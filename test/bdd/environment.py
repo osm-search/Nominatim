@@ -1,3 +1,9 @@
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# This file is part of Nominatim. (https://nominatim.org)
+#
+# Copyright (C) 2022 by the Nominatim developer community.
+# For a full list of authors see the git log.
 from pathlib import Path
 
 from behave import *
@@ -44,8 +50,13 @@ def before_scenario(context, scenario):
         context.nominatim.setup_api_db()
     elif 'UNKNOWNDB' in context.tags:
         context.nominatim.setup_unknown_db()
-    context.scene = None
 
 def after_scenario(context, scenario):
     if 'DB' in context.tags:
         context.nominatim.teardown_db(context)
+
+
+def before_tag(context, tag):
+    if tag == 'fail-legacy':
+        if context.config.userdata['TOKENIZER'] == 'legacy':
+            context.scenario.skip("Not implemented in legacy tokenizer")

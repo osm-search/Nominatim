@@ -1,9 +1,17 @@
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# This file is part of Nominatim. (https://nominatim.org)
+#
+# Copyright (C) 2022 by the Nominatim developer community.
+# For a full list of authors see the git log.
 import tempfile
 import random
 import os
 from pathlib import Path
 
 from nominatim.tools.exec_utils import run_osm2pgsql
+
+from geometry_alias import ALIASES
 
 def get_osm2pgsql_options(nominatim_env, fname, append):
     return dict(import_file=fname,
@@ -39,12 +47,8 @@ def write_opl_file(opl, grid):
 
         return fd.name
 
-@given(u'the scene (?P<scene>.+)')
-def set_default_scene(context, scene):
-    context.scene = scene
-
-@given(u'the ([0-9.]+ )?grid')
-def define_node_grid(context, grid_step):
+@given(u'the ([0-9.]+ )?grid(?: with origin (?P<origin>.*))?')
+def define_node_grid(context, grid_step, origin):
     """
     Define a grid of node positions.
     Use a table to define the grid. The nodes must be integer ids. Optionally
@@ -55,8 +59,22 @@ def define_node_grid(context, grid_step):
     else:
         grid_step = 0.00001
 
+    if origin:
+        if ',' in origin:
+            # TODO coordinate
+            coords = origin.split(',')
+            if len(coords) != 2:
+                raise RuntimeError('Grid origin expects orgin with x,y coordinates.')
+            origin = (float(coords[0]), float(coords[1]))
+        elif origin in ALIASES:
+            origin = ALIASES[origin]
+        else:
+            raise RuntimeError('Grid origin must be either coordinate or alias.')
+    else:
+        origin = (0.0, 0.0)
+
     context.osm.set_grid([context.table.headings] + [list(h) for h in context.table],
-                         grid_step)
+                         grid_step, origin)
 
 
 @when(u'loading osm data')

@@ -1,4 +1,12 @@
 <?php
+/**
+ * SPDX-License-Identifier: GPL-2.0-only
+ *
+ * This file is part of Nominatim. (https://nominatim.org)
+ *
+ * Copyright (C) 2022 by the Nominatim developer community.
+ * For a full list of authors see the git log.
+ */
 
 require_once('init.php');
 require_once('ParameterParser.php');
@@ -18,7 +26,7 @@ function userError($sMsg)
 
 function exception_handler_json($exception)
 {
-    http_response_code($exception->getCode());
+    http_response_code($exception->getCode() == 0 ? 500 : $exception->getCode());
     header('Content-type: application/json; charset=utf-8');
     include(CONST_LibDir.'/template/error-json.php');
     exit();
@@ -26,7 +34,7 @@ function exception_handler_json($exception)
 
 function exception_handler_xml($exception)
 {
-    http_response_code($exception->getCode());
+    http_response_code($exception->getCode() == 0 ? 500 : $exception->getCode());
     header('Content-type: text/xml; charset=utf-8');
     echo '<?xml version="1.0" encoding="UTF-8" ?>'."\n";
     include(CONST_LibDir.'/template/error-xml.php');

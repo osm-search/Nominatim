@@ -1,3 +1,10 @@
+-- SPDX-License-Identifier: GPL-2.0-only
+--
+-- This file is part of Nominatim. (https://nominatim.org)
+--
+-- Copyright (C) 2022 by the Nominatim developer community.
+-- For a full list of authors see the git log.
+
 -- Get tokens used for searching the given place.
 --
 -- These are the tokens that will be saved in the search_name table.
@@ -51,7 +58,7 @@ $$ LANGUAGE SQL IMMUTABLE;
 CREATE OR REPLACE FUNCTION token_matches_street(info JSONB, street_tokens INTEGER[])
   RETURNS BOOLEAN
 AS $$
-  SELECT (info->>'street')::INTEGER[] <@ street_tokens
+  SELECT (info->>'street')::INTEGER[] && street_tokens
 $$ LANGUAGE SQL IMMUTABLE STRICT;
 
 
@@ -90,10 +97,10 @@ AS $$
 $$ LANGUAGE SQL IMMUTABLE STRICT;
 
 
-CREATE OR REPLACE FUNCTION token_normalized_postcode(postcode TEXT)
+CREATE OR REPLACE FUNCTION token_get_postcode(info JSONB)
   RETURNS TEXT
 AS $$
-  SELECT CASE WHEN postcode SIMILAR TO '%(,|;)%' THEN NULL ELSE upper(trim(postcode))END;
+  SELECT info->>'postcode';
 $$ LANGUAGE SQL IMMUTABLE STRICT;
 
 
@@ -193,3 +200,49 @@ BEGIN
 END;
 $$
 LANGUAGE plpgsql;
+
+
+CREATE OR REPLACE FUNCTION create_analyzed_hnr_id(norm_term TEXT, lookup_terms TEXT[])
+  RETURNS INTEGER
+  AS $$
+DECLARE
+  return_id INTEGER;
+BEGIN
+  SELECT min(word_id) INTO return_id
+    FROM word WHERE word = norm_term and type = 'H';
+
+  IF return_id IS NULL THEN
+    return_id := nextval('seq_word');
+    INSERT INTO word (word_id, word_token, type, word, info)
+      SELECT return_id, lookup_term, 'H', norm_term,
+             json_build_object('lookup', lookup_terms[1])
+        FROM unnest(lookup_terms) as lookup_term;
+  END IF;
+
+  RETURN return_id;
+END;
+$$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION create_postcode_word(postcode TEXT, lookup_terms TEXT[])
+  RETURNS BOOLEAN
+  AS $$
+DECLARE
+  existing INTEGER;
+BEGIN
+  SELECT count(*) INTO existing
+    FROM word WHERE word = postcode and type = 'P';
+
+  IF existing > 0 THEN
+    RETURN TRUE;
+  END IF;
+
+  -- postcodes don't need word ids
+  INSERT INTO word (word_token, type, word)
+    SELECT lookup_term, 'P', postcode FROM unnest(lookup_terms) as lookup_term;
+
+  RETURN FALSE;
+END;
+$$
+LANGUAGE plpgsql;
+

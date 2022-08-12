@@ -1,3 +1,9 @@
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# This file is part of Nominatim. (https://nominatim.org)
+#
+# Copyright (C) 2022 by the Nominatim developer community.
+# For a full list of authors see the git log.
 """
 This sanitizer sets the `analyzer` property depending on the
 language of the tag. The language is taken from the suffix of the name.
@@ -7,7 +13,7 @@ Arguments:
 
     filter-kind: Restrict the names the sanitizer should be applied to
                  to the given tags. The parameter expects a list of
-                 regular expressions which are matched against `kind`.
+                 regular expressions which are matched against 'kind'.
                  Note that a match against the full string is expected.
     whitelist: Restrict the set of languages that should be tagged.
                Expects a list of acceptable suffixes. When unset,
@@ -24,32 +30,29 @@ Arguments:
           any analyzer tagged) is retained. (default: replace)
 
 """
-import re
+from typing import Callable, Dict, Optional, List
 
-from nominatim.tools import country_info
+from nominatim.data import country_info
+from nominatim.tokenizer.sanitizers.base import ProcessInfo
+from nominatim.tokenizer.sanitizers.config import SanitizerConfig
 
 class _AnalyzerByLanguage:
     """ Processor for tagging the language of names in a place.
     """
 
-    def __init__(self, config):
-        if 'filter-kind' in config:
-            self.regexes = [re.compile(regex) for regex in config['filter-kind']]
-        else:
-            self.regexes = None
-
+    def __init__(self, config: SanitizerConfig) -> None:
+        self.filter_kind = config.get_filter_kind()
         self.replace = config.get('mode', 'replace') != 'append'
         self.whitelist = config.get('whitelist')
 
-        self.__compute_default_languages(config.get('use-defaults', 'no'))
+        self._compute_default_languages(config.get('use-defaults', 'no'))
 
 
-    def __compute_default_languages(self, use_defaults):
-        self.deflangs = {}
+    def _compute_default_languages(self, use_defaults: str) -> None:
+        self.deflangs: Dict[Optional[str], List[str]] = {}
 
         if use_defaults in ('mono', 'all'):
-            for ccode, prop in country_info.iterate():
-                clangs = prop['languages']
+            for ccode, clangs in country_info.iterate('languages'):
                 if len(clangs) == 1 or use_defaults == 'all':
                     if self.whitelist:
                         self.deflangs[ccode] = [l for l in clangs if l in self.whitelist]
@@ -57,28 +60,21 @@ class _AnalyzerByLanguage:
                         self.deflangs[ccode] = clangs
 
 
-    def _kind_matches(self, kind):
-        if self.regexes is None:
-            return True
-
-        return any(regex.fullmatch(kind) for regex in self.regexes)
-
-
-    def _suffix_matches(self, suffix):
+    def _suffix_matches(self, suffix: str) -> bool:
         if self.whitelist is None:
             return len(suffix) in (2, 3) and suffix.islower()
 
         return suffix in self.whitelist
 
 
-    def __call__(self, obj):
+    def __call__(self, obj: ProcessInfo) -> None:
         if not obj.names:
             return
 
         more_names = []
 
         for name in (n for n in obj.names
-                     if not n.has_attr('analyzer') and self._kind_matches(n.kind)):
+                     if not n.has_attr('analyzer') and self.filter_kind(n.kind)):
             if name.suffix:
                 langs = [name.suffix] if self._suffix_matches(name.suffix) else None
             else:
@@ -96,7 +92,7 @@ class _AnalyzerByLanguage:
         obj.names.extend(more_names)
 
 
-def create(config):
+def create(config: SanitizerConfig) -> Callable[[ProcessInfo], None]:
     """ Create a function that sets the analyzer property depending on the
         language of the tag.
     """

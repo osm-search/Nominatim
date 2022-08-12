@@ -10,7 +10,7 @@ Feature: Reverse geocoding
           | way      | place    | house |
         And result addresses contain
           | house_number | road                | postcode | country_code |
-          | 697          | Upper Kingston Road | 36067    | us |
+          | 707          | Upper Kingston Road | 36067    | us |
 
     @Tiger
     Scenario: No TIGER house number for zoom < 18

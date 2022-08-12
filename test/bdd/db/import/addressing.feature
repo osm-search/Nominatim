@@ -74,20 +74,22 @@ Feature: Address computation
 
     Scenario: boundary areas are preferred over place nodes in the address
         Given the grid
-            | 1 |   |   |   |   |   | 3 |
-            |   | 5 |   |   |   |   |   |
-            |   | 6 |   |   |   |   |   |
-            | 2 |   |   |   |   |   | 4 |
+            | 1 |   |   |   | 10 |   | 3 |
+            |   | 5 |   |   |    |   |   |
+            |   | 6 |   |   |    |   |   |
+            | 2 |   |   |   | 11 |   | 4 |
         And the named places
-            | osm | class    | type    | admin | geometry |
-            | N1  | place    | square  | 15    | 5 |
-            | N2  | place    | city    | 15    | 6 |
-            | R1  | place    | city    | 8     | (1,2,4,3,1) |
+            | osm | class    | type           | admin | geometry |
+            | N1  | place    | square         | 15    | 5 |
+            | N2  | place    | city           | 15    | 6 |
+            | R1  | place    | city           | 8     | (1,2,4,3,1) |
+            | R2  | boundary | administrative | 9     | (1,10,11,2,1) |
         When importing
         Then place_addressline contains
             | object | address | isaddress | cached_rank_address |
             | N1     | R1      | True      | 16                  |
-            | N1     | N2      | False     | 16                  |
+            | N1     | R2      | True      | 18                  |
+            | N1     | N2      | False     | 18                  |
 
     Scenario: place nodes outside a smaller ranked area are ignored
         Given the grid
@@ -251,38 +253,52 @@ Feature: Address computation
             | W1     | W10     |
 
     Scenario: buildings with only addr:postcodes do not appear in the address of a way
-        Given the scene admin-areas
+        Given the grid with origin DE
+            | 1 |   |   |   |   | 8 |   | 6 |   | 2 |
+            |   |10 |11 |   |   |   |   |   |   |   |
+            |   |13 |12 |   |   |   |   |   |   |   |
+            | 20|   |   | 21|   |   |   |   |   |   |
+            |   |   |   |   |   |   |   |   |   |   |
+            |   |   |   |   |   | 9 |   |   |   |   |
+            | 4 |   |   |   |   |   |   | 7 |   | 3 |
         And the named places
-            | osm | class    | type           | admin | addr+postcode | geometry |
-            | R1  | boundary | administrative | 6     | 112           | :b0      |
-            | R34 | boundary | administrative | 8     | 112 DE        | :b1:E    |
-            | R4  | boundary | administrative | 10    | 112 DE 34     | :b2:N    |
+            | osm | class    | type           | admin | addr+postcode | geometry   |
+            | R1  | boundary | administrative | 6     | 10000         | (1,2,3,4,1)|
+            | R34 | boundary | administrative | 8     | 11200         | (1,6,7,4,1)|
+            | R4  | boundary | administrative | 10    | 11230         | (1,8,9,4,1)|
         And the named places
             | osm | class    | type           | geometry |
-            | W93 | highway  | residential    | :w2N     |
+            | W93 | highway  | residential    | 20,21    |
         And the places
             | osm | class    | type        | addr+postcode | geometry |
-            | W22 | place    | postcode    | 445023        | :building:w2N |
+            | W22 | place    | postcode    | 11234         | (10,11,12,13,10) |
         When importing
         Then place_addressline doesn't contain
             | object | address  |
             | W93    | W22      |
 
     Scenario: postcode boundaries do appear in the address of a way
-        Given the scene admin-areas
+       Given the grid with origin DE
+            | 1 |   |   |   |   | 8 |   | 6 |   | 2 |
+            |   |10 |11 |   |   |   |   |   |   |   |
+            |   |13 |12 |   |   |   |   |   |   |   |
+            | 20|   |   | 21|   |   |   |   |   |   |
+            |   |   |   |   |   |   |   |   |   |   |
+            |   |   |   |   |   | 9 |   |   |   |   |
+            | 4 |   |   |   |   |   |   | 7 |   | 3 |
         And the named places
-            | osm | class    | type           | admin | addr+postcode | geometry |
-            | R1  | boundary | administrative | 6     | 112           | :b0      |
-            | R34 | boundary | administrative | 8     | 112 DE        | :b1:E    |
+            | osm | class    | type           | admin | addr+postcode | geometry    |
+            | R1  | boundary | administrative | 6     | 10000         | (1,2,3,4,1) |
+            | R34 | boundary | administrative | 8     | 11000         | (1,6,7,4,1) |
         And the places
             | osm | class    | type        | addr+postcode | geometry |
-            | R4  | boundary | postal_code | 112 DE 34     | :b2:N    |
+            | R4  | boundary | postal_code | 11200         | (1,8,9,4,1) |
         And the named places
             | osm | class    | type           | geometry |
-            | W93 | highway  | residential    | :w2N     |
+            | W93 | highway  | residential    | 20,21    |
         And the places
             | osm | class    | type        | addr+postcode | geometry |
-            | W22 | place    | postcode    | 445023        | :building:w2N |
+            | W22 | place    | postcode    | 11234         | (10,11,12,13,10) |
         When importing
         Then place_addressline contains
             | object | address |
@@ -506,3 +522,23 @@ Feature: Address computation
         Then results contain
            | osm | display_name               |
            | N2  | Leftside, Wonderway, Left |
+
+
+    Scenario: addr:* tags always match the closer area
+        Given the grid
+            | 1 |   |   |   |  2 |   | 5 |
+            |   |   |   |   |    |   |   |
+            |   | 10| 11|   |    |   |   |
+            | 4 |   |   |   |  3 |   | 6 |
+        And the places
+            | osm | class    | type           | admin | name  | geometry    |
+            | R1  | boundary | administrative | 8     | Left  | (1,2,3,4,1) |
+            | R2  | boundary | administrative | 8     | Left  | (2,3,6,5,2) |
+        And the places
+            | osm | class   | type    | name      | addr+city | geometry |
+            | W1  | highway | primary | Wonderway | Left      | 10,11    |
+        When importing
+        Then place_addressline doesn't contain
+            | object | address |
+            | W1     | R2      |
+

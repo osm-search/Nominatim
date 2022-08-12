@@ -1,3 +1,9 @@
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# This file is part of Nominatim. (https://nominatim.org)
+#
+# Copyright (C) 2022 by the Nominatim developer community.
+# For a full list of authors see the git log.
 """
 Test for legacy tokenizer.
 """
@@ -6,7 +12,7 @@ import re
 
 import pytest
 
-from nominatim.indexer.place_info import PlaceInfo
+from nominatim.data.place_info import PlaceInfo
 from nominatim.tokenizer import legacy_tokenizer
 from nominatim.db import properties
 from nominatim.errors import UsageError
@@ -23,7 +29,7 @@ def word_table(temp_db_conn):
 def test_config(project_env, tmp_path):
     module_dir = tmp_path / 'module_src'
     module_dir.mkdir()
-    (module_dir / 'nominatim.so').write_text('TEST nomiantim.so')
+    (module_dir / 'nominatim.so').write_text('TEST nominatim.so')
 
     project_env.lib_dir.module = module_dir
 
@@ -115,7 +121,7 @@ def test_init_new(tokenizer_factory, test_config, monkeypatch,
     outfile = test_config.project_dir / 'module' / 'nominatim.so'
 
     assert outfile.exists()
-    assert outfile.read_text() == 'TEST nomiantim.so'
+    assert outfile.read_text() == 'TEST nominatim.so'
     assert outfile.stat().st_mode == 33261
 
 
@@ -200,7 +206,7 @@ def test_migrate_database(tokenizer_factory, test_config, temp_db_conn, monkeypa
     outfile = test_config.project_dir / 'module' / 'nominatim.so'
 
     assert outfile.exists()
-    assert outfile.read_text() == 'TEST nomiantim.so'
+    assert outfile.read_text() == 'TEST nominatim.so'
     assert outfile.stat().st_mode == 33261
 
 
@@ -249,6 +255,13 @@ def test_update_statistics(word_table, table_factory, temp_db_cursor, tokenizer_
     assert temp_db_cursor.scalar("""SELECT count(*) FROM word
                                     WHERE word_token like ' %' and
                                           search_name_count > 0""") > 0
+
+
+def test_update_word_tokens(tokenizer_factory):
+    tok = tokenizer_factory()
+
+    # This is a noop and should just pass.
+    tok.update_word_tokens()
 
 
 def test_normalize(analyzer):

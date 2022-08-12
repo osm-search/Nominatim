@@ -1,3 +1,9 @@
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# This file is part of Nominatim. (https://nominatim.org)
+#
+# Copyright (C) 2022 by the Nominatim developer community.
+# For a full list of authors see the git log.
 """
 Legacy word table for testing with functions to prefil and test contents
 of the table.
@@ -52,6 +58,24 @@ class MockIcuWordTable:
         self.conn.commit()
 
 
+    def add_housenumber(self, word_id, word_tokens, word=None):
+        with self.conn.cursor() as cur:
+            if isinstance(word_tokens, str):
+                # old style without analyser
+                cur.execute("""INSERT INTO word (word_id, word_token, type)
+                                  VALUES (%s, %s, 'H')
+                            """, (word_id, word_tokens))
+            else:
+                if word is None:
+                    word = word_tokens[0]
+                for token in word_tokens:
+                    cur.execute("""INSERT INTO word (word_id, word_token, type, word, info)
+                                      VALUES (%s, %s, 'H', %s, jsonb_build_object('lookup', %s))
+                                """, (word_id, token, word, word_tokens[0]))
+
+        self.conn.commit()
+
+
     def count(self):
         with self.conn.cursor() as cur:
             return cur.scalar("SELECT count(*) FROM word")
@@ -60,6 +84,11 @@ class MockIcuWordTable:
     def count_special(self):
         with self.conn.cursor() as cur:
             return cur.scalar("SELECT count(*) FROM word WHERE type = 'S'")
+
+
+    def count_housenumbers(self):
+        with self.conn.cursor() as cur:
+            return cur.scalar("SELECT count(*) FROM word WHERE type = 'H'")
 
 
     def get_special(self):

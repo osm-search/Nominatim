@@ -1,4 +1,12 @@
 <?php
+/**
+ * SPDX-License-Identifier: GPL-2.0-only
+ *
+ * This file is part of Nominatim. (https://nominatim.org)
+ *
+ * Copyright (C) 2022 by the Nominatim developer community.
+ * For a full list of authors see the git log.
+ */
 
 require_once(CONST_LibDir.'/init-website.php');
 require_once(CONST_LibDir.'/log.php');
@@ -198,7 +206,7 @@ if ($bIncludeLinkedPlaces) {
     $aLinkedLines = $oDB->getAll($sSQL);
 }
 
-// All places this is an imediate parent of
+// All places this is an immediate parent of
 $aHierarchyLines = false;
 if ($bIncludeHierarchy) {
     $sSQL = 'SELECT obj.place_id, osm_type, osm_id, class, type, housenumber,';

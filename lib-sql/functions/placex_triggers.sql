@@ -1,3 +1,10 @@
+-- SPDX-License-Identifier: GPL-2.0-only
+--
+-- This file is part of Nominatim. (https://nominatim.org)
+--
+-- Copyright (C) 2022 by the Nominatim developer community.
+-- For a full list of authors see the git log.
+
 -- Trigger functions for the placex table.
 
 -- Information returned by update preparation.
@@ -9,7 +16,9 @@ CREATE TYPE prepare_update_info AS (
   country_code TEXT,
   class TEXT,
   type TEXT,
-  linked_place_id BIGINT
+  linked_place_id BIGINT,
+  centroid_x float,
+  centroid_y float
 );
 
 -- Retrieve the data needed by the indexer for updating the place.
@@ -19,30 +28,53 @@ CREATE OR REPLACE FUNCTION placex_indexing_prepare(p placex)
 DECLARE
   location RECORD;
   result prepare_update_info;
+  extra_names HSTORE;
 BEGIN
-  -- For POI nodes, check if the address should be derived from a surrounding
-  -- building.
-  IF p.rank_search < 30 OR p.osm_type != 'N' OR p.address is not null THEN
+  IF not p.address ? '_inherited' THEN
     result.address := p.address;
-  ELSE
-    -- The additional && condition works around the misguided query
-    -- planner of postgis 3.0.
-    SELECT placex.address || hstore('_inherited', '') INTO result.address
-      FROM placex
-     WHERE ST_Covers(geometry, p.centroid)
-           and geometry && p.centroid
-           and placex.address is not null
-           and (placex.address ? 'housenumber' or placex.address ? 'street' or placex.address ? 'place')
-           and rank_search = 30 AND ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon')
-     LIMIT 1;
   END IF;
 
+  -- For POI nodes, check if the address should be derived from a surrounding
+  -- building.
+  IF p.rank_search = 30 AND p.osm_type = 'N' THEN
+    IF p.address is null THEN
+        -- The additional && condition works around the misguided query
+        -- planner of postgis 3.0.
+        SELECT placex.address || hstore('_inherited', '') INTO result.address
+          FROM placex
+         WHERE ST_Covers(geometry, p.centroid)
+               and geometry && p.centroid
+               and placex.address is not null
+               and (placex.address ? 'housenumber' or placex.address ? 'street' or placex.address ? 'place')
+               and rank_search = 30 AND ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon')
+         LIMIT 1;
+    ELSE
+      -- See if we can inherit additional address tags from an interpolation.
+      -- These will become permanent.
+      FOR location IN
+        SELECT (address - 'interpolation'::text - 'housenumber'::text) as address
+          FROM place, planet_osm_ways w
+          WHERE place.osm_type = 'W' and place.address ? 'interpolation'
+                and place.geometry && p.geometry
+                and place.osm_id = w.id
+                and p.osm_id = any(w.nodes)
+      LOOP
+        result.address := location.address || result.address;
+      END LOOP;
+    END IF;
+  END IF;
+
+  -- remove internal and derived names
   result.address := result.address - '_unlisted_place'::TEXT;
-  result.name := p.name;
+  SELECT hstore(array_agg(key), array_agg(value)) INTO result.name
+    FROM each(p.name) WHERE key not like '\_%';
+
   result.class := p.class;
   result.type := p.type;
   result.country_code := p.country_code;
   result.rank_address := p.rank_address;
+  result.centroid_x := ST_X(p.centroid);
+  result.centroid_y := ST_Y(p.centroid);
 
   -- Names of linked places need to be merged in, so search for a linkable
   -- place already here.
@@ -51,8 +83,20 @@ BEGIN
   IF location.place_id is not NULL THEN
     result.linked_place_id := location.place_id;
 
-    IF NOT location.name IS NULL THEN
-      result.name := location.name || result.name;
+    IF location.name is not NULL THEN
+      {% if debug %}RAISE WARNING 'Names original: %, location: %', result.name, location.name;{% endif %}
+      -- Add all names from the place nodes that deviate from the name
+      -- in the relation with the prefix '_place_'. Deviation means that
+      -- either the value is different or a given key is missing completely
+      SELECT hstore(array_agg('_place_' || key), array_agg(value)) INTO extra_names
+        FROM each(location.name - result.name);
+      {% if debug %}RAISE WARNING 'Extra names: %', extra_names;{% endif %}
+
+      IF extra_names is not null THEN
+          result.name := result.name || extra_names;
+      END IF;
+
+      {% if debug %}RAISE WARNING 'Final names: %', result.name;{% endif %}
     END IF;
   END IF;
 
@@ -80,7 +124,8 @@ BEGIN
       IF location.members[i+1] = 'street' THEN
         FOR parent IN
           SELECT place_id from placex
-           WHERE osm_type = 'W' and osm_id = substring(location.members[i],2)::bigint
+           WHERE osm_type = upper(substring(location.members[i], 1, 1))::char(1)
+                 and osm_id = substring(location.members[i], 2)::bigint
                  and name is not null
                  and rank_search between 26 and 27
         LOOP
@@ -124,18 +169,6 @@ BEGIN
   END IF;
 
   IF parent_place_id is null and poi_osm_type = 'N' THEN
-    -- Is this node part of an interpolation?
-    FOR location IN
-      SELECT q.parent_place_id
-        FROM location_property_osmline q, planet_osm_ways x
-       WHERE q.linegeo && bbox and x.id = q.osm_id
-             and poi_osm_id = any(x.nodes)
-       LIMIT 1
-    LOOP
-      {% if debug %}RAISE WARNING 'Get parent from interpolation: %', location.parent_place_id;{% endif %}
-      RETURN location.parent_place_id;
-    END LOOP;
-
     FOR location IN
       SELECT p.place_id, p.osm_id, p.rank_search, p.address,
              coalesce(p.centroid, ST_Centroid(p.geometry)) as centroid
@@ -249,7 +282,7 @@ BEGIN
              OR position(bnd_name in lower(name->'name')) > 0)
         AND placex.class = 'place' AND placex.type = bnd.extratags->'place'
         AND placex.osm_type = 'N'
-        AND placex.linked_place_id is null
+        AND (placex.linked_place_id is null or placex.linked_place_id = bnd.place_id)
         AND placex.rank_search < 26 -- needed to select the right index
         AND placex.type != 'postcode'
         AND ST_Covers(bnd.geometry, placex.geometry)
@@ -265,7 +298,7 @@ BEGIN
       WHERE placex.class = 'place' AND placex.osm_type = 'N'
         AND placex.extratags ? 'wikidata' -- needed to select right index
         AND placex.extratags->'wikidata' = bnd.extratags->'wikidata'
-        AND placex.linked_place_id is null
+        AND (placex.linked_place_id is null or placex.linked_place_id = bnd.place_id)
         AND placex.rank_search < 26
         AND _st_covers(bnd.geometry, placex.geometry)
       ORDER BY lower(name->'name') = bnd_name desc
@@ -289,7 +322,7 @@ BEGIN
              OR (bnd.rank_address = 0 and placex.rank_search = bnd.rank_search))
         AND placex.osm_type = 'N'
         AND placex.class = 'place'
-        AND placex.linked_place_id is null
+        AND (placex.linked_place_id is null or placex.linked_place_id = bnd.place_id)
         AND placex.rank_search < 26 -- needed to select the right index
         AND placex.type != 'postcode'
         AND ST_Covers(bnd.geometry, placex.geometry)
@@ -333,9 +366,10 @@ BEGIN
     WHERE s.place_id = parent_place_id;
 
   FOR addr_item IN
-    SELECT (get_addr_tag_rank(key, country)).*, key,
+    SELECT ranks.*, key,
            token_get_address_search_tokens(token_info, key) as search_tokens
-      FROM token_get_address_keys(token_info) as key
+      FROM token_get_address_keys(token_info) as key,
+           LATERAL get_addr_tag_rank(key, country) as ranks
       WHERE not token_get_address_search_tokens(token_info, key) <@ parent_address_vector
   LOOP
     addr_place := get_address_place(in_partition, geometry,
@@ -423,6 +457,7 @@ CREATE OR REPLACE FUNCTION insert_addresslines(obj_place_id BIGINT,
                                                maxrank SMALLINT,
                                                token_info JSONB,
                                                geometry GEOMETRY,
+                                               centroid GEOMETRY,
                                                country TEXT,
                                                OUT parent_place_id BIGINT,
                                                OUT postcode TEXT,
@@ -447,10 +482,12 @@ BEGIN
   address_havelevel := array_fill(false, ARRAY[maxrank]);
 
   FOR location IN
-    SELECT (get_address_place(partition, geometry, from_rank, to_rank,
-                              extent, token_info, key)).*, key
-      FROM (SELECT (get_addr_tag_rank(key, country)).*, key
-              FROM token_get_address_keys(token_info) as key) x
+    SELECT apl.*, key
+      FROM (SELECT extra.*, key
+              FROM token_get_address_keys(token_info) as key,
+                   LATERAL get_addr_tag_rank(key, country) as extra) x,
+           LATERAL get_address_place(partition, geometry, from_rank, to_rank,
+                              extent, token_info, key) as apl
       ORDER BY rank_address, distance, isguess desc
   LOOP
     IF location.place_id is null THEN
@@ -483,7 +520,7 @@ BEGIN
   END LOOP;
 
   FOR location IN
-    SELECT * FROM getNearFeatures(partition, geometry, maxrank)
+    SELECT * FROM getNearFeatures(partition, geometry, centroid, maxrank)
     WHERE not addr_place_ids @> ARRAY[place_id]
     ORDER BY rank_address, isguess asc,
              distance *
@@ -619,10 +656,7 @@ BEGIN
 {% if not disable_diff_updates %}
   -- The following is not needed until doing diff updates, and slows the main index process down
 
-  IF NEW.osm_type = 'N' and NEW.rank_search > 28 THEN
-      -- might be part of an interpolation
-      result := osmline_reinsert(NEW.osm_id, NEW.geometry);
-  ELSEIF NEW.rank_address > 0 THEN
+  IF NEW.rank_address > 0 THEN
     IF (ST_GeometryType(NEW.geometry) in ('ST_Polygon','ST_MultiPolygon') AND ST_IsValid(NEW.geometry)) THEN
       -- Performance: We just can't handle re-indexing for country level changes
       IF st_area(NEW.geometry) < 1 THEN
@@ -649,7 +683,7 @@ BEGIN
           -- roads may cause reparenting for >27 rank places
           update placex set indexed_status = 2 where indexed_status = 0 and rank_search > NEW.rank_search and ST_DWithin(placex.geometry, NEW.geometry, diameter);
           -- reparenting also for OSM Interpolation Lines (and for Tiger?)
-          update location_property_osmline set indexed_status = 2 where indexed_status = 0 and ST_DWithin(location_property_osmline.linegeo, NEW.geometry, diameter);
+          update location_property_osmline set indexed_status = 2 where indexed_status = 0 and startnumber is not null and ST_DWithin(location_property_osmline.linegeo, NEW.geometry, diameter);
         ELSEIF NEW.rank_search >= 16 THEN
           -- up to rank 16, street-less addresses may need reparenting
           update placex set indexed_status = 2 where indexed_status = 0 and rank_search > NEW.rank_search and ST_DWithin(placex.geometry, NEW.geometry, diameter) and (rank_search < 28 or name is not null or address ? 'place');
@@ -729,9 +763,6 @@ BEGIN
   DELETE FROM place_addressline WHERE place_id = NEW.place_id;
   result := deleteRoad(NEW.partition, NEW.place_id);
   result := deleteLocationArea(NEW.partition, NEW.place_id, NEW.rank_search);
-  UPDATE placex set linked_place_id = null, indexed_status = 2
-         where linked_place_id = NEW.place_id;
-  -- update not necessary for osmline, cause linked_place_id does not exist
 
   NEW.extratags := NEW.extratags - 'linked_place'::TEXT;
 
@@ -740,11 +771,11 @@ BEGIN
   linked_place := NEW.linked_place_id;
   NEW.linked_place_id := OLD.linked_place_id;
 
-  IF NEW.linked_place_id is not null THEN
-    NEW.token_info := null;
-    {% if debug %}RAISE WARNING 'place already linked to %', OLD.linked_place_id;{% endif %}
-    RETURN NEW;
-  END IF;
+  -- Remove linkage, if we have computed a different new linkee.
+  UPDATE placex SET linked_place_id = null, indexed_status = 2
+    WHERE linked_place_id = NEW.place_id
+          and (linked_place is null or linked_place_id != linked_place);
+  -- update not necessary for osmline, cause linked_place_id does not exist
 
   -- Postcodes are just here to compute the centroids. They are not searchable
   -- unless they are a boundary=postal_code.
@@ -790,6 +821,16 @@ BEGIN
                             NEW.class, NEW.type, NEW.admin_level,
                             (NEW.extratags->'capital') = 'yes',
                             NEW.address->'postcode');
+
+  -- Short-cut out for linked places. Note that this must happen after the
+  -- address rank has been recomputed. The linking might nullify a shift in
+  -- address rank.
+  IF NEW.linked_place_id is not null THEN
+    NEW.token_info := null;
+    {% if debug %}RAISE WARNING 'place already linked to %', OLD.linked_place_id;{% endif %}
+    RETURN NEW;
+  END IF;
+
   -- We must always increase the address level relative to the admin boundary.
   IF NEW.class = 'boundary' and NEW.type = 'administrative'
      and NEW.osm_type = 'R' and NEW.rank_address > 0
@@ -827,29 +868,56 @@ BEGIN
 
     IF NEW.rank_address > 9 THEN
         -- Second check that the boundary is not completely contained in a
-        -- place area with a higher address rank
+        -- place area with a equal or higher address rank.
         FOR location IN
-          SELECT rank_address FROM placex
+          SELECT rank_address
+          FROM placex,
+               LATERAL compute_place_rank(country_code, 'A', class, type,
+                                          admin_level, False, null) prank
           WHERE class = 'place' and rank_address < 24
-                and rank_address > NEW.rank_address
+                and prank.address_rank >= NEW.rank_address
                 and geometry && NEW.geometry
                 and geometry ~ NEW.geometry -- needed because ST_Relate does not do bbox cover test
                 and ST_Relate(geometry, NEW.geometry, 'T*T***FF*') -- contains but not equal
-          ORDER BY rank_address desc LIMIT 1
+          ORDER BY prank.address_rank desc LIMIT 1
         LOOP
           NEW.rank_address := location.rank_address + 2;
         END LOOP;
     END IF;
-  ELSEIF NEW.class = 'place' and NEW.osm_type = 'N'
-     and NEW.rank_address between 16 and 23
+  ELSEIF NEW.class = 'place'
+         and ST_GeometryType(NEW.geometry) in ('ST_Polygon', 'ST_MultiPolygon')
+         and NEW.rank_address between 16 and 23
   THEN
-    -- If a place node is contained in a admin boundary with the same address level
-    -- and has not been linked, then make the node a subpart by increasing the
-    -- address rank (city level and above).
+    -- For place areas make sure they are not completely contained in an area
+    -- with a equal or higher address rank.
     FOR location IN
-        SELECT rank_address FROM placex
-        WHERE osm_type = 'R' and class = 'boundary' and type = 'administrative'
-              and rank_address = NEW.rank_address
+          SELECT rank_address
+          FROM placex,
+               LATERAL compute_place_rank(country_code, 'A', class, type,
+                                          admin_level, False, null) prank
+          WHERE prank.address_rank < 24
+                and prank.address_rank >= NEW.rank_address
+                and geometry && NEW.geometry
+                and geometry ~ NEW.geometry -- needed because ST_Relate does not do bbox cover test
+                and ST_Relate(geometry, NEW.geometry, 'T*T***FF*') -- contains but not equal
+          ORDER BY prank.address_rank desc LIMIT 1
+        LOOP
+          NEW.rank_address := location.rank_address + 2;
+        END LOOP;
+  ELSEIF NEW.class = 'place' and NEW.osm_type = 'N'
+         and NEW.rank_address between 16 and 23
+  THEN
+    -- If a place node is contained in an admin or place boundary with the same
+    -- address level and has not been linked, then make the node a subpart
+    -- by increasing the address rank (city level and above).
+    FOR location IN
+        SELECT rank_address
+        FROM placex,
+             LATERAL compute_place_rank(country_code, 'A', class, type,
+                                        admin_level, False, null) prank
+        WHERE osm_type = 'R'
+              and ((class = 'place' and prank.address_rank = NEW.rank_address)
+                   or (class = 'boundary' and rank_address = NEW.rank_address))
               and geometry && NEW.centroid and _ST_Covers(geometry, NEW.centroid)
         LIMIT 1
     LOOP
@@ -929,7 +997,7 @@ BEGIN
       {% if debug %}RAISE WARNING 'Got parent details from search name';{% endif %}
 
       -- determine postcode
-      NEW.postcode := coalesce(token_normalized_postcode(NEW.address->'postcode'),
+      NEW.postcode := coalesce(token_get_postcode(NEW.token_info),
                                location.postcode,
                                get_nearest_postcode(NEW.country_code, NEW.centroid));
 
@@ -958,15 +1026,6 @@ BEGIN
       {% endif %}
 
       NEW.token_info := token_strip_info(NEW.token_info);
-      -- If the address was inherited from a surrounding building,
-      -- do not add it permanently to the table.
-      IF NEW.address ? '_inherited' THEN
-        IF NEW.address ? '_unlisted_place' THEN
-          NEW.address := hstore('_unlisted_place', NEW.address->'_unlisted_place');
-        ELSE
-          NEW.address := null;
-        END IF;
-      END IF;
 
       RETURN NEW;
     END IF;
@@ -977,7 +1036,14 @@ BEGIN
   -- Full indexing
   {% if debug %}RAISE WARNING 'Using full index mode for % %', NEW.osm_type, NEW.osm_id;{% endif %}
   IF linked_place is not null THEN
-    SELECT * INTO location FROM placex WHERE place_id = linked_place;
+    -- Recompute the ranks here as the ones from the linked place might
+    -- have been shifted to accommodate surrounding boundaries.
+    SELECT place_id, osm_id, class, type, extratags,
+           centroid, geometry,
+           (compute_place_rank(country_code, osm_type, class, type, admin_level,
+                              (extratags->'capital') = 'yes', null)).*
+      INTO location
+      FROM placex WHERE place_id = linked_place;
 
     {% if debug %}RAISE WARNING 'Linked %', location;{% endif %}
 
@@ -988,11 +1054,11 @@ BEGIN
         NEW.centroid := geom;
     END IF;
 
-    {% if debug %}RAISE WARNING 'parent address: % rank address: %', parent_address_level, location.rank_address;{% endif %}
-    IF location.rank_address > parent_address_level
-       and location.rank_address < 26
+    {% if debug %}RAISE WARNING 'parent address: % rank address: %', parent_address_level, location.address_rank;{% endif %}
+    IF location.address_rank > parent_address_level
+       and location.address_rank < 26
     THEN
-      NEW.rank_address := location.rank_address;
+      NEW.rank_address := location.address_rank;
     END IF;
 
     -- merge in extra tags
@@ -1001,7 +1067,9 @@ BEGIN
                      || coalesce(NEW.extratags, ''::hstore);
 
     -- mark the linked place (excludes from search results)
-    UPDATE placex set linked_place_id = NEW.place_id
+    -- Force reindexing to remove any traces from the search indexes and
+    -- reset the address rank if necessary.
+    UPDATE placex set linked_place_id = NEW.place_id, indexed_status = 2
       WHERE place_id = location.place_id;
     -- ensure that those places are not found anymore
     {% if 'search_name' in db.tables %}
@@ -1034,20 +1102,35 @@ BEGIN
     END IF;
   END IF;
 
+  {% if not disable_diff_updates %}
+  IF OLD.rank_address != NEW.rank_address THEN
+    -- After a rank shift all addresses containing us must be updated.
+    UPDATE placex p SET indexed_status = 2 FROM place_addressline pa
+      WHERE pa.address_place_id = NEW.place_id and p.place_id = pa.place_id
+            and p.indexed_status = 0 and p.rank_address between 4 and 25;
+  END IF;
+  {% endif %}
+
   IF NEW.admin_level = 2
      AND NEW.class = 'boundary' AND NEW.type = 'administrative'
      AND NEW.country_code IS NOT NULL AND NEW.osm_type = 'R'
   THEN
-    -- Update the list of country names. Adding an additional sanity
-    -- check here: make sure the country does overlap with the area where
-    -- we expect it to be as per static country grid.
+    -- Update the list of country names.
+    -- Only take the name from the largest area for the given country code
+    -- in the hope that this is the authoritative one.
+    -- Also replace any old names so that all mapping mistakes can
+    -- be fixed through regular OSM updates.
     FOR location IN
-      SELECT country_code FROM country_osm_grid
-       WHERE ST_Covers(geometry, NEW.centroid) and country_code = NEW.country_code
+      SELECT osm_id FROM placex
+       WHERE rank_search = 4 and osm_type = 'R'
+             and country_code = NEW.country_code
+       ORDER BY ST_Area(geometry) desc
        LIMIT 1
     LOOP
-      {% if debug %}RAISE WARNING 'Updating names for country '%' with: %', NEW.country_code, NEW.name;{% endif %}
-      UPDATE country_name SET name = name || NEW.name WHERE country_code = NEW.country_code;
+      IF location.osm_id = NEW.osm_id THEN
+        {% if debug %}RAISE WARNING 'Updating names for country '%' with: %', NEW.country_code, NEW.name;{% endif %}
+        UPDATE country_name SET derived_name = NEW.name WHERE country_code = NEW.country_code;
+      END IF;
     END LOOP;
   END IF;
 
@@ -1075,13 +1158,13 @@ BEGIN
   END IF;
 
   SELECT * FROM insert_addresslines(NEW.place_id, NEW.partition, max_rank,
-                                    NEW.token_info, geom, NEW.country_code)
+                                    NEW.token_info, geom, NEW.centroid,
+                                    NEW.country_code)
     INTO NEW.parent_place_id, NEW.postcode, nameaddress_vector;
 
   {% if debug %}RAISE WARNING 'RETURN insert_addresslines: %, %, %', NEW.parent_place_id, NEW.postcode, nameaddress_vector;{% endif %}
 
-  NEW.postcode := coalesce(token_normalized_postcode(NEW.address->'postcode'),
-                           NEW.postcode);
+  NEW.postcode := coalesce(token_get_postcode(NEW.token_info), NEW.postcode);
 
   -- if we have a name add this to the name search table
   IF NEW.name IS NOT NULL THEN
@@ -1122,7 +1205,7 @@ BEGIN
     NEW.postcode := get_nearest_postcode(NEW.country_code, NEW.geometry);
   END IF;
 
-  {% if debug %}RAISE WARNING 'place update % % finsihed.', NEW.osm_type, NEW.osm_id;{% endif %}
+  {% if debug %}RAISE WARNING 'place update % % finished.', NEW.osm_type, NEW.osm_id;{% endif %}
 
   NEW.token_info := token_strip_info(NEW.token_info);
   RETURN NEW;

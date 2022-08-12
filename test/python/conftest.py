@@ -1,3 +1,9 @@
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# This file is part of Nominatim. (https://nominatim.org)
+#
+# Copyright (C) 2022 by the Nominatim developer community.
+# For a full list of authors see the git log.
 import itertools
 import sys
 from pathlib import Path
@@ -203,11 +209,6 @@ def osmline_table(temp_db_with_extensions, table_factory):
                      address HSTORE,
                      postcode TEXT,
                      country_code VARCHAR(2)""")
-
-
-@pytest.fixture
-def word_table(temp_db_conn):
-    return mocks.MockWordTable(temp_db_conn)
 
 
 @pytest.fixture

@@ -42,9 +42,9 @@ is.
 
       ```
       # inside the virtual machine:
-      cd build
-      wget --no-verbose --output-document=/tmp/monaco.osm.pbf http://download.geofabrik.de/europe/monaco-latest.osm.pbf
-      ./utils/setup.php --osm-file /tmp/monaco.osm.pbf --osm2pgsql-cache 1000 --all 2>&1 | tee monaco.$$.log
+      cd nominatim-project
+      wget --no-verbose --output-document=monaco.osm.pbf http://download.geofabrik.de/europe/monaco-latest.osm.pbf
+      nominatim import --osm-file monaco.osm.pbf 2>&1 | tee monaco.$$.log
       ```
 
     To repeat an import you'd need to delete the database first
@@ -56,7 +56,7 @@ is.
 ## Development
 
 Vagrant maps the virtual machine's port 8089 to your host machine. Thus you can
-see Nominatim in action on [locahost:8089](http://localhost:8089/nominatim/).
+see Nominatim in action on [localhost:8089](http://localhost:8089/nominatim/).
 
 You edit code on your host machine in any editor you like. There is no need to
 restart any software: just refresh your browser window.

@@ -24,11 +24,11 @@ export DEBIAN_FRONTEND=noninteractive #DOCS:
     sudo apt install -y php-cgi
     sudo apt install -y build-essential cmake g++ libboost-dev libboost-system-dev \
                         libboost-filesystem-dev libexpat1-dev zlib1g-dev\
-                        libbz2-dev libpq-dev libproj-dev \
-                        postgresql-server-dev-10 postgresql-10-postgis-2.4 \
+                        libbz2-dev libpq-dev \
+                        postgresql-10-postgis-2.4 \
                         postgresql-contrib-10 postgresql-10-postgis-scripts \
-                        php php-pgsql php-intl libicu-dev python3-pip \
-                        python3-psutil python3-jinja2 python3-icu git
+                        php-cli php-pgsql php-intl libicu-dev python3-pip \
+                        python3-psutil python3-jinja2 python3-yaml python3-icu git
 
 # Some of the Python packages that come with Ubuntu 18.04 are too old, so
 # install the latest version from pip:
@@ -105,7 +105,7 @@ fi                                    #DOCS:
 #
 if [ "x$1" == "xyes" ]; then  #DOCS:    :::sh
     cd $USERHOME
-    git clone --recursive git://github.com/openstreetmap/Nominatim.git
+    git clone --recursive https://github.com/openstreetmap/Nominatim.git
     cd Nominatim
 else                               #DOCS:
     cd $USERHOME/Nominatim         #DOCS:

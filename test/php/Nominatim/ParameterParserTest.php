@@ -1,4 +1,12 @@
 <?php
+/**
+ * SPDX-License-Identifier: GPL-2.0-only
+ *
+ * This file is part of Nominatim. (https://nominatim.org)
+ *
+ * Copyright (C) 2022 by the Nominatim developer community.
+ * For a full list of authors see the git log.
+ */
 
 namespace Nominatim;
 
@@ -140,7 +148,7 @@ class ParameterParserTest extends \PHPUnit\Framework\TestCase
         $this->assertSame('foo', $oParams->getSet('val1', array('foo', 'bar')));
 
         $this->assertSame(false, $oParams->getSet('val2', array('foo', 'bar')));
-        $this->assertSame(0, $oParams->getSet('val3', array('foo', 'bar')));
+        $this->assertSame(false, $oParams->getSet('val3', array('foo', 'bar')));
     }
 
 
@@ -176,75 +184,48 @@ class ParameterParserTest extends \PHPUnit\Framework\TestCase
         $oParams = new ParameterParser(array('accept-language' => ''));
         $this->assertSame(array(
                            'name:default' => 'name:default',
+                           '_place_name:default' => '_place_name:default',
                            'name' => 'name',
-                           'brand' => 'brand',
-                           'official_name:default' => 'official_name:default',
-                           'short_name:default' => 'short_name:default',
-                           'official_name' => 'official_name',
-                           'short_name' => 'short_name',
-                           'ref' => 'ref',
-                           'type' => 'type'
-                          ), $oParams->getPreferredLanguages('default'));
+                           '_place_name' => '_place_name'
+                          ), array_slice($oParams->getPreferredLanguages('default'), 0, 4));
 
         $oParams = new ParameterParser(array('accept-language' => 'de,en'));
         $this->assertSame(array(
                            'name:de' => 'name:de',
+                           '_place_name:de' => '_place_name:de',
                            'name:en' => 'name:en',
+                           '_place_name:en' => '_place_name:en',
                            'name' => 'name',
-                           'brand' => 'brand',
-                           'official_name:de' => 'official_name:de',
-                           'short_name:de' => 'short_name:de',
-                           'official_name:en' => 'official_name:en',
-                           'short_name:en' => 'short_name:en',
-                           'official_name' => 'official_name',
-                           'short_name' => 'short_name',
-                           'ref' => 'ref',
-                           'type' => 'type'
-                          ), $oParams->getPreferredLanguages('default'));
+                           '_place_name' => '_place_name'
+                          ), array_slice($oParams->getPreferredLanguages('default'), 0, 6));
 
         $oParams = new ParameterParser(array('accept-language' => 'fr-ca,fr;q=0.8,en-ca;q=0.5,en;q=0.3'));
         $this->assertSame(array(
                            'name:fr-ca' => 'name:fr-ca',
+                           '_place_name:fr-ca' => '_place_name:fr-ca',
                            'name:fr' => 'name:fr',
+                           '_place_name:fr' => '_place_name:fr',
                            'name:en-ca' => 'name:en-ca',
+                           '_place_name:en-ca' => '_place_name:en-ca',
                            'name:en' => 'name:en',
+                           '_place_name:en' => '_place_name:en',
                            'name' => 'name',
-                           'brand' => 'brand',
-                           'official_name:fr-ca' => 'official_name:fr-ca',
-                           'short_name:fr-ca' => 'short_name:fr-ca',
-                           'official_name:fr' => 'official_name:fr',
-                           'short_name:fr' => 'short_name:fr',
-                           'official_name:en-ca' => 'official_name:en-ca',
-                           'short_name:en-ca' => 'short_name:en-ca',
-                           'official_name:en' => 'official_name:en',
-                           'short_name:en' => 'short_name:en',
-                           'official_name' => 'official_name',
-                           'short_name' => 'short_name',
-                           'ref' => 'ref',
-                           'type' => 'type',
-                          ), $oParams->getPreferredLanguages('default'));
+                           '_place_name' => '_place_name'
+                          ), array_slice($oParams->getPreferredLanguages('default'), 0, 10));
 
         $oParams = new ParameterParser(array('accept-language' => 'ja_rm,zh_pinyin'));
         $this->assertSame(array(
                            'name:ja_rm' => 'name:ja_rm',
+                           '_place_name:ja_rm' => '_place_name:ja_rm',
                            'name:zh_pinyin' => 'name:zh_pinyin',
+                           '_place_name:zh_pinyin' => '_place_name:zh_pinyin',
                            'name:ja' => 'name:ja',
+                           '_place_name:ja' => '_place_name:ja',
                            'name:zh' => 'name:zh',
+                           '_place_name:zh' => '_place_name:zh',
                            'name' => 'name',
-                           'brand' => 'brand',
-                           'official_name:ja_rm' => 'official_name:ja_rm',
-                           'short_name:ja_rm' => 'short_name:ja_rm',
-                           'official_name:zh_pinyin' => 'official_name:zh_pinyin',
-                           'short_name:zh_pinyin' => 'short_name:zh_pinyin',
-                           'official_name:ja' => 'official_name:ja',
-                           'short_name:ja' => 'short_name:ja',
-                           'official_name:zh' => 'official_name:zh',
-                           'short_name:zh' => 'short_name:zh',
-                           'official_name' => 'official_name',
-                           'short_name' => 'short_name',
-                           'ref' => 'ref',
-                           'type' => 'type',
-                          ), $oParams->getPreferredLanguages('default'));
+                           '_place_name' => '_place_name'
+                          ), array_slice($oParams->getPreferredLanguages('default'), 0, 10));
     }
 
     public function testHasSetAny()

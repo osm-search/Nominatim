@@ -1,9 +1,17 @@
 <?php
+/**
+ * SPDX-License-Identifier: GPL-2.0-only
+ *
+ * This file is part of Nominatim. (https://nominatim.org)
+ *
+ * Copyright (C) 2022 by the Nominatim developer community.
+ * For a full list of authors see the git log.
+ */
 
 function loadSettings($sProjectDir)
 {
     @define('CONST_InstallDir', $sProjectDir);
-    // Temporary hack to set the direcory via environment instead of
+    // Temporary hack to set the directory via environment instead of
     // the installed scripts. Neither setting is part of the official
     // set of settings.
     defined('CONST_ConfigDir') or define('CONST_ConfigDir', $_SERVER['NOMINATIM_CONFIGDIR']);
@@ -198,24 +206,34 @@ function parseLatLon($sQuery)
     return array($sFound, $fQueryLat, $fQueryLon);
 }
 
-function closestHouseNumber($aRow)
+function addressRankToGeocodeJsonType($iAddressRank)
 {
-    $fHouse = $aRow['startnumber']
-                + ($aRow['endnumber'] - $aRow['startnumber']) * $aRow['fraction'];
-
-    switch ($aRow['interpolationtype']) {
-        case 'odd':
-            $iHn = (int)($fHouse/2) * 2 + 1;
-            break;
-        case 'even':
-            $iHn = (int)(round($fHouse/2)) * 2;
-            break;
-        default:
-            $iHn = (int)(round($fHouse));
-            break;
+    if ($iAddressRank >= 29 && $iAddressRank <= 30) {
+        return 'house';
+    }
+    if ($iAddressRank >= 26 && $iAddressRank < 28) {
+        return 'street';
+    }
+    if ($iAddressRank >= 22 && $iAddressRank < 26) {
+        return 'locality';
+    }
+    if ($iAddressRank >= 17 && $iAddressRank < 22) {
+        return 'district';
+    }
+    if ($iAddressRank >= 13 && $iAddressRank < 17) {
+        return 'city';
+    }
+    if ($iAddressRank >= 10 && $iAddressRank < 13) {
+        return 'county';
+    }
+    if ($iAddressRank >= 5 && $iAddressRank < 10) {
+        return 'state';
+    }
+    if ($iAddressRank >= 4 && $iAddressRank < 5) {
+        return 'country';
     }
 
-    return max(min($aRow['endnumber'], $iHn), $aRow['startnumber']);
+    return 'locality';
 }
 
 if (!function_exists('array_key_last')) {

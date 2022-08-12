@@ -23,12 +23,12 @@ export DEBIAN_FRONTEND=noninteractive #DOCS:
     sudo apt install -y php-cgi
     sudo apt install -y build-essential cmake g++ libboost-dev libboost-system-dev \
                         libboost-filesystem-dev libexpat1-dev zlib1g-dev \
-                        libbz2-dev libpq-dev libproj-dev \
-                        postgresql-server-dev-12 postgresql-12-postgis-3 \
+                        libbz2-dev libpq-dev \
+                        postgresql-12-postgis-3 \
                         postgresql-contrib-12 postgresql-12-postgis-3-scripts \
-                        php php-pgsql php-intl libicu-dev python3-dotenv \
+                        php-cli php-pgsql php-intl libicu-dev python3-dotenv \
                         python3-psycopg2 python3-psutil python3-jinja2 \
-                        python3-icu python3-datrie git
+                        python3-icu python3-datrie python3-yaml git
 
 #
 # System Configuration
@@ -99,7 +99,7 @@ fi                                    #DOCS:
 #
 if [ "x$1" == "xyes" ]; then  #DOCS:    :::sh
     cd $USERHOME
-    git clone --recursive git://github.com/openstreetmap/Nominatim.git
+    git clone --recursive https://github.com/openstreetmap/Nominatim.git
     cd Nominatim
 else                               #DOCS:
     cd $USERHOME/Nominatim         #DOCS:
@@ -258,7 +258,7 @@ EOF_NGINX_CONF
 #
 
 if [ "x$NOSYSTEMD" == "xyes" ]; then  #DOCS:
-    sudo /usr/sbin/php-fpm7.3 --nodaemonize --fpm-config /etc/php/7.3/fpm/php-fpm.conf & #DOCS:
+    sudo /usr/sbin/php-fpm7.4 --nodaemonize --fpm-config /etc/php/7.4/fpm/php-fpm.conf & #DOCS:
     sudo /usr/sbin/nginx &            #DOCS:
 else                                  #DOCS:
     sudo systemctl restart php7.4-fpm nginx

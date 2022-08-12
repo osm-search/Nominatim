@@ -1,4 +1,12 @@
 <?php
+/**
+ * SPDX-License-Identifier: GPL-2.0-only
+ *
+ * This file is part of Nominatim. (https://nominatim.org)
+ *
+ * Copyright (C) 2022 by the Nominatim developer community.
+ * For a full list of authors see the git log.
+ */
 
 require_once(CONST_LibDir.'/Shell.php');
 
@@ -98,7 +106,7 @@ function getCmdOpt($aArg, $aSpec, &$aResult, $bExitOnError = false, $bExitOnUnkn
                 showUsage($aSpec, $bExitOnError, 'Option \''.$aLine[0].'\' is missing');
             }
             if ($aCounts[$aLine[0]] > $aLine[3]) {
-                showUsage($aSpec, $bExitOnError, 'Option \''.$aLine[0].'\' is pressent too many times');
+                showUsage($aSpec, $bExitOnError, 'Option \''.$aLine[0].'\' is present too many times');
             }
             if ($aLine[6] == 'bool' && !array_key_exists($aLine[0], $aResult)) {
                 $aResult[$aLine[0]] = false;

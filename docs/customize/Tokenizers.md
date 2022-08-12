@@ -19,7 +19,22 @@ they can be configured.
 
 The legacy tokenizer implements the analysis algorithms of older Nominatim
 versions. It uses a special Postgresql module to normalize names and queries.
-This tokenizer is currently the default.
+This tokenizer is automatically installed and used when upgrading an older
+database. It should not be used for new installations anymore.
+
+### Compiling the PostgreSQL module
+
+The tokeinzer needs a special C module for PostgreSQL which is not compiled
+by default. If you need the legacy tokenizer, compile Nominatim as follows:
+
+```
+mkdir build
+cd build
+cmake -DBUILD_MODULE=on
+make
+```
+
+### Enabling the tokenizer
 
 To enable the tokenizer add the following line to your project configuration:
 
@@ -47,6 +62,7 @@ normalization functions are hard-coded.
 The ICU tokenizer uses the [ICU library](http://site.icu-project.org/) to
 normalize names and queries. It also offers configurable decomposition and
 abbreviation handling.
+This tokenizer is currently the default.
 
 To enable the tokenizer add the following line to your project configuration:
 
@@ -99,6 +115,9 @@ token-analysis:
           - words:
               - road -> rd
               - bridge -> bdge,br,brdg,bri,brg
+      mutations:
+          - pattern: 'ä'
+            replacements: ['ä', 'ae']
 ```
 
 The configuration file contains four sections:
@@ -178,6 +197,21 @@ The following is a list of sanitizers that are shipped with Nominatim.
     rendering:
         heading_level: 6
 
+##### clean-housenumbers
+
+::: nominatim.tokenizer.sanitizers.clean_housenumbers
+    selection:
+        members: False
+    rendering:
+        heading_level: 6
+
+##### clean-postcodes
+
+::: nominatim.tokenizer.sanitizers.clean_postcodes
+    selection:
+        members: False
+    rendering:
+        heading_level: 6
 
 
 #### Token Analysis
@@ -196,21 +230,25 @@ by a sanitizer (see for example the
 The token-analysis section contains the list of configured analyzers. Each
 analyzer must have an `id` parameter that uniquely identifies the analyzer.
 The only exception is the default analyzer that is used when no special
-analyzer was selected.
+analyzer was selected. There are analysers with special ids:
+
+ * '@housenumber'. If an analyzer with that name is present, it is used
+   for normalization of house numbers.
+ * '@potcode'. If an analyzer with that name is present, it is used
+   for normalization of postcodes.
 
 Different analyzer implementations may exist. To select the implementation,
-the `analyzer` parameter must be set. Currently there is only one implementation
-`generic` which is described in the following.
+the `analyzer` parameter must be set. The different implementations are
+described in the following.
 
 ##### Generic token analyzer
 
-The generic analyzer is able to create variants from a list of given
-abbreviation and decomposition replacements. It takes one optional parameter
-`variants` which lists the replacements to apply. If the section is
-omitted, then the generic analyzer becomes a simple analyzer that only
-applies the transliteration.
+The generic analyzer `generic` is able to create variants from a list of given
+abbreviation and decomposition replacements and introduce spelling variations.
 
-The variants section defines lists of replacements which create alternative
+###### Variants
+
+The optional 'variants' section defines lists of replacements which create alternative
 spellings of a name. To create the variants, a name is scanned from left to
 right and the longest matching replacement is applied until the end of the
 string is reached.
@@ -295,6 +333,48 @@ decomposition has an effect here on the source as well. So a rule
 
 means that for a word like `hauptstrasse` four variants are created:
 `hauptstrasse`, `haupt strasse`, `hauptstr` and `haupt str`.
+
+###### Mutations
+
+The 'mutation' section in the configuration describes an additional set of
+replacements to be applied after the variants have been computed.
+
+Each mutation is described by two parameters: `pattern` and `replacements`.
+The pattern must contain a single regular expression to search for in the
+variant name. The regular expressions need to follow the syntax for
+[Python regular expressions](file:///usr/share/doc/python3-doc/html/library/re.html#regular-expression-syntax).
+Capturing groups are not permitted.
+`replacements` must contain a list of strings that the pattern
+should be replaced with. Each occurrence of the pattern is replaced with
+all given replacements. Be mindful of combinatorial explosion of variants.
+
+###### Modes
+
+The generic analyser supports a special mode `variant-only`. When configured
+then it consumes the input token and emits only variants (if any exist). Enable
+the mode by adding:
+
+```
+  mode: variant-only
+```
+
+to the analyser configuration.
+
+##### Housenumber token analyzer
+
+The analyzer `housenumbers` is purpose-made to analyze house numbers. It
+creates variants with optional spaces between numbers and letters. Thus,
+house numbers of the form '3 a', '3A', '3-A' etc. are all considered equivalent.
+
+The analyzer cannot be customized.
+
+##### Postcode token analyzer
+
+The analyzer `postcodes` is pupose-made to analyze postcodes. It supports
+a 'lookup' varaint of the token, which produces variants with optional
+spaces. Use together with the clean-postcodes sanitizer.
+
+The analyzer cannot be customized.
 
 ### Reconfiguration
 

@@ -150,7 +150,7 @@ database or reuse the space later.
 
 If you only want to use the Nominatim database for reverse lookups or
 if you plan to use the installation only for exports to a
-[photon](https://photon.komoot.de/) database, then you can set up a database
+[photon](https://photon.komoot.io/) database, then you can set up a database
 without search indexes. Add `--reverse-only` to your setup command above.
 
 This saves about 5% of disk space.

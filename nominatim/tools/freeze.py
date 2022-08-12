@@ -1,9 +1,18 @@
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# This file is part of Nominatim. (https://nominatim.org)
+#
+# Copyright (C) 2022 by the Nominatim developer community.
+# For a full list of authors see the git log.
 """
 Functions for removing unnecessary data from the database.
 """
+from typing import Optional
 from pathlib import Path
 
 from psycopg2 import sql as pysql
+
+from nominatim.db.connection import Connection
 
 UPDATE_TABLES = [
     'address_levels',
@@ -19,7 +28,7 @@ UPDATE_TABLES = [
     'wikipedia_%'
 ]
 
-def drop_update_tables(conn):
+def drop_update_tables(conn: Connection) -> None:
     """ Drop all tables only necessary for updating the database from
         OSM replication data.
     """
@@ -36,10 +45,8 @@ def drop_update_tables(conn):
     conn.commit()
 
 
-def drop_flatnode_file(fname):
+def drop_flatnode_file(fpath: Optional[Path]) -> None:
     """ Remove the flatnode file if it exists.
     """
-    if fname:
-        fpath = Path(fname)
-        if fpath.exists():
-            fpath.unlink()
+    if fpath and fpath.exists():
+        fpath.unlink()

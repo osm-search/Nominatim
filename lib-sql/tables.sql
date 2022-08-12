@@ -1,3 +1,10 @@
+-- SPDX-License-Identifier: GPL-2.0-only
+--
+-- This file is part of Nominatim. (https://nominatim.org)
+--
+-- Copyright (C) 2022 by the Nominatim developer community.
+-- For a full list of authors see the git log.
+
 drop table if exists import_status;
 CREATE TABLE import_status (
   lastimportdate timestamp with time zone NOT NULL,
@@ -38,7 +45,7 @@ GRANT SELECT ON TABLE country_name TO "{{config.DATABASE_WEBUSER}}";
 
 DROP TABLE IF EXISTS nominatim_properties;
 CREATE TABLE nominatim_properties (
-    property TEXT,
+    property TEXT NOT NULL,
     value TEXT
 );
 GRANT SELECT ON TABLE nominatim_properties TO "{{config.DATABASE_WEBUSER}}";
@@ -73,9 +80,9 @@ CREATE TABLE location_property_tiger (
   parent_place_id BIGINT,
   startnumber INTEGER,
   endnumber INTEGER,
+  step SMALLINT,
   partition SMALLINT,
   linegeo GEOMETRY,
-  interpolationtype TEXT,
   postcode TEXT);
 GRANT SELECT ON location_property_tiger TO "{{config.DATABASE_WEBUSER}}";
 
@@ -88,10 +95,10 @@ CREATE TABLE location_property_osmline (
     indexed_date TIMESTAMP,
     startnumber INTEGER,
     endnumber INTEGER,
+    step SMALLINT,
     partition SMALLINT,
     indexed_status SMALLINT,
     linegeo GEOMETRY,
-    interpolationtype TEXT,
     address HSTORE,
     token_info JSONB, -- custom column for tokenizer use only
     postcode TEXT,
@@ -99,7 +106,8 @@ CREATE TABLE location_property_osmline (
   ){{db.tablespace.search_data}};
 CREATE UNIQUE INDEX idx_osmline_place_id ON location_property_osmline USING BTREE (place_id) {{db.tablespace.search_index}};
 CREATE INDEX idx_osmline_geometry_sector ON location_property_osmline USING BTREE (geometry_sector) {{db.tablespace.address_index}};
-CREATE INDEX idx_osmline_linegeo ON location_property_osmline USING GIST (linegeo) {{db.tablespace.search_index}};
+CREATE INDEX idx_osmline_linegeo ON location_property_osmline USING GIST (linegeo) {{db.tablespace.search_index}}
+  WHERE startnumber is not null;
 GRANT SELECT ON location_property_osmline TO "{{config.DATABASE_WEBUSER}}";
 
 drop table IF EXISTS search_name;
@@ -247,5 +255,10 @@ ALTER TABLE ONLY wikipedia_redirect ADD CONSTRAINT wikipedia_redirect_pkey PRIMA
 -- osm2pgsql does not create indexes on the middle tables for Nominatim
 -- Add one for lookup of associated street relations.
 CREATE INDEX planet_osm_rels_parts_associated_idx ON planet_osm_rels USING gin(parts) WHERE tags @> ARRAY['associatedStreet'];
+
+-- Needed for lookups if a node is part of an interpolation.
+CREATE INDEX IF NOT EXISTS idx_place_interpolations
+    ON place USING gist(geometry) {{db.tablespace.address_index}}
+    WHERE osm_type = 'W' and address ? 'interpolation';
 
 GRANT SELECT ON table country_osm_grid to "{{config.DATABASE_WEBUSER}}";

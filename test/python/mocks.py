@@ -1,3 +1,9 @@
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# This file is part of Nominatim. (https://nominatim.org)
+#
+# Copyright (C) 2022 by the Nominatim developer community.
+# For a full list of authors see the git log.
 """
 Custom mocks for testing.
 """
@@ -8,7 +14,7 @@ import psycopg2.extras
 from nominatim.db import properties
 
 # This must always point to the mock word table for the default tokenizer.
-from mock_legacy_word_table import MockLegacyWordTable as MockWordTable
+from mock_icu_word_table import MockIcuWordTable as MockWordTable
 
 class MockPlacexTable:
     """ A placex table for testing.
@@ -36,6 +42,7 @@ class MockPlacexTable:
                                admin_level smallint,
                                address hstore,
                                extratags hstore,
+                               token_info jsonb,
                                geometry Geometry(Geometry,4326),
                                wikipedia TEXT,
                                country_code varchar(2),

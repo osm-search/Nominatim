@@ -1,4 +1,12 @@
 <?php
+/**
+ * SPDX-License-Identifier: GPL-2.0-only
+ *
+ * This file is part of Nominatim. (https://nominatim.org)
+ *
+ * Copyright (C) 2022 by the Nominatim developer community.
+ * For a full list of authors see the git log.
+ */
 
 namespace Nominatim;
 
@@ -82,34 +90,5 @@ class LibTest extends \PHPUnit\Framework\TestCase
             $this->assertEqualsWithDelta(-79.982, $aRes[2], 0.01, 'degrees decimal ' . $sQuery);
             $this->assertEquals($sQuery, $aRes[0]);
         }
-    }
-
-    private function closestHouseNumberEvenOddOther($startnumber, $endnumber, $fraction, $aExpected)
-    {
-        foreach (array('even', 'odd', 'other') as $itype) {
-            $this->assertEquals(
-                $aExpected[$itype],
-                closestHouseNumber(array(
-                                    'startnumber' => $startnumber,
-                                    'endnumber' => $endnumber,
-                                    'fraction' => $fraction,
-                                    'interpolationtype' => $itype
-                                   )),
-                "$startnumber => $endnumber, $fraction, $itype"
-            );
-        }
-    }
-
-    public function testClosestHouseNumber()
-    {
-        $this->closestHouseNumberEvenOddOther(50, 100, 0.5, array('even' => 76, 'odd' => 75, 'other' => 75));
-        // upper bound
-        $this->closestHouseNumberEvenOddOther(50, 100, 1.5, array('even' => 100, 'odd' => 100, 'other' => 100));
-        // lower bound
-        $this->closestHouseNumberEvenOddOther(50, 100, -0.5, array('even' => 50, 'odd' => 50, 'other' => 50));
-        // fraction 0
-        $this->closestHouseNumberEvenOddOther(50, 100, 0, array('even' => 50, 'odd' => 51, 'other' => 50));
-        // start == end
-        $this->closestHouseNumberEvenOddOther(50, 50, 0.5, array('even' => 50, 'odd' => 50, 'other' => 50));
     }
 }

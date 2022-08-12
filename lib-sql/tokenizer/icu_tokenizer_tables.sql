@@ -1,3 +1,10 @@
+-- SPDX-License-Identifier: GPL-2.0-only
+--
+-- This file is part of Nominatim. (https://nominatim.org)
+--
+-- Copyright (C) 2022 by the Nominatim developer community.
+-- For a full list of authors see the git log.
+
 DROP TABLE IF EXISTS word;
 CREATE TABLE word (
   word_id INTEGER,
@@ -21,6 +28,10 @@ CREATE INDEX idx_word_postcodes ON word
 CREATE INDEX idx_word_full_word ON word
     USING btree(word) {{db.tablespace.address_index}}
     WHERE type = 'W';
+-- Used when inserting analyzed housenumbers (exclude old-style entries).
+CREATE INDEX idx_word_housenumbers ON word
+    USING btree(word) {{db.tablespace.address_index}}
+    WHERE type = 'H' and word is not null;
 
 GRANT SELECT ON word TO "{{config.DATABASE_WEBUSER}}";
 

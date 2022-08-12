@@ -1,4 +1,12 @@
 <?php
+/**
+ * SPDX-License-Identifier: GPL-2.0-only
+ *
+ * This file is part of Nominatim. (https://nominatim.org)
+ *
+ * Copyright (C) 2022 by the Nominatim developer community.
+ * For a full list of authors see the git log.
+ */
 
 $aOutput = array();
 $aOutput['licence'] = 'Data © OpenStreetMap contributors, ODbL 1.0. https://osm.org/copyright';
@@ -52,7 +60,7 @@ foreach ($aBatchResults as $aSearchResults) {
         }
 
         if (isset($aPointDetails['asgeojson'])) {
-            $aPlace['geojson'] = json_decode($aPointDetails['asgeojson']);
+            $aPlace['geojson'] = json_decode($aPointDetails['asgeojson'], true);
         }
 
         if (isset($aPointDetails['assvg'])) {

@@ -1,20 +1,32 @@
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# This file is part of Nominatim. (https://nominatim.org)
+#
+# Copyright (C) 2022 by the Nominatim developer community.
+# For a full list of authors see the git log.
 """
 Functions for database migration to newer software versions.
 """
+from typing import List, Tuple, Callable, Any
 import logging
 
+from psycopg2 import sql as pysql
+
+from nominatim.config import Configuration
 from nominatim.db import properties
-from nominatim.db.connection import connect
-from nominatim.version import NOMINATIM_VERSION
+from nominatim.db.connection import connect, Connection
+from nominatim.version import NOMINATIM_VERSION, version_str
 from nominatim.tools import refresh
 from nominatim.tokenizer import factory as tokenizer_factory
 from nominatim.errors import UsageError
 
 LOG = logging.getLogger()
 
-_MIGRATION_FUNCTIONS = []
+VersionTuple = Tuple[int, int, int, int]
 
-def migrate(config, paths):
+_MIGRATION_FUNCTIONS : List[Tuple[VersionTuple, Callable[..., None]]] = []
+
+def migrate(config: Configuration, paths: Any) -> int:
     """ Check for the current database version and execute migrations,
         if necesssary.
     """
@@ -40,8 +52,9 @@ def migrate(config, paths):
         has_run_migration = False
         for version, func in _MIGRATION_FUNCTIONS:
             if db_version <= version:
-                LOG.warning("Runnning: %s (%s)", func.__doc__.split('\n', 1)[0],
-                            '{0[0]}.{0[1]}.{0[2]}-{0[3]}'.format(version))
+                title = func.__doc__ or ''
+                LOG.warning("Running: %s (%s)", title.split('\n', 1)[0],
+                            version_str(version))
                 kwargs = dict(conn=conn, config=config, paths=paths)
                 func(**kwargs)
                 conn.commit()
@@ -53,15 +66,14 @@ def migrate(config, paths):
             tokenizer = tokenizer_factory.get_tokenizer_for_db(config)
             tokenizer.update_sql_functions(config)
 
-        properties.set_property(conn, 'database_version',
-                                '{0[0]}.{0[1]}.{0[2]}-{0[3]}'.format(NOMINATIM_VERSION))
+        properties.set_property(conn, 'database_version', version_str())
 
         conn.commit()
 
     return 0
 
 
-def _guess_version(conn):
+def _guess_version(conn: Connection) -> VersionTuple:
     """ Guess a database version when there is no property table yet.
         Only migrations for 3.6 and later are supported, so bail out
         when the version seems older.
@@ -81,7 +93,8 @@ def _guess_version(conn):
 
 
 
-def _migration(major, minor, patch=0, dbpatch=0):
+def _migration(major: int, minor: int, patch: int = 0,
+               dbpatch: int = 0) -> Callable[[Callable[..., None]], Callable[..., None]]:
     """ Decorator for a single migration step. The parameters describe the
         version after which the migration is applicable, i.e before changing
         from the given version to the next, the migration is required.
@@ -94,7 +107,7 @@ def _migration(major, minor, patch=0, dbpatch=0):
         process, so the migration functions may leave a temporary state behind
         there.
     """
-    def decorator(func):
+    def decorator(func: Callable[..., None]) -> Callable[..., None]:
         _MIGRATION_FUNCTIONS.append(((major, minor, patch, dbpatch), func))
         return func
 
@@ -102,7 +115,7 @@ def _migration(major, minor, patch=0, dbpatch=0):
 
 
 @_migration(3, 5, 0, 99)
-def import_status_timestamp_change(conn, **_):
+def import_status_timestamp_change(conn: Connection, **_: Any) -> None:
     """ Add timezone to timestamp in status table.
 
         The import_status table has been changed to include timezone information
@@ -114,19 +127,19 @@ def import_status_timestamp_change(conn, **_):
 
 
 @_migration(3, 5, 0, 99)
-def add_nominatim_property_table(conn, config, **_):
+def add_nominatim_property_table(conn: Connection, config: Configuration, **_: Any) -> None:
     """ Add nominatim_property table.
     """
     if not conn.table_exists('nominatim_properties'):
         with conn.cursor() as cur:
-            cur.execute("""CREATE TABLE nominatim_properties (
-                               property TEXT,
-                               value TEXT);
-                           GRANT SELECT ON TABLE nominatim_properties TO "{}";
-                        """.format(config.DATABASE_WEBUSER))
+            cur.execute(pysql.SQL("""CREATE TABLE nominatim_properties (
+                                        property TEXT,
+                                        value TEXT);
+                                     GRANT SELECT ON TABLE nominatim_properties TO {};
+                                  """).format(pysql.Identifier(config.DATABASE_WEBUSER)))
 
 @_migration(3, 6, 0, 0)
-def change_housenumber_transliteration(conn, **_):
+def change_housenumber_transliteration(conn: Connection, **_: Any) -> None:
     """ Transliterate housenumbers.
 
         The database schema switched from saving raw housenumbers in
@@ -157,7 +170,7 @@ def change_housenumber_transliteration(conn, **_):
 
 
 @_migration(3, 7, 0, 0)
-def switch_placenode_geometry_index(conn, **_):
+def switch_placenode_geometry_index(conn: Connection, **_: Any) -> None:
     """ Replace idx_placex_geometry_reverse_placeNode index.
 
         Make the index slightly more permissive, so that it can also be used
@@ -174,7 +187,7 @@ def switch_placenode_geometry_index(conn, **_):
 
 
 @_migration(3, 7, 0, 1)
-def install_legacy_tokenizer(conn, config, **_):
+def install_legacy_tokenizer(conn: Connection, config: Configuration, **_: Any) -> None:
     """ Setup legacy tokenizer.
 
         If no other tokenizer has been configured yet, then create the
@@ -188,15 +201,16 @@ def install_legacy_tokenizer(conn, config, **_):
                                            and column_name = 'token_info'""",
                                         (table, ))
                 if has_column == 0:
-                    cur.execute('ALTER TABLE {} ADD COLUMN token_info JSONB'.format(table))
+                    cur.execute(pysql.SQL('ALTER TABLE {} ADD COLUMN token_info JSONB')
+                                .format(pysql.Identifier(table)))
         tokenizer = tokenizer_factory.create_tokenizer(config, init_db=False,
                                                        module_name='legacy')
 
-        tokenizer.migrate_database(config)
+        tokenizer.migrate_database(config) # type: ignore[attr-defined]
 
 
 @_migration(4, 0, 99, 0)
-def create_tiger_housenumber_index(conn, **_):
+def create_tiger_housenumber_index(conn: Connection, **_: Any) -> None:
     """ Create idx_location_property_tiger_parent_place_id with included
         house number.
 
@@ -210,3 +224,94 @@ def create_tiger_housenumber_index(conn, **_):
                             ON location_property_tiger
                             USING btree(parent_place_id)
                             INCLUDE (startnumber, endnumber) """)
+
+
+@_migration(4, 0, 99, 1)
+def create_interpolation_index_on_place(conn: Connection, **_: Any) -> None:
+    """ Create idx_place_interpolations for lookup of interpolation lines
+        on updates.
+    """
+    with conn.cursor() as cur:
+        cur.execute("""CREATE INDEX IF NOT EXISTS idx_place_interpolations
+                       ON place USING gist(geometry)
+                       WHERE osm_type = 'W' and address ? 'interpolation'""")
+
+
+@_migration(4, 0, 99, 2)
+def add_step_column_for_interpolation(conn: Connection, **_: Any) -> None:
+    """ Add a new column 'step' to the interpolations table.
+
+        Also converts the data into the stricter format which requires that
+        startnumbers comply with the odd/even requirements.
+    """
+    if conn.table_has_column('location_property_osmline', 'step'):
+        return
+
+    with conn.cursor() as cur:
+        # Mark invalid all interpolations with no intermediate numbers.
+        cur.execute("""UPDATE location_property_osmline SET startnumber = null
+                       WHERE endnumber - startnumber <= 1 """)
+        # Align the start numbers where odd/even does not match.
+        cur.execute("""UPDATE location_property_osmline
+                       SET startnumber = startnumber + 1,
+                           linegeo = ST_LineSubString(linegeo,
+                                                      1.0 / (endnumber - startnumber)::float,
+                                                      1)
+                       WHERE (interpolationtype = 'odd' and startnumber % 2 = 0)
+                              or (interpolationtype = 'even' and startnumber % 2 = 1)
+                    """)
+        # Mark invalid odd/even interpolations with no intermediate numbers.
+        cur.execute("""UPDATE location_property_osmline SET startnumber = null
+                       WHERE interpolationtype in ('odd', 'even')
+                             and endnumber - startnumber = 2""")
+        # Finally add the new column and populate it.
+        cur.execute("ALTER TABLE location_property_osmline ADD COLUMN step SMALLINT")
+        cur.execute("""UPDATE location_property_osmline
+                         SET step = CASE WHEN interpolationtype = 'all'
+                                         THEN 1 ELSE 2 END
+                    """)
+
+
+@_migration(4, 0, 99, 3)
+def add_step_column_for_tiger(conn: Connection, **_: Any) -> None:
+    """ Add a new column 'step' to the tiger data table.
+    """
+    if conn.table_has_column('location_property_tiger', 'step'):
+        return
+
+    with conn.cursor() as cur:
+        cur.execute("ALTER TABLE location_property_tiger ADD COLUMN step SMALLINT")
+        cur.execute("""UPDATE location_property_tiger
+                         SET step = CASE WHEN interpolationtype = 'all'
+                                         THEN 1 ELSE 2 END
+                    """)
+
+
+@_migration(4, 0, 99, 4)
+def add_derived_name_column_for_country_names(conn: Connection, **_: Any) -> None:
+    """ Add a new column 'derived_name' which in the future takes the
+        country names as imported from OSM data.
+    """
+    if not conn.table_has_column('country_name', 'derived_name'):
+        with conn.cursor() as cur:
+            cur.execute("ALTER TABLE country_name ADD COLUMN derived_name public.HSTORE")
+
+
+@_migration(4, 0, 99, 5)
+def mark_internal_country_names(conn: Connection, config: Configuration, **_: Any) -> None:
+    """ Names from the country table should be marked as internal to prevent
+        them from being deleted. Only necessary for ICU tokenizer.
+    """
+    import psycopg2.extras # pylint: disable=import-outside-toplevel
+
+    tokenizer = tokenizer_factory.get_tokenizer_for_db(config)
+    with tokenizer.name_analyzer() as analyzer:
+        with conn.cursor() as cur:
+            psycopg2.extras.register_hstore(cur)
+            cur.execute("SELECT country_code, name FROM country_name")
+
+            for country_code, names in cur:
+                if not names:
+                    names = {}
+                names['countrycode'] = country_code
+                analyzer.add_country_names(country_code, names)

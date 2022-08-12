@@ -34,6 +34,7 @@ Feature: Search queries
           | postcode     | 9495 |
           | country      | Liechtenstein |
           | country_code | li |
+          | ISO3166-2-lvl8 | LI-09 |
 
     Examples:
           | format |
@@ -367,3 +368,10 @@ Feature: Search queries
           | Triesenberg |
 
 
+    Scenario: Array parameters are ignored
+        When sending json search query "Vaduz" with address
+          | countrycodes[] | polygon_svg[] | limit[] | polygon_threshold[] |
+          | IT             | 1             | 3       | 3.4                 |
+        Then result addresses contain
+          | ID | country_code |
+          | 0  | li           |

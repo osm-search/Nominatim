@@ -1,3 +1,48 @@
+4.1.0
+
+ * switch to ICU tokenizer as default
+ * add housenumber normalization and support optional spaces during search
+ * add postcode format checking and support optional spaces during search
+ * add function for cleaning housenumbers in word table
+ * add updates/deletion of country names imported from OSM
+ * linked places no longer overwrite names from a place permanently
+ * move default country name configuration into yaml file (thanks @tareqpi)
+ * more compact layout for interpolation and TIGER tables
+ * introduce mutations to ICU tokenizer (used for German umlauts)
+ * support reinitializing a full project directory with refresh --website
+ * fix various issues with linked places on updates
+ * add support for external sanitizers and token analyzers
+ * add CLI commands for forced indexing
+ * add CLI command for version report
+ * add offline import mode
+ * change geocodejson to return a feature class in the 'type' field
+ * add ISO3166-2 to address output (thanks @I70l0teN4ik)
+ * improve parsing and matching of addr: tags
+ * support relations as street members of associatedStreet
+ * better ranking for address results from TIGER data
+ * adapt rank classification to changed tag usage in OSM
+ * update bundled osm2pgsql to 1.6.0
+ * add typing information to Python code
+ * improve unit test coverage
+ * reorganise and speed up code for BDD tests, drop support for scenes
+ * move PHP unit tests to PHP 9.5
+ * extensive typo fixes in documentation (thanks @woodpeck,@StephanGeorg,
+   @amandasaurus, @nslxndr, @stefkiourk, @Luflosi, @kianmeng)
+ * drop official support for installation on CentOS
+ * add installation instructions for Ubuntu 22.04
+ * add support for PHP8
+ * add setup instructions for updates and systemd
+ * drop support for PostgreSQL 9.5
+
+4.0.1
+
+ * fix initialisation error in replication script
+ * ICU tokenizer: avoid any special characters in word tokens
+ * better error message when API php script does not exist
+ * fix quoting of house numbers in SQL queries
+ * small fixes and improvements in search query parsing
+ * add documentation for moving the database to a different machine
+
 4.0.0
 
  * refactor name token computation and introduce ICU tokenizer

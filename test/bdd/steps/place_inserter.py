@@ -1,3 +1,9 @@
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# This file is part of Nominatim. (https://nominatim.org)
+#
+# Copyright (C) 2022 by the Nominatim developer community.
+# For a full list of authors see the git log.
 """
 Helper classes for filling the place table.
 """
@@ -77,7 +83,7 @@ class PlaceColumn:
             self._add_hstore('address', 'country', value)
 
     def _set_key_geometry(self, value):
-        self.geometry = self.context.osm.parse_geometry(value, self.context.scene)
+        self.geometry = self.context.osm.parse_geometry(value)
         assert self.geometry is not None, "Bad geometry: {}".format(value)
 
     def _add_hstore(self, column, key, value):

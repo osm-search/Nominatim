@@ -34,6 +34,30 @@ to rerun the statistics computation when adding larger amounts of new data,
 for example, when adding an additional country via `nominatim add-data`.
 
 
+## Forcing recomputation of places and areas
+
+Command: `nominatim refresh --data-object [NWR]<id> --data-area [NWR]<id>`
+
+When running replication updates, Nominatim tries to recompute the search
+and address information for all places that are affected by a change. But it
+needs to restrict the total number of changes to make sure it can keep up
+with the minutely updates. Therefore it will refrain from propagating changes
+that affect a lot of objects.
+
+The administrator may force an update of places in the database.
+`nominatim refresh --data-object` invalidates a single OSM object.
+`nominatim refresh --data-area` invalidates an OSM object and all dependent
+objects. That are usually the places that inside its area or around the
+center of the object. Both commands expect the OSM object as an argument
+of the form OSM type + OSM id. The type must be `N` (node), `W` (way) or
+`R` (relation).
+
+After invalidating the object, indexing must be run again. If continuous
+update are running in the background, the objects will be recomputed together
+with the next round of updates. Otherwise you need to run `nominatim index`
+to finish the recomputation.
+
+
 ## Removing large deleted objects
 
 Nominatim refuses to delete very large areas because often these deletions are

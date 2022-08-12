@@ -18,6 +18,7 @@ Zipline near,aerialway,zip_line,near,N
 Ziplines near,aerialway,zip_line,near,Y 
 Zipwire,aerialway,zip_line,-,N 
 Zipwires,aerialway,zip_line,-,Y 
+Zipwires,aerialway,zip_line,name,Y 
 Zipwire in,aerialway,zip_line,in,N 
 Zipwires in,aerialway,zip_line,in,Y 
 Zipwire near,aerialway,zip_line,near,N 

@@ -1,4 +1,12 @@
 <?php
+/**
+ * SPDX-License-Identifier: GPL-2.0-only
+ *
+ * This file is part of Nominatim. (https://nominatim.org)
+ *
+ * Copyright (C) 2022 by the Nominatim developer community.
+ * For a full list of authors see the git log.
+ */
 
 namespace Nominatim;
 
@@ -340,7 +348,9 @@ class PlaceLookup
                     $sSQL .= '     null::text AS extra_place ';
                     $sSQL .= ' FROM (';
                     $sSQL .= '     SELECT place_id, ';    // interpolate the Tiger housenumbers here
-                    $sSQL .= '         ST_LineInterpolatePoint(linegeo, (housenumber_for_place-startnumber::float)/(endnumber-startnumber)::float) AS centroid, ';
+                    $sSQL .= '         CASE WHEN startnumber != endnumber';
+                    $sSQL .= '              THEN ST_LineInterpolatePoint(linegeo, (housenumber_for_place-startnumber::float)/(endnumber-startnumber)::float)';
+                    $sSQL .= '              ELSE ST_LineInterpolatePoint(linegeo, 0.5) END AS centroid, ';
                     $sSQL .= '         parent_place_id, ';
                     $sSQL .= '         housenumber_for_place';
                     $sSQL .= '     FROM (';
@@ -397,7 +407,7 @@ class PlaceLookup
                 $sSQL .= '         CASE ';             // interpolate the housenumbers here
                 $sSQL .= '           WHEN startnumber != endnumber ';
                 $sSQL .= '           THEN ST_LineInterpolatePoint(linegeo, (housenumber_for_place-startnumber::float)/(endnumber-startnumber)::float) ';
-                $sSQL .= '           ELSE ST_LineInterpolatePoint(linegeo, 0.5) ';
+                $sSQL .= '           ELSE linegeo ';
                 $sSQL .= '         END as centroid, ';
                 $sSQL .= '         parent_place_id, ';
                 $sSQL .= '         housenumber_for_place ';
@@ -435,18 +445,14 @@ class PlaceLookup
 
             if ($this->bExtraTags) {
                 if ($aPlace['extra']) {
-                    $aPlace['sExtraTags'] = json_decode($aPlace['extra']);
+                    $aPlace['sExtraTags'] = json_decode($aPlace['extra'], true);
                 } else {
                     $aPlace['sExtraTags'] = (object) array();
                 }
             }
 
             if ($this->bNameDetails) {
-                if ($aPlace['names']) {
-                    $aPlace['sNameDetails'] = json_decode($aPlace['names']);
-                } else {
-                    $aPlace['sNameDetails'] = (object) array();
-                }
+                $aPlace['sNameDetails'] = $this->extractNames($aPlace['names']);
             }
 
             $aPlace['addresstype'] = ClassTypes\getLabelTag(
@@ -469,6 +475,33 @@ class PlaceLookup
         return $aResults;
     }
 
+
+    private function extractNames($sNames)
+    {
+        if (!$sNames) {
+            return (object) array();
+        }
+
+        $aFullNames = json_decode($sNames, true);
+        $aNames = array();
+
+        foreach ($aFullNames as $sKey => $sValue) {
+            if (strpos($sKey, '_place_') === 0) {
+                $sSubKey = substr($sKey, 7);
+                if (array_key_exists($sSubKey, $aFullNames)) {
+                    $aNames[$sKey] = $sValue;
+                } else {
+                    $aNames[$sSubKey] = $sValue;
+                }
+            } else {
+                $aNames[$sKey] = $sValue;
+            }
+        }
+
+        return $aNames;
+    }
+
+
     /* returns an array which will contain the keys
      *   aBoundingBox
      * and may also contain one or more of the keys
@@ -479,8 +512,6 @@ class PlaceLookup
      *   lat
      *   lon
      */
-
-
     public function getOutlines($iPlaceID, $fLon = null, $fLat = null, $fRadius = null, $fLonReverse = null, $fLatReverse = null)
     {
 

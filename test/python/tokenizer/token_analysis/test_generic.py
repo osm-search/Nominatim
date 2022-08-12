@@ -1,3 +1,9 @@
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# This file is part of Nominatim. (https://nominatim.org)
+#
+# Copyright (C) 2022 by the Nominatim developer community.
+# For a full list of authors see the git log.
 """
 Tests for import name normalisation and variant generation.
 """
@@ -24,23 +30,25 @@ def make_analyser(*variants, variant_only=False):
     rules = { 'analyzer': 'generic', 'variants': [{'words': variants}]}
     if variant_only:
         rules['mode'] = 'variant-only'
-    config = module.configure(rules, DEFAULT_NORMALIZATION)
     trans = Transliterator.createFromRules("test_trans", DEFAULT_TRANSLITERATION)
+    norm = Transliterator.createFromRules("test_norm", DEFAULT_NORMALIZATION)
+    config = module.configure(rules, norm, trans)
 
-    return module.create(trans, config)
+    return module.create(norm, trans, config)
 
 
 def get_normalized_variants(proc, name):
     norm = Transliterator.createFromRules("test_norm", DEFAULT_NORMALIZATION)
-    return proc.get_variants_ascii(norm.transliterate(name).strip())
+    return proc.compute_variants(norm.transliterate(name).strip())
 
 
 def test_no_variants():
     rules = { 'analyzer': 'generic' }
-    config = module.configure(rules, DEFAULT_NORMALIZATION)
     trans = Transliterator.createFromRules("test_trans", DEFAULT_TRANSLITERATION)
+    norm = Transliterator.createFromRules("test_norm", DEFAULT_NORMALIZATION)
+    config = module.configure(rules, norm, trans)
 
-    proc = module.create(trans, config)
+    proc = module.create(norm, trans, config)
 
     assert get_normalized_variants(proc, '大德!') == ['dà dé']
 
@@ -115,7 +123,9 @@ class TestGetReplacements:
     @staticmethod
     def configure_rules(*variants):
         rules = { 'analyzer': 'generic', 'variants': [{'words': variants}]}
-        return module.configure(rules, DEFAULT_NORMALIZATION)
+        trans = Transliterator.createFromRules("test_trans", DEFAULT_TRANSLITERATION)
+        norm = Transliterator.createFromRules("test_norm", DEFAULT_NORMALIZATION)
+        return module.configure(rules, norm, trans)
 
 
     def get_replacements(self, *variants):

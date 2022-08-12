@@ -1,10 +1,19 @@
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# This file is part of Nominatim. (https://nominatim.org)
+#
+# Copyright (C) 2022 by the Nominatim developer community.
+# For a full list of authors see the git log.
 """
 Implementation of the 'index' subcommand.
 """
+import argparse
+
 import psutil
 
 from nominatim.db import status
 from nominatim.db.connection import connect
+from nominatim.clicmd.args import NominatimArgs
 
 # Do not repeat documentation of subcommand classes.
 # pylint: disable=C0111
@@ -22,8 +31,7 @@ class UpdateIndex:
     of indexing. For other cases, this function allows to run indexing manually.
     """
 
-    @staticmethod
-    def add_args(parser):
+    def add_args(self, parser: argparse.ArgumentParser) -> None:
         group = parser.add_argument_group('Filter arguments')
         group.add_argument('--boundaries-only', action='store_true',
                            help="""Index only administrative boundaries.""")
@@ -34,8 +42,8 @@ class UpdateIndex:
         group.add_argument('--maxrank', '-R', type=int, metavar='RANK', default=30,
                            help='Maximum/finishing rank')
 
-    @staticmethod
-    def run(args):
+
+    def run(self, args: NominatimArgs) -> int:
         from ..indexer.indexer import Indexer
         from ..tokenizer import factory as tokenizer_factory
 

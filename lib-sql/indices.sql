@@ -1,3 +1,10 @@
+-- SPDX-License-Identifier: GPL-2.0-only
+--
+-- This file is part of Nominatim. (https://nominatim.org)
+--
+-- Copyright (C) 2022 by the Nominatim developer community.
+-- For a full list of authors see the git log.
+
 -- Indices used only during search and update.
 -- These indices are created only after the indexing process is done.
 
@@ -21,7 +28,8 @@ CREATE INDEX IF NOT EXISTS idx_placex_geometry_reverse_lookupPolygon
     AND name is not null AND indexed_status = 0 AND linked_place_id is null;
 
 CREATE INDEX IF NOT EXISTS idx_osmline_parent_place_id
-  ON location_property_osmline USING BTREE (parent_place_id) {{db.tablespace.search_index}};
+  ON location_property_osmline USING BTREE (parent_place_id) {{db.tablespace.search_index}}
+  WHERE parent_place_id is not null;
 
 CREATE INDEX IF NOT EXISTS idx_osmline_parent_osm_id
   ON location_property_osmline USING BTREE (osm_id) {{db.tablespace.search_index}};
@@ -55,8 +63,12 @@ CREATE INDEX IF NOT EXISTS idx_postcode_postcode
 
   {% if postgres.has_index_non_key_column %}
     CREATE INDEX IF NOT EXISTS idx_placex_housenumber
-      ON placex USING btree (parent_place_id) INCLUDE (housenumber) WHERE housenumber is not null;
+      ON placex USING btree (parent_place_id)
+      INCLUDE (housenumber) {{db.tablespace.search_index}}
+      WHERE housenumber is not null;
     CREATE INDEX IF NOT EXISTS idx_osmline_parent_osm_id_with_hnr
-      ON location_property_osmline USING btree(parent_place_id) INCLUDE (startnumber, endnumber);
+      ON location_property_osmline USING btree(parent_place_id)
+      INCLUDE (startnumber, endnumber) {{db.tablespace.search_index}}
+      WHERE startnumber is not null;
   {% endif %}
 {% endif %}

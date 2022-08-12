@@ -1,10 +1,19 @@
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# This file is part of Nominatim. (https://nominatim.org)
+#
+# Copyright (C) 2022 by the Nominatim developer community.
+# For a full list of authors see the git log.
 """
 Subcommand definitions for API calls from the command line.
 """
+from typing import Mapping, Dict
+import argparse
 import logging
 
 from nominatim.tools.exec_utils import run_api_script
 from nominatim.errors import UsageError
+from nominatim.clicmd.args import NominatimArgs
 
 # Do not repeat documentation of subcommand classes.
 # pylint: disable=C0111
@@ -36,7 +45,7 @@ DETAILS_SWITCHES = (
     ('polygon_geojson', 'Include geometry of result')
 )
 
-def _add_api_output_arguments(parser):
+def _add_api_output_arguments(parser: argparse.ArgumentParser) -> None:
     group = parser.add_argument_group('Output arguments')
     group.add_argument('--format', default='jsonv2',
                        choices=['xml', 'json', 'jsonv2', 'geojson', 'geocodejson'],
@@ -54,7 +63,7 @@ def _add_api_output_arguments(parser):
                              "Parameter is difference tolerance in degrees."))
 
 
-def _run_api(endpoint, args, params):
+def _run_api(endpoint: str, args: NominatimArgs, params: Mapping[str, object]) -> int:
     script_file = args.project_dir / 'website' / (endpoint + '.php')
 
     if not script_file.exists():
@@ -76,8 +85,7 @@ class APISearch:
     https://nominatim.org/release-docs/latest/api/Search/
     """
 
-    @staticmethod
-    def add_args(parser):
+    def add_args(self, parser: argparse.ArgumentParser) -> None:
         group = parser.add_argument_group('Query arguments')
         group.add_argument('--query',
                            help='Free-form query string')
@@ -103,8 +111,8 @@ class APISearch:
                            help='Do not remove duplicates from the result list')
 
 
-    @staticmethod
-    def run(args):
+    def run(self, args: NominatimArgs) -> int:
+        params: Dict[str, object]
         if args.query:
             params = dict(q=args.query)
         else:
@@ -139,8 +147,7 @@ class APIReverse:
     https://nominatim.org/release-docs/latest/api/Reverse/
     """
 
-    @staticmethod
-    def add_args(parser):
+    def add_args(self, parser: argparse.ArgumentParser) -> None:
         group = parser.add_argument_group('Query arguments')
         group.add_argument('--lat', type=float, required=True,
                            help='Latitude of coordinate to look up (in WGS84)')
@@ -152,8 +159,7 @@ class APIReverse:
         _add_api_output_arguments(parser)
 
 
-    @staticmethod
-    def run(args):
+    def run(self, args: NominatimArgs) -> int:
         params = dict(lat=args.lat, lon=args.lon, format=args.format)
         if args.zoom is not None:
             params['zoom'] = args.zoom
@@ -181,8 +187,7 @@ class APILookup:
     https://nominatim.org/release-docs/latest/api/Lookup/
     """
 
-    @staticmethod
-    def add_args(parser):
+    def add_args(self, parser: argparse.ArgumentParser) -> None:
         group = parser.add_argument_group('Query arguments')
         group.add_argument('--id', metavar='OSMID',
                            action='append', required=True, dest='ids',
@@ -191,9 +196,8 @@ class APILookup:
         _add_api_output_arguments(parser)
 
 
-    @staticmethod
-    def run(args):
-        params = dict(osm_ids=','.join(args.ids), format=args.format)
+    def run(self, args: NominatimArgs) -> int:
+        params: Dict[str, object] = dict(osm_ids=','.join(args.ids), format=args.format)
 
         for param, _ in EXTRADATA_PARAMS:
             if getattr(args, param):
@@ -218,8 +222,7 @@ class APIDetails:
     https://nominatim.org/release-docs/latest/api/Details/
     """
 
-    @staticmethod
-    def add_args(parser):
+    def add_args(self, parser: argparse.ArgumentParser) -> None:
         group = parser.add_argument_group('Query arguments')
         objs = group.add_mutually_exclusive_group(required=True)
         objs.add_argument('--node', '-n', type=int,
@@ -240,8 +243,8 @@ class APIDetails:
         group.add_argument('--lang', '--accept-language', metavar='LANGS',
                            help='Preferred language order for presenting search results')
 
-    @staticmethod
-    def run(args):
+
+    def run(self, args: NominatimArgs) -> int:
         if args.node:
             params = dict(osmtype='N', osmid=args.node)
         elif args.way:
@@ -270,12 +273,11 @@ class APIStatus:
     https://nominatim.org/release-docs/latest/api/Status/
     """
 
-    @staticmethod
-    def add_args(parser):
+    def add_args(self, parser: argparse.ArgumentParser) -> None:
         group = parser.add_argument_group('API parameters')
         group.add_argument('--format', default='text', choices=['text', 'json'],
                            help='Format of result')
 
-    @staticmethod
-    def run(args):
+
+    def run(self, args: NominatimArgs) -> int:
         return _run_api('status', args, dict(format=args.format))

@@ -3,7 +3,7 @@ theme: readthedocs
 docs_dir: ${CMAKE_CURRENT_BINARY_DIR}
 site_url: https://nominatim.org
 repo_url: https://github.com/openstreetmap/Nominatim
-pages:
+nav:
     - 'Introduction' : 'index.md'
     - 'API Reference':
         - 'Overview': 'api/Overview.md'
@@ -28,6 +28,7 @@ pages:
         - 'Overview': 'customize/Overview.md'
         - 'Import Styles': 'customize/Import-Styles.md'
         - 'Configuration Settings': 'customize/Settings.md'
+        - 'Per-Country Data': 'customize/Country-Settings.md'
         - 'Place Ranking' : 'customize/Ranking.md'
         - 'Tokenizers' : 'customize/Tokenizers.md'
         - 'Special Phrases': 'customize/Special-Phrases.md'
@@ -38,13 +39,14 @@ pages:
         - 'Database Layout' : 'develop/Database-Layout.md'
         - 'Indexing' : 'develop/Indexing.md'
         - 'Tokenizers' : 'develop/Tokenizers.md'
+        - 'Custom modules for ICU tokenizer': 'develop/ICU-Tokenizer-Modules.md'
         - 'Setup for Development' : 'develop/Development-Environment.md'
         - 'Testing' : 'develop/Testing.md'
         - 'External Data Sources': 'develop/data-sources.md'
     - 'Appendix':
-        - 'Installation on CentOS 8' : 'appendix/Install-on-Centos-8.md'
         - 'Installation on Ubuntu 18' : 'appendix/Install-on-Ubuntu-18.md'
         - 'Installation on Ubuntu 20' : 'appendix/Install-on-Ubuntu-20.md'
+        - 'Installation on Ubuntu 22' : 'appendix/Install-on-Ubuntu-22.md'
 markdown_extensions:
     - codehilite
     - admonition
@@ -56,7 +58,7 @@ plugins:
     - search
     - mkdocstrings:
         handlers:
-          python:
+          python-legacy:
             rendering:
               show_source: false
               show_signature_annotations: false

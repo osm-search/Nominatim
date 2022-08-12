@@ -1,6 +1,13 @@
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# This file is part of Nominatim. (https://nominatim.org)
+#
+# Copyright (C) 2022 by the Nominatim developer community.
+# For a full list of authors see the git log.
 """
 Function to add additional OSM data from a file or the API into the database.
 """
+from typing import Any, MutableMapping
 from pathlib import Path
 import logging
 import urllib
@@ -9,7 +16,7 @@ from nominatim.tools.exec_utils import run_osm2pgsql, get_url
 
 LOG = logging.getLogger()
 
-def add_data_from_file(fname, options):
+def add_data_from_file(fname: str, options: MutableMapping[str, Any]) -> int:
     """ Adds data from a OSM file to the database. The file may be a normal
         OSM file or a diff file in all formats supported by libosmium.
     """
@@ -21,7 +28,8 @@ def add_data_from_file(fname, options):
     return 0
 
 
-def add_osm_object(osm_type, osm_id, use_main_api, options):
+def add_osm_object(osm_type: str, osm_id: int, use_main_api: bool,
+                   options: MutableMapping[str, Any]) -> int:
     """ Add or update a single OSM object from the latest version of the
         API.
     """
@@ -44,3 +52,5 @@ def add_osm_object(osm_type, osm_id, use_main_api, options):
     options['import_data'] = get_url(base_url).encode('utf-8')
 
     run_osm2pgsql(options)
+
+    return 0

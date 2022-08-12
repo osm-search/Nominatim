@@ -1,3 +1,10 @@
+-- SPDX-License-Identifier: GPL-2.0-only
+--
+-- This file is part of Nominatim. (https://nominatim.org)
+--
+-- Copyright (C) 2022 by the Nominatim developer community.
+-- For a full list of authors see the git log.
+
 DROP TYPE IF EXISTS nearfeaturecentr CASCADE;
 CREATE TYPE nearfeaturecentr AS (
   place_id BIGINT,
@@ -10,7 +17,7 @@ CREATE TYPE nearfeaturecentr AS (
   centroid GEOMETRY
 );
 
--- feature intersects geoemtry
+-- feature intersects geometry
 -- for areas and linestrings they must touch at least along a line
 CREATE OR REPLACE FUNCTION is_relevant_geometry(de9im TEXT, geom_type TEXT)
 RETURNS BOOLEAN
@@ -32,7 +39,10 @@ BEGIN
 END
 $$ LANGUAGE plpgsql IMMUTABLE;
 
-create or replace function getNearFeatures(in_partition INTEGER, feature GEOMETRY, maxrank INTEGER) RETURNS setof nearfeaturecentr AS $$
+CREATE OR REPLACE function getNearFeatures(in_partition INTEGER, feature GEOMETRY,
+                                           feature_centroid GEOMETRY,
+                                           maxrank INTEGER)
+RETURNS setof nearfeaturecentr AS $$
 DECLARE
   r nearfeaturecentr%rowtype;
 BEGIN
@@ -41,7 +51,11 @@ BEGIN
   IF in_partition = {{ partition }} THEN
     FOR r IN
       SELECT place_id, keywords, rank_address, rank_search,
-             min(ST_Distance(feature, centroid)) as distance,
+             CASE WHEN isguess THEN ST_Distance(feature, centroid)
+                  ELSE min(ST_Distance(feature_centroid, geometry))
+                       -- tie breaker when distance is the same (i.e. way is on boundary)
+                       + 0.00001 * ST_Distance(feature, centroid)
+             END as distance,
              isguess, postcode, centroid
       FROM location_area_large_{{ partition }}
       WHERE geometry && feature
@@ -82,7 +96,7 @@ BEGIN
               AND rank_address between from_rank and to_rank
               AND token_matches_address(token_info, key, keywords)
         GROUP BY place_id, keywords, rank_address, rank_search, isguess, postcode, centroid
-        ORDER BY bool_or(ST_Intersects(geometry, feature)), distance LIMIT 1;
+        ORDER BY bool_or(ST_Intersects(geometry, feature)) DESC, distance LIMIT 1;
       RETURN r;
   END IF;
 {% endfor %}

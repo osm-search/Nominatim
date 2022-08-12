@@ -11,15 +11,16 @@
     }
 },
 {
-    "keys" : ["name:prefix", "name:suffix", "name:prefix:*", "name:suffix:*",
-              "name:etymology", "name:signed", "name:botanical", "*wikidata"],
+    "keys" : ["*:prefix", "*:suffix", "name:prefix:*", "name:suffix:*",
+              "name:etymology", "name:signed", "name:botanical", "*:wikidata",
+              "addr:street:name", "addr:street:type"],
     "values" : {
         "" : "skip"
     }
 },
 {
     "keys" : ["ref", "int_ref", "nat_ref", "reg_ref", "loc_ref", "old_ref",
-              "iata", "icao", "pcode"],
+              "iata", "icao", "pcode", "ISO3166-2"],
     "values" : {
         "" : "ref"
     }

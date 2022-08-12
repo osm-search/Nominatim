@@ -7,6 +7,9 @@ sys.path.insert(1, '@CMAKE_SOURCE_DIR@')
 os.environ['NOMINATIM_NOMINATIM_TOOL'] = os.path.abspath(__file__)
 
 from nominatim import cli
+from nominatim import version
+
+version.GIT_COMMIT_HASH = '@GIT_HASH@'
 
 exit(cli.nominatim(module_dir='@CMAKE_BINARY_DIR@/module',
                    osm2pgsql_path='@CMAKE_BINARY_DIR@/osm2pgsql/osm2pgsql',

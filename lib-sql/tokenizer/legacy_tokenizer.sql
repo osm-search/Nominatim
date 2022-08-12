@@ -1,3 +1,10 @@
+-- SPDX-License-Identifier: GPL-2.0-only
+--
+-- This file is part of Nominatim. (https://nominatim.org)
+--
+-- Copyright (C) 2022 by the Nominatim developer community.
+-- For a full list of authors see the git log.
+
 -- Get tokens used for searching the given place.
 --
 -- These are the tokens that will be saved in the search_name table.
@@ -90,10 +97,10 @@ AS $$
 $$ LANGUAGE SQL IMMUTABLE STRICT;
 
 
-CREATE OR REPLACE FUNCTION token_normalized_postcode(postcode TEXT)
+CREATE OR REPLACE FUNCTION token_get_postcode(info JSONB)
   RETURNS TEXT
 AS $$
-  SELECT CASE WHEN postcode SIMILAR TO '%(,|;)%' THEN NULL ELSE upper(trim(postcode))END;
+  SELECT info->>'postcode';
 $$ LANGUAGE SQL IMMUTABLE STRICT;
 
 

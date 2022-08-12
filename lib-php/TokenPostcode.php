@@ -1,4 +1,12 @@
 <?php
+/**
+ * SPDX-License-Identifier: GPL-2.0-only
+ *
+ * This file is part of Nominatim. (https://nominatim.org)
+ *
+ * Copyright (C) 2022 by the Nominatim developer community.
+ * For a full list of authors see the git log.
+ */
 
 namespace Nominatim\Token;
 
@@ -9,7 +17,7 @@ class Postcode
 {
     /// Database word id, if available.
     private $iId;
-    /// Full nomralized postcode (upper cased).
+    /// Full normalized postcode (upper cased).
     private $sPostcode;
     // Optional country code the postcode belongs to (currently unused).
     private $sCountryCode;
@@ -17,7 +25,12 @@ class Postcode
     public function __construct($iId, $sPostcode, $sCountryCode = '')
     {
         $this->iId = $iId;
-        $this->sPostcode = $sPostcode;
+        $iSplitPos = strpos($sPostcode, '@');
+        if ($iSplitPos === false) {
+            $this->sPostcode = $sPostcode;
+        } else {
+            $this->sPostcode = substr($sPostcode, 0, $iSplitPos);
+        }
         $this->sCountryCode = empty($sCountryCode) ? '' : $sCountryCode;
     }
 

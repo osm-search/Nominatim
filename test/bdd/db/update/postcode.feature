@@ -38,13 +38,13 @@ Feature: Update of postcode
         Given the places
            | osm | class | type  | addr+postcode | addr+housenumber | geometry |
            | N34 | place | house | 01982         | 111              |country:de |
-           | N35 | place | house | 01982         | 5                |country:ch |
+           | N35 | place | house | 01982         | 5                |country:fr |
         When importing
         And marking for delete N34
         And updating postcodes
         Then location_postcode contains exactly
            | country | postcode | geometry |
-           | ch      | 01982    | country:ch |
+           | fr      | 01982    | country:fr |
         And there are word tokens for postcodes 01982
 
      Scenario: Updating a postcode is reflected in postcode table

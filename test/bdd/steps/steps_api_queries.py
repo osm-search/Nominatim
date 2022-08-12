@@ -1,3 +1,9 @@
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# This file is part of Nominatim. (https://nominatim.org)
+#
+# Copyright (C) 2022 by the Nominatim developer community.
+# For a full list of authors see the git log.
 """ Steps that run queries against the API.
 
     Queries may either be run directly via PHP using the query script
@@ -147,6 +153,20 @@ def website_reverse_request(context, fmt, lat, lon):
 
     context.response = ReverseResponse(outp, fmt or 'xml', status)
 
+@when(u'sending (?P<fmt>\S+ )?reverse point (?P<nodeid>.+)')
+def website_reverse_request(context, fmt, nodeid):
+    params = {}
+    if fmt and fmt.strip() == 'debug':
+        params['debug'] = '1'
+    params['lon'], params['lat'] = (f'{c:f}' for c in context.osm.grid_node(int(nodeid)))
+
+
+    outp, status = send_api_query('reverse', params, fmt, context)
+
+    context.response = ReverseResponse(outp, fmt or 'xml', status)
+
+
+
 @when(u'sending (?P<fmt>\S+ )?details query for (?P<query>.*)')
 def website_details_request(context, fmt, query):
     params = {}
@@ -232,7 +252,7 @@ def step_impl(context):
     context.execute_steps("then at least 1 result is returned")
 
     for line in context.table:
-        context.response.match_row(line)
+        context.response.match_row(line, context=context)
 
 @then(u'result (?P<lid>\d+ )?has (?P<neg>not )?attributes (?P<attrs>.*)')
 def validate_attributes(context, lid, neg, attrs):

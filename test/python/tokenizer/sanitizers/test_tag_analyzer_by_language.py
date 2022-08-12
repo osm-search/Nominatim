@@ -1,19 +1,30 @@
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# This file is part of Nominatim. (https://nominatim.org)
+#
+# Copyright (C) 2022 by the Nominatim developer community.
+# For a full list of authors see the git log.
 """
 Tests for the sanitizer that enables language-dependent analyzers.
 """
 import pytest
 
-from nominatim.indexer.place_info import PlaceInfo
+from nominatim.data.place_info import PlaceInfo
 from nominatim.tokenizer.place_sanitizer import PlaceSanitizer
-from nominatim.tools.country_info import setup_country_config
+from nominatim.data.country_info import setup_country_config
 
 class TestWithDefaults:
 
-    @staticmethod
-    def run_sanitizer_on(country, **kwargs):
+    @pytest.fixture(autouse=True)
+    def setup_country(self, def_config):
+        self.config = def_config
+
+
+    def run_sanitizer_on(self, country, **kwargs):
         place = PlaceInfo({'name': {k.replace('_', ':'): v for k, v in kwargs.items()},
                            'country_code': country})
-        name, _ = PlaceSanitizer([{'step': 'tag-analyzer-by-language'}]).process_names(place)
+        name, _ = PlaceSanitizer([{'step': 'tag-analyzer-by-language'}],
+                                 self.config).process_names(place)
 
         return sorted([(p.name, p.kind, p.suffix, p.attr) for p in name])
 
@@ -38,12 +49,17 @@ class TestWithDefaults:
 
 class TestFilterKind:
 
-    @staticmethod
-    def run_sanitizer_on(filt, **kwargs):
+    @pytest.fixture(autouse=True)
+    def setup_country(self, def_config):
+        self.config = def_config
+
+
+    def run_sanitizer_on(self, filt, **kwargs):
         place = PlaceInfo({'name': {k.replace('_', ':'): v for k, v in kwargs.items()},
                            'country_code': 'de'})
         name, _ = PlaceSanitizer([{'step': 'tag-analyzer-by-language',
-                                   'filter-kind': filt}]).process_names(place)
+                                   'filter-kind': filt}],
+                                 self.config).process_names(place)
 
         return sorted([(p.name, p.kind, p.suffix, p.attr) for p in name])
 
@@ -88,14 +104,16 @@ class TestDefaultCountry:
     @pytest.fixture(autouse=True)
     def setup_country(self, def_config):
         setup_country_config(def_config)
+        self.config = def_config
 
-    @staticmethod
-    def run_sanitizer_append(mode,  country, **kwargs):
+
+    def run_sanitizer_append(self, mode,  country, **kwargs):
         place = PlaceInfo({'name': {k.replace('_', ':'): v for k, v in kwargs.items()},
                            'country_code': country})
         name, _ = PlaceSanitizer([{'step': 'tag-analyzer-by-language',
                                    'use-defaults': mode,
-                                   'mode': 'append'}]).process_names(place)
+                                   'mode': 'append'}],
+                                 self.config).process_names(place)
 
         assert all(isinstance(p.attr, dict) for p in name)
         assert all(len(p.attr) <= 1 for p in name)
@@ -105,13 +123,13 @@ class TestDefaultCountry:
         return sorted([(p.name, p.attr.get('analyzer', '')) for p in name])
 
 
-    @staticmethod
-    def run_sanitizer_replace(mode,  country, **kwargs):
+    def run_sanitizer_replace(self, mode,  country, **kwargs):
         place = PlaceInfo({'name': {k.replace('_', ':'): v for k, v in kwargs.items()},
                            'country_code': country})
         name, _ = PlaceSanitizer([{'step': 'tag-analyzer-by-language',
                                    'use-defaults': mode,
-                                   'mode': 'replace'}]).process_names(place)
+                                   'mode': 'replace'}],
+                                 self.config).process_names(place)
 
         assert all(isinstance(p.attr, dict) for p in name)
         assert all(len(p.attr) <= 1 for p in name)
@@ -125,7 +143,8 @@ class TestDefaultCountry:
         place = PlaceInfo({'name': {'name': 'something'}})
         name, _ = PlaceSanitizer([{'step': 'tag-analyzer-by-language',
                                    'use-defaults': 'all',
-                                   'mode': 'replace'}]).process_names(place)
+                                   'mode': 'replace'}],
+                                 self.config).process_names(place)
 
         assert len(name) == 1
         assert name[0].name == 'something'
@@ -193,14 +212,19 @@ class TestDefaultCountry:
 
 class TestCountryWithWhitelist:
 
-    @staticmethod
-    def run_sanitizer_on(mode,  country, **kwargs):
+    @pytest.fixture(autouse=True)
+    def setup_country(self, def_config):
+        self.config = def_config
+
+
+    def run_sanitizer_on(self, mode,  country, **kwargs):
         place = PlaceInfo({'name': {k.replace('_', ':'): v for k, v in kwargs.items()},
                            'country_code': country})
         name, _ = PlaceSanitizer([{'step': 'tag-analyzer-by-language',
                                    'use-defaults': mode,
                                    'mode': 'replace',
-                                   'whitelist': ['de', 'fr', 'ru']}]).process_names(place)
+                                   'whitelist': ['de', 'fr', 'ru']}],
+                                 self.config).process_names(place)
 
         assert all(isinstance(p.attr, dict) for p in name)
         assert all(len(p.attr) <= 1 for p in name)
@@ -232,12 +256,17 @@ class TestCountryWithWhitelist:
 
 class TestWhiteList:
 
-    @staticmethod
-    def run_sanitizer_on(whitelist, **kwargs):
+    @pytest.fixture(autouse=True)
+    def setup_country(self, def_config):
+        self.config = def_config
+
+
+    def run_sanitizer_on(self, whitelist, **kwargs):
         place = PlaceInfo({'name': {k.replace('_', ':'): v for k, v in kwargs.items()}})
         name, _ = PlaceSanitizer([{'step': 'tag-analyzer-by-language',
                                    'mode': 'replace',
-                                   'whitelist': whitelist}]).process_names(place)
+                                   'whitelist': whitelist}],
+                                 self.config).process_names(place)
 
         assert all(isinstance(p.attr, dict) for p in name)
         assert all(len(p.attr) <= 1 for p in name)

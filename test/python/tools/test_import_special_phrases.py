@@ -1,3 +1,9 @@
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# This file is part of Nominatim. (https://nominatim.org)
+#
+# Copyright (C) 2022 by the Nominatim developer community.
+# For a full list of authors see the git log.
 """
     Tests for import special phrases methods
     of the class SPImporter.
@@ -12,16 +18,12 @@ from nominatim.errors import UsageError
 from cursor import CursorForTesting
 
 @pytest.fixture
-def testfile_dir(src_dir):
-    return src_dir / 'test' / 'testfiles'
-
-
-@pytest.fixture
-def sp_importer(temp_db_conn, def_config):
+def sp_importer(temp_db_conn, def_config, monkeypatch):
     """
         Return an instance of SPImporter.
     """
-    loader = SPWikiLoader(def_config, ['en'])
+    monkeypatch.setenv('NOMINATIM_LANGUAGES', 'en')
+    loader = SPWikiLoader(def_config)
     return SPImporter(def_config, temp_db_conn, loader)
 
 
@@ -126,7 +128,7 @@ def test_create_place_classtype_table_and_indexes(
     """
     pairs = set([('class1', 'type1'), ('class2', 'type2')])
 
-    sp_importer._create_place_classtype_table_and_indexes(pairs)
+    sp_importer._create_classtype_table_and_indexes(pairs)
 
     for pair in pairs:
         assert check_table_exist(temp_db_conn, pair[0], pair[1])
@@ -180,8 +182,8 @@ def test_import_phrases(monkeypatch, temp_db_conn, def_config, sp_importer,
     table_factory('place_classtype_amenity_animal_shelter')
     table_factory('place_classtype_wrongclass_wrongtype')
 
-    monkeypatch.setattr('nominatim.tools.special_phrases.sp_wiki_loader.SPWikiLoader._get_wiki_content',
-                        lambda self, lang: xml_wiki_content)
+    monkeypatch.setattr('nominatim.tools.special_phrases.sp_wiki_loader._get_wiki_content',
+                        lambda lang: xml_wiki_content)
 
     tokenizer = tokenizer_mock()
     sp_importer.import_phrases(tokenizer, should_replace)

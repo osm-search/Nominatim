@@ -1,4 +1,12 @@
 <?php
+/**
+ * SPDX-License-Identifier: GPL-2.0-only
+ *
+ * This file is part of Nominatim. (https://nominatim.org)
+ *
+ * Copyright (C) 2022 by the Nominatim developer community.
+ * For a full list of authors see the git log.
+ */
 
 namespace Nominatim;
 
@@ -149,7 +157,8 @@ class Tokenizer
         $sSQL = 'SELECT word_id, word_token, type, word,';
         $sSQL .= "      info->>'op' as operator,";
         $sSQL .= "      info->>'class' as class, info->>'type' as ctype,";
-        $sSQL .= "      info->>'count' as count";
+        $sSQL .= "      info->>'count' as count,";
+        $sSQL .= "      info->>'lookup' as lookup";
         $sSQL .= ' FROM word WHERE word_token in (';
         $sSQL .= join(',', $this->oDB->getDBQuotedList($aTokens)).')';
 
@@ -171,7 +180,8 @@ class Tokenizer
                     }
                     break;
                 case 'H':  // house number tokens
-                    $oValidTokens->addToken($sTok, new Token\HouseNumber($iId, $aWord['word_token']));
+                    $sLookup = $aWord['lookup'] ?? $aWord['word_token'];
+                    $oValidTokens->addToken($sTok, new Token\HouseNumber($iId, $sLookup));
                     break;
                 case 'P':  // postcode tokens
                     // Postcodes are not normalized, so they may have content
@@ -180,13 +190,17 @@ class Tokenizer
                     if ($aWord['word'] !== null
                         && pg_escape_string($aWord['word']) == $aWord['word']
                     ) {
-                        $sNormPostcode = $this->normalizeString($aWord['word']);
-                        if (strpos($sNormQuery, $sNormPostcode) !== false) {
-                            $oValidTokens->addToken(
-                                $sTok,
-                                new Token\Postcode($iId, $aWord['word'], null)
-                            );
+                        $iSplitPos = strpos($aWord['word'], '@');
+                        if ($iSplitPos === false) {
+                            $sPostcode = $aWord['word'];
+                        } else {
+                            $sPostcode = substr($aWord['word'], 0, $iSplitPos);
                         }
+
+                        $oValidTokens->addToken(
+                            $sTok,
+                            new Token\Postcode($iId, $sPostcode, null)
+                        );
                     }
                     break;
                 case 'S':  // tokens for classification terms (special phrases)

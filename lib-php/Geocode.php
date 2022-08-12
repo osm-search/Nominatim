@@ -1,4 +1,12 @@
 <?php
+/**
+ * SPDX-License-Identifier: GPL-2.0-only
+ *
+ * This file is part of Nominatim. (https://nominatim.org)
+ *
+ * Copyright (C) 2022 by the Nominatim developer community.
+ * For a full list of authors see the git log.
+ */
 
 namespace Nominatim;
 
@@ -95,7 +103,7 @@ class Geocode
         }
 
         $this->iFinalLimit = $iLimit;
-        $this->iLimit = $iLimit + min($iLimit, 10);
+        $this->iLimit = $iLimit + max($iLimit, 10);
     }
 
     public function setFeatureType($sFeatureType)
@@ -182,7 +190,7 @@ class Geocode
 
         $this->bFallback = $oParams->getBool('fallback', $this->bFallback);
 
-        // List of excluded Place IDs - used for more acurate pageing
+        // List of excluded Place IDs - used for more accurate pageing
         $sExcluded = $oParams->getStringList('exclude_place_ids');
         if ($sExcluded) {
             foreach ($sExcluded as $iExcludedPlaceID) {
@@ -609,16 +617,15 @@ class Geocode
                     }
                     $aReverseGroupedSearches = $this->getGroupedSearches($aSearches, $aPhrases, $oValidTokens);
 
-                    foreach ($aGroupedSearches as $aSearches) {
+                    foreach ($aReverseGroupedSearches as $aSearches) {
                         foreach ($aSearches as $aSearch) {
-                            if (!isset($aReverseGroupedSearches[$aSearch->getRank()])) {
-                                $aReverseGroupedSearches[$aSearch->getRank()] = array();
+                            if (!isset($aGroupedSearches[$aSearch->getRank()])) {
+                                $aGroupedSearches[$aSearch->getRank()] = array();
                             }
-                            $aReverseGroupedSearches[$aSearch->getRank()][] = $aSearch;
+                            $aGroupedSearches[$aSearch->getRank()][] = $aSearch;
                         }
                     }
 
-                    $aGroupedSearches = $aReverseGroupedSearches;
                     ksort($aGroupedSearches);
                 }
             } else {
@@ -836,7 +843,9 @@ class Geocode
                 $aResult['importance'] = 0.001;
                 $aResult['foundorder'] = $aResult['addressimportance'];
             } else {
-                $aResult['importance'] = max(0.001, $aResult['importance']);
+                if ($aResult['importance'] == 0) {
+                    $aResult['importance'] = 0.0001;
+                }
                 $aResult['importance'] *= $this->viewboxImportanceFactor(
                     $aResult['lon'],
                     $aResult['lat']

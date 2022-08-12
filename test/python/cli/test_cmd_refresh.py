@@ -1,3 +1,9 @@
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# This file is part of Nominatim. (https://nominatim.org)
+#
+# Copyright (C) 2022 by the Nominatim developer community.
+# For a full list of authors see the git log.
 """
 Tests for command line interface wrapper for refresk command.
 """
@@ -31,6 +37,11 @@ class TestRefresh:
     def test_refresh_word_count(self):
         assert self.call_nominatim('refresh', '--word-count') == 0
         assert self.tokenizer_mock.update_statistics_called
+
+
+    def test_refresh_word_tokens(self):
+        assert self.call_nominatim('refresh', '--word-tokens') == 0
+        assert self.tokenizer_mock.update_word_tokens_called
 
 
     def test_refresh_postcodes(self, mock_func_factory, place_table):
@@ -71,3 +82,24 @@ class TestRefresh:
         assert self.call_nominatim('refresh', '--importance', '--wiki-data') == 0
 
         assert calls == ['import', 'update']
+
+    @pytest.mark.parametrize('params', [('--data-object', 'w234'),
+                                        ('--data-object', 'N23', '--data-object', 'N24'),
+                                        ('--data-area', 'R7723'),
+                                        ('--data-area', 'r7723', '--data-area', 'r2'),
+                                        ('--data-area', 'R9284425', '--data-object', 'n1234567894567')])
+    def test_refresh_objects(self, params, mock_func_factory):
+        func_mock = mock_func_factory(nominatim.tools.refresh, 'invalidate_osm_object')
+
+        assert self.call_nominatim('refresh', *params) == 0
+
+        assert func_mock.called == len(params)/2
+
+
+    @pytest.mark.parametrize('func', ('--data-object', '--data-area'))
+    @pytest.mark.parametrize('param', ('234', 'a55', 'R 453', 'Rel'))
+    def test_refresh_objects_bad_param(self, func, param, mock_func_factory):
+        func_mock = mock_func_factory(nominatim.tools.refresh, 'invalidate_osm_object')
+
+        self.call_nominatim('refresh', func, param) == 1
+        assert func_mock.called == 0

@@ -1,4 +1,12 @@
 <?php
+/**
+ * SPDX-License-Identifier: GPL-2.0-only
+ *
+ * This file is part of Nominatim. (https://nominatim.org)
+ *
+ * Copyright (C) 2022 by the Nominatim developer community.
+ * For a full list of authors see the git log.
+ */
 
 namespace Nominatim;
 
@@ -84,6 +92,10 @@ class AddressDetails
                     || $aLine['class'] == 'place')
             ) {
                 $aAddress[$sTypeLabel] = $sName;
+
+                if (!empty($aLine['name'])) {
+                    $this->addSubdivisionCode($aAddress, $aLine['admin_level'], $aLine['name']);
+                }
             }
         }
 
@@ -165,5 +177,15 @@ class AddressDetails
     public function debugInfo()
     {
         return $this->aAddressLines;
+    }
+
+    private function addSubdivisionCode(&$aAddress, $iAdminLevel, $nameDetails)
+    {
+        if (is_string($nameDetails)) {
+            $nameDetails = json_decode('{' . str_replace('"=>"', '":"', $nameDetails) . '}', true);
+        }
+        if (!empty($nameDetails['ISO3166-2'])) {
+            $aAddress["ISO3166-2-lvl$iAdminLevel"] = $nameDetails['ISO3166-2'];
+        }
     }
 }

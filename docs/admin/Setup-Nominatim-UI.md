@@ -16,12 +16,12 @@ and run it. Grab the latest release from
 [nominatim-ui's Github release page](https://github.com/osm-search/nominatim-ui/releases)
 and unpack it. You can use `nominatim-ui-x.x.x.tar.gz` or `nominatim-ui-x.x.x.zip`.
 
-Next you need to adapt the UI yo your installation. Custom settings need to be
+Next you need to adapt the UI to your installation. Custom settings need to be
 put into `dist/theme/config.theme.js`. At a minimum you need to
 set `Nominatim_API_Endpoint` to point to your Nominatim installation:
 
     cd nominatim-ui
-    echo "Nominatim_Config.Nominatim_API_Endpoint='https:\\myserver.org\nominatim';" > dist/theme/config.theme.js
+    echo "Nominatim_Config.Nominatim_API_Endpoint='https://myserver.org/nominatim/';" > dist/theme/config.theme.js
 
 For the full set of available settings, have a look at `dist/config.defaults.js`.
 
@@ -161,24 +161,16 @@ directory like this:
   # If no endpoint is given, then use search.
   RewriteRule ^(/|$)   "search.php"
 
-  # If format-html is explicity requested, forward to the UI.
+  # If format-html is explicitly requested, forward to the UI.
   RewriteCond %{QUERY_STRING} "format=html"
-  RewriteRule ^([^/]+).php ui/$1.html [R,END]
-  # Same but .php suffix is missing.
-  RewriteCond %{QUERY_STRING} "format=html"
-  RewriteRule ^([^/]+) ui/$1.html [R,END]
+  RewriteRule ^([^/]+)(.php)? ui/$1.html [R,END]
 
   # If no format parameter is there then forward anything
   # but /reverse and /lookup to the UI.
   RewriteCond %{QUERY_STRING} "!format="
   RewriteCond %{REQUEST_URI}  "!/lookup"
   RewriteCond %{REQUEST_URI}  "!/reverse"
-  RewriteRule ^([^/]+).php ui/$1.html [R,END]
-  # Same but .php suffix is missing.
-  RewriteCond %{QUERY_STRING} "!format="
-  RewriteCond %{REQUEST_URI}  "!/lookup"
-  RewriteCond %{REQUEST_URI}  "!/reverse"
-  RewriteRule ^([^/]+) ui/$1.html [R,END]
+  RewriteRule ^([^/]+)(.php)? ui/$1.html [R,END]
 </Directory>
 ```
 

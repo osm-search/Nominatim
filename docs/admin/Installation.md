@@ -4,9 +4,9 @@ This page contains generic installation instructions for Nominatim and its
 prerequisites. There are also step-by-step instructions available for
 the following operating systems:
 
+  * [Ubuntu 22.04](../appendix/Install-on-Ubuntu-22.md)
   * [Ubuntu 20.04](../appendix/Install-on-Ubuntu-20.md)
   * [Ubuntu 18.04](../appendix/Install-on-Ubuntu-18.md)
-  * [CentOS 8](../appendix/Install-on-Centos-8.md)
 
 These OS-specific instructions can also be found in executable form
 in the `vagrant/` directory.
@@ -24,8 +24,9 @@ and can't offer support.
 ### Software
 
 !!! Warning
-    For larger installations you **must have** PostgreSQL 11+ and Postgis 3+
+    For larger installations you **must have** PostgreSQL 11+ and PostGIS 3+
     otherwise import and queries will be slow to the point of being unusable.
+    Query performance has marked improvements with PostgreSQL 13+ and PostGIS 3.2+.
 
 For compiling:
 
@@ -41,7 +42,7 @@ For compiling:
 
 For running Nominatim:
 
-  * [PostgreSQL](https://www.postgresql.org) (9.5+ will work, 11+ strongly recommended)
+  * [PostgreSQL](https://www.postgresql.org) (9.6+ will work, 11+ strongly recommended)
   * [PostGIS](https://postgis.net) (2.2+ will work, 3.0+ strongly recommended)
   * [Python 3](https://www.python.org/) (3.6+)
   * [Psycopg2](https://www.psycopg.org) (2.7+)
@@ -66,10 +67,10 @@ the [Development section](../develop/Development-Environment.md).
 ### Hardware
 
 A minimum of 2GB of RAM is required or installation will fail. For a full
-planet import 64GB of RAM or more are strongly recommended. Do not report
+planet import 128GB of RAM or more are strongly recommended. Do not report
 out of memory problems if you have less than 64GB RAM.
 
-For a full planet install you will need at least 900GB of hard disk space.
+For a full planet install you will need at least 1TB of hard disk space.
 Take into account that the OSM database is growing fast.
 Fast disks are essential. Using NVME disks is recommended.
 
@@ -88,8 +89,7 @@ your `postgresql.conf` file.
     work_mem = (50MB)
     effective_cache_size = (24GB)
     synchronous_commit = off
-    checkpoint_segments = 100 # only for postgresql <= 9.4
-    max_wal_size = 1GB # postgresql > 9.4
+    max_wal_size = 1GB
     checkpoint_timeout = 10min
     checkpoint_completion_target = 0.9
 
@@ -112,7 +112,7 @@ For the initial import, you should also set:
     fsync = off
     full_page_writes = off
 
-Don't forget to reenable them after the initial import or you risk database
+Don't forget to re-enable them after the initial import or you risk database
 corruption.
 
 
@@ -129,7 +129,7 @@ If you want to install latest development version from github, make sure to
 also check out the osm2pgsql subproject:
 
 ```
-git clone --recursive git://github.com/openstreetmap/Nominatim.git
+git clone --recursive https://github.com/openstreetmap/Nominatim.git
 ```
 
 The development version does not include the country grid. Download it separately:
@@ -156,6 +156,17 @@ cmake ../Nominatim
 make
 sudo make install
 ```
+
+!!! warning
+    The default installation no longer compiles the PostgreSQL module that
+    is needed for the legacy tokenizer from older Nominatim versions. If you
+    are upgrading an older database or want to run the
+    [legacy tokenizer](../customize/Tokenizers.md#legacy-tokenizer) for
+    some other reason, you need to enable the PostgreSQL module via
+    cmake: `cmake -DBUILD_MODULE=on ../Nominatim`. To compile the module
+    you need to have the server development headers for PostgreSQL installed.
+    On Ubuntu/Debian run: `sudo apt install postgresql-server-dev-<postgresql version>`
+
 
 Nominatim installs itself into `/usr/local` per default. To choose a different
 installation directory add `-DCMAKE_INSTALL_PREFIX=<install root>` to the

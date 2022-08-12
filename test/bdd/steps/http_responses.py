@@ -1,3 +1,9 @@
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# This file is part of Nominatim. (https://nominatim.org)
+#
+# Copyright (C) 2022 by the Nominatim developer community.
+# For a full list of authors see the git log.
 """
 Classes wrapping HTTP responses from the Nominatim API.
 """
@@ -66,13 +72,14 @@ class GenericResponse:
             self.header['json_func'] = m.group(1)
         self.result = json.JSONDecoder(object_pairs_hook=OrderedDict).decode(code)
         if isinstance(self.result, OrderedDict):
-            self.result = [self.result]
+            if 'error' in self.result:
+                self.result = []
+            else:
+                self.result = [self.result]
 
     def _parse_geojson(self):
         self._parse_json()
-        if 'error' in self.result[0]:
-            self.result = []
-        else:
+        if self.result:
             self.result = list(map(_geojson_result_to_json_result, self.result[0]['features']))
 
     def _parse_geocodejson(self):
@@ -94,6 +101,9 @@ class GenericResponse:
                    BadRowValueAssert(self, idx, field, value)
         elif value.startswith("^"):
             assert re.fullmatch(value, self.result[idx][field]), \
+                   BadRowValueAssert(self, idx, field, value)
+        elif isinstance(self.result[idx][field], OrderedDict):
+            assert self.result[idx][field] == eval('{' + value + '}'), \
                    BadRowValueAssert(self, idx, field, value)
         else:
             assert str(self.result[idx][field]) == str(value), \
@@ -122,7 +132,7 @@ class GenericResponse:
                    "\nBad value for row {} field '{}' in address. Expected: {}, got: {}.\nFull address: {}"""\
                        .format(idx, field, value, address[field], json.dumps(address, indent=4))
 
-    def match_row(self, row):
+    def match_row(self, row, context=None):
         """ Match the result fields against the given behave table row.
         """
         if 'ID' in row.headings:
@@ -145,7 +155,12 @@ class GenericResponse:
                     assert self.result[i]['osm_type'] in (OSM_TYPE[value[0]], value[0]), \
                            BadRowValueAssert(self, i, 'osm_type', value)
                 elif name == 'centroid':
-                    lon, lat = value.split(' ')
+                    if ' ' in value:
+                        lon, lat = value.split(' ')
+                    elif context is not None:
+                        lon, lat = context.osm.grid_node(int(value))
+                    else:
+                        raise RuntimeError("Context needed when using grid coordinates")
                     self.assert_field(i, 'lat', float(lat))
                     self.assert_field(i, 'lon', float(lon))
                 else:

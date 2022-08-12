@@ -58,3 +58,48 @@ Feature: Import and search of names
         | រាជធានីភ្នំពេញ |
         | 東京都 |
         | ပုဗ္ဗသီရိ |
+
+
+    Scenario: German umlauts can be found when expanded
+        Given the places
+            | osm | class | type | name+name:de |
+            | N1  | place | city | Münster      |
+            | N2  | place | city | Köln         |
+            | N3  | place | city | Gräfenroda   |
+        When importing
+        When sending search query "münster"
+        Then results contain
+            | osm |
+            | N1  |
+        When sending search query "muenster"
+        Then results contain
+            | osm |
+            | N1  |
+        When sending search query "munster"
+        Then results contain
+            | osm |
+            | N1  |
+        When sending search query "Köln"
+        Then results contain
+            | osm |
+            | N2  |
+        When sending search query "Koeln"
+        Then results contain
+            | osm |
+            | N2  |
+        When sending search query "Koln"
+        Then results contain
+            | osm |
+            | N2  |
+        When sending search query "gräfenroda"
+        Then results contain
+            | osm |
+            | N3  |
+        When sending search query "graefenroda"
+        Then results contain
+            | osm |
+            | N3  |
+        When sending search query "grafenroda"
+        Then results contain
+            | osm |
+            | N3  |

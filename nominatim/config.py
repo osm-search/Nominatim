@@ -1,20 +1,30 @@
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# This file is part of Nominatim. (https://nominatim.org)
+#
+# Copyright (C) 2022 by the Nominatim developer community.
+# For a full list of authors see the git log.
 """
 Nominatim configuration accessor.
 """
+from typing import Dict, Any, List, Mapping, Optional
+import importlib.util
 import logging
 import os
+import sys
 from pathlib import Path
 import json
 import yaml
 
 from dotenv import dotenv_values
 
+from nominatim.typing import StrPath
 from nominatim.errors import UsageError
 
 LOG = logging.getLogger()
+CONFIG_CACHE : Dict[str, Any] = {}
 
-
-def flatten_config_list(content, section=''):
+def flatten_config_list(content: Any, section: str = '') -> List[Any]:
     """ Flatten YAML configuration lists that contain include sections
         which are lists themselves.
     """
@@ -48,7 +58,8 @@ class Configuration:
         avoid conflicts with other environment variables.
     """
 
-    def __init__(self, project_dir, config_dir, environ=None):
+    def __init__(self, project_dir: Path, config_dir: Path,
+                 environ: Optional[Mapping[str, str]] = None) -> None:
         self.environ = environ or os.environ
         self.project_dir = project_dir
         self.config_dir = config_dir
@@ -57,66 +68,86 @@ class Configuration:
             self._config.update(dotenv_values(str((project_dir / '.env').resolve())))
 
         class _LibDirs:
-            pass
+            module: Path
+            osm2pgsql: Path
+            php: Path
+            sql: Path
+            data: Path
 
         self.lib_dir = _LibDirs()
+        self._private_plugins: Dict[str, object] = {}
 
-    def set_libdirs(self, **kwargs):
+
+    def set_libdirs(self, **kwargs: StrPath) -> None:
         """ Set paths to library functions and data.
         """
         for key, value in kwargs.items():
             setattr(self.lib_dir, key, Path(value).resolve())
 
-    def __getattr__(self, name):
+
+    def __getattr__(self, name: str) -> str:
         name = 'NOMINATIM_' + name
 
         if name in self.environ:
             return self.environ[name]
 
-        return self._config[name]
+        return self._config[name] or ''
 
-    def get_bool(self, name):
+
+    def get_bool(self, name: str) -> bool:
         """ Return the given configuration parameter as a boolean.
             Values of '1', 'yes' and 'true' are accepted as truthy values,
             everything else is interpreted as false.
         """
-        return self.__getattr__(name).lower() in ('1', 'yes', 'true')
+        return getattr(self, name).lower() in ('1', 'yes', 'true')
 
 
-    def get_int(self, name):
+    def get_int(self, name: str) -> int:
         """ Return the given configuration parameter as an int.
         """
         try:
-            return int(self.__getattr__(name))
+            return int(getattr(self, name))
         except ValueError as exp:
             LOG.fatal("Invalid setting NOMINATIM_%s. Needs to be a number.", name)
             raise UsageError("Configuration error.") from exp
 
 
-    def get_path(self, name):
+    def get_str_list(self, name: str) -> Optional[List[str]]:
+        """ Return the given configuration parameter as a list of strings.
+            The values are assumed to be given as a comma-sparated list and
+            will be stripped before returning them. On empty values None
+            is returned.
+        """
+        raw = getattr(self, name)
+
+        return [v.strip() for v in raw.split(',')] if raw else None
+
+
+    def get_path(self, name: str) -> Optional[Path]:
         """ Return the given configuration parameter as a Path.
             If a relative path is configured, then the function converts this
             into an absolute path with the project directory as root path.
-            If the configuration is unset, a falsy value is returned.
+            If the configuration is unset, None is returned.
         """
-        value = self.__getattr__(name)
-        if value:
-            value = Path(value)
+        value = getattr(self, name)
+        if not value:
+            return None
 
-            if not value.is_absolute():
-                value = self.project_dir / value
+        cfgpath = Path(value)
 
-            value = value.resolve()
+        if not cfgpath.is_absolute():
+            cfgpath = self.project_dir / cfgpath
 
-        return value
+        return cfgpath.resolve()
 
-    def get_libpq_dsn(self):
+
+    def get_libpq_dsn(self) -> str:
         """ Get configured database DSN converted into the key/value format
             understood by libpq and psycopg.
         """
         dsn = self.DATABASE_DSN
 
-        def quote_param(param):
+        def quote_param(param: str) -> str:
             key, val = param.split('=')
             val = val.replace('\\', '\\\\').replace("'", "\\'")
             if ' ' in val:
@@ -130,20 +161,20 @@ class Configuration:
         return dsn
 
 
-    def get_import_style_file(self):
+    def get_import_style_file(self) -> Path:
         """ Return the import style file as a path object. Translates the
             name of the standard styles automatically into a file in the
             config style.
         """
-        style = self.__getattr__('IMPORT_STYLE')
+        style = getattr(self, 'IMPORT_STYLE')
 
         if style in ('admin', 'street', 'address', 'full', 'extratags'):
-            return self.config_dir / 'import-{}.style'.format(style)
+            return self.config_dir / f'import-{style}.style'
 
         return self.find_config_file('', 'IMPORT_STYLE')
 
 
-    def get_os_env(self):
+    def get_os_env(self) -> Dict[str, Optional[str]]:
         """ Return a copy of the OS environment with the Nominatim configuration
             merged in.
         """
@@ -153,10 +184,11 @@ class Configuration:
         return env
 
 
-    def load_sub_configuration(self, filename, config=None):
+    def load_sub_configuration(self, filename: StrPath,
+                               config: Optional[str] = None) -> Any:
         """ Load additional configuration from a file. `filename` is the name
             of the configuration file. The file is first searched in the
-            project directory and then in the global settings dirctory.
+            project directory and then in the global settings directory.
 
             If `config` is set, then the name of the configuration file can
             be additionally given through a .env configuration option. When
@@ -175,26 +207,75 @@ class Configuration:
         """
         configfile = self.find_config_file(filename, config)
 
+        if str(configfile) in CONFIG_CACHE:
+            return CONFIG_CACHE[str(configfile)]
+
         if configfile.suffix in ('.yaml', '.yml'):
-            return self._load_from_yaml(configfile)
+            result = self._load_from_yaml(configfile)
+        elif configfile.suffix == '.json':
+            with configfile.open('r', encoding='utf-8') as cfg:
+                result = json.load(cfg)
+        else:
+            raise UsageError(f"Config file '{configfile}' has unknown format.")
 
-        if configfile.suffix == '.json':
-            with configfile.open('r') as cfg:
-                return json.load(cfg)
-
-        raise UsageError(f"Config file '{configfile}' has unknown format.")
+        CONFIG_CACHE[str(configfile)] = result
+        return result
 
 
-    def find_config_file(self, filename, config=None):
+    def load_plugin_module(self, module_name: str, internal_path: str) -> Any:
+        """ Load a Python module as a plugin.
+
+            The module_name may have three variants:
+
+            * A name without any '.' is assumed to be an internal module
+              and will be searched relative to `internal_path`.
+            * If the name ends in `.py`, module_name is assumed to be a
+              file name relative to the project directory.
+            * Any other name is assumed to be an absolute module name.
+
+            In either of the variants the module name must start with a letter.
+        """
+        if not module_name or not module_name[0].isidentifier():
+            raise UsageError(f'Invalid module name {module_name}')
+
+        if '.' not in module_name:
+            module_name = module_name.replace('-', '_')
+            full_module = f'{internal_path}.{module_name}'
+            return sys.modules.get(full_module) or importlib.import_module(full_module)
+
+        if module_name.endswith('.py'):
+            if self.project_dir is None or not (self.project_dir / module_name).exists():
+                raise UsageError(f"Cannot find module '{module_name}' in project directory.")
+
+            if module_name in self._private_plugins:
+                return self._private_plugins[module_name]
+
+            file_path = str(self.project_dir / module_name)
+            spec = importlib.util.spec_from_file_location(module_name, file_path)
+            if spec:
+                module = importlib.util.module_from_spec(spec)
+                # Do not add to global modules because there is no standard
+                # module name that Python can resolve.
+                self._private_plugins[module_name] = module
+                assert spec.loader is not None
+                spec.loader.exec_module(module)
+
+                return module
+
+        return sys.modules.get(module_name) or importlib.import_module(module_name)
+
+
+    def find_config_file(self, filename: StrPath,
+                         config: Optional[str] = None) -> Path:
         """ Resolve the location of a configuration file given a filename and
             an optional configuration option with the file name.
             Raises a UsageError when the file cannot be found or is not
             a regular file.
         """
         if config is not None:
-            cfg_filename = self.__getattr__(config)
-            if cfg_filename:
-                cfg_filename = Path(cfg_filename)
+            cfg_value = getattr(self, config)
+            if cfg_value:
+                cfg_filename = Path(cfg_value)
 
                 if cfg_filename.is_absolute():
                     cfg_filename = cfg_filename.resolve()
@@ -218,7 +299,7 @@ class Configuration:
         raise UsageError("Config file not found.")
 
 
-    def _load_from_yaml(self, cfgfile):
+    def _load_from_yaml(self, cfgfile: Path) -> Any:
         """ Load a YAML configuration file. This installs a special handler that
             allows to include other YAML files using the '!include' operator.
         """
@@ -227,11 +308,11 @@ class Configuration:
         return yaml.safe_load(cfgfile.read_text(encoding='utf-8'))
 
 
-    def _yaml_include_representer(self, loader, node):
+    def _yaml_include_representer(self, loader: Any, node: yaml.Node) -> Any:
         """ Handler for the '!include' operator in YAML files.
 
             When the filename is relative, then the file is first searched in the
-            project directory and then in the global settings dirctory.
+            project directory and then in the global settings directory.
         """
         fname = loader.construct_scalar(node)
 

@@ -1,4 +1,12 @@
 <?php
+/**
+ * SPDX-License-Identifier: GPL-2.0-only
+ *
+ * This file is part of Nominatim. (https://nominatim.org)
+ *
+ * Copyright (C) 2022 by the Nominatim developer community.
+ * For a full list of authors see the git log.
+ */
 
 namespace Nominatim;
 
@@ -14,7 +22,10 @@ class ParameterParser
 
     public function getBool($sName, $bDefault = false)
     {
-        if (!isset($this->aParams[$sName]) || strlen($this->aParams[$sName]) == 0) {
+        if (!isset($this->aParams[$sName])
+            || !is_string($this->aParams[$sName])
+            || strlen($this->aParams[$sName]) == 0
+        ) {
             return $bDefault;
         }
 
@@ -23,7 +34,7 @@ class ParameterParser
 
     public function getInt($sName, $bDefault = false)
     {
-        if (!isset($this->aParams[$sName])) {
+        if (!isset($this->aParams[$sName]) || is_array($this->aParams[$sName])) {
             return $bDefault;
         }
 
@@ -36,7 +47,7 @@ class ParameterParser
 
     public function getFloat($sName, $bDefault = false)
     {
-        if (!isset($this->aParams[$sName])) {
+        if (!isset($this->aParams[$sName]) || is_array($this->aParams[$sName])) {
             return $bDefault;
         }
 
@@ -49,7 +60,10 @@ class ParameterParser
 
     public function getString($sName, $bDefault = false)
     {
-        if (!isset($this->aParams[$sName]) || strlen($this->aParams[$sName]) == 0) {
+        if (!isset($this->aParams[$sName])
+            || !is_string($this->aParams[$sName])
+            || strlen($this->aParams[$sName]) == 0
+        ) {
             return $bDefault;
         }
 
@@ -58,11 +72,14 @@ class ParameterParser
 
     public function getSet($sName, $aValues, $sDefault = false)
     {
-        if (!isset($this->aParams[$sName]) || strlen($this->aParams[$sName]) == 0) {
+        if (!isset($this->aParams[$sName])
+            || !is_string($this->aParams[$sName])
+            || strlen($this->aParams[$sName]) == 0
+        ) {
             return $sDefault;
         }
 
-        if (!in_array($this->aParams[$sName], $aValues)) {
+        if (!in_array($this->aParams[$sName], $aValues, true)) {
             userError("Parameter '$sName' must be one of: ".join(', ', $aValues));
         }
 
@@ -106,19 +123,25 @@ class ParameterParser
         }
 
         foreach ($aLanguages as $sLanguage => $fLanguagePref) {
-            $aLangPrefOrder['name:'.$sLanguage] = 'name:'.$sLanguage;
+            $this->addNameTag($aLangPrefOrder, 'name:'.$sLanguage);
         }
-        $aLangPrefOrder['name'] = 'name';
-        $aLangPrefOrder['brand'] = 'brand';
+        $this->addNameTag($aLangPrefOrder, 'name');
+        $this->addNameTag($aLangPrefOrder, 'brand');
         foreach ($aLanguages as $sLanguage => $fLanguagePref) {
-            $aLangPrefOrder['official_name:'.$sLanguage] = 'official_name:'.$sLanguage;
-            $aLangPrefOrder['short_name:'.$sLanguage] = 'short_name:'.$sLanguage;
+            $this->addNameTag($aLangPrefOrder, 'official_name:'.$sLanguage);
+            $this->addNameTag($aLangPrefOrder, 'short_name:'.$sLanguage);
         }
-        $aLangPrefOrder['official_name'] = 'official_name';
-        $aLangPrefOrder['short_name'] = 'short_name';
-        $aLangPrefOrder['ref'] = 'ref';
-        $aLangPrefOrder['type'] = 'type';
+        $this->addNameTag($aLangPrefOrder, 'official_name');
+        $this->addNameTag($aLangPrefOrder, 'short_name');
+        $this->addNameTag($aLangPrefOrder, 'ref');
+        $this->addNameTag($aLangPrefOrder, 'type');
         return $aLangPrefOrder;
+    }
+
+    private function addNameTag(&$aLangPrefOrder, $sTag)
+    {
+        $aLangPrefOrder[$sTag] = $sTag;
+        $aLangPrefOrder['_place_'.$sTag] = '_place_'.$sTag;
     }
 
     public function hasSetAny($aParamNames)

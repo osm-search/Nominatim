@@ -6,15 +6,16 @@
     }
 },
 {
-    "keys" : ["name:prefix", "name:suffix", "name:prefix:*", "name:suffix:*",
-              "name:etymology", "name:signed", "name:botanical", "wikidata", "*:wikidata"],
+    "keys" : ["*:prefix", "*:suffix", "name:prefix:*", "name:suffix:*",
+              "name:etymology", "name:signed", "name:botanical", "wikidata", "*:wikidata",
+              "addr:street:name", "addr:street:type"],
     "values" : {
         "" : "extra"
     }
 },
 {
     "keys" : ["ref", "int_ref", "nat_ref", "reg_ref", "loc_ref", "old_ref",
-              "iata", "icao", "pcode", "pcode:*"],
+              "iata", "icao", "pcode", "pcode:*", "ISO3166-2"],
     "values" : {
         "" : "ref"
     }
@@ -130,13 +131,6 @@
     }
 },
 {
-    "keys" : ["amenity"],
-    "values" : {
-        "restaurant" : "main,operator",
-        "fuel" : "main,operator"
-    }
-},
-{
     "keys" : ["aeroway", "amenity", "club", "craft", "leisure",
               "office", "mountain_pass"],
     "values" : {
@@ -148,7 +142,7 @@
     "keys" : ["shop"],
     "values" : {
         "no" : "skip",
-        "" : "main,operator"
+        "" : "main"
     }
 },
 {
@@ -156,7 +150,7 @@
     "values" : {
         "yes" : "skip",
         "no" : "skip",
-        "" : "main,operator"
+        "" : "main"
     }
 },
 {
@@ -179,7 +173,7 @@
     }
 },
 {
-    "keys" : ["junction"],
+    "keys" : ["junction", "healthcare"],
     "values" : {
         "" : "main,fallback,with_name"
     }

@@ -1,3 +1,9 @@
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# This file is part of Nominatim. (https://nominatim.org)
+#
+# Copyright (C) 2022 by the Nominatim developer community.
+# For a full list of authors see the git log.
 """
 Tests for execution of the sanitztion step.
 """
@@ -5,7 +11,7 @@ import pytest
 
 from nominatim.errors import UsageError
 import nominatim.tokenizer.place_sanitizer as sanitizer
-from nominatim.indexer.place_info import PlaceInfo
+from nominatim.data.place_info import PlaceInfo
 
 
 def test_placeinfo_clone_new_name():
@@ -41,8 +47,8 @@ def test_placeinfo_has_attr():
     assert not place.has_attr('whatever')
 
 
-def test_sanitizer_default():
-    san = sanitizer.PlaceSanitizer([{'step': 'split-name-list'}])
+def test_sanitizer_default(def_config):
+    san = sanitizer.PlaceSanitizer([{'step': 'split-name-list'}], def_config)
 
     name, address =  san.process_names(PlaceInfo({'name': {'name:de:de': '1;2;3'},
                                                   'address': {'street': 'Bald'}}))
@@ -57,8 +63,8 @@ def test_sanitizer_default():
 
 
 @pytest.mark.parametrize('rules', [None, []])
-def test_sanitizer_empty_list(rules):
-    san = sanitizer.PlaceSanitizer(rules)
+def test_sanitizer_empty_list(def_config, rules):
+    san = sanitizer.PlaceSanitizer(rules, def_config)
 
     name, address =  san.process_names(PlaceInfo({'name': {'name:de:de': '1;2;3'}}))
 
@@ -66,6 +72,6 @@ def test_sanitizer_empty_list(rules):
     assert all(isinstance(n, sanitizer.PlaceName) for n in name)
 
 
-def test_sanitizer_missing_step_definition():
+def test_sanitizer_missing_step_definition(def_config):
     with pytest.raises(UsageError):
-        san = sanitizer.PlaceSanitizer([{'id': 'split-name-list'}])
+        san = sanitizer.PlaceSanitizer([{'id': 'split-name-list'}], def_config)

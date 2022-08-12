@@ -1,17 +1,28 @@
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# This file is part of Nominatim. (https://nominatim.org)
+#
+# Copyright (C) 2022 by the Nominatim developer community.
+# For a full list of authors see the git log.
 """
 Helper functions for executing external programs.
 """
+from typing import Any, Union, Optional, Mapping, IO
+from pathlib import Path
 import logging
 import subprocess
 import urllib.request as urlrequest
 from urllib.parse import urlencode
 
-from nominatim.version import NOMINATIM_VERSION
+from nominatim.typing import StrPath
+from nominatim.version import version_str
 from nominatim.db.connection import get_pg_env
 
 LOG = logging.getLogger()
 
-def run_legacy_script(script, *args, nominatim_env=None, throw_on_fail=False):
+def run_legacy_script(script: StrPath, *args: Union[int, str],
+                      nominatim_env: Any,
+                      throw_on_fail: bool = False) -> int:
     """ Run a Nominatim PHP script with the given arguments.
 
         Returns the exit code of the script. If `throw_on_fail` is True
@@ -34,9 +45,11 @@ def run_legacy_script(script, *args, nominatim_env=None, throw_on_fail=False):
 
     return proc.returncode
 
-def run_api_script(endpoint, project_dir, extra_env=None, phpcgi_bin=None,
-                   params=None):
-    """ Execute a Nominiatim API function.
+def run_api_script(endpoint: str, project_dir: Path,
+                   extra_env: Optional[Mapping[str, str]] = None,
+                   phpcgi_bin: Optional[Path] = None,
+                   params: Optional[Mapping[str, Any]] = None) -> int:
+    """ Execute a Nominatim API function.
 
         The function needs a project directory that contains the website
         directory with the scripts to be executed. The scripts will be run
@@ -49,10 +62,10 @@ def run_api_script(endpoint, project_dir, extra_env=None, phpcgi_bin=None,
     query_string = urlencode(params or {})
 
     env = dict(QUERY_STRING=query_string,
-               SCRIPT_NAME='/{}.php'.format(endpoint),
-               REQUEST_URI='/{}.php?{}'.format(endpoint, query_string),
+               SCRIPT_NAME=f'/{endpoint}.php',
+               REQUEST_URI=f'/{endpoint}.php?{query_string}',
                CONTEXT_DOCUMENT_ROOT=webdir,
-               SCRIPT_FILENAME='{}/{}.php'.format(webdir, endpoint),
+               SCRIPT_FILENAME=f'{webdir}/{endpoint}.php',
                HTTP_HOST='localhost',
                HTTP_USER_AGENT='nominatim-tool',
                REMOTE_ADDR='0.0.0.0',
@@ -90,14 +103,14 @@ def run_api_script(endpoint, project_dir, extra_env=None, phpcgi_bin=None,
     return 0
 
 
-def run_php_server(server_address, base_dir):
+def run_php_server(server_address: str, base_dir: StrPath) -> None:
     """ Run the built-in server from the given directory.
     """
     subprocess.run(['/usr/bin/env', 'php', '-S', server_address],
                    cwd=str(base_dir), check=True)
 
 
-def run_osm2pgsql(options):
+def run_osm2pgsql(options: Mapping[str, Any]) -> None:
     """ Run osm2pgsql with the given options.
     """
     env = get_pg_env(options['dsn'])
@@ -141,13 +154,14 @@ def run_osm2pgsql(options):
                    env=env, check=True)
 
 
-def get_url(url):
+def get_url(url: str) -> str:
     """ Get the contents from the given URL and return it as a UTF-8 string.
     """
-    headers = {"User-Agent": "Nominatim/{0[0]}.{0[1]}.{0[2]}-{0[3]}".format(NOMINATIM_VERSION)}
+    headers = {"User-Agent": f"Nominatim/{version_str()}"}
 
     try:
-        with urlrequest.urlopen(urlrequest.Request(url, headers=headers)) as response:
+        request = urlrequest.Request(url, headers=headers)
+        with urlrequest.urlopen(request) as response: # type: IO[bytes]
             return response.read().decode('utf-8')
     except Exception:
         LOG.fatal('Failed to load URL: %s', url)

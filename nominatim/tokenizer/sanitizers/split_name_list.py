@@ -1,25 +1,28 @@
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# This file is part of Nominatim. (https://nominatim.org)
+#
+# Copyright (C) 2022 by the Nominatim developer community.
+# For a full list of authors see the git log.
 """
 Sanitizer that splits lists of names into their components.
 
 Arguments:
     delimiters: Define the set of characters to be used for
-                splitting the list. (default: `,;`)
+                splitting the list. (default: ',;')
 """
-import re
+from typing import Callable
 
-from nominatim.errors import UsageError
+from nominatim.tokenizer.sanitizers.base import ProcessInfo
+from nominatim.tokenizer.sanitizers.config import SanitizerConfig
 
-def create(func):
+def create(config: SanitizerConfig) -> Callable[[ProcessInfo], None]:
     """ Create a name processing function that splits name values with
         multiple values into their components.
     """
-    delimiter_set = set(func.get('delimiters', ',;'))
-    if not delimiter_set:
-        raise UsageError("Set of delimiters in split-name-list sanitizer is empty.")
+    regexp = config.get_delimiter()
 
-    regexp = re.compile('\\s*[{}]\\s*'.format(''.join('\\' + d for d in delimiter_set)))
-
-    def _process(obj):
+    def _process(obj: ProcessInfo) -> None:
         if not obj.names:
             return
 

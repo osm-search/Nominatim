@@ -1,3 +1,10 @@
+-- SPDX-License-Identifier: GPL-2.0-only
+--
+-- This file is part of Nominatim. (https://nominatim.org)
+--
+-- Copyright (C) 2022 by the Nominatim developer community.
+-- For a full list of authors see the git log.
+
 -- Trigger functions for location_postcode table.
 
 
@@ -27,7 +34,7 @@ BEGIN
     NEW.parent_place_id = 0;
     FOR location IN
       SELECT place_id
-        FROM getNearFeatures(partition, NEW.geometry, NEW.rank_search)
+        FROM getNearFeatures(partition, NEW.geometry, NEW.geometry, NEW.rank_search)
         WHERE NOT isguess ORDER BY rank_address DESC, distance asc LIMIT 1
     LOOP
         NEW.parent_place_id = location.place_id;

@@ -15,6 +15,23 @@ breaking changes. **Please read them before running the migration.**
     If you are migrating from a version <3.6, then you still have to follow
     the manual migration steps up to 3.6.
 
+## 4.0.0 -> 4.1.0
+
+### ICU tokenizer is the new default
+
+Nominatim now installs the [ICU tokenizer](../customize/Tokenizers.md#icu-tokenizer)
+by default. This only has an effect on newly installed databases. When
+updating older databases, it keeps its installed tokenizer. If you still
+run with the legacy tokenizer, make sure to compile Nominatim with the
+PostgreSQL module, see [Installation](Installation.md#building-nominatim).
+
+### geocodejson output changed
+
+The `type` field of the geocodejson output has changed. It now contains
+the address class of the object instead of the value of the OSM tag. If
+your client has used the `type` field, switch them to read `osm_value`
+instead.
+
 ## 3.7.0 -> 4.0.0
 
 ### NOMINATIM_PHRASE_CONFIG removed

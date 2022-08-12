@@ -111,7 +111,7 @@ library.
 
 !!! note
     The external module is only needed when using the legacy tokenizer.
-    If you have choosen the ICU tokenizer, then you can ignore this section
+    If you have chosen the ICU tokenizer, then you can ignore this section
     and follow the standard import documentation.
 
 ### Option 1: Compiling the library on the database server
@@ -198,11 +198,10 @@ target machine.
     of a full database.
 
 Next install Nominatim on the target machine by following the standard installation
-instructions. Again make sure to use the same version as the source machine.
+instructions. Again, make sure to use the same version as the source machine.
 
-You can now copy the project directory from the source machine to the new machine.
-If necessary, edit the `.env` file to point it to the restored database.
-Finally run
+Create a project directory on your destination machine and set up the `.env`
+file to match the configuration on the source machine. Finally run
 
     nominatim refresh --website
 
@@ -210,6 +209,8 @@ to make sure that the local installation of Nominatim will be used.
 
 If you are using the legacy tokenizer you might also have to switch to the
 PostgreSQL module that was compiled on your target machine. If you get errors
-that PostgreSQL cannot find or access `nominatim.so` then copy the installed
-version into the `module` directory of your project directory. The installed
-copy can usually be found under `/usr/local/lib/nominatim/module/nominatim.so`.
+that PostgreSQL cannot find or access `nominatim.so` then rerun
+
+   nominatim refresh --functions
+
+on the target machine to update the the location of the module.

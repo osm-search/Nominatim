@@ -26,24 +26,28 @@ Feature: Creation of search terms
          | N1     | #Halle Saale, #Halle |
 
     Scenario: Unnamed POIs have no search entry
-        Given the scene roads-with-pois
+        Given the grid
+         |    | 1 |  |    |
+         | 10 |   |  | 11 |
         And the places
-         | osm | class   | type        | geometry |
-         | N1  | place   | house       | :p-N1 |
+         | osm | class   | type        |
+         | N1  | place   | house       |
         And the named places
          | osm | class   | type        | geometry |
-         | W1  | highway | residential | :w-north |
+         | W1  | highway | residential | 10,11    |
         When importing
         Then search_name has no entry for N1
 
     Scenario: Unnamed POI has a search entry when it has unknown addr: tags
-        Given the scene roads-with-pois
+        Given the grid
+         |    | 1 |  |    |
+         | 10 |   |  | 11 |
         And the places
-         | osm | class   | type        | housenr | addr+city | geometry |
-         | N1  | place   | house       | 23      | Walltown  | :p-N1 |
+         | osm | class   | type        | housenr | addr+city |
+         | N1  | place   | house       | 23      | Walltown  |
         And the places
          | osm | class   | type        | name+name   | geometry |
-         | W1  | highway | residential | Rose Street | :w-north |
+         | W1  | highway | residential | Rose Street | 10,11    |
         When importing
         Then search_name contains
          | object | nameaddress_vector |
@@ -62,13 +66,15 @@ Feature: Creation of search terms
          | N1  | 23, Rose Street |
 
     Scenario: Searching for unknown addr: tags also works for multiple words
-        Given the scene roads-with-pois
+        Given the grid
+         |    | 1 |  |    |
+         | 10 |   |  | 11 |
         And the places
-         | osm | class   | type        | housenr | addr+city        | geometry |
-         | N1  | place   | house       | 23      | Little Big Town  | :p-N1 |
+         | osm | class   | type        | housenr | addr+city        |
+         | N1  | place   | house       | 23      | Little Big Town  |
         And the places
          | osm | class   | type        | name+name   | geometry |
-         | W1  | highway | residential | Rose Street | :w-north |
+         | W1  | highway | residential | Rose Street | 10,11    |
         When importing
         Then search_name contains
          | object | nameaddress_vector |
@@ -87,13 +93,15 @@ Feature: Creation of search terms
          | N1  | 23, Rose Street |
 
      Scenario: Unnamed POI has no search entry when it has known addr: tags
-        Given the scene roads-with-pois
+        Given the grid
+         |    | 1 |  |    |
+         | 10 |   |  | 11 |
         And the places
-         | osm | class   | type        | housenr | addr+city | geometry |
-         | N1  | place   | house       | 23      | Walltown  | :p-N1 |
+         | osm | class   | type        | housenr | addr+city |
+         | N1  | place   | house       | 23      | Walltown  |
         And the places
          | osm | class   | type        | name+name   | addr+city | geometry |
-         | W1  | highway | residential | Rose Street | Walltown | :w-north |
+         | W1  | highway | residential | Rose Street | Walltown  | 10,11    |
         When importing
         Then search_name has no entry for N1
         When sending search query "23 Rose Street, Walltown"
@@ -102,29 +110,34 @@ Feature: Creation of search terms
          | N1  | 23, Rose Street |
 
     Scenario: Unnamed POI must have a house number to get a search entry
-        Given the scene roads-with-pois
+        Given the grid
+         |    | 1 |  |    |
+         | 10 |   |  | 11 |
         And the places
-         | osm | class   | type   | addr+city | geometry |
-         | N1  | place   | house  | Walltown  | :p-N1 |
+         | osm | class   | type   | addr+city |
+         | N1  | place   | house  | Walltown  |
         And the places
          | osm | class   | type        | name+name   | geometry |
-         | W1  | highway | residential | Rose Street | :w-north |
+         | W1  | highway | residential | Rose Street | 10,11    |
         When importing
         Then search_name has no entry for N1
 
     Scenario: Unnamed POIs inherit parent name when unknown addr:place is present
-        Given the scene roads-with-pois
+        Given the grid
+         | 100 |    |   |   |    | 101 |
+         |     |    | 1 |   |    |     |
+         | 103 | 10 |   |   | 11 | 102 |
         And the places
-         | osm | class   | type        | housenr | addr+place | geometry |
-         | N1  | place   | house       | 23      | Walltown   | :p-N1 |
+         | osm | class   | type        | housenr | addr+place |
+         | N1  | place   | house       | 23      | Walltown   |
         And the places
          | osm | class   | type        | name+name    | geometry |
-         | W1  | highway | residential | Rose Street  | :w-north |
-         | N2  | place   | city        | Strange Town | :p-N1 |
+         | W1  | highway | residential | Rose Street  | 10,11    |
+         | R1  | place   | city        | Strange Town | (100,101,102,103,100) |
         When importing
         Then placex contains
          | object | parent_place_id |
-         | N1     | N2              |
+         | N1     | R1              |
         When sending search query "23 Rose Street"
         Then exactly 1 results are returned
         And results contain
@@ -144,14 +157,17 @@ Feature: Creation of search terms
          | N1  | 23, Walltown, Strange Town |
 
     Scenario: Named POIs can be searched by housenumber when unknown addr:place is present
-        Given the scene roads-with-pois
+        Given the grid
+         | 100 |    |   |   |    | 101 |
+         |     |    | 1 |   |    |     |
+         | 103 | 10 |   |   | 11 | 102 |
         And the places
-         | osm | class   | type  | name       | housenr | addr+place | geometry |
-         | N1  | place   | house | Blue house | 23      | Walltown   | :p-N1 |
+         | osm | class   | type  | name       | housenr | addr+place |
+         | N1  | place   | house | Blue house | 23      | Walltown   |
         And the places
          | osm | class   | type        | name+name    | geometry |
-         | W1  | highway | residential | Rose Street  | :w-north |
-         | N2  | place   | city        | Strange Town | :p-N1 |
+         | W1  | highway | residential | Rose Street  | 10,11 |
+         | R1  | place   | city        | Strange Town | (100,101,102,103,100) |
         When importing
         When sending search query "23 Walltown, Strange Town"
         Then results contain
@@ -175,14 +191,17 @@ Feature: Creation of search terms
          | N1  | Blue house, 23, Walltown, Strange Town |
 
     Scenario: Named POIs can be found when unknown multi-word addr:place is present
-        Given the scene roads-with-pois
+        Given the grid
+         | 100 |    |   |   |    | 101 |
+         |     |    | 1 |   |    |     |
+         | 103 | 10 |   |   | 11 | 102 |
         And the places
-         | osm | class   | type  | name       | housenr | addr+place | geometry |
-         | N1  | place   | house | Blue house | 23      | Moon sun   | :p-N1 |
+         | osm | class   | type  | name       | housenr | addr+place |
+         | N1  | place   | house | Blue house | 23      | Moon sun   |
         And the places
          | osm | class   | type        | name+name    | geometry |
-         | W1  | highway | residential | Rose Street  | :w-north |
-         | N2  | place   | city        | Strange Town | :p-N1 |
+         | W1  | highway | residential | Rose Street  | 10,11    |
+         | R1  | place   | city        | Strange Town | (100,101,102,103,100) |
         When importing
         When sending search query "23 Moon Sun, Strange Town"
         Then results contain
@@ -194,14 +213,17 @@ Feature: Creation of search terms
          | N1  | Blue house, 23, Moon sun, Strange Town |
 
     Scenario: Unnamed POIs doesn't inherit parent name when addr:place is present only in parent address
-        Given the scene roads-with-pois
+        Given the grid
+         | 100 |    |   |   |    | 101 |
+         |     |    | 1 |   |    |     |
+         | 103 | 10 |   |   | 11 | 102 |
         And the places
-         | osm | class   | type        | housenr | addr+place | geometry |
-         | N1  | place   | house       | 23      | Walltown   | :p-N1 |
+         | osm | class   | type        | housenr | addr+place |
+         | N1  | place   | house       | 23      | Walltown   |
         And the places
          | osm | class   | type        | name+name    | addr+city | geometry |
-         | W1  | highway | residential | Rose Street  | Walltown  | :w-north |
-         | N2  | place   | suburb      | Strange Town | Walltown  | :p-N1 |
+         | W1  | highway | residential | Rose Street  | Walltown  | 10,11    |
+         | R1  | place   | suburb      | Strange Town | Walltown  | (100,101,102,103,100) |
         When importing
         When sending search query "23 Rose Street, Walltown"
         Then exactly 1 result is returned
@@ -215,13 +237,15 @@ Feature: Creation of search terms
          | N1  | 23, Walltown, Strange Town |
 
     Scenario: Unnamed POIs does inherit parent name when unknown addr:place and addr:street is present
-        Given the scene roads-with-pois
+        Given the grid
+         |    | 1 |  |    |
+         | 10 |   |  | 11 |
         And the places
-         | osm | class   | type   | housenr | addr+place | addr+street | geometry |
-         | N1  | place   | house  | 23      | Walltown   | Lily Street | :p-N1 |
+         | osm | class   | type   | housenr | addr+place | addr+street |
+         | N1  | place   | house  | 23      | Walltown   | Lily Street |
         And the places
          | osm | class   | type        | name+name   | geometry |
-         | W1  | highway | residential | Rose Street | :w-north |
+         | W1  | highway | residential | Rose Street | 10,11    |
         When importing
         Then search_name has no entry for N1
         When sending search query "23 Rose Street"
@@ -232,13 +256,15 @@ Feature: Creation of search terms
         Then exactly 0 results are returned
 
     Scenario: An unknown addr:street is ignored
-        Given the scene roads-with-pois
+        Given the grid
+         |    | 1 |  |    |
+         | 10 |   |  | 11 |
         And the places
-         | osm | class   | type   | housenr |  addr+street | geometry |
-         | N1  | place   | house  | 23      |  Lily Street | :p-N1 |
+         | osm | class   | type   | housenr |  addr+street |
+         | N1  | place   | house  | 23      |  Lily Street |
         And the places
          | osm | class   | type        | name+name   | geometry |
-         | W1  | highway | residential | Rose Street | :w-north |
+         | W1  | highway | residential | Rose Street | 10,11    |
         When importing
         Then search_name has no entry for N1
         When sending search query "23 Rose Street"
@@ -249,13 +275,15 @@ Feature: Creation of search terms
         Then exactly 0 results are returned
 
     Scenario: Named POIs get unknown address tags added in the search_name table
-        Given the scene roads-with-pois
+        Given the grid
+         |    | 1 |  |    |
+         | 10 |   |  | 11 |
         And the places
-         | osm | class   | type        | name+name  | housenr | addr+city | geometry |
-         | N1  | place   | house       | Green Moss | 26      | Walltown  | :p-N1 |
+         | osm | class   | type        | name+name  | housenr | addr+city |
+         | N1  | place   | house       | Green Moss | 26      | Walltown  |
         And the places
          | osm | class   | type        | name+name   | geometry |
-         | W1  | highway | residential | Rose Street | :w-north |
+         | W1  | highway | residential | Rose Street | 10,11    |
         When importing
         Then search_name contains
          | object | name_vector | nameaddress_vector |
@@ -282,14 +310,17 @@ Feature: Creation of search terms
          | N1  | Green Moss, 26, Rose Street |
 
     Scenario: Named POI doesn't inherit parent name when addr:place is present only in parent address
-        Given the scene roads-with-pois
+        Given the grid
+         | 100 |    |   |   |    | 101 |
+         |     |    | 1 |   |    |     |
+         | 103 | 10 |   |   | 11 | 102 |
         And the places
-         | osm | class   | type        | name+name  | addr+place | geometry |
-         | N1  | place   | house       | Green Moss | Walltown  | :p-N1 |
+         | osm | class   | type        | name+name  | addr+place |
+         | N1  | place   | house       | Green Moss | Walltown   |
         And the places
          | osm | class   | type        | name+name    | geometry |
-         | W1  | highway | residential | Rose Street  | :w-north |
-         | N2  | place   | suburb      | Strange Town | :p-N1 |
+         | W1  | highway | residential | Rose Street  | 10,11    |
+         | R1  | place   | suburb      | Strange Town | (100,101,102,103,100) |
         When importing
         When sending search query "Green Moss, Rose Street, Walltown"
         Then exactly 0 result is returned
@@ -299,60 +330,71 @@ Feature: Creation of search terms
          | N1  | Green Moss, Walltown, Strange Town |
 
     Scenario: Named POIs inherit address from parent
-        Given the scene roads-with-pois
+        Given the grid
+         |    | 1 |  |    |
+         | 10 |   |  | 11 |
         And the places
          | osm | class   | type        | name     | geometry |
-         | N1  | place   | house       | foo      | :p-N1 |
-         | W1  | highway | residential | the road | :w-north |
+         | N1  | place   | house       | foo      | 1        |
+         | W1  | highway | residential | the road | 10,11    |
         When importing
         Then search_name contains
          | object | name_vector | nameaddress_vector |
          | N1     | foo         | #the road |
 
     Scenario: Some addr: tags are added to address
-        Given the scene roads-with-pois
+        Given the grid
+         |    | 2 | 3 |    |
+         | 10 |   |   | 11 |
         And the places
-         | osm | class   | type        | name     | geometry |
-         | N2  | place   | city        | bonn     | 81 81 |
-         | N3  | place   | suburb      | smalltown| 80 81 |
+         | osm | class   | type        | name     |
+         | N2  | place   | city        | bonn     |
+         | N3  | place   | suburb      | smalltown|
         And the named places
          | osm | class   | type    | addr+city | addr+municipality | addr+suburb | geometry |
-         | W1  | highway | service | bonn      | New York          | Smalltown   | :w-north |
+         | W1  | highway | service | bonn      | New York          | Smalltown   | 10,11    |
         When importing
         Then search_name contains
          | object | nameaddress_vector |
          | W1     | bonn, new, york, smalltown |
 
     Scenario: A known addr:* tag is added even if the name is unknown
-        Given the scene roads-with-pois
+        Given the grid
+         | 10 | | | | 11 |
         And the places
          | osm | class   | type        | name | addr+city | geometry |
-         | W1  | highway | residential | Road | Nandu     | :w-north |
+         | W1  | highway | residential | Road | Nandu     | 10,11    |
         When importing
         Then search_name contains
          | object | nameaddress_vector |
          | W1     | nandu |
 
     Scenario: addr:postcode is not added to the address terms
-        Given the scene roads-with-pois
+        Given the grid with origin DE
+         |    | 1 |  |    |
+         | 10 |   |  | 11 |
         And the places
-         | osm | class   | type        | name+ref  | geometry |
-         | N1  | place   | state       | 12345     | 80 80 |
+         | osm | class   | type        | name+ref  |
+         | N1  | place   | state       | 12345     |
         And the named places
          | osm | class   | type        | addr+postcode | geometry |
-         | W1  | highway | residential | 12345 | :w-north |
+         | W1  | highway | residential | 12345         | 10,11    |
         When importing
         Then search_name contains not
          | object | nameaddress_vector |
          | W1     | 12345 |
 
     Scenario: a linked place does not show up in search name
+        Given the 0.01 grid
+         | 10 |   | 11 |
+         |    | 2 |    |
+         | 13 |   | 12 |
         Given the named places
          | osm  | class    | type           | admin | geometry |
-         | R13  | boundary | administrative | 9     | poly-area:0.01 |
+         | R13  | boundary | administrative | 9     | (10,11,12,13,10) |
         And the named places
-         | osm  | class    | type           | geometry |
-         | N2   | place    | city           | 0.1 0.1 |
+         | osm  | class    | type           |
+         | N2   | place    | city           |
         And the relations
          | id | members       | tags+type |
          | 13 | N2:label      | boundary |
@@ -363,12 +405,13 @@ Feature: Creation of search terms
         And search_name has no entry for N2
 
     Scenario: a linked waterway does not show up in search name
-        Given the scene split-road
+        Given the grid
+         | 1 | | 2 | | 3 |
         And the places
          | osm | class    | type  | name  | geometry |
-         | W1  | waterway | river | Rhein | :w-2 |
-         | W2  | waterway | river | Rhein | :w-3 |
-         | R13 | waterway | river | Rhein | :w-1 + :w-2 + :w-3 |
+         | W1  | waterway | river | Rhein | 1,2      |
+         | W2  | waterway | river | Rhein | 2,3      |
+         | R13 | waterway | river | Rhein | 1,2,3    |
         And the relations
          | id | members            | tags+type |
          | 13 | W1,W2:main_stream  | waterway |

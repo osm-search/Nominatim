@@ -2,38 +2,37 @@
 Feature: Update parenting of objects
 
     Scenario: POI inside building inherits addr:street change
-        Given the scene building-on-street-corner
+        Given the grid
+         | 10 |  |   |  |   |   |   | 11 |
+         |    |  | 5 |  |   | 6 |   |    |
+         |    |  |   |  |   |   |   |    |
+         |    |  |   |  | 1 |   |   |    |
+         | 12 |  | 8 |  |   | 7 |   |    |
         And the named places
-         | osm | class   | type       | geometry |
-         | N1  | amenity | bank       | :n-inner |
-         | N2  | shop    | bakery     | :n-edge-NS |
-         | N3  | shop    | supermarket| :n-edge-WE |
+         | osm | class   | type  |
+         | N1  | amenity | bank  |
         And the places
          | osm | class    | type | street  | housenr | geometry |
-         | W1  | building | yes  | nowhere | 3       | :w-building |
+         | W1  | building | yes  | nowhere | 3       | (5,6,7,8,5) |
         And the places
          | osm | class    | type        | name | geometry |
-         | W2  | highway  | primary     | bar  | :w-WE |
-         | W3  | highway  | residential | foo  | :w-NS |
+         | W2  | highway  | primary     | bar  | 10,11 |
+         | W3  | highway  | residential | foo  | 10,12 |
         When importing
         Then placex contains
          | object | parent_place_id | housenumber |
          | W1     | W2              | 3 |
-         | N1     | W3              | 3 |
-         | N2     | W3              | 3 |
-         | N3     | W2              | 3 |
+         | N1     | W2              | 3 |
         When updating places
          | osm | class    | type | street | addr_place | housenr | geometry    |
-         | W1  | building | yes  | foo    | nowhere    | 3       | :w-building |
+         | W1  | building | yes  | foo    | nowhere    | 3       | (5,6,7,8,5) |
         And updating places
-         | osm | class   | type       | name | geometry |
-         | N3  | shop    | supermarket| well | :n-edge-WE |
+         | osm | class   | type | name |
+         | N1  | amenity | bank | well |
         Then placex contains
          | object | parent_place_id | housenumber |
          | W1     | W3              | 3 |
          | N1     | W3              | 3 |
-         | N2     | W3              | 3 |
-         | N3     | W3              | 3 |
 
 
     Scenario: Housenumber is reparented when street gets name matching addr:street

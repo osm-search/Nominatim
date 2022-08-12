@@ -79,7 +79,7 @@ When running the import you may get a version mismatch:
 
 pg_config seems to use bad includes sometimes when multiple versions
 of PostgreSQL are available in the system. Make sure you remove the
-server development libraries (`postgresql-server-dev-9.5` on Ubuntu)
+server development libraries (`postgresql-server-dev-13` on Ubuntu)
 and recompile (`cmake .. && make`).
 
 
@@ -159,9 +159,6 @@ by everybody, e.g.
 ```
 
 Try `chmod a+r nominatim.so; chmod a+x nominatim.so`.
-
-When running SELinux, make sure that the
-[context is set up correctly](../appendix/Install-on-Centos-8.md#adding-selinux-security-settings).
 
 When you recently updated your operating system, updated PostgreSQL to
 a new version or moved files (e.g. the build directory) you should

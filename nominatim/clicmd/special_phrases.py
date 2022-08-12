@@ -1,13 +1,22 @@
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# This file is part of Nominatim. (https://nominatim.org)
+#
+# Copyright (C) 2022 by the Nominatim developer community.
+# For a full list of authors see the git log.
 """
     Implementation of the 'special-phrases' command.
 """
+import argparse
 import logging
 from pathlib import Path
+
 from nominatim.errors import UsageError
 from nominatim.db.connection import connect
-from nominatim.tools.special_phrases.sp_importer import SPImporter
+from nominatim.tools.special_phrases.sp_importer import SPImporter, SpecialPhraseLoader
 from nominatim.tools.special_phrases.sp_wiki_loader import SPWikiLoader
 from nominatim.tools.special_phrases.sp_csv_loader import SPCsvLoader
+from nominatim.clicmd.args import NominatimArgs
 
 LOG = logging.getLogger()
 
@@ -43,8 +52,8 @@ class ImportSpecialPhrases:
     with custom rules into the project directory or by using the `--config`
     option to point to another configuration file.
     """
-    @staticmethod
-    def add_args(parser):
+
+    def add_args(self, parser: argparse.ArgumentParser) -> None:
         group = parser.add_argument_group('Input arguments')
         group.add_argument('--import-from-wiki', action='store_true',
                            help='Import special phrases from the OSM wiki to the database')
@@ -52,26 +61,24 @@ class ImportSpecialPhrases:
                            help='Import special phrases from a CSV file')
         group.add_argument('--no-replace', action='store_true',
                            help='Keep the old phrases and only add the new ones')
-        group.add_argument('--config', action='store',
-                           help='Configuration file for black/white listing '
-                                '(default: phrase-settings.json)')
 
-    @staticmethod
-    def run(args):
+
+    def run(self, args: NominatimArgs) -> int:
+
         if args.import_from_wiki:
-            ImportSpecialPhrases.start_import(args, SPWikiLoader(args.config))
+            self.start_import(args, SPWikiLoader(args.config))
 
         if args.import_from_csv:
             if not Path(args.import_from_csv).is_file():
                 LOG.fatal("CSV file '%s' does not exist.", args.import_from_csv)
                 raise UsageError('Cannot access file.')
 
-            ImportSpecialPhrases.start_import(args, SPCsvLoader(args.import_from_csv))
+            self.start_import(args, SPCsvLoader(args.import_from_csv))
 
         return 0
 
-    @staticmethod
-    def start_import(args, loader):
+
+    def start_import(self, args: NominatimArgs, loader: SpecialPhraseLoader) -> None:
         """
             Create the SPImporter object containing the right
             sp loader and then start the import of special phrases.

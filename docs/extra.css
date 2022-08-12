@@ -14,10 +14,11 @@ th {
     background-color: #eee;
 }
 
-/* Indentation for mkdocstrings.
-div.doc-contents:not(.first) {
-  padding-left: 25px;
-  border-left: 4px solid rgba(230, 230, 230);
-  margin-bottom: 60px;
-}*/
+.doc-object h6 {
+    margin-bottom: 0.8em;
+    font-size: 120%;
+}
 
+.doc-object {
+    margin-bottom: 1.3em;
+}

@@ -70,7 +70,7 @@ The update application keeps running forever and retrieves and applies
 new updates from the server as they are published.
 
 You can run this command as a simple systemd service. Create a service
-description like that in `/etc/systemd/system/nominatim-update.service`:
+description like that in `/etc/systemd/system/nominatim-updates.service`:
 
 ```
 [Unit]
@@ -122,14 +122,71 @@ cd /srv/nominatim
 
 while true; do
   nominatim replication --once
-  if [ -f "/srv/nominatim/schedule-mainenance" ]; then
-    rm /srv/nominatim/schedule-mainenance
+  if [ -f "/srv/nominatim/schedule-maintenance" ]; then
+    rm /srv/nominatim/schedule-maintenance
     nominatim refresh --postcodes
   fi
 done
 ```
 
-A cron job then creates the file `/srv/nominatim/need-mainenance` once per night.
+A cron job then creates the file `/srv/nominatim/schedule-maintenance` once per night.
+
+##### One-time mode with systemd
+
+You can run the one-time mode with a systemd timer & service.
+
+Create a timer description like `/etc/systemd/system/nominatim-updates.timer`:
+
+```
+[Unit]
+Description=Timer to start updates of Nominatim
+
+[Timer]
+OnActiveSec=2
+OnUnitActiveSec=1min
+Unit=nominatim-updates.service
+
+[Install]
+WantedBy=multi-user.target
+```
+
+And then a similar service definition: `/etc/systemd/system/nominatim-updates.service`:
+
+```
+[Unit]
+Description=Single updates of Nominatim
+
+[Service]
+WorkingDirectory=/srv/nominatim
+ExecStart=nominatim replication --once
+StandardOutput=append:/var/log/nominatim-updates.log
+StandardError=append:/var/log/nominatim-updates.error.log
+User=nominatim
+Group=nominatim
+Type=simple
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Replace the `WorkingDirectory` with your project directory. Also adapt user and
+group names as required. `OnUnitActiveSec` defines how often the individual
+update command is run.
+
+Now activate the service and start the updates:
+
+```
+sudo systemctl daemon-reload
+sudo systemctl enable nominatim-updates.timer
+sudo systemctl start nominatim-updates.timer
+```
+
+You can stop future data updates, while allowing any current, in-progress
+update steps to finish, by running `sudo systemctl stop
+nominatim-updates.timer` and waiting until `nominatim-updates.service` isn't
+running (`sudo systemctl is-active nominatim-updates.service`). Current output
+from the update can be seen like above (`systemctl status
+nominatim-updates.service`).
 
 
 #### Catch-up mode
@@ -158,7 +215,7 @@ replication catch-up at whatever interval you desire.
     a replication source with an update frequency that is an order of magnitude
     lower. For example, if you want to update once a day, use an hourly updated
     source. This makes sure that you don't miss an entire day of updates when
-    the source is unexpectely late to publish its update.
+    the source is unexpectedly late to publish its update.
 
     If you want to use the source with the same update frequency (e.g. a daily
     updated source with daily updates), use the

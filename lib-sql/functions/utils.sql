@@ -1,3 +1,10 @@
+-- SPDX-License-Identifier: GPL-2.0-only
+--
+-- This file is part of Nominatim. (https://nominatim.org)
+--
+-- Copyright (C) 2022 by the Nominatim developer community.
+-- For a full list of authors see the git log.
+
 -- Assorted helper functions for the triggers.
 
 CREATE OR REPLACE FUNCTION geometry_sector(partition INTEGER, place geometry)
@@ -162,15 +169,6 @@ BEGIN
   END LOOP;
 
 -- RAISE WARNING 'near osm fallback: %', ST_AsText(place_centre);
-
-  -- 
-  FOR nearcountry IN
-    SELECT country_code from country_osm_grid
-    WHERE st_dwithin(geometry, place_centre, 0.5)
-    ORDER BY st_distance(geometry, place_centre) asc, area asc limit 1
-  LOOP
-    RETURN nearcountry.country_code;
-  END LOOP;
 
   RETURN NULL;
 END;

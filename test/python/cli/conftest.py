@@ -1,3 +1,9 @@
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# This file is part of Nominatim. (https://nominatim.org)
+#
+# Copyright (C) 2022 by the Nominatim developer community.
+# For a full list of authors see the git log.
 import pytest
 
 import nominatim.cli
@@ -24,6 +30,7 @@ class DummyTokenizer:
         self.update_sql_functions_called = False
         self.finalize_import_called = False
         self.update_statistics_called = False
+        self.update_word_tokens_called = False
 
     def update_sql_functions(self, *args):
         self.update_sql_functions_called = True
@@ -33,6 +40,9 @@ class DummyTokenizer:
 
     def update_statistics(self):
         self.update_statistics_called = True
+
+    def update_word_tokens(self):
+        self.update_word_tokens_called = True
 
 
 @pytest.fixture

@@ -1,3 +1,9 @@
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# This file is part of Nominatim. (https://nominatim.org)
+#
+# Copyright (C) 2022 by the Nominatim developer community.
+# For a full list of authors see the git log.
 """
 Tests for functions to import a new database.
 """
@@ -173,7 +179,7 @@ def test_truncate_database_tables(temp_db_conn, temp_db_cursor, table_factory, w
 
 @pytest.mark.parametrize("threads", (1, 5))
 def test_load_data(dsn, place_row, placex_table, osmline_table,
-                   word_table, temp_db_cursor, threads):
+                   temp_db_cursor, threads):
     for func in ('precompute_words', 'getorcreate_housenumber_id', 'make_standard_name'):
         temp_db_cursor.execute(f"""CREATE FUNCTION {func} (src TEXT)
                                   RETURNS TEXT AS $$ SELECT 'a'::TEXT $$ LANGUAGE SQL

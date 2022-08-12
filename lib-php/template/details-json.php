@@ -1,4 +1,12 @@
 <?php
+/**
+ * SPDX-License-Identifier: GPL-2.0-only
+ *
+ * This file is part of Nominatim. (https://nominatim.org)
+ *
+ * Copyright (C) 2022 by the Nominatim developer community.
+ * For a full list of authors see the git log.
+ */
 
 $aPlaceDetails = array();
 
@@ -40,7 +48,7 @@ $aPlaceDetails['centroid'] = array(
                               'coordinates' => array( (float) $aPointDetails['lon'], (float) $aPointDetails['lat'] )
                              );
 
-$aPlaceDetails['geometry'] = json_decode($aPointDetails['asgeojson']);
+$aPlaceDetails['geometry'] = json_decode($aPointDetails['asgeojson'], true);
 
 $funcMapAddressLine = function ($aFull) {
     return array(

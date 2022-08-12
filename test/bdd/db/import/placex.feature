@@ -55,75 +55,14 @@ Feature: Import into placex
         Then placex has no entry for N1
 
     Scenario: postcode boundary without postcode is dropped
+        Given the 0.01 grid
+          | 1 | 2 |
+          | 3 |   |
         Given the places
-          | osm | class    | type        | name+ref | geometry |
-          | R1  | boundary | postal_code | 554476   | poly-area:0.1 |
+          | osm | class    | type        | name+ref | geometry  |
+          | R1  | boundary | postal_code | 554476   | (1,2,3,1) |
         When importing
         Then placex has no entry for R1
-
-    Scenario: search and address ranks for GB post codes correctly assigned
-        Given the places
-         | osm  | class | type     | postcode | geometry |
-         | N1   | place | postcode | E45 2CD  | country:gb |
-         | N2   | place | postcode | E45 2    | country:gb |
-         | N3   | place | postcode | Y45      | country:gb |
-        When importing
-        Then placex contains
-         | object | addr+postcode | country_code | rank_search | rank_address |
-         | N1     | E45 2CD       | gb           | 25          | 5 |
-         | N2     | E45 2         | gb           | 23          | 5 |
-         | N3     | Y45           | gb           | 21          | 5 |
-
-    Scenario: wrongly formatted GB postcodes are down-ranked
-        Given the places
-         | osm  | class | type     | postcode | geometry |
-         | N1   | place | postcode | EA452CD  | country:gb |
-         | N2   | place | postcode | E45 23   | country:gb |
-        When importing
-        Then placex contains
-         | object | country_code | rank_search | rank_address |
-         | N1     | gb           | 30          | 30 |
-         | N2     | gb           | 30          | 30 |
-
-    Scenario: search and address rank for DE postcodes correctly assigned
-        Given the places
-         | osm | class | type     | postcode | geometry |
-         | N1  | place | postcode | 56427    | country:de |
-         | N2  | place | postcode | 5642     | country:de |
-         | N3  | place | postcode | 5642A    | country:de |
-         | N4  | place | postcode | 564276   | country:de |
-        When importing
-        Then placex contains
-         | object | country_code | rank_search | rank_address |
-         | N1     | de           | 21          | 11 |
-         | N2     | de           | 30          | 30 |
-         | N3     | de           | 30          | 30 |
-         | N4     | de           | 30          | 30 |
-
-    Scenario: search and address rank for other postcodes are correctly assigned
-        Given the places
-         | osm | class | type     | postcode | geometry |
-         | N1  | place | postcode | 1        | country:ca |
-         | N2  | place | postcode | X3       | country:ca |
-         | N3  | place | postcode | 543      | country:ca |
-         | N4  | place | postcode | 54dc     | country:ca |
-         | N5  | place | postcode | 12345    | country:ca |
-         | N6  | place | postcode | 55TT667  | country:ca |
-         | N7  | place | postcode | 123-65   | country:ca |
-         | N8  | place | postcode | 12 445 4 | country:ca |
-         | N9  | place | postcode | A1:bc10  | country:ca |
-        When importing
-        Then placex contains
-         | object | country_code | rank_search | rank_address |
-         | N1     | ca           | 21          | 11 |
-         | N2     | ca           | 21          | 11 |
-         | N3     | ca           | 21          | 11 |
-         | N4     | ca           | 21          | 11 |
-         | N5     | ca           | 21          | 11 |
-         | N6     | ca           | 21          | 11 |
-         | N7     | ca           | 25          | 11 |
-         | N8     | ca           | 25          | 11 |
-         | N9     | ca           | 25          | 11 |
 
     Scenario: search and address ranks for boundaries are correctly assigned
         Given the named places
@@ -155,18 +94,19 @@ Feature: Import into placex
           | R41    | 8           | 0 |
 
     Scenario: search and address ranks for highways correctly assigned
-        Given the scene roads-with-pois
+        Given the grid
+          | 10 | 1 | 11 |   | 12 |   | 13 |  | 14 | | 15 |   | 16 |
         And the places
           | osm | class    | type  |
           | N1  | highway  | bus_stop |
         And the places
           | osm | class    | type         | geometry |
-          | W1  | highway  | primary      | :w-south |
-          | W2  | highway  | secondary    | :w-south |
-          | W3  | highway  | tertiary     | :w-south |
-          | W4  | highway  | residential  | :w-north |
-          | W5  | highway  | unclassified | :w-north |
-          | W6  | highway  | something    | :w-north |
+          | W1  | highway  | primary      | 10,11 |
+          | W2  | highway  | secondary    | 11,12 |
+          | W3  | highway  | tertiary     | 12,13 |
+          | W4  | highway  | residential  | 13,14 |
+          | W5  | highway  | unclassified | 14,15 |
+          | W6  | highway  | something    | 15,16 |
         When importing
         Then placex contains
           | object | rank_search | rank_address |
@@ -179,15 +119,18 @@ Feature: Import into placex
           | W6     | 30          | 30 |
 
     Scenario: rank and inclusion of landuses
+        Given the 0.4 grid
+          | 1 | 2 | | | | | | 5 |
+          | 4 | 3 | | | | | | 6 |
         Given the named places
           | osm | class   | type |
           | N2  | landuse | residential |
         And the named places
-          | osm | class   | type        | geometry |
-          | W2  | landuse | residential | 1 1, 1 1.1 |
-          | W4  | landuse | residential | poly-area:0.1 |
-          | R2  | landuse | residential | poly-area:0.05 |
-          | R3  | landuse | forrest     | poly-area:0.5 |
+          | osm | class   | type        | geometry    |
+          | W2  | landuse | residential | 1,2,5       |
+          | W4  | landuse | residential | (1,4,3,1)   |
+          | R2  | landuse | residential | (1,2,3,4,1) |
+          | R3  | landuse | forrest     | (1,5,6,4,1) |
         When importing
         Then placex contains
           | object | rank_search | rank_address |
@@ -198,19 +141,22 @@ Feature: Import into placex
           | R3     | 22          |  0 |
 
     Scenario: rank and inclusion of naturals
+        Given the 0.4 grid
+          | 1 | 2 | | | | | | 5 |
+          | 4 | 3 | | | | | | 6 |
        Given the named places
           | osm | class   | type |
           | N2  | natural | peak |
           | N4  | natural | volcano |
           | N5  | natural | foobar |
        And the named places
-          | osm | class   | type           | geometry |
-          | W2  | natural | mountain_range | 12 12,11 11 |
-          | W3  | natural | foobar         | 13 13,13.1 13 |
-          | R3  | natural | volcano        | poly-area:0.1 |
-          | R4  | natural | foobar         | poly-area:0.5 |
-          | R5  | natural | sea            | poly-area:5.0 |
-          | R6  | natural | sea            | poly-area:0.01 |
+          | osm | class   | type           | geometry    |
+          | W2  | natural | mountain_range | 1,2,5       |
+          | W3  | natural | foobar         | 2,3         |
+          | R3  | natural | volcano        | (1,2,4,1)   |
+          | R4  | natural | foobar         | (1,2,3,4,1) |
+          | R5  | natural | sea            | (1,2,5,6,3,4,1) |
+          | R6  | natural | sea            | (2,3,4,2)   |
        When importing
        Then placex contains
           | object | rank_search | rank_address |
@@ -225,16 +171,19 @@ Feature: Import into placex
           | W3     | 22          | 0 |
 
     Scenario: boundary ways for countries and states are ignored
+        Given the 0.3 grid
+          | 1 | 2 |
+          | 4 | 3 |
         Given the named places
           | osm | class    | type           | admin | geometry |
-          | W4  | boundary | administrative | 2     | poly-area:0.1 |
-          | R4  | boundary | administrative | 2     | poly-area:0.1 |
-          | W5  | boundary | administrative | 3     | poly-area:0.1 |
-          | R5  | boundary | administrative | 3     | poly-area:0.1 |
-          | W6  | boundary | administrative | 4     | poly-area:0.1 |
-          | R6  | boundary | administrative | 4     | poly-area:0.1 |
-          | W7  | boundary | administrative | 5     | poly-area:0.1 |
-          | R7  | boundary | administrative | 5     | poly-area:0.1 |
+          | W4  | boundary | administrative | 2     | (1,2,3,4,1) |
+          | R4  | boundary | administrative | 2     | (1,2,3,4,1) |
+          | W5  | boundary | administrative | 3     | (1,2,3,4,1) |
+          | R5  | boundary | administrative | 3     | (1,2,3,4,1) |
+          | W6  | boundary | administrative | 4     | (1,2,3,4,1) |
+          | R6  | boundary | administrative | 4     | (1,2,3,4,1) |
+          | W7  | boundary | administrative | 5     | (1,2,3,4,1) |
+          | R7  | boundary | administrative | 5     | (1,2,3,4,1) |
        When importing
        Then placex contains exactly
            | object |

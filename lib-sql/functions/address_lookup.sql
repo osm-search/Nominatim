@@ -1,3 +1,10 @@
+-- SPDX-License-Identifier: GPL-2.0-only
+--
+-- This file is part of Nominatim. (https://nominatim.org)
+--
+-- Copyright (C) 2022 by the Nominatim developer community.
+-- For a full list of authors see the git log.
+
 -- Functions for returning address information for a place.
 
 DROP TYPE IF EXISTS addressline CASCADE;
@@ -36,8 +43,8 @@ BEGIN
     END IF;
   END LOOP;
 
-  -- anything will do as a fallback - just take the first name type thing there is
-  RETURN trim((avals(name))[1]);
+  -- as a fallback - take the last element since it is the default name
+  RETURN trim((avals(name))[array_length(avals(name), 1)]);
 END;
 $$
 LANGUAGE plpgsql IMMUTABLE;
@@ -101,6 +108,7 @@ CREATE OR REPLACE FUNCTION get_addressdata(in_place_id BIGINT, in_housenumber IN
 DECLARE
   place addressdata_place;
   location RECORD;
+  country RECORD;
   current_rank_address INTEGER;
   location_isaddress BOOLEAN;
 BEGIN
@@ -191,6 +199,16 @@ BEGIN
       WHERE place_id = place.place_id
   LOOP
 --RAISE WARNING '%',location;
+    -- mix in default names for countries
+    IF location.rank_address = 4 and place.country_code is not NULL THEN
+      FOR country IN
+        SELECT coalesce(name, ''::hstore) as name FROM country_name
+          WHERE country_code = place.country_code LIMIT 1
+      LOOP
+        place.name := country.name || place.name;
+      END LOOP;
+    END IF;
+
     IF location.rank_address < 4 THEN
       -- no country locations for ranks higher than country
       place.country_code := NULL::varchar(2);
@@ -265,7 +283,8 @@ BEGIN
   -- If no country was included yet, add the name information from country_name.
   IF current_rank_address > 4 THEN
     FOR location IN
-      SELECT name FROM country_name WHERE country_code = place.country_code LIMIT 1
+      SELECT name || coalesce(derived_name, ''::hstore) as name FROM country_name
+        WHERE country_code = place.country_code LIMIT 1
     LOOP
 --RAISE WARNING '% % %',current_rank_address,searchcountrycode,countryname;
       RETURN NEXT ROW(null, null, null, location.name, 'place', 'country', NULL,
@@ -299,6 +318,11 @@ BEGIN
 
   IF place.postcode is not null THEN
     location := ROW(null, null, null, hstore('ref', place.postcode), 'place',
+                    'postcode', null, null, false, true, 5, 0)::addressline;
+    RETURN NEXT location;
+  ELSEIF place.address is not null and place.address ? 'postcode'
+         and not place.address->'postcode' SIMILAR TO '%(,|;)%' THEN
+    location := ROW(null, null, null, hstore('ref', place.address->'postcode'), 'place',
                     'postcode', null, null, false, true, 5, 0)::addressline;
     RETURN NEXT location;
   END IF;

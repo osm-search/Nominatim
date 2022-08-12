@@ -1,3 +1,9 @@
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# This file is part of Nominatim. (https://nominatim.org)
+#
+# Copyright (C) 2022 by the Nominatim developer community.
+# For a full list of authors see the git log.
 """
 Test for loading dotenv configuration.
 """
@@ -165,6 +171,23 @@ def test_get_int_empty(make_config):
 
     with pytest.raises(UsageError):
         config.get_int('DATABASE_MODULE_PATH')
+
+
+@pytest.mark.parametrize("value,outlist", [('sd', ['sd']),
+                                           ('dd,rr', ['dd', 'rr']),
+                                           (' a , b ', ['a', 'b'])])
+def test_get_str_list_success(make_config, monkeypatch, value, outlist):
+    config = make_config()
+
+    monkeypatch.setenv('NOMINATIM_MYLIST', value)
+
+    assert config.get_str_list('MYLIST') == outlist
+
+
+def test_get_str_list_empty(make_config):
+    config = make_config()
+
+    assert config.get_str_list('LANGUAGES') is None
 
 
 def test_get_path_empty(make_config):

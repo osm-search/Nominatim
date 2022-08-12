@@ -1,4 +1,12 @@
 <?php
+/**
+ * SPDX-License-Identifier: GPL-2.0-only
+ *
+ * This file is part of Nominatim. (https://nominatim.org)
+ *
+ * Copyright (C) 2022 by the Nominatim developer community.
+ * For a full list of authors see the git log.
+ */
 
 namespace Nominatim;
 
@@ -228,7 +236,7 @@ class SearchDescription
      * Add the given full-word token to the list of terms to search for in the
      * name.
      *
-     * @param interger iId    ID of term to add.
+     * @param integer iId    ID of term to add.
      * @param bool bRareName  True if the term is infrequent enough to not
      *                        require other constraints for efficient search.
      */
@@ -256,6 +264,8 @@ class SearchDescription
     {
         if (empty($this->aName)) {
             $this->bNameNeedsAddress = $bNeedsAddress;
+        } elseif ($bSearchable && count($this->aName) >= 2) {
+            $this->bNameNeedsAddress = false;
         } else {
             $this->bNameNeedsAddress &= $bNeedsAddress;
         }
@@ -377,7 +387,7 @@ class SearchDescription
      *
      * @return mixed[] An array with two fields: IDs contains the list of
      *                 matching place IDs and houseNumber the houseNumber
-     *                 if appicable or -1 if not.
+     *                 if applicable or -1 if not.
      */
     public function query(&$oDB, $iMinRank, $iMaxRank, $iLimit)
     {
@@ -411,28 +421,6 @@ class SearchDescription
                 $iMaxRank,
                 $iLimit
             );
-
-            // Now search for housenumber, if housenumber provided. Can be zero.
-            if (($this->sHouseNumber || $this->sHouseNumber === '0') && !empty($aResults)) {
-                $aHnResults = $this->queryHouseNumber($oDB, $aResults);
-
-                // Downgrade the rank of the street results, they are missing
-                // the housenumber. Also drop POI places (rank 30) here, they
-                // cannot be a parent place and therefore must not be shown
-                // as a result for a search with a missing housenumber.
-                foreach ($aResults as $oRes) {
-                    if ($oRes->iAddressRank < 28) {
-                        if ($oRes->iAddressRank >= 26) {
-                            $oRes->iResultRank++;
-                        } else {
-                            $oRes->iResultRank += 2;
-                        }
-                        $aHnResults[$oRes->iId] = $oRes;
-                    }
-                }
-
-                $aResults = $aHnResults;
-            }
 
             // finally get POIs if requested
             if ($this->sClass && !empty($aResults)) {
@@ -579,44 +567,6 @@ class SearchDescription
         $aTerms = array();
         $aOrder = array();
 
-        // Sort by existence of the requested house number but only if not
-        // too many results are expected for the street, i.e. if the result
-        // will be narrowed down by an address. Remember that with ordering
-        // every single result has to be checked.
-        if ($this->sHouseNumber && ($this->bRareName || !empty($this->aAddress) || $this->sPostcode)) {
-            $sHouseNumberRegex = $oDB->getDBQuoted('\\\\m'.$this->sHouseNumber.'\\\\M');
-
-            // Housenumbers on streets and places.
-            $sChildHnr = 'SELECT * FROM placex WHERE parent_place_id = search_name.place_id';
-            $sChildHnr .= '    AND housenumber ~* E'.$sHouseNumberRegex;
-            // Interpolations on streets and places.
-            if (preg_match('/^[0-9]+$/', $this->sHouseNumber)) {
-                $sIpolHnr = 'WHERE parent_place_id = search_name.place_id ';
-                $sIpolHnr .= '  AND startnumber is not NULL';
-                $sIpolHnr .= '    AND '.$this->sHouseNumber.'>=startnumber ';
-                $sIpolHnr .= '    AND '.$this->sHouseNumber.'<=endnumber ';
-            } else {
-                $sIpolHnr = false;
-            }
-            // Housenumbers on the object iteself for unlisted places.
-            $sSelfHnr = 'SELECT * FROM placex WHERE place_id = search_name.place_id';
-            $sSelfHnr .= '    AND housenumber ~* E'.$sHouseNumberRegex;
-
-            $sSql = '(CASE WHEN address_rank = 30 THEN EXISTS('.$sSelfHnr.') ';
-            $sSql .= ' ELSE EXISTS('.$sChildHnr.') ';
-            if ($sIpolHnr) {
-                $sSql .= 'OR EXISTS(SELECT * FROM location_property_osmline '.$sIpolHnr.') ';
-                if (CONST_Use_US_Tiger_Data) {
-                    $sSql .= "OR (country_code = 'us' AND ";
-                    $sSql .= '    EXISTS(SELECT * FROM location_property_tiger '.$sIpolHnr.')) ';
-                }
-            }
-            $sSql .= 'END) DESC';
-
-
-            $aOrder[] = $sSql;
-        }
-
         if (!empty($this->aName)) {
             $aTerms[] = 'name_vector @> '.$oDB->getArraySQL($this->aName);
         }
@@ -662,10 +612,6 @@ class SearchDescription
             $aTerms[] = 'centroid && '.$this->oContext->sqlViewboxSmall;
         }
 
-        if ($this->oContext->hasNearPoint()) {
-            $aOrder[] = $this->oContext->distanceSQL('centroid');
-        }
-
         if ($this->sHouseNumber) {
             $sImportanceSQL = '- abs(26 - address_rank) + 3';
         } else {
@@ -688,122 +634,128 @@ class SearchDescription
             $sExactMatchSQL = '0::int as exactmatch';
         }
 
-        if ($this->sHouseNumber || $this->sClass) {
-            $iLimit = 40;
+        if (empty($aTerms)) {
+            return array();
         }
 
-        $aResults = array();
+        if ($this->hasHousenumber()) {
+            $sHouseNumberRegex = $oDB->getDBQuoted('\\\\m'.$this->sHouseNumber.'\\\\M');
 
-        if (!empty($aTerms)) {
-            $sSQL = 'SELECT place_id, address_rank,'.$sExactMatchSQL;
+            // Housenumbers on streets and places.
+            $sPlacexSql = 'SELECT array_agg(place_id) FROM placex';
+            $sPlacexSql .= ' WHERE parent_place_id = sin.place_id AND sin.address_rank < 30';
+            $sPlacexSql .= $this->oContext->excludeSQL(' AND place_id');
+            $sPlacexSql .= '       and housenumber ~* E'.$sHouseNumberRegex;
+
+            // Interpolations on streets and places.
+            $sInterpolSql = 'null';
+            $sTigerSql = 'null';
+            if (preg_match('/^[0-9]+$/', $this->sHouseNumber)) {
+                $sIpolHnr = 'WHERE parent_place_id = sin.place_id ';
+                $sIpolHnr .= '  AND startnumber is not NULL AND sin.address_rank < 30';
+                $sIpolHnr .= '  AND '.$this->sHouseNumber.' between startnumber and endnumber';
+                $sIpolHnr .= '  AND ('.$this->sHouseNumber.' - startnumber) % step = 0';
+
+                $sInterpolSql = 'SELECT array_agg(place_id) FROM location_property_osmline '.$sIpolHnr;
+                if (CONST_Use_US_Tiger_Data) {
+                    $sTigerSql = 'SELECT array_agg(place_id) FROM location_property_tiger '.$sIpolHnr;
+                    $sTigerSql .= "      and sin.country_code = 'us'";
+                }
+            }
+
+            if ($this->sClass) {
+                $iLimit = 40;
+            }
+
+            $sSelfHnr = 'SELECT * FROM placex WHERE place_id = search_name.place_id';
+            $sSelfHnr .= '    AND housenumber ~* E'.$sHouseNumberRegex;
+
+            $aTerms[] = '(address_rank < 30 or exists('.$sSelfHnr.'))';
+
+
+            $sSQL = 'SELECT sin.*, ';
+            $sSQL .=        '('.$sPlacexSql.') as placex_hnr, ';
+            $sSQL .=        '('.$sInterpolSql.') as interpol_hnr, ';
+            $sSQL .=        '('.$sTigerSql.') as tiger_hnr ';
+            $sSQL .= ' FROM (';
+            $sSQL .= '    SELECT place_id, address_rank, country_code,'.$sExactMatchSQL.',';
+            $sSQL .= '            CASE WHEN importance = 0 OR importance IS NULL';
+            $sSQL .= '               THEN 0.75001-(search_rank::float/40) ELSE importance END as importance';
+            $sSQL .= '     FROM search_name';
+            $sSQL .= '     WHERE '.join(' and ', $aTerms);
+            $sSQL .= '     ORDER BY '.join(', ', $aOrder);
+            $sSQL .= '     LIMIT 40000';
+            $sSQL .= ') as sin';
+            $sSQL .= ' ORDER BY address_rank = 30 desc, placex_hnr, interpol_hnr, tiger_hnr,';
+            $sSQL .= '          importance';
+            $sSQL .= ' LIMIT '.$iLimit;
+        } else {
+            if ($this->sClass) {
+                $iLimit = 40;
+            }
+
+            $sSQL = 'SELECT place_id, address_rank, '.$sExactMatchSQL;
             $sSQL .= ' FROM search_name';
             $sSQL .= ' WHERE '.join(' and ', $aTerms);
             $sSQL .= ' ORDER BY '.join(', ', $aOrder);
             $sSQL .= ' LIMIT '.$iLimit;
-
-            Debug::printSQL($sSQL);
-
-            $aDBResults = $oDB->getAll($sSQL, null, 'Could not get places for search terms.');
-
-            foreach ($aDBResults as $aResult) {
-                $oResult = new Result($aResult['place_id']);
-                $oResult->iExactMatches = $aResult['exactmatch'];
-                $oResult->iAddressRank = $aResult['address_rank'];
-                $aResults[$aResult['place_id']] = $oResult;
-            }
         }
-
-        return $aResults;
-    }
-
-    private function queryHouseNumber(&$oDB, $aRoadPlaceIDs)
-    {
-        $aResults = array();
-        $sRoadPlaceIDs = Result::joinIdsByTableMaxRank(
-            $aRoadPlaceIDs,
-            Result::TABLE_PLACEX,
-            27
-        );
-        $sPOIPlaceIDs = Result::joinIdsByTableMinRank(
-            $aRoadPlaceIDs,
-            Result::TABLE_PLACEX,
-            30
-        );
-
-        $aIDCondition = array();
-        if ($sRoadPlaceIDs) {
-            $aIDCondition[] = 'parent_place_id in ('.$sRoadPlaceIDs.')';
-        }
-        if ($sPOIPlaceIDs) {
-            $aIDCondition[] = 'place_id in ('.$sPOIPlaceIDs.')';
-        }
-
-        if (empty($aIDCondition)) {
-            return $aResults;
-        }
-
-        $sHouseNumberRegex = $oDB->getDBQuoted('\\\\m'.$this->sHouseNumber.'\\\\M');
-        $sSQL = 'SELECT place_id FROM placex WHERE';
-        $sSQL .= '  housenumber ~* E'.$sHouseNumberRegex;
-        $sSQL .= ' AND ('.join(' OR ', $aIDCondition).')';
-        $sSQL .= $this->oContext->excludeSQL(' AND place_id');
 
         Debug::printSQL($sSQL);
 
-        // XXX should inherit the exactMatches from its parent
-        foreach ($oDB->getCol($sSQL) as $iPlaceId) {
-            $aResults[$iPlaceId] = new Result($iPlaceId);
-        }
+        $aDBResults = $oDB->getAll($sSQL, null, 'Could not get places for search terms.');
 
-        $bIsIntHouseNumber= (bool) preg_match('/[0-9]+/', $this->sHouseNumber);
-        $iHousenumber = intval($this->sHouseNumber);
-        if ($bIsIntHouseNumber && $sRoadPlaceIDs && empty($aResults)) {
-            // if nothing found, search in the interpolation line table
-            $sSQL = 'SELECT distinct place_id FROM location_property_osmline';
-            $sSQL .= ' WHERE startnumber is not NULL';
-            $sSQL .= '  AND parent_place_id in ('.$sRoadPlaceIDs.') AND (';
-            if ($iHousenumber % 2 == 0) {
-                // If housenumber is even, look for housenumber in streets
-                // with interpolationtype even or all.
-                $sSQL .= "interpolationtype='even'";
-            } else {
-                // Else look for housenumber with interpolationtype odd or all.
-                $sSQL .= "interpolationtype='odd'";
+        $aResults = array();
+
+        foreach ($aDBResults as $aResult) {
+            $oResult = new Result($aResult['place_id']);
+            $oResult->iExactMatches = $aResult['exactmatch'];
+            $oResult->iAddressRank = $aResult['address_rank'];
+
+            $bNeedResult = true;
+            if ($this->hasHousenumber() && $aResult['address_rank'] < 30) {
+                if ($aResult['placex_hnr']) {
+                    foreach (explode(',', substr($aResult['placex_hnr'], 1, -1)) as $sPlaceID) {
+                        $iPlaceID = intval($sPlaceID);
+                        $oHnrResult = new Result($iPlaceID);
+                        $oHnrResult->iExactMatches = $aResult['exactmatch'];
+                        $oHnrResult->iAddressRank = 30;
+                        $aResults[$iPlaceID] = $oHnrResult;
+                        $bNeedResult = false;
+                    }
+                }
+                if ($aResult['interpol_hnr']) {
+                    foreach (explode(',', substr($aResult['interpol_hnr'], 1, -1)) as $sPlaceID) {
+                        $iPlaceID = intval($sPlaceID);
+                        $oHnrResult = new Result($iPlaceID, Result::TABLE_OSMLINE);
+                        $oHnrResult->iExactMatches = $aResult['exactmatch'];
+                        $oHnrResult->iAddressRank = 30;
+                        $oHnrResult->iHouseNumber = intval($this->sHouseNumber);
+                        $aResults[$iPlaceID] = $oHnrResult;
+                        $bNeedResult = false;
+                    }
+                }
+                if ($aResult['tiger_hnr']) {
+                    foreach (explode(',', substr($aResult['tiger_hnr'], 1, -1)) as $sPlaceID) {
+                        $iPlaceID = intval($sPlaceID);
+                        $oHnrResult = new Result($iPlaceID, Result::TABLE_TIGER);
+                        $oHnrResult->iExactMatches = $aResult['exactmatch'];
+                        $oHnrResult->iAddressRank = 30;
+                        $oHnrResult->iHouseNumber = intval($this->sHouseNumber);
+                        $aResults[$iPlaceID] = $oHnrResult;
+                        $bNeedResult = false;
+                    }
+                }
+
+                if ($aResult['address_rank'] < 26) {
+                    $oResult->iResultRank += 2;
+                } else {
+                    $oResult->iResultRank++;
+                }
             }
-            $sSQL .= " or interpolationtype='all') and ";
-            $sSQL .= $iHousenumber.'>=startnumber and ';
-            $sSQL .= $iHousenumber.'<=endnumber';
-            $sSQL .= $this->oContext->excludeSQL(' AND place_id');
 
-            Debug::printSQL($sSQL);
-
-            foreach ($oDB->getCol($sSQL) as $iPlaceId) {
-                $oResult = new Result($iPlaceId, Result::TABLE_OSMLINE);
-                $oResult->iHouseNumber = $iHousenumber;
-                $aResults[$iPlaceId] = $oResult;
-            }
-        }
-
-        // If nothing found then search in Tiger data (location_property_tiger)
-        if (CONST_Use_US_Tiger_Data && $sRoadPlaceIDs && $bIsIntHouseNumber && empty($aResults)) {
-            $sSQL = 'SELECT place_id FROM location_property_tiger';
-            $sSQL .= ' WHERE parent_place_id in ('.$sRoadPlaceIDs.') and (';
-            if ($iHousenumber % 2 == 0) {
-                $sSQL .= "interpolationtype='even'";
-            } else {
-                $sSQL .= "interpolationtype='odd'";
-            }
-            $sSQL .= " or interpolationtype='all') and ";
-            $sSQL .= $iHousenumber.'>=startnumber and ';
-            $sSQL .= $iHousenumber.'<=endnumber';
-            $sSQL .= $this->oContext->excludeSQL(' AND place_id');
-
-            Debug::printSQL($sSQL);
-
-            foreach ($oDB->getCol($sSQL) as $iPlaceId) {
-                $oResult = new Result($iPlaceId, Result::TABLE_TIGER);
-                $oResult->iHouseNumber = $iHousenumber;
-                $aResults[$iPlaceId] = $oResult;
+            if ($bNeedResult) {
+                $aResults[$aResult['place_id']] = $oResult;
             }
         }
 
@@ -855,6 +807,7 @@ class SearchDescription
                 $sSQL = 'SELECT geometry FROM placex';
                 $sSQL .= " WHERE place_id in ($sPlaceIDs)";
                 $sSQL .= "   AND rank_search < $iMaxRank + 5";
+                $sSQL .= '   AND ST_Area(Box2d(geometry)) < 20';
                 $sSQL .= "   AND ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon')";
                 $sSQL .= ' ORDER BY rank_search ASC ';
                 $sSQL .= ' LIMIT 1';

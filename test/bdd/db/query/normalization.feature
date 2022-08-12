@@ -138,10 +138,13 @@ Feature: Import and search of names
          | 0  | N3 |
 
     Scenario: Landuse with name are found
+        Given the grid
+          | 1 | 2 |
+          | 3 |   |
         Given the places
           | osm | class    | type        | name     | geometry |
-          | R1  | natural  | meadow      | landuse1 | (0 0, 1 0, 1 1, 0 1, 0 0) |
-          | R2  | landuse  | industrial  | landuse2 | (0 0, -1 0, -1 -1, 0 -1, 0 0) |
+          | R1  | natural  | meadow      | landuse1 | (1,2,3,1) |
+          | R2  | landuse  | industrial  | landuse2 | (2,3,1,2) |
         When importing
         When sending search query "landuse1"
         Then results contain
@@ -153,22 +156,17 @@ Feature: Import and search of names
          | 0  | R2 |
 
     Scenario: Postcode boundaries without ref
+        Given the grid with origin FR
+          |   | 2 |   |
+          | 1 |   | 3 |
         Given the places
           | osm | class    | type        | postcode | geometry |
-          | R1  | boundary | postal_code | 12345    | (0 0, 1 0, 1 1, 0 1, 0 0) |
+          | R1  | boundary | postal_code | 12345    | (1,2,3,1) |
         When importing
         When sending search query "12345"
         Then results contain
          | ID | osm |
          | 0  | R1 |
-
-    Scenario: Unprintable characters in postcodes are ignored
-        Given the named places
-            | osm  | class   | type   | address |
-            | N234 | amenity | prison | 'postcode' : u'1234\u200e' |
-        When importing
-        And sending search query "1234"
-        Then result 0 has not attributes osm_type
 
     Scenario Outline: Housenumbers with special characters are found
         Given the grid

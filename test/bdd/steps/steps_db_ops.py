@@ -1,3 +1,9 @@
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# This file is part of Nominatim. (https://nominatim.org)
+#
+# Copyright (C) 2022 by the Nominatim developer community.
+# For a full list of authors see the git log.
 import logging
 from itertools import chain
 
@@ -12,13 +18,19 @@ from nominatim.tokenizer import factory as tokenizer_factory
 def check_database_integrity(context):
     """ Check some generic constraints on the tables.
     """
-    # place_addressline should not have duplicate (place_id, address_place_id)
-    cur = context.db.cursor()
-    cur.execute("""SELECT count(*) FROM
-                    (SELECT place_id, address_place_id, count(*) as c
-                     FROM place_addressline GROUP BY place_id, address_place_id) x
-                   WHERE c > 1""")
-    assert cur.fetchone()[0] == 0, "Duplicates found in place_addressline"
+    with context.db.cursor() as cur:
+        # place_addressline should not have duplicate (place_id, address_place_id)
+        cur.execute("""SELECT count(*) FROM
+                        (SELECT place_id, address_place_id, count(*) as c
+                         FROM place_addressline GROUP BY place_id, address_place_id) x
+                       WHERE c > 1""")
+        assert cur.fetchone()[0] == 0, "Duplicates found in place_addressline"
+
+        # word table must not have empty word_tokens
+        if context.nominatim.tokenizer != 'legacy':
+            cur.execute("SELECT count(*) FROM word WHERE word_token = ''")
+            assert cur.fetchone()[0] == 0, "Empty word tokens found in word table"
+
 
 
 ################################ GIVEN ##################################
@@ -87,31 +99,16 @@ def add_data_to_planet_ways(context):
 def import_and_index_data_from_place_table(context):
     """ Import data previously set up in the place table.
     """
-    nctx = context.nominatim
-
-    tokenizer = tokenizer_factory.create_tokenizer(nctx.get_test_config())
-    context.nominatim.copy_from_place(context.db)
-
-    # XXX use tool function as soon as it is ported
-    with context.db.cursor() as cur:
-        with (context.nominatim.src_dir / 'lib-sql' / 'postcode_tables.sql').open('r') as fd:
-            cur.execute(fd.read())
-        cur.execute("""
-            INSERT INTO location_postcode
-             (place_id, indexed_status, country_code, postcode, geometry)
-            SELECT nextval('seq_place'), 1, country_code,
-                   upper(trim (both ' ' from address->'postcode')) as pc,
-                   ST_Centroid(ST_Collect(ST_Centroid(geometry)))
-              FROM placex
-             WHERE address ? 'postcode' AND address->'postcode' NOT SIMILAR TO '%(,|;)%'
-                   AND geometry IS NOT null
-             GROUP BY country_code, pc""")
-
-    # Call directly as the refresh function does not include postcodes.
-    indexer.LOG.setLevel(logging.ERROR)
-    indexer.Indexer(context.nominatim.get_libpq_dsn(), tokenizer, 1).index_full(analyse=False)
+    context.nominatim.run_nominatim('import', '--continue', 'load-data',
+                                              '--index-noanalyse', '-q',
+                                              '--offline')
 
     check_database_integrity(context)
+
+    # Remove the output of the input, when all was right. Otherwise it will be
+    # output when there are errors that had nothing to do with the import
+    # itself.
+    context.log_capture.buffer.clear()
 
 @when("updating places")
 def update_place_table(context):
@@ -125,6 +122,12 @@ def update_place_table(context):
 
     context.nominatim.reindex_placex(context.db)
     check_database_integrity(context)
+
+    # Remove the output of the input, when all was right. Otherwise it will be
+    # output when there are errors that had nothing to do with the import
+    # itself.
+    context.log_capture.buffer.clear()
+
 
 @when("updating postcodes")
 def update_postcodes(context):
@@ -144,6 +147,11 @@ def delete_places(context, oids):
             NominatimID(oid).query_osm_id(cur, 'DELETE FROM place WHERE {}')
 
     context.nominatim.reindex_placex(context.db)
+
+    # Remove the output of the input, when all was right. Otherwise it will be
+    # output when there are errors that had nothing to do with the import
+    # itself.
+    context.log_capture.buffer.clear()
 
 ################################ THEN ##################################
 
@@ -262,7 +270,7 @@ def check_location_postcode(context):
         for row in context.table:
             db_row = results.get((row['country'],row['postcode']))
             assert db_row is not None, \
-                "Missing row for country '{r['country']}' postcode '{r['postcode']}'.".format(r=row)
+                f"Missing row for country '{row['country']}' postcode '{row['postcode']}'."
 
             db_row.assert_row(row, ('country', 'postcode'))
 
@@ -280,7 +288,7 @@ def check_word_table_for_postcodes(context, exclude, postcodes):
     plist.sort()
 
     with context.db.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
-        if nctx.tokenizer == 'icu':
+        if nctx.tokenizer != 'legacy':
             cur.execute("SELECT word FROM word WHERE type = 'P' and word = any(%s)",
                         (plist,))
         else:
@@ -327,12 +335,13 @@ def check_place_addressline_exclude(context):
     with context.db.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
         for row in context.table:
             pid = NominatimID(row['object']).get_place_id(cur)
-            apid = NominatimID(row['address']).get_place_id(cur)
-            cur.execute(""" SELECT * FROM place_addressline
-                            WHERE place_id = %s AND address_place_id = %s""",
-                        (pid, apid))
-            assert cur.rowcount == 0, \
-                "Row found for place %s and address %s" % (row['object'], row['address'])
+            apid = NominatimID(row['address']).get_place_id(cur, allow_empty=True)
+            if apid is not None:
+                cur.execute(""" SELECT * FROM place_addressline
+                                WHERE place_id = %s AND address_place_id = %s""",
+                            (pid, apid))
+                assert cur.rowcount == 0, \
+                    "Row found for place %s and address %s" % (row['object'], row['address'])
 
 @then("W(?P<oid>\d+) expands to(?P<neg> no)? interpolation")
 def check_location_property_osmline(context, oid, neg):

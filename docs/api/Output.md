@@ -28,6 +28,7 @@ a single place (for reverse) of the following format:
       "city": "London",
       "state_district": "Greater London",
       "state": "England",
+      "ISO3166-2-lvl4": "GB-ENG",
       "postcode": "SW1A 2DU",
       "country": "United Kingdom",
       "country_code": "gb"
@@ -97,7 +98,10 @@ The GeocodeJSON format follows the
 The following feature attributes are implemented:
 
  * `osm_type`, `osm_id` - reference to the OSM object (unofficial extension, [see notes](#osm-reference))
- * `type` - value of the main tag of the object (e.g. residential, restaurant, ...)
+ * `type` - the 'address level' of the object ('house', 'street', `district`, `city`,
+            `county`, `state`, `country`, `locality`)
+ * `osm_key`- key of the main tag of the OSM object (e.g. boundary, highway, amenity)
+ * `osm_value` - value of the main tag of the OSM object (e.g. residential, restaurant)
  * `label` - full comma-separated address
  * `name` - localised name of the place
  * `housenumber`, `street`, `locality`, `district`, `postcode`, `city`,
@@ -126,6 +130,7 @@ formats depending on the API call.
   </result>
   <addressparts>
      <state>Bavaria</state>
+     <ISO3166-2-lvl4>DE-BY</ISO3166-2-lvl4>
      <country>Germany</country>
      <country_code>de</country_code>
   </addressparts>
@@ -179,6 +184,7 @@ Additional information requested with `addressdetails=1`, `extratags=1` and
     <city>London</city>
     <state_district>Greater London</state_district>
     <state>England</state>
+    <ISO3166-2-lvl4>GB-ENG</ISO3166-2-lvl4>
     <postcode>SW1A 2DU</postcode>
     <country>United Kingdom</country>
     <country_code>gb</country_code>
@@ -230,7 +236,7 @@ on another server. It may even change its ID on the same server when it is
 removed and reimported while updating the database with fresh OSM data.
 It is thus not useful to treat it as permanent for later use.
 
-The combination `osm_type`+`osm_id` is slighly better but remember in
+The combination `osm_type`+`osm_id` is slightly better but remember in
 OpenStreetMap mappers can delete, split, recreate places (and those
 get a new `osm_id`), there is no link between those old and new ids.
 Places can also change their meaning without changing their `osm_id`,
@@ -279,12 +285,12 @@ with a designation label. Per default the following labels may appear:
 
  * continent
  * country, country_code
- * region, state, state_district, county
+ * region, state, state_district, county, ISO3166-2-lvl<admin_level>
  * municipality, city, town, village
  * city_district, district, borough, suburb, subdivision
  * hamlet, croft, isolated_dwelling
  * neighbourhood, allotments, quarter
- * city_block, residental, farm, farmyard, industrial, commercial, retail
+ * city_block, residential, farm, farmyard, industrial, commercial, retail
  * road
  * house_number, house_name
  * emergency, historic, military, natural, landuse, place, railway,

@@ -1,4 +1,12 @@
 <?php
+/**
+ * SPDX-License-Identifier: GPL-2.0-only
+ *
+ * This file is part of Nominatim. (https://nominatim.org)
+ *
+ * Copyright (C) 2022 by the Nominatim developer community.
+ * For a full list of authors see the git log.
+ */
 
 namespace Nominatim;
 
@@ -69,7 +77,7 @@ class SimpleWordListTest extends \PHPUnit\Framework\TestCase
 
         $oList = new SimpleWordList('a b c');
         $this->assertEquals(
-            '(a b c),(a|b c),(a b|c),(a|b|c)',
+            '(a b c),(a b|c),(a|b c),(a|b|c)',
             $this->serializeSets($oList->getWordSets(new TokensFullSet()))
         );
 
@@ -80,6 +88,22 @@ class SimpleWordListTest extends \PHPUnit\Framework\TestCase
         );
     }
 
+    public function testCmpByArraylen()
+    {
+        // Array elements are phrases, we want to sort so longest phrases are first
+        $aList1 = array('hackney', 'bridge', 'london', 'england');
+        $aList2 = array('hackney', 'london', 'bridge');
+        $aList3 = array('bridge', 'hackney', 'london', 'england');
+
+        $this->assertEquals(0, \Nominatim\SimpleWordList::cmpByArraylen($aList1, $aList1));
+
+        // list2 "wins". Less array elements
+        $this->assertEquals(1, \Nominatim\SimpleWordList::cmpByArraylen($aList1, $aList2));
+        $this->assertEquals(-1, \Nominatim\SimpleWordList::cmpByArraylen($aList2, $aList3));
+
+        // list1 "wins". Same number of array elements but longer first element
+        $this->assertEquals(-1, \Nominatim\SimpleWordList::cmpByArraylen($aList1, $aList3));
+    }
 
     public function testMaxWordSets()
     {

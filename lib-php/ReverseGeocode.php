@@ -1,4 +1,12 @@
 <?php
+/**
+ * SPDX-License-Identifier: GPL-2.0-only
+ *
+ * This file is part of Nominatim. (https://nominatim.org)
+ *
+ * Copyright (C) 2022 by the Nominatim developer community.
+ * For a full list of authors see the git log.
+ */
 
 namespace Nominatim;
 
@@ -56,8 +64,10 @@ class ReverseGeocode
     {
         Debug::newFunction('lookupInterpolation');
         $sSQL = 'SELECT place_id, parent_place_id, 30 as rank_search,';
-        $sSQL .= '  ST_LineLocatePoint(linegeo,'.$sPointSQL.') as fraction,';
-        $sSQL .= '  startnumber, endnumber, interpolationtype,';
+        $sSQL .= '  (CASE WHEN endnumber != startnumber';
+        $sSQL .= '        THEN (endnumber - startnumber) * ST_LineLocatePoint(linegeo,'.$sPointSQL.')';
+        $sSQL .= '        ELSE startnumber END) as fhnr,';
+        $sSQL .= '  startnumber, endnumber, step,';
         $sSQL .= '  ST_Distance(linegeo,'.$sPointSQL.') as distance';
         $sSQL .= ' FROM location_property_osmline';
         $sSQL .= ' WHERE ST_DWithin('.$sPointSQL.', linegeo, '.$fSearchDiam.')';
@@ -255,7 +265,7 @@ class ReverseGeocode
             // starts if the search is on POI or street level,
             // searches for the nearest POI or street,
             // if a street is found and a POI is searched for,
-            // the nearest POI which the found street is a parent of is choosen.
+            // the nearest POI which the found street is a parent of is chosen.
             $sSQL = 'select place_id,parent_place_id,rank_address,country_code,';
             $sSQL .= ' ST_distance('.$sPointSQL.', geometry) as distance';
             $sSQL .= ' FROM ';
@@ -319,9 +329,9 @@ class ReverseGeocode
                     && $this->iMaxRank >= 28
                 ) {
                     $sSQL = 'SELECT place_id,parent_place_id,30 as rank_search,';
-                    $sSQL .= 'ST_LineLocatePoint(linegeo,'.$sPointSQL.') as fraction,';
-                    $sSQL .= 'ST_distance('.$sPointSQL.', linegeo) as distance,';
-                    $sSQL .= 'startnumber,endnumber,interpolationtype';
+                    $sSQL .= '      (endnumber - startnumber) * ST_LineLocatePoint(linegeo,'.$sPointSQL.') as fhnr,';
+                    $sSQL .= '      startnumber, endnumber, step,';
+                    $sSQL .= '      ST_Distance('.$sPointSQL.', linegeo) as distance';
                     $sSQL .= ' FROM location_property_tiger WHERE parent_place_id = '.$oResult->iId;
                     $sSQL .= ' AND ST_DWithin('.$sPointSQL.', linegeo, 0.001)';
                     $sSQL .= ' ORDER BY distance ASC limit 1';
@@ -333,7 +343,11 @@ class ReverseGeocode
                     if ($aPlaceTiger) {
                         $aPlace = $aPlaceTiger;
                         $oResult = new Result($aPlaceTiger['place_id'], Result::TABLE_TIGER);
-                        $oResult->iHouseNumber = closestHouseNumber($aPlaceTiger);
+                        $iRndNum = max(0, round($aPlaceTiger['fhnr'] / $aPlaceTiger['step']) * $aPlaceTiger['step']);
+                        $oResult->iHouseNumber = $aPlaceTiger['startnumber'] + $iRndNum;
+                        if ($oResult->iHouseNumber > $aPlaceTiger['endnumber']) {
+                            $oResult->iHouseNumber = $aPlaceTiger['endnumber'];
+                        }
                         $iRankAddress = 30;
                     }
                 }
@@ -345,7 +359,7 @@ class ReverseGeocode
                     // We can't reliably go from the closest street to an
                     // interpolation line because the closest interpolation
                     // may have a different street segments as a parent.
-                    // Therefore allow an interpolation line to take precendence
+                    // Therefore allow an interpolation line to take precedence
                     // even when the street is closer.
                     $fDistance = $iRankAddress < 28 ? 0.001 : $aPlace['distance'];
                 }
@@ -355,7 +369,11 @@ class ReverseGeocode
 
                 if ($aHouse) {
                     $oResult = new Result($aHouse['place_id'], Result::TABLE_OSMLINE);
-                    $oResult->iHouseNumber = closestHouseNumber($aHouse);
+                    $iRndNum = max(0, round($aHouse['fhnr'] / $aHouse['step']) * $aHouse['step']);
+                    $oResult->iHouseNumber = $aHouse['startnumber'] + $iRndNum;
+                    if ($oResult->iHouseNumber > $aHouse['endnumber']) {
+                        $oResult->iHouseNumber = $aHouse['endnumber'];
+                    }
                     $aPlace = $aHouse;
                 }
             }

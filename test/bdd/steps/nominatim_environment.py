@@ -1,3 +1,9 @@
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# This file is part of Nominatim. (https://nominatim.org)
+#
+# Copyright (C) 2022 by the Nominatim developer community.
+# For a full list of authors see the git log.
 from pathlib import Path
 import sys
 import tempfile
@@ -9,7 +15,7 @@ sys.path.insert(1, str((Path(__file__) / '..' / '..' / '..' / '..').resolve()))
 
 from nominatim import cli
 from nominatim.config import Configuration
-from nominatim.db.connection import _Connection
+from nominatim.db.connection import Connection
 from nominatim.tools import refresh
 from nominatim.tokenizer import factory as tokenizer_factory
 from steps.utils import run_script
@@ -55,7 +61,7 @@ class NominatimEnvironment:
             dbargs['user'] = self.db_user
         if self.db_pass:
             dbargs['password'] = self.db_pass
-        conn = psycopg2.connect(connection_factory=_Connection, **dbargs)
+        conn = psycopg2.connect(connection_factory=Connection, **dbargs)
         return conn
 
     def next_code_coverage_file(self):
@@ -89,6 +95,7 @@ class NominatimEnvironment:
 
         self.test_env = dict(self.default_config)
         self.test_env['NOMINATIM_DATABASE_DSN'] = dsn
+        self.test_env['NOMINATIM_LANGUAGES'] = 'en,de,fr,ja'
         self.test_env['NOMINATIM_FLATNODE_FILE'] = ''
         self.test_env['NOMINATIM_IMPORT_STYLE'] = 'full'
         self.test_env['NOMINATIM_USE_US_TIGER_DATA'] = 'yes'
@@ -166,22 +173,23 @@ class NominatimEnvironment:
 
         self.template_db_done = True
 
-        if self._reuse_or_drop_db(self.template_db):
-            return
-
         self.write_nominatim_config(self.template_db)
 
-        try:
-            # execute nominatim import on an empty file to get the right tables
-            with tempfile.NamedTemporaryFile(dir='/tmp', suffix='.xml') as fd:
-                fd.write(b'<osm version="0.6"></osm>')
-                fd.flush()
-                self.run_nominatim('import', '--osm-file', fd.name,
-                                             '--osm2pgsql-cache', '1',
-                                             '--ignore-errors')
-        except:
-            self.db_drop_database(self.template_db)
-            raise
+        if not self._reuse_or_drop_db(self.template_db):
+            try:
+                # execute nominatim import on an empty file to get the right tables
+                with tempfile.NamedTemporaryFile(dir='/tmp', suffix='.xml') as fd:
+                    fd.write(b'<osm version="0.6"></osm>')
+                    fd.flush()
+                    self.run_nominatim('import', '--osm-file', fd.name,
+                                                 '--osm2pgsql-cache', '1',
+                                                 '--ignore-errors',
+                                                 '--offline', '--index-noanalyse')
+            except:
+                self.db_drop_database(self.template_db)
+                raise
+
+        self.run_nominatim('refresh', '--functions')
 
 
     def setup_api_db(self):
@@ -201,7 +209,7 @@ class NominatimEnvironment:
                     self.run_nominatim('add-data', '--tiger-data', str((testdata / 'tiger').resolve()))
                     self.run_nominatim('freeze')
 
-                    if self.tokenizer != 'icu':
+                    if self.tokenizer == 'legacy':
                         phrase_file = str((testdata / 'specialphrases_testdb.sql').resolve())
                         run_script(['psql', '-d', self.api_test_db, '-f', phrase_file])
                     else:
@@ -211,7 +219,7 @@ class NominatimEnvironment:
                     self.db_drop_database(self.api_test_db)
                     raise
 
-        tokenizer_factory.create_tokenizer(self.get_test_config(), init_db=False)
+        tokenizer_factory.get_tokenizer_for_db(self.get_test_config())
 
 
     def setup_unknown_db(self):

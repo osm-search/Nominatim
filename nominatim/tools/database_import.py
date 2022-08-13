@@ -100,7 +100,7 @@ def import_osm_data(osm_files: Union[Path, Sequence[Path]],
     if not options['flatnode_file'] and options['osm2pgsql_cache'] == 0:
         # Make some educated guesses about cache size based on the size
         # of the import file and the available memory.
-        mem = psutil.virtual_memory() # type: ignore[no-untyped-call]
+        mem = psutil.virtual_memory()
         fsize = 0
         if isinstance(osm_files, list):
             for fname in osm_files:

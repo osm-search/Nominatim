@@ -47,8 +47,8 @@ def test_placeinfo_has_attr():
     assert not place.has_attr('whatever')
 
 
-def test_sanitizer_default():
-    san = sanitizer.PlaceSanitizer([{'step': 'split-name-list'}])
+def test_sanitizer_default(def_config):
+    san = sanitizer.PlaceSanitizer([{'step': 'split-name-list'}], def_config)
 
     name, address =  san.process_names(PlaceInfo({'name': {'name:de:de': '1;2;3'},
                                                   'address': {'street': 'Bald'}}))
@@ -63,8 +63,8 @@ def test_sanitizer_default():
 
 
 @pytest.mark.parametrize('rules', [None, []])
-def test_sanitizer_empty_list(rules):
-    san = sanitizer.PlaceSanitizer(rules)
+def test_sanitizer_empty_list(def_config, rules):
+    san = sanitizer.PlaceSanitizer(rules, def_config)
 
     name, address =  san.process_names(PlaceInfo({'name': {'name:de:de': '1;2;3'}}))
 
@@ -72,6 +72,6 @@ def test_sanitizer_empty_list(rules):
     assert all(isinstance(n, sanitizer.PlaceName) for n in name)
 
 
-def test_sanitizer_missing_step_definition():
+def test_sanitizer_missing_step_definition(def_config):
     with pytest.raises(UsageError):
-        san = sanitizer.PlaceSanitizer([{'id': 'split-name-list'}])
+        san = sanitizer.PlaceSanitizer([{'id': 'split-name-list'}], def_config)

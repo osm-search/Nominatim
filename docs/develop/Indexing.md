@@ -78,7 +78,7 @@ The inheritance is computed in the data preparation step.
 The prepared place information is handed to the tokenizer next. This is a
 Python module responsible for processing the names  from both name and address
 terms and building up the word index from them. The process is explained in
-more detail in the [Tokenizer chapter](Tokenizer.md).
+more detail in the [Tokenizer chapter](Tokenizers.md).
 
 ### Address processing
 

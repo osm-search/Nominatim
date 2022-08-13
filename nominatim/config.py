@@ -8,8 +8,10 @@
 Nominatim configuration accessor.
 """
 from typing import Dict, Any, List, Mapping, Optional
+import importlib.util
 import logging
 import os
+import sys
 from pathlib import Path
 import json
 import yaml
@@ -73,6 +75,7 @@ class Configuration:
             data: Path
 
         self.lib_dir = _LibDirs()
+        self._private_plugins: Dict[str, object] = {}
 
 
     def set_libdirs(self, **kwargs: StrPath) -> None:
@@ -217,6 +220,49 @@ class Configuration:
 
         CONFIG_CACHE[str(configfile)] = result
         return result
+
+
+    def load_plugin_module(self, module_name: str, internal_path: str) -> Any:
+        """ Load a Python module as a plugin.
+
+            The module_name may have three variants:
+
+            * A name without any '.' is assumed to be an internal module
+              and will be searched relative to `internal_path`.
+            * If the name ends in `.py`, module_name is assumed to be a
+              file name relative to the project directory.
+            * Any other name is assumed to be an absolute module name.
+
+            In either of the variants the module name must start with a letter.
+        """
+        if not module_name or not module_name[0].isidentifier():
+            raise UsageError(f'Invalid module name {module_name}')
+
+        if '.' not in module_name:
+            module_name = module_name.replace('-', '_')
+            full_module = f'{internal_path}.{module_name}'
+            return sys.modules.get(full_module) or importlib.import_module(full_module)
+
+        if module_name.endswith('.py'):
+            if self.project_dir is None or not (self.project_dir / module_name).exists():
+                raise UsageError(f"Cannot find module '{module_name}' in project directory.")
+
+            if module_name in self._private_plugins:
+                return self._private_plugins[module_name]
+
+            file_path = str(self.project_dir / module_name)
+            spec = importlib.util.spec_from_file_location(module_name, file_path)
+            if spec:
+                module = importlib.util.module_from_spec(spec)
+                # Do not add to global modules because there is no standard
+                # module name that Python can resolve.
+                self._private_plugins[module_name] = module
+                assert spec.loader is not None
+                spec.loader.exec_module(module)
+
+                return module
+
+        return sys.modules.get(module_name) or importlib.import_module(module_name)
 
 
     def find_config_file(self, filename: StrPath,

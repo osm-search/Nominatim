@@ -25,9 +25,9 @@ from typing import Optional, Tuple
 # patch level when cherry-picking the commit with the migration.
 #
 # Released versions always have a database patch level of 0.
-NOMINATIM_VERSION = (4, 0, 99, 6)
+NOMINATIM_VERSION = (4, 1, 0, 0)
 
-POSTGRESQL_REQUIRED_VERSION = (9, 5)
+POSTGRESQL_REQUIRED_VERSION = (9, 6)
 POSTGIS_REQUIRED_VERSION = (2, 2)
 
 # Cmake sets a variable @GIT_HASH@ by executing 'git --log'. It is not run

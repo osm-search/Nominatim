@@ -16,7 +16,9 @@ CREATE TYPE prepare_update_info AS (
   country_code TEXT,
   class TEXT,
   type TEXT,
-  linked_place_id BIGINT
+  linked_place_id BIGINT,
+  centroid_x float,
+  centroid_y float
 );
 
 -- Retrieve the data needed by the indexer for updating the place.
@@ -71,6 +73,8 @@ BEGIN
   result.type := p.type;
   result.country_code := p.country_code;
   result.rank_address := p.rank_address;
+  result.centroid_x := ST_X(p.centroid);
+  result.centroid_y := ST_Y(p.centroid);
 
   -- Names of linked places need to be merged in, so search for a linkable
   -- place already here.
@@ -912,7 +916,8 @@ BEGIN
              LATERAL compute_place_rank(country_code, 'A', class, type,
                                         admin_level, False, null) prank
         WHERE osm_type = 'R'
-              and prank.address_rank = NEW.rank_address
+              and ((class = 'place' and prank.address_rank = NEW.rank_address)
+                   or (class = 'boundary' and rank_address = NEW.rank_address))
               and geometry && NEW.centroid and _ST_Covers(geometry, NEW.centroid)
         LIMIT 1
     LOOP
@@ -1096,6 +1101,15 @@ BEGIN
       END IF;
     END IF;
   END IF;
+
+  {% if not disable_diff_updates %}
+  IF OLD.rank_address != NEW.rank_address THEN
+    -- After a rank shift all addresses containing us must be updated.
+    UPDATE placex p SET indexed_status = 2 FROM place_addressline pa
+      WHERE pa.address_place_id = NEW.place_id and p.place_id = pa.place_id
+            and p.indexed_status = 0 and p.rank_address between 4 and 25;
+  END IF;
+  {% endif %}
 
   IF NEW.admin_level = 2
      AND NEW.class = 'boundary' AND NEW.type = 'administrative'

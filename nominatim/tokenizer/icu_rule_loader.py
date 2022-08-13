@@ -8,10 +8,11 @@
 Helper class to create ICU rules from a configuration file.
 """
 from typing import Mapping, Any, Dict, Optional
-import importlib
 import io
 import json
 import logging
+
+from icu import Transliterator
 
 from nominatim.config import flatten_config_list, Configuration
 from nominatim.db.properties import set_property, get_property
@@ -19,7 +20,7 @@ from nominatim.db.connection import Connection
 from nominatim.errors import UsageError
 from nominatim.tokenizer.place_sanitizer import PlaceSanitizer
 from nominatim.tokenizer.icu_token_analysis import ICUTokenAnalysis
-from nominatim.tokenizer.token_analysis.base import AnalysisModule, Analyser
+from nominatim.tokenizer.token_analysis.base import AnalysisModule, Analyzer
 import nominatim.data.country_info
 
 LOG = logging.getLogger()
@@ -45,6 +46,7 @@ class ICURuleLoader:
     """
 
     def __init__(self, config: Configuration) -> None:
+        self.config = config
         rules = config.load_sub_configuration('icu_tokenizer.yaml',
                                               config='TOKENIZER_CONFIG')
 
@@ -92,7 +94,7 @@ class ICURuleLoader:
     def make_sanitizer(self) -> PlaceSanitizer:
         """ Create a place sanitizer from the configured rules.
         """
-        return PlaceSanitizer(self.sanitizer_rules)
+        return PlaceSanitizer(self.sanitizer_rules, self.config)
 
 
     def make_token_analysis(self) -> ICUTokenAnalysis:
@@ -135,6 +137,11 @@ class ICURuleLoader:
         if not isinstance(self.analysis_rules, list):
             raise UsageError("Configuration section 'token-analysis' must be a list.")
 
+        norm = Transliterator.createFromRules("rule_loader_normalization",
+                                              self.normalization_rules)
+        trans = Transliterator.createFromRules("rule_loader_transliteration",
+                                              self.transliteration_rules)
+
         for section in self.analysis_rules:
             name = section.get('id', None)
             if name in self.analysis:
@@ -144,7 +151,8 @@ class ICURuleLoader:
                     LOG.fatal("ICU tokenizer configuration has two token "
                               "analyzers with id '%s'.", name)
                 raise UsageError("Syntax error in ICU tokenizer config.")
-            self.analysis[name] = TokenAnalyzerRule(section, self.normalization_rules)
+            self.analysis[name] = TokenAnalyzerRule(section, norm, trans,
+                                                    self.config)
 
 
     @staticmethod
@@ -168,16 +176,21 @@ class TokenAnalyzerRule:
         and creates a new token analyzer on request.
     """
 
-    def __init__(self, rules: Mapping[str, Any], normalization_rules: str) -> None:
-        # Find the analysis module
-        module_name = 'nominatim.tokenizer.token_analysis.' \
-                      + _get_section(rules, 'analyzer').replace('-', '_')
-        self._analysis_mod: AnalysisModule = importlib.import_module(module_name)
+    def __init__(self, rules: Mapping[str, Any],
+                 normalizer: Any, transliterator: Any,
+                 config: Configuration) -> None:
+        analyzer_name = _get_section(rules, 'analyzer')
+        if not analyzer_name or not isinstance(analyzer_name, str):
+            raise UsageError("'analyzer' parameter needs to be simple string")
 
-        # Load the configuration.
-        self.config = self._analysis_mod.configure(rules, normalization_rules)
+        self._analysis_mod: AnalysisModule = \
+            config.load_plugin_module(analyzer_name, 'nominatim.tokenizer.token_analysis')
 
-    def create(self, normalizer: Any, transliterator: Any) -> Analyser:
+        self.config = self._analysis_mod.configure(rules, normalizer,
+                                                   transliterator)
+
+
+    def create(self, normalizer: Any, transliterator: Any) -> Analyzer:
         """ Create a new analyser instance for the given rule.
         """
         return self._analysis_mod.create(normalizer, transliterator, self.config)

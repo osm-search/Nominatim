@@ -49,7 +49,7 @@ def _get_place_info(cursor: Cursor, osm_id: Optional[str],
         LOG.fatal("OSM object %s not found in database.", osm_id)
         raise UsageError("OSM object not found")
 
-    return cast(DictCursorResult, cursor.fetchone()) # type: ignore[no-untyped-call]
+    return cast(DictCursorResult, cursor.fetchone())
 
 
 def analyse_indexing(config: Configuration, osm_id: Optional[str] = None,

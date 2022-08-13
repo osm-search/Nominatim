@@ -403,3 +403,33 @@ Feature: Import of address interpolations
         Then results contain
           | ID | osm_type | osm_id | type  | display_name |
           | 0  | node     | 1      | house | 0 |
+
+    Scenario: Parenting of interpolation with additional tags
+        Given the grid
+          | 1 |   |   |   |   |   |
+          |   |   |   |   |   |   |
+          |   | 8 |   |   | 9 |   |
+          |   |   |   |   |   |   |
+          | 2 |   |   |   |   | 3 |
+        Given the places
+          | osm | class | type  | housenr | addr+street |
+          | N8  | place | house | 10      | Horiz St    |
+          | N9  | place | house | 16      | Horiz St    |
+        And the places
+          | osm | class   | type        | name     | geometry |
+          | W1  | highway | residential | Vert St  | 1,2      |
+          | W2  | highway | residential | Horiz St | 2,3      |
+        And the places
+          | osm | class | type   | addr+interpolation | addr+inclusion | geometry |
+          | W10 | place | houses | even               | actual         | 8,9      |
+        And the ways
+          | id | nodes |
+          | 10 | 8,9   |
+        When importing
+        Then placex contains
+          | object | parent_place_id |
+          | N8     | W2              |
+          | N9     | W2              |
+        And W10 expands to interpolation
+          | start | end | parent_place_id |
+          | 12    | 14  | W2              |

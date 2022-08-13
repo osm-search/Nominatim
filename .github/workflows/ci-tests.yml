@@ -265,6 +265,10 @@ jobs:
               run: nominatim --version
               working-directory: /home/nominatim/nominatim-project
 
+            - name: Collect host OS information
+              run: nominatim admin --collect-os-info
+              working-directory: /home/nominatim/nominatim-project
+              
             - name: Import
               run: nominatim import --osm-file ../test.pbf
               working-directory: /home/nominatim/nominatim-project

@@ -20,6 +20,7 @@ from nominatim.clicmd.args import NominatimArgs
 
 LOG = logging.getLogger()
 
+
 class AdminFuncs:
     """\
     Analyse and maintain the database.
@@ -36,6 +37,8 @@ class AdminFuncs:
                           help='Migrate the database to a new software version')
         objs.add_argument('--analyse-indexing', action='store_true',
                           help='Print performance analysis of the indexing process')
+        objs.add_argument('--collect-os-info', action="store_true",
+                          help="Generate a report about the host system information")
         group = parser.add_argument_group('Arguments for cache warming')
         group.add_argument('--search-only', action='store_const', dest='target',
                            const='search',
@@ -70,8 +73,13 @@ class AdminFuncs:
             from ..tools import migration
             return migration.migrate(args.config, args)
 
-        return 1
+        if args.collect_os_info:
+            LOG.warning("Reporting System Information")
+            from ..tools import collect_os_info
+            collect_os_info.report_system_information(args.config)
+            return 0
 
+        return 1
 
     def _warm(self, args: NominatimArgs) -> int:
         LOG.warning('Warming database caches')

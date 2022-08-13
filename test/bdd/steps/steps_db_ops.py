@@ -370,6 +370,6 @@ def check_location_property_osmline(context, oid, neg):
 
             DBRow(oid, res, context).assert_row(row, ('start', 'end'))
 
-        assert not todo
+        assert not todo, f"Unmatched lines in table: {list(context.table[i] for i in todo)}"
 
 

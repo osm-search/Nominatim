@@ -15,7 +15,7 @@ DECLARE
   location RECORD;
   waynodes BIGINT[];
 BEGIN
-  IF akeys(in_address) != ARRAY['interpolation'] THEN
+  IF in_address ? 'street' or in_address ? 'place' THEN
     RETURN in_address;
   END IF;
 

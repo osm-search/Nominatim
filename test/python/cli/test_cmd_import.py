@@ -69,7 +69,7 @@ class TestCliImportWithDb:
         assert cf_mock.called > 1
 
         for mock in mocks:
-            assert mock.called > 0, "Mock '{}' not called".format(mock.func_name)
+            assert mock.called == 1, "Mock '{}' not called".format(mock.func_name)
 
 
     def test_import_continue_load_data(self, mock_func_factory):

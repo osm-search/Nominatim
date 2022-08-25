@@ -136,13 +136,13 @@ class UpdateRefresh:
         if args.osm_views:
             data_path = Path(args.project_dir)
             LOG.warning('Import OSM views GeoTIFF data from %s', data_path)
-            with connect(args.config.get_libpq_dsn()) as conn:
-                if refresh.import_osm_views_geotiff(conn, data_path) == 1:
-                    LOG.fatal('FATAL: OSM views GeoTIFF file not found')
-                    return 1
-                if refresh.import_osm_views_geotiff(conn, data_path) == 2:
-                    LOG.fatal('FATAL: PostGIS version number is less than 3')
-                    return 1
+            num = refresh.import_osm_views_geotiff(args.config.get_libpq_dsn(), data_path)
+            if num == 1:
+                LOG.fatal('FATAL: OSM views GeoTIFF file not found')
+                return 1
+            if num == 2:
+                LOG.fatal('FATAL: PostGIS version number is less than 3')
+                return 1
 
         # Attention: importance MUST come after wiki data import.
         if args.importance:

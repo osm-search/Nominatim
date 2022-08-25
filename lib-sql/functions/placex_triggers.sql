@@ -956,7 +956,7 @@ BEGIN
 
   NEW.importance := null;
   SELECT wikipedia, importance
-    FROM compute_importance(NEW.extratags, NEW.country_code, NEW.osm_type, NEW.osm_id)
+    FROM compute_importance(NEW.extratags, NEW.country_code, NEW.osm_type, NEW.osm_id, NEW.centroid)
     INTO NEW.wikipedia,NEW.importance;
 
 {% if debug %}RAISE WARNING 'Importance computed from wikipedia: %', NEW.importance;{% endif %}
@@ -1079,7 +1079,7 @@ BEGIN
 
     SELECT wikipedia, importance
       FROM compute_importance(location.extratags, NEW.country_code,
-                              'N', location.osm_id)
+                              'N', location.osm_id, NEW.centroid)
       INTO linked_wikipedia,linked_importance;
 
     -- Use the maximum importance if one could be computed from the linked object.

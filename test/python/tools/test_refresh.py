@@ -38,6 +38,7 @@ def test_recompute_importance(placex_table, table_factory, temp_db_conn, temp_db
     temp_db_cursor.execute("""CREATE OR REPLACE FUNCTION compute_importance(extratags HSTORE,
                                               country_code varchar(2),
                                               osm_type varchar(1), osm_id BIGINT,
+                                              centroid GEOMETRY,
                                               OUT importance FLOAT,
                                               OUT wikipedia TEXT)
                                AS $$ SELECT 0.1::float, 'foo'::text $$ LANGUAGE SQL""")

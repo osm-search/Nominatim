@@ -32,7 +32,7 @@ class TestRefresh:
         func_mock = mock_func_factory(nominatim.tools.refresh, func)
 
         assert self.call_nominatim('refresh', '--' + command) == 0
-        assert func_mock.called > 0
+        assert func_mock.called == 1
 
 
     def test_refresh_word_count(self):

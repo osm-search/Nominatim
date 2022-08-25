@@ -16,7 +16,7 @@ from pathlib import Path
 from psycopg2 import sql as pysql
 
 from nominatim.config import Configuration
-from nominatim.db.connection import Connection
+from nominatim.db.connection import Connection, connect
 from nominatim.db.utils import execute_file
 from nominatim.db.sql_preprocessor import SQLPreprocessor
 from nominatim.version import version_str
@@ -147,28 +147,48 @@ def import_wikipedia_articles(dsn: str, data_path: Path, ignore_errors: bool = F
 
     return 0
 
-def import_osm_views_geotiff(conn: Connection, data_path: Path) -> int:
+def import_osm_views_geotiff(dsn: str, data_path: Path) -> int:
     """ Replaces the OSM views table with new data.
 
         Returns 0 if all was well and 1 if the OSM views GeoTIFF file could not
         be found. Throws an exception if there was an error reading the file.
     """
     datafile = data_path / 'osmviews.tiff'
-
     if not datafile.exists():
         return 1
+    with connect(dsn) as conn:
 
-    postgis_version = conn.postgis_version_tuple()
-    if postgis_version[0] < 3:
-        return 2
+        postgis_version = conn.postgis_version_tuple()
+        if postgis_version[0] < 3:
+            return 2
 
-    with conn.cursor() as cur:
-        cur.execute('DROP TABLE IF EXISTS "osm_views"')
-        conn.commit()
+        with conn.cursor() as cur:
+            cur.drop_table("osm_views")
+            cur.drop_table("osm_views_stat")
 
-        cmd = f"raster2pgsql -s 4326 -I -C -t 100x100 {datafile} \
-            public.osm_views | psql nominatim > /dev/null"
-        subprocess.run(["/bin/bash", "-c" , cmd], check=True)
+            # -ovr: 6 -> zoom 12, 5 -> zoom 13, 4 -> zoom 14, 3 -> zoom 15
+            reproject_geotiff = f"gdalwarp -q -multi -ovr 3 -overwrite \
+                -co COMPRESS=LZW -tr 0.01 0.01 -t_srs EPSG:4326 {datafile} raster2import.tiff"
+            subprocess.run(["/bin/bash", "-c" , reproject_geotiff], check=True)
+
+            tile_size = 256
+            import_geotiff = f"raster2pgsql -I -C -Y -t {tile_size}x{tile_size} raster2import.tiff \
+                public.osm_views | psql {dsn} > /dev/null"
+            subprocess.run(["/bin/bash", "-c" , import_geotiff], check=True)
+
+            cleanup = "rm raster2import.tiff"
+            subprocess.run(["/bin/bash", "-c" , cleanup], check=True)
+
+            # To normalize osm views data, the max view value is needed
+            cur.execute(f"""
+            CREATE TABLE osm_views_stat AS (
+                SELECT MAX(ST_Value(osm_views.rast, 1, x, y)) AS max_views_count
+                FROM osm_views CROSS JOIN
+                generate_series(1, {tile_size}) As x
+                CROSS JOIN generate_series(1, {tile_size}) As y
+                WHERE x <= ST_Width(rast) AND y <= ST_Height(rast));
+            """)
+            conn.commit()
 
     return 0
 
@@ -182,7 +202,7 @@ def recompute_importance(conn: Connection) -> None:
         cur.execute("""
             UPDATE placex SET (wikipedia, importance) =
                (SELECT wikipedia, importance
-                FROM compute_importance(extratags, country_code, osm_type, osm_id))
+                FROM compute_importance(extratags, country_code, osm_type, osm_id, centroid))
             """)
         cur.execute("""
             UPDATE placex s SET wikipedia = d.wikipedia, importance = d.importance

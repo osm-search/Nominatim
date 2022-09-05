@@ -211,8 +211,8 @@ be more than one. The attributes of that element contain:
  * `ref` - content of `ref` tag if it exists
  * `lat`, `lon` - latitude and longitude of the centroid of the object
  * `boundingbox` - comma-separated list of corner coordinates ([see notes](#boundingbox))
- * `place_rank` - class [search rank](../develop/Ranking#search-rank)
- * `address_rank` - place [address rank](../develop/Ranking#address-rank)
+ * `place_rank` - class [search rank](../customize/Ranking#search-rank)
+ * `address_rank` - place [address rank](../customize/Ranking#address-rank)
  * `display_name` - full comma-separated address
  * `class`, `type` - key and value of the main OSM tag
  * `importance` - computed importance rank

@@ -189,7 +189,7 @@ def connect(dsn: str) -> ConnectionContext:
     try:
         conn = psycopg2.connect(dsn, connection_factory=Connection)
         ctxmgr = cast(ConnectionContext, contextlib.closing(conn))
-        ctxmgr.connection = cast(Connection, conn)
+        ctxmgr.connection = conn
         return ctxmgr
     except psycopg2.OperationalError as err:
         raise UsageError(f"Cannot connect to database: {err}") from err

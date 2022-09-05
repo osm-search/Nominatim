@@ -268,7 +268,7 @@ def check_database_index_valid(conn: Connection, _: Configuration) -> CheckResul
                         WHERE pg_index.indisvalid = false
                         AND pg_index.indexrelid = pg_class.oid""")
 
-        broken = list(cur)
+        broken = [c[0] for c in cur]
 
     if broken:
         return CheckState.FAIL, dict(indexes='\n  '.join(broken))

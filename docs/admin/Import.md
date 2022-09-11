@@ -88,8 +88,9 @@ OSM views data is avalaible as a GeoTIFF file. Put it into your project director
     cd $PROJECT_DIR
     wget https://qrank.wmcloud.org/download/osmviews.tiff
 
-The file is about 380MB and adds around 4GB to the Nominatim database. Importing
-OSM views into Nominatim takes a little over 3 hours.
+The file is about 380MB in which zoom level 15 GeoTIFF is extracted and imported 
+which adds 74MB to Nominatim's database. Importing OSM views data into Nominatim 
+takes around 8 minutes.
 
 !!! warning
     Importing OSM views is currently an experimental feature. OSM views data are

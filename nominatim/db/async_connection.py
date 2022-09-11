@@ -94,7 +94,8 @@ class DBConnection:
 
         # Use a dict to hand in the parameters because async is a reserved
         # word in Python3.
-        self.conn = psycopg2.connect(**{'dsn': self.dsn, 'async': True})
+        self.conn = psycopg2.connect(**{'dsn': self.dsn, 'async': True}) # type: ignore
+        assert self.conn
         self.wait()
 
         if cursor_factory is not None:

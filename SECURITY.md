@@ -9,10 +9,10 @@ versions.
 
 | Version | End of support for security updates |
 | ------- | ----------------------------------- |
+| 4.1.x   | 2024-08-05                          |
 | 4.0.x   | 2023-11-02                          |
 | 3.7.x   | 2023-04-05                          |
 | 3.6.x   | 2022-12-12                          |
-| 3.5.x   | 2022-06-05                          |
 
 ## Reporting a Vulnerability
 

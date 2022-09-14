@@ -72,6 +72,8 @@ class SetupAll:
         from ..tools import database_import, refresh, postcodes, freeze
         from ..indexer.indexer import Indexer
 
+        num_threads = args.threads or psutil.cpu_count() or 1
+
         country_info.setup_country_config(args.config)
 
         if args.continue_at is None:
@@ -109,8 +111,7 @@ class SetupAll:
                 database_import.truncate_data_tables(conn)
 
             LOG.warning('Load data into placex table')
-            database_import.load_data(args.config.get_libpq_dsn(),
-                                      args.threads or psutil.cpu_count() or 1)
+            database_import.load_data(args.config.get_libpq_dsn(), num_threads)
 
         LOG.warning("Setting up tokenizer")
         tokenizer = self._get_tokenizer(args.continue_at, args.config)
@@ -125,14 +126,14 @@ class SetupAll:
                 with connect(args.config.get_libpq_dsn()) as conn:
                     self._create_pending_index(conn, args.config.TABLESPACE_ADDRESS_INDEX)
             LOG.warning('Indexing places')
-            indexer = Indexer(args.config.get_libpq_dsn(), tokenizer,
-                              args.threads or psutil.cpu_count() or 1)
+            indexer = Indexer(args.config.get_libpq_dsn(), tokenizer, num_threads)
             indexer.index_full(analyse=not args.index_noanalyse)
 
         LOG.warning('Post-process tables')
         with connect(args.config.get_libpq_dsn()) as conn:
             database_import.create_search_indices(conn, args.config,
-                                                  drop=args.no_updates)
+                                                  drop=args.no_updates,
+                                                  threads=num_threads)
             LOG.warning('Create search index for default country names.')
             country_info.create_country_names(conn, tokenizer,
                                               args.config.get_str_list('LANGUAGES'))

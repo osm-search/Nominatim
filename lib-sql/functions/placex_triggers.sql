@@ -874,8 +874,9 @@ BEGIN
           FROM placex,
                LATERAL compute_place_rank(country_code, 'A', class, type,
                                           admin_level, False, null) prank
-          WHERE class = 'place' and rank_address < 24
+          WHERE class = 'place' and rank_address between 1 and 23
                 and prank.address_rank >= NEW.rank_address
+                and ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon') -- select right index
                 and geometry && NEW.geometry
                 and geometry ~ NEW.geometry -- needed because ST_Relate does not do bbox cover test
                 and ST_Relate(geometry, NEW.geometry, 'T*T***FF*') -- contains but not equal
@@ -896,6 +897,8 @@ BEGIN
                LATERAL compute_place_rank(country_code, 'A', class, type,
                                           admin_level, False, null) prank
           WHERE prank.address_rank < 24
+                and rank_address between 1 and 25 -- select right index
+                and ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon') -- select right index
                 and prank.address_rank >= NEW.rank_address
                 and geometry && NEW.geometry
                 and geometry ~ NEW.geometry -- needed because ST_Relate does not do bbox cover test
@@ -916,6 +919,8 @@ BEGIN
              LATERAL compute_place_rank(country_code, 'A', class, type,
                                         admin_level, False, null) prank
         WHERE osm_type = 'R'
+              and rank_address between 1 and 25 -- select right index
+              and ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon') -- select right index
               and ((class = 'place' and prank.address_rank = NEW.rank_address)
                    or (class = 'boundary' and rank_address = NEW.rank_address))
               and geometry && NEW.centroid and _ST_Covers(geometry, NEW.centroid)

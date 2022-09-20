@@ -158,7 +158,9 @@ CREATE TABLE placex (
   centroid GEOMETRY(Geometry, 4326)
   ) {{db.tablespace.search_data}};
 CREATE UNIQUE INDEX idx_place_id ON placex USING BTREE (place_id) {{db.tablespace.search_index}};
-CREATE INDEX idx_placex_osmid ON placex USING BTREE (osm_type, osm_id) {{db.tablespace.search_index}};
+CREATE INDEX idx_placex_node_osmid ON placex USING BTREE (osm_id) {{db.tablespace.search_index}} WHERE osm_type = 'N';
+CREATE INDEX idx_placex_way_osmid ON placex USING BTREE (osm_id) {{db.tablespace.search_index}} WHERE osm_type = 'W';
+CREATE INDEX idx_placex_relation_osmid ON placex USING BTREE (osm_id) {{db.tablespace.search_index}} WHERE osm_type = 'R';
 CREATE INDEX idx_placex_linked_place_id ON placex USING BTREE (linked_place_id) {{db.tablespace.address_index}} WHERE linked_place_id IS NOT NULL;
 CREATE INDEX idx_placex_rank_search ON placex USING BTREE (rank_search, geometry_sector) {{db.tablespace.address_index}};
 CREATE INDEX idx_placex_geometry ON placex USING GIST (geometry) {{db.tablespace.search_index}};

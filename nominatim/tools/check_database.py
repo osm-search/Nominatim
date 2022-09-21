@@ -114,9 +114,10 @@ def _get_indexes(conn: Connection) -> List[str]:
             indexes.extend(('idx_placex_housenumber',
                             'idx_osmline_parent_osm_id_with_hnr'))
     if conn.table_exists('place'):
-        indexes.extend(('idx_placex_pendingsector',
-                        'idx_location_area_country_place_id',
-                        'idx_place_osm_unique'))
+        indexes.extend(('idx_location_area_country_place_id',
+                        'idx_place_osm_unique',
+                        'idx_placex_rank_address_sector',
+                        'idx_placex_rank_boundaries_sector'))
 
     return indexes
 
@@ -199,7 +200,7 @@ def check_tokenizer(_: Connection, config: Configuration) -> CheckResult:
 def check_existance_wikipedia(conn: Connection, _: Configuration) -> CheckResult:
     """ Checking for wikipedia/wikidata data
     """
-    if not conn.table_exists('search_name'):
+    if not conn.table_exists('search_name') or not conn.table_exists('place'):
         return CheckState.NOT_APPLICABLE
 
     with conn.cursor() as cur:

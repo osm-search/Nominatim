@@ -5,6 +5,13 @@
 -- Copyright (C) 2022 by the Nominatim developer community.
 -- For a full list of authors see the git log.
 
+-- The following indicies are only useful during imoprt when all of placex is processed.
+
+{% if drop %}
+  DROP INDEX IF EXISTS idx_placex_rank_address_sector;
+  DROP INDEX IF EXISTS idx_placex_rank_boundaries_sector;
+{% endif %}
+
 -- Indices used only during search and update.
 -- These indices are created only after the indexing process is done.
 
@@ -39,10 +46,6 @@ CREATE INDEX IF NOT EXISTS idx_postcode_postcode
 -- Indices only needed for updating.
 
 {% if not drop %}
----
-  CREATE INDEX IF NOT EXISTS idx_placex_pendingsector
-    ON placex USING BTREE (rank_address,geometry_sector) {{db.tablespace.address_index}}
-    WHERE indexed_status > 0;
 ---
   CREATE INDEX IF NOT EXISTS idx_location_area_country_place_id
     ON location_area_country USING BTREE (place_id) {{db.tablespace.address_index}};

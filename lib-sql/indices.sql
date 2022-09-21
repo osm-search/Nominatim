@@ -5,13 +5,6 @@
 -- Copyright (C) 2022 by the Nominatim developer community.
 -- For a full list of authors see the git log.
 
--- The following indicies are only useful during imoprt when all of placex is processed.
-
-{% if drop %}
-  DROP INDEX IF EXISTS idx_placex_rank_address_sector;
-  DROP INDEX IF EXISTS idx_placex_rank_boundaries_sector;
-{% endif %}
-
 -- Indices used only during search and update.
 -- These indices are created only after the indexing process is done.
 
@@ -28,6 +21,9 @@ CREATE INDEX IF NOT EXISTS idx_placex_parent_place_id
   ON placex USING BTREE (parent_place_id) {{db.tablespace.search_index}}
   WHERE parent_place_id IS NOT NULL;
 ---
+CREATE INDEX IF NOT EXISTS idx_placex_geometry ON placex
+  USING GIST (geometry) {{db.tablespace.search_index}};
+---
 CREATE INDEX IF NOT EXISTS idx_placex_geometry_reverse_lookupPolygon
   ON placex USING gist (geometry) {{db.tablespace.search_index}}
   WHERE St_GeometryType(geometry) in ('ST_Polygon', 'ST_MultiPolygon')
@@ -43,9 +39,17 @@ CREATE INDEX IF NOT EXISTS idx_osmline_parent_osm_id
 ---
 CREATE INDEX IF NOT EXISTS idx_postcode_postcode
   ON location_postcode USING BTREE (postcode) {{db.tablespace.search_index}};
--- Indices only needed for updating.
 
-{% if not drop %}
+{% if drop %}
+---
+  DROP INDEX IF EXISTS idx_placex_geometry_address_area_candidates;
+  DROP INDEX IF EXISTS idx_placex_geometry_buildings;
+  DROP INDEX IF EXISTS idx_placex_geometry_lower_rank_ways;
+  DROP INDEX IF EXISTS idx_placex_wikidata;
+  DROP INDEX IF EXISTS idx_placex_rank_address_sector;
+  DROP INDEX IF EXISTS idx_placex_rank_boundaries_sector;
+{% else %}
+-- Indices only needed for updating.
 ---
   CREATE INDEX IF NOT EXISTS idx_location_area_country_place_id
     ON location_area_country USING BTREE (place_id) {{db.tablespace.address_index}};

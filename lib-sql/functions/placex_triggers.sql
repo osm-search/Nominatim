@@ -197,6 +197,7 @@ BEGIN
         SELECT place_id FROM placex
          WHERE bbox && geometry AND _ST_Covers(geometry, ST_Centroid(bbox))
                AND rank_address between 5 and 25
+               AND ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon')
          ORDER BY rank_address desc
       LOOP
         RETURN location.place_id;
@@ -212,6 +213,7 @@ BEGIN
         SELECT place_id FROM placex
          WHERE bbox && geometry AND _ST_Covers(geometry, ST_Centroid(bbox))
                AND rank_address between 5 and 25
+               AND ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon')
         ORDER BY rank_address desc
       LOOP
         RETURN location.place_id;
@@ -275,7 +277,9 @@ BEGIN
 
   -- If extratags has a place tag, look for linked nodes by their place type.
   -- Area and node still have to have the same name.
-  IF bnd.extratags ? 'place' and bnd_name is not null THEN
+  IF bnd.extratags ? 'place' and bnd.extratags->'place' != 'postcode'
+     and bnd_name is not null
+  THEN
     FOR linked_placex IN
       SELECT * FROM placex
       WHERE (position(lower(name->'name') in bnd_name) > 0
@@ -284,7 +288,6 @@ BEGIN
         AND placex.osm_type = 'N'
         AND (placex.linked_place_id is null or placex.linked_place_id = bnd.place_id)
         AND placex.rank_search < 26 -- needed to select the right index
-        AND placex.type != 'postcode'
         AND ST_Covers(bnd.geometry, placex.geometry)
     LOOP
       {% if debug %}RAISE WARNING 'Found type-matching place node %', linked_placex.osm_id;{% endif %}

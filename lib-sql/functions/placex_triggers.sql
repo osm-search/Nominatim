@@ -849,7 +849,8 @@ BEGIN
       FROM placex
       WHERE osm_type = 'R' and class = 'boundary' and type = 'administrative'
             and admin_level < NEW.admin_level and admin_level > 3
-            and rank_address > 0
+            and rank_address between 1 and 25 -- for index selection
+            and ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon') -- for index selection
             and geometry && NEW.centroid and _ST_Covers(geometry, NEW.centroid)
       ORDER BY admin_level desc LIMIT 1
     LOOP

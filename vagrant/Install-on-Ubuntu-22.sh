@@ -99,7 +99,7 @@ fi                                    #DOCS:
 #
 if [ "x$1" == "xyes" ]; then  #DOCS:    :::sh
     cd $USERHOME
-    https://nominatim.org/release/Nominatim-4.1.0.tar.bz2
+    wget https://nominatim.org/release/Nominatim-4.1.0.tar.bz2
     tar xf Nominatim-4.1.0.tar.bz2
 else                               #DOCS:
     cd $USERHOME/Nominatim         #DOCS:

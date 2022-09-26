@@ -225,7 +225,8 @@ def load_data(dsn: str, threads: int) -> None:
             cur.execute('ANALYSE')
 
 
-def create_search_indices(conn: Connection, config: Configuration, drop: bool = False) -> None:
+def create_search_indices(conn: Connection, config: Configuration,
+                          drop: bool = False, threads: int = 1) -> None:
     """ Create tables that have explicit partitioning.
     """
 
@@ -243,4 +244,5 @@ def create_search_indices(conn: Connection, config: Configuration, drop: bool = 
 
     sql = SQLPreprocessor(conn, config)
 
-    sql.run_sql_file(conn, 'indices.sql', drop=drop)
+    sql.run_parallel_sql_file(config.get_libpq_dsn(),
+                              'indices.sql', min(8, threads), drop=drop)

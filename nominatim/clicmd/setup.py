@@ -15,7 +15,7 @@ from pathlib import Path
 import psutil
 
 from nominatim.config import Configuration
-from nominatim.db.connection import connect, Connection
+from nominatim.db.connection import connect
 from nominatim.db import status, properties
 from nominatim.tokenizer.base import AbstractTokenizer
 from nominatim.version import version_str
@@ -72,6 +72,8 @@ class SetupAll:
         from ..tools import database_import, refresh, postcodes, freeze
         from ..indexer.indexer import Indexer
 
+        num_threads = args.threads or psutil.cpu_count() or 1
+
         country_info.setup_country_config(args.config)
 
         if args.continue_at is None:
@@ -109,8 +111,7 @@ class SetupAll:
                 database_import.truncate_data_tables(conn)
 
             LOG.warning('Load data into placex table')
-            database_import.load_data(args.config.get_libpq_dsn(),
-                                      args.threads or psutil.cpu_count() or 1)
+            database_import.load_data(args.config.get_libpq_dsn(), num_threads)
 
         LOG.warning("Setting up tokenizer")
         tokenizer = self._get_tokenizer(args.continue_at, args.config)
@@ -121,18 +122,15 @@ class SetupAll:
                                        args.project_dir, tokenizer)
 
         if args.continue_at is None or args.continue_at in ('load-data', 'indexing'):
-            if args.continue_at is not None and args.continue_at != 'load-data':
-                with connect(args.config.get_libpq_dsn()) as conn:
-                    self._create_pending_index(conn, args.config.TABLESPACE_ADDRESS_INDEX)
             LOG.warning('Indexing places')
-            indexer = Indexer(args.config.get_libpq_dsn(), tokenizer,
-                              args.threads or psutil.cpu_count() or 1)
+            indexer = Indexer(args.config.get_libpq_dsn(), tokenizer, num_threads)
             indexer.index_full(analyse=not args.index_noanalyse)
 
         LOG.warning('Post-process tables')
         with connect(args.config.get_libpq_dsn()) as conn:
             database_import.create_search_indices(conn, args.config,
-                                                  drop=args.no_updates)
+                                                  drop=args.no_updates,
+                                                  threads=num_threads)
             LOG.warning('Create search index for default country names.')
             country_info.create_country_names(conn, tokenizer,
                                               args.config.get_str_list('LANGUAGES'))
@@ -186,27 +184,6 @@ class SetupAll:
 
         # just load the tokenizer
         return tokenizer_factory.get_tokenizer_for_db(config)
-
-
-    def _create_pending_index(self, conn: Connection, tablespace: str) -> None:
-        """ Add a supporting index for finding places still to be indexed.
-
-            This index is normally created at the end of the import process
-            for later updates. When indexing was partially done, then this
-            index can greatly improve speed going through already indexed data.
-        """
-        if conn.index_exists('idx_placex_pendingsector'):
-            return
-
-        with conn.cursor() as cur:
-            LOG.warning('Creating support index')
-            if tablespace:
-                tablespace = 'TABLESPACE ' + tablespace
-            cur.execute(f"""CREATE INDEX idx_placex_pendingsector
-                            ON placex USING BTREE (rank_address,geometry_sector)
-                            {tablespace} WHERE indexed_status > 0
-                         """)
-        conn.commit()
 
 
     def _finalize_database(self, dsn: str, offline: bool) -> None:

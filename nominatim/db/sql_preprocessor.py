@@ -11,6 +11,7 @@ from typing import Set, Dict, Any
 import jinja2
 
 from nominatim.db.connection import Connection
+from nominatim.db.async_connection import WorkerPool
 from nominatim.config import Configuration
 
 def _get_partitions(conn: Connection) -> Set[int]:
@@ -96,3 +97,21 @@ class SQLPreprocessor:
         with conn.cursor() as cur:
             cur.execute(sql)
         conn.commit()
+
+
+    def run_parallel_sql_file(self, dsn: str, name: str, num_threads: int = 1,
+                              **kwargs: Any) -> None:
+        """ Execure the given SQL files using parallel asynchronous connections.
+            The keyword arguments may supply additional parameters for
+            preprocessing.
+
+            After preprocessing the SQL code is cut at lines containing only
+            '---'. Each chunk is sent to one of the `num_threads` workers.
+        """
+        sql = self.env.get_template(name).render(**kwargs)
+
+        parts = sql.split('\n---\n')
+
+        with WorkerPool(dsn, num_threads) as pool:
+            for part in parts:
+                pool.next_free_worker().perform(part)

@@ -105,11 +105,8 @@ class TestCliImportWithDb:
         for mock in mocks:
             assert mock.called == 1, "Mock '{}' not called".format(mock.func_name)
 
-        assert temp_db_conn.index_exists('idx_placex_pendingsector')
-
         # Calling it again still works for the index
         assert self.call_nominatim('import', '--continue', 'indexing') == 0
-        assert temp_db_conn.index_exists('idx_placex_pendingsector')
 
 
     def test_import_continue_postprocess(self, mock_func_factory):

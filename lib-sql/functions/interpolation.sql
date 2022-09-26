@@ -52,7 +52,9 @@ BEGIN
 
   IF parent_place_id is null THEN
     FOR location IN SELECT place_id FROM placex
-        WHERE ST_DWithin(geom, placex.geometry, 0.001) and placex.rank_search = 26
+        WHERE ST_DWithin(geom, placex.geometry, 0.001)
+              and placex.rank_search = 26
+              and placex.osm_type = 'W' -- needed for index selection
         ORDER BY CASE WHEN ST_GeometryType(geom) = 'ST_Line' THEN
                   (ST_distance(placex.geometry, ST_LineInterpolatePoint(geom,0))+
                   ST_distance(placex.geometry, ST_LineInterpolatePoint(geom,0.5))+

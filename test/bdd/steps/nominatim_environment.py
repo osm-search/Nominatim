@@ -201,19 +201,21 @@ class NominatimEnvironment:
             self.api_db_done = True
 
             if not self._reuse_or_drop_db(self.api_test_db):
-                testdata = Path('__file__') / '..' / '..' / 'testdb'
-                self.test_env['NOMINATIM_WIKIPEDIA_DATA_PATH'] = str(testdata.resolve())
+                testdata = (Path(__file__) / '..' / '..' / '..' / 'testdb').resolve()
+                self.test_env['NOMINATIM_WIKIPEDIA_DATA_PATH'] = str(testdata)
+                simp_file = Path(self.website_dir.name) / 'secondary_importance.sql.gz'
+                simp_file.symlink_to(testdata / 'secondary_importance.sql.gz')
 
                 try:
                     self.run_nominatim('import', '--osm-file', str(self.api_test_file))
-                    self.run_nominatim('add-data', '--tiger-data', str((testdata / 'tiger').resolve()))
+                    self.run_nominatim('add-data', '--tiger-data', str(testdata / 'tiger'))
                     self.run_nominatim('freeze')
 
                     if self.tokenizer == 'legacy':
-                        phrase_file = str((testdata / 'specialphrases_testdb.sql').resolve())
+                        phrase_file = str(testdata / 'specialphrases_testdb.sql')
                         run_script(['psql', '-d', self.api_test_db, '-f', phrase_file])
                     else:
-                        csv_path = str((testdata / 'full_en_phrases_test.csv').resolve())
+                        csv_path = str(testdata / 'full_en_phrases_test.csv')
                         self.run_nominatim('special-phrases', '--import-from-csv', csv_path)
                 except:
                     self.db_drop_database(self.api_test_db)

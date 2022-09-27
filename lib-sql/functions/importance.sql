@@ -98,46 +98,9 @@ $$
 LANGUAGE plpgsql STABLE;
 
 
-CREATE OR REPLACE FUNCTION get_osm_views(centroid GEOMETRY)
-  RETURNS BIGINT
-  AS $$
-DECLARE
-  result BIGINT;
-BEGIN
-  SELECT ST_Value(osm_views.rast, centroid)
-  FROM osm_views
-  WHERE ST_Intersects(ST_ConvexHull(osm_views.rast), centroid) LIMIT 1 INTO result;
-
-  return COALESCE(result, 0);
-END;
-$$
-LANGUAGE plpgsql STABLE;
-
-
-CREATE OR REPLACE FUNCTION normalize_osm_views(views BIGINT)
-  RETURNS FLOAT
-  AS $$
-  DECLARE
-    normalized_osm_views FLOAT;
-    max_views BIGINT;
-  BEGIN
-    IF views > 0 THEN
-      -- Get the highest view count to use it in normalizing the data
-      SELECT max_views_count FROM osm_views_stat INTO max_views;
-      normalized_osm_views := (LOG(views))/(LOG(max_views));
-    ELSE
-      normalized_osm_views := 0.0;
-    END IF;
-
-    RETURN normalized_osm_views;
-  END;
-$$
-LANGUAGE plpgsql;
-
-
 CREATE OR REPLACE FUNCTION compute_importance(extratags HSTORE,
                                               country_code varchar(2),
-                                              osm_type varchar(1), osm_id BIGINT,
+                                              rank_search SMALLINT,
                                               centroid GEOMETRY)
   RETURNS place_importance
   AS $$
@@ -147,38 +110,43 @@ DECLARE
   osm_views_exists BIGINT;
   views BIGINT;
 BEGIN
- -- check if osm_views table exists
- SELECT COUNT(table_name)
-   INTO osm_views_exists
- FROM information_schema.tables
- WHERE table_schema LIKE 'public' AND 
-       table_type LIKE 'BASE TABLE' AND
-       table_name = 'osm_views';
-
-  -- add importance by OSM views if osm_views table exists
-  IF osm_views_exists THEN
-    views := get_osm_views(centroid);
-    result.importance := normalize_osm_views(views) * 0.35;
-  END IF;
-
-  -- add importance by wiki data if the place has one
-  FOR match IN SELECT * FROM get_wikipedia_match(extratags, country_code)
-               WHERE language is not NULL
+  -- add importance by wikipedia article if the place has one
+  FOR match IN
+    SELECT * FROM get_wikipedia_match(extratags, country_code)
+    WHERE language is not NULL
   LOOP
-    result.importance := COALESCE(result.importance, 0) + match.importance * 0.65;
+    result.importance := match.importance;
     result.wikipedia := match.language || ':' || match.title;
     RETURN result;
   END LOOP;
 
-  IF extratags ? 'wikidata' THEN
+  -- Nothing? Then try with the wikidata tag.
+  IF result.importance is null AND extratags ? 'wikidata' THEN
     FOR match IN SELECT * FROM wikipedia_article
                   WHERE wd_page_title = extratags->'wikidata'
-                  ORDER BY language = 'en' DESC, langcount DESC LIMIT 1 LOOP
-      result.importance := COALESCE(result.importance, 0) + match.importance * 0.65;
+                  ORDER BY language = 'en' DESC, langcount DESC LIMIT 1
+    LOOP
+      result.importance := match.importance;
       result.wikipedia := match.language || ':' || match.title;
       RETURN result;
     END LOOP;
   END IF;
+
+  -- Still nothing? Fall back to a default.
+  IF result.importance is null THEN
+    result.importance := 0.75001 - (rank_search::float / 40);
+  END IF;
+
+{% if 'secondary_importance' in db.tables %}
+  FOR match IN
+    SELECT ST_Value(rast, centroid) as importance
+    FROM secondary_importance
+    WHERE ST_Intersects(ST_ConvexHull(rast), centroid) LIMIT 1
+  LOOP
+    -- Secondary importance as tie breaker with 0.0001 weight.
+    result.importance := result.importance + match.importance::float / 655350000;
+  END LOOP;
+{% endif %}
 
   RETURN result;
 END;

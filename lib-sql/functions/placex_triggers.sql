@@ -965,7 +965,7 @@ BEGIN
 
   NEW.importance := null;
   SELECT wikipedia, importance
-    FROM compute_importance(NEW.extratags, NEW.country_code, NEW.osm_type, NEW.osm_id, NEW.centroid)
+    FROM compute_importance(NEW.extratags, NEW.country_code, NEW.rank_search, NEW.centroid)
     INTO NEW.wikipedia,NEW.importance;
 
 {% if debug %}RAISE WARNING 'Importance computed from wikipedia: %', NEW.importance;{% endif %}
@@ -1047,7 +1047,7 @@ BEGIN
   IF linked_place is not null THEN
     -- Recompute the ranks here as the ones from the linked place might
     -- have been shifted to accommodate surrounding boundaries.
-    SELECT place_id, osm_id, class, type, extratags,
+    SELECT place_id, osm_id, class, type, extratags, rank_search,
            centroid, geometry,
            (compute_place_rank(country_code, osm_type, class, type, admin_level,
                               (extratags->'capital') = 'yes', null)).*
@@ -1088,7 +1088,7 @@ BEGIN
 
     SELECT wikipedia, importance
       FROM compute_importance(location.extratags, NEW.country_code,
-                              'N', location.osm_id, NEW.centroid)
+                              location.rank_search, NEW.centroid)
       INTO linked_wikipedia,linked_importance;
 
     -- Use the maximum importance if one could be computed from the linked object.

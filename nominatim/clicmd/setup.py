@@ -96,8 +96,6 @@ class SetupAll:
                                             drop=args.no_updates,
                                             ignore_errors=args.ignore_errors)
 
-            self._setup_tables(args.config, args.reverse_only)
-
             LOG.warning('Importing wikipedia importance data')
             data_path = Path(args.config.WIKIPEDIA_DATA_PATH or args.project_dir)
             if refresh.import_wikipedia_articles(args.config.get_libpq_dsn(),
@@ -111,6 +109,8 @@ class SetupAll:
                                                    args.project_dir) != 0:
                 LOG.error('Secondary importance file not imported. '
                           'Falling back to default ranking.')
+
+            self._setup_tables(args.config, args.reverse_only)
 
         if args.continue_at is None or args.continue_at == 'load-data':
             LOG.warning('Initialise tables')

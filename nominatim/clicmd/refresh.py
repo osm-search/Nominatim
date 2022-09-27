@@ -63,8 +63,8 @@ class UpdateRefresh:
                            help='Update the PL/pgSQL functions in the database')
         group.add_argument('--wiki-data', action='store_true',
                            help='Update Wikipedia/data importance numbers')
-        group.add_argument('--osm-views', action='store_true',
-                           help='Update OSM views/data importance numbers')
+        group.add_argument('--secondary-importance', action='store_true',
+                           help='Update secondary importance raster data')
         group.add_argument('--importance', action='store_true',
                            help='Recompute place importances (expensive!)')
         group.add_argument('--website', action='store_true',
@@ -117,6 +117,20 @@ class UpdateRefresh:
             with connect(args.config.get_libpq_dsn()) as conn:
                 refresh.load_address_levels_from_config(conn, args.config)
 
+        # Attention: must come BEFORE functions
+        if args.secondary_importance:
+            with connect(args.config.get_libpq_dsn()) as conn:
+                # If the table did not exist before, then the importance code
+                # needs to be enabled.
+                if not conn.table_exists('secondary_importance'):
+                    args.functions = True
+
+            LOG.warning('Import secondary importance raster data from %s', args.project_dir)
+            if refresh.import_secondary_importance(args.config.get_libpq_dsn(),
+                                                args.project_dir) > 0:
+                LOG.fatal('FATAL: Cannot update sendary importance raster data')
+                return 1
+
         if args.functions:
             LOG.warning('Create functions')
             with connect(args.config.get_libpq_dsn()) as conn:
@@ -131,17 +145,6 @@ class UpdateRefresh:
             if refresh.import_wikipedia_articles(args.config.get_libpq_dsn(),
                                                  data_path) > 0:
                 LOG.fatal('FATAL: Wikipedia importance dump file not found')
-                return 1
-
-        if args.osm_views:
-            data_path = Path(args.project_dir)
-            LOG.warning('Import OSM views GeoTIFF data from %s', data_path)
-            num = refresh.import_osm_views_geotiff(args.config.get_libpq_dsn(), data_path)
-            if num == 1:
-                LOG.fatal('FATAL: OSM views GeoTIFF file not found')
-                return 1
-            if num == 2:
-                LOG.fatal('FATAL: PostGIS version number is less than 3')
                 return 1
 
         # Attention: importance MUST come after wiki data import.

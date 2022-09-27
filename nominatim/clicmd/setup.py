@@ -58,8 +58,6 @@ class SetupAll:
         group2.add_argument('--no-updates', action='store_true',
                            help="Do not keep tables that are only needed for "
                                 "updating the database later")
-        group2.add_argument('--osm-views', action='store_true',
-                            help='Import OSM views GeoTIFF')
         group2.add_argument('--offline', action='store_true',
                             help="Do not attempt to load any additional data from the internet")
         group3 = parser.add_argument_group('Expert options')
@@ -108,15 +106,11 @@ class SetupAll:
                           'Calculating importance values of locations will not '
                           'use Wikipedia importance data.')
 
-            LOG.warning('Importing OSM views GeoTIFF data')
-            data_path = Path(args.project_dir)
-            num = refresh.import_osm_views_geotiff(args.config.get_libpq_dsn(), data_path)
-            if num == 1:
-                LOG.error('OSM views GeoTIFF file not found. '
-                        'Calculating importance values of locations will not use OSM views data.')
-            elif num == 2:
-                LOG.error('PostGIS version number is less than 3. '
-                        'Calculating importance values of locations will not use OSM views data.')
+            LOG.warning('Importing secondary importance raster data')
+            if refresh.import_secondary_importance(args.config.get_libpq_dsn(),
+                                                   args.project_dir) != 0:
+                LOG.error('Secondary importance file not imported. '
+                          'Falling back to default ranking.')
 
         if args.continue_at is None or args.continue_at == 'load-data':
             LOG.warning('Initialise tables')

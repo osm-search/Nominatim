@@ -9,7 +9,6 @@ Functions for bringing auxiliary data in the database up-to-date.
 """
 from typing import MutableSequence, Tuple, Any, Type, Mapping, Sequence, List, cast
 import logging
-import subprocess
 from textwrap import dedent
 from pathlib import Path
 
@@ -147,48 +146,23 @@ def import_wikipedia_articles(dsn: str, data_path: Path, ignore_errors: bool = F
 
     return 0
 
-def import_osm_views_geotiff(dsn: str, data_path: Path) -> int:
-    """ Replaces the OSM views table with new data.
+def import_secondary_importance(dsn: str, data_path: Path, ignore_errors: bool = False) -> int:
+    """ Replaces the secondary importance raster data table with new data.
 
-        Returns 0 if all was well and 1 if the OSM views GeoTIFF file could not
+        Returns 0 if all was well and 1 if the raster SQL file could not
         be found. Throws an exception if there was an error reading the file.
     """
-    datafile = data_path / 'osmviews.tiff'
+    datafile = data_path / 'secondary_importance.sql.gz'
     if not datafile.exists():
         return 1
-    with connect(dsn) as conn:
 
+    with connect(dsn) as conn:
         postgis_version = conn.postgis_version_tuple()
         if postgis_version[0] < 3:
+            LOG.error('PostGIS version is too old for using OSM raster data.')
             return 2
 
-        with conn.cursor() as cur:
-            cur.drop_table("osm_views")
-            cur.drop_table("osm_views_stat")
-
-            # -ovr: 6 -> zoom 12, 5 -> zoom 13, 4 -> zoom 14, 3 -> zoom 15
-            reproject_geotiff = f"gdalwarp -q -multi -ovr 3 -overwrite \
-                -co COMPRESS=LZW -tr 0.01 0.01 -t_srs EPSG:4326 {datafile} raster2import.tiff"
-            subprocess.run(["/bin/bash", "-c" , reproject_geotiff], check=True)
-
-            tile_size = 256
-            import_geotiff = f"raster2pgsql -I -C -Y -t {tile_size}x{tile_size} raster2import.tiff \
-                public.osm_views | psql {dsn} > /dev/null"
-            subprocess.run(["/bin/bash", "-c" , import_geotiff], check=True)
-
-            cleanup = "rm raster2import.tiff"
-            subprocess.run(["/bin/bash", "-c" , cleanup], check=True)
-
-            # To normalize osm views data, the max view value is needed
-            cur.execute(f"""
-            CREATE TABLE osm_views_stat AS (
-                SELECT MAX(ST_Value(osm_views.rast, 1, x, y)) AS max_views_count
-                FROM osm_views CROSS JOIN
-                generate_series(1, {tile_size}) As x
-                CROSS JOIN generate_series(1, {tile_size}) As y
-                WHERE x <= ST_Width(rast) AND y <= ST_Height(rast));
-            """)
-            conn.commit()
+    execute_file(dsn, datafile, ignore_errors=ignore_errors)
 
     return 0
 

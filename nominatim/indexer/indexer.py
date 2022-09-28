@@ -128,58 +128,64 @@ class Indexer:
                     with conn.cursor() as cur:
                         cur.execute('ANALYZE')
 
-            self.index_by_rank(0, 4)
-            _analyze()
+            if self.index_by_rank(0, 4) > 0:
+                _analyze()
 
-            self.index_boundaries(0, 30)
-            _analyze()
+            if self.index_boundaries(0, 30) > 100:
+                _analyze()
 
-            self.index_by_rank(5, 25)
-            _analyze()
+            if self.index_by_rank(5, 25) > 100:
+                _analyze()
 
-            self.index_by_rank(26, 30)
-            _analyze()
+            if self.index_by_rank(26, 30) > 1000:
+                _analyze()
 
-            self.index_postcodes()
-            _analyze()
+            if self.index_postcodes() > 100:
+                _analyze()
 
 
-    def index_boundaries(self, minrank: int, maxrank: int) -> None:
+    def index_boundaries(self, minrank: int, maxrank: int) -> int:
         """ Index only administrative boundaries within the given rank range.
         """
+        total = 0
         LOG.warning("Starting indexing boundaries using %s threads",
                     self.num_threads)
 
         with self.tokenizer.name_analyzer() as analyzer:
             for rank in range(max(minrank, 4), min(maxrank, 26)):
-                self._index(runners.BoundaryRunner(rank, analyzer))
+                total += self._index(runners.BoundaryRunner(rank, analyzer))
 
-    def index_by_rank(self, minrank: int, maxrank: int) -> None:
+        return total
+
+    def index_by_rank(self, minrank: int, maxrank: int) -> int:
         """ Index all entries of placex in the given rank range (inclusive)
             in order of their address rank.
 
             When rank 30 is requested then also interpolations and
             places with address rank 0 will be indexed.
         """
+        total = 0
         maxrank = min(maxrank, 30)
         LOG.warning("Starting indexing rank (%i to %i) using %i threads",
                     minrank, maxrank, self.num_threads)
 
         with self.tokenizer.name_analyzer() as analyzer:
             for rank in range(max(1, minrank), maxrank + 1):
-                self._index(runners.RankRunner(rank, analyzer), 20 if rank == 30 else 1)
+                total += self._index(runners.RankRunner(rank, analyzer), 20 if rank == 30 else 1)
 
             if maxrank == 30:
-                self._index(runners.RankRunner(0, analyzer))
-                self._index(runners.InterpolationRunner(analyzer), 20)
+                total += self._index(runners.RankRunner(0, analyzer))
+                total += self._index(runners.InterpolationRunner(analyzer), 20)
+
+        return total
 
 
-    def index_postcodes(self) -> None:
+    def index_postcodes(self) -> int:
         """Index the entries of the location_postcode table.
         """
         LOG.warning("Starting indexing postcodes using %s threads", self.num_threads)
 
-        self._index(runners.PostcodeRunner(), 20)
+        return self._index(runners.PostcodeRunner(), 20)
 
 
     def update_status_table(self) -> None:
@@ -191,7 +197,7 @@ class Indexer:
 
             conn.commit()
 
-    def _index(self, runner: runners.Runner, batch: int = 1) -> None:
+    def _index(self, runner: runners.Runner, batch: int = 1) -> int:
         """ Index a single rank or table. `runner` describes the SQL to use
             for indexing. `batch` describes the number of objects that
             should be processed with a single SQL statement
@@ -233,4 +239,4 @@ class Indexer:
 
                 conn.commit()
 
-        progress.done()
+        return progress.done()

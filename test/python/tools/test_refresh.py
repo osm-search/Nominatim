@@ -17,8 +17,14 @@ def test_refresh_import_wikipedia_not_existing(dsn):
     assert refresh.import_wikipedia_articles(dsn, Path('.')) == 1
 
 
-def test_refresh_import_osm_views_geotiff_not_existing(dsn):
-    assert refresh.import_osm_views_geotiff(dsn, Path('.')) == 1
+def test_refresh_import_secondary_importance_non_existing(dsn):
+    assert refresh.import_secondary_importance(dsn, Path('.')) == 1
+
+def test_refresh_import_secondary_importance_testdb(dsn, src_dir, temp_db_conn, temp_db_cursor):
+    temp_db_cursor.execute('CREATE EXTENSION postgis; CREATE EXTENSION postgis_raster')
+    assert refresh.import_secondary_importance(dsn, src_dir / 'test' / 'testdb') == 0
+
+    assert temp_db_conn.table_exists('secondary_importance')
 
 
 @pytest.mark.parametrize("replace", (True, False))

@@ -55,7 +55,7 @@ class ProgressLogger:
 
         self.next_info += int(places_per_sec) * self.log_interval
 
-    def done(self) -> None:
+    def done(self) -> int:
         """ Print final statistics about the progress.
         """
         rank_end_time = datetime.now()
@@ -70,3 +70,5 @@ class ProgressLogger:
         LOG.warning("Done %d/%d in %d @ %.3f per second - FINISHED %s\n",
                     self.done_places, self.total_places, int(diff_seconds),
                     places_per_sec, self.name)
+
+        return self.done_places

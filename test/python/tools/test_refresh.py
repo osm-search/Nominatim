@@ -21,10 +21,15 @@ def test_refresh_import_secondary_importance_non_existing(dsn):
     assert refresh.import_secondary_importance(dsn, Path('.')) == 1
 
 def test_refresh_import_secondary_importance_testdb(dsn, src_dir, temp_db_conn, temp_db_cursor):
-    temp_db_cursor.execute('CREATE EXTENSION postgis; CREATE EXTENSION postgis_raster')
-    assert refresh.import_secondary_importance(dsn, src_dir / 'test' / 'testdb') == 0
+    temp_db_cursor.execute('CREATE EXTENSION postgis')
 
-    assert temp_db_conn.table_exists('secondary_importance')
+    if temp_db_conn.postgis_version_tuple()[0] < 3:
+        assert refresh.import_secondary_importance(dsn, src_dir / 'test' / 'testdb') > 0
+    else:
+        temp_db_cursor.execute('CREATE EXTENSION postgis_raster')
+        assert refresh.import_secondary_importance(dsn, src_dir / 'test' / 'testdb') == 0
+
+        assert temp_db_conn.table_exists('secondary_importance')
 
 
 @pytest.mark.parametrize("replace", (True, False))

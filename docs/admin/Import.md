@@ -78,27 +78,10 @@ This data is available as a binary download. Put it into your project directory:
 
 The file is about 400MB and adds around 4GB to the Nominatim database.
 
-### OSM views 
-OSM publishes aggregate map access numbers that are generated based on the users’ 
-behavior when viewing locations on the map. This data is also optional and 
-it complements wikipedia/wikidata rankings to further enhance the search results
-if added.
-OSM views data is avalaible as a GeoTIFF file. Put it into your project directory:
-
-    cd $PROJECT_DIR
-    wget https://qrank.wmcloud.org/download/osmviews.tiff
-
-The file is about 380MB and adds around 4GB to the Nominatim database. Importing
-OSM views into Nominatim takes a little over 3 hours.
-
-!!! warning
-    Importing OSM views is currently an experimental feature. OSM views data are
-    not yet included in the importance values calculations.
-
 !!! tip
-    If you forgot to download the wikipedia rankings or OSM views, then you can 
-    also add importances after the import. To add both, download their files, then 
-    run `nominatim refresh --wiki-data --osm-views --importance`. Updating 
+    If you forgot to download the wikipedia rankings, then you can
+    also add importances after the import. Download the SQL files, then
+    run `nominatim refresh --wiki-data --importance`. Updating
     importances for a planet will take a couple of hours.
 
 ### External postcodes

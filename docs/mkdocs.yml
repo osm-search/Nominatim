@@ -30,6 +30,7 @@ nav:
         - 'Configuration Settings': 'customize/Settings.md'
         - 'Per-Country Data': 'customize/Country-Settings.md'
         - 'Place Ranking' : 'customize/Ranking.md'
+        - 'Importance' : 'customize/Importance.md'
         - 'Tokenizers' : 'customize/Tokenizers.md'
         - 'Special Phrases': 'customize/Special-Phrases.md'
         - 'External data: US housenumbers from TIGER': 'customize/Tiger.md'

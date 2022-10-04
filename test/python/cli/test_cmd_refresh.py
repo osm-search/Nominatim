@@ -71,6 +71,18 @@ class TestRefresh:
 
         assert self.call_nominatim('refresh', '--wiki-data') == 1
 
+    def test_refresh_secondary_importance_file_not_found(self):
+        assert self.call_nominatim('refresh', '--secondary-importance') == 1
+
+
+    def test_refresh_secondary_importance_new_table(self, mock_func_factory):
+        mocks = [mock_func_factory(nominatim.tools.refresh, 'import_secondary_importance'),
+                 mock_func_factory(nominatim.tools.refresh, 'create_functions')]
+
+        assert self.call_nominatim('refresh', '--secondary-importance') == 0
+        assert mocks[0].called == 1
+        assert mocks[1].called == 1
+
 
     def test_refresh_importance_computed_after_wiki_import(self, monkeypatch):
         calls = []

@@ -15,7 +15,7 @@ from pathlib import Path
 from psycopg2 import sql as pysql
 
 from nominatim.config import Configuration
-from nominatim.db.connection import Connection
+from nominatim.db.connection import Connection, connect
 from nominatim.db.utils import execute_file
 from nominatim.db.sql_preprocessor import SQLPreprocessor
 from nominatim.version import version_str
@@ -146,6 +146,25 @@ def import_wikipedia_articles(dsn: str, data_path: Path, ignore_errors: bool = F
 
     return 0
 
+def import_secondary_importance(dsn: str, data_path: Path, ignore_errors: bool = False) -> int:
+    """ Replaces the secondary importance raster data table with new data.
+
+        Returns 0 if all was well and 1 if the raster SQL file could not
+        be found. Throws an exception if there was an error reading the file.
+    """
+    datafile = data_path / 'secondary_importance.sql.gz'
+    if not datafile.exists():
+        return 1
+
+    with connect(dsn) as conn:
+        postgis_version = conn.postgis_version_tuple()
+        if postgis_version[0] < 3:
+            LOG.error('PostGIS version is too old for using OSM raster data.')
+            return 2
+
+    execute_file(dsn, datafile, ignore_errors=ignore_errors)
+
+    return 0
 
 def recompute_importance(conn: Connection) -> None:
     """ Recompute wikipedia links and importance for all entries in placex.
@@ -157,7 +176,7 @@ def recompute_importance(conn: Connection) -> None:
         cur.execute("""
             UPDATE placex SET (wikipedia, importance) =
                (SELECT wikipedia, importance
-                FROM compute_importance(extratags, country_code, osm_type, osm_id))
+                FROM compute_importance(extratags, country_code, osm_type, osm_id, centroid))
             """)
         cur.execute("""
             UPDATE placex s SET wikipedia = d.wikipedia, importance = d.importance

@@ -68,14 +68,15 @@ Feature: Search queries
           | 0 |
         Then there are duplicates
 
+    @fail-legacy
     Scenario: Search with bounded viewbox in right area
-        When sending json search query "bar" with address
+        When sending json search query "post" with address
           | bounded | viewbox |
           | 1       |  9,47,10,48 |
         Then result addresses contain
           | ID | town |
           | 0  | Vaduz |
-        When sending json search query "bar" with address
+        When sending json search query "post" with address
           | bounded | viewbox |
           | 1       |  9.49712,47.17122,9.52605,47.16242 |
         Then result addresses contain
@@ -119,17 +120,17 @@ Feature: Search queries
 
     Scenario: Prefer results within viewbox
         When sending json search query "Gässle" with address
-          | accept-language |
-          | en |
-        Then result addresses contain
-          | ID | town |
-          | 0  | Balzers |
-        When sending json search query "Gässle" with address
           | accept-language | viewbox |
           | en              | 9.52413,47.10759,9.53140,47.10539 |
         Then result addresses contain
           | ID | village |
           | 0  | Triesen |
+        When sending json search query "Gässle" with address
+          | accept-language | viewbox |
+          | en              | 9.45949,47.08421,9.54094,47.05466 |
+        Then result addresses contain
+          | ID | town |
+          | 0  | Balzers |
 
     Scenario: viewboxes cannot be points
         When sending json search query "foo"

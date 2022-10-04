@@ -100,32 +100,55 @@ LANGUAGE plpgsql STABLE;
 
 CREATE OR REPLACE FUNCTION compute_importance(extratags HSTORE,
                                               country_code varchar(2),
-                                              osm_type varchar(1), osm_id BIGINT)
+                                              rank_search SMALLINT,
+                                              centroid GEOMETRY)
   RETURNS place_importance
   AS $$
 DECLARE
   match RECORD;
   result place_importance;
+  osm_views_exists BIGINT;
+  views BIGINT;
 BEGIN
-  FOR match IN SELECT * FROM get_wikipedia_match(extratags, country_code)
-               WHERE language is not NULL
+  -- add importance by wikipedia article if the place has one
+  FOR match IN
+    SELECT * FROM get_wikipedia_match(extratags, country_code)
+    WHERE language is not NULL
   LOOP
     result.importance := match.importance;
     result.wikipedia := match.language || ':' || match.title;
     RETURN result;
   END LOOP;
 
-  IF extratags ? 'wikidata' THEN
+  -- Nothing? Then try with the wikidata tag.
+  IF result.importance is null AND extratags ? 'wikidata' THEN
     FOR match IN SELECT * FROM wikipedia_article
                   WHERE wd_page_title = extratags->'wikidata'
-                  ORDER BY language = 'en' DESC, langcount DESC LIMIT 1 LOOP
+                  ORDER BY language = 'en' DESC, langcount DESC LIMIT 1
+    LOOP
       result.importance := match.importance;
       result.wikipedia := match.language || ':' || match.title;
       RETURN result;
     END LOOP;
   END IF;
 
-  RETURN null;
+  -- Still nothing? Fall back to a default.
+  IF result.importance is null THEN
+    result.importance := 0.75001 - (rank_search::float / 40);
+  END IF;
+
+{% if 'secondary_importance' in db.tables %}
+  FOR match IN
+    SELECT ST_Value(rast, centroid) as importance
+    FROM secondary_importance
+    WHERE ST_Intersects(ST_ConvexHull(rast), centroid) LIMIT 1
+  LOOP
+    -- Secondary importance as tie breaker with 0.0001 weight.
+    result.importance := result.importance + match.importance::float / 655350000;
+  END LOOP;
+{% endif %}
+
+  RETURN result;
 END;
 $$
 LANGUAGE plpgsql;

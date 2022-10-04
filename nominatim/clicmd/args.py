@@ -115,6 +115,7 @@ class NominatimArgs:
     address_levels: bool
     functions: bool
     wiki_data: bool
+    secondary_importance: bool
     importance: bool
     website: bool
     diffs: bool

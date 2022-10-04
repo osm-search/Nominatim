@@ -79,10 +79,10 @@ This data is available as a binary download. Put it into your project directory:
 The file is about 400MB and adds around 4GB to the Nominatim database.
 
 !!! tip
-    If you forgot to download the wikipedia rankings, you can also add
-    importances after the import. Download the files, then run
-    `nominatim refresh --wiki-data --importance`. Updating importances for
-    a planet can take a couple of hours.
+    If you forgot to download the wikipedia rankings, then you can
+    also add importances after the import. Download the SQL files, then
+    run `nominatim refresh --wiki-data --importance`. Updating
+    importances for a planet will take a couple of hours.
 
 ### External postcodes
 
@@ -139,7 +139,7 @@ import. So this option is particularly interesting if you plan to transfer the
 database or reuse the space later.
 
 !!! warning
-    The datastructure for updates are also required when adding additional data
+    The data structure for updates are also required when adding additional data
     after the import, for example [TIGER housenumber data](../customize/Tiger.md).
     If you plan to use those, you must not use the `--no-updates` parameter.
     Do a normal import, add the external data and once you are done with

@@ -59,7 +59,7 @@ class SetupAll:
                            help="Do not keep tables that are only needed for "
                                 "updating the database later")
         group2.add_argument('--offline', action='store_true',
-                           help="Do not attempt to load any additional data from the internet")
+                            help="Do not attempt to load any additional data from the internet")
         group3 = parser.add_argument_group('Expert options')
         group3.add_argument('--ignore-errors', action='store_true',
                            help='Continue import even when errors in SQL are present')
@@ -96,14 +96,21 @@ class SetupAll:
                                             drop=args.no_updates,
                                             ignore_errors=args.ignore_errors)
 
-            self._setup_tables(args.config, args.reverse_only)
-
             LOG.warning('Importing wikipedia importance data')
             data_path = Path(args.config.WIKIPEDIA_DATA_PATH or args.project_dir)
             if refresh.import_wikipedia_articles(args.config.get_libpq_dsn(),
                                                  data_path) > 0:
                 LOG.error('Wikipedia importance dump file not found. '
-                          'Will be using default importances.')
+                          'Calculating importance values of locations will not '
+                          'use Wikipedia importance data.')
+
+            LOG.warning('Importing secondary importance raster data')
+            if refresh.import_secondary_importance(args.config.get_libpq_dsn(),
+                                                   args.project_dir) != 0:
+                LOG.error('Secondary importance file not imported. '
+                          'Falling back to default ranking.')
+
+            self._setup_tables(args.config, args.reverse_only)
 
         if args.continue_at is None or args.continue_at == 'load-data':
             LOG.warning('Initialise tables')

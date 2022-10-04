@@ -185,7 +185,10 @@ def check_place_contents(context, table, exact):
 
         if exact:
             cur.execute('SELECT osm_type, osm_id, class from {}'.format(table))
-            assert expected_content == set([(r[0], r[1], r[2]) for r in cur])
+            actual = set([(r[0], r[1], r[2]) for r in cur])
+            assert expected_content == actual, \
+                   f"Missing entries: {expected_content - actual}\n" \
+                   f"Not expected in table: {actual - expected_content}"
 
 
 @then("(?P<table>placex|place) has no entry for (?P<oid>.*)")

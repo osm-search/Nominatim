@@ -27,6 +27,7 @@ userconfig = {
     'API_TEST_FILE'  : (TEST_BASE_DIR / 'testdb' / 'apidb-test-data.pbf').resolve(),
     'SERVER_MODULE_PATH' : None,
     'TOKENIZER' : None, # Test with a custom tokenizer
+    'STYLE' : 'extratags',
     'PHPCOV' : False, # set to output directory to enable code coverage
 }
 

@@ -36,6 +36,7 @@ class NominatimEnvironment:
         self.api_test_db = config['API_TEST_DB']
         self.api_test_file = config['API_TEST_FILE']
         self.tokenizer = config['TOKENIZER']
+        self.import_style = config['STYLE']
         self.server_module_path = config['SERVER_MODULE_PATH']
         self.reuse_template = not config['REMOVE_TEMPLATE']
         self.keep_scenario_db = config['KEEP_TEST_DB']
@@ -107,6 +108,8 @@ class NominatimEnvironment:
         self.test_env['NOMINATIM_NOMINATIM_TOOL'] = str((self.build_dir / 'nominatim').resolve())
         if self.tokenizer is not None:
             self.test_env['NOMINATIM_TOKENIZER'] = self.tokenizer
+        if self.import_style is not None:
+            self.test_env['NOMINATIM_IMPORT_STYLE'] = self.import_style
 
         if self.server_module_path:
             self.test_env['NOMINATIM_DATABASE_MODULE_PATH'] = self.server_module_path

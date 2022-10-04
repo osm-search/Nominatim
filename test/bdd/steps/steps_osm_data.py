@@ -17,7 +17,7 @@ def get_osm2pgsql_options(nominatim_env, fname, append):
     return dict(import_file=fname,
                 osm2pgsql=str(nominatim_env.build_dir / 'osm2pgsql' / 'osm2pgsql'),
                 osm2pgsql_cache=50,
-                osm2pgsql_style=str(nominatim_env.src_dir / 'settings' / 'import-extratags.style'),
+                osm2pgsql_style=str(nominatim_env.get_test_config().get_import_style_file()),
                 threads=1,
                 dsn=nominatim_env.get_libpq_dsn(),
                 flatnode_file='',

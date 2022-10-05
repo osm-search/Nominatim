@@ -172,10 +172,12 @@ Feature: Search queries
 
     Scenario: Limit number of search results
         When sending json search query "landstr"
+          | dedupe |
+          | 0      |
         Then more than 4 results are returned
         When sending json search query "landstr"
-          | limit |
-          | 4 |
+          | limit | dedupe |
+          | 4     | 0      |
         Then exactly 4 results are returned
 
     Scenario: Limit parameter must be a number

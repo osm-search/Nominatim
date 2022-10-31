@@ -175,6 +175,9 @@ token-analysis:
       mode: variant-only
       variants:
           - !include icu-rules/variants-ru.yaml
+      mutations:
+          - pattern: ё
+            replacements: ["ё", "е"]
     - id: sk
       analyzer: generic
       mode: variant-only

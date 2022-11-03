@@ -10,6 +10,7 @@ Helper functions for executing external programs.
 from typing import Any, Union, Optional, Mapping, IO
 from pathlib import Path
 import logging
+import os
 import subprocess
 import urllib.request as urlrequest
 from urllib.parse import urlencode
@@ -120,9 +121,16 @@ def run_osm2pgsql(options: Mapping[str, Any]) -> None:
            '--log-progress', 'true',
            '--number-processes', str(options['threads']),
            '--cache', str(options['osm2pgsql_cache']),
-           '--output', 'gazetteer',
            '--style', str(options['osm2pgsql_style'])
           ]
+
+    if str(options['osm2pgsql_style']).endswith('.lua'):
+        env['LUA_PATH'] = ';'.join((str(options['osm2pgsql_style_path'] / 'flex-base.lua'),
+                                    os.environ.get('LUAPATH', ';')))
+        cmd.extend(('--output', 'flex'))
+    else:
+        cmd.extend(('--output', 'gazetteer'))
+
     if options['append']:
         cmd.append('--append')
     else:

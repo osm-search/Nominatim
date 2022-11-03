@@ -106,10 +106,10 @@ Feature: Tag evaluation
             n7002 Thighway=primary,bridge=yes,bridge:name=1
             """
         Then place contains exactly
-            | object        | class   | type    | name        | extratags         |
-            | N7001         | highway | primary | 'name': '1' | -                 |
-            | N7002:highway | highway | primary | -           | 'bridge:name': '1'|
-            | N7002:bridge  | bridge  | yes     | 'name': '1' | 'bridge:name': '1'|
+            | object        | class   | type    | name        | extratags+bridge:name |
+            | N7001         | highway | primary | 'name': '1' | -                     |
+            | N7002:highway | highway | primary | -           | 1                     |
+            | N7002:bridge  | bridge  | yes     | 'name': '1' | 1                     |
 
 
     Scenario: Global fallback and skipping
@@ -153,13 +153,15 @@ Feature: Tag evaluation
             n10002 Tboundary=natural,place=city,name=B
             n10003 Tboundary=administrative,place=island,name=C
             """
-        Then place contains exactly
+        Then place contains
             | object          | class    | type           | extratags       |
             | N10001          | boundary | administrative | 'place': 'city' |
-            | N10002:boundary | boundary | natural        | - |
-            | N10002:place    | place    | city           | - |
-            | N10003:boundary | boundary | administrative | - |
-            | N10003:place    | place    | island         | - |
+        And place contains
+            | object          | class    | type           |
+            | N10002:boundary | boundary | natural        |
+            | N10002:place    | place    | city           |
+            | N10003:boundary | boundary | administrative |
+            | N10003:place    | place    | island         |
 
 
     Scenario: Shorten tiger:county tags
@@ -200,6 +202,6 @@ Feature: Tag evaluation
             n13002 Taddr:interpolation=even,place=city
             """
         Then place contains exactly
-            | object | class | type   | extratags       | address                 |
-            | N13001 | place | houses | -               | 'interpolation': 'odd'  |
-            | N13002 | place | houses | 'place': 'city' | 'interpolation': 'even' |
+            | object | class | type   | address                 |
+            | N13001 | place | houses | 'interpolation': 'odd'  |
+            | N13002 | place | houses | 'interpolation': 'even' |

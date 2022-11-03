@@ -197,7 +197,7 @@ if [ "x$2" == "xinstall-nginx" ]; then #DOCS:
 sudo tee /etc/php/7.4/fpm/pool.d/www.conf << EOF_PHP_FPM_CONF
 [www]
 ; Replace the tcp listener and add the unix socket
-listen = /var/run/php7.4-fpm.sock
+listen = /var/run/php-fpm-nominatim.sock
 
 ; Ensure that the daemon runs as the correct user
 listen.owner = www-data
@@ -232,7 +232,7 @@ server {
         fastcgi_param SCRIPT_FILENAME "\$document_root\$uri.php";
         fastcgi_param PATH_TRANSLATED "\$document_root\$uri.php";
         fastcgi_param QUERY_STRING    \$args;
-        fastcgi_pass unix:/var/run/php7.4-fpm.sock;
+        fastcgi_pass unix:/var/run/php-fpm-nominatim.sock;
         fastcgi_index index.php;
         include fastcgi_params;
     }
@@ -242,7 +242,7 @@ server {
         if (!-f \$document_root\$fastcgi_script_name) {
             return 404;
         }
-        fastcgi_pass unix:/var/run/php7.4-fpm.sock;
+        fastcgi_pass unix:/var/run/php-fpm-nominatim.sock;
         fastcgi_index search.php;
         include fastcgi.conf;
     }
@@ -250,9 +250,9 @@ server {
 EOF_NGINX_CONF
 #DOCS:```
 
-# If you have some errors, make sure that php7.4-fpm.sock is well under
+# If you have some errors, make sure that php-fpm-nominatim.sock is well under
 # /var/run/ and not under /var/run/php. Otherwise change the Nginx configuration
-# to /var/run/php/php7.4-fpm.sock.
+# to /var/run/php/php-fpm-nominatim.sock.
 #
 # Enable the configuration and restart Nginx
 #

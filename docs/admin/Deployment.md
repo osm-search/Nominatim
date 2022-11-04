@@ -99,7 +99,7 @@ Unix socket instead, change the pool configuration
 
 ``` ini
 ; Replace the tcp listener and add the unix socket
-listen = /var/run/php-fpm.sock
+listen = /var/run/php-fpm-nominatim.sock
 
 ; Ensure that the daemon runs as the correct user
 listen.owner = www-data
@@ -121,7 +121,7 @@ location @php {
     fastcgi_param SCRIPT_FILENAME "$document_root$uri.php";
     fastcgi_param PATH_TRANSLATED "$document_root$uri.php";
     fastcgi_param QUERY_STRING    $args;
-    fastcgi_pass unix:/var/run/php-fpm.sock;
+    fastcgi_pass unix:/var/run/php-fpm-nominatim.sock;
     fastcgi_index index.php;
     include fastcgi_params;
 }
@@ -131,7 +131,7 @@ location ~ [^/]\.php(/|$) {
     if (!-f $document_root$fastcgi_script_name) {
         return 404;
     }
-    fastcgi_pass unix:/var/run/php-fpm.sock;
+    fastcgi_pass unix:/var/run/php-fpm-nominatim.sock;
     fastcgi_index search.php;
     include fastcgi.conf;
 }

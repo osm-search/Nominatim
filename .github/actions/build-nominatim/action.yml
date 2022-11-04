@@ -9,6 +9,10 @@ inputs:
         description: 'Additional options to hand to cmake'
         required: false
         default: ''
+    lua:
+        description: 'Version of Lua to use'
+        required: false
+        default: '5.3'
 
 runs:
     using: "composite"
@@ -21,7 +25,7 @@ runs:
           shell: bash
         - name: Install prerequisites
           run: |
-            sudo apt-get install -y -qq libboost-system-dev libboost-filesystem-dev libexpat1-dev zlib1g-dev libbz2-dev libpq-dev libproj-dev libicu-dev
+            sudo apt-get install -y -qq libboost-system-dev libboost-filesystem-dev libexpat1-dev zlib1g-dev libbz2-dev libpq-dev libproj-dev libicu-dev liblua${LUA_VERSION}-dev lua${LUA_VERSION}
             if [ "x$UBUNTUVER" == "x18" ]; then
                 pip3 install python-dotenv psycopg2==2.7.7 jinja2==2.8 psutil==5.4.2 pyicu==2.9 osmium PyYAML==5.1 datrie
             else
@@ -31,6 +35,7 @@ runs:
           env:
             UBUNTUVER: ${{ inputs.ubuntu }}
             CMAKE_ARGS: ${{ inputs.cmake-args }}
+            LUA_VERSION: ${{ inputs.lua }}
 
         - name: Configure
           run: mkdir build && cd build && cmake $CMAKE_ARGS ../Nominatim

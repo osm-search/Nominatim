@@ -130,10 +130,7 @@ def update(conn: Connection, options: MutableMapping[str, Any],
         if endseq is None:
             return UpdateState.NO_CHANGES
 
-        # Consume updates with osm2pgsql.
-        options['append'] = True
-        options['disable_jit'] = conn.server_version_tuple() >= (11, 0)
-        run_osm2pgsql(options)
+        run_osm2pgsql_updates(conn, options)
 
         # Write the current status to the file
         endstate = repl.get_state_info(endseq)
@@ -141,6 +138,25 @@ def update(conn: Connection, options: MutableMapping[str, Any],
                           seq=endseq, indexed=False)
 
     return UpdateState.UP_TO_DATE
+
+
+def run_osm2pgsql_updates(conn: Connection, options: MutableMapping[str, Any]) -> None:
+    """ Run osm2pgsql in append mode.
+    """
+    # Remove any stale deletion marks.
+    with conn.cursor() as cur:
+        cur.execute('TRUNCATE place_to_be_deleted')
+    conn.commit()
+
+    # Consume updates with osm2pgsql.
+    options['append'] = True
+    options['disable_jit'] = conn.server_version_tuple() >= (11, 0)
+    run_osm2pgsql(options)
+
+    # Handle deletions
+    with conn.cursor() as cur:
+        cur.execute('SELECT flush_deleted_places()')
+    conn.commit()
 
 
 def _make_replication_server(url: str, timeout: int) -> ContextManager[ReplicationServer]:

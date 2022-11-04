@@ -10,6 +10,7 @@ import os
 from pathlib import Path
 
 from nominatim.tools.exec_utils import run_osm2pgsql
+from nominatim.tools.replication import run_osm2pgsql_updates
 
 from geometry_alias import ALIASES
 
@@ -118,6 +119,7 @@ def update_from_osm_file(context):
     # create an OSM file and import it
     fname = write_opl_file(context.text, context.osm)
     try:
-        run_osm2pgsql(get_osm2pgsql_options(context.nominatim, fname, append=True))
+        run_osm2pgsql_updates(context.db,
+                              get_osm2pgsql_options(context.nominatim, fname, append=True))
     finally:
         os.remove(fname)

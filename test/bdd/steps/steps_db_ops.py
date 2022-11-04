@@ -118,7 +118,10 @@ def update_place_table(context):
     context.nominatim.run_nominatim('refresh', '--functions')
     with context.db.cursor() as cur:
         for row in context.table:
-            PlaceColumn(context).add_row(row, False).db_insert(cur)
+            col = PlaceColumn(context).add_row(row, False)
+            col.db_delete(cur)
+            col.db_insert(cur)
+        cur.execute('SELECT flush_deleted_places()')
 
     context.nominatim.reindex_placex(context.db)
     check_database_integrity(context)
@@ -143,8 +146,10 @@ def delete_places(context, oids):
     """
     context.nominatim.run_nominatim('refresh', '--functions')
     with context.db.cursor() as cur:
+        cur.execute('TRUNCATE place_to_be_deleted')
         for oid in oids.split(','):
             NominatimID(oid).query_osm_id(cur, 'DELETE FROM place WHERE {}')
+        cur.execute('SELECT flush_deleted_places()')
 
     context.nominatim.reindex_placex(context.db)
 

@@ -92,6 +92,12 @@ class PlaceColumn:
         else:
             self.columns[column] = {key: value}
 
+    def db_delete(self, cursor):
+        """ Issue a delete for the given OSM object.
+        """
+        cursor.execute('DELETE FROM place WHERE osm_type = %s and osm_id = %s',
+                       (self.columns['osm_type'] , self.columns['osm_id']))
+
     def db_insert(self, cursor):
         """ Insert the collected data into the database.
         """

@@ -82,4 +82,14 @@ CREATE INDEX IF NOT EXISTS idx_postcode_postcode
       INCLUDE (startnumber, endnumber) {{db.tablespace.search_index}}
       WHERE startnumber is not null;
   {% endif %}
+---
+-- Table needed for running updates with osm2pgsql on place.
+  CREATE TABLE IF NOT EXISTS place_to_be_deleted (
+    osm_type CHAR(1),
+    osm_id BIGINT,
+    class TEXT,
+    type TEXT,
+    deferred BOOLEAN
+   );
+
 {% endif %}

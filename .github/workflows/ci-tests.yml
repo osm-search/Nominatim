@@ -50,7 +50,7 @@ jobs:
                       pytest: py.test-3
                       php: 7.4
                     - ubuntu: 22
-                      postgresql: 14
+                      postgresql: 15
                       postgis: 3
                       pytest: py.test-3
                       php: 8.1

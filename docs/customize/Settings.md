@@ -148,6 +148,29 @@ Setting this option to 'yes' means that Nominatim skips reindexing of contained
 objects when the area becomes too large.
 
 
+#### NOMINATIM_UPDATE_FORWARD_DEPENDENCIES
+
+| Summary            |                                                     |
+| --------------     | --------------------------------------------------- |
+| **Description:**   | Forward geometry changes to dependet objects |
+| **Format:**        | bool |
+| **Default:**       | no |
+| **Comment:**       | EXPERT ONLY. Must not be enabled after import. |
+
+The geometry of OSM ways and relations may change when a node that is part
+of the object is moved around. These changes are not propagated per default.
+The geometry of ways/relations is only updated the next time that the object
+itself is touched. When enabling this option, then dependent objects will
+be marked for update when one of its member objects changes.
+
+Enabling this option may slow down updates significantly.
+
+!!! warning
+    If you want to enable this option, it must be set already on import.
+    Do not enable this option on an existing database that was imported with
+    NOMINATIM_UPDATE_FORWARD_DEPENDENCIES=no.
+    Updates will become unusably slow.
+
 #### NOMINATIM_LANGUAGES
 
 | Summary            |                                                     |

@@ -57,10 +57,11 @@ code and message, e.g.
 
 Possible status codes are
 
-   |     | message              | notes                                             |
-   |-----|----------------------|---------------------------------------------------|
-   | 700 | "No database"        | connection failed                                 |
-   | 701 | "Module failed"      | database could not load nominatim.so              |
+  |    | message          | notes                                             |
+   |------------------|----------------------|---------------------------------------------------|
+   | 700 | "No database"    | connection failed                                 |
+   | 701 | "Module failed"  | database could not load nominatim.so              |
    | 702 | "Module call failed" | nominatim.so loaded but calling a function failed |
-   | 703 | "Query failed"       | test query against a database table failed        |
-   | 704 | "No value"           | test query worked but returned no results         |
+   | 70 | "Query failed"   | test query against a database table failed        |
+   | 704 | "No value"       | test query worked but returned no results         |
+   | 705 | "Import date is not available"           | No import dates were returned (enabling replication can fix this)         |

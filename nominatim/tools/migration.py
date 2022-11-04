@@ -315,3 +315,20 @@ def mark_internal_country_names(conn: Connection, config: Configuration, **_: An
                     names = {}
                 names['countrycode'] = country_code
                 analyzer.add_country_names(country_code, names)
+
+
+@_migration(4, 1, 99, 0)
+def add_place_deletion_todo_table(conn: Connection, **_: Any) -> None:
+    """ Add helper table for deleting data on updates.
+
+        The table is only necessary when updates are possible, i.e.
+        the database is not in freeze mode.
+    """
+    if conn.table_exists('place'):
+        with conn.cursor() as cur:
+            cur.execute("""CREATE TABLE IF NOT EXISTS place_to_be_deleted (
+                             osm_type CHAR(1),
+                             osm_id BIGINT,
+                             class TEXT,
+                             type TEXT,
+                             deferred BOOLEAN)""")

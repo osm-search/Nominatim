@@ -71,7 +71,8 @@ class ReverseGeocode
         $sSQL .= '  ST_Distance(linegeo,'.$sPointSQL.') as distance';
         $sSQL .= ' FROM location_property_osmline';
         $sSQL .= ' WHERE ST_DWithin('.$sPointSQL.', linegeo, '.$fSearchDiam.')';
-        $sSQL .= ' and indexed_status = 0 and startnumber is not NULL ';
+        $sSQL .= '       and indexed_status = 0 and startnumber is not NULL ';
+        $sSQL .= '       and parent_place_id != 0';
         $sSQL .= ' ORDER BY distance ASC limit 1';
         Debug::printSQL($sSQL);
 

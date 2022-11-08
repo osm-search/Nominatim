@@ -76,7 +76,8 @@ class UpdateReplication:
 
         LOG.warning("Initialising replication updates")
         with connect(args.config.get_libpq_dsn()) as conn:
-            replication.init_replication(conn, base_url=args.config.REPLICATION_URL)
+            replication.init_replication(conn, base_url=args.config.REPLICATION_URL,
+                                         socket_timeout=args.socket_timeout)
             if args.update_functions:
                 LOG.warning("Create functions")
                 refresh.create_functions(conn, args.config, True, False)
@@ -87,7 +88,8 @@ class UpdateReplication:
         from ..tools import replication
 
         with connect(args.config.get_libpq_dsn()) as conn:
-            return replication.check_for_updates(conn, base_url=args.config.REPLICATION_URL)
+            return replication.check_for_updates(conn, base_url=args.config.REPLICATION_URL,
+                                                 socket_timeout=args.socket_timeout)
 
 
     def _report_update(self, batchdate: dt.datetime,

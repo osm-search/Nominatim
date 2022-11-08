@@ -148,7 +148,7 @@ class UpdateReplication:
         while True:
             with connect(args.config.get_libpq_dsn()) as conn:
                 start = dt.datetime.now(dt.timezone.utc)
-                state = replication.update(conn, params)
+                state = replication.update(conn, params, socket_timeout=args.socket_timeout)
                 if state is not replication.UpdateState.NO_CHANGES:
                     status.log_status(conn, start, 'import')
                 batchdate, _, _ = status.get_status(conn)

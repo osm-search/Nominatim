@@ -7,11 +7,11 @@ jobs:
         runs-on: ubuntu-latest
 
         steps:
-            - uses: actions/checkout@v2
+            - uses: actions/checkout@v3
               with:
                 submodules: true
 
-            - uses: actions/cache@v2
+            - uses: actions/cache@v3
               with:
                   path: |
                      data/country_osm_grid.sql.gz
@@ -27,7 +27,7 @@ jobs:
                   mv nominatim-src.tar.bz2 Nominatim
 
             - name: 'Upload Artifact'
-              uses: actions/upload-artifact@v2
+              uses: actions/upload-artifact@v3
               with:
                   name: full-source
                   path: nominatim-src.tar.bz2
@@ -58,7 +58,7 @@ jobs:
         runs-on: ubuntu-${{ matrix.ubuntu }}.04
 
         steps:
-            - uses: actions/download-artifact@v2
+            - uses: actions/download-artifact@v3
               with:
                   name: full-source
 
@@ -72,7 +72,7 @@ jobs:
                   tools: phpunit, phpcs, composer
                   ini-values: opcache.jit=disable
 
-            - uses: actions/setup-python@v2
+            - uses: actions/setup-python@v4
               with:
                 python-version: 3.6
               if: matrix.ubuntu == 18
@@ -136,7 +136,7 @@ jobs:
         runs-on: ubuntu-20.04
 
         steps:
-            - uses: actions/download-artifact@v2
+            - uses: actions/download-artifact@v3
               with:
                   name: full-source
 
@@ -231,7 +231,7 @@ jobs:
                 OS: ${{ matrix.name }}
                 INSTALL_MODE: ${{ matrix.install_mode }}
 
-            - uses: actions/download-artifact@v2
+            - uses: actions/download-artifact@v3
               with:
                   name: full-source
                   path: /home/nominatim

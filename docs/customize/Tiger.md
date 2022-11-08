@@ -14,13 +14,13 @@ entire US adds about 10GB to your database.
 
         nominatim add-data --tiger-data tiger-nominatim-preprocessed-latest.csv.tar.gz
 
-  3. Enable use of the Tiger data in your `.env` by adding:
+  3. Enable use of the Tiger data in your existing `.env` file by adding:
 
         echo NOMINATIM_USE_US_TIGER_DATA=yes >> .env
 
   4. Apply the new settings:
 
-        nominatim refresh --functions
+        nominatim refresh --functions --website
 
 
 See the [TIGER-data project](https://github.com/osm-search/TIGER-data) for more

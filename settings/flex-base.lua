@@ -219,49 +219,58 @@ function tag_match(data)
         return nil
     end
 
-    local tests = {}
+    local fullmatches = {}
+    local key_prefixes = {}
+    local key_suffixes = {}
 
     if data.keys ~= nil then
         for _, key in pairs(data.keys) do
             if key:sub(1, 1) == '*' then
                 if #key > 1 then
-                    local suffix = key:sub(2)
-                    tests[#tests + 1] = function (k, v)
-                        return k:sub(-#suffix) == suffix
+                    if key_suffixes[#key - 1] == nil then
+                        key_suffixes[#key - 1] = {}
                     end
+                    key_suffixes[#key - 1][key:sub(2)] = true
                 end
             elseif key:sub(#key, #key) == '*' then
-                local prefix = key:sub(1, #key - 1)
-                tests[#tests + 1] = function (k, v)
-                    return k:sub(1, #prefix) == prefix
+                if key_prefixes[#key - 1] == nil then
+                    key_prefixes[#key - 1] = {}
                 end
+                key_prefixes[#key - 1][key:sub(1, #key - 1)] = true
             else
-                tests[#tests + 1] = function (k, v)
-                    return k == key
-                end
+                fullmatches[key] = true
             end
         end
     end
 
     if data.tags ~= nil then
-        local tags = {}
         for k, vlist in pairs(data.tags) do
-            tags[k] = {}
-            for _, v in pairs(vlist) do
-                tags[k][v] = true
+            if fullmatches[k] == nil then
+                fullmatches[k] = {}
+                for _, v in pairs(vlist) do
+                    fullmatches[k][v] = true
+                end
             end
-        end
-        tests[#tests + 1] = function (k, v)
-            return tags[k] ~= nil and tags[k][v] ~= nil
         end
     end
 
     return function (k, v)
-        for _, func in pairs(tests) do
-            if func(k, v) then
+        if fullmatches[k] ~= nil and (fullmatches[k] == true or fullmatches[k][v] ~= nil) then
+            return true
+        end
+
+        for slen, slist in pairs(key_suffixes) do
+            if #k >= slen and slist[k:sub(-slen)] ~= nil then
                 return true
             end
         end
+
+        for slen, slist in pairs(key_prefixes) do
+            if #k >= slen and slist[k:sub(1, slen)] ~= nil then
+                return true
+            end
+        end
+
         return false
     end
 end

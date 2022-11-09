@@ -99,7 +99,7 @@ jobs:
               if: matrix.ubuntu == 22
 
             - name: Install latest pylint/mypy
-              run: pip3 install -U pylint mypy types-PyYAML types-jinja2 types-psycopg2 types-psutil typing-extensions
+              run: pip3 install -U pylint mypy types-PyYAML types-jinja2 types-psycopg2 types-psutil types-requests typing-extensions
 
             - name: PHP linting
               run: phpcs --report-width=120 .

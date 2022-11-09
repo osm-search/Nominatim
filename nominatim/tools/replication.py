@@ -156,25 +156,25 @@ def _make_replication_server(url: str, timeout: int) -> ContextManager[Replicati
             """ Download a resource from the given URL and return a byte sequence
                 of the content.
             """
-            get_params = {
-                'headers': {"User-Agent" : f"Nominatim (pyosmium/{pyo_version.pyosmium_release})"},
-                'timeout': timeout or None,
-                'stream': True
-            }
+            headers = {"User-Agent" : f"Nominatim (pyosmium/{pyo_version.pyosmium_release})"}
 
             if self.session is not None:
-                return self.session.get(url.get_full_url(), **get_params)
+                return self.session.get(url.get_full_url(),
+                                       headers=headers, timeout=timeout or None,
+                                       stream=True)
 
             @contextmanager
             def _get_url_with_session() -> Iterator[requests.Response]:
                 with requests.Session() as session:
-                    request = session.get(url.get_full_url(), **get_params) # type: ignore
+                    request = session.get(url.get_full_url(),
+                                          headers=headers, timeout=timeout or None,
+                                          stream=True)
                     yield request
 
             return _get_url_with_session()
 
         repl = ReplicationServer(url)
-        repl.open_url = types.MethodType(patched_open_url, repl)
+        setattr(repl, 'open_url', types.MethodType(patched_open_url, repl))
 
         return cast(ContextManager[ReplicationServer], repl)
 

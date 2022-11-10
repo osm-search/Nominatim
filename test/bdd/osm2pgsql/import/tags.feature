@@ -75,6 +75,7 @@ Feature: Tag evaluation
             n5003 Tshop=yes,country_code=x
             n5004 Tshop=yes,addr:country=us
             n5005 Tshop=yes,country=be
+            n5006 Tshop=yes,addr:country=France
             """
         Then place contains exactly
             | object | class | address         |
@@ -83,6 +84,7 @@ Feature: Tag evaluation
             | N5003  | shop  | - |
             | N5004  | shop  | 'country': 'us' |
             | N5005  | shop  | - |
+            | N5006  | shop  | - |
 
 
     Scenario: Postcodes

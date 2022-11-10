@@ -331,8 +331,10 @@ function process_tags(o)
     end
 
     -- address keys
-    o:grab_address{match=function (k, v) return COUNTRY_TAGS(k, v) and #v == 2 end,
-                   out_key='country'}
+    o:grab_address{match=COUNTRY_TAGS, out_key='country'}
+    if o.address.country ~= nil and #o.address.country ~= 2 then
+        o.address['country'] = nil
+    end
     if o:grab_name{match=HOUSENAME_TAGS} > 0 then
         fallback = {'place', 'house'}
     end

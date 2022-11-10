@@ -2,6 +2,11 @@
 Feature: Tag evaluation
     Tests if tags are correctly updated in the place table
 
+    Background:
+        Given the grid
+            | 1  | 2  | 3 |
+            | 10 | 11 |   |
+            | 45 | 46 |   |
 
     Scenario: Main tag deleted
         When loading osm data
@@ -29,7 +34,7 @@ Feature: Tag evaluation
         And placex contains exactly
             | object     | indexed_status |
             | N1:amenity | 100            |
-            | N2:highway | 2              |
+            | N2:highway | 0              |
             | N2:railway | 100            |
             | N3:amenity | 0              |
 
@@ -57,7 +62,7 @@ Feature: Tag evaluation
         And placex contains exactly
             | object     | indexed_status |
             | N1:amenity | 1              |
-            | N2:highway | 2              |
+            | N2:highway | 0              |
             | N2:railway | 1              |
 
 
@@ -208,62 +213,62 @@ Feature: Tag evaluation
     Scenario: Main tags with name key, adding key name
         When loading osm data
             """
-            n22 Tbridge=yes
+            n2 Tbridge=yes
             """
         Then place contains exactly
             | object | class    | type  |
 
         When updating osm data
             """
-            n22 Tbridge=yes,bridge:name=high
+            n2 Tbridge=yes,bridge:name=high
             """
         Then place contains exactly
             | object | class    | type  | name           |
-            | N22    | bridge   | yes   | 'name': 'high' |
+            | N2     | bridge   | yes   | 'name': 'high' |
         And placex contains exactly
-            | object       | indexed_status |
-            | N22:bridge   | 1              |
+            | object    | indexed_status |
+            | N2:bridge | 1              |
 
 
     Scenario: Main tags with name key, deleting key name
         When loading osm data
             """
-            n22 Tbridge=yes,bridge:name=high
+            n2 Tbridge=yes,bridge:name=high
             """
         Then place contains exactly
             | object | class    | type  | name           |
-            | N22    | bridge   | yes   | 'name': 'high' |
+            | N2     | bridge   | yes   | 'name': 'high' |
 
         When updating osm data
             """
-            n22 Tbridge=yes
+            n2 Tbridge=yes
             """
         Then place contains exactly
             | object | class    | type  |
         And placex contains exactly
-            | object       | indexed_status |
-            | N22:bridge   | 100            |
+            | object    | indexed_status |
+            | N2:bridge | 100            |
 
 
     Scenario: Main tags with name key, changing key name
         When loading osm data
             """
-            n22 Tbridge=yes,bridge:name=high
+            n2 Tbridge=yes,bridge:name=high
             """
         Then place contains exactly
             | object | class    | type  | name           |
-            | N22    | bridge   | yes   | 'name': 'high' |
+            | N2     | bridge   | yes   | 'name': 'high' |
 
         When updating osm data
             """
-            n22 Tbridge=yes,bridge:name:en=high
+            n2 Tbridge=yes,bridge:name:en=high
             """
         Then place contains exactly
             | object | class    | type  | name           |
-            | N22    | bridge   | yes   | 'name:en': 'high' |
+            | N2     | bridge   | yes   | 'name:en': 'high' |
         And placex contains exactly
-            | object       | indexed_status |
-            | N22:bridge   | 2              |
+            | object    | indexed_status |
+            | N2:bridge | 2              |
 
 
     Scenario: Downgrading a highway to one that is dropped without name

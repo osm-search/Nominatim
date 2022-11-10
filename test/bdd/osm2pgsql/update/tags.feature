@@ -31,10 +31,9 @@ Feature: Tag evaluation
             | object     | class   | type       |
             | N2:highway | highway | bus_stop   |
             | N3         | amenity | prison     |
-        And placex contains exactly
+        And placex contains
             | object     | indexed_status |
             | N1:amenity | 100            |
-            | N2:highway | 0              |
             | N2:railway | 100            |
             | N3:amenity | 0              |
 
@@ -59,10 +58,9 @@ Feature: Tag evaluation
             | N1         | amenity | restaurant |
             | N2:highway | highway | bus_stop   |
             | N2:railway | railway | stop       |
-        And placex contains exactly
+        And placex contains
             | object     | indexed_status |
             | N1:amenity | 1              |
-            | N2:highway | 0              |
             | N2:railway | 1              |
 
 

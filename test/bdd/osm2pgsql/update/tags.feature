@@ -364,3 +364,50 @@ Feature: Tag evaluation
           | object     | indexed_status |
           | W1:tourism | 2              |
           | W1:highway | 1              |
+
+
+    Scenario: Replay on administrative boundary
+        When loading osm data
+          """
+          n10 x34.0 y-4.23
+          n11 x34.1 y-4.23
+          n12 x34.2 y-4.13
+          w10 Tboundary=administrative,waterway=river,name=Border,admin_level=2 Nn12,n11,n10
+          """
+        Then place contains exactly
+          | object       |
+          | W10:waterway |
+          | W10:boundary |
+
+        When updating osm data
+          """
+          w10 Tboundary=administrative,waterway=river,name=Border,admin_level=2 Nn12,n11,n10
+          """
+        Then place contains exactly
+          | object       |
+          | W10:waterway |
+          | W10:boundary |
+        And placex contains exactly
+          | object       |
+          | W10:waterway |
+
+
+    Scenario: Change admin_level on administrative boundary
+        When loading osm data
+          """
+          n10 x34.0 y-4.23
+          n11 x34.1 y-4.23
+          n12 x34.2 y-4.13
+          w10 Tboundary=administrative,name=Border,admin_level=2 Nn12,n11,n10
+          """
+        Then place contains exactly
+          | object       | admin_level |
+          | W10:boundary | 2           |
+
+        When updating osm data
+          """
+          w10 Tboundary=administrative,name=Border,admin_level=4 Nn12,n11,n10
+          """
+        Then place contains exactly
+          | object       | admin_level |
+          | W10:boundary | 4           |

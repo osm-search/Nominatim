@@ -47,8 +47,6 @@ BEGIN
 
   {% if debug %}RAISE WARNING 'Existing: %',existing.osm_id;{% endif %}
 
-  -- Handle a place changing type by removing the old data.
-  -- (This trigger is executed BEFORE INSERT of the NEW tuple.)
   IF existing.osm_type IS NULL THEN
     DELETE FROM place where osm_type = NEW.osm_type and osm_id = NEW.osm_id and class = NEW.class;
   END IF;
@@ -192,15 +190,11 @@ BEGIN
     END IF;
     {% endif %}
 
-    IF existing.osm_type IS NOT NULL THEN
-      -- Pathological case caused by the triggerless copy into place during initial import
-      -- force delete even for large areas, it will be reinserted later
-      UPDATE place SET geometry = ST_SetSRID(ST_Point(0,0), 4326)
-        WHERE osm_type = NEW.osm_type and osm_id = NEW.osm_id
-              and class = NEW.class and type = NEW.type;
-      DELETE FROM place
-        WHERE osm_type = NEW.osm_type and osm_id = NEW.osm_id
-              and class = NEW.class and type = NEW.type;
+    IF existingplacex.osm_type is not NULL THEN
+      -- Mark any existing place for delete in the placex table
+      UPDATE placex SET indexed_status = 100
+        WHERE placex.osm_type = NEW.osm_type and placex.osm_id = NEW.osm_id
+              and placex.class = 'boundary' and placex.type = 'administrative';
     END IF;
 
     -- Process it as a new insertion
@@ -210,6 +204,27 @@ BEGIN
               NEW.admin_level, NEW.address, NEW.extratags, NEW.geometry);
 
     {% if debug %}RAISE WARNING 'insert done % % % % %',NEW.osm_type,NEW.osm_id,NEW.class,NEW.type,NEW.name;{% endif %}
+
+    IF existing.osm_type is not NULL THEN
+      -- If there is already an entry in place, just update that, if necessary.
+      IF coalesce(existing.name, ''::hstore) != coalesce(NEW.name, ''::hstore)
+         or coalesce(existing.address, ''::hstore) != coalesce(NEW.address, ''::hstore)
+         or coalesce(existing.extratags, ''::hstore) != coalesce(NEW.extratags, ''::hstore)
+         or coalesce(existing.admin_level, 15) != coalesce(NEW.admin_level, 15)
+         or existing.geometry::text != NEW.geometry::text
+      THEN
+        UPDATE place
+          SET name = NEW.name,
+              address = NEW.address,
+              extratags = NEW.extratags,
+              admin_level = NEW.admin_level,
+              geometry = NEW.geometry
+          WHERE osm_type = NEW.osm_type and osm_id = NEW.osm_id
+                and class = NEW.class and type = NEW.type;
+      END IF;
+
+      RETURN NULL;
+    END IF;
 
     RETURN NEW;
   END IF;

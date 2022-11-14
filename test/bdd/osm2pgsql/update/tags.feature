@@ -33,9 +33,12 @@ Feature: Tag evaluation
             | N3         | amenity | prison     |
         And placex contains
             | object     | indexed_status |
-            | N1:amenity | 100            |
-            | N2:railway | 100            |
             | N3:amenity | 0              |
+        When indexing
+        Then placex contains exactly
+            | object     | type     | name        |
+            | N2:highway | bus_stop | 'name': 'X' |
+            | N3:amenity | prison   | -           |
 
 
     Scenario: Main tag added
@@ -58,10 +61,12 @@ Feature: Tag evaluation
             | N1         | amenity | restaurant |
             | N2:highway | highway | bus_stop   |
             | N2:railway | railway | stop       |
-        And placex contains
-            | object     | indexed_status |
-            | N1:amenity | 1              |
-            | N2:railway | 1              |
+        When indexing
+        Then placex contains exactly
+            | object     | type       | name        |
+            | N1:amenity | restaurant | -           |
+            | N2:highway | bus_stop   | 'name': 'X' |
+            | N2:railway | stop       | 'name': 'X' |
 
 
     Scenario: Main tag modified
@@ -84,10 +89,11 @@ Feature: Tag evaluation
             | object | class   | type    |
             | N10    | highway | path    |
             | N11    | highway | primary |
-        And placex contains
-            | object      | indexed_status |
-            | N11:amenity | 100            |
-            | N11:highway | 1              |
+        When indexing
+        Then placex contains exactly
+            | object      | type       | name        |
+            | N10:highway | path       | 'name': 'X' |
+            | N11:highway | primary    | -           |
 
 
     Scenario: Main tags with name, name added
@@ -108,10 +114,11 @@ Feature: Tag evaluation
             | object | class   | type    |
             | N45    | landuse | cemetry |
             | N46    | building| yes     |
-        And placex contains exactly
-            | object       | indexed_status |
-            | N45:landuse  | 1              |
-            | N46:building | 1              |
+        When indexing
+        Then placex contains exactly
+            | object      | type       | name           | address            |
+            | N45:landuse | cemetry    | 'name': 'TODO' | -                  |
+            | N46:building| yes        | -              | 'housenumber': '1' |
 
 
     Scenario: Main tags with name, name removed
@@ -132,11 +139,9 @@ Feature: Tag evaluation
             """
         Then place contains exactly
             | object | class   | type    |
-        And placex contains exactly
-            | object       | indexed_status |
-            | N45:landuse  | 100            |
-            | N46:building | 100            |
-
+        When indexing
+        Then placex contains exactly
+            | object      |
 
     Scenario: Main tags with name, name modified
         When loading osm data
@@ -158,10 +163,11 @@ Feature: Tag evaluation
             | object | class   | type    | name            | address            |
             | N45    | landuse | cemetry | 'name' : 'DONE' | -                  |
             | N46    | building| yes     | -               | 'housenumber': '10'|
-        And placex contains exactly
-            | object       | indexed_status |
-            | N45:landuse  | 2              |
-            | N46:building | 2              |
+        When indexing
+        Then placex contains exactly
+            | object | class   | type    | name            | address            |
+            | N45    | landuse | cemetry | 'name' : 'DONE' | -                  |
+            | N46    | building| yes     | -               | 'housenumber': '10'|
 
 
     Scenario: Main tag added to address only node
@@ -180,10 +186,10 @@ Feature: Tag evaluation
         Then place contains exactly
             | object | class    | type  | address |
             | N1     | building | yes   | 'housenumber': '345'|
-        And placex contains exactly
-            | object       | indexed_status |
-            | N1:place     | 100            |
-            | N1:building  | 1              |
+        When indexing
+        Then placex contains exactly
+            | object | class    | type  | address |
+            | N1     | building | yes   | 'housenumber': '345'|
 
 
     Scenario: Main tag removed from address only node
@@ -202,10 +208,10 @@ Feature: Tag evaluation
         Then place contains exactly
             | object | class | type  | address |
             | N1     | place | house | 'housenumber': '345'|
-        And placex contains exactly
-            | object       | indexed_status |
-            | N1:place     | 1              |
-            | N1:building  | 100            |
+        When indexing
+        Then placex contains exactly
+            | object | class | type  | address |
+            | N1     | place | house | 'housenumber': '345'|
 
 
     Scenario: Main tags with name key, adding key name
@@ -223,9 +229,10 @@ Feature: Tag evaluation
         Then place contains exactly
             | object | class    | type  | name           |
             | N2     | bridge   | yes   | 'name': 'high' |
-        And placex contains exactly
-            | object    | indexed_status |
-            | N2:bridge | 1              |
+        When indexing
+        Then placex contains exactly
+            | object | class    | type  | name           |
+            | N2     | bridge   | yes   | 'name': 'high' |
 
 
     Scenario: Main tags with name key, deleting key name
@@ -242,10 +249,10 @@ Feature: Tag evaluation
             n2 Tbridge=yes
             """
         Then place contains exactly
-            | object | class    | type  |
-        And placex contains exactly
-            | object    | indexed_status |
-            | N2:bridge | 100            |
+            | object |
+        When indexing
+        Then placex contains exactly
+            | object |
 
 
     Scenario: Main tags with name key, changing key name
@@ -262,11 +269,12 @@ Feature: Tag evaluation
             n2 Tbridge=yes,bridge:name:en=high
             """
         Then place contains exactly
-            | object | class    | type  | name           |
-            | N2     | bridge   | yes   | 'name:en': 'high' |
-        And placex contains exactly
-            | object    | indexed_status |
-            | N2:bridge | 2              |
+            | object | class  | type | name              |
+            | N2     | bridge | yes  | 'name:en': 'high' |
+        When indexing
+        Then placex contains exactly
+            | object | class  | type | name              |
+            | N2     | bridge | yes  | 'name:en': 'high' |
 
 
     Scenario: Downgrading a highway to one that is dropped without name
@@ -286,9 +294,9 @@ Feature: Tag evaluation
           """
         Then place contains exactly
           | object     |
-        And placex contains exactly
-          | object     | indexed_status |
-          | W1:highway | 100            |
+        When indexing
+        Then placex contains exactly
+            | object |
 
 
     Scenario: Upgrading a highway to one that is not dropped without name
@@ -308,9 +316,10 @@ Feature: Tag evaluation
         Then place contains exactly
           | object     |
           | W1:highway |
-        And placex contains exactly
-          | object     | indexed_status |
-          | W1:highway | 1              |
+        When indexing
+        Then placex contains exactly
+          | object     |
+          | W1:highway |
 
 
     Scenario: Downgrading a highway when a second tag is present
@@ -321,24 +330,21 @@ Feature: Tag evaluation
           w1 Thighway=residential,tourism=hotel Nn100,n101
           """
         Then place contains exactly
-          | object     |
-          | W1:highway |
-          | W1:tourism |
+          | object     | type        |
+          | W1:highway | residential |
+          | W1:tourism | hotel       |
 
         When updating osm data
           """
           w1 Thighway=service,tourism=hotel Nn100,n101
           """
         Then place contains exactly
-          | object     |
-          | W1:tourism |
-        And placex contains exactly
-          | object     |
-          | W1:tourism |
-          | W1:highway |
-        And placex contains
-          | object     | indexed_status |
-          | W1:highway | 100            |
+          | object     | type  |
+          | W1:tourism | hotel |
+        When indexing
+        Then placex contains exactly
+          | object     | type  |
+          | W1:tourism | hotel |
 
 
     Scenario: Upgrading a highway when a second tag is present
@@ -349,21 +355,22 @@ Feature: Tag evaluation
           w1 Thighway=service,tourism=hotel Nn100,n101
           """
         Then place contains exactly
-          | object     |
-          | W1:tourism |
+          | object     | type  |
+          | W1:tourism | hotel |
 
         When updating osm data
           """
           w1 Thighway=residential,tourism=hotel Nn100,n101
           """
         Then place contains exactly
-          | object     |
-          | W1:highway |
-          | W1:tourism |
-        And placex contains exactly
-          | object     | indexed_status |
-          | W1:tourism | 2              |
-          | W1:highway | 1              |
+          | object     | type        |
+          | W1:highway | residential |
+          | W1:tourism | hotel       |
+        When indexing
+        Then placex contains exactly
+          | object     | type        |
+          | W1:highway | residential |
+          | W1:tourism | hotel       |
 
 
     Scenario: Replay on administrative boundary
@@ -375,39 +382,109 @@ Feature: Tag evaluation
           w10 Tboundary=administrative,waterway=river,name=Border,admin_level=2 Nn12,n11,n10
           """
         Then place contains exactly
-          | object       |
-          | W10:waterway |
-          | W10:boundary |
+          | object       | type           | admin_level | name             |
+          | W10:waterway | river          | 2           | 'name': 'Border' |
+          | W10:boundary | administrative | 2           | 'name': 'Border' |
 
         When updating osm data
           """
           w10 Tboundary=administrative,waterway=river,name=Border,admin_level=2 Nn12,n11,n10
           """
         Then place contains exactly
-          | object       |
-          | W10:waterway |
-          | W10:boundary |
-        And placex contains exactly
-          | object       |
-          | W10:waterway |
+          | object       | type           | admin_level | name             |
+          | W10:waterway | river          | 2           | 'name': 'Border' |
+          | W10:boundary | administrative | 2           | 'name': 'Border' |
+        When indexing
+        Then placex contains exactly
+          | object       | type           | admin_level | name             |
+          | W10:waterway | river          | 2           | 'name': 'Border' |
 
 
     Scenario: Change admin_level on administrative boundary
+        Given the grid
+          | 10 | 11 |
+          | 13 | 12 |
         When loading osm data
           """
-          n10 x34.0 y-4.23
-          n11 x34.1 y-4.23
-          n12 x34.2 y-4.13
-          w10 Tboundary=administrative,name=Border,admin_level=2 Nn12,n11,n10
+          n10
+          n11
+          n12
+          n13
+          w10 Nn10,n11,n12,n13,n10
+          r10 Ttype=multipolygon,boundary=administrative,name=Border,admin_level=2 Mw10@
           """
         Then place contains exactly
           | object       | admin_level |
-          | W10:boundary | 2           |
+          | R10:boundary | 2           |
 
         When updating osm data
           """
-          w10 Tboundary=administrative,name=Border,admin_level=4 Nn12,n11,n10
+          r10 Ttype=multipolygon,boundary=administrative,name=Border,admin_level=4 Mw10@
           """
         Then place contains exactly
-          | object       | admin_level |
-          | W10:boundary | 4           |
+          | object       | type           | admin_level |
+          | R10:boundary | administrative | 4           |
+        When indexing
+        Then placex contains exactly
+          | object       | type           | admin_level |
+          | R10:boundary | administrative | 4           |
+
+
+    Scenario: Change boundary to administrative
+        Given the grid
+          | 10 | 11 |
+          | 13 | 12 |
+        When loading osm data
+          """
+          n10
+          n11
+          n12
+          n13
+          w10 Nn10,n11,n12,n13,n10
+          r10 Ttype=multipolygon,boundary=informal,name=Border,admin_level=4 Mw10@
+          """
+        Then place contains exactly
+          | object       | type     | admin_level |
+          | R10:boundary | informal | 4           |
+
+        When updating osm data
+          """
+          r10 Ttype=multipolygon,boundary=administrative,name=Border,admin_level=4 Mw10@
+          """
+        Then place contains exactly
+          | object       | type           | admin_level |
+          | R10:boundary | administrative | 4           |
+        When indexing
+        Then placex contains exactly
+          | object       | type           | admin_level |
+          | R10:boundary | administrative | 4           |
+
+
+    Scenario: Change boundary away from administrative
+        Given the grid
+          | 10 | 11 |
+          | 13 | 12 |
+        When loading osm data
+          """
+          n10
+          n11
+          n12
+          n13
+          w10 Nn10,n11,n12,n13,n10
+          r10 Ttype=multipolygon,boundary=administrative,name=Border,admin_level=4 Mw10@
+          """
+        Then place contains exactly
+          | object       | type           | admin_level |
+          | R10:boundary | administrative | 4           |
+
+        When updating osm data
+          """
+          r10 Ttype=multipolygon,boundary=informal,name=Border,admin_level=4 Mw10@
+          """
+        Then place contains exactly
+          | object       | type     | admin_level |
+          | R10:boundary | informal | 4           |
+        When indexing
+        Then placex contains exactly
+          | object       | type     | admin_level |
+          | R10:boundary | informal | 4           |

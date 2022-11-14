@@ -123,3 +123,11 @@ def update_from_osm_file(context):
                               get_osm2pgsql_options(context.nominatim, fname, append=True))
     finally:
         os.remove(fname)
+
+@when('indexing')
+def index_database(context):
+    """
+    Run the Nominatim indexing step. This will process data previously
+    loaded with 'updating osm data'
+    """
+    context.nominatim.run_nominatim('index')

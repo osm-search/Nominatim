@@ -194,7 +194,7 @@ BEGIN
       -- Mark any existing place for delete in the placex table
       UPDATE placex SET indexed_status = 100
         WHERE placex.osm_type = NEW.osm_type and placex.osm_id = NEW.osm_id
-              and placex.class = 'boundary' and placex.type = 'administrative';
+              and placex.class = NEW.class and placex.type = NEW.type;
     END IF;
 
     -- Process it as a new insertion

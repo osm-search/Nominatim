@@ -69,19 +69,31 @@ class SpecialTerm
      */
     public function extendSearch($oSearch, $oPosition)
     {
-        $iSearchCost = 2;
+        $iSearchCost = 0;
 
         $iOp = $this->iOperator;
         if ($iOp == \Nominatim\Operator::NONE) {
-            if ($oSearch->hasName() || $oSearch->getContext()->isBoundedSearch()) {
+            if ($oPosition->isFirstToken()
+                || $oSearch->hasName()
+                || $oSearch->getContext()->isBoundedSearch()
+            ) {
                 $iOp = \Nominatim\Operator::NAME;
+                $iSearchCost += 3;
             } else {
                 $iOp = \Nominatim\Operator::NEAR;
-                $iSearchCost += 2;
+                $iSearchCost += 4;
+                if (!$oPosition->isFirstToken()) {
+                    $iSearchCost += 3;
+                }
             }
-        } elseif (!$oPosition->isFirstToken() && !$oPosition->isLastToken()) {
+        } elseif ($oPosition->isFirstToken()) {
             $iSearchCost += 2;
+        } elseif ($oPosition->isLastToken()) {
+            $iSearchCost += 4;
+        } else {
+            $iSearchCost += 6;
         }
+
         if ($oSearch->hasHousenumber()) {
             $iSearchCost ++;
         }

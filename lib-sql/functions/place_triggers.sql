@@ -34,6 +34,11 @@ BEGIN
     RETURN null;
   END IF;
 
+  -- Remove the place from the list of places to be deleted
+  DELETE FROM place_to_be_deleted pdel
+    WHERE pdel.osm_type = NEW.osm_type and pdel.osm_id = NEW.osm_id
+          and pdel.class = NEW.class;
+
   -- Have we already done this place?
   SELECT * INTO existing
     FROM place
@@ -42,8 +47,6 @@ BEGIN
 
   {% if debug %}RAISE WARNING 'Existing: %',existing.osm_id;{% endif %}
 
-  -- Handle a place changing type by removing the old data.
-  -- (This trigger is executed BEFORE INSERT of the NEW tuple.)
   IF existing.osm_type IS NULL THEN
     DELETE FROM place where osm_type = NEW.osm_type and osm_id = NEW.osm_id and class = NEW.class;
   END IF;
@@ -187,15 +190,11 @@ BEGIN
     END IF;
     {% endif %}
 
-    IF existing.osm_type IS NOT NULL THEN
-      -- Pathological case caused by the triggerless copy into place during initial import
-      -- force delete even for large areas, it will be reinserted later
-      UPDATE place SET geometry = ST_SetSRID(ST_Point(0,0), 4326)
-        WHERE osm_type = NEW.osm_type and osm_id = NEW.osm_id
-              and class = NEW.class and type = NEW.type;
-      DELETE FROM place
-        WHERE osm_type = NEW.osm_type and osm_id = NEW.osm_id
-              and class = NEW.class and type = NEW.type;
+    IF existingplacex.osm_type is not NULL THEN
+      -- Mark any existing place for delete in the placex table
+      UPDATE placex SET indexed_status = 100
+        WHERE placex.osm_type = NEW.osm_type and placex.osm_id = NEW.osm_id
+              and placex.class = NEW.class and placex.type = NEW.type;
     END IF;
 
     -- Process it as a new insertion
@@ -205,6 +204,27 @@ BEGIN
               NEW.admin_level, NEW.address, NEW.extratags, NEW.geometry);
 
     {% if debug %}RAISE WARNING 'insert done % % % % %',NEW.osm_type,NEW.osm_id,NEW.class,NEW.type,NEW.name;{% endif %}
+
+    IF existing.osm_type is not NULL THEN
+      -- If there is already an entry in place, just update that, if necessary.
+      IF coalesce(existing.name, ''::hstore) != coalesce(NEW.name, ''::hstore)
+         or coalesce(existing.address, ''::hstore) != coalesce(NEW.address, ''::hstore)
+         or coalesce(existing.extratags, ''::hstore) != coalesce(NEW.extratags, ''::hstore)
+         or coalesce(existing.admin_level, 15) != coalesce(NEW.admin_level, 15)
+         or existing.geometry::text != NEW.geometry::text
+      THEN
+        UPDATE place
+          SET name = NEW.name,
+              address = NEW.address,
+              extratags = NEW.extratags,
+              admin_level = NEW.admin_level,
+              geometry = NEW.geometry
+          WHERE osm_type = NEW.osm_type and osm_id = NEW.osm_id
+                and class = NEW.class and type = NEW.type;
+      END IF;
+
+      RETURN NULL;
+    END IF;
 
     RETURN NEW;
   END IF;
@@ -321,35 +341,67 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-
 CREATE OR REPLACE FUNCTION place_delete()
   RETURNS TRIGGER
   AS $$
 DECLARE
-  has_rank BOOLEAN;
+  deferred BOOLEAN;
 BEGIN
+  {% if debug %}RAISE WARNING 'Delete for % % %/%', OLD.osm_type, OLD.osm_id, OLD.class, OLD.type;{% endif %}
 
-  {% if debug %}RAISE WARNING 'delete: % % % %',OLD.osm_type,OLD.osm_id,OLD.class,OLD.type;{% endif %}
-
-  -- deleting large polygons can have a massive effect on the system - require manual intervention to let them through
-  IF st_area(OLD.geometry) > 2 and st_isvalid(OLD.geometry) THEN
-    SELECT bool_or(not (rank_address = 0 or rank_address > 25)) as ranked FROM placex WHERE osm_type = OLD.osm_type and osm_id = OLD.osm_id and class = OLD.class and type = OLD.type INTO has_rank;
-    IF has_rank THEN
-      insert into import_polygon_delete (osm_type, osm_id, class, type) values (OLD.osm_type,OLD.osm_id,OLD.class,OLD.type);
-      RETURN NULL;
-    END IF;
+  deferred := ST_IsValid(OLD.geometry) and ST_Area(OLD.geometry) > 2;
+  IF deferred THEN
+    SELECT bool_or(not (rank_address = 0 or rank_address > 25)) INTO deferred
+      FROM placex
+      WHERE osm_type = OLD.osm_type and osm_id = OLD.osm_id
+            and class = OLD.class and type = OLD.type;
   END IF;
 
-  -- mark for delete
-  UPDATE placex set indexed_status = 100 where osm_type = OLD.osm_type and osm_id = OLD.osm_id and class = OLD.class and type = OLD.type;
+  INSERT INTO place_to_be_deleted (osm_type, osm_id, class, type, deferred)
+    VALUES(OLD.osm_type, OLD.osm_id, OLD.class, OLD.type, deferred);
 
-  -- interpolations are special
-  IF OLD.osm_type='W' and OLD.class = 'place' and OLD.type = 'houses' THEN
-    UPDATE location_property_osmline set indexed_status = 100 where osm_id = OLD.osm_id; -- osm_id = wayid (=old.osm_id)
-  END IF;
-
-  RETURN OLD;
+  RETURN NULL;
 END;
-$$
-LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION flush_deleted_places()
+  RETURNS INTEGER
+  AS $$
+BEGIN
+  -- deleting large polygons can have a massive effect on the system - require manual intervention to let them through
+  INSERT INTO import_polygon_delete (osm_type, osm_id, class, type)
+    SELECT osm_type, osm_id, class, type FROM place_to_be_deleted WHERE deferred;
+
+  -- delete from place table
+  ALTER TABLE place DISABLE TRIGGER place_before_delete;
+  DELETE FROM place USING place_to_be_deleted
+    WHERE place.osm_type = place_to_be_deleted.osm_type
+          and place.osm_id = place_to_be_deleted.osm_id
+          and place.class = place_to_be_deleted.class
+          and place.type = place_to_be_deleted.type
+          and not deferred;
+  ALTER TABLE place ENABLE TRIGGER place_before_delete;
+
+  -- Mark for delete in the placex table
+  UPDATE placex SET indexed_status = 100 FROM place_to_be_deleted
+    WHERE placex.osm_type = place_to_be_deleted.osm_type
+          and placex.osm_id = place_to_be_deleted.osm_id
+          and placex.class = place_to_be_deleted.class
+          and placex.type = place_to_be_deleted.type
+          and not deferred;
+
+   -- Mark for delete in interpolations
+   UPDATE location_property_osmline SET indexed_status = 100 FROM place_to_be_deleted
+    WHERE place_to_be_deleted.osm_type = 'W'
+          and place_to_be_deleted.class = 'place'
+          and place_to_be_deleted.type = 'houses'
+          and location_property_osmline.osm_id = place_to_be_deleted.osm_id
+          and not deferred;
+
+   -- Clear todo list.
+   TRUNCATE TABLE place_to_be_deleted;
+
+   RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
 

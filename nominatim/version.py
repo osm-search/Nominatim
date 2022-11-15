@@ -25,7 +25,7 @@ from typing import Optional, Tuple
 # patch level when cherry-picking the commit with the migration.
 #
 # Released versions always have a database patch level of 0.
-NOMINATIM_VERSION = (4, 1, 0, 0)
+NOMINATIM_VERSION = (4, 1, 99, 0)
 
 POSTGRESQL_REQUIRED_VERSION = (9, 6)
 POSTGIS_REQUIRED_VERSION = (2, 2)

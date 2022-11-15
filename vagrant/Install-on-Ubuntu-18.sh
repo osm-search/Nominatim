@@ -24,7 +24,7 @@ export DEBIAN_FRONTEND=noninteractive #DOCS:
     sudo apt install -y php-cgi
     sudo apt install -y build-essential cmake g++ libboost-dev libboost-system-dev \
                         libboost-filesystem-dev libexpat1-dev zlib1g-dev\
-                        libbz2-dev libpq-dev \
+                        libbz2-dev libpq-dev liblua5.3-dev lua5.3\
                         postgresql-10-postgis-2.4 \
                         postgresql-contrib-10 postgresql-10-postgis-scripts \
                         php-cli php-pgsql php-intl libicu-dev python3-pip \

@@ -118,7 +118,10 @@ def update_place_table(context):
     context.nominatim.run_nominatim('refresh', '--functions')
     with context.db.cursor() as cur:
         for row in context.table:
-            PlaceColumn(context).add_row(row, False).db_insert(cur)
+            col = PlaceColumn(context).add_row(row, False)
+            col.db_delete(cur)
+            col.db_insert(cur)
+        cur.execute('SELECT flush_deleted_places()')
 
     context.nominatim.reindex_placex(context.db)
     check_database_integrity(context)
@@ -143,8 +146,10 @@ def delete_places(context, oids):
     """
     context.nominatim.run_nominatim('refresh', '--functions')
     with context.db.cursor() as cur:
+        cur.execute('TRUNCATE place_to_be_deleted')
         for oid in oids.split(','):
             NominatimID(oid).query_osm_id(cur, 'DELETE FROM place WHERE {}')
+        cur.execute('SELECT flush_deleted_places()')
 
     context.nominatim.reindex_placex(context.db)
 
@@ -185,7 +190,10 @@ def check_place_contents(context, table, exact):
 
         if exact:
             cur.execute('SELECT osm_type, osm_id, class from {}'.format(table))
-            assert expected_content == set([(r[0], r[1], r[2]) for r in cur])
+            actual = set([(r[0], r[1], r[2]) for r in cur])
+            assert expected_content == actual, \
+                   f"Missing entries: {expected_content - actual}\n" \
+                   f"Not expected in table: {actual - expected_content}"
 
 
 @then("(?P<table>placex|place) has no entry for (?P<oid>.*)")
@@ -372,4 +380,49 @@ def check_location_property_osmline(context, oid, neg):
 
         assert not todo, f"Unmatched lines in table: {list(context.table[i] for i in todo)}"
 
+@then("location_property_osmline contains(?P<exact> exactly)?")
+def check_place_contents(context, exact):
+    """ Check contents of the interpolation table. Each row represents a table row
+        and all data must match. Data not present in the expected table, may
+        be arbitry. The rows are identified via the 'object' column which must
+        have an identifier of the form '<osm id>[:<startnumber>]'. When multiple
+        rows match (for example because 'startnumber' was left out and there are
+        multiple entries for the given OSM object) then all must match. All
+        expected rows are expected to be present with at least one database row.
+        When 'exactly' is given, there must not be additional rows in the database.
+    """
+    with context.db.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
+        expected_content = set()
+        for row in context.table:
+            if ':' in row['object']:
+                nid, start = row['object'].split(':', 2)
+                start = int(start)
+            else:
+                nid, start = row['object'], None
+
+            query = """SELECT *, ST_AsText(linegeo) as geomtxt,
+                              ST_GeometryType(linegeo) as geometrytype
+                       FROM location_property_osmline WHERE osm_id=%s"""
+
+            if ':' in row['object']:
+                query += ' and startnumber = %s'
+                params = [int(val) for val in row['object'].split(':', 2)]
+            else:
+                params = (int(row['object']), )
+
+            cur.execute(query, params)
+            assert cur.rowcount > 0, "No rows found for " + row['object']
+
+            for res in cur:
+                if exact:
+                    expected_content.add((res['osm_id'], res['startnumber']))
+
+                DBRow(nid, res, context).assert_row(row, ['object'])
+
+        if exact:
+            cur.execute('SELECT osm_id, startnumber from location_property_osmline')
+            actual = set([(r[0], r[1]) for r in cur])
+            assert expected_content == actual, \
+                   f"Missing entries: {expected_content - actual}\n" \
+                   f"Not expected in table: {actual - expected_content}"
 

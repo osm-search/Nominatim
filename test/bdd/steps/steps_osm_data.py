@@ -10,6 +10,7 @@ import os
 from pathlib import Path
 
 from nominatim.tools.exec_utils import run_osm2pgsql
+from nominatim.tools.replication import run_osm2pgsql_updates
 
 from geometry_alias import ALIASES
 
@@ -17,7 +18,8 @@ def get_osm2pgsql_options(nominatim_env, fname, append):
     return dict(import_file=fname,
                 osm2pgsql=str(nominatim_env.build_dir / 'osm2pgsql' / 'osm2pgsql'),
                 osm2pgsql_cache=50,
-                osm2pgsql_style=str(nominatim_env.src_dir / 'settings' / 'import-extratags.style'),
+                osm2pgsql_style=str(nominatim_env.get_test_config().get_import_style_file()),
+                osm2pgsql_style_path=nominatim_env.get_test_config().config_dir,
                 threads=1,
                 dsn=nominatim_env.get_libpq_dsn(),
                 flatnode_file='',
@@ -117,6 +119,15 @@ def update_from_osm_file(context):
     # create an OSM file and import it
     fname = write_opl_file(context.text, context.osm)
     try:
-        run_osm2pgsql(get_osm2pgsql_options(context.nominatim, fname, append=True))
+        run_osm2pgsql_updates(context.db,
+                              get_osm2pgsql_options(context.nominatim, fname, append=True))
     finally:
         os.remove(fname)
+
+@when('indexing')
+def index_database(context):
+    """
+    Run the Nominatim indexing step. This will process data previously
+    loaded with 'updating osm data'
+    """
+    context.nominatim.run_nominatim('index')

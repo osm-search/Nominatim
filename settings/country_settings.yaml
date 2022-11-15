@@ -61,26 +61,11 @@ am:
       pattern: "dddd"
 
 
-# Netherlands Antilles (De Nederlandse Antillen)
-an:
-    partition: 58
-    languages: nl, en, pap
-    names: !include country-names/an.yaml
-
-
 # Angola (Angola)
 ao:
     partition: 85
     languages: pt
     names: !include country-names/ao.yaml
-    postcode: no
-
-
-#  (Antarctica)
-aq:
-    partition: 181
-    languages: en, es, fr, ru
-    names: !include country-names/aq.yaml
     postcode: no
 
 
@@ -91,13 +76,6 @@ ar:
     names: !include country-names/ar.yaml
     postcode:
       pattern: "l?dddd(?:lll)?"
-
-
-#  (American Samoa)
-as:
-    partition: 182
-    languages: en, sm
-    names: !include country-names/as.yaml
 
 
 # Austria (Österreich)
@@ -116,21 +94,6 @@ au:
     names: !include country-names/au.yaml
     postcode:
       pattern: "dddd"
-
-
-#  (Aruba)
-aw:
-    partition: 183
-    languages: nl, pap
-    names: !include country-names/aw.yaml
-    postcode: no
-
-
-#  (Aland Islands)
-ax:
-    partition: 184
-    languages: sv
-    names: !include country-names/ax.yaml
 
 
 # Azerbaijan (Azərbaycan)
@@ -221,13 +184,6 @@ bj:
     postcode: no
 
 
-#  (Saint Barthélemy)
-bl:
-    partition: 204
-    languages: fr
-    names: !include country-names/bl.yaml
-
-
 # Bermuda (Bermuda)
 bm:
     partition: 176
@@ -256,13 +212,6 @@ bo:
     postcode: no
 
 
-# Caribbean Netherlands (Caribisch Nederland)
-bq:
-    partition: 250
-    languages: nl
-    names: !include country-names/bq.yaml
-
-
 # Brazil (Brasil)
 br:
     partition: 121
@@ -288,13 +237,6 @@ bt:
     names: !include country-names/bt.yaml
     postcode:
       pattern: "ddddd"
-
-
-#  (Bouvet Island)
-bv:
-    partition: 185
-    languages: "no"
-    names: !include country-names/bv.yaml
 
 
 # Botswana (Botswana)
@@ -330,13 +272,6 @@ ca:
     postcode:
       pattern: "(ldl) ?(dld)"
       output: \1 \2
-
-
-# Cocos (Keeling) Islands (Cocos (Keeling) Islands)
-cc:
-    partition: 118
-    languages: en
-    names: !include country-names/cc.yaml
 
 
 # Democratic Republic of the Congo (République démocratique du Congo)
@@ -448,20 +383,6 @@ cv:
     names: !include country-names/cv.yaml
     postcode:
       pattern: "dddd"
-
-
-# Curaçao (Curaçao)
-cw:
-    partition: 248
-    languages: nl, en
-    names: !include country-names/cw.yaml
-
-
-# Christmas Island (Christmas Island)
-cx:
-    partition: 177
-    languages: en
-    names: !include country-names/cx.yaml
 
 
 # Cyprus (Κύπρος - Kıbrıs)
@@ -683,13 +604,6 @@ ge:
       pattern: "dddd"
 
 
-# French Guiana (Guyane Française)
-gf:
-    partition: 231
-    languages: fr
-    names: !include country-names/gf.yaml
-
-
 # Guernsey (Guernsey)
 gg:
     partition: 77
@@ -745,13 +659,6 @@ gn:
       pattern: "ddd"
 
 
-# Guadeloupe (Guadeloupe)
-gp:
-    partition: 232
-    languages: fr
-    names: !include country-names/gp.yaml
-
-
 # Equatorial Guinea (Guinea Ecuatorial)
 gq:
     partition: 12
@@ -789,13 +696,6 @@ gt:
       pattern: "ddddd"
 
 
-# Guam (Guam)
-gu:
-    partition: 187
-    languages: en, ch
-    names: !include country-names/gu.yaml
-
-
 # Guinea-Bissau (Guiné-Bissau)
 gw:
     partition: 8
@@ -811,20 +711,6 @@ gy:
     languages: en
     names: !include country-names/gy.yaml
     postcode: no
-
-
-#  (Hong Kong)
-hk:
-    partition: 188
-    languages: zh-hant, en
-    names: !include country-names/hk.yaml
-
-
-#  (Heard Island and MaxDonald Islands)
-hm:
-    partition: 189
-    languages: en
-    names: !include country-names/hm.yaml
 
 
 # Honduras (Honduras)
@@ -1229,13 +1115,6 @@ me:
       pattern: "ddddd"
 
 
-# Saint Martin (Saint Martin)
-mf:
-    partition: 203
-    languages: fr
-    names: !include country-names/mf.yaml
-
-
 # Madagascar (Madagasikara)
 mg:
     partition: 164
@@ -1287,28 +1166,6 @@ mn:
     names: !include country-names/mn.yaml
     postcode:
       pattern: "ddddd"
-
-
-# Macao (Macao)
-mo:
-    partition: 191
-    languages: zh-hant, pt
-    names: !include country-names/mo.yaml
-    postcode: no
-
-
-# Northern Mariana Islands (Northern Mariana Islands)
-mp:
-    partition: 192
-    languages: ch, en
-    names: !include country-names/mp.yaml
-
-
-# Martinique (Martinique)
-mq:
-    partition: 233
-    languages: fr
-    names: !include country-names/mq.yaml
 
 
 # Mauritania (موريتانيا)
@@ -1398,13 +1255,6 @@ na:
       pattern: "ddddd"
 
 
-# New Caledonia (Nouvelle-Calédonie)
-nc:
-    partition: 234
-    languages: fr
-    names: !include country-names/nc.yaml
-
-
 # Niger (Niger)
 ne:
     partition: 226
@@ -1412,13 +1262,6 @@ ne:
     names: !include country-names/ne.yaml
     postcode:
       pattern: "dddd"
-
-
-# Norfolk Island (Norfolk Island)
-nf:
-    partition: 100
-    languages: en, pih
-    names: !include country-names/nf.yaml
 
 
 # Nigeria (Nigeria)
@@ -1519,13 +1362,6 @@ pe:
       pattern: "ddddd"
 
 
-# French Polynesia (Polynésie française)
-pf:
-    partition: 202
-    languages: fr
-    names: !include country-names/pf.yaml
-
-
 # Papua New Guinea (Papua Niugini)
 pg:
     partition: 71
@@ -1563,13 +1399,6 @@ pl:
       output: \1-\2
 
 
-# Saint Pierre and Miquelon (Saint-Pierre-et-Miquelon)
-pm:
-    partition: 236
-    languages: fr
-    names: !include country-names/pm.yaml
-
-
 # Pitcairn Islands (Pitcairn Islands)
 pn:
     partition: 113
@@ -1578,13 +1407,6 @@ pn:
     postcode:
       pattern: "(PCRN) ?(1ZZ)"
       output: \1 \2
-
-
-# Puerto Rico (Puerto Rico)
-pr:
-    partition: 193
-    languages: es, en
-    names: !include country-names/pr.yaml
 
 
 # Palestinian Territory (Palestinian Territory)
@@ -1629,13 +1451,6 @@ qa:
     languages: ar
     names: !include country-names/qa.yaml
     postcode: no
-
-
-#  (Réunion)
-re:
-    partition: 235
-    languages: fr
-    names: !include country-names/re.yaml
 
 
 # Romania (România)
@@ -1745,13 +1560,6 @@ si:
       pattern: "dddd"
 
 
-#  (Svalbard and Jan Mayen)
-sj:
-    partition: 197
-    languages: "no"
-    names: !include country-names/sj.yaml
-
-
 # Slovakia (Slovensko)
 sk:
     partition: 172
@@ -1831,13 +1639,6 @@ sv:
       pattern: "dddd"
 
 
-#  (Sint Maarten)
-sx:
-    partition: 249
-    languages: nl, en
-    names: !include country-names/sx.yaml
-
-
 # Syria (سوريا)
 sy:
     partition: 104
@@ -1871,13 +1672,6 @@ td:
     languages: fr, ar
     names: !include country-names/td.yaml
     postcode: no
-
-
-# French Southern Lands (Terres australes et antarctiques françaises)
-tf:
-    partition: 132
-    languages: fr
-    names: !include country-names/tf.yaml
 
 
 # Togo (Togo)
@@ -2009,15 +1803,6 @@ ug:
     postcode: no
 
 
-#  (United States Minor Outlying Islands)
-um:
-    partition: 198
-    languages: en
-    names: !include country-names/um.yaml
-    postcode:
-      pattern: "96898"
-
-
 # United States (United States)
 us:
     partition: 2
@@ -2083,13 +1868,6 @@ vg:
       output: VG\1
 
 
-#  (United States Virgin Islands)
-vi:
-    partition: 199
-    languages: en
-    names: !include country-names/vi.yaml
-
-
 # Vietnam (Việt Nam)
 vn:
     partition: 75
@@ -2105,13 +1883,6 @@ vu:
     languages: bi, en, fr
     names: !include country-names/vu.yaml
     postcode: no
-
-
-# Wallis and Futuna Islands (Wallis-et-Futuna)
-wf:
-    partition: 238
-    languages: fr
-    names: !include country-names/wf.yaml
 
 
 # Samoa (Sāmoa)
@@ -2136,13 +1907,6 @@ ye:
     languages: ar
     names: !include country-names/ye.yaml
     postcode: no
-
-
-# Mayotte (Mayotte)
-yt:
-    partition: 200
-    languages: fr
-    names: !include country-names/yt.yaml
 
 
 # South Africa (South Africa)

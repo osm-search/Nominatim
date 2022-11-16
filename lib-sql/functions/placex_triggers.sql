@@ -107,12 +107,17 @@ LANGUAGE plpgsql STABLE;
 
 
 CREATE OR REPLACE FUNCTION find_associated_street(poi_osm_type CHAR(1),
-                                                  poi_osm_id BIGINT)
+                                                  poi_osm_id BIGINT,
+                                                  bbox GEOMETRY)
   RETURNS BIGINT
   AS $$
 DECLARE
   location RECORD;
   parent RECORD;
+  result BIGINT;
+  distance FLOAT;
+  new_distance FLOAT;
+  waygeom GEOMETRY;
 BEGIN
   FOR location IN
     SELECT members FROM planet_osm_rels
@@ -123,19 +128,34 @@ BEGIN
     FOR i IN 1..array_upper(location.members, 1) BY 2 LOOP
       IF location.members[i+1] = 'street' THEN
         FOR parent IN
-          SELECT place_id from placex
+          SELECT place_id, geometry
+           FROM placex
            WHERE osm_type = upper(substring(location.members[i], 1, 1))::char(1)
                  and osm_id = substring(location.members[i], 2)::bigint
                  and name is not null
                  and rank_search between 26 and 27
         LOOP
-          RETURN parent.place_id;
+          -- Find the closest 'street' member.
+          -- Avoid distance computation for the frequent case where there is
+          -- only one street member.
+          IF waygeom is null THEN
+            result := parent.place_id;
+            waygeom := parent.geometry;
+          ELSE
+            distance := coalesce(distance, ST_Distance(waygeom, bbox));
+            new_distance := ST_Distance(parent.geometry, bbox);
+            IF new_distance < distance THEN
+              distance := new_distance;
+              result := parent.place_id;
+              waygeom := parent.geometry;
+            END IF;
+          END IF;
         END LOOP;
       END IF;
     END LOOP;
   END LOOP;
 
-  RETURN NULL;
+  RETURN result;
 END;
 $$
 LANGUAGE plpgsql STABLE;
@@ -162,7 +182,7 @@ BEGIN
   {% if debug %}RAISE WARNING 'finding street for % %', poi_osm_type, poi_osm_id;{% endif %}
 
   -- Is this object part of an associatedStreet relation?
-  parent_place_id := find_associated_street(poi_osm_type, poi_osm_id);
+  parent_place_id := find_associated_street(poi_osm_type, poi_osm_id, bbox);
 
   IF parent_place_id is null THEN
     parent_place_id := find_parent_for_address(token_info, poi_partition, bbox);
@@ -185,7 +205,7 @@ BEGIN
         RETURN location.place_id;
       END IF;
 
-      parent_place_id := find_associated_street('W', location.osm_id);
+      parent_place_id := find_associated_street('W', location.osm_id, bbox);
     END LOOP;
   END IF;
 

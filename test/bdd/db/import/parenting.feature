@@ -437,6 +437,29 @@ Feature: Parenting of objects
           | object | parent_place_id |
           | N9     | R14             |
 
+
+    Scenario: Choose closest street in associatedStreet relation
+        Given the grid
+         | 1  |   |    |  | 3  |
+         | 10 |   | 11 |  | 12 |
+        And the places
+         | osm | class | type  | housenr | geometry |
+         | N1  | place | house | 1       | 1        |
+         | N3  | place | house | 3       | 3        |
+        And the named places
+         | osm  | class    | type        | geometry |
+         | W100 | highway  | residential | 10,11    |
+         | W101 | highway  | residential | 11,12    |
+        And the relations
+         | id | members                                            | tags+type |
+         | 1  | N1:house,N3:house,W100:street,W101:street | associatedStreet |
+        When importing
+        Then placex contains
+         | object | parent_place_id |
+         | N1     | W100            |
+         | N3     | W101            |
+
+
     Scenario: POIs in building inherit address
         Given the grid
          | 10 |  |   |   |   |   | 11 |

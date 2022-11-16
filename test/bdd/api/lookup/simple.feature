@@ -31,3 +31,11 @@ Feature: Places by osm_type and osm_id Tests
       | jsonv2 |
       | geojson |
       | xml |
+
+
+    Scenario: Lookup of a linked place
+        When sending geocodejson lookup query for N1932181216
+        Then exactly 1 result is returned
+        And results contain
+          | name  |
+          | Vaduz |

@@ -187,12 +187,12 @@ class PlaceLookup
             return null;
         }
 
-        $aResults = $this->lookup(array($iPlaceID => new Result($iPlaceID)));
+        $aResults = $this->lookup(array($iPlaceID => new Result($iPlaceID)), 0, 30, true);
 
         return empty($aResults) ? null : reset($aResults);
     }
 
-    public function lookup($aResults, $iMinRank = 0, $iMaxRank = 30)
+    public function lookup($aResults, $iMinRank = 0, $iMaxRank = 30, $bAllowLinked = false)
     {
         Debug::newFunction('Place lookup');
 
@@ -247,7 +247,9 @@ class PlaceLookup
             if ($this->sAllowedTypesSQLList) {
                 $sSQL .= 'AND placex.class in '.$this->sAllowedTypesSQLList;
             }
-            $sSQL .= '    AND linked_place_id is null ';
+            if (!$bAllowLinked) {
+                $sSQL .= '    AND linked_place_id is null ';
+            }
             $sSQL .= ' GROUP BY ';
             $sSQL .= '     osm_type, ';
             $sSQL .= '     osm_id, ';

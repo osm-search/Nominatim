@@ -391,3 +391,29 @@ Feature: Update of address interpolations
           | parent_place_id | start | end |
           | W1              | 4     | 6   |
 
+    Scenario: Legal interpolation type changed to illegal one
+      Given the grid
+          | 1 |  | 2 |
+          | 3 |  | 4 |
+      And the places
+          | osm | class   | type         | name         | geometry |
+          | W1  | highway | unclassified | Cloud Street | 1, 2     |
+      And the ways
+          | id  | nodes |
+          | 2   | 3,4   |
+      And the places
+          | osm | class   | type    | addr+interpolation | geometry |
+          | W2  | place   | houses  | even               | 3,4      |
+      And the places
+          | osm | class | type  | housenr |
+          | N3  | place | house | 2       |
+          | N4  | place | house | 6       |
+      When importing
+      Then W2 expands to interpolation
+          | parent_place_id | start | end |
+          | W1              | 4     | 4   |
+      When updating places
+          | osm | class   | type    | addr+interpolation | geometry |
+          | W2  | place   | houses  | 12-2               | 3,4      |
+      Then W2 expands to no interpolation
+

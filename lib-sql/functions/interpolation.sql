@@ -82,27 +82,35 @@ CREATE OR REPLACE FUNCTION reinsert_interpolation(way_id BIGINT, addr HSTORE,
 DECLARE
   existing BIGINT[];
 BEGIN
-  -- Get the existing entry from the interpolation table.
-  SELECT array_agg(place_id) INTO existing
-    FROM location_property_osmline WHERE osm_id = way_id;
-
-  IF existing IS NULL or array_length(existing, 1) = 0 THEN
-    INSERT INTO location_property_osmline (osm_id, address, linegeo)
-      VALUES (way_id, addr, geom);
+  IF addr is NULL OR NOT addr ? 'interpolation'
+         OR NOT (addr->'interpolation' in ('odd', 'even', 'all')
+                 or addr->'interpolation' similar to '[1-9]')
+  THEN
+    -- the new interpolation is illegal, simply remove existing entries
+    DELETE FROM location_property_osmline WHERE osm_id = way_id;
   ELSE
-    -- Update the interpolation table:
-    --   The first entry gets the original data, all other entries
-    --   are removed and will be recreated on indexing.
-    --   (An interpolation can be split up, if it has more than 2 address nodes)
-    UPDATE location_property_osmline
-      SET address = addr,
-          linegeo = geom,
-          startnumber = null,
-          indexed_status = 1
-      WHERE place_id = existing[1];
-    IF array_length(existing, 1) > 1 THEN
-      DELETE FROM location_property_osmline
-        WHERE place_id = any(existing[2:]);
+    -- Get the existing entry from the interpolation table.
+    SELECT array_agg(place_id) INTO existing
+      FROM location_property_osmline WHERE osm_id = way_id;
+
+    IF existing IS NULL or array_length(existing, 1) = 0 THEN
+      INSERT INTO location_property_osmline (osm_id, address, linegeo)
+        VALUES (way_id, addr, geom);
+    ELSE
+      -- Update the interpolation table:
+      --   The first entry gets the original data, all other entries
+      --   are removed and will be recreated on indexing.
+      --   (An interpolation can be split up, if it has more than 2 address nodes)
+      UPDATE location_property_osmline
+        SET address = addr,
+            linegeo = geom,
+            startnumber = null,
+            indexed_status = 1
+        WHERE place_id = existing[1];
+      IF array_length(existing, 1) > 1 THEN
+        DELETE FROM location_property_osmline
+          WHERE place_id = any(existing[2:]);
+      END IF;
     END IF;
   END IF;
 

@@ -433,3 +433,26 @@ Feature: Import of address interpolations
         And W10 expands to interpolation
           | start | end | parent_place_id |
           | 12    | 14  | W2              |
+
+
+    Scenario Outline: Bad interpolation values are ignored
+        Given the grid with origin 1,1
+          | 1 |  | 9 |  | 2 |
+        Given the places
+          | osm | class | type   | housenr |
+          | N1  | place | house  | 2       |
+          | N2  | place | house  | 6       |
+        And the places
+          | osm | class | type   | addr+interpolation | geometry |
+          | W1  | place | houses | <value>            | 1,2      |
+        And the ways
+          | id | nodes |
+          | 1  | 1,2 |
+        When importing
+        Then W1 expands to no interpolation
+
+        Examples:
+          | value |
+          | foo   |
+          | x     |
+          | 12-2  |

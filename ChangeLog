@@ -1,3 +1,17 @@
+4.1.1
+
+ * fix crash on update when addr:interpolation receives an illegal value
+ * fix minimum number of retrived results to be at least 10
+ * fix search for combinations of special term + name (e.g Hotel Bellevue)
+ * do not return interpolations without a parent street on reverse search
+ * improve invalidation of linked places on updates
+ * fix address parsing for interpolation lines
+ * make sure socket timeouts are respected during replication
+   (working around a bug in some versions of pyosmium)
+ * update bundled osm2pgsql to 1.7.1
+ * typing fixes to work with latest type annotations from typeshed
+ * smaller improvements to documention (thanks to @mausch)
+
 4.1.0
 
  * switch to ICU tokenizer as default

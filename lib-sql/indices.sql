@@ -56,6 +56,15 @@ CREATE INDEX IF NOT EXISTS idx_postcode_postcode
 ---
   CREATE UNIQUE INDEX IF NOT EXISTS idx_place_osm_unique
     ON place USING btree(osm_id, osm_type, class, type) {{db.tablespace.address_index}};
+---
+-- Table needed for running updates with osm2pgsql on place.
+  CREATE TABLE IF NOT EXISTS place_to_be_deleted (
+    osm_type CHAR(1),
+    osm_id BIGINT,
+    class TEXT,
+    type TEXT,
+    deferred BOOLEAN
+   );
 {% endif %}
 
 -- Indices only needed for search.
@@ -82,14 +91,5 @@ CREATE INDEX IF NOT EXISTS idx_postcode_postcode
       INCLUDE (startnumber, endnumber) {{db.tablespace.search_index}}
       WHERE startnumber is not null;
   {% endif %}
----
--- Table needed for running updates with osm2pgsql on place.
-  CREATE TABLE IF NOT EXISTS place_to_be_deleted (
-    osm_type CHAR(1),
-    osm_id BIGINT,
-    class TEXT,
-    type TEXT,
-    deferred BOOLEAN
-   );
 
 {% endif %}

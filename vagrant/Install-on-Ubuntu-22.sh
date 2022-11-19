@@ -105,13 +105,6 @@ else                               #DOCS:
     cd $USERHOME/Nominatim         #DOCS:
 fi                                 #DOCS:
 
-# When installing the latest source from github, you also need to
-# download the country grid:
-
-if [ ! -f data/country_osm_grid.sql.gz ]; then       #DOCS:    :::sh
-    wget -O data/country_osm_grid.sql.gz https://www.nominatim.org/data/country_grid.sql.gz
-fi                                 #DOCS:
-
 # The code must be built in a separate directory. Create this directory,
 # then configure and build Nominatim in there:
 

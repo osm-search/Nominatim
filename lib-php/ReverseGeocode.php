@@ -189,14 +189,16 @@ class ReverseGeocode
         $sSQL .= '(select place_id, parent_place_id, rank_address, rank_search, country_code, geometry';
         $sSQL .= ' FROM placex';
         $sSQL .= ' WHERE ST_GeometryType(geometry) in (\'ST_Polygon\', \'ST_MultiPolygon\')';
-        $sSQL .= ' AND rank_address Between 5 AND ' .$iMaxRank;
+        // Ensure that query planner doesn't use the index on rank_search.
+        $sSQL .= ' AND coalesce(rank_search, 0) between 5 and ' .$iMaxRank;
+        $sSQL .= ' AND rank_address between 4 and 25'; // needed for index selection
         $sSQL .= ' AND geometry && '.$sPointSQL;
         $sSQL .= ' AND type != \'postcode\' ';
         $sSQL .= ' AND name is not null';
         $sSQL .= ' AND indexed_status = 0 and linked_place_id is null';
-        $sSQL .= ' ORDER BY rank_address DESC LIMIT 50 ) as a';
-        $sSQL .= ' WHERE ST_CONTAINS(geometry, '.$sPointSQL.' )';
-        $sSQL .= ' ORDER BY rank_address DESC LIMIT 1';
+        $sSQL .= ' ORDER BY rank_search DESC LIMIT 50 ) as a';
+        $sSQL .= ' WHERE ST_Contains(geometry, '.$sPointSQL.' )';
+        $sSQL .= ' ORDER BY rank_search DESC LIMIT 1';
         Debug::printSQL($sSQL);
 
         $aPoly = $this->oDB->getRow($sSQL, null, 'Could not determine polygon containing the point.');
@@ -208,7 +210,7 @@ class ReverseGeocode
             $iRankSearch = $aPoly['rank_search'];
             $iPlaceID = $aPoly['place_id'];
 
-            if ($iRankAddress != $iMaxRank) {
+            if ($iRankSearch != $iMaxRank) {
                 $sSQL = 'SELECT place_id FROM ';
                 $sSQL .= '(SELECT place_id, rank_search, country_code, geometry,';
                 $sSQL .= ' ST_distance('.$sPointSQL.', geometry) as distance';

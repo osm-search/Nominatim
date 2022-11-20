@@ -189,7 +189,8 @@ class ReverseGeocode
         $sSQL .= '(select place_id, parent_place_id, rank_address, rank_search, country_code, geometry';
         $sSQL .= ' FROM placex';
         $sSQL .= ' WHERE ST_GeometryType(geometry) in (\'ST_Polygon\', \'ST_MultiPolygon\')';
-        $sSQL .= ' AND rank_search between 5 and ' .$iMaxRank;
+        // Ensure that query planner doesn't use the index on rank_search.
+        $sSQL .= ' AND coalesce(rank_search, 0) between 5 and ' .$iMaxRank;
         $sSQL .= ' AND rank_address between 4 and 25'; // needed for index selection
         $sSQL .= ' AND geometry && '.$sPointSQL;
         $sSQL .= ' AND type != \'postcode\' ';

@@ -117,7 +117,6 @@ def run_osm2pgsql(options: Mapping[str, Any]) -> None:
     env = get_pg_env(options['dsn'])
     cmd = [str(options['osm2pgsql']),
            '--hstore', '--latlon', '--slim',
-           '--with-forward-dependencies', 'false',
            '--log-progress', 'true',
            '--number-processes', str(options['threads']),
            '--cache', str(options['osm2pgsql_cache']),
@@ -131,13 +130,13 @@ def run_osm2pgsql(options: Mapping[str, Any]) -> None:
     else:
         cmd.extend(('--output', 'gazetteer'))
 
-    if options['append']:
-        cmd.append('--append')
-    else:
-        cmd.append('--create')
+    cmd.append('--append' if options['append'] else '--create')
 
     if options['flatnode_file']:
         cmd.extend(('--flat-nodes', options['flatnode_file']))
+
+    if not options.get('forward_dependencies', False):
+        cmd.extend(('--with-forward-dependencies', 'false'))
 
     for key, param in (('slim_data', '--tablespace-slim-data'),
                        ('slim_index', '--tablespace-slim-index'),

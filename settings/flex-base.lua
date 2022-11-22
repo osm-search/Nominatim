@@ -347,16 +347,6 @@ function process_tags(o)
 
     local is_interpolation = o:grab_address{match=INTERPOLATION_TAGS} > 0
 
-    if ADD_TIGER_COUNTY then
-        local v = o:grab_tag('tiger:county')
-        if v ~= nil then
-            v, num = v:gsub(',.*', ' county')
-            if num == 0 then
-                v = v .. ' county'
-            end
-            o:set_address('tiger:county', v)
-        end
-    end
     o:grab_address{match=ADDRESS_TAGS}
 
     if is_interpolation then

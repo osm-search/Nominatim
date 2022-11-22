@@ -35,6 +35,7 @@ sanitizers:
     - step: clean-postcodes
       convert-to-address: yes
       default-pattern: "[A-Z0-9- ]{3,12}"
+    - step: clean-tiger-tags
     - step: split-name-list
     - step: strip-brace-terms
     - step: tag-analyzer-by-language

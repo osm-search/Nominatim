@@ -213,6 +213,15 @@ The following is a list of sanitizers that are shipped with Nominatim.
     rendering:
         heading_level: 6
 
+##### clean-tiger-tags
+
+::: nominatim.tokenizer.sanitizers.clean_tiger_tags
+    selection:
+        members: False
+    rendering:
+        heading_level: 6
+
+
 
 #### Token Analysis
 

@@ -123,8 +123,7 @@ HOUSENUMBER_TAGS = tag_match{keys = {'addr:housenumber', 'addr:conscriptionnumbe
 
 INTERPOLATION_TAGS = tag_match{keys = {'addr:interpolation'}}
 
-ADDRESS_TAGS = tag_match{keys = {'addr:*', 'is_in:*'}}
-ADD_TIGER_COUNTY = true
+ADDRESS_TAGS = tag_match{keys = {'addr:*', 'is_in:*', 'tiger:county'}}
 
 SAVE_EXTRA_MAINS = true
 

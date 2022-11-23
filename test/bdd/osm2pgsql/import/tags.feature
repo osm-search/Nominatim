@@ -166,20 +166,6 @@ Feature: Tag evaluation
             | N10003:place    | place    | island         |
 
 
-    Scenario: Shorten tiger:county tags
-        When loading osm data
-            """
-            n11001 Tplace=village,tiger:county=Feebourgh%2c%%20%AL
-            n11002 Tplace=village,addr:state=Alabama,tiger:county=Feebourgh%2c%%20%AL
-            n11003 Tplace=village,tiger:county=Feebourgh
-            """
-        Then place contains exactly
-            | object | class | address             |
-            | N11001 | place | 'tiger:county': 'Feebourgh county' |
-            | N11002 | place | 'tiger:county': 'Feebourgh county', 'state': 'Alabama' |
-            | N11003 | place | 'tiger:county': 'Feebourgh county' |
-
-
     Scenario: Building fallbacks
         When loading osm data
             """

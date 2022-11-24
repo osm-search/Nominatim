@@ -332,3 +332,19 @@ def add_place_deletion_todo_table(conn: Connection, **_: Any) -> None:
                              class TEXT,
                              type TEXT,
                              deferred BOOLEAN)""")
+
+
+@_migration(4, 1, 99, 1)
+def split_pending_index(conn: Connection, **_: Any) -> None:
+    """ Reorganise indexes for pending updates.
+    """
+    if conn.table_exists('place'):
+        with conn.cursor() as cur:
+            cur.execute("""CREATE INDEX IF NOT EXISTS idx_placex_rank_address_sector
+                           ON placex USING BTREE (rank_address, geometry_sector)
+                           WHERE indexed_status > 0""")
+            cur.execute("""CREATE INDEX IF NOT EXISTS idx_placex_rank_boundaries_sector
+                           ON placex USING BTREE (rank_search, geometry_sector)
+                           WHERE class = 'boundary' and type = 'administrative'
+                                 and indexed_status > 0""")
+            cur.execute("DROP INDEX IF EXISTS idx_placex_pendingsector")

@@ -1,3 +1,26 @@
+4.2.0
+
+ * add experimental support for osm2pgsql flex style
+ * introduce secondary importance value to be retrieved from a raster data file
+   (currently still unused, to replace address importance, thanks to @tareqpi)
+ * add new report tool `nominatim admin --collect-os-info`
+   (thanks @micahcochran, @tareqpi)
+ * reorganise index to improve lookup performance and size
+ * run index creation after import in parallel
+ * run ANALYZE more selectively to speed up continuation of indexing
+ * fix crash on update when addr:interpolation receives an illegal value
+ * fix minimum number of retrieved results to be at least 10
+ * fix search for combinations of special term + name (e.g Hotel Bellevue)
+ * do not return interpolations without a parent street on reverse search
+ * improve invalidation of linked places on updates
+ * fix address parsing for interpolation lines
+ * make sure socket timeouts are respected during replication
+   (working around a bug in some versions of pyosmium)
+ * update bundled osm2pgsql to 1.7.1
+ * add support for PostgreSQL 15
+ * typing fixes to work with latest type annotations from typeshed
+ * smaller improvements to documentation (thanks to @mausch)
+
 4.1.0
 
  * switch to ICU tokenizer as default

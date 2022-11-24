@@ -64,3 +64,39 @@ Before submitting a pull request make sure that the tests pass:
   cd build
   make test
 ```
+
+## Releases
+
+Nominatim follows semantic versioning. Major releases are done for large changes
+that require (or at least strongly recommend) a reimport of the databases.
+Minor releases can usually be applied to exisiting databases Patch releases
+contain bug fixes only and are released from a separate branch where the
+relevant changes are cherry-picked from the master branch.
+
+Checklist for releases:
+
+* [ ] increase version in `nominatim/version.py` and CMakeLists.txt
+* [ ] update `ChangeLog` (copy information from patch releases from release branch)
+* [ ] complete `docs/admin/Migration.md`
+* [ ] update EOL dates in `SECURITY.md`
+* [ ] commit and make sure CI tests pass
+* [ ] test migration
+  * download, build and import previous version
+  * migrate using master version
+  * run updates using master version
+* [ ] prepare tarball:
+  * `git clone --recursive https://github.com/osm-search/Nominatim` (switch to right branch!)
+  * `rm -r .git* osm2pgsql/.git*`
+  * copy country data into `data/`
+  * add version to base directory and package
+* [ ] upload tarball to https://nominatim.org
+* [ ] prepare documentation
+  * check out new docs branch
+  * change git checkout instructions to tarball download instructions or adapt version on existing ones
+  * build documentation and copy to https://github.com/osm-search/nominatim-org-site
+  * add new version to history
+* [ ] check release tarball
+  * download tarball as per new documentation instructions
+  * compile and import Nominatim
+  * run `nominatim --version` to confirm correct version
+* [ ] tag new release and add a release on github.com

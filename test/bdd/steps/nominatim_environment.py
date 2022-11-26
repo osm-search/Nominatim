@@ -105,7 +105,6 @@ class NominatimEnvironment:
         self.test_env['NOMINATIM_CONFIGDIR'] = str((self.src_dir / 'settings').resolve())
         self.test_env['NOMINATIM_DATABASE_MODULE_SRC_PATH'] = str((self.build_dir / 'module').resolve())
         self.test_env['NOMINATIM_OSM2PGSQL_BINARY'] = str((self.build_dir / 'osm2pgsql' / 'osm2pgsql').resolve())
-        self.test_env['NOMINATIM_NOMINATIM_TOOL'] = str((self.build_dir / 'nominatim').resolve())
         if self.tokenizer is not None:
             self.test_env['NOMINATIM_TOKENIZER'] = self.tokenizer
         if self.import_style is not None:

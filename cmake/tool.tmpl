@@ -4,8 +4,6 @@ import os
 
 sys.path.insert(1, '@CMAKE_SOURCE_DIR@')
 
-os.environ['NOMINATIM_NOMINATIM_TOOL'] = os.path.abspath(__file__)
-
 from nominatim import cli
 from nominatim import version
 

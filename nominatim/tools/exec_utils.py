@@ -15,6 +15,7 @@ import subprocess
 import urllib.request as urlrequest
 from urllib.parse import urlencode
 
+from nominatim.config import Configuration
 from nominatim.typing import StrPath
 from nominatim.version import version_str
 from nominatim.db.connection import get_pg_env
@@ -22,7 +23,7 @@ from nominatim.db.connection import get_pg_env
 LOG = logging.getLogger()
 
 def run_legacy_script(script: StrPath, *args: Union[int, str],
-                      nominatim_env: Any,
+                      config: Configuration,
                       throw_on_fail: bool = False) -> int:
     """ Run a Nominatim PHP script with the given arguments.
 
@@ -30,18 +31,18 @@ def run_legacy_script(script: StrPath, *args: Union[int, str],
         then throw a `CalledProcessError` on a non-zero exit.
     """
     cmd = ['/usr/bin/env', 'php', '-Cq',
-           str(nominatim_env.phplib_dir / 'admin' / script)]
+           str(config.lib_dir.php / 'admin' / script)]
     cmd.extend([str(a) for a in args])
 
-    env = nominatim_env.config.get_os_env()
-    env['NOMINATIM_DATADIR'] = str(nominatim_env.data_dir)
-    env['NOMINATIM_SQLDIR'] = str(nominatim_env.sqllib_dir)
-    env['NOMINATIM_CONFIGDIR'] = str(nominatim_env.config_dir)
-    env['NOMINATIM_DATABASE_MODULE_SRC_PATH'] = str(nominatim_env.module_dir)
+    env = config.get_os_env()
+    env['NOMINATIM_DATADIR'] = str(config.lib_dir.data)
+    env['NOMINATIM_SQLDIR'] = str(config.lib_dir.sql)
+    env['NOMINATIM_CONFIGDIR'] = str(config.config_dir)
+    env['NOMINATIM_DATABASE_MODULE_SRC_PATH'] = str(config.lib_dir.module)
     if not env['NOMINATIM_OSM2PGSQL_BINARY']:
-        env['NOMINATIM_OSM2PGSQL_BINARY'] = str(nominatim_env.osm2pgsql_path)
+        env['NOMINATIM_OSM2PGSQL_BINARY'] = str(config.lib_dir.osm2pgsql)
 
-    proc = subprocess.run(cmd, cwd=str(nominatim_env.project_dir), env=env,
+    proc = subprocess.run(cmd, cwd=str(config.project_dir), env=env,
                           check=throw_on_fail)
 
     return proc.returncode

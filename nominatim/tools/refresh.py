@@ -216,6 +216,7 @@ def setup_website(basedir: Path, config: Configuration, conn: Connection) -> Non
         LOG.info('Creating website directory.')
         basedir.mkdir()
 
+    assert config.project_dir is not None
     template = dedent(f"""\
                       <?php
 

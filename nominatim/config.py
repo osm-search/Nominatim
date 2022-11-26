@@ -20,6 +20,7 @@ from dotenv import dotenv_values
 
 from nominatim.typing import StrPath
 from nominatim.errors import UsageError
+import nominatim.paths
 
 LOG = logging.getLogger()
 CONFIG_CACHE : Dict[str, Any] = {}
@@ -58,21 +59,22 @@ class Configuration:
         avoid conflicts with other environment variables.
     """
 
-    def __init__(self, project_dir: Path, config_dir: Path,
+    def __init__(self, project_dir: Optional[Path],
                  environ: Optional[Mapping[str, str]] = None) -> None:
         self.environ = environ or os.environ
         self.project_dir = project_dir
-        self.config_dir = config_dir
-        self._config = dotenv_values(str((config_dir / 'env.defaults').resolve()))
-        if project_dir is not None and (project_dir / '.env').is_file():
-            self._config.update(dotenv_values(str((project_dir / '.env').resolve())))
+        self.config_dir = nominatim.paths.CONFIG_DIR
+        self._config = dotenv_values(str(self.config_dir / 'env.defaults'))
+        if self.project_dir is not None and (self.project_dir / '.env').is_file():
+            self.project_dir = self.project_dir.resolve()
+            self._config.update(dotenv_values(str(self.project_dir / '.env')))
 
         class _LibDirs:
             module: Path
             osm2pgsql: Path
-            php: Path
-            sql: Path
-            data: Path
+            php = nominatim.paths.PHPLIB_DIR
+            sql = nominatim.paths.SQLLIB_DIR
+            data = nominatim.paths.DATA_DIR
 
         self.lib_dir = _LibDirs()
         self._private_plugins: Dict[str, object] = {}
@@ -82,7 +84,7 @@ class Configuration:
         """ Set paths to library functions and data.
         """
         for key, value in kwargs.items():
-            setattr(self.lib_dir, key, Path(value).resolve())
+            setattr(self.lib_dir, key, Path(value))
 
 
     def __getattr__(self, name: str) -> str:
@@ -136,6 +138,7 @@ class Configuration:
         cfgpath = Path(value)
 
         if not cfgpath.is_absolute():
+            assert self.project_dir is not None
             cfgpath = self.project_dir / cfgpath
 
         return cfgpath.resolve()
@@ -174,11 +177,11 @@ class Configuration:
         return self.find_config_file('', 'IMPORT_STYLE')
 
 
-    def get_os_env(self) -> Dict[str, Optional[str]]:
+    def get_os_env(self) -> Dict[str, str]:
         """ Return a copy of the OS environment with the Nominatim configuration
             merged in.
         """
-        env = dict(self._config)
+        env = {k: v for k, v in self._config.items() if v is not None}
         env.update(self.environ)
 
         return env

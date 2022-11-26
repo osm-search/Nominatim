@@ -11,8 +11,4 @@ version.GIT_COMMIT_HASH = '@GIT_HASH@'
 
 exit(cli.nominatim(module_dir='@NOMINATIM_LIBDIR@/module',
                    osm2pgsql_path='@NOMINATIM_LIBDIR@/osm2pgsql',
-                   phplib_dir='@NOMINATIM_LIBDIR@/lib-php',
-                   sqllib_dir='@NOMINATIM_LIBDIR@/lib-sql',
-                   data_dir='@NOMINATIM_DATADIR@',
-                   config_dir='@NOMINATIM_CONFIGDIR@',
                    phpcgi_path='@PHPCGI_BIN@'))

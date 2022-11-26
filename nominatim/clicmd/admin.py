@@ -88,4 +88,4 @@ class AdminFuncs:
             params.append('--reverse-only')
         if args.target == 'search':
             params.append('--search-only')
-        return run_legacy_script(*params, nominatim_env=args)
+        return run_legacy_script(*params, config=args.config)

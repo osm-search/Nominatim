@@ -21,7 +21,7 @@ def test_config(src_dir, tmp_path):
     """
     (tmp_path / 'project').mkdir()
     (tmp_path / 'config').mkdir()
-    conf = Configuration(tmp_path / 'project', src_dir / 'settings')
+    conf = Configuration(tmp_path / 'project')
     conf.config_dir = tmp_path / 'config'
     return conf
 

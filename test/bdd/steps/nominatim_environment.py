@@ -302,10 +302,6 @@ class NominatimEnvironment:
 
         cli.nominatim(module_dir='',
                       osm2pgsql_path=str(self.build_dir / 'osm2pgsql' / 'osm2pgsql'),
-                      phplib_dir=str(self.src_dir / 'lib-php'),
-                      sqllib_dir=str(self.src_dir / 'lib-sql'),
-                      data_dir=str(self.src_dir / 'data'),
-                      config_dir=str(self.src_dir / 'settings'),
                       cli_args=cmdline,
                       phpcgi_path='',
                       environ=self.test_env)

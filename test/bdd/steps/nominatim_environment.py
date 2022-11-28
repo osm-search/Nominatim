@@ -43,7 +43,7 @@ class NominatimEnvironment:
         self.code_coverage_path = config['PHPCOV']
         self.code_coverage_id = 1
 
-        self.default_config = Configuration(None, self.src_dir / 'settings').get_os_env()
+        self.default_config = Configuration(None).get_os_env()
         self.test_env = None
         self.template_db_done = False
         self.api_db_done = False
@@ -130,13 +130,9 @@ class NominatimEnvironment:
 
 
     def get_test_config(self):
-        cfg = Configuration(Path(self.website_dir.name), self.src_dir / 'settings',
-                            environ=self.test_env)
+        cfg = Configuration(Path(self.website_dir.name), environ=self.test_env)
         cfg.set_libdirs(module=self.build_dir / 'module',
-                        osm2pgsql=self.build_dir / 'osm2pgsql' / 'osm2pgsql',
-                        php=self.src_dir / 'lib-php',
-                        sql=self.src_dir / 'lib-sql',
-                        data=self.src_dir / 'data')
+                        osm2pgsql=self.build_dir / 'osm2pgsql' / 'osm2pgsql')
         return cfg
 
     def get_libpq_dsn(self):
@@ -306,10 +302,6 @@ class NominatimEnvironment:
 
         cli.nominatim(module_dir='',
                       osm2pgsql_path=str(self.build_dir / 'osm2pgsql' / 'osm2pgsql'),
-                      phplib_dir=str(self.src_dir / 'lib-php'),
-                      sqllib_dir=str(self.src_dir / 'lib-sql'),
-                      data_dir=str(self.src_dir / 'data'),
-                      config_dir=str(self.src_dir / 'settings'),
                       cli_args=cmdline,
                       phpcgi_path='',
                       environ=self.test_env)

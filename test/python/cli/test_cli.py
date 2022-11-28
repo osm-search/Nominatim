@@ -82,19 +82,17 @@ def test_cli_export_command(cli_call, mock_run_legacy):
                                          ('restrict-to-osm-way', '727'),
                                          ('restrict-to-osm-relation', '197532')
                                         ])
-def test_export_parameters(src_dir, tmp_path, param, value):
+def test_export_parameters(src_dir, tmp_path, param, value, monkeypatch):
     (tmp_path / 'admin').mkdir()
     (tmp_path / 'admin' / 'export.php').write_text(f"""<?php
         exit(strpos(implode(' ', $_SERVER['argv']), '--{param} {value}') >= 0 ? 0 : 10);
         """)
 
+    monkeypatch.setattr(nominatim.paths, 'PHPLIB_DIR', tmp_path)
+
     assert nominatim.cli.nominatim(module_dir='MODULE NOT AVAILABLE',
                                    osm2pgsql_path='OSM2PGSQL NOT AVAILABLE',
-                                   phplib_dir=str(tmp_path),
-                                   data_dir=str(src_dir / 'data'),
                                    phpcgi_path='/usr/bin/php-cgi',
-                                   sqllib_dir=str(src_dir / 'lib-sql'),
-                                   config_dir=str(src_dir / 'settings'),
                                    cli_args=['export', '--' + param, value]) == 0
 
 

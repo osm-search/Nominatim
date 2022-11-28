@@ -11,8 +11,4 @@ version.GIT_COMMIT_HASH = '@GIT_HASH@'
 
 exit(cli.nominatim(module_dir='@CMAKE_BINARY_DIR@/module',
                    osm2pgsql_path='@CMAKE_BINARY_DIR@/osm2pgsql/osm2pgsql',
-                   phplib_dir='@CMAKE_SOURCE_DIR@/lib-php',
-                   sqllib_dir='@CMAKE_SOURCE_DIR@/lib-sql',
-                   data_dir='@CMAKE_SOURCE_DIR@/data',
-                   config_dir='@CMAKE_SOURCE_DIR@/settings',
                    phpcgi_path='@PHPCGI_BIN@'))

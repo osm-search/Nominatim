@@ -12,31 +12,28 @@ import subprocess
 
 import pytest
 
+from nominatim.config import Configuration
 import nominatim.tools.exec_utils as exec_utils
+import nominatim.paths
 
 class TestRunLegacyScript:
 
     @pytest.fixture(autouse=True)
-    def setup_nominatim_env(self, tmp_path, def_config):
+    def setup_nominatim_env(self, tmp_path, monkeypatch):
         tmp_phplib_dir = tmp_path / 'phplib'
         tmp_phplib_dir.mkdir()
         (tmp_phplib_dir / 'admin').mkdir()
 
-        class _NominatimEnv:
-            config = def_config
-            phplib_dir = tmp_phplib_dir
-            data_dir = Path('data')
-            project_dir = Path('.')
-            sqllib_dir = Path('lib-sql')
-            config_dir = Path('settings')
-            module_dir = 'module'
-            osm2pgsql_path = 'osm2pgsql'
+        monkeypatch.setattr(nominatim.paths, 'PHPLIB_DIR', tmp_phplib_dir)
 
-        self.testenv = _NominatimEnv
+        self.phplib_dir = tmp_phplib_dir
+        self.config = Configuration(tmp_path)
+        self.config.set_libdirs(module='.', osm2pgsql='default_osm2pgsql',
+                                php=tmp_phplib_dir)
 
 
     def mk_script(self, code):
-        codefile = self.testenv.phplib_dir / 'admin' / 't.php'
+        codefile = self.phplib_dir / 'admin' / 't.php'
         codefile.write_text('<?php\n' + code + '\n')
 
         return 't.php'
@@ -46,25 +43,25 @@ class TestRunLegacyScript:
     def test_run_legacy_return_exit_code(self, return_code):
         fname = self.mk_script('exit({});'.format(return_code))
         assert return_code == \
-                 exec_utils.run_legacy_script(fname, nominatim_env=self.testenv)
+                 exec_utils.run_legacy_script(fname, config=self.config)
 
 
     def test_run_legacy_return_throw_on_fail(self):
         fname = self.mk_script('exit(11);')
         with pytest.raises(subprocess.CalledProcessError):
-            exec_utils.run_legacy_script(fname, nominatim_env=self.testenv,
+            exec_utils.run_legacy_script(fname, config=self.config,
                                          throw_on_fail=True)
 
 
     def test_run_legacy_return_dont_throw_on_success(self):
         fname = self.mk_script('exit(0);')
-        assert exec_utils.run_legacy_script(fname, nominatim_env=self.testenv,
+        assert exec_utils.run_legacy_script(fname, config=self.config,
                                             throw_on_fail=True) == 0
 
     def test_run_legacy_use_given_module_path(self):
         fname = self.mk_script("exit($_SERVER['NOMINATIM_DATABASE_MODULE_PATH'] == '' ? 0 : 23);")
 
-        assert exec_utils.run_legacy_script(fname, nominatim_env=self.testenv) == 0
+        assert exec_utils.run_legacy_script(fname, config=self.config) == 0
 
 
     def test_run_legacy_do_not_overwrite_module_path(self, monkeypatch):
@@ -72,13 +69,13 @@ class TestRunLegacyScript:
         fname = self.mk_script(
             "exit($_SERVER['NOMINATIM_DATABASE_MODULE_PATH'] == 'other' ? 0 : 1);")
 
-        assert exec_utils.run_legacy_script(fname, nominatim_env=self.testenv) == 0
+        assert exec_utils.run_legacy_script(fname, config=self.config) == 0
 
 
     def test_run_legacy_default_osm2pgsql_binary(self, monkeypatch):
-        fname = self.mk_script("exit($_SERVER['NOMINATIM_OSM2PGSQL_BINARY'] == 'osm2pgsql' ? 0 : 23);")
+        fname = self.mk_script("exit($_SERVER['NOMINATIM_OSM2PGSQL_BINARY'] == 'default_osm2pgsql' ? 0 : 23);")
 
-        assert exec_utils.run_legacy_script(fname, nominatim_env=self.testenv) == 0
+        assert exec_utils.run_legacy_script(fname, config=self.config) == 0
 
 
     def test_run_legacy_override_osm2pgsql_binary(self, monkeypatch):
@@ -86,7 +83,7 @@ class TestRunLegacyScript:
 
         fname = self.mk_script("exit($_SERVER['NOMINATIM_OSM2PGSQL_BINARY'] == 'somethingelse' ? 0 : 23);")
 
-        assert exec_utils.run_legacy_script(fname, nominatim_env=self.testenv) == 0
+        assert exec_utils.run_legacy_script(fname, config=self.config) == 0
 
 
 class TestRunApiScript:

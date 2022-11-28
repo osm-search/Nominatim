@@ -55,6 +55,7 @@ def create_tokenizer(config: Configuration, init_db: bool = True,
         module_name = config.TOKENIZER
 
     # Create the directory for the tokenizer data
+    assert config.project_dir is not None
     basedir = config.project_dir / 'tokenizer'
     if not basedir.exists():
         basedir.mkdir()
@@ -80,6 +81,7 @@ def get_tokenizer_for_db(config: Configuration) -> AbstractTokenizer:
         The function looks up the appropriate tokenizer in the database
         and initialises it.
     """
+    assert config.project_dir is not None
     basedir = config.project_dir / 'tokenizer'
     if not basedir.is_dir():
         # Directory will be repopulated by tokenizer below.

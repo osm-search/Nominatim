@@ -13,14 +13,10 @@ import nominatim.clicmd.api
 
 
 @pytest.mark.parametrize("endpoint", (('search', 'reverse', 'lookup', 'details', 'status')))
-def test_no_api_without_phpcgi(src_dir, endpoint):
+def test_no_api_without_phpcgi(endpoint):
     assert nominatim.cli.nominatim(module_dir='MODULE NOT AVAILABLE',
                                    osm2pgsql_path='OSM2PGSQL NOT AVAILABLE',
-                                   phplib_dir=str(src_dir / 'lib-php'),
-                                   data_dir=str(src_dir / 'data'),
                                    phpcgi_path=None,
-                                   sqllib_dir=str(src_dir / 'lib-sql'),
-                                   config_dir=str(src_dir / 'settings'),
                                    cli_args=[endpoint]) == 1
 
 
@@ -36,24 +32,28 @@ def test_no_api_without_phpcgi(src_dir, endpoint):
 class TestCliApiCall:
 
     @pytest.fixture(autouse=True)
-    def setup_cli_call(self, cli_call):
-        self.call_nominatim = cli_call
+    def setup_cli_call(self, params, cli_call, mock_func_factory, tmp_path):
+        self.mock_run_api = mock_func_factory(nominatim.clicmd.api, 'run_api_script')
 
-    def test_api_commands_simple(self, mock_func_factory, params, tmp_path):
+        def _run():
+            return cli_call(*params, '--project-dir', str(tmp_path))
+
+        self.run_nominatim = _run
+
+
+    def test_api_commands_simple(self, tmp_path, params):
         (tmp_path / 'website').mkdir()
         (tmp_path / 'website' / (params[0] + '.php')).write_text('')
-        mock_run_api = mock_func_factory(nominatim.clicmd.api, 'run_api_script')
 
-        assert self.call_nominatim(*params, '--project-dir', str(tmp_path)) == 0
+        assert self.run_nominatim() == 0
 
-        assert mock_run_api.called == 1
-        assert mock_run_api.last_args[0] == params[0]
+        assert self.mock_run_api.called == 1
+        assert self.mock_run_api.last_args[0] == params[0]
 
 
-    def test_bad_project_idr(self, mock_func_factory, params):
-        mock_run_api = mock_func_factory(nominatim.clicmd.api, 'run_api_script')
+    def test_bad_project_dir(self):
+        assert self.run_nominatim() == 1
 
-        assert self.call_nominatim(*params) == 1
 
 QUERY_PARAMS = {
  'search': ('--query', 'somewhere'),

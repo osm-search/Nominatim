@@ -87,7 +87,7 @@ class SetupAll:
 
             LOG.warning('Setting up country tables')
             country_info.setup_country_tables(args.config.get_libpq_dsn(),
-                                              args.data_dir,
+                                              args.config.lib_dir.data,
                                               args.no_partitions)
 
             LOG.warning('Importing OSM data file')

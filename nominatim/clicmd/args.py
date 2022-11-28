@@ -42,12 +42,6 @@ class NominatimArgs:
     # Basic environment set by root program.
     config: Configuration
     project_dir: Path
-    module_dir: Path
-    osm2pgsql_path: Path
-    phplib_dir: Path
-    sqllib_dir: Path
-    data_dir: Path
-    config_dir: Path
     phpcgi_path: Path
 
     # Global switches
@@ -181,7 +175,7 @@ class NominatimArgs:
             from the command line arguments. The resulting dict can be
             further customized and then used in `run_osm2pgsql()`.
         """
-        return dict(osm2pgsql=self.config.OSM2PGSQL_BINARY or self.osm2pgsql_path,
+        return dict(osm2pgsql=self.config.OSM2PGSQL_BINARY or self.config.lib_dir.osm2pgsql,
                     osm2pgsql_cache=self.osm2pgsql_cache or default_cache,
                     osm2pgsql_style=self.config.get_import_style_file(),
                     osm2pgsql_style_path=self.config.config_dir,

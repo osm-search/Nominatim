@@ -107,24 +107,18 @@ def table_factory(temp_db_cursor):
 
 
 @pytest.fixture
-def def_config(src_dir):
-    cfg = Configuration(None, src_dir / 'settings')
-    cfg.set_libdirs(module='.', osm2pgsql='.',
-                    php=src_dir / 'lib-php',
-                    sql=src_dir / 'lib-sql',
-                    data=src_dir / 'data')
+def def_config():
+    cfg = Configuration(None)
+    cfg.set_libdirs(module='.', osm2pgsql='.')
     return cfg
 
 
 @pytest.fixture
-def project_env(src_dir, tmp_path):
+def project_env(tmp_path):
     projdir = tmp_path / 'project'
     projdir.mkdir()
-    cfg = Configuration(projdir, src_dir / 'settings')
-    cfg.set_libdirs(module='.', osm2pgsql='.',
-                    php=src_dir / 'lib-php',
-                    sql=src_dir / 'lib-sql',
-                    data=src_dir / 'data')
+    cfg = Configuration(projdir)
+    cfg.set_libdirs(module='.', osm2pgsql='.')
     return cfg
 
 
@@ -214,9 +208,8 @@ def osmline_table(temp_db_with_extensions, table_factory):
 @pytest.fixture
 def sql_preprocessor_cfg(tmp_path, table_factory, temp_db_with_extensions):
     table_factory('country_name', 'partition INT', ((0, ), (1, ), (2, )))
-    cfg = Configuration(None, SRC_DIR.resolve() / 'settings')
-    cfg.set_libdirs(module='.', osm2pgsql='.', php=SRC_DIR / 'lib-php',
-                    sql=tmp_path, data=SRC_DIR / 'data')
+    cfg = Configuration(None)
+    cfg.set_libdirs(module='.', osm2pgsql='.', sql=tmp_path)
     return cfg
 
 

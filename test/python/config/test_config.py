@@ -14,23 +14,23 @@ from nominatim.config import Configuration, flatten_config_list
 from nominatim.errors import UsageError
 
 @pytest.fixture
-def make_config(src_dir):
+def make_config():
     """ Create a configuration object from the given project directory.
     """
     def _mk_config(project_dir=None):
-        return Configuration(project_dir, src_dir / 'settings')
+        return Configuration(project_dir)
 
     return _mk_config
 
 @pytest.fixture
-def make_config_path(src_dir, tmp_path):
+def make_config_path(tmp_path):
     """ Create a configuration object with project and config directories
         in a temporary directory.
     """
     def _mk_config():
         (tmp_path / 'project').mkdir()
         (tmp_path / 'config').mkdir()
-        conf = Configuration(tmp_path / 'project', src_dir / 'settings')
+        conf = Configuration(tmp_path / 'project')
         conf.config_dir = tmp_path / 'config'
         return conf
 

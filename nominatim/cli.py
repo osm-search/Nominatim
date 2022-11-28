@@ -100,9 +100,7 @@ class CommandlineParser:
             self.parser.print_help()
             return 1
 
-        for arg in ('module_dir', 'osm2pgsql_path', 'phplib_dir', 'sqllib_dir',
-                    'data_dir', 'config_dir', 'phpcgi_path'):
-            setattr(args, arg, Path(kwargs[arg]))
+        args.phpcgi_path = Path(kwargs['phpcgi_path'])
         args.project_dir = Path(args.project_dir).resolve()
 
         if 'cli_args' not in kwargs:
@@ -111,13 +109,10 @@ class CommandlineParser:
                                 datefmt='%Y-%m-%d %H:%M:%S',
                                 level=max(4 - args.verbose, 1) * 10)
 
-        args.config = Configuration(args.project_dir, args.config_dir,
+        args.config = Configuration(args.project_dir,
                                     environ=kwargs.get('environ', os.environ))
-        args.config.set_libdirs(module=args.module_dir,
-                                osm2pgsql=args.osm2pgsql_path,
-                                php=args.phplib_dir,
-                                sql=args.sqllib_dir,
-                                data=args.data_dir)
+        args.config.set_libdirs(module=kwargs['module_dir'],
+                                osm2pgsql=kwargs['osm2pgsql_path'])
 
         log = logging.getLogger()
         log.warning('Using project directory: %s', str(args.project_dir))
@@ -195,7 +190,7 @@ class QueryExport:
         if args.restrict_to_osm_relation:
             params.extend(('--restrict-to-osm-relation', args.restrict_to_osm_relation))
 
-        return run_legacy_script('export.php', *params, nominatim_env=args)
+        return run_legacy_script('export.php', *params, config=args.config)
 
 
 class AdminServe:

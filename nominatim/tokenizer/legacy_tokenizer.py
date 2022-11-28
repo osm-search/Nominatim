@@ -106,6 +106,7 @@ class LegacyTokenizer(AbstractTokenizer):
             This copies all necessary data in the project directory to make
             sure the tokenizer remains stable even over updates.
         """
+        assert config.project_dir is not None
         module_dir = _install_module(config.DATABASE_MODULE_PATH,
                                      config.lib_dir.module,
                                      config.project_dir / 'module')
@@ -127,6 +128,8 @@ class LegacyTokenizer(AbstractTokenizer):
     def init_from_project(self, config: Configuration) -> None:
         """ Initialise the tokenizer from the project directory.
         """
+        assert config.project_dir is not None
+
         with connect(self.dsn) as conn:
             self.normalization = properties.get_property(conn, DBCFG_NORMALIZATION)
 
@@ -149,6 +152,8 @@ class LegacyTokenizer(AbstractTokenizer):
     def update_sql_functions(self, config: Configuration) -> None:
         """ Reimport the SQL functions for this tokenizer.
         """
+        assert config.project_dir is not None
+
         with connect(self.dsn) as conn:
             max_word_freq = properties.get_property(conn, DBCFG_MAXWORDFREQ)
             modulepath = config.DATABASE_MODULE_PATH or \
@@ -193,6 +198,8 @@ class LegacyTokenizer(AbstractTokenizer):
             This is a special migration function for updating existing databases
             to new software versions.
         """
+        assert config.project_dir is not None
+
         self.normalization = config.TERM_NORMALIZATION
         module_dir = _install_module(config.DATABASE_MODULE_PATH,
                                      config.lib_dir.module,

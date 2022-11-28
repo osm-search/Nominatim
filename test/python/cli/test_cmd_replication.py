@@ -15,6 +15,7 @@ import pytest
 import nominatim.cli
 import nominatim.indexer.indexer
 import nominatim.tools.replication
+import nominatim.tools.refresh
 from nominatim.db import status
 
 @pytest.fixture
@@ -107,7 +108,7 @@ class TestCliReplication:
     def test_replication_update_once_no_index(self, update_mock):
         assert self.call_nominatim('--once', '--no-index') == 0
 
-        assert str(update_mock.last_args[1]['osm2pgsql']) == 'OSM2PGSQL NOT AVAILABLE'
+        assert str(update_mock.last_args[1]['osm2pgsql']).endswith('OSM2PGSQL NOT AVAILABLE')
 
 
     def test_replication_update_custom_osm2pgsql(self, monkeypatch, update_mock):

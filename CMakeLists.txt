@@ -233,7 +233,14 @@ if (BUILD_IMPORTER)
     install(DIRECTORY nominatim
             DESTINATION ${NOMINATIM_LIBDIR}/lib-python
             FILES_MATCHING PATTERN "*.py"
+            PATTERN "paths.py" EXCLUDE
             PATTERN __pycache__ EXCLUDE)
+
+    configure_file(${PROJECT_SOURCE_DIR}/cmake/paths-py.tmpl paths-py.installed)
+    install(FILES ${PROJECT_BINARY_DIR}/paths-py.installed
+            DESTINATION ${NOMINATIM_LIBDIR}/lib-python/nominatim
+            RENAME paths.py)
+
     install(DIRECTORY lib-sql DESTINATION ${NOMINATIM_LIBDIR})
 
     install(FILES ${COUNTRY_GRID_FILE}

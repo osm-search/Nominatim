@@ -17,6 +17,14 @@ Vagrant.configure("2") do |config|
     checkout = "no"
   end
 
+  config.vm.provider "hyperv" do |hv, override|
+    hv.memory = 2048
+    hv.linked_clone = true
+    if ENV['CHECKOUT'] != 'y' then
+      override.vm.synced_folder ".", "/home/vagrant/Nominatim", type: "smb", smb_host: ENV['SMB_HOST'] || ENV['COMPUTERNAME']
+    end
+  end
+
   config.vm.provider "virtualbox" do |vb, override|
     vb.gui = false
     vb.memory = 2048
@@ -34,7 +42,34 @@ Vagrant.configure("2") do |config|
     end
   end
 
-  config.vm.define "ubuntu", primary: true do |sub|
+  config.vm.define "ubuntu22", primary: true do |sub|
+      sub.vm.box = "generic/ubuntu2204"
+      sub.vm.provision :shell do |s|
+        s.path = "vagrant/Install-on-Ubuntu-22.sh"
+        s.privileged = false
+        s.args = [checkout]
+      end
+  end
+
+  config.vm.define "ubuntu22-apache" do |sub|
+      sub.vm.box = "generic/ubuntu2204"
+      sub.vm.provision :shell do |s|
+        s.path = "vagrant/Install-on-Ubuntu-22.sh"
+        s.privileged = false
+        s.args = [checkout, "install-apache"]
+      end
+  end
+
+  config.vm.define "ubuntu22-nginx" do |sub|
+      sub.vm.box = "generic/ubuntu2204"
+      sub.vm.provision :shell do |s|
+        s.path = "vagrant/Install-on-Ubuntu-22.sh"
+        s.privileged = false
+        s.args = [checkout, "install-nginx"]
+      end
+  end
+
+  config.vm.define "ubuntu20" do |sub|
       sub.vm.box = "generic/ubuntu2004"
       sub.vm.provision :shell do |s|
         s.path = "vagrant/Install-on-Ubuntu-20.sh"
@@ -43,7 +78,7 @@ Vagrant.configure("2") do |config|
       end
   end
 
-  config.vm.define "ubuntu-apache" do |sub|
+  config.vm.define "ubuntu20-apache" do |sub|
       sub.vm.box = "generic/ubuntu2004"
       sub.vm.provision :shell do |s|
         s.path = "vagrant/Install-on-Ubuntu-20.sh"
@@ -52,7 +87,7 @@ Vagrant.configure("2") do |config|
       end
   end
 
-  config.vm.define "ubuntu-nginx" do |sub|
+  config.vm.define "ubuntu20-nginx" do |sub|
       sub.vm.box = "generic/ubuntu2004"
       sub.vm.provision :shell do |s|
         s.path = "vagrant/Install-on-Ubuntu-20.sh"
@@ -87,24 +122,5 @@ Vagrant.configure("2") do |config|
         s.args = [checkout, "install-nginx"]
       end
   end
-
-  config.vm.define "centos7" do |sub|
-      sub.vm.box = "centos/7"
-      sub.vm.provision :shell do |s|
-        s.path = "vagrant/Install-on-Centos-7.sh"
-        s.privileged = false
-        s.args = [checkout]
-      end
-  end
-
-  config.vm.define "centos" do |sub|
-      sub.vm.box = "generic/centos8"
-      sub.vm.provision :shell do |s|
-        s.path = "vagrant/Install-on-Centos-8.sh"
-        s.privileged = false
-        s.args = [checkout]
-      end
-  end
-
 
 end

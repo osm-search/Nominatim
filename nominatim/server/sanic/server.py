@@ -1,0 +1,62 @@
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# This file is part of Nominatim. (https://nominatim.org)
+#
+# Copyright (C) 2022 by the Nominatim developer community.
+# For a full list of authors see the git log.
+"""
+Server implementation using the sanic webserver framework.
+"""
+from pathlib import Path
+
+import sanic
+
+from nominatim.api import NominatimAPIAsync
+from nominatim.apicmd.status import StatusResult
+import nominatim.result_formatter.v1 as formatting
+
+api = sanic.Blueprint('NominatimAPI')
+
+CONTENT_TYPE = {
+  'text': 'text/plain; charset=utf-8',
+  'xml': 'text/xml; charset=utf-8'
+}
+
+def usage_error(msg):
+    return sanic.response.text(msg, status=400)
+
+
+def api_response(request, result):
+    body = request.ctx.formatter.format(result, request.ctx.format)
+    return sanic.response.text(body,
+                               content_type=CONTENT_TYPE.get(request.ctx.format, 'application/json'))
+
+
+@api.on_request
+async def extract_format(request):
+    request.ctx.formatter = request.app.ctx.formatters[request.route.ctx.result_type]
+
+    request.ctx.format = request.args.get('format', request.route.ctx.default_format)
+    if not request.ctx.formatter.supports_format(request.ctx.format):
+        return usage_error("Parameter 'format' must be one of: " +
+                           ', '.join(request.ctx.formatter.list_formats()))
+
+
+@api.get('/status', ctx_result_type=StatusResult, ctx_default_format='text')
+async def status(request):
+    return api_response(request,await request.app.ctx.api.status())
+
+
+def get_application(project_dir: Path) -> sanic.Sanic:
+    app = sanic.Sanic("NominatimInstance")
+
+    app.ctx.api = NominatimAPIAsync(project_dir)
+    app.ctx.formatters = {}
+    for rtype in (StatusResult, ):
+        app.ctx.formatters[rtype] = formatting.create(rtype)
+
+    app.blueprint(api)
+
+    return app
+
+

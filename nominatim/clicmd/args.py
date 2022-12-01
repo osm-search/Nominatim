@@ -127,6 +127,7 @@ class NominatimArgs:
 
     # Arguments to 'serve'
     server: str
+    engine: str
 
     # Arguments to 'special-phrases
     import_from_wiki: bool

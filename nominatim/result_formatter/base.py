@@ -28,6 +28,12 @@ class ResultFormatter(Generic[T]):
         return list(self.functions.keys())
 
 
+    def supports_format(self, fmt: str) -> bool:
+        """ Check if the given format is supported by this formatter.
+        """
+        return fmt in self.functions
+
+
     def format(self, result: T, fmt: str) -> str:
         """ Convert the given result into a string using the given format.
 

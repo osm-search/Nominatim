@@ -28,7 +28,7 @@ def _format_status_json(result: StatusResult) -> str:
     out['status'] = result.status
     out['message'] = result.message
     if result.data_updated is not None:
-        out['data_updated'] = result.data_updated
+        out['data_updated'] = result.data_updated.isoformat()
     out['software_version'] = result.software_version
     if result.database_version is not None:
         out['database_version'] = result.database_version

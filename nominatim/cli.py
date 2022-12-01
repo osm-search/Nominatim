@@ -197,9 +197,14 @@ class AdminServe:
     """\
     Start a simple web server for serving the API.
 
-    This command starts the built-in PHP webserver to serve the website
+    This command starts a built-in webserver to serve the website
     from the current project directory. This webserver is only suitable
     for testing and development. Do not use it in production setups!
+
+    There are different webservers available. The default 'php' engine
+    runs the classic PHP frontend. 'sanic' and 'falcon' are Python servers
+    which run the new Python frontend code. This is highly experimental
+    at the moment and may not include the full API.
 
     By the default, the webserver can be accessed at: http://127.0.0.1:8088
     """
@@ -208,10 +213,31 @@ class AdminServe:
         group = parser.add_argument_group('Server arguments')
         group.add_argument('--server', default='127.0.0.1:8088',
                            help='The address the server will listen to.')
+        group.add_argument('--engine', default='php',
+                           choices=('php', 'sanic', 'falcon'),
+                           help='Webserver framework to run. (default: php)')
 
 
     def run(self, args: NominatimArgs) -> int:
-        run_php_server(args.server, args.project_dir / 'website')
+        if args.engine == 'php':
+            run_php_server(args.server, args.project_dir / 'website')
+        elif args.engine == 'sanic':
+            import nominatim.server.sanic.server
+
+            app = nominatim.server.sanic.server.get_application(args.project_dir)
+
+            server_info = args.server.split(':', 1)
+            host = server_info[0]
+            if len(server_info) > 1:
+                if not server_info[1].isdigit():
+                    raise UsageError('Invalid format for --server parameter. Use <host>:<port>')
+                port = int(server_info[1])
+            else:
+                port = 8088
+            app.run(host=host, port=port, debug=True)
+        elif args.engine == 'falcon':
+            raise NotImplementedError('Support for falcon not yet available.')
+
         return 0
 
 

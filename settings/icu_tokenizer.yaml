@@ -24,6 +24,7 @@ transliteration:
     - ":: lower ()"
     - "[^a-z0-9[:Space:]] >"
     - ":: NFC ()"
+    - "[:Space:]+ > ' '"
 sanitizers:
     - step: clean-housenumbers
       filter-kind:

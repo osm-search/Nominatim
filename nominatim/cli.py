@@ -221,11 +221,7 @@ class AdminServe:
     def run(self, args: NominatimArgs) -> int:
         if args.engine == 'php':
             run_php_server(args.server, args.project_dir / 'website')
-        elif args.engine == 'sanic':
-            import nominatim.server.sanic.server
-
-            app = nominatim.server.sanic.server.get_application(args.project_dir)
-
+        else:
             server_info = args.server.split(':', 1)
             host = server_info[0]
             if len(server_info) > 1:
@@ -234,9 +230,18 @@ class AdminServe:
                 port = int(server_info[1])
             else:
                 port = 8088
-            app.run(host=host, port=port, debug=True)
-        elif args.engine == 'falcon':
-            raise NotImplementedError('Support for falcon not yet available.')
+
+            if args.engine == 'sanic':
+                import nominatim.server.sanic.server
+
+                app = nominatim.server.sanic.server.get_application(args.project_dir)
+                app.run(host=host, port=port, debug=True)
+            elif args.engine == 'falcon':
+                import uvicorn
+                import nominatim.server.falcon.server
+
+                app = nominatim.server.falcon.server.get_application(args.project_dir)
+                uvicorn.run(app, host=host, port=port)
 
         return 0
 

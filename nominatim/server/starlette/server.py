@@ -7,12 +7,14 @@
 """
 Server implementation using the starlette webserver framework.
 """
+from typing import Any, Type
 from pathlib import Path
 
 from starlette.applications import Starlette
 from starlette.routing import Route
 from starlette.exceptions import HTTPException
 from starlette.responses import Response
+from starlette.requests import Request
 
 from nominatim.api import NominatimAPIAsync
 from nominatim.apicmd.status import StatusResult
@@ -28,7 +30,11 @@ FORMATTERS = {
 }
 
 
-def parse_format(request, rtype, default):
+def parse_format(request: Request, rtype: Type[Any], default: str) -> None:
+    """ Get and check the 'format' parameter and prepare the formatter.
+        `rtype` describes the expected return type and `default` the
+        format value to assume when no parameter is present.
+    """
     fmt = request.query_params.get('format', default=default)
     fmtter = FORMATTERS[rtype]
 
@@ -40,13 +46,18 @@ def parse_format(request, rtype, default):
     request.state.formatter = fmtter
 
 
-def format_response(request, result):
+def format_response(request: Request, result: Any) -> Response:
+    """ Render response into a string according to the formatter
+        set in `parse_format()`.
+    """
     fmt = request.state.format
     return Response(request.state.formatter.format(result, fmt),
                     media_type=CONTENT_TYPE.get(fmt, 'application/json'))
 
 
-async def on_status(request):
+async def on_status(request: Request) -> Response:
+    """ Implementation of status endpoint.
+    """
     parse_format(request, StatusResult, 'text')
     result = await request.app.state.API.status()
     return format_response(request, result)
@@ -57,6 +68,8 @@ V1_ROUTES = [
 ]
 
 def get_application(project_dir: Path) -> Starlette:
+    """ Create a Nominatim falcon ASGI application.
+    """
     app = Starlette(debug=True, routes=V1_ROUTES)
 
     app.state.API = NominatimAPIAsync(project_dir)

@@ -7,15 +7,13 @@
 """
 Implementation of classes for API access via libraries.
 """
-from typing import Mapping, Optional, TypeVar, Callable, Any
-import functools
+from typing import Mapping, Optional
 import asyncio
 from pathlib import Path
 
 from sqlalchemy.engine.url import URL
 from sqlalchemy.ext.asyncio import create_async_engine
 
-from nominatim.typing import StrPath
 from nominatim.config import Configuration
 from nominatim.apicmd.status import get_status, StatusResult
 
@@ -56,4 +54,6 @@ class NominatimAPI:
 
 
     def status(self) -> StatusResult:
+        """ Return the status of the database.
+        """
         return asyncio.get_event_loop().run_until_complete(self.async_api.status())

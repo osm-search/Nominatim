@@ -9,6 +9,7 @@ Command-line interface to the Nominatim functions for import, update,
 database administration and querying.
 """
 from typing import Optional, Any, List, Union
+import importlib
 import logging
 import os
 import sys
@@ -232,17 +233,17 @@ class AdminServe:
                 port = 8088
 
             if args.engine == 'sanic':
-                import nominatim.server.sanic.server
+                server_module = importlib.import_module('nominatim.server.sanic.server')
 
-                app = nominatim.server.sanic.server.get_application(args.project_dir)
+                app = server_module.get_application(args.project_dir)
                 app.run(host=host, port=port, debug=True)
             else:
-                import uvicorn
+                import uvicorn # pylint: disable=import-outside-toplevel
 
                 if args.engine == 'falcon':
-                    import nominatim.server.falcon.server as server_module
+                    server_module = importlib.import_module('nominatim.server.falcon.server')
                 elif args.engine == 'starlette':
-                    import nominatim.server.starlette.server as server_module
+                    server_module = importlib.import_module('nominatim.server.starlette.server')
 
                 app = server_module.get_application(args.project_dir)
                 uvicorn.run(app, host=host, port=port)

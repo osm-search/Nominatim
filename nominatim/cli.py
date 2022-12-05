@@ -202,7 +202,7 @@ class AdminServe:
     for testing and development. Do not use it in production setups!
 
     There are different webservers available. The default 'php' engine
-    runs the classic PHP frontend. 'sanic' and 'falcon' are Python servers
+    runs the classic PHP frontend. The other engines are Python servers
     which run the new Python frontend code. This is highly experimental
     at the moment and may not include the full API.
 
@@ -214,7 +214,7 @@ class AdminServe:
         group.add_argument('--server', default='127.0.0.1:8088',
                            help='The address the server will listen to.')
         group.add_argument('--engine', default='php',
-                           choices=('php', 'sanic', 'falcon'),
+                           choices=('php', 'sanic', 'falcon', 'starlette'),
                            help='Webserver framework to run. (default: php)')
 
 
@@ -236,11 +236,15 @@ class AdminServe:
 
                 app = nominatim.server.sanic.server.get_application(args.project_dir)
                 app.run(host=host, port=port, debug=True)
-            elif args.engine == 'falcon':
+            else:
                 import uvicorn
-                import nominatim.server.falcon.server
 
-                app = nominatim.server.falcon.server.get_application(args.project_dir)
+                if args.engine == 'falcon':
+                    import nominatim.server.falcon.server as server_module
+                elif args.engine == 'starlette':
+                    import nominatim.server.starlette.server as server_module
+
+                app = server_module.get_application(args.project_dir)
                 uvicorn.run(app, host=host, port=port)
 
         return 0

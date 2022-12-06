@@ -61,6 +61,15 @@ For running continuous updates:
 
   * [pyosmium](https://osmcode.org/pyosmium/)
 
+For running the experimental Python frontend:
+
+  * [SQLAlchemy](https://www.sqlalchemy.org/) (1.4+ with greenlet support)
+  * one of the following web frameworks:
+    * [falcon](https://falconframework.org/) (3.0+)
+    * [sanic](https://sanic.dev)
+    * [starlette](https://www.starlette.io/)
+  * [uvicorn](https://www.uvicorn.org/) (only with falcon and starlette framworks)
+
 For dependencies for running tests and building documentation, see
 the [Development section](../develop/Development-Environment.md).
 

@@ -84,6 +84,8 @@ The tests can be configured with a set of environment variables (`behave -D key=
  * `TEST_DB` - name of test database (db tests)
  * `API_TEST_DB` - name of the database containing the API test data (api tests)
  * `API_TEST_FILE` - OSM file to be imported into the API test database (api tests)
+ * `API_ENGINE` - webframe to use for running search queries, same values as
+                  `nominatim serve --engine` parameter
  * `DB_HOST` - (optional) hostname of database host
  * `DB_PORT` - (optional) port of database on host
  * `DB_USER` - (optional) username of database login
@@ -120,7 +122,7 @@ and compromises the following data:
 API tests should only be testing the functionality of the website PHP code.
 Most tests should be formulated as BDD DB creation tests (see below) instead.
 
-#### Code Coverage
+#### Code Coverage (PHP engine only)
 
 The API tests also support code coverage tests. You need to install
 [PHP_CodeCoverage](https://github.com/sebastianbergmann/php-code-coverage).
@@ -153,7 +155,3 @@ needs superuser rights for postgres.
 
 These tests check that data is imported correctly into the place table. They
 use the same template database as the DB Creation tests, so the same remarks apply.
-
-Note that most testing of the gazetteer output of osm2pgsql is done in the tests
-of osm2pgsql itself. The BDD tests are just there to ensure compatibility of
-the osm2pgsql and Nominatim code.

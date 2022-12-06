@@ -37,6 +37,13 @@ It has the following additional requirements:
 * [Python Typing Extensions](https://github.com/python/typing_extensions) (for Python < 3.9)
 * [pytest](https://pytest.org)
 
+For testing the Python search frontend, you need to install extra dependencies
+depending on your choice of webserver framework:
+
+* [sanic-testing](https://sanic.dev/en/plugins/sanic-testing/getting-started.html) (sanic only)
+* [httpx](https://www.python-httpx.org/) (starlette only)
+* [asgi-lifespan](https://github.com/florimondmanca/asgi-lifespan) (starlette only)
+
 The documentation is built with mkdocs:
 
 * [mkdocs](https://www.mkdocs.org/) >= 1.1.2
@@ -56,7 +63,8 @@ sudo apt install php-cgi phpunit php-codesniffer \
                  python3-pip python3-setuptools python3-dev
 
 pip3 install --user behave mkdocs mkdocstrings pytest pylint \
-                    mypy types-PyYAML types-jinja2 types-psycopg2 types-psutil
+                    mypy types-PyYAML types-jinja2 types-psycopg2 types-psutil \
+                    sanic-testing httpx asgi-lifespan
 ```
 
 The `mkdocs` executable will be located in `.local/bin`. You may have to add

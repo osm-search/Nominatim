@@ -28,6 +28,7 @@ userconfig = {
     'SERVER_MODULE_PATH' : None,
     'TOKENIZER' : None, # Test with a custom tokenizer
     'STYLE' : 'extratags',
+    'API_ENGINE': 'php',
     'PHPCOV' : False, # set to output directory to enable code coverage
 }
 

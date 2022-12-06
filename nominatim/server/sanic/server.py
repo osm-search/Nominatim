@@ -7,7 +7,7 @@
 """
 Server implementation using the sanic webserver framework.
 """
-from typing import Any, Optional
+from typing import Any, Optional, Mapping
 from pathlib import Path
 
 import sanic
@@ -64,12 +64,13 @@ async def status(request: sanic.Request) -> sanic.HTTPResponse:
     return api_response(request,await request.app.ctx.api.status())
 
 
-def get_application(project_dir: Path) -> sanic.Sanic:
+def get_application(project_dir: Path,
+                    environ: Optional[Mapping[str, str]] = None) -> sanic.Sanic:
     """ Create a Nominatim sanic ASGI application.
     """
     app = sanic.Sanic("NominatimInstance")
 
-    app.ctx.api = NominatimAPIAsync(project_dir)
+    app.ctx.api = NominatimAPIAsync(project_dir, environ)
     app.ctx.formatters = {}
     for rtype in (StatusResult, ):
         app.ctx.formatters[rtype] = formatting.create(rtype)

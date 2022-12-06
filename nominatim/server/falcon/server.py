@@ -7,7 +7,7 @@
 """
 Server implementation using the falcon webserver framework.
 """
-from typing import Type, Any
+from typing import Type, Any, Optional, Mapping
 from pathlib import Path
 
 import falcon
@@ -26,8 +26,8 @@ class NominatimV1:
     """ Implementation of V1 version of the Nominatim API.
     """
 
-    def __init__(self, project_dir: Path) -> None:
-        self.api = NominatimAPIAsync(project_dir)
+    def __init__(self, project_dir: Path, environ: Optional[Mapping[str, str]]) -> None:
+        self.api = NominatimAPIAsync(project_dir, environ)
         self.formatters = {}
 
         for rtype in (StatusResult, ):
@@ -67,12 +67,13 @@ class NominatimV1:
         self.format_response(req, resp, result)
 
 
-def get_application(project_dir: Path) -> falcon.asgi.App:
+def get_application(project_dir: Path,
+                    environ: Optional[Mapping[str, str]] = None) -> falcon.asgi.App:
     """ Create a Nominatim falcon ASGI application.
     """
     app = falcon.asgi.App()
 
-    api = NominatimV1(project_dir)
+    api = NominatimV1(project_dir, environ)
 
     app.add_route('/status', api, suffix='status')
 

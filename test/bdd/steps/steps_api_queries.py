@@ -9,10 +9,12 @@
     Queries may either be run directly via PHP using the query script
     or via the HTTP interface using php-cgi.
 """
+from pathlib import Path
 import json
 import os
 import re
 import logging
+import asyncio
 from urllib.parse import urlencode
 
 from utils import run_script
@@ -72,6 +74,16 @@ def send_api_query(endpoint, params, fmt, context):
             for h in context.table.headings:
                 params[h] = context.table[0][h]
 
+    if context.nominatim.api_engine is None:
+        return send_api_query_php(endpoint, params, context)
+
+    return asyncio.run(context.nominatim.api_engine(endpoint, params,
+                                                    Path(context.nominatim.website_dir.name),
+                                                    context.nominatim.test_env))
+
+
+
+def send_api_query_php(endpoint, params, context):
     env = dict(BASE_SERVER_ENV)
     env['QUERY_STRING'] = urlencode(params)
 

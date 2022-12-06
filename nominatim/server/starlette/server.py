@@ -7,7 +7,7 @@
 """
 Server implementation using the starlette webserver framework.
 """
-from typing import Any, Type
+from typing import Any, Type, Optional, Mapping
 from pathlib import Path
 
 from starlette.applications import Starlette
@@ -67,11 +67,12 @@ V1_ROUTES = [
     Route('/status', endpoint=on_status)
 ]
 
-def get_application(project_dir: Path) -> Starlette:
+def get_application(project_dir: Path,
+                    environ: Optional[Mapping[str, str]] = None) -> Starlette:
     """ Create a Nominatim falcon ASGI application.
     """
     app = Starlette(debug=True, routes=V1_ROUTES)
 
-    app.state.API = NominatimAPIAsync(project_dir)
+    app.state.API = NominatimAPIAsync(project_dir, environ)
 
     return app

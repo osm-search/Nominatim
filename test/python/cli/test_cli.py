@@ -11,6 +11,7 @@ These tests just check that the various command line parameters route to the
 correct functionionality. They use a lot of monkeypatching to avoid executing
 the actual functions.
 """
+import importlib
 import pytest
 
 import nominatim.indexer.indexer
@@ -59,13 +60,54 @@ def test_cli_add_data_tiger_data(cli_call, cli_tokenizer_mock, mock_func_factory
     assert mock.called == 1
 
 
-def test_cli_serve_command(cli_call, mock_func_factory):
+def test_cli_serve_php(cli_call, mock_func_factory):
     func = mock_func_factory(nominatim.cli, 'run_php_server')
 
     cli_call('serve') == 0
 
     assert func.called == 1
 
+
+def test_cli_serve_sanic(cli_call, mock_func_factory):
+    mod = pytest.importorskip("sanic")
+    func = mock_func_factory(mod.Sanic, "run")
+
+    cli_call('serve', '--engine', 'sanic') == 0
+
+    assert func.called == 1
+
+
+def test_cli_serve_starlette_custom_server(cli_call, mock_func_factory):
+    pytest.importorskip("starlette")
+    mod = pytest.importorskip("uvicorn")
+    func = mock_func_factory(mod, "run")
+
+    cli_call('serve', '--engine', 'starlette', '--server', 'foobar:4545') == 0
+
+    assert func.called == 1
+    assert func.last_kwargs['host'] == 'foobar'
+    assert func.last_kwargs['port'] == 4545
+
+
+def test_cli_serve_starlette_custom_server_bad_port(cli_call, mock_func_factory):
+    pytest.importorskip("starlette")
+    mod = pytest.importorskip("uvicorn")
+    func = mock_func_factory(mod, "run")
+
+    cli_call('serve', '--engine', 'starlette', '--server', 'foobar:45:45') == 1
+
+
+@pytest.mark.parametrize("engine", ['falcon', 'starlette'])
+def test_cli_serve_uvicorn_based(cli_call, engine, mock_func_factory):
+    pytest.importorskip(engine)
+    mod = pytest.importorskip("uvicorn")
+    func = mock_func_factory(mod, "run")
+
+    cli_call('serve', '--engine', engine) == 0
+
+    assert func.called == 1
+    assert func.last_kwargs['host'] == '127.0.0.1'
+    assert func.last_kwargs['port'] == 8088
 
 def test_cli_export_command(cli_call, mock_run_legacy):
     assert cli_call('export', '--output-all-postcodes') == 0

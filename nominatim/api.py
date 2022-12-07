@@ -38,6 +38,14 @@ class NominatimAPIAsync:
                                           future=True)
 
 
+    async def close(self) -> None:
+        """ Close all active connections to the database. The NominatimAPIAsync
+            object remains usable after closing. If a new API functions is
+            called, new connections are created.
+        """
+        await self.engine.dispose()
+
+
     async def status(self) -> StatusResult:
         """ Return the status of the database.
         """
@@ -51,6 +59,14 @@ class NominatimAPI:
     def __init__(self, project_dir: Path,
                  environ: Optional[Mapping[str, str]] = None) -> None:
         self.async_api = NominatimAPIAsync(project_dir, environ)
+
+
+    def close(self) -> None:
+        """ Close all active connections to the database. The NominatimAPIAsync
+            object remains usable after closing. If a new API functions is
+            called, new connections are created.
+        """
+        asyncio.get_event_loop().run_until_complete(self.async_api.close())
 
 
     def status(self) -> StatusResult:

@@ -7,9 +7,12 @@
 """
 Tests for API access commands of command-line interface wrapper.
 """
+import json
 import pytest
 
 import nominatim.clicmd.api
+import nominatim.api
+from nominatim.apicmd.status import StatusResult
 
 
 @pytest.mark.parametrize("endpoint", (('search', 'reverse', 'lookup', 'details', 'status')))
@@ -27,9 +30,8 @@ def test_no_api_without_phpcgi(endpoint):
                                     ('details', '--node', '1'),
                                     ('details', '--way', '1'),
                                     ('details', '--relation', '1'),
-                                    ('details', '--place_id', '10001'),
-                                    ('status',)])
-class TestCliApiCall:
+                                    ('details', '--place_id', '10001')])
+class TestCliApiCallPhp:
 
     @pytest.fixture(autouse=True)
     def setup_cli_call(self, params, cli_call, mock_func_factory, tmp_path):
@@ -53,6 +55,29 @@ class TestCliApiCall:
 
     def test_bad_project_dir(self):
         assert self.run_nominatim() == 1
+
+
+class TestCliStatusCall:
+
+    @pytest.fixture(autouse=True)
+    def setup_status_mock(self, monkeypatch):
+        monkeypatch.setattr(nominatim.api.NominatimAPI, 'status',
+                            lambda self: StatusResult(200, 'OK'))
+
+
+    def test_status_simple(self, cli_call, tmp_path):
+        result = cli_call('status', '--project-dir', str(tmp_path))
+
+        assert result == 0
+
+
+    def test_status_json_format(self, cli_call, tmp_path, capsys):
+        result = cli_call('status', '--project-dir', str(tmp_path),
+                          '--format', 'json')
+
+        assert result == 0
+
+        json.loads(capsys.readouterr().out)
 
 
 QUERY_PARAMS = {

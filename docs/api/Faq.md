@@ -59,3 +59,27 @@ suited for these kinds of queries.
 
 That said if you installed your own Nominatim instance you can use the
 `nominatim export` PHP script as basis to return such lists.
+
+#### 7. My result has a wrong postcode. Where does it come from?
+
+Most places in OSM don't have a postcode, so Nominatim tries to interpolate
+one. It first look at all the places that make up the address of the place.
+If one of them has a postcode defined, this is the one to be used. When
+none of the address parts has a postcode either, Nominatim interpolates one
+from the surrounding objects. If the postcode is for your result is one, then
+most of the time there is an OSM object with the wrong postcode nearby.
+
+To find the bad postcode, go to
+[https://nominatim.openstreetmap.org](https://nominatim.openstreetmap.org)
+and search for your place. When you have found it, click on the 'details' link
+under the result to go to the details page. There is a field 'Computed Postcode'
+which should display the bad postcode. Click on the 'how?' link. A small
+explanation text appears. It contains a link to a query for Overpass Turbo.
+Click on that and you get a map with all places in the area that have the bad
+postcode. If none is displayed, zoom the map out a bit and then click on 'Run'.
+
+Now go to [OpenStreetMap](https://openstreetmap.org) and fix the error you
+have just found. It will take at least a day for Nominatim to catch up with
+your data fix. Sometimes longer, depending on how much editing activity is in
+the area.
+

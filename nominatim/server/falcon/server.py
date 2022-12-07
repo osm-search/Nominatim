@@ -65,6 +65,8 @@ class NominatimV1:
         result = await self.api.status()
 
         self.format_response(req, resp, result)
+        if result.status and req.context.format == 'text':
+            resp.status = 500
 
 
 def get_application(project_dir: Path,

@@ -54,7 +54,7 @@ def test_status_database_not_found(monkeypatch):
     result = api.status()
 
     assert result.status == 700
-    assert result.message == 'No database'
+    assert result.message == 'Database connection failed'
     assert result.software_version == version_str()
     assert result.database_version is None
     assert result.data_updated is None

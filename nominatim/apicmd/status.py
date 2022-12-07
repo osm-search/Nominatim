@@ -61,6 +61,6 @@ async def get_status(engine: AsyncEngine) -> StatusResult:
             status.data_updated = await _get_database_date(conn)
             status.database_version = await _get_database_version(conn)
     except asyncpg.PostgresError:
-        return StatusResult(700, 'No database')
+        return StatusResult(700, 'Database connection failed')
 
     return status

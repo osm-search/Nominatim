@@ -38,7 +38,11 @@ class TestStatusResultFormat:
 
 
     def test_format_text(self):
-        assert self.formatter.format(StatusResult(0, 'message here'), 'text') == 'message here'
+        assert self.formatter.format(StatusResult(0, 'message here'), 'text') == 'OK'
+
+
+    def test_format_text(self):
+        assert self.formatter.format(StatusResult(500, 'message here'), 'text') == 'ERROR: message here'
 
 
     def test_format_json_minimal(self):

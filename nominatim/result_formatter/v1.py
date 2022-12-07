@@ -18,7 +18,10 @@ create = FormatDispatcher()
 
 @create.format_func(StatusResult, 'text')
 def _format_status_text(result: StatusResult) -> str:
-    return result.message
+    if result.status:
+        return f"ERROR: {result.message}"
+
+    return 'OK'
 
 
 @create.format_func(StatusResult, 'json')

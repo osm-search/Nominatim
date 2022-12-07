@@ -61,7 +61,13 @@ async def extract_format(request: sanic.Request) -> Optional[sanic.HTTPResponse]
 async def status(request: sanic.Request) -> sanic.HTTPResponse:
     """ Implementation of status endpoint.
     """
-    return api_response(request,await request.app.ctx.api.status())
+    result = await request.app.ctx.api.status()
+    response = api_response(request, result)
+
+    if request.ctx.format == 'text' and result.status:
+        response.status = 500
+
+    return response
 
 
 def get_application(project_dir: Path,

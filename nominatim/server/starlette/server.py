@@ -60,7 +60,12 @@ async def on_status(request: Request) -> Response:
     """
     parse_format(request, StatusResult, 'text')
     result = await request.app.state.API.status()
-    return format_response(request, result)
+    response = format_response(request, result)
+
+    if request.state.format == 'text' and result.status:
+        response.status_code = 500
+
+    return response
 
 
 V1_ROUTES = [

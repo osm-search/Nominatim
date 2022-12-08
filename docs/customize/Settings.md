@@ -666,7 +666,7 @@ The entries in the log file have the following format:
     <request time> <execution time in s> <number of results> <type> "<query string>"
 
 Request time is the time when the request was started. The execution time is
-given in ms and corresponds to the time the query took executing in PHP.
+given in seconds and corresponds to the time the query took executing in PHP.
 type contains the name of the endpoint used.
 
 Can be used as the same time as NOMINATIM_LOG_DB.

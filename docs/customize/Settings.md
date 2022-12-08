@@ -663,7 +663,7 @@ the project directory.
 
 The entries in the log file have the following format:
 
-    <request time> <execution time in s> <number of results> <type> "<query string>"
+    <request time> <execution time in ms> <number of results> <type> "<query string>"
 
 Request time is the time when the request was started. The execution time is
 given in ms and corresponds to the time the query took executing in PHP.

@@ -1230,7 +1230,11 @@ BEGIN
     {% endif %}
   END IF;
 
-  IF NEW.postcode is null AND NEW.rank_search > 8 THEN
+  IF NEW.postcode is null AND NEW.rank_search > 8
+     AND (NEW.rank_address > 0
+          OR ST_GeometryType(NEW.geometry) not in ('ST_LineString','ST_MultiLineString')
+          OR ST_Length(NEW.geometry) < 0.02)
+  THEN
     NEW.postcode := get_nearest_postcode(NEW.country_code, NEW.geometry);
   END IF;
 

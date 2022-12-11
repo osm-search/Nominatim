@@ -874,7 +874,7 @@ class Geocode
                 $iCountWords = 0;
                 $sAddress = $aResult['langaddress'];
                 foreach ($aRecheckWords as $i => $sWord) {
-                    if (stripos($sAddress, $sWord)!==false) {
+                    if (grapheme_stripos($sAddress, $sWord)!==false) {
                         $iCountWords++;
                         if (preg_match('/(^|,)\s*'.preg_quote($sWord, '/').'\s*(,|$)/', $sAddress)) {
                             $iCountWords += 0.1;

@@ -23,10 +23,9 @@ class StatusResult:
     def __init__(self, status: int, msg: str):
         self.status = status
         self.message = msg
-        # XXX versions really should stay tuples here
-        self.software_version = version.version_str()
+        self.software_version = version.NOMINATIM_VERSION
         self.data_updated: Optional[dt.datetime]  = None
-        self.database_version: Optional[str] = None
+        self.database_version: Optional[version.NominatimVersion] = None
 
 
 async def _get_database_date(conn: AsyncConnection) -> Optional[dt.datetime]:
@@ -41,13 +40,13 @@ async def _get_database_date(conn: AsyncConnection) -> Optional[dt.datetime]:
     return None
 
 
-async def _get_database_version(conn: AsyncConnection) -> Optional[str]:
+async def _get_database_version(conn: AsyncConnection) -> Optional[version.NominatimVersion]:
     sql = sqla.text("""SELECT value FROM nominatim_properties
                        WHERE property = 'database_version'""")
     result = await conn.execute(sql)
 
     for row in result:
-        return cast(str, row[0])
+        return version.parse_version(cast(str, row[0]))
 
     return None
 

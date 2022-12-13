@@ -7,25 +7,34 @@
 """
 Version information for Nominatim.
 """
-from typing import Optional, Tuple
+from typing import Optional, NamedTuple
 
-# Version information: major, minor, patch level, database patch level
-#
-# The first three numbers refer to the last released version.
-#
-# The database patch level tracks important changes between releases
-# and must always be increased when there is a change to the database or code
-# that requires a migration.
-#
-# When adding a migration on the development branch, raise the patch level
-# to 99 to make sure that the migration is applied when updating from a
-# patch release to the next minor version. Patch releases usually shouldn't
-# have migrations in them. When they are needed, then make sure that the
-# migration can be reapplied and set the migration version to the appropriate
-# patch level when cherry-picking the commit with the migration.
-#
-# Released versions always have a database patch level of 0.
-NOMINATIM_VERSION = (4, 2, 99, 0)
+class NominatimVersion(NamedTuple):
+    """ Version information for Nominatim. We follow semantic versioning.
+
+        Major, minor and patch_level refer to the last released version.
+        The database patch level tracks important changes between releases
+        and must always be increased when there is a change to the database or code
+        that requires a migration.
+
+        When adding a migration on the development branch, raise the patch level
+        to 99 to make sure that the migration is applied when updating from a
+        patch release to the next minor version. Patch releases usually shouldn't
+        have migrations in them. When they are needed, then make sure that the
+        migration can be reapplied and set the migration version to the appropriate
+        patch level when cherry-picking the commit with the migration.
+    """
+
+    major: int
+    minor: int
+    patch_level: int
+    db_patch_level: int
+
+    def __str__(self) -> str:
+        return f"{self.major}.{self.minor}.{self.patch_level}-{self.db_patch_level}"
+
+
+NOMINATIM_VERSION = NominatimVersion(4, 2, 99, 0)
 
 POSTGRESQL_REQUIRED_VERSION = (9, 6)
 POSTGIS_REQUIRED_VERSION = (2, 2)
@@ -37,9 +46,11 @@ POSTGIS_REQUIRED_VERSION = (2, 2)
 GIT_COMMIT_HASH : Optional[str] = None
 
 
-# pylint: disable=consider-using-f-string
-def version_str(version:Tuple[int, int, int, int] = NOMINATIM_VERSION) -> str:
+def parse_version(version: str) -> NominatimVersion:
+    """ Parse a version string into a version consisting of a tuple of
+        four ints: major, minor, patch level, database patch level
+
+        This is the reverse operation of `version_str()`.
     """
-    Return a human-readable string of the version.
-    """
-    return '{}.{}.{}-{}'.format(*version)
+    parts = version.split('.')
+    return NominatimVersion(*[int(x) for x in parts[:2] + parts[2].split('-')])

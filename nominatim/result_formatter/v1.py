@@ -26,14 +26,13 @@ def _format_status_text(result: StatusResult) -> str:
 
 @create.format_func(StatusResult, 'json')
 def _format_status_json(result: StatusResult) -> str:
-    # XXX write a simple JSON serializer
     out: Dict[str, Any] = OrderedDict()
     out['status'] = result.status
     out['message'] = result.message
     if result.data_updated is not None:
         out['data_updated'] = result.data_updated.isoformat()
-    out['software_version'] = result.software_version
+    out['software_version'] = str(result.software_version)
     if result.database_version is not None:
-        out['database_version'] = result.database_version
+        out['database_version'] = str(result.database_version)
 
     return json.dumps(out)

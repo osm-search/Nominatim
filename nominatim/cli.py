@@ -61,7 +61,7 @@ class CommandlineParser:
     def nominatim_version_text(self) -> str:
         """ Program name and version number as string
         """
-        text = f'Nominatim version {version.version_str()}'
+        text = f'Nominatim version {version.NOMINATIM_VERSION!s}'
         if version.GIT_COMMIT_HASH is not None:
             text += f' ({version.GIT_COMMIT_HASH})'
         return text

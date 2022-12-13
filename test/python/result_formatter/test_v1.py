@@ -12,7 +12,7 @@ import pytest
 
 import nominatim.result_formatter.v1 as format_module
 from nominatim.apicmd.status import StatusResult
-from nominatim.version import version_str
+from nominatim.version import NOMINATIM_VERSION
 
 STATUS_FORMATS = {'text', 'json'}
 
@@ -50,7 +50,7 @@ class TestStatusResultFormat:
 
         result = self.formatter.format(status, 'json')
 
-        assert result == '{"status": 700, "message": "Bad format.", "software_version": "%s"}' % (version_str())
+        assert result == '{"status": 700, "message": "Bad format.", "software_version": "%s"}' % (NOMINATIM_VERSION, )
 
 
     def test_format_json_full(self):
@@ -60,4 +60,4 @@ class TestStatusResultFormat:
 
         result = self.formatter.format(status, 'json')
 
-        assert result == '{"status": 0, "message": "OK", "data_updated": "2010-02-07T20:20:03+00:00", "software_version": "%s", "database_version": "5.6"}' % (version_str())
+        assert result == '{"status": 0, "message": "OK", "data_updated": "2010-02-07T20:20:03+00:00", "software_version": "%s", "database_version": "5.6"}' % (NOMINATIM_VERSION, )

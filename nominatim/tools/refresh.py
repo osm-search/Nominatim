@@ -18,7 +18,7 @@ from nominatim.config import Configuration
 from nominatim.db.connection import Connection, connect
 from nominatim.db.utils import execute_file
 from nominatim.db.sql_preprocessor import SQLPreprocessor
-from nominatim.version import version_str
+from nominatim.version import NOMINATIM_VERSION
 
 LOG = logging.getLogger()
 
@@ -223,7 +223,7 @@ def setup_website(basedir: Path, config: Configuration, conn: Connection) -> Non
                       @define('CONST_Debug', $_GET['debug'] ?? false);
                       @define('CONST_LibDir', '{config.lib_dir.php}');
                       @define('CONST_TokenizerDir', '{config.project_dir / 'tokenizer'}');
-                      @define('CONST_NominatimVersion', '{version_str()}');
+                      @define('CONST_NominatimVersion', '{NOMINATIM_VERSION!s}');
 
                       """)
 

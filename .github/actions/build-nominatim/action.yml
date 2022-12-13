@@ -27,9 +27,10 @@ runs:
           run: |
             sudo apt-get install -y -qq libboost-system-dev libboost-filesystem-dev libexpat1-dev zlib1g-dev libbz2-dev libpq-dev libproj-dev libicu-dev liblua${LUA_VERSION}-dev lua${LUA_VERSION}
             if [ "x$UBUNTUVER" == "x18" ]; then
-                pip3 install python-dotenv psycopg2==2.7.7 jinja2==2.8 psutil==5.4.2 pyicu==2.9 osmium PyYAML==5.1 datrie
+                pip3 install python-dotenv psycopg2==2.7.7 jinja2==2.8 psutil==5.4.2 pyicu==2.9 osmium PyYAML==5.1 sqlalchemy==1.4 datrie asyncpg
             else
-                sudo apt-get install -y -qq python3-icu python3-datrie python3-pyosmium python3-jinja2 python3-psutil python3-psycopg2 python3-dotenv python3-yaml
+                sudo apt-get install -y -qq python3-icu python3-datrie python3-pyosmium python3-jinja2 python3-psutil python3-psycopg2 python3-dotenv python3-yaml python3-asyncpg
+                pip3 install sqlalchemy
             fi
           shell: bash
           env:

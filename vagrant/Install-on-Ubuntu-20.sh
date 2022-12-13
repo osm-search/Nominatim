@@ -27,8 +27,14 @@ export DEBIAN_FRONTEND=noninteractive #DOCS:
                         postgresql-12-postgis-3 \
                         postgresql-contrib-12 postgresql-12-postgis-3-scripts \
                         php-cli php-pgsql php-intl libicu-dev python3-dotenv \
-                        python3-psycopg2 python3-psutil python3-jinja2 \
+                        python3-psycopg2 python3-psutil python3-jinja2 python3-pip \
                         python3-icu python3-datrie python3-yaml git
+
+# Some of the Python packages that come with Ubuntu 20.04 are too old, so
+# install the latest version from pip:
+
+    pip3 install --user sqlalchemy asyncpg
+
 
 #
 # System Configuration

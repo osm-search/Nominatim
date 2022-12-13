@@ -9,9 +9,6 @@ import importlib
 import sys
 import tempfile
 
-from asgi_lifespan import LifespanManager
-import httpx
-
 import psycopg2
 import psycopg2.extras
 
@@ -337,6 +334,8 @@ class NominatimEnvironment:
 
     def create_api_request_func_starlette(self):
         import nominatim.server.starlette.server
+        from asgi_lifespan import LifespanManager
+        import httpx
 
         async def _request(endpoint, params, project_dir, environ):
             app = nominatim.server.starlette.server.get_application(project_dir, environ)

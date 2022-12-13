@@ -49,6 +49,8 @@ For running Nominatim:
   * [Python Dotenv](https://github.com/theskumar/python-dotenv)
   * [psutil](https://github.com/giampaolo/psutil)
   * [Jinja2](https://palletsprojects.com/p/jinja/)
+  * [SQLAlchemy](https://www.sqlalchemy.org/) (1.4+ with greenlet support)
+  * [asyncpg](https://magicstack.github.io/asyncpg)
   * [PyICU](https://pypi.org/project/PyICU/)
   * [PyYaml](https://pyyaml.org/) (5.1+)
   * [datrie](https://github.com/pytries/datrie)
@@ -63,7 +65,6 @@ For running continuous updates:
 
 For running the experimental Python frontend:
 
-  * [SQLAlchemy](https://www.sqlalchemy.org/) (1.4+ with greenlet support)
   * one of the following web frameworks:
     * [falcon](https://falconframework.org/) (3.0+)
     * [sanic](https://sanic.dev)

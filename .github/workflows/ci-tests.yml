@@ -129,10 +129,12 @@ jobs:
 
             - name: Install newer Python packages (for typechecking info)
               run: pip3 install -U osmium uvicorn
+              if: matrix.ubuntu >= 20
 
             - name: Python static typechecking
               run: python3 -m mypy --strict nominatim
               working-directory: Nominatim
+              if: matrix.ubuntu >= 20
 
     legacy-test:
         needs: create-archive

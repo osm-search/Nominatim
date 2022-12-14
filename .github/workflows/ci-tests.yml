@@ -179,20 +179,13 @@ jobs:
 
         strategy:
             matrix:
-                name: [Ubuntu-18, Ubuntu-20, Ubuntu-22]
+                name: [Ubuntu-20, Ubuntu-22]
                 include:
-                    - name: Ubuntu-18
-                      flavour: ubuntu
-                      image: "ubuntu:18.04"
-                      ubuntu: 18
-                      install_mode: install-nginx
                     - name: Ubuntu-20
-                      flavour: ubuntu
                       image: "ubuntu:20.04"
                       ubuntu: 20
                       install_mode: install-apache
                     - name: Ubuntu-22
-                      flavour: ubuntu
                       image: "ubuntu:22.04"
                       ubuntu: 22
                       install_mode: install-apache
@@ -215,14 +208,6 @@ jobs:
                   apt-get install -y git sudo wget
                   ln -snf /usr/share/zoneinfo/$CONTAINER_TIMEZONE /etc/localtime && echo $CONTAINER_TIMEZONE > /etc/timezone
               shell: bash
-              if: matrix.flavour == 'ubuntu'
-
-            - name: Prepare container (CentOS)
-              run: |
-                  dnf update -y
-                  dnf install -y sudo glibc-langpack-en
-              shell: bash
-              if: matrix.flavour == 'centos'
 
             - name: Setup import user
               run: |
@@ -256,14 +241,6 @@ jobs:
                   mkdir data-env-reverse
               working-directory: /home/nominatim
 
-            - name: Prepare import environment (CentOS)
-              run: |
-                  sudo ln -s /usr/local/bin/nominatim /usr/bin/nominatim
-                  echo NOMINATIM_DATABASE_WEBUSER="apache" > nominatim-project/.env
-                  cp nominatim-project/.env data-env-reverse/.env
-              working-directory: /home/nominatim
-              if: matrix.flavour == 'centos'
-
             - name: Print version
               run: nominatim --version
               working-directory: /home/nominatim/nominatim-project
@@ -271,7 +248,7 @@ jobs:
             - name: Collect host OS information
               run: nominatim admin --collect-os-info
               working-directory: /home/nominatim/nominatim-project
-              
+
             - name: Import
               run: nominatim import --osm-file ../test.pbf
               working-directory: /home/nominatim/nominatim-project
@@ -291,7 +268,6 @@ jobs:
             - name: Prepare update (Ubuntu)
               run: apt-get install -y python3-pip
               shell: bash
-              if: matrix.flavour == 'ubuntu'
 
             - name: Run update
               run: |

@@ -71,7 +71,7 @@ jobs:
 
             - uses: actions/setup-python@v4
               with:
-                python-version: 3.6
+                python-version: 3.7
               if: matrix.ubuntu == 18
 
             - uses: ./Nominatim/.github/actions/setup-postgresql

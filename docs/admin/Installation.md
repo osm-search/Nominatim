@@ -49,7 +49,7 @@ For running Nominatim:
   * [psutil](https://github.com/giampaolo/psutil)
   * [Jinja2](https://palletsprojects.com/p/jinja/)
   * [SQLAlchemy](https://www.sqlalchemy.org/) (1.4+ with greenlet support)
-  * [asyncpg](https://magicstack.github.io/asyncpg)
+  * [asyncpg](https://magicstack.github.io/asyncpg) (0.8+)
   * [PyICU](https://pypi.org/project/PyICU/)
   * [PyYaml](https://pyyaml.org/) (5.1+)
   * [datrie](https://github.com/pytries/datrie)

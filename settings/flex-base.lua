@@ -102,8 +102,39 @@ function Place:grab_address(data)
     return count
 end
 
-function Place:set_address(key, value)
-    self.address[key] = value
+local function strip_address_prefix(k)
+    if k:sub(1, 5) == 'addr:' then
+        return k:sub(6)
+    end
+
+    if k:sub(1, 6) == 'is_in:' then
+        return k:sub(7)
+    end
+
+    return k
+end
+
+
+function Place:grab_address_parts(data)
+    local count = 0
+
+    if data.groups ~= nil then
+        for k, v in pairs(self.object.tags) do
+            local atype = data.groups(k, v)
+
+            if atype == 'main' then
+                self.has_name = true
+                self.address[strip_address_prefix(k)] = v
+                count = count + 1
+            elseif atype == 'extra' then
+                self.address[strip_address_prefix(k)] = v
+            elseif atype ~= nil then
+                self.address[atype] = v
+            end
+        end
+    end
+
+    return count
 end
 
 function Place:grab_name(data)
@@ -127,10 +158,6 @@ end
 
 function Place:grab_tag(key)
     return self.object:grab_tag(key)
-end
-
-function Place:tags()
-    return self.object.tags
 end
 
 function Place:write_place(k, v, mtype, save_extra_mains)
@@ -277,6 +304,61 @@ function tag_match(data)
 end
 
 
+function key_group(data)
+    if data == nil or next(data) == nil then
+        return nil
+    end
+
+    local fullmatches = {}
+    local key_prefixes = {}
+    local key_suffixes = {}
+
+    for group, tags in pairs(data) do
+        for _, key in pairs(tags) do
+            if key:sub(1, 1) == '*' then
+                if #key > 1 then
+                    if key_suffixes[#key - 1] == nil then
+                        key_suffixes[#key - 1] = {}
+                    end
+                    key_suffixes[#key - 1][key:sub(2)] = group
+                end
+            elseif key:sub(#key, #key) == '*' then
+                if key_prefixes[#key - 1] == nil then
+                    key_prefixes[#key - 1] = {}
+                end
+                key_prefixes[#key - 1][key:sub(1, #key - 1)] = group
+            else
+                fullmatches[key] = group
+            end
+        end
+    end
+
+    return function (k, v)
+        local val = fullmatches[k]
+        if val ~= nil then
+            return val
+        end
+
+        for slen, slist in pairs(key_suffixes) do
+            if #k >= slen then
+                val = slist[k:sub(-slen)]
+                if val ~= nil then
+                    return val
+                end
+            end
+        end
+
+        for slen, slist in pairs(key_prefixes) do
+            if #k >= slen then
+                val = slist[k:sub(1, slen)]
+                if val ~= nil then
+                    return val
+                end
+            end
+        end
+    end
+end
+
 -- Process functions for all data types
 function osm2pgsql.process_node(object)
 
@@ -332,25 +414,20 @@ function process_tags(o)
     end
 
     -- address keys
-    o:grab_address{match=COUNTRY_TAGS, out_key='country'}
+    if o:grab_name{match=HOUSENAME_TAGS} > 0 then
+        fallback = {'place', 'house', 'always'}
+    end
+    if o:grab_address_parts{groups=ADDRESS_TAGS} > 0 and fallback == nil then
+        fallback = {'place', 'house', 'always'}
+    end
     if o.address.country ~= nil and #o.address.country ~= 2 then
         o.address['country'] = nil
     end
-    if o:grab_name{match=HOUSENAME_TAGS} > 0 then
-        fallback = {'place', 'house'}
-    end
-    if o:grab_address{match=HOUSENUMBER_TAGS, include_on_name = true} > 0 and fallback == nil then
-        fallback = {'place', 'house'}
-    end
-    if o:grab_address{match=POSTCODES, out_key='postcode'} > 0 and fallback == nil then
-        fallback = {'place', 'postcode'}
+    if fallback == nil and o.address.postcode ~= nil then
+        fallback = {'place', 'postcode', 'always'}
     end
 
-    local is_interpolation = o:grab_address{match=INTERPOLATION_TAGS} > 0
-
-    o:grab_address{match=ADDRESS_TAGS}
-
-    if is_interpolation then
+    if o.address.interpolation ~= nil then
         o:write_place('place', 'houses', 'always', SAVE_EXTRA_MAINS)
         return
     end
@@ -363,21 +440,19 @@ function process_tags(o)
     o:grab_extratags{match = POST_EXTRAS}
 
     -- collect main keys
-    local num_mains = 0
-    for k, v in pairs(o:tags()) do
-        num_mains = num_mains + o:write_place(k, v, MAIN_KEYS[k], SAVE_EXTRA_MAINS)
+    for k, v in pairs(o.object.tags) do
+        local ktype = MAIN_KEYS[k]
+        if ktype == 'fallback' then
+            if o.has_name then
+                fallback = {k, v, 'named'}
+            end
+        elseif ktype ~= nil then
+            o:write_place(k, v, MAIN_KEYS[k], SAVE_EXTRA_MAINS)
+        end
     end
 
-    if num_mains == 0 then
-        for tag, mtype in pairs(MAIN_FALLBACK_KEYS) do
-            if o:write_place(tag, nil, mtype, SAVE_EXTRA_MAINS) > 0 then
-                return
-            end
-        end
-
-        if fallback ~= nil then
-            o:write_place(fallback[1], fallback[2], 'always', SAVE_EXTRA_MAINS)
-        end
+    if fallback ~= nil and o.num_entries == 0 then
+        o:write_place(fallback[1], fallback[2], fallback[3], SAVE_EXTRA_MAINS)
     end
 end
 

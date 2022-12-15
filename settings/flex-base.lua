@@ -156,6 +156,28 @@ function Place:grab_name(data)
     return count
 end
 
+function Place:grab_name_parts(data)
+    local fallback = nil
+
+    if data.groups ~= nil then
+        for k, v in pairs(self.object.tags) do
+            local atype = data.groups(k, v)
+
+            if atype ~= nil then
+                self.names[k] = v
+                if atype == 'main' then
+                    self.has_name = true
+                elseif atype == 'house' then
+                    self.has_name = true
+                    fallback = {'place', 'house', 'always'}
+                end
+            end
+        end
+    end
+
+    return fallback
+end
+
 function Place:grab_tag(key)
     return self.object:grab_tag(key)
 end
@@ -401,8 +423,6 @@ function osm2pgsql.process_relation(object)
 end
 
 function process_tags(o)
-    local fallback
-
     o:delete{match = PRE_DELETE}
     o:grab_extratags{match = PRE_EXTRAS}
 
@@ -413,10 +433,10 @@ function process_tags(o)
         end}
     end
 
+    -- name keys
+    local fallback = o:grab_name_parts{groups=NAMES}
+
     -- address keys
-    if o:grab_name{match=HOUSENAME_TAGS} > 0 then
-        fallback = {'place', 'house', 'always'}
-    end
     if o:grab_address_parts{groups=ADDRESS_TAGS} > 0 and fallback == nil then
         fallback = {'place', 'house', 'always'}
     end
@@ -431,10 +451,6 @@ function process_tags(o)
         o:write_place('place', 'houses', 'always', SAVE_EXTRA_MAINS)
         return
     end
-
-    -- name keys
-    o:grab_name{match = NAMES}
-    o:grab_name{match = REFS, include_on_name = false}
 
     o:delete{match = POST_DELETE}
     o:grab_extratags{match = POST_EXTRAS}

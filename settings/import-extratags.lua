@@ -1,12 +1,6 @@
-require('flex-base')
+flex = require('flex-base')
 
-RELATION_TYPES = {
-    multipolygon = relation_as_multipolygon,
-    boundary = relation_as_multipolygon,
-    waterway = relation_as_multiline
-}
-
-MAIN_KEYS = {
+flex.MAIN_KEYS = {
     building = 'fallback',
     emergency = 'always',
     healthcare = 'fallback',
@@ -52,7 +46,7 @@ MAIN_KEYS = {
 }
 
 
-PRE_DELETE = tag_match{keys = {'note', 'note:*', 'source', 'source*', 'attribution',
+flex.PRE_DELETE = flex.tag_match{keys = {'note', 'note:*', 'source', 'source*', 'attribution',
                                'comment', 'fixme', 'FIXME', 'created_by', 'NHD:*',
                                'nhd:*', 'gnis:*', 'geobase:*', 'KSJ2:*', 'yh:*',
                                'osak:*', 'naptan:*', 'CLC:*', 'import', 'it:fvg:*',
@@ -83,15 +77,15 @@ PRE_DELETE = tag_match{keys = {'note', 'note:*', 'source', 'source*', 'attributi
                                boundary = {'place'}}
                       }
 
-POST_DELETE = tag_match{keys = {'tiger:*'}}
+flex.POST_DELETE = flex.tag_match{keys = {'tiger:*'}}
 
-PRE_EXTRAS = tag_match{keys = {'*:prefix', '*:suffix', 'name:prefix:*', 'name:suffix:*',
+flex.PRE_EXTRAS = flex.tag_match{keys = {'*:prefix', '*:suffix', 'name:prefix:*', 'name:suffix:*',
                                'name:etymology', 'name:signed', 'name:botanical',
                                'wikidata', '*:wikidata',
                                'addr:street:name', 'addr:street:type'}
                       }
 
-NAMES = key_group{main = {'name', 'name:*',
+flex.NAMES = flex.tag_group{main = {'name', 'name:*',
                           'int_name', 'int_name:*',
                           'nat_name', 'nat_name:*',
                           'reg_name', 'reg_name:*',
@@ -107,7 +101,7 @@ NAMES = key_group{main = {'name', 'name:*',
                    house = {'addr:housename'}
                   }
 
-ADDRESS_TAGS = key_group{main = {'addr:housenumber',
+flex.ADDRESS_TAGS = flex.tag_group{main = {'addr:housenumber',
                                  'addr:conscriptionnumber',
                                  'addr:streetnumber'},
                          extra = {'addr:*', 'is_in:*', 'tiger:county'},
@@ -119,5 +113,5 @@ ADDRESS_TAGS = key_group{main = {'addr:housenumber',
                          interpolation = {'addr:interpolation'}
                         }
 
-SAVE_EXTRA_MAINS = true
+flex.SAVE_EXTRA_MAINS = true
 

@@ -122,10 +122,10 @@ Feature: Tag evaluation
             n8003 Tshop=shoes,name:source=survey
             """
         Then place contains exactly
-            | object | class | extratags    |
-            | N8001  | shop  | 'xx': 'yy'   |
-            | N8002  | shop  | 'ele': '234' |
-            | N8003  | shop  | -            |
+            | object | class | name | extratags    |
+            | N8001  | shop  |  -   | 'xx': 'yy'   |
+            | N8002  | shop  |  -   | 'ele': '234' |
+            | N8003  | shop  |  -   | -            |
 
 
     Scenario: Admin levels

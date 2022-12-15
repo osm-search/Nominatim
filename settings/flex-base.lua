@@ -1,6 +1,7 @@
 -- Core functions for Nominatim import flex style.
 --
 
+local module = {}
 
 -- The single place table.
 place_table = osm2pgsql.define_table{
@@ -135,14 +136,17 @@ function Place:grab_address_parts(data)
         for k, v in pairs(self.object.tags) do
             local atype = data.groups(k, v)
 
-            if atype == 'main' then
-                self.has_name = true
-                self.address[strip_address_prefix(k)] = v
-                count = count + 1
-            elseif atype == 'extra' then
-                self.address[strip_address_prefix(k)] = v
-            elseif atype ~= nil then
-                self.address[atype] = v
+            if atype ~= nil then
+                if atype == 'main' then
+                    self.has_name = true
+                    self.address[strip_address_prefix(k)] = v
+                    count = count + 1
+                elseif atype == 'extra' then
+                    self.address[strip_address_prefix(k)] = v
+                else
+                    self.address[atype] = v
+                end
+                self.object.tags[k] = nil
             end
         end
     end
@@ -277,7 +281,7 @@ function Place:write_row(k, v, save_extra_mains)
 end
 
 
-function tag_match(data)
+function module.tag_match(data)
     if data == nil or next(data) == nil then
         return nil
     end
@@ -339,7 +343,7 @@ function tag_match(data)
 end
 
 
-function key_group(data)
+function module.tag_group(data)
     if data == nil or next(data) == nil then
         return nil
     end
@@ -401,7 +405,7 @@ function osm2pgsql.process_node(object)
         return o:as_point()
     end
 
-    process_tags(Place.new(object, geom_func))
+    module.process_tags(Place.new(object, geom_func))
 end
 
 function osm2pgsql.process_way(object)
@@ -416,27 +420,27 @@ function osm2pgsql.process_way(object)
         return geom
     end
 
-    process_tags(Place.new(object, geom_func))
+    module.process_tags(Place.new(object, geom_func))
 end
 
-function relation_as_multipolygon(o)
+function module.relation_as_multipolygon(o)
     return o:as_multipolygon()
 end
 
-function relation_as_multiline(o)
+function module.relation_as_multiline(o)
     return o:as_multilinestring():line_merge()
 end
 
 function osm2pgsql.process_relation(object)
-    local geom_func = RELATION_TYPES[object.tags.type]
+    local geom_func = module.RELATION_TYPES[object.tags.type]
 
     if geom_func ~= nil then
-        process_tags(Place.new(object, geom_func))
+        module.process_tags(Place.new(object, geom_func))
     end
 end
 
-function process_tags(o)
-    o:clean{delete = PRE_DELETE, extra = PRE_EXTRAS}
+function module.process_tags(o)
+    o:clean{delete = module.PRE_DELETE, extra = module.PRE_EXTRAS}
 
     -- Exception for boundary/place double tagging
     if o.object.tags.boundary == 'administrative' then
@@ -446,10 +450,10 @@ function process_tags(o)
     end
 
     -- name keys
-    local fallback = o:grab_name_parts{groups=NAMES}
+    local fallback = o:grab_name_parts{groups=module.NAMES}
 
     -- address keys
-    if o:grab_address_parts{groups=ADDRESS_TAGS} > 0 and fallback == nil then
+    if o:grab_address_parts{groups=module.ADDRESS_TAGS} > 0 and fallback == nil then
         fallback = {'place', 'house', 'always'}
     end
     if o.address.country ~= nil and #o.address.country ~= 2 then
@@ -460,27 +464,36 @@ function process_tags(o)
     end
 
     if o.address.interpolation ~= nil then
-        o:write_place('place', 'houses', 'always', SAVE_EXTRA_MAINS)
+        o:write_place('place', 'houses', 'always', module.SAVE_EXTRA_MAINS)
         return
     end
 
-    o:clean{delete = POST_DELETE, extra = POST_EXTRAS}
+    o:clean{delete = module.POST_DELETE, extra = module.POST_EXTRAS}
 
     -- collect main keys
     for k, v in pairs(o.object.tags) do
-        local ktype = MAIN_KEYS[k]
+        local ktype = module.MAIN_KEYS[k]
         if ktype == 'fallback' then
             if o.has_name then
                 fallback = {k, v, 'named'}
             end
         elseif ktype ~= nil then
-            o:write_place(k, v, MAIN_KEYS[k], SAVE_EXTRA_MAINS)
+            o:write_place(k, v,module.MAIN_KEYS[k], module.SAVE_EXTRA_MAINS)
         end
     end
 
     if fallback ~= nil and o.num_entries == 0 then
-        o:write_place(fallback[1], fallback[2], fallback[3], SAVE_EXTRA_MAINS)
+        o:write_place(fallback[1], fallback[2], fallback[3], module.SAVE_EXTRA_MAINS)
     end
 end
 
+------ defaults --------------
 
+module.RELATION_TYPES = {
+    multipolygon = module.relation_as_multipolygon,
+    boundary = module.relation_as_multipolygon,
+    waterway = module.relation_as_multiline
+}
+
+
+return module

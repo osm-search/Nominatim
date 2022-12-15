@@ -44,6 +44,19 @@ function Place.new(object, geom_func)
     return self
 end
 
+function Place:clean(data)
+    if data.delete ~= nil or data.extra ~= nil then
+        for k, v in pairs(self.object.tags) do
+            if data.delete ~= nil and data.delete(k, v) then
+                self.object.tags[k] = nil
+            elseif data.extra ~= nil and data.extra(k, v) then
+                self.extratags[k] = v
+                self.object.tags[k] = nil
+            end
+        end
+    end
+end
+
 function Place:delete(data)
     if data.match ~= nil then
         for k, v in pairs(self.object.tags) do
@@ -423,8 +436,7 @@ function osm2pgsql.process_relation(object)
 end
 
 function process_tags(o)
-    o:delete{match = PRE_DELETE}
-    o:grab_extratags{match = PRE_EXTRAS}
+    o:clean{delete = PRE_DELETE, extra = PRE_EXTRAS}
 
     -- Exception for boundary/place double tagging
     if o.object.tags.boundary == 'administrative' then
@@ -452,8 +464,7 @@ function process_tags(o)
         return
     end
 
-    o:delete{match = POST_DELETE}
-    o:grab_extratags{match = POST_EXTRAS}
+    o:clean{delete = POST_DELETE, extra = POST_EXTRAS}
 
     -- collect main keys
     for k, v in pairs(o.object.tags) do

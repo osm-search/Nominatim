@@ -3,6 +3,13 @@
 
 local module = {}
 
+local PRE_DELETE = nil
+local PRE_EXTRAS = nil
+local MAIN_KEYS = nil
+local NAMES = nil
+local ADDRESS_TAGS = nil
+
+
 -- The single place table.
 place_table = osm2pgsql.define_table{
     name = "place",
@@ -17,6 +24,23 @@ place_table = osm2pgsql.define_table{
         { column = 'geometry', type = 'geometry', projection = 'WGS84', not_null = true },
     },
     indexes = {}
+}
+
+------------ Geometry functions for relations ---------------------
+
+function module.relation_as_multipolygon(o)
+    return o:as_multipolygon()
+end
+
+function module.relation_as_multiline(o)
+    return o:as_multilinestring():line_merge()
+end
+
+
+module.RELATION_TYPES = {
+    multipolygon = module.relation_as_multipolygon,
+    boundary = module.relation_as_multipolygon,
+    waterway = module.relation_as_multiline
 }
 
 ------------- Place class ------------------------------------------
@@ -422,14 +446,6 @@ function osm2pgsql.process_way(object)
     module.process_tags(Place.new(object, geom_func))
 end
 
-function module.relation_as_multipolygon(o)
-    return o:as_multipolygon()
-end
-
-function module.relation_as_multiline(o)
-    return o:as_multilinestring():line_merge()
-end
-
 function osm2pgsql.process_relation(object)
     local geom_func = module.RELATION_TYPES[object.tags.type]
 
@@ -439,7 +455,7 @@ function osm2pgsql.process_relation(object)
 end
 
 function module.process_tags(o)
-    o:clean{delete = module.PRE_DELETE, extra = module.PRE_EXTRAS}
+    o:clean{delete = PRE_DELETE, extra = PRE_EXTRAS}
 
     -- Exception for boundary/place double tagging
     if o.object.tags.boundary == 'administrative' then
@@ -449,10 +465,10 @@ function module.process_tags(o)
     end
 
     -- name keys
-    local fallback = o:grab_name_parts{groups=module.NAMES}
+    local fallback = o:grab_name_parts{groups=NAMES}
 
     -- address keys
-    if o:grab_address_parts{groups=module.ADDRESS_TAGS} > 0 and fallback == nil then
+    if o:grab_address_parts{groups=ADDRESS_TAGS} > 0 and fallback == nil then
         fallback = {'place', 'house', 'always'}
     end
     if o.address.country ~= nil and #o.address.country ~= 2 then
@@ -463,70 +479,73 @@ function module.process_tags(o)
     end
 
     if o.address.interpolation ~= nil then
-        o:write_place('place', 'houses', 'always', module.SAVE_EXTRA_MAINS)
+        o:write_place('place', 'houses', 'always', SAVE_EXTRA_MAINS)
         return
     end
 
-    o:clean{delete = module.POST_DELETE, extra = module.POST_EXTRAS}
+    o:clean{delete = POST_DELETE, extra = POST_EXTRAS}
 
     -- collect main keys
     for k, v in pairs(o.object.tags) do
-        local ktype = module.MAIN_KEYS[k]
+        local ktype = MAIN_KEYS[k]
         if ktype == 'fallback' then
             if o.has_name then
                 fallback = {k, v, 'named'}
             end
         elseif ktype ~= nil then
-            o:write_place(k, v,module.MAIN_KEYS[k], module.SAVE_EXTRA_MAINS)
+            o:write_place(k, v, MAIN_KEYS[k], SAVE_EXTRA_MAINS)
         end
     end
 
     if fallback ~= nil and o.num_entries == 0 then
-        o:write_place(fallback[1], fallback[2], fallback[3], module.SAVE_EXTRA_MAINS)
+        o:write_place(fallback[1], fallback[2], fallback[3], SAVE_EXTRA_MAINS)
     end
 end
 
 --------- Convenience functions for simple style configuration -----------------
 
+
 function module.set_prefilters(data)
-    module.PRE_DELETE = module.tag_match{keys = data.delete_keys, tags = data.delete_tags}
-    module.PRE_EXTRAS = module.tag_match{keys = data.extratag_keys,
-                                         tags = data.extratag_tags}
+    PRE_DELETE = module.tag_match{keys = data.delete_keys, tags = data.delete_tags}
+    PRE_EXTRAS = module.tag_match{keys = data.extratag_keys,
+                                  tags = data.extratag_tags}
 end
 
 function module.set_main_tags(data)
-    module.MAIN_KEYS = data
+    MAIN_KEYS = data
 end
 
 function module.set_name_tags(data)
-    module.NAMES = module.tag_group(data)
+    NAMES = module.tag_group(data)
 end
 
 function module.set_address_tags(data)
-    module.ADDRESS_TAGS = module.tag_group(data)
+    ADDRESS_TAGS = module.tag_group(data)
 end
 
 function module.set_unused_handling(data)
     if data.extra_keys == nil and data.extra_tags == nil then
-        module.POST_DELETE = module.tag_match{data.delete_keys, tags = data.delete_tags}
-        module.POST_EXTRAS = nil
-        module.SAVE_EXTRA_MAINS = true
+        POST_DELETE = module.tag_match{data.delete_keys, tags = data.delete_tags}
+        POST_EXTRAS = nil
+        SAVE_EXTRA_MAINS = true
     elseif data.delete_keys == nil and data.delete_tags == nil then
-        module.POST_DELETE = nil
-        module.POST_EXTRAS = module.tag_match{data.extra_keys, tags = data.extra_tags}
-        module.SAVE_EXTRA_MAINS = false
+        POST_DELETE = nil
+        POST_EXTRAS = module.tag_match{data.extra_keys, tags = data.extra_tags}
+        SAVE_EXTRA_MAINS = false
     else
         error("unused handler can have only 'extra_keys' or 'delete_keys' set.")
     end
 end
 
------- defaults --------------
-
-module.RELATION_TYPES = {
-    multipolygon = module.relation_as_multipolygon,
-    boundary = module.relation_as_multipolygon,
-    waterway = module.relation_as_multiline
-}
-
+function set_relation_types(data)
+    module.RELATION_TYPES = {}
+    for k, v in data do
+        if v == 'multipolygon' then
+            module.RELATION_TYPES[k] = module.relation_as_multipolygon
+        elseif v == 'multiline' then
+            module.RELATION_TYPES[k] = module.relation_as_multiline
+        end
+    end
+end
 
 return module

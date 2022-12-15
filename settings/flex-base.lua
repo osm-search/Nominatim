@@ -14,7 +14,8 @@ place_table = osm2pgsql.define_table{
         { column = 'address', type = 'hstore' },
         { column = 'extratags', type = 'hstore' },
         { column = 'geometry', type = 'geometry', projection = 'WGS84', not_null = true },
-    }
+    },
+    indexes = {}
 }
 
 ------------- Place class ------------------------------------------

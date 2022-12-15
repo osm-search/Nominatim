@@ -7,7 +7,9 @@ RELATION_TYPES = {
 }
 
 MAIN_KEYS = {
+    building = 'fallback',
     emergency = 'always',
+    healthcare = 'fallback',
     historic = 'always',
     military = 'always',
     natural = 'named',
@@ -36,6 +38,8 @@ MAIN_KEYS = {
     amenity = 'always',
     club = 'always',
     craft = 'always',
+    junction = 'fallback',
+    landuse = 'fallback',
     leisure = 'always',
     office = 'always',
     mountain_pass = 'always',
@@ -45,13 +49,6 @@ MAIN_KEYS = {
     tunnel = 'named_with_key',
     waterway = 'named',
     place = 'always'
-}
-
-MAIN_FALLBACK_KEYS = {
-    building = 'named',
-    landuse = 'named',
-    junction = 'named',
-    healthcare = 'named'
 }
 
 
@@ -109,21 +106,19 @@ NAMES = tag_match{keys = {'name', 'name:*',
 REFS = tag_match{keys = {'ref', 'int_ref', 'nat_ref', 'reg_ref', 'loc_ref', 'old_ref',
                          'iata', 'icao', 'pcode', 'pcode:*', 'ISO3166-2'}}
 
-POSTCODES = tag_match{keys = {'postal_code', 'postcode', 'addr:postcode',
-                              'tiger:zip_left', 'tiger:zip_right'}}
-
-COUNTRY_TAGS = tag_match{keys = {'country_code', 'ISO3166-1',
-                                 'addr:country_code', 'is_in:country_code',
-                                 'addr:country', 'is_in:country'}}
-
 HOUSENAME_TAGS = tag_match{keys = {'addr:housename'}}
 
-HOUSENUMBER_TAGS = tag_match{keys = {'addr:housenumber', 'addr:conscriptionnumber',
-                                     'addr:streetnumber'}}
-
-INTERPOLATION_TAGS = tag_match{keys = {'addr:interpolation'}}
-
-ADDRESS_TAGS = tag_match{keys = {'addr:*', 'is_in:*', 'tiger:county'}}
+ADDRESS_TAGS = key_group{main = {'addr:housenumber',
+                                 'addr:conscriptionnumber',
+                                 'addr:streetnumber'},
+                         extra = {'addr:*', 'is_in:*', 'tiger:county'},
+                         postcode = {'postal_code', 'postcode', 'addr:postcode',
+                                     'tiger:zip_left', 'tiger:zip_right'},
+                         country = {'country_code', 'ISO3166-1',
+                                    'addr:country_code', 'is_in:country_code',
+                                    'addr:country', 'is_in:country'},
+                         interpolation = {'addr:interpolation'}
+                        }
 
 SAVE_EXTRA_MAINS = true
 

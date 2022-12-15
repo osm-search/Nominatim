@@ -91,8 +91,7 @@ PRE_EXTRAS = tag_match{keys = {'*:prefix', '*:suffix', 'name:prefix:*', 'name:su
                                'addr:street:name', 'addr:street:type'}
                       }
 
-
-NAMES = tag_match{keys = {'name', 'name:*',
+NAMES = key_group{main = {'name', 'name:*',
                           'int_name', 'int_name:*',
                           'nat_name', 'nat_name:*',
                           'reg_name', 'reg_name:*',
@@ -101,12 +100,12 @@ NAMES = tag_match{keys = {'name', 'name:*',
                           'alt_name', 'alt_name:*', 'alt_name_*',
                           'official_name', 'official_name:*',
                           'place_name', 'place_name:*',
-                          'short_name', 'short_name:*', 'brand'}}
-
-REFS = tag_match{keys = {'ref', 'int_ref', 'nat_ref', 'reg_ref', 'loc_ref', 'old_ref',
-                         'iata', 'icao', 'pcode', 'pcode:*', 'ISO3166-2'}}
-
-HOUSENAME_TAGS = tag_match{keys = {'addr:housename'}}
+                          'short_name', 'short_name:*', 'brand'},
+                   extra = {'ref', 'int_ref', 'nat_ref', 'reg_ref',
+                            'loc_ref', 'old_ref',
+                            'iata', 'icao', 'pcode', 'pcode:*', 'ISO3166-2'},
+                   house = {'addr:housename'}
+                  }
 
 ADDRESS_TAGS = key_group{main = {'addr:housenumber',
                                  'addr:conscriptionnumber',

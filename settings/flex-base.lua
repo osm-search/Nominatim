@@ -46,14 +46,12 @@ function Place.new(object, geom_func)
 end
 
 function Place:clean(data)
-    if data.delete ~= nil or data.extra ~= nil then
-        for k, v in pairs(self.object.tags) do
-            if data.delete ~= nil and data.delete(k, v) then
-                self.object.tags[k] = nil
-            elseif data.extra ~= nil and data.extra(k, v) then
-                self.extratags[k] = v
-                self.object.tags[k] = nil
-            end
+    for k, v in pairs(self.object.tags) do
+        if data.delete ~= nil and data.delete(k, v) then
+            self.object.tags[k] = nil
+        elseif data.extra ~= nil and data.extra(k, v) then
+            self.extratags[k] = v
+            self.object.tags[k] = nil
         end
     end
 end
@@ -182,6 +180,7 @@ function Place:grab_name_parts(data)
 
             if atype ~= nil then
                 self.names[k] = v
+                self.object.tags[k] = nil
                 if atype == 'main' then
                     self.has_name = true
                 elseif atype == 'house' then
@@ -484,6 +483,40 @@ function module.process_tags(o)
 
     if fallback ~= nil and o.num_entries == 0 then
         o:write_place(fallback[1], fallback[2], fallback[3], module.SAVE_EXTRA_MAINS)
+    end
+end
+
+--------- Convenience functions for simple style configuration -----------------
+
+function module.set_prefilters(data)
+    module.PRE_DELETE = module.tag_match{keys = data.delete_keys, tags = data.delete_tags}
+    module.PRE_EXTRAS = module.tag_match{keys = data.extratag_keys,
+                                         tags = data.extratag_tags}
+end
+
+function module.set_main_tags(data)
+    module.MAIN_KEYS = data
+end
+
+function module.set_name_tags(data)
+    module.NAMES = module.tag_group(data)
+end
+
+function module.set_address_tags(data)
+    module.ADDRESS_TAGS = module.tag_group(data)
+end
+
+function module.set_unused_handling(data)
+    if data.extra_keys == nil and data.extra_tags == nil then
+        module.POST_DELETE = module.tag_match{data.delete_keys, tags = data.delete_tags}
+        module.POST_EXTRAS = nil
+        module.SAVE_EXTRA_MAINS = true
+    elseif data.delete_keys == nil and data.delete_tags == nil then
+        module.POST_DELETE = nil
+        module.POST_EXTRAS = module.tag_match{data.extra_keys, tags = data.extra_tags}
+        module.SAVE_EXTRA_MAINS = false
+    else
+        error("unused handler can have only 'extra_keys' or 'delete_keys' set.")
     end
 end
 

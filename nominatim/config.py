@@ -172,7 +172,7 @@ class Configuration:
         style = getattr(self, 'IMPORT_STYLE')
 
         if style in ('admin', 'street', 'address', 'full', 'extratags'):
-            return self.config_dir / f'import-{style}.style'
+            return self.config_dir / f'import-{style}.lua'
 
         return self.find_config_file('', 'IMPORT_STYLE')
 

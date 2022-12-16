@@ -8,6 +8,8 @@ local PRE_EXTRAS = nil
 local MAIN_KEYS = nil
 local NAMES = nil
 local ADDRESS_TAGS = nil
+local SAVE_EXTRA_MAINS = false
+local POSTCODE_FALLBACK = true
 
 
 -- The single place table.
@@ -474,7 +476,7 @@ function module.process_tags(o)
     if o.address.country ~= nil and #o.address.country ~= 2 then
         o.address['country'] = nil
     end
-    if fallback == nil and o.address.postcode ~= nil then
+    if POSTCODE_FALLBACK and fallback == nil and o.address.postcode ~= nil then
         fallback = {'place', 'postcode', 'always'}
     end
 
@@ -520,6 +522,11 @@ function module.set_name_tags(data)
 end
 
 function module.set_address_tags(data)
+    if data.postcode_fallback ~= nil then
+        POSTCODE_FALLBACK = data.postcode_fallback
+        data.postcode_fallback = nil
+    end
+
     ADDRESS_TAGS = module.tag_group(data)
 end
 

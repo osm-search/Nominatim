@@ -181,7 +181,6 @@ class NominatimArgs:
                     osm2pgsql_style_path=self.config.config_dir,
                     threads=self.threads or default_threads,
                     dsn=self.config.get_libpq_dsn(),
-                    forward_dependencies=self.config.get_bool('UPDATE_FORWARD_DEPENDENCIES'),
                     flatnode_file=str(self.config.get_path('FLATNODE_FILE') or ''),
                     tablespaces=dict(slim_data=self.config.TABLESPACE_OSM_DATA,
                                      slim_index=self.config.TABLESPACE_OSM_INDEX,

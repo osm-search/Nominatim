@@ -348,3 +348,29 @@ def split_pending_index(conn: Connection, **_: Any) -> None:
                            WHERE class = 'boundary' and type = 'administrative'
                                  and indexed_status > 0""")
             cur.execute("DROP INDEX IF EXISTS idx_placex_pendingsector")
+
+
+@_migration(4, 2, 99, 0)
+def enable_forward_dependencies(conn: Connection, **_: Any) -> None:
+    """ Create indexes for updates with forward dependency tracking (long-running).
+    """
+    if conn.table_exists('planet_osm_ways'):
+        with conn.cursor() as cur:
+            cur.execute("""SELECT * FROM pg_indexes
+                           WHERE tablename = 'planet_osm_ways'
+                                 and indexdef LIKE '%nodes%'""")
+            if cur.rowcount == 0:
+                cur.execute("""CREATE OR REPLACE FUNCTION public.planet_osm_index_bucket(bigint[])
+                               RETURNS bigint[]
+                               LANGUAGE sql IMMUTABLE
+                                AS $function$
+                                  SELECT ARRAY(SELECT DISTINCT unnest($1) >> 5)
+                                $function$""")
+                cur.execute("""CREATE INDEX planet_osm_ways_nodes_bucket_idx
+                                 ON planet_osm_ways
+                                 USING gin (planet_osm_index_bucket(nodes))
+                                 WITH (fastupdate=off)""")
+                cur.execute("""CREATE INDEX planet_osm_rels_parts_idx
+                                 ON planet_osm_rels USING gin (parts)
+                                 WITH (fastupdate=off)""")
+                cur.execute("ANALYZE planet_osm_ways")

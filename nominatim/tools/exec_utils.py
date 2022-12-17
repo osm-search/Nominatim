@@ -136,9 +136,6 @@ def run_osm2pgsql(options: Mapping[str, Any]) -> None:
     if options['flatnode_file']:
         cmd.extend(('--flat-nodes', options['flatnode_file']))
 
-    if not options.get('forward_dependencies', False):
-        cmd.extend(('--with-forward-dependencies', 'false'))
-
     for key, param in (('slim_data', '--tablespace-slim-data'),
                        ('slim_index', '--tablespace-slim-index'),
                        ('main_data', '--tablespace-main-data'),

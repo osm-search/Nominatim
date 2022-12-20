@@ -135,7 +135,7 @@ git clone --recursive https://github.com/openstreetmap/Nominatim.git
 The development version does not include the country grid. Download it separately:
 
 ```
-wget -O Nominatim/data/country_osm_grid.sql.gz https://www.nominatim.org/data/country_grid.sql.gz
+wget -O Nominatim/data/country_osm_grid.sql.gz https://nominatim.org/data/country_grid.sql.gz
 ```
 
 ### Building Nominatim

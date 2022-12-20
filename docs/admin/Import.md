@@ -74,7 +74,7 @@ but it will improve the quality of the results if this is installed.
 This data is available as a binary download. Put it into your project directory:
 
     cd $PROJECT_DIR
-    wget https://www.nominatim.org/data/wikimedia-importance.sql.gz
+    wget https://nominatim.org/data/wikimedia-importance.sql.gz
 
 The file is about 400MB and adds around 4GB to the Nominatim database.
 
@@ -92,8 +92,8 @@ and the UK (using the [CodePoint OpenData set](https://osdatahub.os.uk/downloads
 This data can be optionally downloaded into the project directory:
 
     cd $PROJECT_DIR
-    wget https://www.nominatim.org/data/gb_postcodes.csv.gz
-    wget https://www.nominatim.org/data/us_postcodes.csv.gz
+    wget https://nominatim.org/data/gb_postcodes.csv.gz
+    wget https://nominatim.org/data/us_postcodes.csv.gz
 
 You can also add your own custom postcode sources, see
 [Customization of postcodes](../customize/Postcodes.md).

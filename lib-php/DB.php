@@ -43,7 +43,7 @@ class DB
             $sMsg = 'Failed to establish database connection:' . $e->getMessage();
             throw new \Nominatim\DatabaseError($sMsg, 500, null, $e->getMessage());
         }
-        
+
         $this->connection->exec("SET DateStyle TO 'sql,european'");
         $this->connection->exec("SET client_encoding TO 'utf-8'");
         // Disable JIT and parallel workers. They interfere badly with search SQL.
@@ -59,7 +59,7 @@ class DB
         if ($iMaxExecution > 0) {
             $conn->setAttribute(\PDO::ATTR_TIMEOUT, $iMaxExecution); // seconds
         }
-        
+
         return true;
     }
 

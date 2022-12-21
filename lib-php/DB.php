@@ -57,7 +57,7 @@ class DB
         
         $iMaxExecution = ini_get('max_execution_time');
         if ($iMaxExecution > 0) {
-            $conn->setAttribute(\PDO::ATTR_TIMEOUT, $iMaxExecution); // seconds
+            $this->connection->setAttribute(\PDO::ATTR_TIMEOUT, $iMaxExecution); // seconds
         }
 
         return true;

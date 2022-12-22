@@ -1,6 +1,6 @@
 # Install Nominatim in a virtual machine for development and testing
 
-This document describes how you can install Nominatim inside a Ubuntu 16
+This document describes how you can install Nominatim inside a Ubuntu 22
 virtual machine on your desktop/laptop (host machine). The goal is to give
 you a development environment to easily edit code and run the test suite
 without affecting the rest of your system. 
@@ -69,8 +69,7 @@ installation.
 PHP errors are written to `/var/log/apache2/error.log`.
 
 With `echo` and `var_dump()` you write into the output (HTML/XML/JSON) when
-you either add `&debug=1` to the URL (preferred) or set
-`@define('CONST_Debug', true);` in `settings/local.php`.
+you either add `&debug=1` to the URL.
 
 In the Python BDD test you can use `logger.info()` for temporary debug
 statements.
@@ -130,6 +129,10 @@ and then
 Yes, Vagrant and Virtualbox can be installed on MS Windows just fine. You need a 64bit
 version of Windows.
 
+##### Will it run on Apple Silicon?
+
+You might need to replace Virtualbox with [Parallels](https://www.parallels.com/products/desktop/).
+There is no free/open source version of Parallels.
 
 ##### Why Monaco, can I use another country?
 
@@ -141,11 +144,12 @@ No. Long running Nominatim installations will differ once new import features (o
 bug fixes) get added since those usually only get applied to new/changed data.
 
 Also this document skips the optional Wikipedia data import which affects ranking
-of search results. See [Nominatim installation](https://nominatim.org/release-docs/latest/admin/Installation) for details.
+of search results. See [Nominatim installation](https://nominatim.org/release-docs/latest/admin/Installation)
+for details.
 
 ##### Why Ubuntu? Can I test CentOS/Fedora/CoreOS/FreeBSD?
 
-There is a Vagrant script for CentOS available, but the Nominatim directory
+There used to be a Vagrant script for CentOS available, but the Nominatim directory
 isn't symlinked/mounted to the host which makes development trickier. We used
 it mainly for debugging installation with SELinux.
 
@@ -154,14 +158,17 @@ are slightly different, e.g. the name of the package manager, Apache2 package
 name, location of files. We chose Ubuntu because that is closest to the
 nominatim.openstreetmap.org production environment.
 
-You can configure/download other Vagrant boxes from [https://app.vagrantup.com/boxes/search](https://app.vagrantup.com/boxes/search).
+You can configure/download other Vagrant boxes from
+[https://app.vagrantup.com/boxes/search](https://app.vagrantup.com/boxes/search).
 
 ##### How can I connect to an existing database?
 
-Let's say you have a Postgres database named `nominatim_it` on server `your-server.com` and port `5432`. The Postgres username is `postgres`. You can edit `settings/local.php` and point Nominatim to it.
+Let's say you have a Postgres database named `nominatim_it` on server `your-server.com`
+and port `5432`. The Postgres username is `postgres`. You can edit the `.env` in your
+project directory and point Nominatim to it.
 
-    pgsql:host=your-server.com;port=5432;user=postgres;dbname=nominatim_it
-    
+    NOMINATIM_DATABASE_DSN="pgsql:host=your-server.com;port=5432;user=postgres;dbname=nominatim_it
+
 No data import or restarting necessary.
 
 If the Postgres installation is behind a firewall, you can try
@@ -169,11 +176,12 @@ If the Postgres installation is behind a firewall, you can try
     ssh -L 9999:localhost:5432 your-username@your-server.com
 
 inside the virtual machine. It will map the port to `localhost:9999` and then
-you edit `settings/local.php` with
+you edit `.env` file with
 
-    @define('CONST_Database_DSN', 'pgsql:host=localhost;port=9999;user=postgres;dbname=nominatim_it');
+    NOMINATIM_DATABASE_DSN="pgsql:host=localhost;port=9999;user=postgres;dbname=nominatim_it"
 
-To access postgres directly remember to specify the hostname, e.g. `psql --host localhost --port 9999 nominatim_it`
+To access postgres directly remember to specify the hostname,
+e.g. `psql --host localhost --port 9999 nominatim_it`
 
 
 ##### My computer is slow and the import takes too long. Can I start the virtual machine "in the cloud"?

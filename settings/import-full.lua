@@ -1,4 +1,4 @@
-flex = require('flex-base')
+local flex = require('flex-base')
 
 flex.set_main_tags{
     building = 'fallback',
@@ -74,7 +74,7 @@ flex.set_prefilters{delete_keys = {'note', 'note:*', 'source', '*source', 'attri
                                    waterway = {'riverbank'},
                                    building = {'no'},
                                    boundary = {'place'}},
-                    extratag_keys = {'*:prefix', '*:suffix', 'name:prefix:*', 'name:suffix:*',
+                    extra_keys = {'*:prefix', '*:suffix', 'name:prefix:*', 'name:suffix:*',
                                'name:etymology', 'name:signed', 'name:botanical',
                                'wikidata', '*:wikidata',
                                'addr:street:name', 'addr:street:type'}
@@ -110,3 +110,5 @@ flex.set_address_tags{main = {'addr:housenumber',
 
 
 flex.set_unused_handling{extra_keys = {'place'}}
+
+return flex

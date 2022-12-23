@@ -1,4 +1,4 @@
-flex = require('flex-base')
+local flex = require('flex-base')
 
 flex.set_main_tags{
     highway = {'always',
@@ -32,7 +32,7 @@ flex.set_prefilters{delete_keys = {'building', 'source',
                                               'noexit', 'crossing', 'give_way', 'stop'},
                                    landuse = {'cemetry', 'no'},
                                    boundary = {'place'}},
-                    extratag_keys = {'wikipedia', 'wikipedia:*', 'wikidata', 'capital', 'area'}
+                    extra_keys = {'wikipedia', 'wikipedia:*', 'wikidata', 'capital', 'area'}
                    }
 
 flex.set_name_tags{main = {'name', 'name:*',
@@ -65,3 +65,5 @@ flex.set_address_tags{main = {'addr:housenumber',
 
 
 flex.set_unused_handling{extra_keys = {'place'}}
+
+return flex

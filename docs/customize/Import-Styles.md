@@ -49,7 +49,9 @@ during the processing.
     There are no built-in defaults for the tag lists, so all the functions
     need to be called from your style script to fully process the data.
     Make sure you start from one of the default style and only modify
-    the data you are interested in.
+    the data you are interested in. You can also derive your style from an
+    existing style by importing the appropriate module, e.g.
+    `local flex = require('import-street')`.
 
 Many of the following functions take _key match lists_. These lists can
 contain three kinds of strings to match against tag keys:
@@ -91,10 +93,12 @@ key, then this is used as default for values that are not listed.
 
 !!! example
     ``` lua
+    local flex = require('import-full')
+
     flex.set_main_tags{
-        boundary = {'administrative' = named},
-        highway = {'always', street_lamp = 'named'}
-        landuse = 'fallback',
+        boundary = {administrative = 'named'},
+        highway = {'always', street_lamp = 'named'},
+        landuse = 'fallback'
     }
     ```
 
@@ -134,9 +138,11 @@ Any other string is matched exactly against tag keys.
 
 !!! example
     ``` lua
+    local flex = require('import-full')
+
     flex.set_prefilters{
         delete_keys = {'source', 'source:*'},
-        extra_tags = {'amenity' = {'yes', 'no'}
+        extra_tags = {amenity = {'yes', 'no'}}
     }
     flex.set_main_tags{
         amenity = 'always'
@@ -168,7 +174,9 @@ They take _key match lists_ for main and extra names respectively.
 
 !!! example
     ``` lua
-    flex.set_main_tags{'highway' = {'traffic_light' = 'named'}}
+    local flex = require('flex-base')
+
+    flex.set_main_tags{highway = {traffic_light = 'named'}}
     flex.set_name_tags{main = {'name', 'name:*'},
                        extra = {'ref'}
                       }
@@ -204,6 +212,8 @@ are accepted, all other values are discarded.
 
 !!! example
     ``` lua
+    local flex = require('import-full')
+
     flex.set_address_tags{
         main = {'addr:housenumber'},
         extra = {'addr:*'},
@@ -239,6 +249,8 @@ above.
 
 !!! example
     ``` lua
+    local flex = require('import-full')
+
     flex.set_address_tags{
         main = {'addr:housenumber'},
         extra = {'addr:*', 'tiger:county'}
@@ -274,6 +286,8 @@ kinds of geometries can be used:
 
 !!! Example
     ``` lua
+    local flex = require('import-full')
+
     flex.RELATION_TYPES['site'] = flex.relation_as_multipolygon
     ```
 
@@ -292,6 +306,8 @@ logic.
 
 !!! Example
     ``` lua
+    local flex = require('import-full')
+
     function osm2pgsql.process_relation(object)
         if object.tags.boundary ~= 'administrative' or object.tags.admin_level ~= '2' then
           flex.process_relation(object)
@@ -312,6 +328,8 @@ responsible for filtering the tags and writing out the rows into Postgresql.
 
 !!! Example
     ``` lua
+    local flex = require('import-full')
+
     local original_process_tags = flex.process_tags
 
     function flex.process_tags(o)

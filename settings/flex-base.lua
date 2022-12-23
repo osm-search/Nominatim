@@ -461,8 +461,8 @@ end
 
 function module.set_prefilters(data)
     PRE_DELETE = module.tag_match{keys = data.delete_keys, tags = data.delete_tags}
-    PRE_EXTRAS = module.tag_match{keys = data.extratag_keys,
-                                  tags = data.extratag_tags}
+    PRE_EXTRAS = module.tag_match{keys = data.extra_keys,
+                                  tags = data.extra_tags}
 end
 
 function module.set_main_tags(data)
@@ -484,12 +484,12 @@ end
 
 function module.set_unused_handling(data)
     if data.extra_keys == nil and data.extra_tags == nil then
-        POST_DELETE = module.tag_match{data.delete_keys, tags = data.delete_tags}
+        POST_DELETE = module.tag_match{keys = data.delete_keys, tags = data.delete_tags}
         POST_EXTRAS = nil
         SAVE_EXTRA_MAINS = true
     elseif data.delete_keys == nil and data.delete_tags == nil then
         POST_DELETE = nil
-        POST_EXTRAS = module.tag_match{data.extra_keys, tags = data.extra_tags}
+        POST_EXTRAS = module.tag_match{keys = data.extra_keys, tags = data.extra_tags}
         SAVE_EXTRA_MAINS = false
     else
         error("unused handler can have only 'extra_keys' or 'delete_keys' set.")

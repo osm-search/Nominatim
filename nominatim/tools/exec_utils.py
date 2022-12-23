@@ -125,7 +125,7 @@ def run_osm2pgsql(options: Mapping[str, Any]) -> None:
           ]
 
     if str(options['osm2pgsql_style']).endswith('.lua'):
-        env['LUA_PATH'] = ';'.join((str(options['osm2pgsql_style_path'] / 'flex-base.lua'),
+        env['LUA_PATH'] = ';'.join((str(options['osm2pgsql_style_path'] / '?.lua'),
                                     os.environ.get('LUAPATH', ';')))
         cmd.extend(('--output', 'flex'))
     else:

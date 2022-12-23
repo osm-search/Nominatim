@@ -15,7 +15,7 @@ flex.set_prefilters{delete_keys = {'building', 'source', 'highway',
                                    'addr:street:name', 'addr:street:type'},
                     delete_tags = {landuse = {'cemetry', 'no'},
                                    boundary = {'place'}},
-                    extratag_keys = {'wikipedia', 'wikipedia:*', 'wikidata', 'capital'}
+                    extra_keys = {'wikipedia', 'wikipedia:*', 'wikidata', 'capital'}
                    }
 
 flex.set_name_tags{main = {'name', 'name:*',
@@ -42,3 +42,5 @@ flex.set_address_tags{extra = {'addr:*', 'is_in:*'},
                      }
 
 flex.set_unused_handling{extra_keys = {'place'}}
+
+return flex

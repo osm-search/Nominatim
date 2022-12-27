@@ -47,9 +47,9 @@ class DB
         $this->connection->exec("SET DateStyle TO 'sql,european'");
         $this->connection->exec("SET client_encoding TO 'utf-8'");
         // Disable JIT and parallel workers. They interfere badly with search SQL.
-        $this->connection->exec("SET max_parallel_workers_per_gather TO 0");  
+        $this->connection->exec('SET max_parallel_workers_per_gather TO 0');
         if ($this->getPostgresVersion() >= 11) {
-            $this->connection->exec("SET jit_above_cost TO -1");
+            $this->connection->exec('SET jit_above_cost TO -1');
         }
         
         $iMaxExecution = ini_get('max_execution_time');

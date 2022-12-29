@@ -89,11 +89,6 @@ class NominatimEnvironment:
         if self.db_pass:
             dsn += ';password=' + self.db_pass
 
-        if self.website_dir is not None \
-           and self.test_env is not None \
-           and dsn == self.test_env['NOMINATIM_DATABASE_DSN']:
-            return # environment already set uo
-
         self.test_env = dict(self.default_config)
         self.test_env['NOMINATIM_DATABASE_DSN'] = dsn
         self.test_env['NOMINATIM_LANGUAGES'] = 'en,de,fr,ja'

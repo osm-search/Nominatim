@@ -109,6 +109,6 @@ flex.set_address_tags{main = {'addr:housenumber',
                      }
 
 
-flex.set_unused_handling{delete_keys = {'tiger:*'}}
+flex.set_unused_handling{extra_keys = {'place'}}
 
 return flex

@@ -222,7 +222,7 @@ def test_get_import_style_intern(make_config, src_dir, monkeypatch):
 
     monkeypatch.setenv('NOMINATIM_IMPORT_STYLE', 'street')
 
-    expected = src_dir / 'settings' / 'import-street.style'
+    expected = src_dir / 'settings' / 'import-street.lua'
 
     assert config.get_import_style_file() == expected
 

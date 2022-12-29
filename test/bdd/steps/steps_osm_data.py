@@ -49,6 +49,15 @@ def write_opl_file(opl, grid):
 
         return fd.name
 
+@given('the lua style file')
+def lua_style_file(context):
+    """ Define a custom style file to use for the import.
+    """
+    style = Path(context.nominatim.website_dir.name) / 'custom.lua'
+    style.write_text(context.text)
+    context.nominatim.test_env['NOMINATIM_IMPORT_STYLE'] = str(style)
+
+
 @given(u'the ([0-9.]+ )?grid(?: with origin (?P<origin>.*))?')
 def define_node_grid(context, grid_step, origin):
     """

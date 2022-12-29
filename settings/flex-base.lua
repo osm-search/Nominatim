@@ -1,9 +1,19 @@
 -- Core functions for Nominatim import flex style.
 --
 
+local module = {}
+
+local PRE_DELETE = nil
+local PRE_EXTRAS = nil
+local MAIN_KEYS = nil
+local NAMES = nil
+local ADDRESS_TAGS = nil
+local SAVE_EXTRA_MAINS = false
+local POSTCODE_FALLBACK = true
+
 
 -- The single place table.
-place_table = osm2pgsql.define_table{
+local place_table = osm2pgsql.define_table{
     name = "place",
     ids = { type = 'any', id_column = 'osm_id', type_column = 'osm_type' },
     columns = {
@@ -14,7 +24,25 @@ place_table = osm2pgsql.define_table{
         { column = 'address', type = 'hstore' },
         { column = 'extratags', type = 'hstore' },
         { column = 'geometry', type = 'geometry', projection = 'WGS84', not_null = true },
-    }
+    },
+    indexes = {}
+}
+
+------------ Geometry functions for relations ---------------------
+
+function module.relation_as_multipolygon(o)
+    return o:as_multipolygon()
+end
+
+function module.relation_as_multiline(o)
+    return o:as_multilinestring():line_merge()
+end
+
+
+module.RELATION_TYPES = {
+    multipolygon = module.relation_as_multipolygon,
+    boundary = module.relation_as_multipolygon,
+    waterway = module.relation_as_multiline
 }
 
 ------------- Place class ------------------------------------------
@@ -43,6 +71,17 @@ function Place.new(object, geom_func)
     return self
 end
 
+function Place:clean(data)
+    for k, v in pairs(self.object.tags) do
+        if data.delete ~= nil and data.delete(k, v) then
+            self.object.tags[k] = nil
+        elseif data.extra ~= nil and data.extra(k, v) then
+            self.extratags[k] = v
+            self.object.tags[k] = nil
+        end
+    end
+end
+
 function Place:delete(data)
     if data.match ~= nil then
         for k, v in pairs(self.object.tags) do
@@ -69,54 +108,37 @@ function Place:grab_extratags(data)
     return count
 end
 
-function Place:grab_address(data)
+local function strip_address_prefix(k)
+    if k:sub(1, 5) == 'addr:' then
+        return k:sub(6)
+    end
+
+    if k:sub(1, 6) == 'is_in:' then
+        return k:sub(7)
+    end
+
+    return k
+end
+
+
+function Place:grab_address_parts(data)
     local count = 0
 
-    if data.match ~= nil then
+    if data.groups ~= nil then
         for k, v in pairs(self.object.tags) do
-            if data.match(k, v) then
-                self.object.tags[k] = nil
+            local atype = data.groups(k, v)
 
-                if data.include_on_name == true then
+            if atype ~= nil then
+                if atype == 'main' then
                     self.has_name = true
-                end
-
-                if data.out_key ~= nil then
-                    self.address[data.out_key] = v
-                    return 1
-                end
-
-                if k:sub(1, 5) == 'addr:' then
-                    self.address[k:sub(6)] = v
-                elseif k:sub(1, 6) == 'is_in:' then
-                    self.address[k:sub(7)] = v
+                    self.address[strip_address_prefix(k)] = v
+                    count = count + 1
+                elseif atype == 'extra' then
+                    self.address[strip_address_prefix(k)] = v
                 else
-                    self.address[k] = v
+                    self.address[atype] = v
                 end
-                count = count + 1
-            end
-        end
-    end
-
-    return count
-end
-
-function Place:set_address(key, value)
-    self.address[key] = value
-end
-
-function Place:grab_name(data)
-    local count = 0
-
-    if data.match ~= nil then
-        for k, v in pairs(self.object.tags) do
-            if data.match(k, v) then
                 self.object.tags[k] = nil
-                self.names[k] = v
-                if data.include_on_name ~= false then
-                    self.has_name = true
-                end
-                count = count + 1
             end
         end
     end
@@ -124,13 +146,30 @@ function Place:grab_name(data)
     return count
 end
 
-function Place:grab_tag(key)
-    return self.object:grab_tag(key)
+
+function Place:grab_name_parts(data)
+    local fallback = nil
+
+    if data.groups ~= nil then
+        for k, v in pairs(self.object.tags) do
+            local atype = data.groups(k, v)
+
+            if atype ~= nil then
+                self.names[k] = v
+                self.object.tags[k] = nil
+                if atype == 'main' then
+                    self.has_name = true
+                elseif atype == 'house' then
+                    self.has_name = true
+                    fallback = {'place', 'house', 'always'}
+                end
+            end
+        end
+    end
+
+    return fallback
 end
 
-function Place:tags()
-    return self.object.tags
-end
 
 function Place:write_place(k, v, mtype, save_extra_mains)
     if mtype == nil then
@@ -214,7 +253,7 @@ function Place:write_row(k, v, save_extra_mains)
 end
 
 
-function tag_match(data)
+function module.tag_match(data)
     if data == nil or next(data) == nil then
         return nil
     end
@@ -276,17 +315,72 @@ function tag_match(data)
 end
 
 
+function module.tag_group(data)
+    if data == nil or next(data) == nil then
+        return nil
+    end
+
+    local fullmatches = {}
+    local key_prefixes = {}
+    local key_suffixes = {}
+
+    for group, tags in pairs(data) do
+        for _, key in pairs(tags) do
+            if key:sub(1, 1) == '*' then
+                if #key > 1 then
+                    if key_suffixes[#key - 1] == nil then
+                        key_suffixes[#key - 1] = {}
+                    end
+                    key_suffixes[#key - 1][key:sub(2)] = group
+                end
+            elseif key:sub(#key, #key) == '*' then
+                if key_prefixes[#key - 1] == nil then
+                    key_prefixes[#key - 1] = {}
+                end
+                key_prefixes[#key - 1][key:sub(1, #key - 1)] = group
+            else
+                fullmatches[key] = group
+            end
+        end
+    end
+
+    return function (k, v)
+        local val = fullmatches[k]
+        if val ~= nil then
+            return val
+        end
+
+        for slen, slist in pairs(key_suffixes) do
+            if #k >= slen then
+                val = slist[k:sub(-slen)]
+                if val ~= nil then
+                    return val
+                end
+            end
+        end
+
+        for slen, slist in pairs(key_prefixes) do
+            if #k >= slen then
+                val = slist[k:sub(1, slen)]
+                if val ~= nil then
+                    return val
+                end
+            end
+        end
+    end
+end
+
 -- Process functions for all data types
-function osm2pgsql.process_node(object)
+function module.process_node(object)
 
     local function geom_func(o)
         return o:as_point()
     end
 
-    process_tags(Place.new(object, geom_func))
+    module.process_tags(Place.new(object, geom_func))
 end
 
-function osm2pgsql.process_way(object)
+function module.process_way(object)
 
     local function geom_func(o)
         local geom = o:as_polygon()
@@ -298,30 +392,24 @@ function osm2pgsql.process_way(object)
         return geom
     end
 
-    process_tags(Place.new(object, geom_func))
+    module.process_tags(Place.new(object, geom_func))
 end
 
-function relation_as_multipolygon(o)
-    return o:as_multipolygon()
-end
-
-function relation_as_multiline(o)
-    return o:as_multilinestring():line_merge()
-end
-
-function osm2pgsql.process_relation(object)
-    local geom_func = RELATION_TYPES[object.tags.type]
+function module.process_relation(object)
+    local geom_func = module.RELATION_TYPES[object.tags.type]
 
     if geom_func ~= nil then
-        process_tags(Place.new(object, geom_func))
+        module.process_tags(Place.new(object, geom_func))
     end
 end
 
-function process_tags(o)
-    local fallback
+-- The process functions are used by default by osm2pgsql.
+osm2pgsql.process_node = module.process_node
+osm2pgsql.process_way = module.process_way
+osm2pgsql.process_relation = module.process_relation
 
-    o:delete{match = PRE_DELETE}
-    o:grab_extratags{match = PRE_EXTRAS}
+function module.process_tags(o)
+    o:clean{delete = PRE_DELETE, extra = PRE_EXTRAS}
 
     -- Exception for boundary/place double tagging
     if o.object.tags.boundary == 'administrative' then
@@ -330,54 +418,93 @@ function process_tags(o)
         end}
     end
 
+    -- name keys
+    local fallback = o:grab_name_parts{groups=NAMES}
+
     -- address keys
-    o:grab_address{match=COUNTRY_TAGS, out_key='country'}
+    if o:grab_address_parts{groups=ADDRESS_TAGS} > 0 and fallback == nil then
+        fallback = {'place', 'house', 'always'}
+    end
     if o.address.country ~= nil and #o.address.country ~= 2 then
         o.address['country'] = nil
     end
-    if o:grab_name{match=HOUSENAME_TAGS} > 0 then
-        fallback = {'place', 'house'}
-    end
-    if o:grab_address{match=HOUSENUMBER_TAGS, include_on_name = true} > 0 and fallback == nil then
-        fallback = {'place', 'house'}
-    end
-    if o:grab_address{match=POSTCODES, out_key='postcode'} > 0 and fallback == nil then
-        fallback = {'place', 'postcode'}
+    if POSTCODE_FALLBACK and fallback == nil and o.address.postcode ~= nil then
+        fallback = {'place', 'postcode', 'always'}
     end
 
-    local is_interpolation = o:grab_address{match=INTERPOLATION_TAGS} > 0
-
-    o:grab_address{match=ADDRESS_TAGS}
-
-    if is_interpolation then
+    if o.address.interpolation ~= nil then
         o:write_place('place', 'houses', 'always', SAVE_EXTRA_MAINS)
         return
     end
 
-    -- name keys
-    o:grab_name{match = NAMES}
-    o:grab_name{match = REFS, include_on_name = false}
-
-    o:delete{match = POST_DELETE}
-    o:grab_extratags{match = POST_EXTRAS}
+    o:clean{delete = POST_DELETE, extra = POST_EXTRAS}
 
     -- collect main keys
-    local num_mains = 0
-    for k, v in pairs(o:tags()) do
-        num_mains = num_mains + o:write_place(k, v, MAIN_KEYS[k], SAVE_EXTRA_MAINS)
+    for k, v in pairs(o.object.tags) do
+        local ktype = MAIN_KEYS[k]
+        if ktype == 'fallback' then
+            if o.has_name then
+                fallback = {k, v, 'named'}
+            end
+        elseif ktype ~= nil then
+            o:write_place(k, v, MAIN_KEYS[k], SAVE_EXTRA_MAINS)
+        end
     end
 
-    if num_mains == 0 then
-        for tag, mtype in pairs(MAIN_FALLBACK_KEYS) do
-            if o:write_place(tag, nil, mtype, SAVE_EXTRA_MAINS) > 0 then
-                return
-            end
-        end
+    if fallback ~= nil and o.num_entries == 0 then
+        o:write_place(fallback[1], fallback[2], fallback[3], SAVE_EXTRA_MAINS)
+    end
+end
 
-        if fallback ~= nil then
-            o:write_place(fallback[1], fallback[2], 'always', SAVE_EXTRA_MAINS)
+--------- Convenience functions for simple style configuration -----------------
+
+
+function module.set_prefilters(data)
+    PRE_DELETE = module.tag_match{keys = data.delete_keys, tags = data.delete_tags}
+    PRE_EXTRAS = module.tag_match{keys = data.extra_keys,
+                                  tags = data.extra_tags}
+end
+
+function module.set_main_tags(data)
+    MAIN_KEYS = data
+end
+
+function module.set_name_tags(data)
+    NAMES = module.tag_group(data)
+end
+
+function module.set_address_tags(data)
+    if data.postcode_fallback ~= nil then
+        POSTCODE_FALLBACK = data.postcode_fallback
+        data.postcode_fallback = nil
+    end
+
+    ADDRESS_TAGS = module.tag_group(data)
+end
+
+function module.set_unused_handling(data)
+    if data.extra_keys == nil and data.extra_tags == nil then
+        POST_DELETE = module.tag_match{keys = data.delete_keys, tags = data.delete_tags}
+        POST_EXTRAS = nil
+        SAVE_EXTRA_MAINS = true
+    elseif data.delete_keys == nil and data.delete_tags == nil then
+        POST_DELETE = nil
+        POST_EXTRAS = module.tag_match{keys = data.extra_keys, tags = data.extra_tags}
+        SAVE_EXTRA_MAINS = false
+    else
+        error("unused handler can have only 'extra_keys' or 'delete_keys' set.")
+    end
+end
+
+function set_relation_types(data)
+    module.RELATION_TYPES = {}
+    for k, v in data do
+        if v == 'multipolygon' then
+            module.RELATION_TYPES[k] = module.relation_as_multipolygon
+        elseif v == 'multiline' then
+            module.RELATION_TYPES[k] = module.relation_as_multiline
         end
     end
 end
 
-
+return module

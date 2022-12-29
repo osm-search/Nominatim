@@ -51,6 +51,7 @@ nav:
 markdown_extensions:
     - codehilite
     - admonition
+    - pymdownx.superfences
     - def_list
     - toc:
         permalink: 

@@ -271,11 +271,12 @@ endif()
 install(FILES settings/env.defaults
               settings/address-levels.json
               settings/phrase-settings.json
-              settings/import-admin.style
-              settings/import-street.style
-              settings/import-address.style
-              settings/import-full.style
-              settings/import-extratags.style
+              settings/import-admin.lua
+              settings/import-street.lua
+              settings/import-address.lua
+              settings/import-full.lua
+              settings/import-extratags.lua
+              settings/flex-base.lua
               settings/icu_tokenizer.yaml
               settings/country_settings.yaml
         DESTINATION ${NOMINATIM_CONFIGDIR})

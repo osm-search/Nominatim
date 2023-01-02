@@ -384,7 +384,19 @@ BEGIN
 
   -- Mark for delete in the placex table
   UPDATE placex SET indexed_status = 100 FROM place_to_be_deleted
-    WHERE placex.osm_type = place_to_be_deleted.osm_type
+    WHERE placex.osm_type = 'N' and place_to_be_deleted.osm_type = 'N'
+          and placex.osm_id = place_to_be_deleted.osm_id
+          and placex.class = place_to_be_deleted.class
+          and placex.type = place_to_be_deleted.type
+          and not deferred;
+  UPDATE placex SET indexed_status = 100 FROM place_to_be_deleted
+    WHERE placex.osm_type = 'W' and place_to_be_deleted.osm_type = 'W'
+          and placex.osm_id = place_to_be_deleted.osm_id
+          and placex.class = place_to_be_deleted.class
+          and placex.type = place_to_be_deleted.type
+          and not deferred;
+  UPDATE placex SET indexed_status = 100 FROM place_to_be_deleted
+    WHERE placex.osm_type = 'R' and place_to_be_deleted.osm_type = 'R'
           and placex.osm_id = place_to_be_deleted.osm_id
           and placex.class = place_to_be_deleted.class
           and placex.type = place_to_be_deleted.type

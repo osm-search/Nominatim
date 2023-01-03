@@ -18,7 +18,7 @@ from nominatim.config import Configuration
 from nominatim.db.connection import connect
 from nominatim.db import status, properties
 from nominatim.tokenizer.base import AbstractTokenizer
-from nominatim.version import version_str
+from nominatim.version import NOMINATIM_VERSION
 from nominatim.clicmd.args import NominatimArgs
 from nominatim.errors import UsageError
 
@@ -205,4 +205,4 @@ class SetupAll:
                 except Exception as exc: # pylint: disable=broad-except
                     LOG.error('Cannot determine date of database: %s', exc)
 
-            properties.set_property(conn, 'database_version', version_str())
+            properties.set_property(conn, 'database_version', str(NOMINATIM_VERSION))

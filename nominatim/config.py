@@ -17,6 +17,7 @@ import json
 import yaml
 
 from dotenv import dotenv_values
+from psycopg2.extensions import parse_dsn
 
 from nominatim.typing import StrPath
 from nominatim.errors import UsageError
@@ -51,7 +52,7 @@ class Configuration:
         Nominatim uses dotenv to configure the software. Configuration options
         are resolved in the following order:
 
-         * from the OS environment (or the dirctionary given in `environ`
+         * from the OS environment (or the dictionary given in `environ`)
          * from the .env file in the project directory of the installation
          * from the default installation in the configuration directory
 
@@ -162,6 +163,18 @@ class Configuration:
             return ' '.join([quote_param(p) for p in dsn[6:].split(';')])
 
         return dsn
+
+
+    def get_database_params(self) -> Mapping[str, str]:
+        """ Get the configured parameters for the database connection
+            as a mapping.
+        """
+        dsn = self.DATABASE_DSN
+
+        if dsn.startswith('pgsql:'):
+            return dict((p.split('=', 1) for p in dsn[6:].split(';')))
+
+        return parse_dsn(dsn)
 
 
     def get_import_style_file(self) -> Path:

@@ -15,16 +15,14 @@ from psycopg2 import sql as pysql
 from nominatim.config import Configuration
 from nominatim.db import properties
 from nominatim.db.connection import connect, Connection
-from nominatim.version import NOMINATIM_VERSION, version_str
+from nominatim.version import NominatimVersion, NOMINATIM_VERSION, parse_version
 from nominatim.tools import refresh
 from nominatim.tokenizer import factory as tokenizer_factory
 from nominatim.errors import UsageError
 
 LOG = logging.getLogger()
 
-VersionTuple = Tuple[int, int, int, int]
-
-_MIGRATION_FUNCTIONS : List[Tuple[VersionTuple, Callable[..., None]]] = []
+_MIGRATION_FUNCTIONS : List[Tuple[NominatimVersion, Callable[..., None]]] = []
 
 def migrate(config: Configuration, paths: Any) -> int:
     """ Check for the current database version and execute migrations,
@@ -37,8 +35,7 @@ def migrate(config: Configuration, paths: Any) -> int:
             db_version_str = None
 
         if db_version_str is not None:
-            parts = db_version_str.split('.')
-            db_version = tuple(int(x) for x in parts[:2] + parts[2].split('-'))
+            db_version = parse_version(db_version_str)
 
             if db_version == NOMINATIM_VERSION:
                 LOG.warning("Database already at latest version (%s)", db_version_str)
@@ -53,8 +50,7 @@ def migrate(config: Configuration, paths: Any) -> int:
         for version, func in _MIGRATION_FUNCTIONS:
             if db_version <= version:
                 title = func.__doc__ or ''
-                LOG.warning("Running: %s (%s)", title.split('\n', 1)[0],
-                            version_str(version))
+                LOG.warning("Running: %s (%s)", title.split('\n', 1)[0], version)
                 kwargs = dict(conn=conn, config=config, paths=paths)
                 func(**kwargs)
                 conn.commit()
@@ -66,14 +62,14 @@ def migrate(config: Configuration, paths: Any) -> int:
             tokenizer = tokenizer_factory.get_tokenizer_for_db(config)
             tokenizer.update_sql_functions(config)
 
-        properties.set_property(conn, 'database_version', version_str())
+        properties.set_property(conn, 'database_version', str(NOMINATIM_VERSION))
 
         conn.commit()
 
     return 0
 
 
-def _guess_version(conn: Connection) -> VersionTuple:
+def _guess_version(conn: Connection) -> NominatimVersion:
     """ Guess a database version when there is no property table yet.
         Only migrations for 3.6 and later are supported, so bail out
         when the version seems older.
@@ -89,7 +85,7 @@ def _guess_version(conn: Connection) -> VersionTuple:
                       'prior to 3.6.0. Automatic migration not possible.')
             raise UsageError('Migration not possible.')
 
-    return (3, 5, 0, 99)
+    return NominatimVersion(3, 5, 0, 99)
 
 
 
@@ -108,7 +104,8 @@ def _migration(major: int, minor: int, patch: int = 0,
         there.
     """
     def decorator(func: Callable[..., None]) -> Callable[..., None]:
-        _MIGRATION_FUNCTIONS.append(((major, minor, patch, dbpatch), func))
+        version = (NominatimVersion(major, minor, patch, dbpatch))
+        _MIGRATION_FUNCTIONS.append((version, func))
         return func
 
     return decorator

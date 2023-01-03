@@ -20,7 +20,7 @@ from psycopg2.extensions import make_dsn, parse_dsn
 from nominatim.config import Configuration
 from nominatim.db.connection import connect
 from nominatim.typing import DictCursorResults
-from nominatim.version import version_str
+from nominatim.version import NOMINATIM_VERSION
 
 
 def convert_version(ver_tup: Tuple[int, int]) -> str:
@@ -135,8 +135,8 @@ def report_system_information(config: Configuration) -> None:
 
     **Software Environment:**
     - Python version: {sys.version}
-    - Nominatim version: {version_str()} 
-    - PostgreSQL version: {postgresql_ver} 
+    - Nominatim version: {NOMINATIM_VERSION!s}
+    - PostgreSQL version: {postgresql_ver}
     - PostGIS version: {postgis_ver}
     - OS: {os_name_info()}
     

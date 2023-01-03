@@ -6,7 +6,6 @@ the following operating systems:
 
   * [Ubuntu 22.04](../appendix/Install-on-Ubuntu-22.md)
   * [Ubuntu 20.04](../appendix/Install-on-Ubuntu-20.md)
-  * [Ubuntu 18.04](../appendix/Install-on-Ubuntu-18.md)
 
 These OS-specific instructions can also be found in executable form
 in the `vagrant/` directory.
@@ -44,11 +43,13 @@ For running Nominatim:
 
   * [PostgreSQL](https://www.postgresql.org) (9.6+ will work, 11+ strongly recommended)
   * [PostGIS](https://postgis.net) (2.2+ will work, 3.0+ strongly recommended)
-  * [Python 3](https://www.python.org/) (3.6+)
+  * [Python 3](https://www.python.org/) (3.7+)
   * [Psycopg2](https://www.psycopg.org) (2.7+)
   * [Python Dotenv](https://github.com/theskumar/python-dotenv)
   * [psutil](https://github.com/giampaolo/psutil)
   * [Jinja2](https://palletsprojects.com/p/jinja/)
+  * [SQLAlchemy](https://www.sqlalchemy.org/) (1.4+ with greenlet support)
+  * [asyncpg](https://magicstack.github.io/asyncpg) (0.8+)
   * [PyICU](https://pypi.org/project/PyICU/)
   * [PyYaml](https://pyyaml.org/) (5.1+)
   * [datrie](https://github.com/pytries/datrie)
@@ -60,6 +61,14 @@ For running Nominatim:
 For running continuous updates:
 
   * [pyosmium](https://osmcode.org/pyosmium/)
+
+For running the experimental Python frontend:
+
+  * one of the following web frameworks:
+    * [falcon](https://falconframework.org/) (3.0+)
+    * [sanic](https://sanic.dev)
+    * [starlette](https://www.starlette.io/)
+  * [uvicorn](https://www.uvicorn.org/) (only with falcon and starlette framworks)
 
 For dependencies for running tests and building documentation, see
 the [Development section](../develop/Development-Environment.md).

@@ -9,6 +9,7 @@ Command-line interface to the Nominatim functions for import, update,
 database administration and querying.
 """
 from typing import Optional, Any, List, Union
+import importlib
 import logging
 import os
 import sys
@@ -60,7 +61,7 @@ class CommandlineParser:
     def nominatim_version_text(self) -> str:
         """ Program name and version number as string
         """
-        text = f'Nominatim version {version.version_str()}'
+        text = f'Nominatim version {version.NOMINATIM_VERSION!s}'
         if version.GIT_COMMIT_HASH is not None:
             text += f' ({version.GIT_COMMIT_HASH})'
         return text
@@ -197,9 +198,14 @@ class AdminServe:
     """\
     Start a simple web server for serving the API.
 
-    This command starts the built-in PHP webserver to serve the website
+    This command starts a built-in webserver to serve the website
     from the current project directory. This webserver is only suitable
     for testing and development. Do not use it in production setups!
+
+    There are different webservers available. The default 'php' engine
+    runs the classic PHP frontend. The other engines are Python servers
+    which run the new Python frontend code. This is highly experimental
+    at the moment and may not include the full API.
 
     By the default, the webserver can be accessed at: http://127.0.0.1:8088
     """
@@ -208,10 +214,40 @@ class AdminServe:
         group = parser.add_argument_group('Server arguments')
         group.add_argument('--server', default='127.0.0.1:8088',
                            help='The address the server will listen to.')
+        group.add_argument('--engine', default='php',
+                           choices=('php', 'sanic', 'falcon', 'starlette'),
+                           help='Webserver framework to run. (default: php)')
 
 
     def run(self, args: NominatimArgs) -> int:
-        run_php_server(args.server, args.project_dir / 'website')
+        if args.engine == 'php':
+            run_php_server(args.server, args.project_dir / 'website')
+        else:
+            server_info = args.server.split(':', 1)
+            host = server_info[0]
+            if len(server_info) > 1:
+                if not server_info[1].isdigit():
+                    raise UsageError('Invalid format for --server parameter. Use <host>:<port>')
+                port = int(server_info[1])
+            else:
+                port = 8088
+
+            if args.engine == 'sanic':
+                server_module = importlib.import_module('nominatim.server.sanic.server')
+
+                app = server_module.get_application(args.project_dir)
+                app.run(host=host, port=port, debug=True)
+            else:
+                import uvicorn # pylint: disable=import-outside-toplevel
+
+                if args.engine == 'falcon':
+                    server_module = importlib.import_module('nominatim.server.falcon.server')
+                elif args.engine == 'starlette':
+                    server_module = importlib.import_module('nominatim.server.starlette.server')
+
+                app = server_module.get_application(args.project_dir)
+                uvicorn.run(app, host=host, port=port)
+
         return 0
 
 

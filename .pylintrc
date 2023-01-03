@@ -1,6 +1,6 @@
 [MASTER]
 
-extension-pkg-whitelist=osmium
+extension-pkg-whitelist=osmium,falcon
 ignored-modules=icu,datrie
 
 [MESSAGES CONTROL]

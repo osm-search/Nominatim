@@ -14,6 +14,9 @@ import logging
 from nominatim.tools.exec_utils import run_api_script
 from nominatim.errors import UsageError
 from nominatim.clicmd.args import NominatimArgs
+from nominatim.api import NominatimAPI
+from nominatim.apicmd.status import StatusResult
+import nominatim.result_formatter.v1 as formatting
 
 # Do not repeat documentation of subcommand classes.
 # pylint: disable=C0111
@@ -264,7 +267,7 @@ class APIDetails:
 
 
 class APIStatus:
-    """\
+    """
     Execute API status query.
 
     This command works exactly the same as if calling the /status endpoint on
@@ -274,10 +277,13 @@ class APIStatus:
     """
 
     def add_args(self, parser: argparse.ArgumentParser) -> None:
+        formats = formatting.create(StatusResult).list_formats()
         group = parser.add_argument_group('API parameters')
-        group.add_argument('--format', default='text', choices=['text', 'json'],
+        group.add_argument('--format', default=formats[0], choices=formats,
                            help='Format of result')
 
 
     def run(self, args: NominatimArgs) -> int:
-        return _run_api('status', args, dict(format=args.format))
+        status = NominatimAPI(args.project_dir).status()
+        print(formatting.create(StatusResult).format(status, args.format))
+        return 0

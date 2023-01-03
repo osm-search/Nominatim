@@ -42,17 +42,14 @@ jobs:
                     - ubuntu: 18
                       postgresql: 9.6
                       postgis: 2.5
-                      pytest: pytest
                       php: 7.2
                     - ubuntu: 20
                       postgresql: 13
                       postgis: 3
-                      pytest: py.test-3
                       php: 7.4
                     - ubuntu: 22
                       postgresql: 15
                       postgis: 3
-                      pytest: py.test-3
                       php: 8.1
 
         runs-on: ubuntu-${{ matrix.ubuntu }}.04
@@ -74,7 +71,7 @@ jobs:
 
             - uses: actions/setup-python@v4
               with:
-                python-version: 3.6
+                python-version: 3.7
               if: matrix.ubuntu == 18
 
             - uses: ./Nominatim/.github/actions/setup-postgresql
@@ -86,33 +83,35 @@ jobs:
               with:
                   ubuntu: ${{ matrix.ubuntu }}
 
-            - name: Install test prerequsites
-              run: sudo apt-get install -y -qq python3-pytest python3-behave
+            - name: Install test prerequsites (behave from apt)
+              run: sudo apt-get install -y -qq python3-behave
               if: matrix.ubuntu == 20
 
-            - name: Install test prerequsites
-              run: pip3 install pylint pytest behave==1.2.6
+            - name: Install test prerequsites (behave from pip)
+              run: pip3 install behave==1.2.6
               if: ${{ (matrix.ubuntu == 18) || (matrix.ubuntu == 22) }}
 
-            - name: Install test prerequsites
-              run: sudo apt-get install -y -qq python3-pytest
-              if: matrix.ubuntu == 22
+            - name: Install test prerequsites (from apt for Ununtu 2x)
+              run: sudo apt-get install -y -qq python3-pytest uvicorn
+              if: matrix.ubuntu >= 20
+
+            - name: Install test prerequsites (from pip for Ubuntu 18)
+              run: pip3 install pytest uvicorn
+              if: matrix.ubuntu == 18
+
+            - name: Install Python webservers
+              run: pip3 install falcon sanic sanic-testing starlette
 
             - name: Install latest pylint/mypy
-              run: pip3 install -U pylint mypy types-PyYAML types-jinja2 types-psycopg2 types-psutil types-requests typing-extensions
+              run: pip3 install -U pylint mypy types-PyYAML types-jinja2 types-psycopg2 types-psutil types-requests typing-extensions asgi_lifespan sqlalchemy2-stubs
 
             - name: PHP linting
               run: phpcs --report-width=120 .
               working-directory: Nominatim
 
             - name: Python linting
-              run: pylint nominatim
+              run: python3 -m pylint nominatim
               working-directory: Nominatim
-
-            - name: Python static typechecking
-              run: mypy --strict nominatim
-              working-directory: Nominatim
-
 
             - name: PHP unit tests
               run: phpunit ./
@@ -120,16 +119,22 @@ jobs:
               if: ${{ (matrix.ubuntu == 20) || (matrix.ubuntu == 22) }}
 
             - name: Python unit tests
-              run: $PYTEST test/python
+              run: python3 -m pytest test/python
               working-directory: Nominatim
-              env:
-                PYTEST: ${{ matrix.pytest }}
 
             - name: BDD tests
               run: |
-                  behave -DREMOVE_TEMPLATE=1 -DBUILDDIR=$GITHUB_WORKSPACE/build --format=progress3
+                  python3 -m behave -DREMOVE_TEMPLATE=1 -DBUILDDIR=$GITHUB_WORKSPACE/build --format=progress3
               working-directory: Nominatim/test/bdd
 
+            - name: Install newer Python packages (for typechecking info)
+              run: pip3 install -U osmium uvicorn
+              if: matrix.ubuntu >= 20
+
+            - name: Python static typechecking
+              run: python3 -m mypy --strict nominatim
+              working-directory: Nominatim
+              if: matrix.ubuntu >= 20
 
     legacy-test:
         needs: create-archive
@@ -166,7 +171,7 @@ jobs:
 
             - name: BDD tests (legacy tokenizer)
               run: |
-                  behave -DREMOVE_TEMPLATE=1 -DBUILDDIR=$GITHUB_WORKSPACE/build -DTOKENIZER=legacy --format=progress3
+                  python3 -m behave -DREMOVE_TEMPLATE=1 -DBUILDDIR=$GITHUB_WORKSPACE/build -DTOKENIZER=legacy --format=progress3
               working-directory: Nominatim/test/bdd
 
 
@@ -176,20 +181,13 @@ jobs:
 
         strategy:
             matrix:
-                name: [Ubuntu-18, Ubuntu-20, Ubuntu-22]
+                name: [Ubuntu-20, Ubuntu-22]
                 include:
-                    - name: Ubuntu-18
-                      flavour: ubuntu
-                      image: "ubuntu:18.04"
-                      ubuntu: 18
-                      install_mode: install-nginx
                     - name: Ubuntu-20
-                      flavour: ubuntu
                       image: "ubuntu:20.04"
                       ubuntu: 20
                       install_mode: install-apache
                     - name: Ubuntu-22
-                      flavour: ubuntu
                       image: "ubuntu:22.04"
                       ubuntu: 22
                       install_mode: install-apache
@@ -212,14 +210,6 @@ jobs:
                   apt-get install -y git sudo wget
                   ln -snf /usr/share/zoneinfo/$CONTAINER_TIMEZONE /etc/localtime && echo $CONTAINER_TIMEZONE > /etc/timezone
               shell: bash
-              if: matrix.flavour == 'ubuntu'
-
-            - name: Prepare container (CentOS)
-              run: |
-                  dnf update -y
-                  dnf install -y sudo glibc-langpack-en
-              shell: bash
-              if: matrix.flavour == 'centos'
 
             - name: Setup import user
               run: |
@@ -253,14 +243,6 @@ jobs:
                   mkdir data-env-reverse
               working-directory: /home/nominatim
 
-            - name: Prepare import environment (CentOS)
-              run: |
-                  sudo ln -s /usr/local/bin/nominatim /usr/bin/nominatim
-                  echo NOMINATIM_DATABASE_WEBUSER="apache" > nominatim-project/.env
-                  cp nominatim-project/.env data-env-reverse/.env
-              working-directory: /home/nominatim
-              if: matrix.flavour == 'centos'
-
             - name: Print version
               run: nominatim --version
               working-directory: /home/nominatim/nominatim-project
@@ -268,7 +250,7 @@ jobs:
             - name: Collect host OS information
               run: nominatim admin --collect-os-info
               working-directory: /home/nominatim/nominatim-project
-              
+
             - name: Import
               run: nominatim import --osm-file ../test.pbf
               working-directory: /home/nominatim/nominatim-project
@@ -288,7 +270,6 @@ jobs:
             - name: Prepare update (Ubuntu)
               run: apt-get install -y python3-pip
               shell: bash
-              if: matrix.flavour == 'ubuntu'
 
             - name: Run update
               run: |

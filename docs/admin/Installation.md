@@ -53,7 +53,7 @@ For running Nominatim:
   * [PyICU](https://pypi.org/project/PyICU/)
   * [PyYaml](https://pyyaml.org/) (5.1+)
   * [datrie](https://github.com/pytries/datrie)
-  * [PHP](https://php.net) (7.0 or later)
+  * [PHP](https://php.net) (7.3+)
   * PHP-pgsql
   * PHP-intl (bundled with PHP)
   * PHP-cgi (for running queries from the command line)

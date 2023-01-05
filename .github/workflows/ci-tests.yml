@@ -37,20 +37,26 @@ jobs:
         needs: create-archive
         strategy:
             matrix:
-                ubuntu: [18, 20, 22]
+                flavour: [oldstuff, "ubuntu-20", "ubuntu-22"]
                 include:
-                    - ubuntu: 18
-                      postgresql: 9.6
-                      postgis: 2.5
-                      php: 7.2
-                    - ubuntu: 20
+                    - flavour: oldstuff
+                      ubuntu: 20
+                      postgresql: '9.6'
+                      postgis: '2.5'
+                      php: '7.3'
+                      lua: '5.1'
+                    - flavour: ubuntu-20
+                      ubuntu: 20
                       postgresql: 13
                       postgis: 3
-                      php: 7.4
-                    - ubuntu: 22
+                      php: '7.4'
+                      lua: '5.3'
+                    - flavour: ubuntu-22
+                      ubuntu: 22
                       postgresql: 15
                       postgis: 3
-                      php: 8.1
+                      php: '8.1'
+                      lua: '5.3'
 
         runs-on: ubuntu-${{ matrix.ubuntu }}.04
 
@@ -72,7 +78,7 @@ jobs:
             - uses: actions/setup-python@v4
               with:
                 python-version: 3.7
-              if: matrix.ubuntu == 18
+              if: matrix.flavour == 'oldstuff'
 
             - uses: ./Nominatim/.github/actions/setup-postgresql
               with:
@@ -81,23 +87,24 @@ jobs:
 
             - uses: ./Nominatim/.github/actions/build-nominatim
               with:
-                  ubuntu: ${{ matrix.ubuntu }}
+                  flavour: ${{ matrix.flavour }}
+                  lua: ${{ matrix.lua }}
 
             - name: Install test prerequsites (behave from apt)
               run: sudo apt-get install -y -qq python3-behave
-              if: matrix.ubuntu == 20
+              if: matrix.flavour == 'ubuntu-20'
 
             - name: Install test prerequsites (behave from pip)
               run: pip3 install behave==1.2.6
-              if: ${{ (matrix.ubuntu == 18) || (matrix.ubuntu == 22) }}
+              if: (matrix.flavour == 'oldstuff') || (matrix.flavour == 'ubuntu-22')
 
             - name: Install test prerequsites (from apt for Ununtu 2x)
               run: sudo apt-get install -y -qq python3-pytest uvicorn
-              if: matrix.ubuntu >= 20
+              if: matrix.flavour != 'oldstuff'
 
             - name: Install test prerequsites (from pip for Ubuntu 18)
               run: pip3 install pytest uvicorn
-              if: matrix.ubuntu == 18
+              if: matrix.flavour == 'oldstuff'
 
             - name: Install Python webservers
               run: pip3 install falcon sanic sanic-testing starlette
@@ -129,12 +136,12 @@ jobs:
 
             - name: Install newer Python packages (for typechecking info)
               run: pip3 install -U osmium uvicorn
-              if: matrix.ubuntu >= 20
+              if: matrix.flavour != 'oldstuff'
 
             - name: Python static typechecking
               run: python3 -m mypy --strict nominatim
               working-directory: Nominatim
-              if: matrix.ubuntu >= 20
+              if: matrix.flavour != 'oldstuff'
 
     legacy-test:
         needs: create-archive
@@ -151,7 +158,7 @@ jobs:
             - name: Setup PHP
               uses: shivammathur/setup-php@v2
               with:
-                  php-version: 7.4
+                  php-version: '7.4'
 
             - uses: ./Nominatim/.github/actions/setup-postgresql
               with:
@@ -163,7 +170,6 @@ jobs:
 
             - uses: ./Nominatim/.github/actions/build-nominatim
               with:
-                  ubuntu: 20
                   cmake-args: -DBUILD_MODULE=on
 
             - name: Install test prerequsites

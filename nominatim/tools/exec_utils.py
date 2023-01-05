@@ -119,7 +119,7 @@ def run_osm2pgsql(options: Mapping[str, Any]) -> None:
     cmd = [str(options['osm2pgsql']),
            '--hstore', '--latlon', '--slim',
            '--log-progress', 'true',
-           '--number-processes', str(options['threads']),
+           '--number-processes', '1' if options['append'] else str(options['threads']),
            '--cache', str(options['osm2pgsql_cache']),
            '--style', str(options['osm2pgsql_style'])
           ]

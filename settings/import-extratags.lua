@@ -77,6 +77,7 @@ flex.set_prefilters{delete_keys = {'note', 'note:*', 'source', '*source', 'attri
                     extratag_keys = {'*:prefix', '*:suffix', 'name:prefix:*', 'name:suffix:*',
                                'name:etymology', 'name:signed', 'name:botanical',
                                'wikidata', '*:wikidata',
+                               '*:wikipedia', 'brand:wikipedia:*',
                                'addr:street:name', 'addr:street:type'}
                    }
 

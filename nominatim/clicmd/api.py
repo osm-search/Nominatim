@@ -251,9 +251,9 @@ class APIDetails:
         if args.node:
             params = dict(osmtype='N', osmid=args.node)
         elif args.way:
-            params = dict(osmtype='W', osmid=args.node)
+            params = dict(osmtype='W', osmid=args.way)
         elif args.relation:
-            params = dict(osmtype='R', osmid=args.node)
+            params = dict(osmtype='R', osmid=args.relation)
         else:
             params = dict(place_id=args.place_id)
         if args.object_class:

@@ -2,21 +2,26 @@
 Feature: Creation of search terms
     Tests that search_name table is filled correctly
 
-    Scenario Outline: Comma- and semicolon separated names appear as full names
+    Scenario: Semicolon-separated names appear as separate full names
         Given the places
          | osm | class   | type | name+alt_name |
-         | N1  | place   | city | New York<sep>Big Apple |
+         | N1  | place   | city | New York; Big Apple |
         When importing
         Then search_name contains
          | object | name_vector |
          | N1     | #New York, #Big Apple |
 
-    Examples:
-         | sep |
-         | ,   |
-         | ;   |
+    @fail-legacy
+    Scenario: Comma-separated names appear as a single full name
+        Given the places
+         | osm | class   | type | name+alt_name |
+         | N1  | place   | city | New York, Big Apple |
+        When importing
+        Then search_name contains
+         | object | name_vector |
+         | N1     | #New York Big Apple |
 
-    Scenario Outline: Name parts before brackets appear as full names
+    Scenario: Name parts before brackets appear as full names
         Given the places
          | osm | class   | type | name+name |
          | N1  | place   | city | Halle (Saale) |

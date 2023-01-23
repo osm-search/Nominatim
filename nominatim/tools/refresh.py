@@ -176,7 +176,7 @@ def recompute_importance(conn: Connection) -> None:
         cur.execute("""
             UPDATE placex SET (wikipedia, importance) =
                (SELECT wikipedia, importance
-                FROM compute_importance(extratags, country_code, osm_type, osm_id, centroid))
+                FROM compute_importance(extratags, country_code, rank_search, centroid))
             """)
         cur.execute("""
             UPDATE placex s SET wikipedia = d.wikipedia, importance = d.importance

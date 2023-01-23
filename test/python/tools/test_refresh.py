@@ -48,7 +48,7 @@ def test_refresh_import_wikipedia(dsn, src_dir, table_factory, temp_db_cursor, r
 def test_recompute_importance(placex_table, table_factory, temp_db_conn, temp_db_cursor):
     temp_db_cursor.execute("""CREATE OR REPLACE FUNCTION compute_importance(extratags HSTORE,
                                               country_code varchar(2),
-                                              osm_type varchar(1), osm_id BIGINT,
+                                              rank_search SMALLINT,
                                               centroid GEOMETRY,
                                               OUT importance FLOAT,
                                               OUT wikipedia TEXT)

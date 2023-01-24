@@ -15,7 +15,7 @@ from nominatim.tools.exec_utils import run_api_script
 from nominatim.errors import UsageError
 from nominatim.clicmd.args import NominatimArgs
 from nominatim.api import NominatimAPI, StatusResult
-import nominatim.result_formatter.v1 as formatting
+import nominatim.api.v1 as api_output
 
 # Do not repeat documentation of subcommand classes.
 # pylint: disable=C0111
@@ -276,7 +276,7 @@ class APIStatus:
     """
 
     def add_args(self, parser: argparse.ArgumentParser) -> None:
-        formats = formatting.create(StatusResult).list_formats()
+        formats = api_output.list_formats(StatusResult)
         group = parser.add_argument_group('API parameters')
         group.add_argument('--format', default=formats[0], choices=formats,
                            help='Format of result')
@@ -284,5 +284,5 @@ class APIStatus:
 
     def run(self, args: NominatimArgs) -> int:
         status = NominatimAPI(args.project_dir).status()
-        print(formatting.create(StatusResult).format(status, args.format))
+        print(api_output.format_result(status, args.format))
         return 0

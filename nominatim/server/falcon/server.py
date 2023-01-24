@@ -14,7 +14,7 @@ import falcon
 import falcon.asgi
 
 from nominatim.api import NominatimAPIAsync, StatusResult
-import nominatim.result_formatter.v1 as formatting
+import nominatim.api.v1 as api_impl
 
 CONTENT_TYPE = {
   'text': falcon.MEDIA_TEXT,
@@ -27,10 +27,6 @@ class NominatimV1:
 
     def __init__(self, project_dir: Path, environ: Optional[Mapping[str, str]]) -> None:
         self.api = NominatimAPIAsync(project_dir, environ)
-        self.formatters = {}
-
-        for rtype in (StatusResult, ):
-            self.formatters[rtype] = formatting.create(rtype)
 
 
     def parse_format(self, req: falcon.asgi.Request, rtype: Type[Any], default: str) -> None:
@@ -39,12 +35,11 @@ class NominatimV1:
             format value to assume when no parameter is present.
         """
         req.context.format = req.get_param('format', default=default)
-        req.context.formatter = self.formatters[rtype]
 
-        if not req.context.formatter.supports_format(req.context.format):
+        if not api_impl.supports_format(rtype, req.context.format):
             raise falcon.HTTPBadRequest(
                 description="Parameter 'format' must be one of: " +
-                            ', '.join(req.context.formatter.list_formats()))
+                            ', '.join(api_impl.list_formats(rtype)))
 
 
     def format_response(self, req: falcon.asgi.Request, resp: falcon.asgi.Response,
@@ -52,7 +47,7 @@ class NominatimV1:
         """ Render response into a string according to the formatter
             set in `parse_format()`.
         """
-        resp.text = req.context.formatter.format(result, req.context.format)
+        resp.text = api_impl.format_result(result, req.context.format)
         resp.content_type = CONTENT_TYPE.get(req.context.format, falcon.MEDIA_JSON)
 
 

@@ -13,7 +13,7 @@ from pathlib import Path
 import sanic
 
 from nominatim.api import NominatimAPIAsync, StatusResult
-import nominatim.result_formatter.v1 as formatting
+import nominatim.api.v1 as api_impl
 
 api = sanic.Blueprint('NominatimAPI')
 
@@ -32,7 +32,7 @@ def api_response(request: sanic.Request, result: Any) -> sanic.HTTPResponse:
     """ Render a response from the query results using the configured
         formatter.
     """
-    body = request.ctx.formatter.format(result, request.ctx.format)
+    body = api_impl.format_result(result, request.ctx.format)
     return sanic.response.text(body,
                                content_type=CONTENT_TYPE.get(request.ctx.format,
                                                              'application/json'))
@@ -46,12 +46,11 @@ async def extract_format(request: sanic.Request) -> Optional[sanic.HTTPResponse]
         is present.
     """
     assert request.route is not None
-    request.ctx.formatter = request.app.ctx.formatters[request.route.ctx.result_type]
 
     request.ctx.format = request.args.get('format', request.route.ctx.default_format)
-    if not request.ctx.formatter.supports_format(request.ctx.format):
+    if not api_impl.supports_format(request.route.ctx.result_type, request.ctx.format):
         return usage_error("Parameter 'format' must be one of: " +
-                           ', '.join(request.ctx.formatter.list_formats()))
+                           ', '.join(api_impl.list_formats(request.route.ctx.result_type)))
 
     return None
 
@@ -76,9 +75,6 @@ def get_application(project_dir: Path,
     app = sanic.Sanic("NominatimInstance")
 
     app.ctx.api = NominatimAPIAsync(project_dir, environ)
-    app.ctx.formatters = {}
-    for rtype in (StatusResult, ):
-        app.ctx.formatters[rtype] = formatting.create(rtype)
 
     app.blueprint(api)
 

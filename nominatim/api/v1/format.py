@@ -11,12 +11,12 @@ from typing import Dict, Any
 from collections import OrderedDict
 import json
 
-from nominatim.result_formatter.base import FormatDispatcher
+from nominatim.api.result_formatting import FormatDispatcher
 from nominatim.api import StatusResult
 
-create = FormatDispatcher()
+dispatch = FormatDispatcher()
 
-@create.format_func(StatusResult, 'text')
+@dispatch.format_func(StatusResult, 'text')
 def _format_status_text(result: StatusResult) -> str:
     if result.status:
         return f"ERROR: {result.message}"
@@ -24,7 +24,7 @@ def _format_status_text(result: StatusResult) -> str:
     return 'OK'
 
 
-@create.format_func(StatusResult, 'json')
+@dispatch.format_func(StatusResult, 'json')
 def _format_status_json(result: StatusResult) -> str:
     out: Dict[str, Any] = OrderedDict()
     out['status'] = result.status

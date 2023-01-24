@@ -17,17 +17,12 @@ from starlette.responses import Response
 from starlette.requests import Request
 
 from nominatim.api import NominatimAPIAsync, StatusResult
-import nominatim.result_formatter.v1 as formatting
+import nominatim.api.v1 as api_impl
 
 CONTENT_TYPE = {
   'text': 'text/plain; charset=utf-8',
   'xml': 'text/xml; charset=utf-8'
 }
-
-FORMATTERS = {
-    StatusResult: formatting.create(StatusResult)
-}
-
 
 def parse_format(request: Request, rtype: Type[Any], default: str) -> None:
     """ Get and check the 'format' parameter and prepare the formatter.
@@ -35,22 +30,19 @@ def parse_format(request: Request, rtype: Type[Any], default: str) -> None:
         format value to assume when no parameter is present.
     """
     fmt = request.query_params.get('format', default=default)
-    fmtter = FORMATTERS[rtype]
 
-    if not fmtter.supports_format(fmt):
+    if not api_impl.supports_format(rtype, fmt):
         raise HTTPException(400, detail="Parameter 'format' must be one of: " +
-                                        ', '.join(fmtter.list_formats()))
+                                        ', '.join(api_impl.list_formats(rtype)))
 
     request.state.format = fmt
-    request.state.formatter = fmtter
 
 
 def format_response(request: Request, result: Any) -> Response:
-    """ Render response into a string according to the formatter
-        set in `parse_format()`.
+    """ Render response into a string according.
     """
     fmt = request.state.format
-    return Response(request.state.formatter.format(result, fmt),
+    return Response(api_impl.format_result(result, fmt),
                     media_type=CONTENT_TYPE.get(fmt, 'application/json'))
 
 

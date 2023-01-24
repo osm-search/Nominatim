@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2022 by the Nominatim developer community.
+# Copyright (C) 2023 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for formatting results for the V1 API.
@@ -11,7 +11,7 @@ import datetime as dt
 import pytest
 
 import nominatim.result_formatter.v1 as format_module
-from nominatim.apicmd.status import StatusResult
+from nominatim.api import StatusResult
 from nominatim.version import NOMINATIM_VERSION
 
 STATUS_FORMATS = {'text', 'json'}

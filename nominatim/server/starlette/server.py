@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2022 by the Nominatim developer community.
+# Copyright (C) 2023 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Server implementation using the starlette webserver framework.
@@ -16,8 +16,7 @@ from starlette.exceptions import HTTPException
 from starlette.responses import Response
 from starlette.requests import Request
 
-from nominatim.api import NominatimAPIAsync
-from nominatim.apicmd.status import StatusResult
+from nominatim.api import NominatimAPIAsync, StatusResult
 import nominatim.result_formatter.v1 as formatting
 
 CONTENT_TYPE = {

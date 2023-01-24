@@ -17,7 +17,7 @@ import sqlalchemy.ext.asyncio as sa_asyncio
 import asyncpg
 
 from nominatim.config import Configuration
-from nominatim.apicmd.status import get_status, StatusResult
+from nominatim.api.status import get_status, StatusResult
 
 class NominatimAPIAsync:
     """ API loader asynchornous version.

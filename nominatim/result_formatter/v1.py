@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2022 by the Nominatim developer community.
+# Copyright (C) 2023 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Output formatters for API version v1.
@@ -12,7 +12,7 @@ from collections import OrderedDict
 import json
 
 from nominatim.result_formatter.base import FormatDispatcher
-from nominatim.apicmd.status import StatusResult
+from nominatim.api import StatusResult
 
 create = FormatDispatcher()
 

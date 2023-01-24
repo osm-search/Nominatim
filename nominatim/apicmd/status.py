@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2022 by the Nominatim developer community.
+# Copyright (C) 2023 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Classes and function releated to status call.
@@ -10,8 +10,8 @@ Classes and function releated to status call.
 from typing import Optional, cast
 import datetime as dt
 
-import sqlalchemy as sqla
-from sqlalchemy.ext.asyncio.engine import AsyncEngine, AsyncConnection
+import sqlalchemy as sa
+from sqlalchemy.ext.asyncio.engine import AsyncConnection
 import asyncpg
 
 from nominatim import version
@@ -31,7 +31,7 @@ class StatusResult:
 async def _get_database_date(conn: AsyncConnection) -> Optional[dt.datetime]:
     """ Query the database date.
     """
-    sql = sqla.text('SELECT lastimportdate FROM import_status LIMIT 1')
+    sql = sa.text('SELECT lastimportdate FROM import_status LIMIT 1')
     result = await conn.execute(sql)
 
     for row in result:
@@ -41,8 +41,8 @@ async def _get_database_date(conn: AsyncConnection) -> Optional[dt.datetime]:
 
 
 async def _get_database_version(conn: AsyncConnection) -> Optional[version.NominatimVersion]:
-    sql = sqla.text("""SELECT value FROM nominatim_properties
-                       WHERE property = 'database_version'""")
+    sql = sa.text("""SELECT value FROM nominatim_properties
+                     WHERE property = 'database_version'""")
     result = await conn.execute(sql)
 
     for row in result:
@@ -51,14 +51,13 @@ async def _get_database_version(conn: AsyncConnection) -> Optional[version.Nomin
     return None
 
 
-async def get_status(engine: AsyncEngine) -> StatusResult:
+async def get_status(conn: AsyncConnection) -> StatusResult:
     """ Execute a status API call.
     """
     status = StatusResult(0, 'OK')
     try:
-        async with engine.begin() as conn:
-            status.data_updated = await _get_database_date(conn)
-            status.database_version = await _get_database_version(conn)
+        status.data_updated = await _get_database_date(conn)
+        status.database_version = await _get_database_version(conn)
     except asyncpg.PostgresError:
         return StatusResult(700, 'Database connection failed')
 

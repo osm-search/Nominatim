@@ -65,7 +65,7 @@ def get_application(project_dir: Path,
     """
     api = NominatimAPIAsync(project_dir, environ)
 
-    app = App()
+    app = App(cors_enable=api.config.get_bool('CORS_NOACCESSCONTROL'))
     for name, func in api_impl.ROUTES:
         app.add_route('/' + name, EndpointWrapper(func, api))
 

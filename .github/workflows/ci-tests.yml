@@ -107,7 +107,7 @@ jobs:
               if: matrix.flavour == 'oldstuff'
 
             - name: Install Python webservers
-              run: pip3 install falcon sanic sanic-testing starlette
+              run: pip3 install falcon sanic sanic-testing sanic-cors starlette
 
             - name: Install latest pylint/mypy
               run: pip3 install -U pylint mypy types-PyYAML types-jinja2 types-psycopg2 types-psutil types-requests typing-extensions asgi_lifespan sqlalchemy2-stubs

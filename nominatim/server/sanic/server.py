@@ -58,6 +58,10 @@ def get_application(project_dir: Path,
 
     app.ctx.api = NominatimAPIAsync(project_dir, environ)
 
+    if app.ctx.api.config.get_bool('CORS_NOACCESSCONTROL'):
+        from sanic_cors import CORS # pylint: disable=import-outside-toplevel
+        CORS(app)
+
     for name, func in api_impl.ROUTES:
         app.add_route(_wrap_endpoint(func), f"/{name}", name=f"v1_{name}_simple")
 

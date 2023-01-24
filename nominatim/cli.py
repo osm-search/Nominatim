@@ -236,7 +236,7 @@ class AdminServe:
                 server_module = importlib.import_module('nominatim.server.sanic.server')
 
                 app = server_module.get_application(args.project_dir)
-                app.run(host=host, port=port, debug=True)
+                app.run(host=host, port=port, debug=True, single_process=True)
             else:
                 import uvicorn # pylint: disable=import-outside-toplevel
 

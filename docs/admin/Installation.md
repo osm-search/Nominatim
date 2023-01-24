@@ -66,7 +66,7 @@ For running the experimental Python frontend:
 
   * one of the following web frameworks:
     * [falcon](https://falconframework.org/) (3.0+)
-    * [sanic](https://sanic.dev)
+    * [sanic](https://sanic.dev) and (optionally) [sanic-cors](https://github.com/ashleysommer/sanic-cors)
     * [starlette](https://www.starlette.io/)
   * [uvicorn](https://www.uvicorn.org/) (only with falcon and starlette framworks)
 

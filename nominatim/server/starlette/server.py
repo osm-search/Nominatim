@@ -15,7 +15,10 @@ from starlette.routing import Route
 from starlette.exceptions import HTTPException
 from starlette.responses import Response
 from starlette.requests import Request
+from starlette.middleware import Middleware
+from starlette.middleware.cors import CORSMiddleware
 
+from nominatim.config import Configuration
 from nominatim.api import NominatimAPIAsync
 import nominatim.api.v1 as api_impl
 
@@ -55,11 +58,17 @@ def get_application(project_dir: Path,
                     environ: Optional[Mapping[str, str]] = None) -> Starlette:
     """ Create a Nominatim falcon ASGI application.
     """
+    config = Configuration(project_dir, environ)
+
     routes = []
     for name, func in api_impl.ROUTES:
         routes.append(Route(f"/{name}", endpoint=_wrap_endpoint(func)))
 
-    app = Starlette(debug=True, routes=routes)
+    middleware = []
+    if config.get_bool('CORS_NOACCESSCONTROL'):
+        middleware.append(Middleware(CORSMiddleware, allow_origins=['*']))
+
+    app = Starlette(debug=True, routes=routes, middleware=middleware)
 
     app.state.API = NominatimAPIAsync(project_dir, environ)
 

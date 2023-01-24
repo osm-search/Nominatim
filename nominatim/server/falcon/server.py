@@ -66,7 +66,12 @@ def get_application(project_dir: Path,
     api = NominatimAPIAsync(project_dir, environ)
 
     app = App(cors_enable=api.config.get_bool('CORS_NOACCESSCONTROL'))
+
+    legacy_urls = api.config.get_bool('SERVE_LEGACY_URLS')
     for name, func in api_impl.ROUTES:
-        app.add_route('/' + name, EndpointWrapper(func, api))
+        endpoint = EndpointWrapper(func, api)
+        app.add_route(f"/{name}", endpoint)
+        if legacy_urls:
+            app.add_route(f"/{name}.php", endpoint)
 
     return app

@@ -61,8 +61,12 @@ def get_application(project_dir: Path,
     config = Configuration(project_dir, environ)
 
     routes = []
+    legacy_urls = config.get_bool('SERVE_LEGACY_URLS')
     for name, func in api_impl.ROUTES:
-        routes.append(Route(f"/{name}", endpoint=_wrap_endpoint(func)))
+        endpoint = _wrap_endpoint(func)
+        routes.append(Route(f"/{name}", endpoint=endpoint))
+        if legacy_urls:
+            routes.append(Route(f"/{name}.php", endpoint=endpoint))
 
     middleware = []
     if config.get_bool('CORS_NOACCESSCONTROL'):

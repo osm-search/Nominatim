@@ -62,7 +62,11 @@ def get_application(project_dir: Path,
         from sanic_cors import CORS # pylint: disable=import-outside-toplevel
         CORS(app)
 
+    legacy_urls = app.ctx.api.config.get_bool('SERVE_LEGACY_URLS')
     for name, func in api_impl.ROUTES:
-        app.add_route(_wrap_endpoint(func), f"/{name}", name=f"v1_{name}_simple")
+        endpoint = _wrap_endpoint(func)
+        app.add_route(endpoint, f"/{name}", name=f"v1_{name}_simple")
+        if legacy_urls:
+            app.add_route(endpoint, f"/{name}.php", name=f"v1_{name}_legacy")
 
     return app

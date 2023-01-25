@@ -110,7 +110,7 @@ jobs:
               run: pip3 install falcon sanic sanic-testing sanic-cors starlette
 
             - name: Install latest pylint/mypy
-              run: pip3 install -U pylint mypy types-PyYAML types-jinja2 types-psycopg2 types-psutil types-requests typing-extensions asgi_lifespan sqlalchemy2-stubs
+              run: pip3 install -U pylint mypy types-PyYAML types-jinja2 types-psycopg2 types-psutil types-requests types-ujson typing-extensions asgi_lifespan sqlalchemy2-stubs
 
             - name: PHP linting
               run: phpcs --report-width=120 .

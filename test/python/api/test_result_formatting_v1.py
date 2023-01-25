@@ -44,7 +44,7 @@ def test_status_format_json_minimal():
 
     result = api_impl.format_result(status, 'json')
 
-    assert result == '{"status": 700, "message": "Bad format.", "software_version": "%s"}' % (NOMINATIM_VERSION, )
+    assert result == '{"status":700,"message":"Bad format.","software_version":"%s"}' % (NOMINATIM_VERSION, )
 
 
 def test_status_format_json_full():
@@ -54,4 +54,4 @@ def test_status_format_json_full():
 
     result = api_impl.format_result(status, 'json')
 
-    assert result == '{"status": 0, "message": "OK", "data_updated": "2010-02-07T20:20:03+00:00", "software_version": "%s", "database_version": "5.6"}' % (NOMINATIM_VERSION, )
+    assert result == '{"status":0,"message":"OK","data_updated":"2010-02-07T20:20:03+00:00","software_version":"%s","database_version":"5.6"}' % (NOMINATIM_VERSION, )

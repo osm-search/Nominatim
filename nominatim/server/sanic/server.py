@@ -2,85 +2,71 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2022 by the Nominatim developer community.
+# Copyright (C) 2023 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Server implementation using the sanic webserver framework.
 """
-from typing import Any, Optional, Mapping
+from typing import Any, Optional, Mapping, Callable, cast, Coroutine
 from pathlib import Path
 
-import sanic
+from sanic import Request, HTTPResponse, Sanic
+from sanic.exceptions import SanicException
+from sanic.response import text as TextResponse
 
 from nominatim.api import NominatimAPIAsync
-from nominatim.apicmd.status import StatusResult
-import nominatim.result_formatter.v1 as formatting
+import nominatim.api.v1 as api_impl
 
-api = sanic.Blueprint('NominatimAPI')
-
-CONTENT_TYPE = {
-  'text': 'text/plain; charset=utf-8',
-  'xml': 'text/xml; charset=utf-8'
-}
-
-def usage_error(msg: str) -> sanic.HTTPResponse:
-    """ Format the response for an error with the query parameters.
+class ParamWrapper(api_impl.ASGIAdaptor):
+    """ Adaptor class for server glue to Sanic framework.
     """
-    return sanic.response.text(msg, status=400)
+
+    def __init__(self, request: Request) -> None:
+        self.request = request
 
 
-def api_response(request: sanic.Request, result: Any) -> sanic.HTTPResponse:
-    """ Render a response from the query results using the configured
-        formatter.
-    """
-    body = request.ctx.formatter.format(result, request.ctx.format)
-    return sanic.response.text(body,
-                               content_type=CONTENT_TYPE.get(request.ctx.format,
-                                                             'application/json'))
+    def get(self, name: str, default: Optional[str] = None) -> Optional[str]:
+        return cast(Optional[str], self.request.args.get(name, default))
 
 
-@api.on_request # type: ignore[misc]
-async def extract_format(request: sanic.Request) -> Optional[sanic.HTTPResponse]:
-    """ Get and check the 'format' parameter and prepare the formatter.
-        `ctx.result_type` describes the expected return type and
-        `ctx.default_format` the format value to assume when no parameter
-        is present.
-    """
-    assert request.route is not None
-    request.ctx.formatter = request.app.ctx.formatters[request.route.ctx.result_type]
-
-    request.ctx.format = request.args.get('format', request.route.ctx.default_format)
-    if not request.ctx.formatter.supports_format(request.ctx.format):
-        return usage_error("Parameter 'format' must be one of: " +
-                           ', '.join(request.ctx.formatter.list_formats()))
-
-    return None
+    def get_header(self, name: str, default: Optional[str] = None) -> Optional[str]:
+        return cast(Optional[str], self.request.headers.get(name, default))
 
 
-@api.get('/status', ctx_result_type=StatusResult, ctx_default_format='text')
-async def status(request: sanic.Request) -> sanic.HTTPResponse:
-    """ Implementation of status endpoint.
-    """
-    result = await request.app.ctx.api.status()
-    response = api_response(request, result)
+    def error(self, msg: str) -> SanicException:
+        return SanicException(msg, status_code=400)
 
-    if request.ctx.format == 'text' and result.status:
-        response.status = 500
 
-    return response
+    def create_response(self, status: int, output: str,
+                        content_type: str) -> HTTPResponse:
+        return TextResponse(output, status=status, content_type=content_type)
+
+
+def _wrap_endpoint(func: api_impl.EndpointFunc)\
+       -> Callable[[Request], Coroutine[Any, Any, HTTPResponse]]:
+    async def _callback(request: Request) -> HTTPResponse:
+        return cast(HTTPResponse, await func(request.app.ctx.api, ParamWrapper(request)))
+
+    return _callback
 
 
 def get_application(project_dir: Path,
-                    environ: Optional[Mapping[str, str]] = None) -> sanic.Sanic:
+                    environ: Optional[Mapping[str, str]] = None) -> Sanic:
     """ Create a Nominatim sanic ASGI application.
     """
-    app = sanic.Sanic("NominatimInstance")
+    app = Sanic("NominatimInstance")
 
     app.ctx.api = NominatimAPIAsync(project_dir, environ)
-    app.ctx.formatters = {}
-    for rtype in (StatusResult, ):
-        app.ctx.formatters[rtype] = formatting.create(rtype)
 
-    app.blueprint(api)
+    if app.ctx.api.config.get_bool('CORS_NOACCESSCONTROL'):
+        from sanic_cors import CORS # pylint: disable=import-outside-toplevel
+        CORS(app)
+
+    legacy_urls = app.ctx.api.config.get_bool('SERVE_LEGACY_URLS')
+    for name, func in api_impl.ROUTES:
+        endpoint = _wrap_endpoint(func)
+        app.add_route(endpoint, f"/{name}", name=f"v1_{name}_simple")
+        if legacy_urls:
+            app.add_route(endpoint, f"/{name}.php", name=f"v1_{name}_legacy")
 
     return app

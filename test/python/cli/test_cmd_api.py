@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2022 by the Nominatim developer community.
+# Copyright (C) 2023 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for API access commands of command-line interface wrapper.
@@ -11,8 +11,7 @@ import json
 import pytest
 
 import nominatim.clicmd.api
-import nominatim.api
-from nominatim.apicmd.status import StatusResult
+import nominatim.api as napi
 
 
 @pytest.mark.parametrize("endpoint", (('search', 'reverse', 'lookup', 'details', 'status')))
@@ -61,8 +60,8 @@ class TestCliStatusCall:
 
     @pytest.fixture(autouse=True)
     def setup_status_mock(self, monkeypatch):
-        monkeypatch.setattr(nominatim.api.NominatimAPI, 'status',
-                            lambda self: StatusResult(200, 'OK'))
+        monkeypatch.setattr(napi.NominatimAPI, 'status',
+                            lambda self: napi.StatusResult(200, 'OK'))
 
 
     def test_status_simple(self, cli_call, tmp_path):

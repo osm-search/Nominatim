@@ -9,6 +9,7 @@ Classes and function releated to status call.
 """
 from typing import Optional, cast
 import datetime as dt
+import dataclasses
 
 import sqlalchemy as sa
 import asyncpg
@@ -16,16 +17,15 @@ import asyncpg
 from nominatim.api.connection import SearchConnection
 from nominatim import version
 
+@dataclasses.dataclass
 class StatusResult:
     """ Result of a call to the status API.
     """
-
-    def __init__(self, status: int, msg: str):
-        self.status = status
-        self.message = msg
-        self.software_version = version.NOMINATIM_VERSION
-        self.data_updated: Optional[dt.datetime]  = None
-        self.database_version: Optional[version.NominatimVersion] = None
+    status: int
+    message: str
+    software_version = version.NOMINATIM_VERSION
+    data_updated: Optional[dt.datetime] = None
+    database_version: Optional[version.NominatimVersion] = None
 
 
 async def _get_database_date(conn: SearchConnection) -> Optional[dt.datetime]:

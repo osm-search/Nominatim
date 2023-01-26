@@ -12,7 +12,6 @@ import datetime as dt
 import dataclasses
 
 import sqlalchemy as sa
-import asyncpg
 
 from nominatim.api.connection import SearchConnection
 from nominatim import version
@@ -28,37 +27,20 @@ class StatusResult:
     database_version: Optional[version.NominatimVersion] = None
 
 
-async def _get_database_date(conn: SearchConnection) -> Optional[dt.datetime]:
-    """ Query the database date.
-    """
-    sql = sa.text('SELECT lastimportdate FROM import_status LIMIT 1')
-    result = await conn.execute(sql)
-
-    for row in result:
-        return cast(dt.datetime, row[0])
-
-    return None
-
-
-async def _get_database_version(conn: SearchConnection) -> Optional[version.NominatimVersion]:
-    sql = sa.text("""SELECT value FROM nominatim_properties
-                     WHERE property = 'database_version'""")
-    result = await conn.execute(sql)
-
-    for row in result:
-        return version.parse_version(cast(str, row[0]))
-
-    return None
-
-
 async def get_status(conn: SearchConnection) -> StatusResult:
     """ Execute a status API call.
     """
     status = StatusResult(0, 'OK')
-    try:
-        status.data_updated = await _get_database_date(conn)
-        status.database_version = await _get_database_version(conn)
-    except asyncpg.PostgresError:
-        return StatusResult(700, 'Database connection failed')
+
+    # Last update date
+    sql = sa.select(conn.t.import_status.c.lastimportdate).limit(1)
+    status.data_updated = await conn.scalar(sql)
+
+    # Database version
+    sql = sa.select(conn.t.properties.c.value)\
+            .where(conn.t.properties.c.property == 'database_version')
+    verstr = await conn.scalar(sql)
+    if verstr is not None:
+        status.database_version = version.parse_version(cast(str, verstr))
 
     return status

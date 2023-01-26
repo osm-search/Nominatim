@@ -11,9 +11,9 @@ from typing import Optional, cast
 import datetime as dt
 
 import sqlalchemy as sa
-from sqlalchemy.ext.asyncio.engine import AsyncConnection
 import asyncpg
 
+from nominatim.api.connection import SearchConnection
 from nominatim import version
 
 class StatusResult:
@@ -28,7 +28,7 @@ class StatusResult:
         self.database_version: Optional[version.NominatimVersion] = None
 
 
-async def _get_database_date(conn: AsyncConnection) -> Optional[dt.datetime]:
+async def _get_database_date(conn: SearchConnection) -> Optional[dt.datetime]:
     """ Query the database date.
     """
     sql = sa.text('SELECT lastimportdate FROM import_status LIMIT 1')
@@ -40,7 +40,7 @@ async def _get_database_date(conn: AsyncConnection) -> Optional[dt.datetime]:
     return None
 
 
-async def _get_database_version(conn: AsyncConnection) -> Optional[version.NominatimVersion]:
+async def _get_database_version(conn: SearchConnection) -> Optional[version.NominatimVersion]:
     sql = sa.text("""SELECT value FROM nominatim_properties
                      WHERE property = 'database_version'""")
     result = await conn.execute(sql)
@@ -51,7 +51,7 @@ async def _get_database_version(conn: AsyncConnection) -> Optional[version.Nomin
     return None
 
 
-async def get_status(conn: AsyncConnection) -> StatusResult:
+async def get_status(conn: SearchConnection) -> StatusResult:
     """ Execute a status API call.
     """
     status = StatusResult(0, 'OK')

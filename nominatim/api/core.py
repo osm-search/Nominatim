@@ -16,8 +16,10 @@ import sqlalchemy as sa
 import sqlalchemy.ext.asyncio as sa_asyncio
 import asyncpg
 
+from nominatim.db.sqlalchemy_schema import SearchTables
 from nominatim.config import Configuration
 from nominatim.api.status import get_status, StatusResult
+from nominatim.api.connection import SearchConnection
 
 class NominatimAPIAsync:
     """ API loader asynchornous version.
@@ -29,6 +31,7 @@ class NominatimAPIAsync:
 
         self._engine_lock = asyncio.Lock()
         self._engine: Optional[sa_asyncio.AsyncEngine] = None
+        self._tables: Optional[SearchTables] = None
 
 
     async def setup_database(self) -> None:
@@ -73,6 +76,7 @@ class NominatimAPIAsync:
                 # Make sure that all connections get the new settings
                 await self.close()
 
+            self._tables = SearchTables(sa.MetaData(), engine.name) # pylint: disable=no-member
             self._engine = engine
 
 
@@ -86,7 +90,7 @@ class NominatimAPIAsync:
 
 
     @contextlib.asynccontextmanager
-    async def begin(self) -> AsyncIterator[sa_asyncio.AsyncConnection]:
+    async def begin(self) -> AsyncIterator[SearchConnection]:
         """ Create a new connection with automatic transaction handling.
 
             This function may be used to get low-level access to the database.
@@ -97,9 +101,10 @@ class NominatimAPIAsync:
             await self.setup_database()
 
         assert self._engine is not None
+        assert self._tables is not None
 
         async with self._engine.begin() as conn:
-            yield conn
+            yield SearchConnection(conn, self._tables)
 
 
     async def status(self) -> StatusResult:

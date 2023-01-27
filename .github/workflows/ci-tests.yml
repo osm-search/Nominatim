@@ -109,8 +109,8 @@ jobs:
             - name: Install Python webservers
               run: pip3 install falcon sanic sanic-testing sanic-cors starlette
 
-            - name: Install latest pylint/mypy
-              run: pip3 install -U pylint mypy types-PyYAML types-jinja2 types-psycopg2 types-psutil types-requests types-ujson typing-extensions asgi_lifespan sqlalchemy2-stubs
+            - name: Install latest pylint
+              run: pip3 install -U pylint asgi_lifespan
 
             - name: PHP linting
               run: phpcs --report-width=120 .
@@ -134,8 +134,8 @@ jobs:
                   python3 -m behave -DREMOVE_TEMPLATE=1 -DBUILDDIR=$GITHUB_WORKSPACE/build --format=progress3
               working-directory: Nominatim/test/bdd
 
-            - name: Install newer Python packages (for typechecking info)
-              run: pip3 install -U osmium uvicorn
+            - name: Install mypy and typechecking info
+              run: pip3 install -U mypy osmium uvicorn types-PyYAML types-jinja2 types-psycopg2 types-psutil types-requests types-ujson typing-extensions
               if: matrix.flavour != 'oldstuff'
 
             - name: Python static typechecking

@@ -69,7 +69,7 @@ class NominatimAPIAsync:
                 self.server_version = 0
 
             if self.server_version >= 110000:
-                @sa.event.listens_for(engine.sync_engine, "connect") # type: ignore[misc]
+                @sa.event.listens_for(engine.sync_engine, "connect")
                 def _on_connect(dbapi_con: Any, _: Any) -> None:
                     cursor = dbapi_con.cursor()
                     cursor.execute("SET jit_above_cost TO '-1'")

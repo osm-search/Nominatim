@@ -37,7 +37,7 @@ class SearchConnection:
 
     async def execute(self, sql: sa.sql.base.Executable,
                       params: Union[Mapping[str, Any], Sequence[Mapping[str, Any]], None] = None
-                     ) -> sa.engine.Result:
+                     ) -> 'sa.engine.Result[Any]':
         """ Execute a 'execute()' query on the connection.
         """
         return await self.connection.execute(sql, params)

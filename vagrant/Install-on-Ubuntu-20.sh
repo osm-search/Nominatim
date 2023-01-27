@@ -33,7 +33,7 @@ export DEBIAN_FRONTEND=noninteractive #DOCS:
 # Some of the Python packages that come with Ubuntu 20.04 are too old, so
 # install the latest version from pip:
 
-    pip3 install --user sqlalchemy asyncpg
+    pip3 install --user sqlalchemy GeoAlchemy2 asyncpg
 
 
 #

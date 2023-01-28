@@ -7,7 +7,7 @@
 """
 Extended SQLAlchemy connection class that also includes access to the schema.
 """
-from typing import Any, Mapping, Sequence, Union
+from typing import Any, Mapping, Sequence, Union, Dict, cast
 
 import sqlalchemy as sa
 from sqlalchemy.ext.asyncio import AsyncConnection
@@ -22,9 +22,11 @@ class SearchConnection:
     """
 
     def __init__(self, conn: AsyncConnection,
-                 tables: SearchTables) -> None:
+                 tables: SearchTables,
+                 properties: Dict[str, Any]) -> None:
         self.connection = conn
         self.t = tables # pylint: disable=invalid-name
+        self._property_cache = properties
 
 
     async def scalar(self, sql: sa.sql.base.Executable,
@@ -41,3 +43,44 @@ class SearchConnection:
         """ Execute a 'execute()' query on the connection.
         """
         return await self.connection.execute(sql, params)
+
+
+    async def get_property(self, name: str, cached: bool = True) -> str:
+        """ Get a property from Nominatim's property table.
+
+            Property values are normally cached so that they are only
+            retrieved from the database when they are queried for the
+            first time with this function. Set 'cached' to False to force
+            reading the property from the database.
+
+            Raises a ValueError if the property does not exist.
+        """
+        if name.startswith('DB:'):
+            raise ValueError(f"Illegal property value '{name}'.")
+
+        if cached and name in self._property_cache:
+            return cast(str, self._property_cache[name])
+
+        sql = sa.select(self.t.properties.c.value)\
+            .where(self.t.properties.c.property == name)
+        value = await self.connection.scalar(sql)
+
+        if value is None:
+            raise ValueError(f"Property '{name}' not found in database.")
+
+        self._property_cache[name] = cast(str, value)
+
+        return cast(str, value)
+
+
+    async def get_db_property(self, name: str) -> Any:
+        """ Get a setting from the database. At the moment, only
+            'server_version', the version of the database software, can
+            be retrieved with this function.
+
+            Raises a ValueError if the property does not exist.
+        """
+        if name != 'server_version':
+            raise ValueError(f"DB setting '{name}' not found in database.")
+
+        return self._property_cache['DB:server_version']

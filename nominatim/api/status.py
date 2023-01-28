@@ -7,7 +7,7 @@
 """
 Classes and function releated to status call.
 """
-from typing import Optional, cast
+from typing import Optional
 import datetime as dt
 import dataclasses
 
@@ -37,10 +37,10 @@ async def get_status(conn: SearchConnection) -> StatusResult:
     status.data_updated = await conn.scalar(sql)
 
     # Database version
-    sql = sa.select(conn.t.properties.c.value)\
-            .where(conn.t.properties.c.property == 'database_version')
-    verstr = await conn.scalar(sql)
-    if verstr is not None:
-        status.database_version = version.parse_version(cast(str, verstr))
+    try:
+        verstr = await conn.get_property('database_version')
+        status.database_version = version.parse_version(verstr)
+    except ValueError:
+        pass
 
     return status

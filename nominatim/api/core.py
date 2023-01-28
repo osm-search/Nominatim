@@ -7,7 +7,7 @@
 """
 Implementation of classes for API access via libraries.
 """
-from typing import Mapping, Optional, Any, AsyncIterator
+from typing import Mapping, Optional, Any, AsyncIterator, Dict
 import asyncio
 import contextlib
 from pathlib import Path
@@ -32,6 +32,7 @@ class NominatimAPIAsync:
         self._engine_lock = asyncio.Lock()
         self._engine: Optional[sa_asyncio.AsyncEngine] = None
         self._tables: Optional[SearchTables] = None
+        self._property_cache: Dict[str, Any] = {'DB:server_version': 0}
 
 
     async def setup_database(self) -> None:
@@ -64,17 +65,19 @@ class NominatimAPIAsync:
             try:
                 async with engine.begin() as conn:
                     result = await conn.scalar(sa.text('SHOW server_version_num'))
-                    self.server_version = int(result)
+                    server_version = int(result)
             except asyncpg.PostgresError:
-                self.server_version = 0
+                server_version = 0
 
-            if self.server_version >= 110000:
+            if server_version >= 110000:
                 @sa.event.listens_for(engine.sync_engine, "connect")
                 def _on_connect(dbapi_con: Any, _: Any) -> None:
                     cursor = dbapi_con.cursor()
                     cursor.execute("SET jit_above_cost TO '-1'")
                 # Make sure that all connections get the new settings
                 await self.close()
+
+            self._property_cache['DB:server_version'] = server_version
 
             self._tables = SearchTables(sa.MetaData(), engine.name) # pylint: disable=no-member
             self._engine = engine
@@ -104,7 +107,7 @@ class NominatimAPIAsync:
         assert self._tables is not None
 
         async with self._engine.begin() as conn:
-            yield SearchConnection(conn, self._tables)
+            yield SearchConnection(conn, self._tables, self._property_cache)
 
 
     async def status(self) -> StatusResult:

@@ -99,11 +99,15 @@ jobs:
               if: (matrix.flavour == 'oldstuff') || (matrix.flavour == 'ubuntu-22')
 
             - name: Install test prerequsites (from apt for Ununtu 2x)
-              run: sudo apt-get install -y -qq python3-pytest uvicorn
+              run: sudo apt-get install -y -qq python3-pytest python3-pytest-asyncio uvicorn
               if: matrix.flavour != 'oldstuff'
 
+            - name: Install newer pytest-asyncio
+              run: pip3 install -U pytest-asyncio
+              if: matrix.flavour == 'ubuntu-20'
+
             - name: Install test prerequsites (from pip for Ubuntu 18)
-              run: pip3 install pytest uvicorn
+              run: pip3 install pytest pytest-asyncio uvicorn
               if: matrix.flavour == 'oldstuff'
 
             - name: Install Python webservers
@@ -123,7 +127,6 @@ jobs:
             - name: PHP unit tests
               run: phpunit ./
               working-directory: Nominatim/test/php
-              if: ${{ (matrix.ubuntu == 20) || (matrix.ubuntu == 22) }}
 
             - name: Python unit tests
               run: python3 -m pytest test/python

@@ -36,6 +36,7 @@ It has the following additional requirements:
 * [mypy](http://mypy-lang.org/) (plus typing information for external libs)
 * [Python Typing Extensions](https://github.com/python/typing_extensions) (for Python < 3.9)
 * [pytest](https://pytest.org)
+* [pytest-asyncio](https://pytest-asyncio.readthedocs.io)
 
 For testing the Python search frontend, you need to install extra dependencies
 depending on your choice of webserver framework:
@@ -62,7 +63,7 @@ To install all necessary packages run:
 sudo apt install php-cgi phpunit php-codesniffer \
                  python3-pip python3-setuptools python3-dev
 
-pip3 install --user behave mkdocs mkdocstrings pytest pylint \
+pip3 install --user behave mkdocs mkdocstrings pytest pytest-asyncio pylint \
                     mypy types-PyYAML types-jinja2 types-psycopg2 types-psutil \
                     types-ujosn types-requests typing-extensions\
                     sanic-testing httpx asgi-lifespan

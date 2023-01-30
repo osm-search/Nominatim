@@ -99,18 +99,22 @@ jobs:
               if: (matrix.flavour == 'oldstuff') || (matrix.flavour == 'ubuntu-22')
 
             - name: Install test prerequsites (from apt for Ununtu 2x)
-              run: sudo apt-get install -y -qq python3-pytest uvicorn
+              run: sudo apt-get install -y -qq python3-pytest python3-pytest-asyncio uvicorn
               if: matrix.flavour != 'oldstuff'
 
+            - name: Install newer pytest-asyncio
+              run: pip3 install -U pytest-asyncio
+              if: matrix.flavour == 'ubuntu-20'
+
             - name: Install test prerequsites (from pip for Ubuntu 18)
-              run: pip3 install pytest uvicorn
+              run: pip3 install pytest pytest-asyncio uvicorn
               if: matrix.flavour == 'oldstuff'
 
             - name: Install Python webservers
               run: pip3 install falcon sanic sanic-testing sanic-cors starlette
 
-            - name: Install latest pylint/mypy
-              run: pip3 install -U pylint mypy types-PyYAML types-jinja2 types-psycopg2 types-psutil types-requests types-ujson typing-extensions asgi_lifespan sqlalchemy2-stubs
+            - name: Install latest pylint
+              run: pip3 install -U pylint asgi_lifespan
 
             - name: PHP linting
               run: phpcs --report-width=120 .
@@ -123,7 +127,6 @@ jobs:
             - name: PHP unit tests
               run: phpunit ./
               working-directory: Nominatim/test/php
-              if: ${{ (matrix.ubuntu == 20) || (matrix.ubuntu == 22) }}
 
             - name: Python unit tests
               run: python3 -m pytest test/python
@@ -134,8 +137,8 @@ jobs:
                   python3 -m behave -DREMOVE_TEMPLATE=1 -DBUILDDIR=$GITHUB_WORKSPACE/build --format=progress3
               working-directory: Nominatim/test/bdd
 
-            - name: Install newer Python packages (for typechecking info)
-              run: pip3 install -U osmium uvicorn
+            - name: Install mypy and typechecking info
+              run: pip3 install -U mypy osmium uvicorn types-PyYAML types-jinja2 types-psycopg2 types-psutil types-requests types-ujson typing-extensions
               if: matrix.flavour != 'oldstuff'
 
             - name: Python static typechecking

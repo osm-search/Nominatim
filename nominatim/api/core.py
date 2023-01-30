@@ -7,7 +7,7 @@
 """
 Implementation of classes for API access via libraries.
 """
-from typing import Mapping, Optional, Any, AsyncIterator
+from typing import Mapping, Optional, Any, AsyncIterator, Dict
 import asyncio
 import contextlib
 from pathlib import Path
@@ -16,8 +16,10 @@ import sqlalchemy as sa
 import sqlalchemy.ext.asyncio as sa_asyncio
 import asyncpg
 
+from nominatim.db.sqlalchemy_schema import SearchTables
 from nominatim.config import Configuration
 from nominatim.api.status import get_status, StatusResult
+from nominatim.api.connection import SearchConnection
 
 class NominatimAPIAsync:
     """ API loader asynchornous version.
@@ -29,6 +31,8 @@ class NominatimAPIAsync:
 
         self._engine_lock = asyncio.Lock()
         self._engine: Optional[sa_asyncio.AsyncEngine] = None
+        self._tables: Optional[SearchTables] = None
+        self._property_cache: Dict[str, Any] = {'DB:server_version': 0}
 
 
     async def setup_database(self) -> None:
@@ -61,18 +65,21 @@ class NominatimAPIAsync:
             try:
                 async with engine.begin() as conn:
                     result = await conn.scalar(sa.text('SHOW server_version_num'))
-                    self.server_version = int(result)
+                    server_version = int(result)
             except asyncpg.PostgresError:
-                self.server_version = 0
+                server_version = 0
 
-            if self.server_version >= 110000:
-                @sa.event.listens_for(engine.sync_engine, "connect") # type: ignore[misc]
+            if server_version >= 110000:
+                @sa.event.listens_for(engine.sync_engine, "connect")
                 def _on_connect(dbapi_con: Any, _: Any) -> None:
                     cursor = dbapi_con.cursor()
                     cursor.execute("SET jit_above_cost TO '-1'")
                 # Make sure that all connections get the new settings
                 await self.close()
 
+            self._property_cache['DB:server_version'] = server_version
+
+            self._tables = SearchTables(sa.MetaData(), engine.name) # pylint: disable=no-member
             self._engine = engine
 
 
@@ -86,7 +93,7 @@ class NominatimAPIAsync:
 
 
     @contextlib.asynccontextmanager
-    async def begin(self) -> AsyncIterator[sa_asyncio.AsyncConnection]:
+    async def begin(self) -> AsyncIterator[SearchConnection]:
         """ Create a new connection with automatic transaction handling.
 
             This function may be used to get low-level access to the database.
@@ -97,9 +104,10 @@ class NominatimAPIAsync:
             await self.setup_database()
 
         assert self._engine is not None
+        assert self._tables is not None
 
         async with self._engine.begin() as conn:
-            yield conn
+            yield SearchConnection(conn, self._tables, self._property_cache)
 
 
     async def status(self) -> StatusResult:

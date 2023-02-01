@@ -45,7 +45,7 @@ class AddressLine:
     names: Dict[str, str]
     extratags: Optional[Dict[str, str]]
 
-    admin_level: int
+    admin_level: Optional[int]
     fromarea: bool
     isaddress: bool
     rank_address: int
@@ -187,10 +187,16 @@ def _result_row_to_address_row(row: SaRow) -> AddressLine:
     if 'place_type' in row:
         extratags['place_type'] = row.place_type
 
+    names = row.name
+    if getattr(row, 'housenumber', None) is not None:
+        if names is None:
+            names = {}
+        names['housenumber'] = row.housenumber
+
     return AddressLine(place_id=row.place_id,
-                       osm_object=(row.osm_type, row.osm_id),
+                       osm_object=None if row.osm_type is None else (row.osm_type, row.osm_id),
                        category=(getattr(row, 'class'), row.type),
-                       names=row.name,
+                       names=names,
                        extratags=extratags,
                        admin_level=row.admin_level,
                        fromarea=row.fromarea,
@@ -235,7 +241,7 @@ def _placex_select_address_row(conn: SearchConnection,
     t = conn.t.placex
     return sa.select(t.c.place_id, t.c.osm_type, t.c.osm_id, t.c.name,
                      t.c.class_.label('class'), t.c.type,
-                     t.c.admin_level,
+                     t.c.admin_level, t.c.housenumber,
                      sa.literal_column("""ST_GeometryType(geometry) in
                                         ('ST_Polygon','ST_MultiPolygon')""").label('fromarea'),
                      t.c.rank_address,

@@ -20,4 +20,11 @@ from .status import (StatusResult as StatusResult)
 from .types import (PlaceID as PlaceID,
                     OsmID as OsmID,
                     PlaceRef as PlaceRef,
+                    GeometryFormat as GeometryFormat,
                     LookupDetails as LookupDetails)
+from .results import (SourceTable as SourceTable,
+                      AddressLine as AddressLine,
+                      AddressLines as AddressLines,
+                      WordInfo as WordInfo,
+                      WordInfos as WordInfos,
+                      SearchResult as SearchResult)

@@ -23,8 +23,8 @@ def _select_column_geometry(column: SaColumn,
     """
     if geometry_output & ntyp.GeometryFormat.GEOJSON:
         return sa.literal_column(f"""
-                  ST_AsGeoJSON(CASE WHEN ST_NPoints({0}) > 5000
-                               THEN ST_SimplifyPreserveTopology({0}, 0.0001)
+                  ST_AsGeoJSON(CASE WHEN ST_NPoints({column.name}) > 5000
+                               THEN ST_SimplifyPreserveTopology({column.name}, 0.0001)
                                ELSE {column.name} END)
                   """).label('geometry_geojson')
 

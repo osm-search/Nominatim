@@ -155,6 +155,12 @@ class NominatimAPI:
         self._loop.close()
 
 
+    @property
+    def config(self) -> Configuration:
+        """ Return the configuration used by the API.
+        """
+        return self._async_api.config
+
     def status(self) -> StatusResult:
         """ Return the status of the database.
         """

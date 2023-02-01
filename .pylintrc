@@ -15,4 +15,4 @@ ignored-classes=NominatimArgs,closing
 #   typed Python is enabled. See also https://github.com/PyCQA/pylint/issues/5273
 disable=too-few-public-methods,duplicate-code,too-many-ancestors,bad-option-value,no-self-use,not-context-manager
 
-good-names=i,x,y,m,fd,db,cc
+good-names=i,x,y,m,t,fd,db,cc

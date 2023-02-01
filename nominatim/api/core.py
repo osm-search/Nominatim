@@ -18,8 +18,12 @@ import asyncpg
 
 from nominatim.db.sqlalchemy_schema import SearchTables
 from nominatim.config import Configuration
-from nominatim.api.status import get_status, StatusResult
 from nominatim.api.connection import SearchConnection
+from nominatim.api.status import get_status, StatusResult
+from nominatim.api.lookup import get_place_by_id
+from nominatim.api.types import PlaceRef, LookupDetails
+from nominatim.api.results import SearchResult
+
 
 class NominatimAPIAsync:
     """ API loader asynchornous version.
@@ -122,6 +126,16 @@ class NominatimAPIAsync:
         return status
 
 
+    async def lookup(self, place: PlaceRef,
+                     details: LookupDetails) -> Optional[SearchResult]:
+        """ Get detailed information about a place in the database.
+
+            Returns None if there is no entry under the given ID.
+        """
+        async with self.begin() as db:
+            return await get_place_by_id(db, place, details)
+
+
 class NominatimAPI:
     """ API loader, synchronous version.
     """
@@ -145,3 +159,10 @@ class NominatimAPI:
         """ Return the status of the database.
         """
         return self._loop.run_until_complete(self._async_api.status())
+
+
+    def lookup(self, place: PlaceRef,
+               details: LookupDetails) -> Optional[SearchResult]:
+        """ Get detailed information about a place in the database.
+        """
+        return self._loop.run_until_complete(self._async_api.lookup(place, details))

@@ -103,6 +103,20 @@ class APITester:
                       'postcode': kw.get('postcode'),
                       'linegeo': 'SRID=4326;' + kw.get('geometry', 'LINESTRING(1.1 -0.2, 1.09 -0.22)')})
 
+
+    def add_postcode(self, **kw):
+        self.add_data('postcode',
+                     {'place_id': kw.get('place_id', 1000),
+                      'parent_place_id': kw.get('parent_place_id'),
+                      'country_code': kw.get('country_code'),
+                      'postcode': kw.get('postcode'),
+                      'rank_search': kw.get('rank_search', 20),
+                      'rank_address': kw.get('rank_address', 22),
+                      'indexed_date': kw.get('indexed_date',
+                                             dt.datetime(2022, 12, 7, 14, 14, 46, 0)),
+                      'geometry': 'SRID=4326;' + kw.get('geometry', 'POINT(23 34)')})
+
+
     async def exec_async(self, sql, *args, **kwargs):
         async with self.api._async_api.begin() as conn:
             return await conn.execute(sql, *args, **kwargs)

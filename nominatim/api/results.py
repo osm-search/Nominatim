@@ -203,6 +203,23 @@ def create_from_tiger_row(row: SaRow) -> SearchResult:
                         geometry=_filter_geometries(row))
 
 
+def create_from_postcode_row(row: SaRow) -> SearchResult:
+    """ Construct a new SearchResult and add the data from the result row
+        from the postcode centroid table.
+    """
+    return SearchResult(source_table=SourceTable.POSTCODE,
+                        place_id=row.place_id,
+                        parent_place_id=row.parent_place_id,
+                        category=('place', 'postcode'),
+                        names={'ref': row.postcode},
+                        rank_search=row.rank_search,
+                        rank_address=row.rank_address,
+                        country_code=row.country_code,
+                        centroid=Point(row.x, row.y),
+                        indexed_date=row.indexed_date,
+                        geometry=_filter_geometries(row))
+
+
 async def add_result_details(conn: SearchConnection, result: SearchResult,
                              details: LookupDetails) -> None:
     """ Retrieve more details from the database according to the

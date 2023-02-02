@@ -95,8 +95,8 @@ async def find_in_osmline(conn: SearchConnection, place: ntyp.PlaceRef,
 
 async def find_in_tiger(conn: SearchConnection, place: ntyp.PlaceRef,
                         details: ntyp.LookupDetails) -> Optional[SaRow]:
-    """ Search for the given place in table of Tiger addresses and return the
-        base information.
+    """ Search for the given place in the table of Tiger addresses and return
+        the base information. Only lookup by place ID is supported.
     """
     t = conn.t.tiger
     sql = sa.select(t.c.place_id, t.c.parent_place_id,
@@ -105,6 +105,27 @@ async def find_in_tiger(conn: SearchConnection, place: ntyp.PlaceRef,
                     sa.func.ST_X(sa.func.ST_Centroid(t.c.linegeo)).label('x'),
                     sa.func.ST_Y(sa.func.ST_Centroid(t.c.linegeo)).label('y'),
                     _select_column_geometry(t.c.linegeo, details.geometry_output))
+
+    if isinstance(place, ntyp.PlaceID):
+        sql = sql.where(t.c.place_id == place.place_id)
+    else:
+        return None
+
+    return (await conn.execute(sql)).one_or_none()
+
+
+async def find_in_postcode(conn: SearchConnection, place: ntyp.PlaceRef,
+                           details: ntyp.LookupDetails) -> Optional[SaRow]:
+    """ Search for the given place in the postcode table and return the
+        base information. Only lookup by place ID is supported.
+    """
+    t = conn.t.postcode
+    sql = sa.select(t.c.place_id, t.c.parent_place_id,
+                    t.c.rank_search, t.c.rank_address,
+                    t.c.indexed_date, t.c.postcode, t.c.country_code,
+                    sa.func.ST_X(t.c.geometry).label('x'),
+                    sa.func.ST_Y(t.c.geometry).label('y'),
+                    _select_column_geometry(t.c.geometry, details.geometry_output))
 
     if isinstance(place, ntyp.PlaceID):
         sql = sql.where(t.c.place_id == place.place_id)
@@ -130,6 +151,12 @@ async def get_place_by_id(conn: SearchConnection, place: ntyp.PlaceRef,
     row = await find_in_osmline(conn, place, details)
     if row is not None:
         result = nres.create_from_osmline_row(row)
+        await nres.add_result_details(conn, result, details)
+        return result
+
+    row = await find_in_postcode(conn, place, details)
+    if row is not None:
+        result = nres.create_from_postcode_row(row)
         await nres.add_result_details(conn, result, details)
         return result
 

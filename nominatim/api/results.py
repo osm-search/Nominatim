@@ -11,7 +11,7 @@ Data classes are part of the public API while the functions are for
 internal use only. That's why they are implemented as free-standing functions
 instead of member functions.
 """
-from typing import Optional, Tuple, Dict, Sequence, Any
+from typing import Optional, Tuple, Dict, Sequence
 import enum
 import dataclasses
 import datetime as dt

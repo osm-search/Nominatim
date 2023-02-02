@@ -104,7 +104,7 @@ def _migration(major: int, minor: int, patch: int = 0,
         there.
     """
     def decorator(func: Callable[..., None]) -> Callable[..., None]:
-        version = (NominatimVersion(major, minor, patch, dbpatch))
+        version = NominatimVersion(major, minor, patch, dbpatch)
         _MIGRATION_FUNCTIONS.append((version, func))
         return func
 

@@ -77,6 +77,22 @@ class APITester:
                        'isaddress': kw.get('isaddress', True)})
 
 
+    def add_osmline(self, **kw):
+        self.add_data('osmline',
+                     {'place_id': kw.get('place_id', 10000),
+                      'osm_id': kw.get('osm_id', 4004),
+                      'parent_place_id': kw.get('parent_place_id'),
+                      'indexed_date': kw.get('indexed_date',
+                                             dt.datetime(2022, 12, 7, 14, 14, 46, 0)),
+                      'startnumber': kw.get('startnumber', 2),
+                      'endnumber': kw.get('endnumber', 6),
+                      'step': kw.get('step', 2),
+                      'address': kw.get('address'),
+                      'postcode': kw.get('postcode'),
+                      'country_code': kw.get('country_code'),
+                      'linegeo': 'SRID=4326;' + kw.get('geometry', 'LINESTRING(1.1 -0.2, 1.09 -0.22)')})
+
+
     async def exec_async(self, sql, *args, **kwargs):
         async with self.api._async_api.begin() as conn:
             return await conn.execute(sql, *args, **kwargs)

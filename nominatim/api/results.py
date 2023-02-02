@@ -135,6 +135,11 @@ class SearchResult:
         return '{"type": "Point","coordinates": [%f, %f]}' % self.centroid
 
 
+def _filter_geometries(row: SaRow) -> Dict[str, str]:
+    return {k[9:]: v for k, v in row._mapping.items() # pylint: disable=W0212
+            if k.startswith('geometry_')}
+
+
 def create_from_placex_row(row: SaRow) -> SearchResult:
     """ Construct a new SearchResult and add the data from the result row
         from the placex table.
@@ -157,10 +162,30 @@ def create_from_placex_row(row: SaRow) -> SearchResult:
                           importance=row.importance,
                           country_code=row.country_code,
                           indexed_date=getattr(row, 'indexed_date'),
-                          centroid=Point(row.x, row.y))
+                          centroid=Point(row.x, row.y),
+                          geometry = _filter_geometries(row))
 
-    result.geometry = {k[9:]: v for k, v in row._mapping.items() # pylint: disable=W0212
-                       if k.startswith('geometry_')}
+    return result
+
+
+def create_from_osmline_row(row: SaRow) -> SearchResult:
+    """ Construct a new SearchResult and add the data from the result row
+        from the osmline table.
+    """
+    result = SearchResult(source_table=SourceTable.OSMLINE,
+                          place_id=row.place_id,
+                          parent_place_id=row.parent_place_id,
+                          osm_object=('W', row.osm_id),
+                          category=('place', 'houses'),
+                          address=row.address,
+                          postcode=row.postcode,
+                          extratags={'startnumber': str(row.startnumber),
+                                     'endnumber': str(row.endnumber),
+                                     'step': str(row.step)},
+                          country_code=row.country_code,
+                          indexed_date=getattr(row, 'indexed_date'),
+                          centroid=Point(row.x, row.y),
+                          geometry = _filter_geometries(row))
 
     return result
 

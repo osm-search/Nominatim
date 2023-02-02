@@ -64,6 +64,35 @@ async def find_in_placex(conn: SearchConnection, place: ntyp.PlaceRef,
     return (await conn.execute(sql)).one_or_none()
 
 
+async def find_in_osmline(conn: SearchConnection, place: ntyp.PlaceRef,
+                          details: ntyp.LookupDetails) -> Optional[SaRow]:
+    """ Search for the given place in the osmline table and return the
+        base information.
+    """
+    t = conn.t.osmline
+    sql = sa.select(t.c.place_id, t.c.osm_id, t.c.parent_place_id,
+                    t.c.indexed_date, t.c.startnumber, t.c.endnumber,
+                    t.c.step, t.c.address, t.c.postcode, t.c.country_code,
+                    sa.func.ST_X(sa.func.ST_Centroid(t.c.linegeo)).label('x'),
+                    sa.func.ST_Y(sa.func.ST_Centroid(t.c.linegeo)).label('y'),
+                    _select_column_geometry(t.c.linegeo, details.geometry_output))
+
+    if isinstance(place, ntyp.PlaceID):
+        sql = sql.where(t.c.place_id == place.place_id)
+    elif isinstance(place, ntyp.OsmID) and place.osm_type == 'W':
+        # There may be multiple interpolations for a single way.
+        # If 'class' contains a number, return the one that belongs to that number.
+        sql = sql.where(t.c.osm_id == place.osm_id).limit(1)
+        if place.osm_class and place.osm_class.isdigit():
+            sql = sql.order_by(sa.func.greatest(0,
+                                    sa.func.least(int(place.osm_class) - t.c.endnumber),
+                                           t.c.startnumber - int(place.osm_class)))
+    else:
+        return None
+
+    return (await conn.execute(sql)).one_or_none()
+
+
 async def get_place_by_id(conn: SearchConnection, place: ntyp.PlaceRef,
                           details: ntyp.LookupDetails) -> Optional[nres.SearchResult]:
     """ Retrieve a place with additional details from the database.
@@ -74,6 +103,12 @@ async def get_place_by_id(conn: SearchConnection, place: ntyp.PlaceRef,
     row = await find_in_placex(conn, place, details)
     if row is not None:
         result = nres.create_from_placex_row(row=row)
+        await nres.add_result_details(conn, result, details)
+        return result
+
+    row = await find_in_osmline(conn, place, details)
+    if row is not None:
+        result = nres.create_from_osmline_row(row=row)
         await nres.add_result_details(conn, result, details)
         return result
 

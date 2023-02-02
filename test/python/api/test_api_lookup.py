@@ -172,7 +172,7 @@ def test_lookup_placex_with_address_details(apiobj):
            ]
 
 
-def test_lookup_place_wth_linked_places_none_existing(apiobj):
+def test_lookup_place_with_linked_places_none_existing(apiobj):
     apiobj.add_placex(place_id=332, osm_type='W', osm_id=4,
                      class_='highway', type='residential',  name='Street',
                      country_code='pl', linked_place_id=45,
@@ -251,6 +251,127 @@ def test_lookup_place_with_parented_places_existing(apiobj):
                                 admin_level=15, fromarea=False, isaddress=True,
                                 rank_address=30, distance=0.0),
     ]
+
+
+@pytest.mark.parametrize('idobj', (napi.PlaceID(4924), napi.OsmID('W', 9928)))
+def test_lookup_in_osmline(apiobj, idobj):
+    import_date = dt.datetime(2022, 12, 7, 14, 14, 46, 0)
+    apiobj.add_osmline(place_id=4924, osm_id=9928,
+                       parent_place_id=12,
+                       startnumber=1, endnumber=4, step=1,
+                       country_code='gb', postcode='34425',
+                       address={'city': 'Big'},
+                       indexed_date=import_date,
+                       geometry='LINESTRING(23 34, 23 35)')
+
+    result = apiobj.api.lookup(idobj, napi.LookupDetails())
+
+    assert result is not None
+
+    assert result.source_table.name == 'OSMLINE'
+    assert result.category == ('place', 'houses')
+    assert result.centroid == (pytest.approx(23.0), pytest.approx(34.5))
+
+    assert result.place_id == 4924
+    assert result.parent_place_id == 12
+    assert result.linked_place_id is None
+    assert result.osm_object == ('W', 9928)
+    assert result.admin_level == 15
+
+    assert result.names is None
+    assert result.address == {'city': 'Big'}
+    assert result.extratags == {'startnumber': '1', 'endnumber': '4', 'step': '1'}
+
+    assert result.housenumber is None
+    assert result.postcode == '34425'
+    assert result.wikipedia is None
+
+    assert result.rank_search == 30
+    assert result.rank_address == 30
+    assert result.importance is None
+
+    assert result.country_code == 'gb'
+    assert result.indexed_date == import_date
+
+    assert result.address_rows is None
+    assert result.linked_rows is None
+    assert result.parented_rows is None
+    assert result.name_keywords is None
+    assert result.address_keywords is None
+
+    assert result.geometry == {'type': 'ST_LineString'}
+
+
+def test_lookup_in_osmline_split_interpolation(apiobj):
+    apiobj.add_osmline(place_id=1000, osm_id=9,
+                       startnumber=2, endnumber=4, step=1)
+    apiobj.add_osmline(place_id=1001, osm_id=9,
+                       startnumber=6, endnumber=9, step=1)
+    apiobj.add_osmline(place_id=1002, osm_id=9,
+                       startnumber=11, endnumber=20, step=1)
+
+    for i in range(1, 6):
+        result = apiobj.api.lookup(napi.OsmID('W', 9, str(i)), napi.LookupDetails())
+        assert result.place_id == 1000
+    for i in range(7, 11):
+        result = apiobj.api.lookup(napi.OsmID('W', 9, str(i)), napi.LookupDetails())
+        assert result.place_id == 1001
+    for i in range(12, 22):
+        result = apiobj.api.lookup(napi.OsmID('W', 9, str(i)), napi.LookupDetails())
+        assert result.place_id == 1002
+
+
+def test_lookup_osmline_with_address_details(apiobj):
+    apiobj.add_osmline(place_id=9000, osm_id=9,
+                       startnumber=2, endnumber=4, step=1,
+                       parent_place_id=332)
+    apiobj.add_placex(place_id=332, osm_type='W', osm_id=4,
+                     class_='highway', type='residential',  name='Street',
+                     country_code='pl',
+                     rank_search=27, rank_address=26)
+    apiobj.add_address_placex(332, fromarea=False, isaddress=False,
+                              distance=0.0034,
+                              place_id=1000, osm_type='N', osm_id=3333,
+                              class_='place', type='suburb', name='Smallplace',
+                              country_code='pl', admin_level=13,
+                              rank_search=24, rank_address=23)
+    apiobj.add_address_placex(332, fromarea=True, isaddress=True,
+                              place_id=1001, osm_type='N', osm_id=3334,
+                              class_='place', type='city', name='Bigplace',
+                              country_code='pl',
+                              rank_search=17, rank_address=16)
+
+    result = apiobj.api.lookup(napi.PlaceID(9000),
+                               napi.LookupDetails(address_details=True))
+
+    assert result.address_rows == [
+               napi.AddressLine(place_id=None, osm_object=None,
+                                category=('place', 'house_number'),
+                                names={'ref': '2'}, extratags={},
+                                admin_level=None, fromarea=True, isaddress=True,
+                                rank_address=28, distance=0.0),
+               napi.AddressLine(place_id=332, osm_object=('W', 4),
+                                category=('highway', 'residential'),
+                                names={'name': 'Street'}, extratags={},
+                                admin_level=15, fromarea=True, isaddress=True,
+                                rank_address=26, distance=0.0),
+               napi.AddressLine(place_id=1000, osm_object=('N', 3333),
+                                category=('place', 'suburb'),
+                                names={'name': 'Smallplace'}, extratags={},
+                                admin_level=13, fromarea=False, isaddress=True,
+                                rank_address=23, distance=0.0034),
+               napi.AddressLine(place_id=1001, osm_object=('N', 3334),
+                                category=('place', 'city'),
+                                names={'name': 'Bigplace'}, extratags={},
+                                admin_level=15, fromarea=True, isaddress=True,
+                                rank_address=16, distance=0.0),
+               napi.AddressLine(place_id=None, osm_object=None,
+                                category=('place', 'country_code'),
+                                names={'ref': 'pl'}, extratags={},
+                                admin_level=None, fromarea=True, isaddress=False,
+                                rank_address=4, distance=0.0)
+
+           ]
 
 
 @pytest.mark.parametrize('gtype', (napi.GeometryFormat.KML,

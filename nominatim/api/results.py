@@ -144,50 +144,63 @@ def create_from_placex_row(row: SaRow) -> SearchResult:
     """ Construct a new SearchResult and add the data from the result row
         from the placex table.
     """
-    result = SearchResult(source_table=SourceTable.PLACEX,
-                          place_id=row.place_id,
-                          parent_place_id=row.parent_place_id,
-                          linked_place_id=row.linked_place_id,
-                          osm_object=(row.osm_type, row.osm_id),
-                          category=(row.class_, row.type),
-                          admin_level=row.admin_level,
-                          names=row.name,
-                          address=row.address,
-                          extratags=row.extratags,
-                          housenumber=row.housenumber,
-                          postcode=row.postcode,
-                          wikipedia=row.wikipedia,
-                          rank_address=row.rank_address,
-                          rank_search=row.rank_search,
-                          importance=row.importance,
-                          country_code=row.country_code,
-                          indexed_date=getattr(row, 'indexed_date'),
-                          centroid=Point(row.x, row.y),
-                          geometry = _filter_geometries(row))
-
-    return result
+    return SearchResult(source_table=SourceTable.PLACEX,
+                        place_id=row.place_id,
+                        parent_place_id=row.parent_place_id,
+                        linked_place_id=row.linked_place_id,
+                        osm_object=(row.osm_type, row.osm_id),
+                        category=(row.class_, row.type),
+                        admin_level=row.admin_level,
+                        names=row.name,
+                        address=row.address,
+                        extratags=row.extratags,
+                        housenumber=row.housenumber,
+                        postcode=row.postcode,
+                        wikipedia=row.wikipedia,
+                        rank_address=row.rank_address,
+                        rank_search=row.rank_search,
+                        importance=row.importance,
+                        country_code=row.country_code,
+                        indexed_date=getattr(row, 'indexed_date'),
+                        centroid=Point(row.x, row.y),
+                        geometry=_filter_geometries(row))
 
 
 def create_from_osmline_row(row: SaRow) -> SearchResult:
     """ Construct a new SearchResult and add the data from the result row
         from the osmline table.
     """
-    result = SearchResult(source_table=SourceTable.OSMLINE,
-                          place_id=row.place_id,
-                          parent_place_id=row.parent_place_id,
-                          osm_object=('W', row.osm_id),
-                          category=('place', 'houses'),
-                          address=row.address,
-                          postcode=row.postcode,
-                          extratags={'startnumber': str(row.startnumber),
-                                     'endnumber': str(row.endnumber),
-                                     'step': str(row.step)},
-                          country_code=row.country_code,
-                          indexed_date=getattr(row, 'indexed_date'),
-                          centroid=Point(row.x, row.y),
-                          geometry = _filter_geometries(row))
+    return SearchResult(source_table=SourceTable.OSMLINE,
+                        place_id=row.place_id,
+                        parent_place_id=row.parent_place_id,
+                        osm_object=('W', row.osm_id),
+                        category=('place', 'houses'),
+                        address=row.address,
+                        postcode=row.postcode,
+                        extratags={'startnumber': str(row.startnumber),
+                                   'endnumber': str(row.endnumber),
+                                   'step': str(row.step)},
+                        country_code=row.country_code,
+                        indexed_date=getattr(row, 'indexed_date'),
+                        centroid=Point(row.x, row.y),
+                        geometry=_filter_geometries(row))
 
-    return result
+
+def create_from_tiger_row(row: SaRow) -> SearchResult:
+    """ Construct a new SearchResult and add the data from the result row
+        from the Tiger table.
+    """
+    return SearchResult(source_table=SourceTable.TIGER,
+                        place_id=row.place_id,
+                        parent_place_id=row.parent_place_id,
+                        category=('place', 'houses'),
+                        postcode=row.postcode,
+                        extratags={'startnumber': str(row.startnumber),
+                                   'endnumber': str(row.endnumber),
+                                   'step': str(row.step)},
+                        country_code='us',
+                        centroid=Point(row.x, row.y),
+                        geometry=_filter_geometries(row))
 
 
 async def add_result_details(conn: SearchConnection, result: SearchResult,

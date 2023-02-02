@@ -18,7 +18,7 @@ from nominatim.db.sql_preprocessor import SQLPreprocessor
 class APITester:
 
     def __init__(self):
-        self.api = napi.NominatimAPI(Path('/invalid'), {})
+        self.api = napi.NominatimAPI(Path('/invalid'))
         self.async_to_sync(self.api._async_api.setup_database())
 
 
@@ -93,6 +93,16 @@ class APITester:
                       'linegeo': 'SRID=4326;' + kw.get('geometry', 'LINESTRING(1.1 -0.2, 1.09 -0.22)')})
 
 
+    def add_tiger(self, **kw):
+        self.add_data('tiger',
+                     {'place_id': kw.get('place_id', 30000),
+                      'parent_place_id': kw.get('parent_place_id'),
+                      'startnumber': kw.get('startnumber', 2),
+                      'endnumber': kw.get('endnumber', 6),
+                      'step': kw.get('step', 2),
+                      'postcode': kw.get('postcode'),
+                      'linegeo': 'SRID=4326;' + kw.get('geometry', 'LINESTRING(1.1 -0.2, 1.09 -0.22)')})
+
     async def exec_async(self, sql, *args, **kwargs):
         async with self.api._async_api.begin() as conn:
             return await conn.execute(sql, *args, **kwargs)
@@ -104,9 +114,10 @@ class APITester:
 
 
 @pytest.fixture
-def apiobj(temp_db_with_extensions, temp_db_conn):
+def apiobj(temp_db_with_extensions, temp_db_conn, monkeypatch):
     """ Create an asynchronous SQLAlchemy engine for the test DB.
     """
+    monkeypatch.setenv('NOMINATIM_USE_US_TIGER_DATA', 'yes')
     testapi = APITester()
     testapi.async_to_sync(testapi.create_tables())
 

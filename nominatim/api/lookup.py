@@ -93,6 +93,27 @@ async def find_in_osmline(conn: SearchConnection, place: ntyp.PlaceRef,
     return (await conn.execute(sql)).one_or_none()
 
 
+async def find_in_tiger(conn: SearchConnection, place: ntyp.PlaceRef,
+                        details: ntyp.LookupDetails) -> Optional[SaRow]:
+    """ Search for the given place in table of Tiger addresses and return the
+        base information.
+    """
+    t = conn.t.tiger
+    sql = sa.select(t.c.place_id, t.c.parent_place_id,
+                    t.c.startnumber, t.c.endnumber, t.c.step,
+                    t.c.postcode,
+                    sa.func.ST_X(sa.func.ST_Centroid(t.c.linegeo)).label('x'),
+                    sa.func.ST_Y(sa.func.ST_Centroid(t.c.linegeo)).label('y'),
+                    _select_column_geometry(t.c.linegeo, details.geometry_output))
+
+    if isinstance(place, ntyp.PlaceID):
+        sql = sql.where(t.c.place_id == place.place_id)
+    else:
+        return None
+
+    return (await conn.execute(sql)).one_or_none()
+
+
 async def get_place_by_id(conn: SearchConnection, place: ntyp.PlaceRef,
                           details: ntyp.LookupDetails) -> Optional[nres.SearchResult]:
     """ Retrieve a place with additional details from the database.
@@ -102,13 +123,19 @@ async def get_place_by_id(conn: SearchConnection, place: ntyp.PlaceRef,
 
     row = await find_in_placex(conn, place, details)
     if row is not None:
-        result = nres.create_from_placex_row(row=row)
+        result = nres.create_from_placex_row(row)
         await nres.add_result_details(conn, result, details)
         return result
 
     row = await find_in_osmline(conn, place, details)
     if row is not None:
-        result = nres.create_from_osmline_row(row=row)
+        result = nres.create_from_osmline_row(row)
+        await nres.add_result_details(conn, result, details)
+        return result
+
+    row = await find_in_tiger(conn, place, details)
+    if row is not None:
+        result = nres.create_from_tiger_row(row)
         await nres.add_result_details(conn, result, details)
         return result
 

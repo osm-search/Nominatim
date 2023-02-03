@@ -32,17 +32,17 @@ def test_status_unsupported():
 
 
 def test_status_format_text():
-    assert api_impl.format_result(StatusResult(0, 'message here'), 'text') == 'OK'
+    assert api_impl.format_result(StatusResult(0, 'message here'), 'text', {}) == 'OK'
 
 
 def test_status_format_text():
-    assert api_impl.format_result(StatusResult(500, 'message here'), 'text') == 'ERROR: message here'
+    assert api_impl.format_result(StatusResult(500, 'message here'), 'text', {}) == 'ERROR: message here'
 
 
 def test_status_format_json_minimal():
     status = StatusResult(700, 'Bad format.')
 
-    result = api_impl.format_result(status, 'json')
+    result = api_impl.format_result(status, 'json', {})
 
     assert result == '{"status":700,"message":"Bad format.","software_version":"%s"}' % (NOMINATIM_VERSION, )
 
@@ -52,6 +52,6 @@ def test_status_format_json_full():
     status.data_updated = dt.datetime(2010, 2, 7, 20, 20, 3, 0, tzinfo=dt.timezone.utc)
     status.database_version = '5.6'
 
-    result = api_impl.format_result(status, 'json')
+    result = api_impl.format_result(status, 'json', {})
 
     assert result == '{"status":0,"message":"OK","data_updated":"2010-02-07T20:20:03+00:00","software_version":"%s","database_version":"5.6"}' % (NOMINATIM_VERSION, )

@@ -10,11 +10,13 @@ Subcommand definitions for API calls from the command line.
 from typing import Mapping, Dict
 import argparse
 import logging
+import json
+import sys
 
 from nominatim.tools.exec_utils import run_api_script
 from nominatim.errors import UsageError
 from nominatim.clicmd.args import NominatimArgs
-from nominatim.api import NominatimAPI, StatusResult
+import nominatim.api as napi
 import nominatim.api.v1 as api_output
 
 # Do not repeat documentation of subcommand classes.
@@ -36,15 +38,6 @@ EXTRADATA_PARAMS = (
     ('extratags', ("Include additional information if available "
                    "(e.g. wikipedia link, opening hours)")),
     ('namedetails', 'Include a list of alternative names')
-)
-
-DETAILS_SWITCHES = (
-    ('addressdetails', 'Include a breakdown of the address into elements'),
-    ('keywords', 'Include a list of name keywords and address keywords'),
-    ('linkedplaces', 'Include a details of places that are linked with this one'),
-    ('hierarchy', 'Include details of places lower in the address hierarchy'),
-    ('group_hierarchy', 'Group the places by type'),
-    ('polygon_geojson', 'Include geometry of result')
 )
 
 def _add_api_output_arguments(parser: argparse.ArgumentParser) -> None:
@@ -240,29 +233,66 @@ class APIDetails:
                                  "of the same object."))
 
         group = parser.add_argument_group('Output arguments')
-        for name, desc in DETAILS_SWITCHES:
-            group.add_argument('--' + name, action='store_true', help=desc)
+        group.add_argument('--addressdetails', action='store_true',
+                           help='Include a breakdown of the address into elements')
+        group.add_argument('--keywords', action='store_true',
+                           help='Include a list of name keywords and address keywords')
+        group.add_argument('--linkedplaces', action='store_true',
+                           help='Include a details of places that are linked with this one')
+        group.add_argument('--hierarchy', action='store_true',
+                           help='Include details of places lower in the address hierarchy')
+        group.add_argument('--group_hierarchy', action='store_true',
+                           help='Group the places by type')
+        group.add_argument('--polygon_geojson', action='store_true',
+                           help='Include geometry of result')
         group.add_argument('--lang', '--accept-language', metavar='LANGS',
                            help='Preferred language order for presenting search results')
 
 
     def run(self, args: NominatimArgs) -> int:
+        place: napi.PlaceRef
         if args.node:
-            params = dict(osmtype='N', osmid=args.node)
+            place = napi.OsmID('N', args.node, args.object_class)
         elif args.way:
-            params = dict(osmtype='W', osmid=args.way)
+            place = napi.OsmID('W', args.way, args.object_class)
         elif args.relation:
-            params = dict(osmtype='R', osmid=args.relation)
+            place = napi.OsmID('R', args.relation, args.object_class)
         else:
-            params = dict(place_id=args.place_id)
-        if args.object_class:
-            params['class'] = args.object_class
-        for name, _ in DETAILS_SWITCHES:
-            params[name] = '1' if getattr(args, name) else '0'
-        if args.lang:
-            params['accept-language'] = args.lang
+            assert args.place_id is not None
+            place = napi.PlaceID(args.place_id)
 
-        return _run_api('details', args, params)
+        api = napi.NominatimAPI(args.project_dir)
+
+        details = napi.LookupDetails(address_details=args.addressdetails,
+                                     linked_places=args.linkedplaces,
+                                     parented_places=args.hierarchy,
+                                     keywords=args.keywords)
+        if args.polygon_geojson:
+            details.geometry_output = napi.GeometryFormat.GEOJSON
+
+        if args.lang:
+            locales = napi.Locales.from_accept_languages(args.lang)
+        elif api.config.DEFAULT_LANGUAGE:
+            locales = napi.Locales.from_accept_languages(api.config.DEFAULT_LANGUAGE)
+        else:
+            locales = napi.Locales()
+
+        result = api.lookup(place, details)
+
+        if result:
+            output = api_output.format_result(
+                        result,
+                        'details-json',
+                        {'locales': locales,
+                         'group_hierarchy': args.group_hierarchy})
+            # reformat the result, so it is pretty-printed
+            json.dump(json.loads(output), sys.stdout, indent=4)
+            sys.stdout.write('\n')
+
+            return 0
+
+        LOG.error("Object not found in database.")
+        return 42
 
 
 class APIStatus:
@@ -276,13 +306,13 @@ class APIStatus:
     """
 
     def add_args(self, parser: argparse.ArgumentParser) -> None:
-        formats = api_output.list_formats(StatusResult)
+        formats = api_output.list_formats(napi.StatusResult)
         group = parser.add_argument_group('API parameters')
         group.add_argument('--format', default=formats[0], choices=formats,
                            help='Format of result')
 
 
     def run(self, args: NominatimArgs) -> int:
-        status = NominatimAPI(args.project_dir).status()
-        print(api_output.format_result(status, args.format))
+        status = napi.NominatimAPI(args.project_dir).status()
+        print(api_output.format_result(status, args.format, {}))
         return 0

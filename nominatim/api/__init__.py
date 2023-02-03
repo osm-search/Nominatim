@@ -28,3 +28,4 @@ from .results import (SourceTable as SourceTable,
                       WordInfo as WordInfo,
                       WordInfos as WordInfos,
                       SearchResult as SearchResult)
+from .localization import (Locales as Locales)

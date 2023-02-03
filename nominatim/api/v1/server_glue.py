@@ -143,7 +143,7 @@ async def status_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> A
     else:
         status_code = 200
 
-    return params.build_response(formatting.format_result(result, fmt), fmt,
+    return params.build_response(formatting.format_result(result, fmt, {}), fmt,
                                  status=status_code)
 
 EndpointFunc = Callable[[napi.NominatimAPIAsync, ASGIAdaptor], Any]

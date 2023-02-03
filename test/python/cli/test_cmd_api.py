@@ -25,11 +25,7 @@ def test_no_api_without_phpcgi(endpoint):
 @pytest.mark.parametrize("params", [('search', '--query', 'new'),
                                     ('search', '--city', 'Berlin'),
                                     ('reverse', '--lat', '0', '--lon', '0', '--zoom', '13'),
-                                    ('lookup', '--id', 'N1'),
-                                    ('details', '--node', '1'),
-                                    ('details', '--way', '1'),
-                                    ('details', '--relation', '1'),
-                                    ('details', '--place_id', '10001')])
+                                    ('lookup', '--id', 'N1')])
 class TestCliApiCallPhp:
 
     @pytest.fixture(autouse=True)
@@ -73,6 +69,29 @@ class TestCliStatusCall:
     def test_status_json_format(self, cli_call, tmp_path, capsys):
         result = cli_call('status', '--project-dir', str(tmp_path),
                           '--format', 'json')
+
+        assert result == 0
+
+        json.loads(capsys.readouterr().out)
+
+
+class TestCliDetailsCall:
+
+    @pytest.fixture(autouse=True)
+    def setup_status_mock(self, monkeypatch):
+        result = napi.SearchResult(napi.SourceTable.PLACEX, ('place', 'thing'),
+                                   (1.0, -3.0))
+
+        monkeypatch.setattr(napi.NominatimAPI, 'lookup',
+                            lambda *args: result)
+
+    @pytest.mark.parametrize("params", [('--node', '1'),
+                                        ('--way', '1'),
+                                        ('--relation', '1'),
+                                        ('--place_id', '10001')])
+
+    def test_status_json_format(self, cli_call, tmp_path, capsys, params):
+        result = cli_call('details', '--project-dir', str(tmp_path), *params)
 
         assert result == 0
 
@@ -157,27 +176,3 @@ def test_cli_search_param_dedupe(cli_call, project_env):
 
     assert cli_call('search', *QUERY_PARAMS['search'], '--project-dir', str(project_env.project_dir),
                     '--no-dedupe') == 0
-
-
-def test_cli_details_param_class(cli_call, project_env):
-    webdir = project_env.project_dir / 'website'
-    webdir.mkdir()
-    (webdir / 'details.php').write_text(f"""<?php
-        exit($_GET['class']  == 'highway' ? 0 : 10);
-        """)
-
-    assert cli_call('details', *QUERY_PARAMS['details'], '--project-dir', str(project_env.project_dir),
-                    '--class', 'highway') == 0
-
-
-@pytest.mark.parametrize('param', ('lang', 'accept-language'))
-def test_cli_details_param_lang(cli_call, project_env, param):
-    webdir = project_env.project_dir / 'website'
-    webdir.mkdir()
-    (webdir / 'details.php').write_text(f"""<?php
-        exit($_GET['accept-language']  == 'es' ? 0 : 10);
-        """)
-
-    assert cli_call('details', *QUERY_PARAMS['details'], '--project-dir', str(project_env.project_dir),
-                    '--' + param, 'es') == 0
-

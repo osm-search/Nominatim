@@ -62,3 +62,9 @@ def before_tag(context, tag):
     if tag == 'fail-legacy':
         if context.config.userdata['TOKENIZER'] == 'legacy':
             context.scenario.skip("Not implemented in legacy tokenizer")
+    if tag == 'v1-api-php-only':
+        if context.config.userdata['API_ENGINE'] != 'php':
+            context.scenario.skip("Only valid with PHP version of v1 API.")
+    if tag == 'v1-api-python-only':
+        if context.config.userdata['API_ENGINE'] == 'php':
+            context.scenario.skip("Only valid with Python version of v1 API.")

@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2022 by the Nominatim developer community.
+# Copyright (C) 2023 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Classes wrapping HTTP responses from the Nominatim API.
@@ -109,6 +109,26 @@ class GenericResponse:
             assert str(self.result[idx][field]) == str(value), \
                    BadRowValueAssert(self, idx, field, value)
 
+
+    def assert_subfield(self, idx, path, value):
+        assert path
+
+        field = self.result[idx]
+        for p in path:
+            assert isinstance(field, OrderedDict)
+            assert p in field
+            field = field[p]
+
+        if isinstance(value, float):
+            assert Almost(value) == float(field)
+        elif value.startswith("^"):
+            assert re.fullmatch(value, field)
+        elif isinstance(field, OrderedDict):
+            assert field, eval('{' + value + '}')
+        else:
+            assert str(field) == str(value)
+
+
     def assert_address_field(self, idx, field, value):
         """ Check that result rows`idx` has a field `field` with value `value`
             in its address. If idx is None, then all results are checked.
@@ -163,6 +183,8 @@ class GenericResponse:
                         raise RuntimeError("Context needed when using grid coordinates")
                     self.assert_field(i, 'lat', float(lat))
                     self.assert_field(i, 'lon', float(lon))
+                elif '+' in name:
+                    self.assert_subfield(i, name.split('+'), value)
                 else:
                     self.assert_field(i, name, value)
 

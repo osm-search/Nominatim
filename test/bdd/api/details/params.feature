@@ -7,6 +7,9 @@ Feature: Object details
         Then the result is valid json
         And result has attributes geometry
         And result has not attributes keywords,address,linked_places,parentof
+        And results contain
+            | geometry+type |
+            | Point         |
 
     Scenario: JSON Details with pretty printing
         When sending json details query for W297699560
@@ -64,6 +67,7 @@ Feature: Object details
             | keywords |
             | 1 |
         Then the result is valid json
+        And result has attributes keywords
 
     Scenario Outline: JSON details with full geometry
         When sending json details query for <osmid>
@@ -71,12 +75,15 @@ Feature: Object details
             | 1 |
         Then the result is valid json
         And result has attributes geometry
+        And results contain
+            | geometry+type |
+            | <geometry>    |
 
     Examples:
-            | osmid |
-            | W297699560 |
-            | W243055645 |
-            | W243055716 |
-            | W43327921  |
+            | osmid      | geometry   |
+            | W297699560 | LineString |
+            | W243055645 | Polygon    |
+            | W243055716 | Polygon    |
+            | W43327921  | LineString |
 
 

@@ -79,7 +79,8 @@ def send_api_query(endpoint, params, fmt, context):
 
     return asyncio.run(context.nominatim.api_engine(endpoint, params,
                                                     Path(context.nominatim.website_dir.name),
-                                                    context.nominatim.test_env))
+                                                    context.nominatim.test_env,
+                                                    getattr(context, 'http_headers', {})))
 
 
 

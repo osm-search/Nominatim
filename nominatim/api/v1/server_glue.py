@@ -11,6 +11,7 @@ Combine with the scaffolding provided for the various Python ASGI frameworks.
 from typing import Optional, Any, Type, Callable
 import abc
 
+from nominatim.config import Configuration
 import nominatim.api as napi
 from nominatim.api.v1.format import dispatch as formatting
 
@@ -40,9 +41,9 @@ class ASGIAdaptor(abc.ABC):
 
 
     @abc.abstractmethod
-    def error(self, msg: str) -> Exception:
+    def error(self, msg: str, status: int = 400) -> Exception:
         """ Construct an appropriate exception from the given error message.
-            The exception must result in a HTTP 400 error.
+            The exception must result in a HTTP error with the given status.
         """
 
 
@@ -56,6 +57,12 @@ class ASGIAdaptor(abc.ABC):
             The response must return the HTTP given status code 'status', set
             the HTTP content-type headers to the string provided and the
             body of the response to 'output'.
+        """
+
+
+    @abc.abstractmethod
+    def config(self) -> Configuration:
+        """ Return the current configuration object.
         """
 
 
@@ -116,6 +123,14 @@ class ASGIAdaptor(abc.ABC):
         return value != '0'
 
 
+    def get_accepted_languages(self) -> str:
+        """ Return the accepted langauges.
+        """
+        return self.get('accept-language')\
+               or self.get_header('http_accept_language')\
+               or self.config().DEFAULT_LANGUAGE
+
+
 def parse_format(params: ASGIAdaptor, result_type: Type[Any], default: str) -> str:
     """ Get and check the 'format' parameter and prepare the formatter.
         `fmtter` is a formatter and `default` the
@@ -146,8 +161,49 @@ async def status_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> A
     return params.build_response(formatting.format_result(result, fmt, {}), fmt,
                                  status=status_code)
 
+
+async def details_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> Any:
+    """ Server glue for /details endpoint. See API docs for details.
+    """
+    place_id = params.get_int('place_id', 0)
+    place: napi.PlaceRef
+    if place_id:
+        place = napi.PlaceID(place_id)
+    else:
+        osmtype = params.get('osmtype')
+        if osmtype is None:
+            raise params.error("Missing ID parameter 'place_id' or 'osmtype'.")
+        place = napi.OsmID(osmtype, params.get_int('osmid'), params.get('class'))
+
+    details = napi.LookupDetails(address_details=params.get_bool('addressdetails', False),
+                                 linked_places=params.get_bool('linkedplaces', False),
+                                 parented_places=params.get_bool('hierarchy', False),
+                                 keywords=params.get_bool('keywords', False))
+
+    if params.get_bool('polygon_geojson', False):
+        details.geometry_output = napi.GeometryFormat.GEOJSON
+
+    locales = napi.Locales.from_accept_languages(params.get_accepted_languages())
+    print(locales.languages)
+
+    result = await api.lookup(place, details)
+
+    if result is None:
+        raise params.error('No place with that OSM ID found.', status=404)
+
+    output = formatting.format_result(
+                 result,
+                 'details-json',
+                 {'locales': locales,
+                  'group_hierarchy': params.get_bool('group_hierarchy', False),
+                  'icon_base_url': params.config().MAPICON_URL})
+
+    return params.build_response(output, 'json')
+
+
 EndpointFunc = Callable[[napi.NominatimAPIAsync, ASGIAdaptor], Any]
 
 ROUTES = [
-    ('status', status_endpoint)
+    ('status', status_endpoint),
+    ('details', details_endpoint)
 ]

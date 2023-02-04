@@ -58,7 +58,7 @@ def test_lookup_in_placex(apiobj, idobj):
     assert result.importance == pytest.approx(0.01)
 
     assert result.country_code == 'gb'
-    assert result.indexed_date == import_date
+    assert result.indexed_date == import_date.replace(tzinfo=dt.timezone.utc)
 
     assert result.address_rows is None
     assert result.linked_rows is None
@@ -106,7 +106,7 @@ def test_lookup_in_placex_minimal_info(apiobj):
     assert result.importance is None
 
     assert result.country_code is None
-    assert result.indexed_date == import_date
+    assert result.indexed_date == import_date.replace(tzinfo=dt.timezone.utc)
 
     assert result.address_rows is None
     assert result.linked_rows is None
@@ -290,7 +290,7 @@ def test_lookup_in_osmline(apiobj, idobj):
     assert result.importance is None
 
     assert result.country_code == 'gb'
-    assert result.indexed_date == import_date
+    assert result.indexed_date == import_date.replace(tzinfo=dt.timezone.utc)
 
     assert result.address_rows is None
     assert result.linked_rows is None
@@ -506,7 +506,7 @@ def test_lookup_in_postcode(apiobj):
     assert result.importance is None
 
     assert result.country_code == 'gb'
-    assert result.indexed_date == import_date
+    assert result.indexed_date == import_date.replace(tzinfo=dt.timezone.utc)
 
     assert result.address_rows is None
     assert result.linked_rows is None
@@ -558,6 +558,15 @@ def test_lookup_postcode_with_address_details(apiobj):
                                 admin_level=None, fromarea=True, isaddress=False,
                                 rank_address=4, distance=0.0)
            ]
+
+@pytest.mark.parametrize('objid', [napi.PlaceID(1736),
+                                   napi.OsmID('W', 55),
+                                   napi.OsmID('N', 55, 'amenity')])
+def test_lookup_missing_object(apiobj, objid):
+    apiobj.add_placex(place_id=1, osm_type='N', osm_id=55,
+                      class_='place', type='suburb')
+
+    assert apiobj.api.lookup(objid, napi.LookupDetails()) is None
 
 
 @pytest.mark.parametrize('gtype', (napi.GeometryFormat.KML,

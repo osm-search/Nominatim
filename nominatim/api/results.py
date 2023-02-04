@@ -105,6 +105,9 @@ class SearchResult:
 
     geometry: Dict[str, str] = dataclasses.field(default_factory=dict)
 
+    def __post_init__(self) -> None:
+        if self.indexed_date is not None and self.indexed_date.tzinfo is None:
+            self.indexed_date = self.indexed_date.replace(tzinfo=dt.timezone.utc)
 
     @property
     def lat(self) -> float:

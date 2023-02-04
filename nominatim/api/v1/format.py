@@ -45,7 +45,7 @@ def _add_address_row(writer: JsonWriter, row: napi.AddressLine,
                      locales: napi.Locales) -> None:
     writer.start_object()\
             .keyval('localname', locales.display_name(row.names))\
-            .keyval('place_id', row.place_id)
+            .keyval_not_none('place_id', row.place_id)
 
     if row.osm_object is not None:
         writer.keyval('osm_id', row.osm_object[1])\
@@ -100,8 +100,8 @@ def _format_search_json(result: napi.SearchResult, options: Mapping[str, Any]) -
 
     out = JsonWriter()
     out.start_object()\
-         .keyval('place_id', result.place_id)\
-         .keyval('parent_place_id', result.parent_place_id)
+         .keyval_not_none('place_id', result.place_id)\
+         .keyval_not_none('parent_place_id', result.parent_place_id)
 
     if result.osm_object is not None:
         out.keyval('osm_type', result.osm_object[0])\
@@ -111,16 +111,16 @@ def _format_search_json(result: napi.SearchResult, options: Mapping[str, Any]) -
          .keyval('type', result.category[1])\
          .keyval('admin_level', result.admin_level)\
          .keyval('localname', locales.display_name(result.names))\
-         .keyval('names', result.names or [])\
-         .keyval('addresstags', result.address or [])\
-         .keyval('housenumber', result.housenumber)\
-         .keyval('calculated_postcode', result.postcode)\
-         .keyval('country_code', result.country_code)\
+         .keyval_not_none('names', result.names or None)\
+         .keyval_not_none('addresstags', result.address or None)\
+         .keyval_not_none('housenumber', result.housenumber)\
+         .keyval_not_none('calculated_postcode', result.postcode)\
+         .keyval_not_none('country_code', result.country_code)\
          .keyval_not_none('indexed_date', result.indexed_date, lambda v: v.isoformat())\
-         .keyval('importance', result.importance)\
+         .keyval_not_none('importance', result.importance)\
          .keyval('calculated_importance', result.calculated_importance())\
-         .keyval('extratags', result.extratags or [])\
-         .keyval('calculated_wikipedia', result.wikipedia)\
+         .keyval_not_none('extratags', result.extratags or None)\
+         .keyval_not_none('calculated_wikipedia', result.wikipedia)\
          .keyval('rank_address', result.rank_address)\
          .keyval('rank_search', result.rank_search)\
          .keyval('isarea', 'Polygon' in (geom or result.geometry.get('type') or ''))\

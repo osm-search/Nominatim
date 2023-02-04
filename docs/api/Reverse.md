@@ -35,7 +35,7 @@ Additional parameters are accepted as listed below.
 
 !!! warning "Deprecation warning"
     The reverse API used to allow address lookup for a single OSM object by
-    its OSM id. This use is now deprecated. Use the [Address Lookup API](../Lookup)
+    its OSM id. This use is now deprecated. Use the [Address Lookup API](Lookup.md)
     instead.
 
 ### Output format

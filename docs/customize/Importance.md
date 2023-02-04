@@ -12,7 +12,7 @@ customize them.
 The main value for importance is derived from page ranking values for Wikipedia
 pages for a place. For places that do not have their own
 Wikipedia page, a formula is used that derives a static importance from the
-places [search rank](../customize/Ranking#search-rank).
+places [search rank](../customize/Ranking.md#search-rank).
 
 In a second step, a secondary importance value is added which is meant to
 represent how well-known the general area is where the place is located. It

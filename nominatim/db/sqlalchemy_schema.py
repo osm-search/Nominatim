@@ -14,6 +14,22 @@ from geoalchemy2 import Geometry
 from sqlalchemy.dialects.postgresql import HSTORE, ARRAY, JSONB
 from sqlalchemy.dialects.sqlite import JSON as sqlite_json
 
+class PostgresTypes:
+    """ Type definitions for complex types as used in Postgres variants.
+    """
+    Composite = HSTORE
+    Json = JSONB
+    IntArray = ARRAY(sa.Integer()) #pylint: disable=invalid-name
+
+
+class SqliteTypes:
+    """ Type definitions for complex types as used in Postgres variants.
+    """
+    Composite = sqlite_json
+    Json = sqlite_json
+    IntArray = sqlite_json
+
+
 #pylint: disable=too-many-instance-attributes
 class SearchTables:
     """ Data class that holds the tables of the Nominatim database.
@@ -21,13 +37,9 @@ class SearchTables:
 
     def __init__(self, meta: sa.MetaData, engine_name: str) -> None:
         if engine_name == 'postgresql':
-            Composite: Any = HSTORE
-            Json: Any = JSONB
-            IntArray: Any = ARRAY(sa.Integer()) #pylint: disable=invalid-name
+            self.types: Any = PostgresTypes
         elif engine_name == 'sqlite':
-            Composite = sqlite_json
-            Json = sqlite_json
-            IntArray = sqlite_json
+            self.types = SqliteTypes
         else:
             raise ValueError("Only 'postgresql' and 'sqlite' engines are supported.")
 
@@ -57,9 +69,9 @@ class SearchTables:
             sa.Column('class', sa.Text, nullable=False, key='class_'),
             sa.Column('type', sa.Text, nullable=False),
             sa.Column('admin_level', sa.SmallInteger),
-            sa.Column('name', Composite),
-            sa.Column('address', Composite),
-            sa.Column('extratags', Composite),
+            sa.Column('name', self.types.Composite),
+            sa.Column('address', self.types.Composite),
+            sa.Column('extratags', self.types.Composite),
             sa.Column('geometry', Geometry(srid=4326), nullable=False),
             sa.Column('wikipedia', sa.Text),
             sa.Column('country_code', sa.String(2)),
@@ -97,7 +109,7 @@ class SearchTables:
             sa.Column('partition', sa.SmallInteger),
             sa.Column('indexed_status', sa.SmallInteger),
             sa.Column('linegeo', Geometry(srid=4326)),
-            sa.Column('address', Composite),
+            sa.Column('address', self.types.Composite),
             sa.Column('postcode', sa.Text),
             sa.Column('country_code', sa.String(2)))
 
@@ -106,12 +118,12 @@ class SearchTables:
             sa.Column('word_token', sa.Text, nullable=False),
             sa.Column('type', sa.Text, nullable=False),
             sa.Column('word', sa.Text),
-            sa.Column('info', Json))
+            sa.Column('info', self.types.Json))
 
         self.country_name = sa.Table('country_name', meta,
             sa.Column('country_code', sa.String(2)),
-            sa.Column('name', Composite),
-            sa.Column('derived_name', Composite),
+            sa.Column('name', self.types.Composite),
+            sa.Column('derived_name', self.types.Composite),
             sa.Column('country_default_language_code', sa.Text),
             sa.Column('partition', sa.Integer))
 
@@ -126,8 +138,8 @@ class SearchTables:
             sa.Column('importance', sa.Float),
             sa.Column('search_rank', sa.SmallInteger),
             sa.Column('address_rank', sa.SmallInteger),
-            sa.Column('name_vector', IntArray, index=True),
-            sa.Column('nameaddress_vector', IntArray, index=True),
+            sa.Column('name_vector', self.types.IntArray, index=True),
+            sa.Column('nameaddress_vector', self.types.IntArray, index=True),
             sa.Column('country_code', sa.String(2)),
             sa.Column('centroid', Geometry(srid=4326)))
 

@@ -16,6 +16,7 @@ from sanic.response import text as TextResponse
 
 from nominatim.api import NominatimAPIAsync
 import nominatim.api.v1 as api_impl
+from nominatim.config import Configuration
 
 class ParamWrapper(api_impl.ASGIAdaptor):
     """ Adaptor class for server glue to Sanic framework.
@@ -33,13 +34,17 @@ class ParamWrapper(api_impl.ASGIAdaptor):
         return cast(Optional[str], self.request.headers.get(name, default))
 
 
-    def error(self, msg: str) -> SanicException:
-        return SanicException(msg, status_code=400)
+    def error(self, msg: str, status: int = 400) -> SanicException:
+        return SanicException(msg, status_code=status)
 
 
     def create_response(self, status: int, output: str,
                         content_type: str) -> HTTPResponse:
         return TextResponse(output, status=status, content_type=content_type)
+
+
+    def config(self) -> Configuration:
+        return cast(Configuration, self.request.app.ctx.api.config)
 
 
 def _wrap_endpoint(func: api_impl.EndpointFunc)\

@@ -18,9 +18,9 @@ from starlette.requests import Request
 from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
 
-from nominatim.config import Configuration
 from nominatim.api import NominatimAPIAsync
 import nominatim.api.v1 as api_impl
+from nominatim.config import Configuration
 
 class ParamWrapper(api_impl.ASGIAdaptor):
     """ Adaptor class for server glue to Starlette framework.
@@ -38,12 +38,16 @@ class ParamWrapper(api_impl.ASGIAdaptor):
         return self.request.headers.get(name, default)
 
 
-    def error(self, msg: str) -> HTTPException:
-        return HTTPException(400, detail=msg)
+    def error(self, msg: str, status: int = 400) -> HTTPException:
+        return HTTPException(status, detail=msg)
 
 
     def create_response(self, status: int, output: str, content_type: str) -> Response:
         return Response(output, status_code=status, media_type=content_type)
+
+
+    def config(self) -> Configuration:
+        return cast(Configuration, self.request.app.state.API.config)
 
 
 def _wrap_endpoint(func: api_impl.EndpointFunc)\

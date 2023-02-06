@@ -7,11 +7,11 @@
 """
 Helper classes and functions for formating results into API responses.
 """
-from typing import Type, TypeVar, Dict, List, Callable, Any
+from typing import Type, TypeVar, Dict, List, Callable, Any, Mapping
 from collections import defaultdict
 
 T = TypeVar('T') # pylint: disable=invalid-name
-FormatFunc = Callable[[T], str]
+FormatFunc = Callable[[T, Mapping[str, Any]], str]
 
 
 class FormatDispatcher:
@@ -47,10 +47,10 @@ class FormatDispatcher:
         return fmt in self.format_functions[result_type]
 
 
-    def format_result(self, result: Any, fmt: str) -> str:
+    def format_result(self, result: Any, fmt: str, options: Mapping[str, Any]) -> str:
         """ Convert the given result into a string using the given format.
 
             The format is expected to be in the list returned by
             `list_formats()`.
         """
-        return self.format_functions[type(result)][fmt](result)
+        return self.format_functions[type(result)][fmt](result, options)

@@ -168,6 +168,11 @@ class NominatimArgs:
 
     # Arguments to 'details'
     object_class: Optional[str]
+    linkedplaces: bool
+    hierarchy: bool
+    keywords: bool
+    polygon_geojson: bool
+    group_hierarchy: bool
 
 
     def osm2pgsql_options(self, default_cache: int,

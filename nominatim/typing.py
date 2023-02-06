@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2022 by the Nominatim developer community.
+# Copyright (C) 2023 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Type definitions for typing annotations.
@@ -50,3 +50,19 @@ else:
     Protocol = object
     Final = 'Final'
     TypedDict = dict
+
+
+# SQLAlchemy introduced generic types in version 2.0 making typing
+# inclompatiple with older versions. Add wrappers here so we don't have
+# to litter the code with bare-string types.
+
+if TYPE_CHECKING:
+    import sqlalchemy as sa
+    from typing_extensions import (TypeAlias as TypeAlias)
+else:
+    TypeAlias = str
+
+SaSelect: TypeAlias = 'sa.Select[Any]'
+SaRow: TypeAlias = 'sa.Row[Any]'
+SaColumn: TypeAlias = 'sa.Column[Any]'
+SaLabel: TypeAlias = 'sa.Label[Any]'

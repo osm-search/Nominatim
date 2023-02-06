@@ -15,15 +15,18 @@ from falcon.asgi import App, Request, Response
 
 from nominatim.api import NominatimAPIAsync
 import nominatim.api.v1 as api_impl
+from nominatim.config import Configuration
 
 
 class ParamWrapper(api_impl.ASGIAdaptor):
     """ Adaptor class for server glue to Falcon framework.
     """
 
-    def __init__(self, req: Request, resp: Response) -> None:
+    def __init__(self, req: Request, resp: Response,
+                 config: Configuration) -> None:
         self.request = req
         self.response = resp
+        self._config = config
 
 
     def get(self, name: str, default: Optional[str] = None) -> Optional[str]:
@@ -34,14 +37,23 @@ class ParamWrapper(api_impl.ASGIAdaptor):
         return cast(Optional[str], self.request.get_header(name, default=default))
 
 
-    def error(self, msg: str) -> falcon.HTTPBadRequest:
-        return falcon.HTTPBadRequest(description=msg)
+    def error(self, msg: str, status: int = 400) -> falcon.HTTPError:
+        if status == 400:
+            return falcon.HTTPBadRequest(description=msg)
+        if status == 404:
+            return falcon.HTTPNotFound(description=msg)
+
+        return falcon.HTTPError(status, description=msg)
 
 
     def create_response(self, status: int, output: str, content_type: str) -> None:
         self.response.status = status
         self.response.text = output
         self.response.content_type = content_type
+
+
+    def config(self) -> Configuration:
+        return self._config
 
 
 class EndpointWrapper:
@@ -56,7 +68,7 @@ class EndpointWrapper:
     async def on_get(self, req: Request, resp: Response) -> None:
         """ Implementation of the endpoint.
         """
-        await self.func(self.api, ParamWrapper(req, resp))
+        await self.func(self.api, ParamWrapper(req, resp, self.api.config))
 
 
 def get_application(project_dir: Path,

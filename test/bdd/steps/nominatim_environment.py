@@ -337,12 +337,13 @@ class NominatimEnvironment:
         from asgi_lifespan import LifespanManager
         import httpx
 
-        async def _request(endpoint, params, project_dir, environ):
+        async def _request(endpoint, params, project_dir, environ, http_headers):
             app = nominatim.server.starlette.server.get_application(project_dir, environ)
 
             async with LifespanManager(app):
                 async with httpx.AsyncClient(app=app, base_url="http://nominatim.test") as client:
-                    response = await client.get(f"/{endpoint}", params=params)
+                    response = await client.get(f"/{endpoint}", params=params,
+                                                headers=http_headers)
 
             return response.text, response.status_code
 
@@ -352,10 +353,11 @@ class NominatimEnvironment:
     def create_api_request_func_sanic(self):
         import nominatim.server.sanic.server
 
-        async def _request(endpoint, params, project_dir, environ):
+        async def _request(endpoint, params, project_dir, environ, http_headers):
             app = nominatim.server.sanic.server.get_application(project_dir, environ)
 
-            _, response = await app.asgi_client.get(f"/{endpoint}", params=params)
+            _, response = await app.asgi_client.get(f"/{endpoint}", params=params,
+                                                    headers=http_headers)
 
             return response.text, response.status_code
 
@@ -366,11 +368,12 @@ class NominatimEnvironment:
         import nominatim.server.falcon.server
         import falcon.testing
 
-        async def _request(endpoint, params, project_dir, environ):
+        async def _request(endpoint, params, project_dir, environ, http_headers):
             app = nominatim.server.falcon.server.get_application(project_dir, environ)
 
             async with falcon.testing.ASGIConductor(app) as conductor:
-                response = await conductor.get(f"/{endpoint}", params=params)
+                response = await conductor.get(f"/{endpoint}", params=params,
+                                               headers=http_headers)
 
             return response.text, response.status_code
 

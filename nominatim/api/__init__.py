@@ -14,6 +14,19 @@ import from this file, not from the source files directly.
 # See also https://github.com/PyCQA/pylint/issues/6006
 # pylint: disable=useless-import-alias
 
-from nominatim.api.core import (NominatimAPI as NominatimAPI,
-                                NominatimAPIAsync as NominatimAPIAsync)
-from nominatim.api.status import (StatusResult as StatusResult)
+from .core import (NominatimAPI as NominatimAPI,
+                   NominatimAPIAsync as NominatimAPIAsync)
+from .status import (StatusResult as StatusResult)
+from .types import (PlaceID as PlaceID,
+                    OsmID as OsmID,
+                    PlaceRef as PlaceRef,
+                    Point as Point,
+                    GeometryFormat as GeometryFormat,
+                    LookupDetails as LookupDetails)
+from .results import (SourceTable as SourceTable,
+                      AddressLine as AddressLine,
+                      AddressLines as AddressLines,
+                      WordInfo as WordInfo,
+                      WordInfos as WordInfos,
+                      SearchResult as SearchResult)
+from .localization import (Locales as Locales)

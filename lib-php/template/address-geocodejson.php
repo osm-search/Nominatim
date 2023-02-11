@@ -36,6 +36,9 @@ if (empty($aPlace)) {
         $aFilteredPlaces['properties']['geocoding']['osm_id'] = $aPlace['osm_id'];
     }
 
+    $aFilteredPlaces['properties']['geocoding']['osm_key'] = $aPlace['class'];
+    $aFilteredPlaces['properties']['geocoding']['osm_value'] = $aPlace['type'];
+
     $aFilteredPlaces['properties']['geocoding']['type'] = addressRankToGeocodeJsonType($aPlace['rank_address']);
 
     $aFilteredPlaces['properties']['geocoding']['accuracy'] = (int) $fDistance;

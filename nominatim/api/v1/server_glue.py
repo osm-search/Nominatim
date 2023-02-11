@@ -13,12 +13,14 @@ import abc
 
 from nominatim.config import Configuration
 import nominatim.api as napi
+import nominatim.api.logging as loglib
 from nominatim.api.v1.format import dispatch as formatting
 
 CONTENT_TYPE = {
   'text': 'text/plain; charset=utf-8',
   'xml': 'text/xml; charset=utf-8',
-  'jsonp': 'application/javascript'
+  'jsonp': 'application/javascript',
+  'debug': 'text/html; charset=utf-8'
 }
 
 
@@ -131,6 +133,18 @@ class ASGIAdaptor(abc.ABC):
                or self.config().DEFAULT_LANGUAGE
 
 
+    def setup_debugging(self) -> bool:
+        """ Set up collection of debug information if requested.
+
+            Return True when debugging was requested.
+        """
+        if self.get_bool('debug', False):
+            loglib.set_log_output('html')
+            return True
+
+        return False
+
+
 def parse_format(params: ASGIAdaptor, result_type: Type[Any], default: str) -> str:
     """ Get and check the 'format' parameter and prepare the formatter.
         `fmtter` is a formatter and `default` the
@@ -175,6 +189,8 @@ async def details_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> 
             raise params.error("Missing ID parameter 'place_id' or 'osmtype'.")
         place = napi.OsmID(osmtype, params.get_int('osmid'), params.get('class'))
 
+    debug = params.setup_debugging()
+
     details = napi.LookupDetails(address_details=params.get_bool('addressdetails', False),
                                  linked_places=params.get_bool('linkedplaces', False),
                                  parented_places=params.get_bool('hierarchy', False),
@@ -184,9 +200,11 @@ async def details_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> 
         details.geometry_output = napi.GeometryFormat.GEOJSON
 
     locales = napi.Locales.from_accept_languages(params.get_accepted_languages())
-    print(locales.languages)
 
     result = await api.lookup(place, details)
+
+    if debug:
+        return params.build_response(loglib.get_and_disable(), 'debug')
 
     if result is None:
         raise params.error('No place with that OSM ID found.', status=404)

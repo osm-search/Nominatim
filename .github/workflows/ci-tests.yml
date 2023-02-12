@@ -140,7 +140,7 @@ jobs:
               working-directory: Nominatim/test/bdd
 
             - name: Install mypy and typechecking info
-              run: pip3 install -U mypy osmium uvicorn types-PyYAML types-jinja2 types-psycopg2 types-psutil types-requests types-ujson typing-extensions
+              run: pip3 install -U mypy osmium uvicorn types-PyYAML types-jinja2 types-psycopg2 types-psutil types-requests types-ujson types-Pygments typing-extensions
               if: matrix.flavour != 'oldstuff'
 
             - name: Python static typechecking

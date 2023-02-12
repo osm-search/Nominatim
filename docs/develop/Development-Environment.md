@@ -65,7 +65,7 @@ sudo apt install php-cgi phpunit php-codesniffer \
 
 pip3 install --user behave mkdocs mkdocstrings pytest pytest-asyncio pylint \
                     mypy types-PyYAML types-jinja2 types-psycopg2 types-psutil \
-                    types-ujson types-requests typing-extensions\
+                    types-ujson types-requests types-Pygments typing-extensions\
                     sanic-testing httpx asgi-lifespan
 ```
 

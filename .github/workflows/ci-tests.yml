@@ -71,6 +71,8 @@ jobs:
                   php-version: ${{ matrix.php }}
                   tools: phpunit:9, phpcs, composer
                   ini-values: opcache.jit=disable
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
             - uses: actions/setup-python@v4
               with:

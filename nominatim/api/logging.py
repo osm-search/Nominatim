@@ -7,8 +7,9 @@
 """
 Functions for specialised logging with HTML output.
 """
-from typing import Any, Optional, cast
+from typing import Any, cast
 from contextvars import ContextVar
+import textwrap
 import io
 
 import sqlalchemy as sa
@@ -30,6 +31,8 @@ class BaseLogger:
         in derived classes which implement logging functionality.
     """
     def get_buffer(self) -> str:
+        """ Return the current content of the log buffer.
+        """
         return ''
 
     def function(self, func: str, **kwargs: Any) -> None:
@@ -61,16 +64,15 @@ class BaseLogger:
 class HTMLLogger(BaseLogger):
     """ Logger that formats messages in HTML.
     """
-    def __init__(self):
+    def __init__(self) -> None:
         self.buffer = io.StringIO()
 
 
     def get_buffer(self) -> str:
         return HTML_HEADER + self.buffer.getvalue() + HTML_FOOTER
 
+
     def function(self, func: str, **kwargs: Any) -> None:
-        """ Start a new debug chapter for the given function and its parameters.
-        """
         self._write(f"<h1>Debug output for {func}()</h1>\n<p>Parameters:<dl>")
         for name, value in kwargs.items():
             self._write(f'<dt>{name}</dt><dd>{self._python_var(value)}</dd>')
@@ -78,25 +80,18 @@ class HTMLLogger(BaseLogger):
 
 
     def section(self, heading: str) -> None:
-        """ Start a new section with the given title.
-        """
         self._write(f"<h2>{heading}</h2>")
 
+
     def comment(self, text: str) -> None:
-        """ Add a simple comment to the debug output.
-        """
         self._write(f"<p>{text}</p>")
 
+
     def var_dump(self, heading: str, var: Any) -> None:
-        """ Print the content of the variable to the debug output prefixed by
-            the given heading.
-        """
         self._write(f'<h5>{heading}</h5>{self._python_var(var)}')
 
 
     def sql(self, conn: AsyncConnection, statement: 'sa.Executable') -> None:
-        """ Dump the SQL statement to debug output.
-        """
         sqlstr = str(cast('sa.ClauseElement', statement)
                       .compile(conn.sync_engine, compile_kwargs={"literal_binds": True}))
         if CODE_HIGHLIGHT:
@@ -118,6 +113,51 @@ class HTMLLogger(BaseLogger):
     def _write(self, text: str) -> None:
         """ Add the raw text to the debug output.
         """
+        self.buffer.write(text)
+
+
+class TextLogger(BaseLogger):
+    """ Logger creating output suitable for the console.
+    """
+    def __init__(self) -> None:
+        self.buffer = io.StringIO()
+
+
+    def get_buffer(self) -> str:
+        return self.buffer.getvalue()
+
+
+    def function(self, func: str, **kwargs: Any) -> None:
+        self._write(f"#### Debug output for {func}()\n\nParameters:\n")
+        for name, value in kwargs.items():
+            self._write(f'  {name}: {self._python_var(value)}\n')
+        self._write('\n')
+
+
+    def section(self, heading: str) -> None:
+        self._write(f"\n# {heading}\n\n")
+
+
+    def comment(self, text: str) -> None:
+        self._write(f"{text}\n")
+
+
+    def var_dump(self, heading: str, var: Any) -> None:
+        self._write(f'{heading}:\n  {self._python_var(var)}\n\n')
+
+
+    def sql(self, conn: AsyncConnection, statement: 'sa.Executable') -> None:
+        sqlstr = str(cast('sa.ClauseElement', statement)
+                      .compile(conn.sync_engine, compile_kwargs={"literal_binds": True}))
+        sqlstr = '\n| '.join(textwrap.wrap(sqlstr, width=78))
+        self._write(f"| {sqlstr}\n\n")
+
+
+    def _python_var(self, var: Any) -> str:
+        return str(var)
+
+
+    def _write(self, text: str) -> None:
         self.buffer.write(text)
 
 

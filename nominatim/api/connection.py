@@ -13,6 +13,7 @@ import sqlalchemy as sa
 from sqlalchemy.ext.asyncio import AsyncConnection
 
 from nominatim.db.sqlalchemy_schema import SearchTables
+from nominatim.api.logging import log
 
 class SearchConnection:
     """ An extended SQLAlchemy connection class, that also contains
@@ -34,14 +35,16 @@ class SearchConnection:
                     ) -> Any:
         """ Execute a 'scalar()' query on the connection.
         """
+        log().sql(self.connection, sql)
         return await self.connection.scalar(sql, params)
 
 
-    async def execute(self, sql: sa.sql.base.Executable,
+    async def execute(self, sql: 'sa.Executable',
                       params: Union[Mapping[str, Any], Sequence[Mapping[str, Any]], None] = None
-                     ) -> 'sa.engine.Result[Any]':
+                     ) -> 'sa.Result[Any]':
         """ Execute a 'execute()' query on the connection.
         """
+        log().sql(self.connection, sql)
         return await self.connection.execute(sql, params)
 
 

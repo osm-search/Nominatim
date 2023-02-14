@@ -15,6 +15,7 @@ from nominatim.typing import SaColumn, SaLabel, SaRow
 from nominatim.api.connection import SearchConnection
 import nominatim.api.types as ntyp
 import nominatim.api.results as nres
+from nominatim.api.logging import log
 
 def _select_column_geometry(column: SaColumn,
                             geometry_output: ntyp.GeometryFormat) -> SaLabel:
@@ -36,6 +37,7 @@ async def find_in_placex(conn: SearchConnection, place: ntyp.PlaceRef,
     """ Search for the given place in the placex table and return the
         base information.
     """
+    log().section("Find in placex table")
     t = conn.t.placex
     sql = sa.select(t.c.place_id, t.c.osm_type, t.c.osm_id, t.c.name,
                     t.c.class_, t.c.type, t.c.admin_level,
@@ -69,6 +71,7 @@ async def find_in_osmline(conn: SearchConnection, place: ntyp.PlaceRef,
     """ Search for the given place in the osmline table and return the
         base information.
     """
+    log().section("Find in interpolation table")
     t = conn.t.osmline
     sql = sa.select(t.c.place_id, t.c.osm_id, t.c.parent_place_id,
                     t.c.indexed_date, t.c.startnumber, t.c.endnumber,
@@ -98,6 +101,7 @@ async def find_in_tiger(conn: SearchConnection, place: ntyp.PlaceRef,
     """ Search for the given place in the table of Tiger addresses and return
         the base information. Only lookup by place ID is supported.
     """
+    log().section("Find in TIGER table")
     t = conn.t.tiger
     sql = sa.select(t.c.place_id, t.c.parent_place_id,
                     t.c.startnumber, t.c.endnumber, t.c.step,
@@ -119,6 +123,7 @@ async def find_in_postcode(conn: SearchConnection, place: ntyp.PlaceRef,
     """ Search for the given place in the postcode table and return the
         base information. Only lookup by place ID is supported.
     """
+    log().section("Find in postcode table")
     t = conn.t.postcode
     sql = sa.select(t.c.place_id, t.c.parent_place_id,
                     t.c.rank_search, t.c.rank_address,
@@ -139,30 +144,36 @@ async def get_place_by_id(conn: SearchConnection, place: ntyp.PlaceRef,
                           details: ntyp.LookupDetails) -> Optional[nres.SearchResult]:
     """ Retrieve a place with additional details from the database.
     """
+    log().function('get_place_by_id', place=place, details=details)
+
     if details.geometry_output and details.geometry_output != ntyp.GeometryFormat.GEOJSON:
         raise ValueError("lookup only supports geojosn polygon output.")
 
     row = await find_in_placex(conn, place, details)
     if row is not None:
         result = nres.create_from_placex_row(row)
+        log().var_dump('Result', result)
         await nres.add_result_details(conn, result, details)
         return result
 
     row = await find_in_osmline(conn, place, details)
     if row is not None:
         result = nres.create_from_osmline_row(row)
+        log().var_dump('Result', result)
         await nres.add_result_details(conn, result, details)
         return result
 
     row = await find_in_postcode(conn, place, details)
     if row is not None:
         result = nres.create_from_postcode_row(row)
+        log().var_dump('Result', result)
         await nres.add_result_details(conn, result, details)
         return result
 
     row = await find_in_tiger(conn, place, details)
     if row is not None:
         result = nres.create_from_tiger_row(row)
+        log().var_dump('Result', result)
         await nres.add_result_details(conn, result, details)
         return result
 

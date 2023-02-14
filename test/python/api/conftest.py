@@ -14,6 +14,7 @@ import datetime as dt
 
 import nominatim.api as napi
 from nominatim.db.sql_preprocessor import SQLPreprocessor
+import nominatim.api.logging as loglib
 
 class APITester:
 
@@ -138,6 +139,8 @@ def apiobj(temp_db_with_extensions, temp_db_conn, monkeypatch):
     SQLPreprocessor(temp_db_conn, testapi.api.config)\
         .run_sql_file(temp_db_conn, 'functions/address_lookup.sql')
 
+    loglib.set_log_output('text')
     yield testapi
+    print(loglib.get_and_disable())
 
     testapi.api.close()

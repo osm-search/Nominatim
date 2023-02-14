@@ -21,6 +21,7 @@ import sqlalchemy as sa
 from nominatim.typing import SaSelect, SaRow
 from nominatim.api.types import Point, LookupDetails
 from nominatim.api.connection import SearchConnection
+from nominatim.api.logging import log
 
 # This file defines complex result data classes.
 # pylint: disable=too-many-instance-attributes
@@ -228,13 +229,18 @@ async def add_result_details(conn: SearchConnection, result: SearchResult,
     """ Retrieve more details from the database according to the
         parameters specified in 'details'.
     """
+    log().section('Query details for result')
     if details.address_details:
+        log().comment('Query address details')
         await complete_address_details(conn, result)
     if details.linked_places:
+        log().comment('Query linked places')
         await complete_linked_places(conn, result)
     if details.parented_places:
+        log().comment('Query parent places')
         await complete_parented_places(conn, result)
     if details.keywords:
+        log().comment('Query keywords')
         await complete_keywords(conn, result)
 
 

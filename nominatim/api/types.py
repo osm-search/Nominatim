@@ -10,6 +10,7 @@ Complex datatypes used by the Nominatim API.
 from typing import Optional, Union, NamedTuple
 import dataclasses
 import enum
+from struct import unpack
 
 @dataclasses.dataclass
 class PlaceID:
@@ -53,6 +54,33 @@ class Point(NamedTuple):
         """ Return the longitude of the point.
         """
         return self.x
+
+
+    def to_geojson(self) -> str:
+        """ Return the point in GeoJSON format.
+        """
+        return f'{{"type": "Point","coordinates": [{self.x}, {self.y}]}}'
+
+
+    @staticmethod
+    def from_wkb(wkb: bytes) -> 'Point':
+        """ Create a point from EWKB as returned from the database.
+        """
+        if len(wkb) != 25:
+            raise ValueError("Point wkb has unexpected length")
+        if wkb[0] == 0:
+            gtype, srid, x, y = unpack('>iidd', wkb[1:])
+        elif wkb[0] == 1:
+            gtype, srid, x, y = unpack('<iidd', wkb[1:])
+        else:
+            raise ValueError("WKB has unknown endian value.")
+
+        if gtype != 0x20000001:
+            raise ValueError("WKB must be a point geometry.")
+        if srid != 4326:
+            raise ValueError("Only WGS84 WKB supported.")
+
+        return Point(x, y)
 
 
 class GeometryFormat(enum.Flag):

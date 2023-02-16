@@ -96,7 +96,7 @@ def _add_parent_rows_grouped(writer: JsonWriter, rows: napi.AddressLines,
 def _format_search_json(result: napi.SearchResult, options: Mapping[str, Any]) -> str:
     locales = options.get('locales', napi.Locales())
     geom = result.geometry.get('geojson')
-    centroid = result.centroid_as_geojson()
+    centroid = result.centroid.to_geojson()
 
     out = JsonWriter()
     out.start_object()\

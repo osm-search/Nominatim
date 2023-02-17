@@ -190,7 +190,6 @@ CREATE INDEX idx_placex_geometry_buildings ON placex
 
 -- Usage: - linking of similar named places to boundaries
 --        - linking of place nodes with same type to boundaries
---        - lookupPolygon()
 CREATE INDEX idx_placex_geometry_placenode ON placex
   USING {{postgres.spgist_geom}} (geometry) {{db.tablespace.address_index}}
   WHERE osm_type = 'N' and rank_search < 26

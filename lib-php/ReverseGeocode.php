@@ -122,12 +122,13 @@ class ReverseGeocode
                 $sSQL .= ' FROM placex';
                 $sSQL .= ' WHERE osm_type = \'N\'';
                 $sSQL .= ' AND country_code = \''.$sCountryCode.'\'';
-                $sSQL .= ' AND rank_search < 26 '; // needed to select right index
+                $sSQL .= ' AND rank_address between 4 and 25'; // needed to select right index
                 $sSQL .= ' AND rank_search between 5 and ' .min(25, $iMaxRank);
-                $sSQL .= ' AND class = \'place\' AND type != \'postcode\'';
+                $sSQL .= ' AND type != \'postcode\'';
                 $sSQL .= ' AND name IS NOT NULL ';
                 $sSQL .= ' and indexed_status = 0 and linked_place_id is null';
-                $sSQL .= ' AND ST_DWithin('.$sPointSQL.', geometry, 1.8)) p ';
+                $sSQL .= ' AND ST_Buffer(geometry, reverse_place_diameter(rank_search)) && '.$sPointSQL;
+                $sSQL .= ') as a ';
                 $sSQL .= 'WHERE distance <= reverse_place_diameter(rank_search)';
                 $sSQL .= ' ORDER BY rank_search DESC, distance ASC';
                 $sSQL .= ' LIMIT 1';
@@ -216,23 +217,18 @@ class ReverseGeocode
                 $sSQL .= ' ST_distance('.$sPointSQL.', geometry) as distance';
                 $sSQL .= ' FROM placex';
                 $sSQL .= ' WHERE osm_type = \'N\'';
-                // using rank_search because of a better differentiation
-                // for place nodes at rank_address 16
                 $sSQL .= ' AND rank_search > '.$iRankSearch;
                 $sSQL .= ' AND rank_search <= '.$iMaxRank;
-                $sSQL .= ' AND rank_search < 26 '; // needed to select right index
-                $sSQL .= ' AND rank_address > 0';
-                $sSQL .= ' AND class = \'place\'';
+                $sSQL .= ' AND rank_address between 4 and 25';  // needed to select right index
                 $sSQL .= ' AND type != \'postcode\'';
                 $sSQL .= ' AND name IS NOT NULL ';
                 $sSQL .= ' AND indexed_status = 0 AND linked_place_id is null';
-                $sSQL .= ' AND ST_DWithin('.$sPointSQL.', geometry, reverse_place_diameter('.$iRankSearch.'::smallint))';
-                $sSQL .= ' ORDER BY distance ASC,';
-                $sSQL .= ' rank_address DESC';
-                $sSQL .= ' limit 500) as a';
-                $sSQL .= ' WHERE ST_CONTAINS((SELECT geometry FROM placex WHERE place_id = '.$iPlaceID.'), geometry )';
+                $sSQL .= ' AND ST_Buffer(geometry, reverse_place_diameter(rank_search)) && '.$sPointSQL;
+                $sSQL .= ' ORDER BY rank_search DESC, distance ASC';
+                $sSQL .= ' limit 100) as a';
+                $sSQL .= ' WHERE ST_Contains((SELECT geometry FROM placex WHERE place_id = '.$iPlaceID.'), geometry )';
                 $sSQL .= ' AND distance <= reverse_place_diameter(rank_search)';
-                $sSQL .= ' ORDER BY distance ASC, rank_search DESC';
+                $sSQL .= ' ORDER BY rank_search DESC, distance ASC';
                 $sSQL .= ' LIMIT 1';
                 Debug::printSQL($sSQL);
 

@@ -46,7 +46,8 @@ class SPWikiLoader:
                          ['af', 'ar', 'br', 'ca', 'cs', 'de', 'en', 'es',
                           'et', 'eu', 'fa', 'fi', 'fr', 'gl', 'hr', 'hu',
                           'ia', 'is', 'it', 'ja', 'mk', 'nl', 'no', 'pl',
-                          'ps', 'pt', 'ru', 'sk', 'sl', 'sv', 'uk', 'vi']
+                          'ps', 'pt', 'ru', 'sk', 'sl', 'sv', 'uk', 'vi',
+                          'lv', 'tr']
 
 
     def generate_phrases(self) -> Iterable[SpecialPhrase]:

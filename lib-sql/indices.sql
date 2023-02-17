@@ -30,6 +30,13 @@ CREATE INDEX IF NOT EXISTS idx_placex_geometry_reverse_lookupPolygon
     AND rank_address between 4 and 25 AND type != 'postcode'
     AND name is not null AND indexed_status = 0 AND linked_place_id is null;
 ---
+-- used in reverse large area lookup
+CREATE INDEX IF NOT EXISTS idx_placex_geometry_reverse_lookupPlaceNode
+  ON placex USING gist (ST_Buffer(geometry, reverse_place_diameter(rank_search)))
+  {{db.tablespace.search_index}}
+  WHERE rank_address between 4 and 25 AND type != 'postcode'
+    AND name is not null AND linked_place_id is null AND osm_type = 'N';
+---
 CREATE INDEX IF NOT EXISTS idx_osmline_parent_place_id
   ON location_property_osmline USING BTREE (parent_place_id) {{db.tablespace.search_index}}
   WHERE parent_place_id is not null;

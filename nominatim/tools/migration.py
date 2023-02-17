@@ -48,7 +48,8 @@ def migrate(config: Configuration, paths: Any) -> int:
 
         has_run_migration = False
         for version, func in _MIGRATION_FUNCTIONS:
-            if db_version <= version:
+            if db_version < version or \
+               (db_version == (3, 5, 0, 99) and version == (3, 5, 0, 99)):
                 title = func.__doc__ or ''
                 LOG.warning("Running: %s (%s)", title.split('\n', 1)[0], version)
                 kwargs = dict(conn=conn, config=config, paths=paths)
@@ -371,3 +372,16 @@ def enable_forward_dependencies(conn: Connection, **_: Any) -> None:
                                  ON planet_osm_rels USING gin (parts)
                                  WITH (fastupdate=off)""")
                 cur.execute("ANALYZE planet_osm_ways")
+
+
+@_migration(4, 2, 99, 1)
+def add_improved_geometry_reverse_placenode_index(conn: Connection, **_: Any) -> None:
+    """ Create improved index for reverse lookup of place nodes.
+    """
+    with conn.cursor() as cur:
+        cur.execute("""CREATE INDEX IF NOT EXISTS idx_placex_geometry_reverse_lookupPlaceNode
+                       ON placex
+                       USING gist (ST_Buffer(geometry, reverse_place_diameter(rank_search)))
+                       WHERE rank_address between 4 and 25 AND type != 'postcode'
+                         AND name is not null AND linked_place_id is null AND osm_type = 'N'
+                    """)

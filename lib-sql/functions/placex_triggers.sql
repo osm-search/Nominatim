@@ -1120,7 +1120,7 @@ BEGIN
   ELSE
     -- No linked place? As a last resort check if the boundary is tagged with
     -- a place type and adapt the rank address.
-    IF NEW.rank_address > 0 and NEW.extratags ? 'place' THEN
+    IF NEW.rank_address between 4 and 25 and NEW.extratags ? 'place' THEN
       SELECT address_rank INTO place_address_level
         FROM compute_place_rank(NEW.country_code, 'A', 'place',
                                 NEW.extratags->'place', 0::SMALLINT, False, null);

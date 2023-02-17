@@ -122,12 +122,13 @@ class ReverseGeocode
                 $sSQL .= ' FROM placex';
                 $sSQL .= ' WHERE osm_type = \'N\'';
                 $sSQL .= ' AND country_code = \''.$sCountryCode.'\'';
-                $sSQL .= ' AND rank_search < 26 '; // needed to select right index
+                $sSQL .= ' AND rank_address between 4 and 25'; // needed to select right index
                 $sSQL .= ' AND rank_search between 5 and ' .min(25, $iMaxRank);
-                $sSQL .= ' AND class = \'place\' AND type != \'postcode\'';
+                $sSQL .= ' AND type != \'postcode\'';
                 $sSQL .= ' AND name IS NOT NULL ';
                 $sSQL .= ' and indexed_status = 0 and linked_place_id is null';
-                $sSQL .= ' AND ST_DWithin('.$sPointSQL.', geometry, 1.8)) p ';
+                $sSQL .= ' AND ST_Buffer(geometry, reverse_place_diameter(rank_search)) && '.$sPointSQL;
+                $sSQL .= ') as a ';
                 $sSQL .= 'WHERE distance <= reverse_place_diameter(rank_search)';
                 $sSQL .= ' ORDER BY rank_search DESC, distance ASC';
                 $sSQL .= ' LIMIT 1';

@@ -132,13 +132,6 @@ class SearchResult:
         return self.importance or (0.7500001 - (self.rank_search/40.0))
 
 
-    # pylint: disable=consider-using-f-string
-    def centroid_as_geojson(self) -> str:
-        """ Get the centroid in GeoJSON format.
-        """
-        return '{"type": "Point","coordinates": [%f, %f]}' % self.centroid
-
-
 def _filter_geometries(row: SaRow) -> Dict[str, str]:
     return {k[9:]: v for k, v in row._mapping.items() # pylint: disable=W0212
             if k.startswith('geometry_')}
@@ -166,7 +159,7 @@ def create_from_placex_row(row: SaRow) -> SearchResult:
                         importance=row.importance,
                         country_code=row.country_code,
                         indexed_date=getattr(row, 'indexed_date'),
-                        centroid=Point(row.x, row.y),
+                        centroid=Point.from_wkb(row.centroid.data),
                         geometry=_filter_geometries(row))
 
 
@@ -186,7 +179,7 @@ def create_from_osmline_row(row: SaRow) -> SearchResult:
                                    'step': str(row.step)},
                         country_code=row.country_code,
                         indexed_date=getattr(row, 'indexed_date'),
-                        centroid=Point(row.x, row.y),
+                        centroid=Point.from_wkb(row.centroid.data),
                         geometry=_filter_geometries(row))
 
 
@@ -203,7 +196,7 @@ def create_from_tiger_row(row: SaRow) -> SearchResult:
                                    'endnumber': str(row.endnumber),
                                    'step': str(row.step)},
                         country_code='us',
-                        centroid=Point(row.x, row.y),
+                        centroid=Point.from_wkb(row.centroid.data),
                         geometry=_filter_geometries(row))
 
 
@@ -219,7 +212,7 @@ def create_from_postcode_row(row: SaRow) -> SearchResult:
                         rank_search=row.rank_search,
                         rank_address=row.rank_address,
                         country_code=row.country_code,
-                        centroid=Point(row.x, row.y),
+                        centroid=Point.from_wkb(row.centroid.data),
                         indexed_date=row.indexed_date,
                         geometry=_filter_geometries(row))
 

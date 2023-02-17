@@ -80,7 +80,7 @@ class TestCliDetailsCall:
     @pytest.fixture(autouse=True)
     def setup_status_mock(self, monkeypatch):
         result = napi.SearchResult(napi.SourceTable.PLACEX, ('place', 'thing'),
-                                   (1.0, -3.0))
+                                   napi.Point(1.0, -3.0))
 
         monkeypatch.setattr(napi.NominatimAPI, 'lookup',
                             lambda *args: result)
@@ -90,7 +90,7 @@ class TestCliDetailsCall:
                                         ('--relation', '1'),
                                         ('--place_id', '10001')])
 
-    def test_status_json_format(self, cli_call, tmp_path, capsys, params):
+    def test_details_json_format(self, cli_call, tmp_path, capsys, params):
         result = cli_call('details', '--project-dir', str(tmp_path), *params)
 
         assert result == 0

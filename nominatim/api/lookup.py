@@ -46,8 +46,7 @@ async def find_in_placex(conn: SearchConnection, place: ntyp.PlaceRef,
                     t.c.importance, t.c.wikipedia, t.c.indexed_date,
                     t.c.parent_place_id, t.c.rank_address, t.c.rank_search,
                     t.c.linked_place_id,
-                    sa.func.ST_X(t.c.centroid).label('x'),
-                    sa.func.ST_Y(t.c.centroid).label('y'),
+                    t.c.centroid,
                     _select_column_geometry(t.c.geometry, details.geometry_output))
 
     if isinstance(place, ntyp.PlaceID):
@@ -76,8 +75,7 @@ async def find_in_osmline(conn: SearchConnection, place: ntyp.PlaceRef,
     sql = sa.select(t.c.place_id, t.c.osm_id, t.c.parent_place_id,
                     t.c.indexed_date, t.c.startnumber, t.c.endnumber,
                     t.c.step, t.c.address, t.c.postcode, t.c.country_code,
-                    sa.func.ST_X(sa.func.ST_Centroid(t.c.linegeo)).label('x'),
-                    sa.func.ST_Y(sa.func.ST_Centroid(t.c.linegeo)).label('y'),
+                    t.c.linegeo.ST_Centroid().label('centroid'),
                     _select_column_geometry(t.c.linegeo, details.geometry_output))
 
     if isinstance(place, ntyp.PlaceID):
@@ -106,8 +104,7 @@ async def find_in_tiger(conn: SearchConnection, place: ntyp.PlaceRef,
     sql = sa.select(t.c.place_id, t.c.parent_place_id,
                     t.c.startnumber, t.c.endnumber, t.c.step,
                     t.c.postcode,
-                    sa.func.ST_X(sa.func.ST_Centroid(t.c.linegeo)).label('x'),
-                    sa.func.ST_Y(sa.func.ST_Centroid(t.c.linegeo)).label('y'),
+                    t.c.linegeo.ST_Centroid().label('centroid'),
                     _select_column_geometry(t.c.linegeo, details.geometry_output))
 
     if isinstance(place, ntyp.PlaceID):
@@ -128,8 +125,7 @@ async def find_in_postcode(conn: SearchConnection, place: ntyp.PlaceRef,
     sql = sa.select(t.c.place_id, t.c.parent_place_id,
                     t.c.rank_search, t.c.rank_address,
                     t.c.indexed_date, t.c.postcode, t.c.country_code,
-                    sa.func.ST_X(t.c.geometry).label('x'),
-                    sa.func.ST_Y(t.c.geometry).label('y'),
+                    t.c.geometry.label('centroid'),
                     _select_column_geometry(t.c.geometry, details.geometry_output))
 
     if isinstance(place, ntyp.PlaceID):

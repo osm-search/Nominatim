@@ -255,3 +255,15 @@ Feature: Rank assignment
          | W1     | R10     | True      | 18                  |
          | W1     | R2      | True      | 16                  |
          | W1     | N9      | False     | 18                  |
+
+
+    Scenario: POI nodes with place tags
+        Given the places
+          | osm | class   | type       | name | extratags       |
+          | N23 | amenity | playground | AB   | "place": "city" |
+          | N23 | place   | city       | AB   | "amenity": "playground" |
+        When importing
+        Then placex contains exactly
+          | object      | rank_search | rank_address |
+          | N23:amenity | 30          | 30           |
+          | N23:place   | 16          | 16           |

@@ -135,7 +135,7 @@ class Debug
 
     public static function printSQL($sSQL)
     {
-        echo '<p><tt><font color="#aaa">'.$sSQL.'</font></tt></p>'."\n";
+        echo '<p><tt><b>'.date('c').'</b> <font color="#aaa">'.$sSQL.'</font></tt></p>'."\n";
     }
 
     private static function outputVar($mVar, $sPreNL)

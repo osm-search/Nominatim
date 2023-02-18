@@ -15,6 +15,25 @@ breaking changes. **Please read them before running the migration.**
     If you are migrating from a version <3.6, then you still have to follow
     the manual migration steps up to 3.6.
 
+## 4.1.0 -> master
+
+### New indexes for reverse lookup
+
+The reverse lookup algorithm has changed slightly to improve performance.
+This change needs a different index in the database. The required index
+will be automatically build during migration. Until the new index is available
+performance of the /reverse endpoint is significantly reduced. You should
+therefore either remove traffic from the machine before attempting a
+version update or create the index manually **before** starting the update
+using the following SQL:
+
+```
+CREATE INDEX IF NOT EXISTS idx_placex_geometry_reverse_lookupPlaceNode
+  ON placex USING gist (ST_Buffer(geometry, reverse_place_diameter(rank_search)))
+  WHERE rank_address between 4 and 25 AND type != 'postcode'
+    AND name is not null AND linked_place_id is null AND osm_type = 'N';
+```
+
 ## 4.0.0 -> 4.1.0
 
 ### ICU tokenizer is the new default

@@ -1,3 +1,7 @@
+3.7.3
+
+ * fix XSS vulnerability in debug view
+
 3.7.2
 
  * fix database check for reverse-only imports

@@ -1,3 +1,7 @@
+4.0.2
+
+ * fix XSS vulnerability in debug view
+
 4.0.1
 
  * fix initialisation error in replication script
@@ -35,6 +39,10 @@
  * add security disclosure policy
  * add testing of installation scripts via CI
  * drop support for Python < 3.6 and Postgresql < 9.5
+
+3.7.3
+
+ * fix XSS vulnerability in debug view
 
 3.7.2
 

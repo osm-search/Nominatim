@@ -135,7 +135,7 @@ class Debug
 
     public static function printSQL($sSQL)
     {
-        echo '<p><tt><font color="#aaa">'.$sSQL.'</font></tt></p>'."\n";
+        echo '<p><tt><font color="#aaa">'.htmlspecialchars($sSQL).'</font></tt></p>'."\n";
     }
 
     private static function outputVar($mVar, $sPreNL)
@@ -178,11 +178,12 @@ class Debug
         }
 
         if (is_string($mVar)) {
-            echo "'$mVar'";
-            return strlen($mVar) + 2;
+            $sOut = "'$mVar'";
+        } else {
+            $sOut = (string)$mVar;
         }
 
-        echo (string)$mVar;
-        return strlen((string)$mVar);
+        echo htmlspecialchars($sOut);
+        return strlen($sOut);
     }
 }

@@ -37,14 +37,14 @@ class DebugTest extends \PHPUnit\Framework\TestCase
 <pre><b>Var1:</b>  <i>True</i></pre>
 <pre><b>Var2:</b>  <i>False</i></pre>
 <pre><b>Var3:</b>  0</pre>
-<pre><b>Var4:</b>  'String'</pre>
-<pre><b>Var5:</b>  0 => 'one'
-       1 => 'two'
-       2 => 'three'</pre>
-<pre><b>Var6:</b>  'key' => 'value'
-       'key2' => 'value2'</pre>
+<pre><b>Var4:</b>  &#039;String&#039;</pre>
+<pre><b>Var5:</b>  0 => &#039;one&#039;
+       1 => &#039;two&#039;
+       2 => &#039;three&#039;</pre>
+<pre><b>Var6:</b>  &#039;key&#039; => &#039;value&#039;
+       &#039;key2&#039; => &#039;value2&#039;</pre>
 <pre><b>Var7:</b>  me as string</pre>
-<pre><b>Var8:</b>  'value', 'value2'</pre>
+<pre><b>Var8:</b>  &#039;value&#039;, &#039;value2&#039;</pre>
 
 EOT
         );
@@ -64,10 +64,10 @@ EOT
     public function testDebugArray()
     {
         $this->expectOutputString(<<<EOT
-<pre><b>Arr0:</b>  'null'</pre>
-<pre><b>Arr1:</b>  'key1' => 'val1'
-       'key2' => 'val2'
-       'key3' => 'val3'</pre>
+<pre><b>Arr0:</b>  &#039;null&#039;</pre>
+<pre><b>Arr1:</b>  &#039;key1&#039; => &#039;val1&#039;
+       &#039;key2&#039; => &#039;val2&#039;
+       &#039;key3&#039; => &#039;val3&#039;</pre>
 
 EOT
         );
@@ -93,12 +93,12 @@ EOT
     <th><small>1</small></th>
   </tr>
   <tr>
-    <td><pre>'one'</pre></td>
-    <td><pre>'two'</pre></td>
+    <td><pre>&#039;one&#039;</pre></td>
+    <td><pre>&#039;two&#039;</pre></td>
   </tr>
   <tr>
-    <td><pre>'three'</pre></td>
-    <td><pre>'four'</pre></td>
+    <td><pre>&#039;three&#039;</pre></td>
+    <td><pre>&#039;four&#039;</pre></td>
   </tr>
 </table>
 <b>Table4:</b>
@@ -109,9 +109,9 @@ EOT
     <th><small>key3</small></th>
   </tr>
   <tr>
-    <td><pre>'val1'</pre></td>
-    <td><pre>'val2'</pre></td>
-    <td><pre>'val3'</pre></td>
+    <td><pre>&#039;val1&#039;</pre></td>
+    <td><pre>&#039;val2&#039;</pre></td>
+    <td><pre>&#039;val3&#039;</pre></td>
   </tr>
 </table>
 
@@ -147,18 +147,18 @@ EOT
   </tr>
   <tr>
     <td><pre>group1</pre></td>
-    <td><pre>'val1'</pre></td>
-    <td><pre>'val2'</pre></td>
+    <td><pre>&#039;val1&#039;</pre></td>
+    <td><pre>&#039;val2&#039;</pre></td>
   </tr>
   <tr>
     <td><pre>group1</pre></td>
-    <td><pre>'one'</pre></td>
-    <td><pre>'two'</pre></td>
+    <td><pre>&#039;one&#039;</pre></td>
+    <td><pre>&#039;two&#039;</pre></td>
   </tr>
   <tr>
     <td><pre>group2</pre></td>
-    <td><pre>'val1'</pre></td>
-    <td><pre>'val2'</pre></td>
+    <td><pre>&#039;val1&#039;</pre></td>
+    <td><pre>&#039;val2&#039;</pre></td>
   </tr>
 </table>
 <b>Table4:</b>
@@ -171,15 +171,15 @@ EOT
   </tr>
   <tr>
     <td><pre>group1</pre></td>
-    <td><pre>'val1'</pre></td>
-    <td><pre>'val2'</pre></td>
-    <td><pre>'val3'</pre></td>
+    <td><pre>&#039;val1&#039;</pre></td>
+    <td><pre>&#039;val2&#039;</pre></td>
+    <td><pre>&#039;val3&#039;</pre></td>
   </tr>
   <tr>
     <td><pre>group1</pre></td>
-    <td><pre>'val1'</pre></td>
-    <td><pre>'val2'</pre></td>
-    <td><pre>'val3'</pre></td>
+    <td><pre>&#039;val1&#039;</pre></td>
+    <td><pre>&#039;val2&#039;</pre></td>
+    <td><pre>&#039;val3&#039;</pre></td>
   </tr>
 </table>
 

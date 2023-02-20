@@ -1,3 +1,7 @@
+4.2.1
+
+ * fix XSS vulnerability in debug view
+
 4.2.0
 
  * add experimental support for osm2pgsql flex style
@@ -20,6 +24,10 @@
  * add support for PostgreSQL 15
  * typing fixes to work with latest type annotations from typeshed
  * smaller improvements to documentation (thanks to @mausch)
+
+4.1.1
+
+ * fix XSS vulnerability in debug view
 
 4.1.0
 
@@ -56,6 +64,10 @@
  * add support for PHP8
  * add setup instructions for updates and systemd
  * drop support for PostgreSQL 9.5
+
+4.0.2
+
+ * fix XSS vulnerability in debug view
 
 4.0.1
 
@@ -94,6 +106,10 @@
  * add security disclosure policy
  * add testing of installation scripts via CI
  * drop support for Python < 3.6 and Postgresql < 9.5
+
+3.7.3
+
+ * fix XSS vulnerability in debug view
 
 3.7.2
 

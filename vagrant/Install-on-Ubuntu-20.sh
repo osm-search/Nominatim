@@ -99,8 +99,8 @@ fi                                    #DOCS:
 #
 if [ "x$1" == "xyes" ]; then  #DOCS:    :::sh
     cd $USERHOME
-    wget https://nominatim.org/release/Nominatim-4.2.0.tar.bz2
-    tar xf Nominatim-4.2.0.tar.bz2
+    wget https://nominatim.org/release/Nominatim-4.2.1.tar.bz2
+    tar xf Nominatim-4.2.1.tar.bz2
 else                               #DOCS:
     cd $USERHOME/Nominatim         #DOCS:
 fi                                 #DOCS:
@@ -110,7 +110,7 @@ fi                                 #DOCS:
 
     mkdir $USERHOME/build
     cd $USERHOME/build
-    cmake $USERHOME/Nominatim-4.2.0
+    cmake $USERHOME/Nominatim-4.2.1
     make
     sudo make install
 

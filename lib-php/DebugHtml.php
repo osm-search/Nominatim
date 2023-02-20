@@ -127,7 +127,7 @@ class Debug
 
     public static function printSQL($sSQL)
     {
-        echo '<p><tt><font color="#aaa">'.htmlspecialchars($sSQL).'</font></tt></p>'."\n";
+        echo '<p><tt><font color="#aaa">'.htmlspecialchars($sSQL, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401).'</font></tt></p>'."\n";
     }
 
     private static function outputVar($mVar, $sPreNL)
@@ -175,7 +175,7 @@ class Debug
             $sOut = (string)$mVar;
         }
 
-        echo htmlspecialchars($sOut);
+        echo htmlspecialchars($sOut, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401);
         return strlen($sOut);
     }
 }

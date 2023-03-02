@@ -102,7 +102,7 @@ Here is an example configuration file:
 ``` yaml
 normalization:
     - ":: lower ()"
-    - "ß > 'ss'" # German szet is unimbigiously equal to double ss
+    - "ß > 'ss'" # German szet is unambiguously equal to double ss
 transliteration:
     - !include /etc/nominatim/icu-rules/extended-unicode-to-asccii.yaml
     - ":: Ascii ()"
@@ -128,7 +128,7 @@ The configuration file contains four sections:
 The normalization and transliteration sections each define a set of
 ICU rules that are applied to the names.
 
-The **normalisation** rules are applied after sanitation. They should remove
+The **normalization** rules are applied after sanitation. They should remove
 any information that is not relevant for search at all. Usual rules to be
 applied here are: lower-casing, removing of special characters, cleanup of
 spaces.
@@ -221,7 +221,13 @@ The following is a list of sanitizers that are shipped with Nominatim.
     rendering:
         heading_level: 6
 
+#### delete-tags
 
+::: nominatim.tokenizer.sanitizers.delete_tags
+    selection:
+        members: False
+    rendering:
+        heading_level: 6
 
 #### Token Analysis
 

@@ -41,6 +41,6 @@ def _clean_tiger_county(obj: ProcessInfo) -> None:
 
 
 def create(_: SanitizerConfig) -> Callable[[ProcessInfo], None]:
-    """ Create a housenumber processing function.
+    """ Create a function that preprocesses tags from the TIGER import.
     """
     return _clean_tiger_county

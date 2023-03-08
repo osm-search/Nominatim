@@ -74,7 +74,7 @@ class _PostcodeSanitizer:
 
 
 def create(config: SanitizerConfig) -> Callable[[ProcessInfo], None]:
-    """ Create a housenumber processing function.
+    """ Create a function that filters postcodes by their officially allowed pattern.
     """
 
     return _PostcodeSanitizer(config)

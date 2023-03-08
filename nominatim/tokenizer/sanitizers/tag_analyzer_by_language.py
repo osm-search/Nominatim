@@ -12,7 +12,7 @@ If a name already has an analyzer tagged, then this is kept.
 Arguments:
 
     filter-kind: Restrict the names the sanitizer should be applied to
-                 to the given tags. The parameter expects a list of
+                 the given tags. The parameter expects a list of
                  regular expressions which are matched against 'kind'.
                  Note that a match against the full string is expected.
     whitelist: Restrict the set of languages that should be tagged.

@@ -69,7 +69,7 @@ Before submitting a pull request make sure that the tests pass:
 
 Nominatim follows semantic versioning. Major releases are done for large changes
 that require (or at least strongly recommend) a reimport of the databases.
-Minor releases can usually be applied to exisiting databases Patch releases
+Minor releases can usually be applied to exisiting databases. Patch releases
 contain bug fixes only and are released from a separate branch where the
 relevant changes are cherry-picked from the master branch.
 

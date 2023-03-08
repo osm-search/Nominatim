@@ -21,7 +21,7 @@ class PlaceName:
 
         In addition to that, a name may have arbitrary additional attributes.
         How attributes are used, depends on the sanitizers and token analysers.
-        The exception is is the 'analyzer' attribute. This attribute determines
+        The exception is the 'analyzer' attribute. This attribute determines
         which token analysis module will be used to finalize the treatment of
         names.
     """

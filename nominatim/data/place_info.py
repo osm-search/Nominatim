@@ -55,7 +55,7 @@ class PlaceInfo:
 
     @property
     def rank_address(self) -> int:
-        """ The [rank address][1] before ant rank correction is applied.
+        """ The [rank address][1] before any rank correction is applied.
 
             [1]: ../customize/Ranking.md#address-rank
         """

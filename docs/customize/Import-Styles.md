@@ -127,7 +127,7 @@ to the user when requested, but are not used otherwise.
   values. Tags with matching key/value pairs are deleted.
 * __extra_keys__ is a _key match list_ for tags which should be saved into
   extratags
-* __delete_tags__ contains a table of tag keys pointing to a list of tag
+* __extra_tags__ contains a table of tag keys pointing to a list of tag
   values. Tags with matching key/value pairs are moved to extratags.
 
 Key list may contain three kinds of strings:
@@ -193,14 +193,14 @@ Address tags will be used to build up the address of an object.
 `set_address_tags()` takes a table with arbitrary fields pointing to
 _key match lists_. To fields have a special meaning:
 
-__main__ defines
+* __main__: defines
 the tags that make a full address object out of the OSM object. This
 is usually the housenumber or variants thereof. If a main address tag
 appears, then the object will always be included, if necessary with a
 fallback of `place=house`. If the key has a prefix of `addr:` or `is_in:`
 this will be stripped.
 
-__extra__ defines all supplementary tags for addresses, tags like `addr:street`, `addr:city` etc. If the key has a prefix of `addr:` or `is_in:` this will be stripped.
+* __extra__: defines all supplementary tags for addresses, tags like `addr:street`, `addr:city` etc. If the key has a prefix of `addr:` or `is_in:` this will be stripped.
 
 All other fields will be handled as summary fields. If a key matches the
 key match list, then its value will be added to the address tags with the

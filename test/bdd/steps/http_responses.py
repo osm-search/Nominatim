@@ -137,8 +137,6 @@ class GenericResponse:
                 elif name == 'osm':
                     self.check_row_field(i, 'osm_type', OsmType(value[0]))
                     self.check_row_field(i, 'osm_id', Field(value[1:]))
-                elif name == 'osm_type':
-                    self.check_row_field(i, 'osm_type', OsmType(value[0]))
                 elif name == 'centroid':
                     if ' ' in value:
                         lon, lat = value.split(' ')
@@ -146,8 +144,8 @@ class GenericResponse:
                         lon, lat = context.osm.grid_node(int(value))
                     else:
                         raise RuntimeError("Context needed when using grid coordinates")
-                    self.check_row_field(i, 'lat', Field(float(lat)), base=subdict)
-                    self.check_row_field(i, 'lon', Field(float(lon)), base=subdict)
+                    self.check_row_field(i, 'lat', Field(float(lat)))
+                    self.check_row_field(i, 'lon', Field(float(lon)))
                 elif '+' in name:
                     self.assert_subfield(i, name.split('+'), value)
                 else:

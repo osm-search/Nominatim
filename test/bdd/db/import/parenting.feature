@@ -23,12 +23,12 @@ Feature: Parenting of objects
          | N2     | W1 |
         When sending search query "4 galoo"
         Then results contain
-         | ID | osm_type | osm_id | display_name |
-         | 0  | N        | 1      | 4, galoo, 12345, Deutschland |
+         | ID | osm | display_name |
+         | 0  | N1  | 4, galoo, 12345, Deutschland |
         When sending search query "5 galoo"
         Then results contain
-         | ID | osm_type | osm_id | display_name |
-         | 0  | N        | 2      | 5, galoo, 99999, Deutschland |
+         | ID | osm | display_name |
+         | 0  | N2  | 5, galoo, 99999, Deutschland |
 
     Scenario: Address without tags, closest street
         Given the grid

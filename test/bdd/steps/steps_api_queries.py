@@ -164,28 +164,30 @@ def website_search_request(context, fmt, query, addr):
 
     context.response = SearchResponse(outp, fmt or 'json', status)
 
-@when(u'sending (?P<fmt>\S+ )?reverse coordinates (?P<lat>.+)?,(?P<lon>.+)?')
-def website_reverse_request(context, fmt, lat, lon):
+
+@when('sending v1/reverse at (?P<lat>[\d.-]*),(?P<lon>[\d.-]*)(?: with format (?P<fmt>.+))?')
+def api_endpoint_v1_reverse(context, lat, lon, fmt):
     params = {}
     if lat is not None:
         params['lat'] = lat
     if lon is not None:
         params['lon'] = lon
+    if fmt is None:
+        fmt = 'jsonv2'
+    elif fmt == "''":
+        fmt = None
 
     outp, status = send_api_query('reverse', params, fmt, context)
-
     context.response = ReverseResponse(outp, fmt or 'xml', status)
 
-@when(u'sending (?P<fmt>\S+ )?reverse point (?P<nodeid>.+)')
-def website_reverse_request(context, fmt, nodeid):
+
+@when('sending v1/reverse N(?P<nodeid>\d+)(?: with format (?P<fmt>.+))?')
+def api_endpoint_v1_reverse_from_node(context, nodeid, fmt):
     params = {}
     params['lon'], params['lat'] = (f'{c:f}' for c in context.osm.grid_node(int(nodeid)))
 
-
     outp, status = send_api_query('reverse', params, fmt, context)
-
     context.response = ReverseResponse(outp, fmt or 'xml', status)
-
 
 
 @when(u'sending (?P<fmt>\S+ )?details query for (?P<query>.*)')

@@ -23,7 +23,7 @@ Feature: Query of address interpolations
           | id | nodes |
           | 1  | 1,3   |
         When importing
-        When sending jsonv2 reverse point 2
+        When sending v1/reverse N2
         Then results contain
           | ID | display_name |
           | 0  | 3, Nickway   |
@@ -48,7 +48,7 @@ Feature: Query of address interpolations
           | id | nodes |
           | 1  | 1,3   |
         When importing
-        When sending jsonv2 reverse point 2
+        When sending v1/reverse N2
         Then results contain
           | ID | display_name | centroid |
           | 0  | 10, Nickway  | 2 |

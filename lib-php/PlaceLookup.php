@@ -524,12 +524,7 @@ class PlaceLookup
 
         // Get the bounding box and outline polygon
         $sSQL = 'select place_id,0 as numfeatures,st_area(geometry) as area,';
-        if ($fLonReverse != null && $fLatReverse != null) {
-            $sSQL .= ' ST_Y(closest_point) as centrelat,';
-            $sSQL .= ' ST_X(closest_point) as centrelon,';
-        } else {
-            $sSQL .= ' ST_Y(centroid) as centrelat, ST_X(centroid) as centrelon,';
-        }
+        $sSQL .= ' ST_Y(centroid) as centrelat, ST_X(centroid) as centrelon,';
         $sSQL .= ' ST_YMin(geometry) as minlat,ST_YMax(geometry) as maxlat,';
         $sSQL .= ' ST_XMin(geometry) as minlon,ST_XMax(geometry) as maxlon';
         if ($this->bIncludePolygonAsGeoJSON) {
@@ -544,19 +539,21 @@ class PlaceLookup
         if ($this->bIncludePolygonAsText) {
             $sSQL .= ',ST_AsText(geometry) as astext';
         }
+
+        $sSQL .= ' FROM (SELECT place_id';
         if ($fLonReverse != null && $fLatReverse != null) {
-            $sFrom = ' from (SELECT * , CASE WHEN (class = \'highway\') AND (ST_GeometryType(geometry) = \'ST_LineString\') THEN ';
-            $sFrom .=' ST_ClosestPoint(geometry, ST_SetSRID(ST_Point('.$fLatReverse.','.$fLonReverse.'),4326))';
-            $sFrom .=' ELSE centroid END AS closest_point';
-            $sFrom .= ' from placex where place_id = '.$iPlaceID.') as plx';
+            $sSQL .= ',CASE WHEN (class = \'highway\') AND (ST_GeometryType(geometry) = \'ST_LineString\') THEN ';
+            $sSQL .=' ST_ClosestPoint(geometry, ST_SetSRID(ST_Point('.$fLatReverse.','.$fLonReverse.'),4326))';
+            $sSQL .=' ELSE centroid END AS centroid';
         } else {
-            $sFrom = ' from placex where place_id = '.$iPlaceID;
+            $sSQL .= ',centroid';
         }
         if ($this->fPolygonSimplificationThreshold > 0) {
-            $sSQL .= ' from (select place_id,centroid,ST_SimplifyPreserveTopology(geometry,'.$this->fPolygonSimplificationThreshold.') as geometry'.$sFrom.') as plx';
+            $sSQL .= ',ST_SimplifyPreserveTopology(geometry,'.$this->fPolygonSimplificationThreshold.') as geometry';
         } else {
-            $sSQL .= $sFrom;
+            $sSQL .= ',geometry';
         }
+        $sSQL .= ' FROM placex where place_id = '.$iPlaceID.') as plx';
 
         $aPointPolygon = $this->oDB->getRow($sSQL, null, 'Could not get outline');
 

@@ -48,6 +48,15 @@ BASE_SERVER_ENV = {
 }
 
 
+def make_todo_list(context, result_id):
+    if result_id is None:
+        context.execute_steps("then at least 1 result is returned")
+        return range(len(context.response.result))
+
+    context.execute_steps(f"then more than {result_id}results are returned")
+    return (int(result_id.strip()), )
+
+
 def compare(operator, op1, op2):
     if operator == 'less than':
         return op1 < op2
@@ -265,14 +274,7 @@ def step_impl(context):
 
 @then(u'result (?P<lid>\d+ )?has (?P<neg>not )?attributes (?P<attrs>.*)')
 def validate_attributes(context, lid, neg, attrs):
-    if lid is None:
-        idx = range(len(context.response.result))
-        context.execute_steps("then at least 1 result is returned")
-    else:
-        idx = [int(lid.strip())]
-        context.execute_steps("then more than %sresults are returned" % lid)
-
-    for i in idx:
+    for i in make_todo_list(context, lid):
         check_for_attributes(context.response.result[i], attrs,
                              'absent' if neg else 'present')
 
@@ -317,16 +319,9 @@ def check_address(context, lid, complete):
 
 @then(u'result (?P<lid>\d+ )?has bounding box in (?P<coords>[\d,.-]+)')
 def check_bounding_box_in_area(context, lid, coords):
-    if lid is None:
-        context.execute_steps("then at least 1 result is returned")
-        todos = range(len(context.response.result))
-    else:
-        context.execute_steps(f"then more than {lid}results are returned")
-        todos = (int(lid), )
-
     expected = Bbox(coords)
 
-    for idx in todos:
+    for idx in make_todo_list(context, lid):
         res = context.response.result[idx]
         check_for_attributes(res, 'boundingbox')
         context.response.check_row(idx, res['boundingbox'] in expected,
@@ -335,16 +330,9 @@ def check_bounding_box_in_area(context, lid, coords):
 
 @then(u'result (?P<lid>\d+ )?has centroid in (?P<coords>[\d,.-]+)')
 def check_centroid_in_area(context, lid, coords):
-    if lid is None:
-        context.execute_steps("then at least 1 result is returned")
-        todos = range(len(context.response.result))
-    else:
-        context.execute_steps(f"then more than {lid}results are returned")
-        todos = (int(lid), )
-
     expected = Bbox(coords)
 
-    for idx in todos:
+    for idx in make_todo_list(context, lid):
         res = context.response.result[idx]
         check_for_attributes(res, 'lat,lon')
         context.response.check_row(idx, (res['lon'], res['lat']) in expected,
@@ -369,3 +357,4 @@ def check_for_duplicates(context, neg):
         assert not has_dupe, "Found duplicate for %s" % (dup, )
     else:
         assert has_dupe, "No duplicates found"
+

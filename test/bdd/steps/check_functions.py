@@ -7,6 +7,7 @@
 """
 Collection of assertion functions used for the steps.
 """
+import json
 
 class Almost:
     """ Compares a float value with a certain jitter.
@@ -41,3 +42,24 @@ class Bbox:
 
     def __str__(self):
         return str(self.coord)
+
+
+
+def check_for_attributes(obj, attrs, presence='present'):
+    """ Check that the object has the given attributes. 'attrs' is a
+        string with a comma-separated list of attributes. If 'presence'
+        is set to 'absent' then the function checks that the attributes do
+        not exist for the object
+    """
+    def _dump_json():
+        return json.dumps(obj, sort_keys=True, indent=2, ensure_ascii=False)
+
+    for attr in attrs.split(','):
+        attr = attr.strip()
+        if presence == 'absent':
+            assert attr not in obj, \
+                   f"Unexpected attribute {attr}. Full response:\n{_dump_json()}"
+        else:
+            assert attr in obj, \
+                   f"No attribute '{attr}'. Full response:\n{_dump_json()}"
+

@@ -11,7 +11,7 @@ import re
 import json
 import xml.etree.ElementTree as ET
 
-from check_functions import Almost
+from check_functions import Almost, check_for_attributes
 
 OSM_TYPE = {'N' : 'node', 'W' : 'way', 'R' : 'relation',
             'n' : 'node', 'w' : 'way', 'r' : 'relation',
@@ -76,15 +76,47 @@ class GenericResponse:
             else:
                 self.result = [self.result]
 
+
     def _parse_geojson(self):
         self._parse_json()
         if self.result:
-            self.result = list(map(_geojson_result_to_json_result, self.result[0]['features']))
+            geojson = self.result[0]
+            # check for valid geojson
+            check_for_attributes(geojson, 'type,features')
+            assert geojson['type'] == 'FeatureCollection'
+            assert isinstance(geojson['features'], list)
+
+            self.result = []
+            for result in geojson['features']:
+                check_for_attributes(result, 'type,properties,geometry')
+                assert result['type'] == 'Feature'
+                new = result['properties']
+                check_for_attributes(new, 'geojson', 'absent')
+                new['geojson'] = result['geometry']
+                if 'bbox' in result:
+                    check_for_attributes(new, 'boundingbox', 'absent')
+                    # bbox is  minlon, minlat, maxlon, maxlat
+                    # boundingbox is minlat, maxlat, minlon, maxlon
+                    new['boundingbox'] = [result['bbox'][1],
+                                          result['bbox'][3],
+                                          result['bbox'][0],
+                                          result['bbox'][2]]
+                for k, v in geojson.items():
+                    if k not in ('type', 'features'):
+                        check_for_attributes(new, '__' + k, 'absent')
+                        new['__' + k] = v
+                self.result.append(new)
+
 
     def _parse_geocodejson(self):
         self._parse_geojson()
-        if self.result is not None:
-            self.result = [r['geocoding'] for r in self.result]
+        if self.result:
+            for r in self.result:
+                assert set(r.keys()) == {'geocoding', 'geojson', '__geocoding'}, \
+                       f"Unexpected keys in result: {r.keys()}"
+                check_for_attributes(r['geocoding'], 'geojson', 'absent')
+                r |= r.pop('geocoding')
+
 
     def assert_field(self, idx, field, value):
         """ Check that result row `idx` has a field `field` with value `value`.

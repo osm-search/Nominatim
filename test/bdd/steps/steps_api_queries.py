@@ -15,6 +15,7 @@ import os
 import re
 import logging
 import asyncio
+import xml.etree.ElementTree as ET
 from urllib.parse import urlencode
 
 from utils import run_script
@@ -73,8 +74,12 @@ def compare(operator, op1, op2):
 
 
 def send_api_query(endpoint, params, fmt, context):
-    if fmt is not None and fmt.strip() != 'debug':
-        params['format'] = fmt.strip()
+    if fmt is not None:
+        if fmt.strip() == 'debug':
+            params['debug'] = '1'
+        else:
+            params['format'] = fmt.strip()
+
     if context.table:
         if context.table.headings[0] == 'param':
             for line in context.table:
@@ -154,8 +159,6 @@ def website_search_request(context, fmt, query, addr):
         params['q'] = query
     if addr is not None:
         params['addressdetails'] = '1'
-    if fmt and fmt.strip() == 'debug':
-        params['debug'] = '1'
 
     outp, status = send_api_query('search', params, fmt, context)
 
@@ -168,8 +171,6 @@ def website_reverse_request(context, fmt, lat, lon):
         params['lat'] = lat
     if lon is not None:
         params['lon'] = lon
-    if fmt and fmt.strip() == 'debug':
-        params['debug'] = '1'
 
     outp, status = send_api_query('reverse', params, fmt, context)
 
@@ -178,8 +179,6 @@ def website_reverse_request(context, fmt, lat, lon):
 @when(u'sending (?P<fmt>\S+ )?reverse point (?P<nodeid>.+)')
 def website_reverse_request(context, fmt, nodeid):
     params = {}
-    if fmt and fmt.strip() == 'debug':
-        params['debug'] = '1'
     params['lon'], params['lat'] = (f'{c:f}' for c in context.osm.grid_node(int(nodeid)))
 
 
@@ -220,7 +219,7 @@ def website_status_request(context, fmt):
 
 @step(u'(?P<operator>less than|more than|exactly|at least|at most) (?P<number>\d+) results? (?:is|are) returned')
 def validate_result_number(context, operator, number):
-    assert context.response.errorcode == 200
+    context.execute_steps("Then a HTTP 200 is returned")
     numres = len(context.response.result)
     assert compare(operator, numres, int(number)), \
            f"Bad number of results: expected {operator} {number}, got {numres}."
@@ -237,7 +236,19 @@ def check_page_content_equals(context, text):
 @then(u'the result is valid (?P<fmt>\w+)')
 def step_impl(context, fmt):
     context.execute_steps("Then a HTTP 200 is returned")
-    assert context.response.format == fmt
+    if fmt.strip() == 'html':
+        try:
+            tree = ET.fromstring(context.response.page)
+        except Exception as ex:
+            assert False, f"Could not parse page:\n{context.response.page}"
+
+        assert tree.tag == 'html'
+        body = tree.find('./body')
+        assert body is not None
+        assert body.find('.//script') is None
+    else:
+        assert context.response.format == fmt
+
 
 @then(u'a (?P<fmt>\w+) user error is returned')
 def check_page_error(context, fmt):

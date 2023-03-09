@@ -132,6 +132,8 @@ Feature: Simple Reverse Tests
      | Nan      | 8.448 |
      | 48.966   | Nan |
 
-     Scenario: Reverse Debug output returns no errors
+
+    @v1-api-python-only
+    Scenario: Reverse Debug output returns no errors
         When sending debug reverse coordinates 47.11,9.57
-        Then a HTTP 200 is returned
+        Then the result is valid html

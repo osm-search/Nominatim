@@ -103,3 +103,16 @@ Feature: Object details
             | category | type     | admin_level |
             | place    | postcode | 15          |
         And result has not attributes osm_type,osm_id
+
+
+    @v1-api-python-only
+    Scenario Outline: Details debug output returns no errors
+        When sending debug details query for <feature>
+        Then the result is valid html
+
+        Examples:
+          | feature     |
+          | N5484325405 |
+          | W1          |
+          | 112820      |
+          | 112871      |

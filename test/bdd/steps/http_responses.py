@@ -84,7 +84,8 @@ class GenericResponse:
                 assert set(r.keys()) == {'geocoding', 'geojson', '__geocoding'}, \
                        f"Unexpected keys in result: {r.keys()}"
                 check_for_attributes(r['geocoding'], 'geojson', 'absent')
-                r |= r.pop('geocoding')
+                inner = r.pop('geocoding')
+                r.update(inner)
 
 
     def assert_address_field(self, idx, field, value):

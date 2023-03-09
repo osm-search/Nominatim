@@ -264,12 +264,12 @@ def check_header_no_attr(context, neg, attrs):
                          'absent' if neg else 'present')
 
 
-@then(u'results contain')
-def step_impl(context):
+@then(u'results contain(?: in field (?P<field>.*))?')
+def step_impl(context, field):
     context.execute_steps("then at least 1 result is returned")
 
     for line in context.table:
-        context.response.match_row(line, context=context)
+        context.response.match_row(line, context=context, field=field)
 
 
 @then(u'result (?P<lid>\d+ )?has (?P<neg>not )?attributes (?P<attrs>.*)')

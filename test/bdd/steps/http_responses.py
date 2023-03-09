@@ -7,7 +7,6 @@
 """
 Classes wrapping HTTP responses from the Nominatim API.
 """
-from collections import OrderedDict
 import re
 import json
 import xml.etree.ElementTree as ET
@@ -70,8 +69,8 @@ class GenericResponse:
         else:
             code = m.group(2)
             self.header['json_func'] = m.group(1)
-        self.result = json.JSONDecoder(object_pairs_hook=OrderedDict).decode(code)
-        if isinstance(self.result, OrderedDict):
+        self.result = json.JSONDecoder().decode(code)
+        if isinstance(self.result, dict):
             if 'error' in self.result:
                 self.result = []
             else:
@@ -102,7 +101,7 @@ class GenericResponse:
         elif value.startswith("^"):
             assert re.fullmatch(value, self.result[idx][field]), \
                    BadRowValueAssert(self, idx, field, value)
-        elif isinstance(self.result[idx][field], OrderedDict):
+        elif isinstance(self.result[idx][field], dict):
             assert self.result[idx][field] == eval('{' + value + '}'), \
                    BadRowValueAssert(self, idx, field, value)
         else:
@@ -115,7 +114,7 @@ class GenericResponse:
 
         field = self.result[idx]
         for p in path:
-            assert isinstance(field, OrderedDict)
+            assert isinstance(field, dict)
             assert p in field
             field = field[p]
 
@@ -123,7 +122,7 @@ class GenericResponse:
             assert Almost(value) == float(field)
         elif value.startswith("^"):
             assert re.fullmatch(value, field)
-        elif isinstance(field, OrderedDict):
+        elif isinstance(field, dict):
             assert field, eval('{' + value + '}')
         else:
             assert str(field) == str(value)

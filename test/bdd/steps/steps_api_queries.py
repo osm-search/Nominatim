@@ -69,7 +69,7 @@ def compare(operator, op1, op2):
     elif operator == 'at most':
         return op1 <= op2
     else:
-        raise Exception("unknown operator '%s'" % operator)
+        raise ValueError(f"Unknown operator '{operator}'")
 
 
 def send_api_query(endpoint, params, fmt, context):
@@ -97,11 +97,11 @@ def send_api_query_php(endpoint, params, context):
     env = dict(BASE_SERVER_ENV)
     env['QUERY_STRING'] = urlencode(params)
 
-    env['SCRIPT_NAME'] = '/%s.php' % endpoint
-    env['REQUEST_URI'] = '%s?%s' % (env['SCRIPT_NAME'], env['QUERY_STRING'])
+    env['SCRIPT_NAME'] = f'/{endpoint}.php'
+    env['REQUEST_URI'] = f"{env['SCRIPT_NAME']}?{env['QUERY_STRING']}"
     env['CONTEXT_DOCUMENT_ROOT'] = os.path.join(context.nominatim.website_dir.name, 'website')
     env['SCRIPT_FILENAME'] = os.path.join(env['CONTEXT_DOCUMENT_ROOT'],
-                                          '%s.php' % endpoint)
+                                          f'{endpoint}.php')
 
     LOG.debug("Environment:" + json.dumps(env, sort_keys=True, indent=2))
 
@@ -113,7 +113,7 @@ def send_api_query_php(endpoint, params, context):
         env['XDEBUG_MODE'] = 'coverage'
         env['COV_SCRIPT_FILENAME'] = env['SCRIPT_FILENAME']
         env['COV_PHP_DIR'] = context.nominatim.src_dir
-        env['COV_TEST_NAME'] = '%s:%s' % (context.scenario.filename, context.scenario.line)
+        env['COV_TEST_NAME'] = f"{context.scenario.filename}:{context.scenario.line}"
         env['SCRIPT_FILENAME'] = \
                 os.path.join(os.path.split(__file__)[0], 'cgi-with-coverage.php')
         cmd.append(env['SCRIPT_FILENAME'])
@@ -122,11 +122,11 @@ def send_api_query_php(endpoint, params, context):
         cmd.append(env['SCRIPT_FILENAME'])
 
     for k,v in params.items():
-        cmd.append("%s=%s" % (k, v))
+        cmd.append(f"{k}={v}")
 
     outp, err = run_script(cmd, cwd=context.nominatim.website_dir.name, env=env)
 
-    assert len(err) == 0, "Unexpected PHP error: %s" % (err)
+    assert len(err) == 0, f"Unexpected PHP error: {err}"
 
     if outp.startswith('Status: '):
         status = int(outp[8:11])
@@ -223,12 +223,12 @@ def validate_result_number(context, operator, number):
     assert context.response.errorcode == 200
     numres = len(context.response.result)
     assert compare(operator, numres, int(number)), \
-        "Bad number of results: expected {} {}, got {}.".format(operator, number, numres)
+           f"Bad number of results: expected {operator} {number}, got {numres}."
 
 @then(u'a HTTP (?P<status>\d+) is returned')
 def check_http_return_status(context, status):
     assert context.response.errorcode == int(status), \
-           "Return HTTP status is {}.".format(context.response.errorcode)
+           f"Return HTTP status is {context.response.errorcode}."
 
 @then(u'the page contents equals "(?P<text>.+)"')
 def check_page_content_equals(context, text):
@@ -252,10 +252,9 @@ def check_page_error(context, fmt):
 @then(u'result header contains')
 def check_header_attr(context):
     for line in context.table:
-        assert re.fullmatch(line['value'], context.response.header[line['attr']]) is not None, \
-               "attribute '%s': expected: '%s', got '%s'" % (
-                    line['attr'], line['value'],
-                    context.response.header[line['attr']])
+        value = context.response.header[line['attr']]
+        assert re.fullmatch(line['value'], value) is not None, \
+               f"Attribute '{line['attr']}': expected: '{line['value']}', got '{value}'"
 
 
 @then(u'result header has (?P<neg>not )?attributes (?P<attrs>.*)')
@@ -292,7 +291,7 @@ def step_impl(context):
 
 @then(u'address of result (?P<lid>\d+) has(?P<neg> no)? types (?P<attrs>.*)')
 def check_address(context, lid, neg, attrs):
-    context.execute_steps("then more than %s results are returned" % lid)
+    context.execute_steps(f"then more than {lid} results are returned")
 
     addr_parts = context.response.result[int(lid)]['address']
 
@@ -304,7 +303,7 @@ def check_address(context, lid, neg, attrs):
 
 @then(u'address of result (?P<lid>\d+) (?P<complete>is|contains)')
 def check_address(context, lid, complete):
-    context.execute_steps("then more than %s results are returned" % lid)
+    context.execute_steps(f"then more than {lid} results are returned")
 
     lid = int(lid)
     addr_parts = dict(context.response.result[lid]['address'])
@@ -314,7 +313,7 @@ def check_address(context, lid, complete):
         del addr_parts[line['type']]
 
     if complete == 'is':
-        assert len(addr_parts) == 0, "Additional address parts found: %s" % str(addr_parts)
+        assert len(addr_parts) == 0, f"Additional address parts found: {addr_parts!s}"
 
 
 @then(u'result (?P<lid>\d+ )?has bounding box in (?P<coords>[\d,.-]+)')
@@ -354,7 +353,7 @@ def check_for_duplicates(context, neg):
         resarr.add(dup)
 
     if neg:
-        assert not has_dupe, "Found duplicate for %s" % (dup, )
+        assert not has_dupe, f"Found duplicate for {dup}"
     else:
         assert has_dupe, "No duplicates found"
 

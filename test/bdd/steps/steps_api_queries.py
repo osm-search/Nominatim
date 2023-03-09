@@ -314,36 +314,42 @@ def check_address(context, lid, complete):
     if complete == 'is':
         assert len(addr_parts) == 0, "Additional address parts found: %s" % str(addr_parts)
 
+
 @then(u'result (?P<lid>\d+ )?has bounding box in (?P<coords>[\d,.-]+)')
-def step_impl(context, lid, coords):
+def check_bounding_box_in_area(context, lid, coords):
     if lid is None:
         context.execute_steps("then at least 1 result is returned")
-        bboxes = context.response.property_list('boundingbox')
+        todos = range(len(context.response.result))
     else:
-        context.execute_steps("then more than {}results are returned".format(lid))
-        bboxes = [context.response.result[int(lid)]['boundingbox']]
+        context.execute_steps(f"then more than {lid}results are returned")
+        todos = (int(lid), )
 
     expected = Bbox(coords)
 
-    for bbox in bboxes:
-        assert bbox in expected, "Bbox {} is not contained in {}.".format(bbox, expected)
+    for idx in todos:
+        res = context.response.result[idx]
+        check_for_attributes(res, 'boundingbox')
+        context.response.check_row(idx, res['boundingbox'] in expected,
+                                   f"Bbox is not contained in {expected}")
+
 
 @then(u'result (?P<lid>\d+ )?has centroid in (?P<coords>[\d,.-]+)')
-def step_impl(context, lid, coords):
+def check_centroid_in_area(context, lid, coords):
     if lid is None:
         context.execute_steps("then at least 1 result is returned")
-        centroids = zip(context.response.property_list('lon'),
-                        context.response.property_list('lat'))
+        todos = range(len(context.response.result))
     else:
-        context.execute_steps("then more than %sresults are returned".format(lid))
-        res = context.response.result[int(lid)]
-        centroids = [(res['lon'], res['lat'])]
+        context.execute_steps(f"then more than {lid}results are returned")
+        todos = (int(lid), )
 
     expected = Bbox(coords)
 
-    for centroid in centroids:
-        assert centroid in expected,\
-               "Centroid {} is not inside {}.".format(centroid, expected)
+    for idx in todos:
+        res = context.response.result[idx]
+        check_for_attributes(res, 'lat,lon')
+        context.response.check_row(idx, (res['lon'], res['lat']) in expected,
+                                   f"Centroid is not inside {expected}")
+
 
 @then(u'there are(?P<neg> no)? duplicates')
 def check_for_duplicates(context, neg):

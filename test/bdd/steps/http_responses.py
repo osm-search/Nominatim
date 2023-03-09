@@ -152,10 +152,6 @@ class GenericResponse:
                     self.check_row_field(i, name, Field(value))
 
 
-    def property_list(self, prop):
-        return [x[prop] for x in self.result]
-
-
     def check_row(self, idx, check, msg):
         """ Assert for the condition 'check' and print 'msg' on fail together
             with the contents of the failing result.

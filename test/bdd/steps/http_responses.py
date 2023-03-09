@@ -220,24 +220,33 @@ class ReverseResponse(GenericResponse):
             if child.tag == 'result':
                 assert not self.result, "More than one result in reverse result"
                 self.result.append(dict(child.attrib))
+                check_for_attributes(self.result[0], 'display_name', 'absent')
+                self.result[0]['display_name'] = child.text
             elif child.tag == 'addressparts':
+                assert 'address' not in self.result[0], "More than one address in result"
                 address = {}
                 for sub in child:
+                    assert len(sub) == 0, f"Address element '{sub.tag}' has subelements"
                     address[sub.tag] = sub.text
                 self.result[0]['address'] = address
             elif child.tag == 'extratags':
+                assert 'extratags' not in self.result[0], "More than one extratags in result"
                 self.result[0]['extratags'] = {}
                 for tag in child:
+                    assert len(tag) == 0, f"Extratags element '{tag.attrib['key']}' has subelements"
                     self.result[0]['extratags'][tag.attrib['key']] = tag.attrib['value']
             elif child.tag == 'namedetails':
+                assert 'namedetails' not in self.result[0], "More than one namedetails in result"
                 self.result[0]['namedetails'] = {}
                 for tag in child:
+                    assert len(tag) == 0, f"Namedetails element '{tag.attrib['desc']}' has subelements"
                     self.result[0]['namedetails'][tag.attrib['desc']] = tag.text
             elif child.tag == 'geokml':
-                self.result[0][child.tag] = True
+                assert 'geokml' not in self.result[0], "More than one geokml in result"
+                self.result[0]['geokml'] = ET.tostring(child, encoding='unicode')
             else:
                 assert child.tag == 'error', \
-                       "Unknown XML tag {} on page: {}".format(child.tag, self.page)
+                       f"Unknown XML tag {child.tag} on page: {self.page}"
 
 
 class StatusResponse(GenericResponse):

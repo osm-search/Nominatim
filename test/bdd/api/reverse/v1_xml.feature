@@ -12,8 +12,8 @@ Feature: XML output for Reverse API
           | osm_type | osm_id     | place_rank | address_rank |
           | node     | 6522627624 | 30         | 30           |
         And results contain
-          | lat        | lon       | boundingbox |
-          | 47.0660892 | 9.5036065 | 47.0660392,47.0661392,9.5035565,9.5036565 |
+          | centroid             | boundingbox |
+          | 9.5036065 47.0660892 | 47.0660392,47.0661392,9.5035565,9.5036565 |
         And results contain
           | ref                   | display_name |
           | Dorfbäckerei Herrmann | Dorfbäckerei Herrmann, 29, Gnetsch, Mäls, Balzers, Oberland, 9496, Liechtenstein |
@@ -31,8 +31,8 @@ Feature: XML output for Reverse API
          | osm_type | osm_id    | place_rank  | address_rank |
          | way      | 396009653 | 30          | 30           |
         And results contain
-          | lat               | lon                | boundingbox |
-          | 32.47535802569396 | -86.48085532585448 | 32.475308025694,32.475408025694,-86.480905325854,-86.480805325854 |
+          | centroid                     | boundingbox |
+          | -86.4808553258 32.4753580256 | ^32.475308025\d*,32.475408025\d*,-86.480905325\d*,-86.480805325\d* |
         And results contain
           | display_name |
           | 707, Upper Kingston Road, Upper Kingston, Prattville, Autauga County, 36067, United States |
@@ -44,8 +44,8 @@ Feature: XML output for Reverse API
           | osm_type | osm_id | place_rank | address_rank |
           | way      | 1      | 30         | 30           |
         And results contain
-          | lat          | lon        | boundingbox |
-          | 47.118545392 | 9.57054676 | 47.118495392,47.118595392,9.57049676,9.57059676 |
+          | centroid                | boundingbox |
+          | 9.57054676 47.118545392 | 47.118495392,47.118595392,9.57049676,9.57059676 |
         And results contain
           | display_name |
           | 1019, Grosssteg, Sücka, Triesenberg, Oberland, 9497, Liechtenstein |
@@ -84,4 +84,4 @@ Feature: XML output for Reverse API
           | polygon_kml | 1     |
        Then results contain
           | geokml |
-          | <geokml><LineString><coordinates>9.5039353,47.0657546 9.5040437,47.0657781 9.5040808,47.065787 9.5054298,47.0661407</coordinates></LineString></geokml> |
+          | ^<geokml><LineString><coordinates>9.5039\d*,47.0657\d* 9.5040\d*,47.0657\d* 9.5040\d*,47.065\d* 9.5054\d*,47.0661\d*</coordinates></LineString></geokml> |

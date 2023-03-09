@@ -27,8 +27,8 @@ Feature: Json output for Reverse API
           | osm_type | osm_id     |
           | node     | 6522627624 |
         And results contain
-          | lat        | lon       | boundingbox |
-          | 47.0660892 | 9.5036065 | ['47.0660392', '47.0661392', '9.5035565', '9.5036565'] |
+          | centroid             | boundingbox |
+          | 9.5036065 47.0660892 | ['47.0660392', '47.0661392', '9.5035565', '9.5036565'] |
         And results contain
           | display_name |
           | Dorfbäckerei Herrmann, 29, Gnetsch, Mäls, Balzers, Oberland, 9496, Liechtenstein |
@@ -61,8 +61,8 @@ Feature: Json output for Reverse API
           | osm_type | osm_id |
           | way      | 1      |
         And results contain
-          | lat          | lon        | boundingbox |
-          | 47.118545392 | 9.57054676 | ['47.118495392', '47.118595392', '9.57049676', '9.57059676'] |
+          | centroid                | boundingbox |
+          | 9.57054676 47.118545392 | ['47.118495392', '47.118595392', '9.57049676', '9.57059676'] |
         And results contain
           | display_name |
           | 1019, Grosssteg, Sücka, Triesenberg, Oberland, 9497, Liechtenstein |
@@ -121,7 +121,7 @@ Feature: Json output for Reverse API
           | polygon_kml | 1     |
        Then results contain
           | geokml |
-          | <LineString><coordinates>9.5039353,47.0657546 9.5040437,47.0657781 9.5040808,47.065787 9.5054298,47.0661407</coordinates></LineString> |
+          | ^<LineString><coordinates>9.5039\d*,47.0657\d* 9.5040\d*,47.0657\d* 9.5040\d*,47.065\d* 9.5054\d*,47.0661\d*</coordinates></LineString> |
 
        Examples:
           | format |

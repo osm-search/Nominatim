@@ -55,8 +55,8 @@ Feature: Linking of places
          | R23    | -   |
         When sending search query "rhein"
         Then results contain
-         | osm_type |
-         | R |
+         | osm |
+         | R13 |
 
     Scenario: Relations are not linked when in waterway relations
         Given the grid
@@ -81,9 +81,9 @@ Feature: Linking of places
          | R2     | - |
         When sending search query "rhein"
         Then results contain
-          | ID | osm_type |
-          |  0 | R |
-          |  1 | W |
+          | ID | osm |
+          |  0 | R1  |
+          |  1 | W2  |
 
 
     Scenario: Empty waterway relations are handled correctly
@@ -138,8 +138,8 @@ Feature: Linking of places
          | W2     | R1 |
         When sending search query "rhein2"
         Then results contain
-         | osm_type |
-         | W |
+         | osm |
+         | W1  |
 
     # github #573
     Scenario: Boundaries should only be linked to places
@@ -205,14 +205,14 @@ Feature: Linking of places
          | city |
          | Berlin |
         Then results contain
-          | ID | osm_type | osm_id |
-          |  0 | R | 13 |
+          | ID | osm |
+          |  0 | R13 |
         When sending search query ""
          | state |
          | Berlin |
         Then results contain
-          | ID | osm_type | osm_id |
-          |  0 | R | 13 |
+          | ID | osm |
+          |  0 | R13 |
 
 
     Scenario: Boundaries without place tags only link against same admin level
@@ -237,14 +237,14 @@ Feature: Linking of places
          | state |
          | Berlin |
         Then results contain
-          | ID | osm_type | osm_id |
-          |  0 | R | 13 |
+          | ID | osm |
+          |  0 | R13 |
         When sending search query ""
          | city |
          | Berlin |
         Then results contain
-          | ID | osm_type | osm_id |
-          |  0 | N | 2 |
+          | ID | osm |
+          |  0 | N2  |
 
     # github #1352
     Scenario: Do not use linked centroid when it is outside the area

@@ -15,11 +15,12 @@ import os
 import re
 import logging
 import asyncio
+import xml.etree.ElementTree as ET
 from urllib.parse import urlencode
 
 from utils import run_script
 from http_responses import GenericResponse, SearchResponse, ReverseResponse, StatusResponse
-from check_functions import Bbox
+from check_functions import Bbox, check_for_attributes
 from table_compare import NominatimID
 
 LOG = logging.getLogger(__name__)
@@ -48,6 +49,15 @@ BASE_SERVER_ENV = {
 }
 
 
+def make_todo_list(context, result_id):
+    if result_id is None:
+        context.execute_steps("then at least 1 result is returned")
+        return range(len(context.response.result))
+
+    context.execute_steps(f"then more than {result_id}results are returned")
+    return (int(result_id.strip()), )
+
+
 def compare(operator, op1, op2):
     if operator == 'less than':
         return op1 < op2
@@ -60,12 +70,16 @@ def compare(operator, op1, op2):
     elif operator == 'at most':
         return op1 <= op2
     else:
-        raise Exception("unknown operator '%s'" % operator)
+        raise ValueError(f"Unknown operator '{operator}'")
 
 
 def send_api_query(endpoint, params, fmt, context):
-    if fmt is not None and fmt.strip() != 'debug':
-        params['format'] = fmt.strip()
+    if fmt is not None:
+        if fmt.strip() == 'debug':
+            params['debug'] = '1'
+        else:
+            params['format'] = fmt.strip()
+
     if context.table:
         if context.table.headings[0] == 'param':
             for line in context.table:
@@ -88,11 +102,11 @@ def send_api_query_php(endpoint, params, context):
     env = dict(BASE_SERVER_ENV)
     env['QUERY_STRING'] = urlencode(params)
 
-    env['SCRIPT_NAME'] = '/%s.php' % endpoint
-    env['REQUEST_URI'] = '%s?%s' % (env['SCRIPT_NAME'], env['QUERY_STRING'])
+    env['SCRIPT_NAME'] = f'/{endpoint}.php'
+    env['REQUEST_URI'] = f"{env['SCRIPT_NAME']}?{env['QUERY_STRING']}"
     env['CONTEXT_DOCUMENT_ROOT'] = os.path.join(context.nominatim.website_dir.name, 'website')
     env['SCRIPT_FILENAME'] = os.path.join(env['CONTEXT_DOCUMENT_ROOT'],
-                                          '%s.php' % endpoint)
+                                          f'{endpoint}.php')
 
     LOG.debug("Environment:" + json.dumps(env, sort_keys=True, indent=2))
 
@@ -104,7 +118,7 @@ def send_api_query_php(endpoint, params, context):
         env['XDEBUG_MODE'] = 'coverage'
         env['COV_SCRIPT_FILENAME'] = env['SCRIPT_FILENAME']
         env['COV_PHP_DIR'] = context.nominatim.src_dir
-        env['COV_TEST_NAME'] = '%s:%s' % (context.scenario.filename, context.scenario.line)
+        env['COV_TEST_NAME'] = f"{context.scenario.filename}:{context.scenario.line}"
         env['SCRIPT_FILENAME'] = \
                 os.path.join(os.path.split(__file__)[0], 'cgi-with-coverage.php')
         cmd.append(env['SCRIPT_FILENAME'])
@@ -113,11 +127,11 @@ def send_api_query_php(endpoint, params, context):
         cmd.append(env['SCRIPT_FILENAME'])
 
     for k,v in params.items():
-        cmd.append("%s=%s" % (k, v))
+        cmd.append(f"{k}={v}")
 
     outp, err = run_script(cmd, cwd=context.nominatim.website_dir.name, env=env)
 
-    assert len(err) == 0, "Unexpected PHP error: %s" % (err)
+    assert len(err) == 0, f"Unexpected PHP error: {err}"
 
     if outp.startswith('Status: '):
         status = int(outp[8:11])
@@ -145,39 +159,35 @@ def website_search_request(context, fmt, query, addr):
         params['q'] = query
     if addr is not None:
         params['addressdetails'] = '1'
-    if fmt and fmt.strip() == 'debug':
-        params['debug'] = '1'
 
     outp, status = send_api_query('search', params, fmt, context)
 
     context.response = SearchResponse(outp, fmt or 'json', status)
 
-@when(u'sending (?P<fmt>\S+ )?reverse coordinates (?P<lat>.+)?,(?P<lon>.+)?')
-def website_reverse_request(context, fmt, lat, lon):
+
+@when('sending v1/reverse at (?P<lat>[\d.-]*),(?P<lon>[\d.-]*)(?: with format (?P<fmt>.+))?')
+def api_endpoint_v1_reverse(context, lat, lon, fmt):
     params = {}
     if lat is not None:
         params['lat'] = lat
     if lon is not None:
         params['lon'] = lon
-    if fmt and fmt.strip() == 'debug':
-        params['debug'] = '1'
+    if fmt is None:
+        fmt = 'jsonv2'
+    elif fmt == "''":
+        fmt = None
 
     outp, status = send_api_query('reverse', params, fmt, context)
-
     context.response = ReverseResponse(outp, fmt or 'xml', status)
 
-@when(u'sending (?P<fmt>\S+ )?reverse point (?P<nodeid>.+)')
-def website_reverse_request(context, fmt, nodeid):
+
+@when('sending v1/reverse N(?P<nodeid>\d+)(?: with format (?P<fmt>.+))?')
+def api_endpoint_v1_reverse_from_node(context, nodeid, fmt):
     params = {}
-    if fmt and fmt.strip() == 'debug':
-        params['debug'] = '1'
     params['lon'], params['lat'] = (f'{c:f}' for c in context.osm.grid_node(int(nodeid)))
 
-
     outp, status = send_api_query('reverse', params, fmt, context)
-
     context.response = ReverseResponse(outp, fmt or 'xml', status)
-
 
 
 @when(u'sending (?P<fmt>\S+ )?details query for (?P<query>.*)')
@@ -211,15 +221,15 @@ def website_status_request(context, fmt):
 
 @step(u'(?P<operator>less than|more than|exactly|at least|at most) (?P<number>\d+) results? (?:is|are) returned')
 def validate_result_number(context, operator, number):
-    assert context.response.errorcode == 200
+    context.execute_steps("Then a HTTP 200 is returned")
     numres = len(context.response.result)
     assert compare(operator, numres, int(number)), \
-        "Bad number of results: expected {} {}, got {}.".format(operator, number, numres)
+           f"Bad number of results: expected {operator} {number}, got {numres}."
 
 @then(u'a HTTP (?P<status>\d+) is returned')
 def check_http_return_status(context, status):
     assert context.response.errorcode == int(status), \
-           "Return HTTP status is {}.".format(context.response.errorcode)
+           f"Return HTTP status is {context.response.errorcode}."
 
 @then(u'the page contents equals "(?P<text>.+)"')
 def check_page_content_equals(context, text):
@@ -228,7 +238,19 @@ def check_page_content_equals(context, text):
 @then(u'the result is valid (?P<fmt>\w+)')
 def step_impl(context, fmt):
     context.execute_steps("Then a HTTP 200 is returned")
-    assert context.response.format == fmt
+    if fmt.strip() == 'html':
+        try:
+            tree = ET.fromstring(context.response.page)
+        except Exception as ex:
+            assert False, f"Could not parse page:\n{context.response.page}"
+
+        assert tree.tag == 'html'
+        body = tree.find('./body')
+        assert body is not None
+        assert body.find('.//script') is None
+    else:
+        assert context.response.format == fmt
+
 
 @then(u'a (?P<fmt>\w+) user error is returned')
 def check_page_error(context, fmt):
@@ -243,49 +265,31 @@ def check_page_error(context, fmt):
 @then(u'result header contains')
 def check_header_attr(context):
     for line in context.table:
-        assert re.fullmatch(line['value'], context.response.header[line['attr']]) is not None, \
-               "attribute '%s': expected: '%s', got '%s'" % (
-                    line['attr'], line['value'],
-                    context.response.header[line['attr']])
+        value = context.response.header[line['attr']]
+        assert re.fullmatch(line['value'], value) is not None, \
+               f"Attribute '{line['attr']}': expected: '{line['value']}', got '{value}'"
+
 
 @then(u'result header has (?P<neg>not )?attributes (?P<attrs>.*)')
 def check_header_no_attr(context, neg, attrs):
-    for attr in attrs.split(','):
-        if neg:
-            assert attr not in context.response.header, \
-                   "Unexpected attribute {}. Full response:\n{}".format(
-                       attr, json.dumps(context.response.header, sort_keys=True, indent=2))
-        else:
-            assert attr in context.response.header, \
-                   "No attribute {}. Full response:\n{}".format(
-                       attr, json.dumps(context.response.header, sort_keys=True, indent=2))
+    check_for_attributes(context.response.header, attrs,
+                         'absent' if neg else 'present')
 
-@then(u'results contain')
-def step_impl(context):
+
+@then(u'results contain(?: in field (?P<field>.*))?')
+def step_impl(context, field):
     context.execute_steps("then at least 1 result is returned")
 
     for line in context.table:
-        context.response.match_row(line, context=context)
+        context.response.match_row(line, context=context, field=field)
+
 
 @then(u'result (?P<lid>\d+ )?has (?P<neg>not )?attributes (?P<attrs>.*)')
 def validate_attributes(context, lid, neg, attrs):
-    if lid is None:
-        idx = range(len(context.response.result))
-        context.execute_steps("then at least 1 result is returned")
-    else:
-        idx = [int(lid.strip())]
-        context.execute_steps("then more than %sresults are returned" % lid)
+    for i in make_todo_list(context, lid):
+        check_for_attributes(context.response.result[i], attrs,
+                             'absent' if neg else 'present')
 
-    for i in idx:
-        for attr in attrs.split(','):
-            if neg:
-                assert attr not in context.response.result[i],\
-                       "Unexpected attribute {}. Full response:\n{}".format(
-                           attr, json.dumps(context.response.result[i], sort_keys=True, indent=2))
-            else:
-                assert attr in context.response.result[i], \
-                       "No attribute {}. Full response:\n{}".format(
-                           attr, json.dumps(context.response.result[i], sort_keys=True, indent=2))
 
 @then(u'result addresses contain')
 def step_impl(context):
@@ -300,7 +304,7 @@ def step_impl(context):
 
 @then(u'address of result (?P<lid>\d+) has(?P<neg> no)? types (?P<attrs>.*)')
 def check_address(context, lid, neg, attrs):
-    context.execute_steps("then more than %s results are returned" % lid)
+    context.execute_steps(f"then more than {lid} results are returned")
 
     addr_parts = context.response.result[int(lid)]['address']
 
@@ -312,7 +316,7 @@ def check_address(context, lid, neg, attrs):
 
 @then(u'address of result (?P<lid>\d+) (?P<complete>is|contains)')
 def check_address(context, lid, complete):
-    context.execute_steps("then more than %s results are returned" % lid)
+    context.execute_steps(f"then more than {lid} results are returned")
 
     lid = int(lid)
     addr_parts = dict(context.response.result[lid]['address'])
@@ -322,38 +326,30 @@ def check_address(context, lid, complete):
         del addr_parts[line['type']]
 
     if complete == 'is':
-        assert len(addr_parts) == 0, "Additional address parts found: %s" % str(addr_parts)
+        assert len(addr_parts) == 0, f"Additional address parts found: {addr_parts!s}"
+
 
 @then(u'result (?P<lid>\d+ )?has bounding box in (?P<coords>[\d,.-]+)')
-def step_impl(context, lid, coords):
-    if lid is None:
-        context.execute_steps("then at least 1 result is returned")
-        bboxes = context.response.property_list('boundingbox')
-    else:
-        context.execute_steps("then more than {}results are returned".format(lid))
-        bboxes = [context.response.result[int(lid)]['boundingbox']]
-
+def check_bounding_box_in_area(context, lid, coords):
     expected = Bbox(coords)
 
-    for bbox in bboxes:
-        assert bbox in expected, "Bbox {} is not contained in {}.".format(bbox, expected)
+    for idx in make_todo_list(context, lid):
+        res = context.response.result[idx]
+        check_for_attributes(res, 'boundingbox')
+        context.response.check_row(idx, res['boundingbox'] in expected,
+                                   f"Bbox is not contained in {expected}")
+
 
 @then(u'result (?P<lid>\d+ )?has centroid in (?P<coords>[\d,.-]+)')
-def step_impl(context, lid, coords):
-    if lid is None:
-        context.execute_steps("then at least 1 result is returned")
-        centroids = zip(context.response.property_list('lon'),
-                        context.response.property_list('lat'))
-    else:
-        context.execute_steps("then more than %sresults are returned".format(lid))
-        res = context.response.result[int(lid)]
-        centroids = [(res['lon'], res['lat'])]
-
+def check_centroid_in_area(context, lid, coords):
     expected = Bbox(coords)
 
-    for centroid in centroids:
-        assert centroid in expected,\
-               "Centroid {} is not inside {}.".format(centroid, expected)
+    for idx in make_todo_list(context, lid):
+        res = context.response.result[idx]
+        check_for_attributes(res, 'lat,lon')
+        context.response.check_row(idx, (res['lon'], res['lat']) in expected,
+                                   f"Centroid is not inside {expected}")
+
 
 @then(u'there are(?P<neg> no)? duplicates')
 def check_for_duplicates(context, neg):
@@ -370,6 +366,7 @@ def check_for_duplicates(context, neg):
         resarr.add(dup)
 
     if neg:
-        assert not has_dupe, "Found duplicate for %s" % (dup, )
+        assert not has_dupe, f"Found duplicate for {dup}"
     else:
         assert has_dupe, "No duplicates found"
+

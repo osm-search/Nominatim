@@ -2,13 +2,13 @@
 Feature: Localization of reverse search results
 
     Scenario: default language
-        When sending json reverse coordinates 47.14,9.55
+        When sending v1/reverse at 47.14,9.55
         Then result addresses contain
           | ID | country |
           | 0  | Liechtenstein |
 
     Scenario: accept-language parameter
-        When sending json reverse coordinates 47.14,9.55
+        When sending v1/reverse at 47.14,9.55
           | accept-language |
           | ja,en |
         Then result addresses contain
@@ -19,7 +19,7 @@ Feature: Localization of reverse search results
         Given the HTTP header
           | accept-language |
           | fo-ca,fo;q=0.8,en-ca;q=0.5,en;q=0.3 |
-        When sending json reverse coordinates 47.14,9.55
+        When sending v1/reverse at 47.14,9.55
         Then result addresses contain
           | ID | country |
           | 0  | Liktinstein |
@@ -28,7 +28,7 @@ Feature: Localization of reverse search results
         Given the HTTP header
           | accept-language |
           | fo-ca,fo;q=0.8,en-ca;q=0.5,en;q=0.3 |
-        When sending json reverse coordinates 47.14,9.55
+        When sending v1/reverse at 47.14,9.55
           | accept-language |
           | en |
         Then result addresses contain

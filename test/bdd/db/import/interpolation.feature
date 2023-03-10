@@ -273,12 +273,12 @@ Feature: Import of address interpolations
           | W3              | 14    | 14 |
         When sending search query "16 Cloud Street"
         Then results contain
-         | ID | osm_type | osm_id |
-         | 0  | N        | 4 |
+         | ID | osm |
+         | 0  | N4  |
         When sending search query "14 Cloud Street"
         Then results contain
-         | ID | osm_type | osm_id |
-         | 0  | W        | 11 |
+         | ID | osm |
+         | 0  | W11 |
 
     Scenario: addr:street on housenumber way
         Given the grid
@@ -318,12 +318,12 @@ Feature: Import of address interpolations
           | W3              | 14    | 14 |
         When sending search query "16 Cloud Street"
         Then results contain
-         | ID | osm_type | osm_id |
-         | 0  | N        | 4 |
+         | ID | osm |
+         | 0  | N4  |
         When sending search query "14 Cloud Street"
         Then results contain
-         | ID | osm_type | osm_id |
-         | 0  | W        | 11 |
+         | ID | osm |
+         | 0  | W11 |
 
     Scenario: Geometry of points and way don't match (github #253)
         Given the places
@@ -399,10 +399,10 @@ Feature: Import of address interpolations
         Then W1 expands to interpolation
           | start | end | geometry |
           | 2     | 8   | 10,11 |
-        When sending jsonv2 reverse coordinates 1,1
+        When sending v1/reverse at 1,1
         Then results contain
-          | ID | osm_type | osm_id | type  | display_name |
-          | 0  | node     | 1      | house | 0 |
+          | ID | osm | type  | display_name |
+          | 0  | N1  | house | 0 |
 
     Scenario: Parenting of interpolation with additional tags
         Given the grid

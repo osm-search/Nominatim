@@ -44,8 +44,8 @@ Feature: Updates of linked places
          | dups |
          | 1    |
         Then results contain
-         | osm_type |
-         | R |
+         | osm |
+         | R1 |
         When updating places
          | osm | class    | type           | name   | admin | geometry |
          | R1  | boundary | administrative | foobar | 8     | (10,11,12,13,10) |
@@ -56,8 +56,8 @@ Feature: Updates of linked places
          | dups |
          | 1    |
         Then results contain
-         | osm_type |
-         | N |
+         | osm |
+         | N1 |
 
     Scenario: Add linked place when linking relation is removed
         Given the 0.1 grid
@@ -75,8 +75,8 @@ Feature: Updates of linked places
          | dups |
          | 1    |
         Then results contain
-         | osm_type |
-         | R |
+         | osm |
+         | R1 |
         When marking for delete R1
         Then placex contains
          | object | linked_place_id |
@@ -85,8 +85,8 @@ Feature: Updates of linked places
          | dups |
          | 1    |
         Then results contain
-         | osm_type |
-         | N |
+         | osm |
+         | N1 |
 
     Scenario: Remove linked place when linking relation is added
         Given the 0.1 grid
@@ -101,8 +101,8 @@ Feature: Updates of linked places
          | dups |
          | 1    |
         Then results contain
-         | osm_type |
-         | N |
+         | osm |
+         | N1 |
         When updating places
          | osm | class    | type           | name   | admin | geometry |
          | R1  | boundary | administrative | foo    | 8     | (10,11,12,13,10) |
@@ -113,8 +113,8 @@ Feature: Updates of linked places
          | dups |
          | 1    |
         Then results contain
-         | osm_type |
-         | R |
+         | osm |
+         | R1 |
 
     Scenario: Remove linked place when linking relation is renamed
         Given the 0.1 grid
@@ -132,8 +132,8 @@ Feature: Updates of linked places
          | dups |
          | 1    |
         Then results contain
-         | osm_type |
-         | N |
+         | osm |
+         | N1 |
         When updating places
          | osm | class    | type           | name   | admin | geometry |
          | R1  | boundary | administrative | foo    | 8     | (10,11,12,13,10) |
@@ -144,8 +144,8 @@ Feature: Updates of linked places
          | dups |
          | 1    |
         Then results contain
-         | osm_type |
-         | R |
+         | osm |
+         | R1 |
 
     Scenario: Update linking relation when linkee name is updated
         Given the 0.1 grid

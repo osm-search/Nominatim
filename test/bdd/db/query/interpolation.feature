@@ -23,7 +23,7 @@ Feature: Query of address interpolations
           | id | nodes |
           | 1  | 1,3   |
         When importing
-        When sending jsonv2 reverse point 2
+        When sending v1/reverse N2
         Then results contain
           | ID | display_name |
           | 0  | 3, Nickway   |
@@ -43,12 +43,12 @@ Feature: Query of address interpolations
         And the places
           | osm | class | type  | housenr | geometry |
           | N1  | place | house | 2       | 1        |
-          | N3  | place | house | 16      | 3        |
+          | N3  | place | house | 18      | 3        |
         And the ways
           | id | nodes |
           | 1  | 1,3   |
         When importing
-        When sending jsonv2 reverse point 2
+        When sending v1/reverse N2
         Then results contain
           | ID | display_name | centroid |
           | 0  | 10, Nickway  | 2 |

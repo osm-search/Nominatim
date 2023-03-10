@@ -7,43 +7,11 @@
 """
 Classes wrapping HTTP responses from the Nominatim API.
 """
-from collections import OrderedDict
 import re
 import json
 import xml.etree.ElementTree as ET
 
-from check_functions import Almost
-
-OSM_TYPE = {'N' : 'node', 'W' : 'way', 'R' : 'relation',
-            'n' : 'node', 'w' : 'way', 'r' : 'relation',
-            'node' : 'n', 'way' : 'w', 'relation' : 'r'}
-
-def _geojson_result_to_json_result(geojson_result):
-    result = geojson_result['properties']
-    result['geojson'] = geojson_result['geometry']
-    if 'bbox' in geojson_result:
-        # bbox is  minlon, minlat, maxlon, maxlat
-        # boundingbox is minlat, maxlat, minlon, maxlon
-        result['boundingbox'] = [geojson_result['bbox'][1],
-                                 geojson_result['bbox'][3],
-                                 geojson_result['bbox'][0],
-                                 geojson_result['bbox'][2]]
-    return result
-
-class BadRowValueAssert:
-    """ Lazily formatted message for failures to find a field content.
-    """
-
-    def __init__(self, response, idx, field, value):
-        self.idx = idx
-        self.field = field
-        self.value = value
-        self.row = response.result[idx]
-
-    def __str__(self):
-        return "\nBad value for row {} field '{}'. Expected: {}, got: {}.\nFull row: {}"""\
-                   .format(self.idx, self.field, self.value,
-                           self.row[self.field], json.dumps(self.row, indent=4))
+from check_functions import Almost, OsmType, Field, check_for_attributes
 
 
 class GenericResponse:
@@ -70,63 +38,54 @@ class GenericResponse:
         else:
             code = m.group(2)
             self.header['json_func'] = m.group(1)
-        self.result = json.JSONDecoder(object_pairs_hook=OrderedDict).decode(code)
-        if isinstance(self.result, OrderedDict):
+        self.result = json.JSONDecoder().decode(code)
+        if isinstance(self.result, dict):
             if 'error' in self.result:
                 self.result = []
             else:
                 self.result = [self.result]
 
+
     def _parse_geojson(self):
         self._parse_json()
         if self.result:
-            self.result = list(map(_geojson_result_to_json_result, self.result[0]['features']))
+            geojson = self.result[0]
+            # check for valid geojson
+            check_for_attributes(geojson, 'type,features')
+            assert geojson['type'] == 'FeatureCollection'
+            assert isinstance(geojson['features'], list)
+
+            self.result = []
+            for result in geojson['features']:
+                check_for_attributes(result, 'type,properties,geometry')
+                assert result['type'] == 'Feature'
+                new = result['properties']
+                check_for_attributes(new, 'geojson', 'absent')
+                new['geojson'] = result['geometry']
+                if 'bbox' in result:
+                    check_for_attributes(new, 'boundingbox', 'absent')
+                    # bbox is  minlon, minlat, maxlon, maxlat
+                    # boundingbox is minlat, maxlat, minlon, maxlon
+                    new['boundingbox'] = [result['bbox'][1],
+                                          result['bbox'][3],
+                                          result['bbox'][0],
+                                          result['bbox'][2]]
+                for k, v in geojson.items():
+                    if k not in ('type', 'features'):
+                        check_for_attributes(new, '__' + k, 'absent')
+                        new['__' + k] = v
+                self.result.append(new)
+
 
     def _parse_geocodejson(self):
         self._parse_geojson()
-        if self.result is not None:
-            self.result = [r['geocoding'] for r in self.result]
-
-    def assert_field(self, idx, field, value):
-        """ Check that result row `idx` has a field `field` with value `value`.
-            Float numbers are matched approximately. When the expected value
-            starts with a carat, regular expression matching is used.
-        """
-        assert field in self.result[idx], \
-               "Result row {} has no field '{}'.\nFull row: {}"\
-                   .format(idx, field, json.dumps(self.result[idx], indent=4))
-
-        if isinstance(value, float):
-            assert Almost(value) == float(self.result[idx][field]), \
-                   BadRowValueAssert(self, idx, field, value)
-        elif value.startswith("^"):
-            assert re.fullmatch(value, self.result[idx][field]), \
-                   BadRowValueAssert(self, idx, field, value)
-        elif isinstance(self.result[idx][field], OrderedDict):
-            assert self.result[idx][field] == eval('{' + value + '}'), \
-                   BadRowValueAssert(self, idx, field, value)
-        else:
-            assert str(self.result[idx][field]) == str(value), \
-                   BadRowValueAssert(self, idx, field, value)
-
-
-    def assert_subfield(self, idx, path, value):
-        assert path
-
-        field = self.result[idx]
-        for p in path:
-            assert isinstance(field, OrderedDict)
-            assert p in field
-            field = field[p]
-
-        if isinstance(value, float):
-            assert Almost(value) == float(field)
-        elif value.startswith("^"):
-            assert re.fullmatch(value, field)
-        elif isinstance(field, OrderedDict):
-            assert field, eval('{' + value + '}')
-        else:
-            assert str(field) == str(value)
+        if self.result:
+            for r in self.result:
+                assert set(r.keys()) == {'geocoding', 'geojson', '__geocoding'}, \
+                       f"Unexpected keys in result: {r.keys()}"
+                check_for_attributes(r['geocoding'], 'geojson', 'absent')
+                inner = r.pop('geocoding')
+                r.update(inner)
 
 
     def assert_address_field(self, idx, field, value):
@@ -139,20 +98,13 @@ class GenericResponse:
             todo = [int(idx)]
 
         for idx in todo:
-            assert 'address' in self.result[idx], \
-                   "Result row {} has no field 'address'.\nFull row: {}"\
-                       .format(idx, json.dumps(self.result[idx], indent=4))
+            self.check_row(idx, 'address' in self.result[idx], "No field 'address'")
 
             address = self.result[idx]['address']
-            assert field in address, \
-                   "Result row {} has no field '{}' in address.\nFull address: {}"\
-                       .format(idx, field, json.dumps(address, indent=4))
+            self.check_row_field(idx, field, value, base=address)
 
-            assert address[field] == value, \
-                   "\nBad value for row {} field '{}' in address. Expected: {}, got: {}.\nFull address: {}"""\
-                       .format(idx, field, value, address[field], json.dumps(address, indent=4))
 
-    def match_row(self, row, context=None):
+    def match_row(self, row, context=None, field=None):
         """ Match the result fields against the given behave table row.
         """
         if 'ID' in row.headings:
@@ -161,19 +113,20 @@ class GenericResponse:
             todo = range(len(self.result))
 
         for i in todo:
+            subdict = self.result[i]
+            if field is not None:
+                for key in field.split('.'):
+                    self.check_row(i, key in subdict, f"Missing subfield {key}")
+                    subdict = subdict[key]
+                    self.check_row(i, isinstance(subdict, dict),
+                                   f"Subfield {key} not a dict")
+
             for name, value in zip(row.headings, row.cells):
                 if name == 'ID':
                     pass
                 elif name == 'osm':
-                    assert 'osm_type' in self.result[i], \
-                           "Result row {} has no field 'osm_type'.\nFull row: {}"\
-                               .format(i, json.dumps(self.result[i], indent=4))
-                    assert self.result[i]['osm_type'] in (OSM_TYPE[value[0]], value[0]), \
-                           BadRowValueAssert(self, i, 'osm_type', value)
-                    self.assert_field(i, 'osm_id', value[1:])
-                elif name == 'osm_type':
-                    assert self.result[i]['osm_type'] in (OSM_TYPE[value[0]], value[0]), \
-                           BadRowValueAssert(self, i, 'osm_type', value)
+                    self.check_row_field(i, 'osm_type', OsmType(value[0]), base=subdict)
+                    self.check_row_field(i, 'osm_id', Field(value[1:]), base=subdict)
                 elif name == 'centroid':
                     if ' ' in value:
                         lon, lat = value.split(' ')
@@ -181,15 +134,43 @@ class GenericResponse:
                         lon, lat = context.osm.grid_node(int(value))
                     else:
                         raise RuntimeError("Context needed when using grid coordinates")
-                    self.assert_field(i, 'lat', float(lat))
-                    self.assert_field(i, 'lon', float(lon))
-                elif '+' in name:
-                    self.assert_subfield(i, name.split('+'), value)
+                    self.check_row_field(i, 'lat', Field(float(lat)), base=subdict)
+                    self.check_row_field(i, 'lon', Field(float(lon)), base=subdict)
                 else:
-                    self.assert_field(i, name, value)
+                    self.check_row_field(i, name, Field(value), base=subdict)
 
-    def property_list(self, prop):
-        return [x[prop] for x in self.result]
+
+    def check_row(self, idx, check, msg):
+        """ Assert for the condition 'check' and print 'msg' on fail together
+            with the contents of the failing result.
+        """
+        class _RowError:
+            def __init__(self, row):
+                self.row = row
+
+            def __str__(self):
+                return f"{msg}. Full row {idx}:\n" \
+                       + json.dumps(self.row, indent=4, ensure_ascii=False)
+
+        assert check, _RowError(self.result[idx])
+
+
+    def check_row_field(self, idx, field, expected, base=None):
+        """ Check field 'field' of result 'idx' for the expected value
+            and print a meaningful error if the condition fails.
+            When 'base' is set to a dictionary, then the field is checked
+            in that base. The error message will still report the contents
+            of the full result.
+        """
+        if base is None:
+            base = self.result[idx]
+
+        self.check_row(idx, field in base, f"No field '{field}'")
+        value = base[field]
+
+        self.check_row(idx, expected == value,
+                       f"\nBad value for field '{field}'. Expected: {expected}, got: {value}")
+
 
 
 class SearchResponse(GenericResponse):
@@ -240,24 +221,33 @@ class ReverseResponse(GenericResponse):
             if child.tag == 'result':
                 assert not self.result, "More than one result in reverse result"
                 self.result.append(dict(child.attrib))
+                check_for_attributes(self.result[0], 'display_name', 'absent')
+                self.result[0]['display_name'] = child.text
             elif child.tag == 'addressparts':
+                assert 'address' not in self.result[0], "More than one address in result"
                 address = {}
                 for sub in child:
+                    assert len(sub) == 0, f"Address element '{sub.tag}' has subelements"
                     address[sub.tag] = sub.text
                 self.result[0]['address'] = address
             elif child.tag == 'extratags':
+                assert 'extratags' not in self.result[0], "More than one extratags in result"
                 self.result[0]['extratags'] = {}
                 for tag in child:
+                    assert len(tag) == 0, f"Extratags element '{tag.attrib['key']}' has subelements"
                     self.result[0]['extratags'][tag.attrib['key']] = tag.attrib['value']
             elif child.tag == 'namedetails':
+                assert 'namedetails' not in self.result[0], "More than one namedetails in result"
                 self.result[0]['namedetails'] = {}
                 for tag in child:
+                    assert len(tag) == 0, f"Namedetails element '{tag.attrib['desc']}' has subelements"
                     self.result[0]['namedetails'][tag.attrib['desc']] = tag.text
             elif child.tag == 'geokml':
-                self.result[0][child.tag] = True
+                assert 'geokml' not in self.result[0], "More than one geokml in result"
+                self.result[0]['geokml'] = ET.tostring(child, encoding='unicode')
             else:
                 assert child.tag == 'error', \
-                       "Unknown XML tag {} on page: {}".format(child.tag, self.page)
+                       f"Unknown XML tag {child.tag} on page: {self.page}"
 
 
 class StatusResponse(GenericResponse):

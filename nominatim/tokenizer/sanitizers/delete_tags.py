@@ -54,8 +54,7 @@ Arguments:
 
 
 """
-from typing import Callable, List, Optional, Pattern, Tuple, Sequence
-import re
+from typing import Callable, List, Tuple, Sequence
 
 from nominatim.tokenizer.sanitizers.base import ProcessInfo
 from nominatim.data.place_name import PlaceName
@@ -65,37 +64,33 @@ class _TagSanitizer:
 
     def __init__(self, config: SanitizerConfig) -> None:
         self.type = config.get('type', 'name')
-        self.filter_kind = config.get_filter_kind()
+        self.filter_kind = config.get_filter('filter-kind')
         self.country_codes = config.get_string_list('country_code', [])
-        self.allowed_ranks = self._set_allowed_ranks( \
-                                            config.get_string_list('rank_address', ['0-30']))
+        self.filter_suffix = config.get_filter('suffix')
+        self.filter_name = config.get_filter('name')
+        self.allowed_ranks = self._set_allowed_ranks(
+            config.get_string_list("rank_address", ["0-30"])
+        )
 
         self.has_country_code = config.get('country_code', None) is not None
-
-        suffixregexps = config.get_string_list('suffix', [r'[\s\S]*'])
-        self.suffix_regexp = [re.compile(r) for r in suffixregexps]
-
-        nameregexps = config.get_string_list('name', [r'[\s\S]*'])
-        self.name_regexp = [re.compile(r) for r in nameregexps]
-
 
 
     def __call__(self, obj: ProcessInfo) -> None:
         tags = obj.names if self.type == 'name' else obj.address
 
-        if (not tags or
-             self.has_country_code and
-              obj.place.country_code not in self.country_codes or
-               not self.allowed_ranks[obj.place.rank_address]):
+        if not tags \
+           or not self.allowed_ranks[obj.place.rank_address] \
+           or self.has_country_code \
+           and obj.place.country_code not in self.country_codes:
             return
 
         filtered_tags: List[PlaceName] = []
 
         for tag in tags:
 
-            if (not self.filter_kind(tag.kind) or
-                  not self._matches(tag.suffix, self.suffix_regexp) or
-                    not self._matches(tag.name, self.name_regexp)):
+            if not self.filter_kind(tag.kind) \
+               or not self.filter_suffix(tag.suffix or '') \
+               or not self.filter_name(tag.name):
                 filtered_tags.append(tag)
 
 
@@ -117,24 +112,13 @@ class _TagSanitizer:
         for rank in ranks:
             intvl = [int(x) for x in rank.split('-')]
 
-            start, end = (intvl[0], intvl[0]) if len(intvl) == 1 else (intvl[0], intvl[1])
+            start, end = intvl[0], intvl[0] if len(intvl) == 1 else intvl[1]
 
             for i in range(start, end + 1):
                 allowed_ranks[i] = True
 
 
         return tuple(allowed_ranks)
-
-
-    def _matches(self, value: Optional[str], patterns: List[Pattern[str]]) -> bool:
-        """ Returns True if the given value fully matches any of the regular
-            expression pattern in the list. Otherwise, returns False.
-
-            Note that if the value is None, it is taken as an empty string.
-        """
-        target = '' if value is None else value
-        return any(r.fullmatch(target) is not None for r in patterns)
-
 
 
 def create(config: SanitizerConfig) -> Callable[[ProcessInfo], None]:

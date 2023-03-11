@@ -302,7 +302,7 @@ class TestAllParameters:
 
     def test_list_arguments_pass(self):
         res = self.run_sanitizer_on(['de', 'in'], ['20-28', '30'], [r'abc.*', r'[\s\S]*'],
-                                    name='foo', ref_abc='foo', name_abcxx='bar', ref_pqr='baz')
+                                    name='foo', ref='foo', name_abcxx='bar', ref_pqr='baz')
 
         assert res == []
 
@@ -315,7 +315,7 @@ class TestAllParameters:
 
     def test_mix_arguments_pass(self):
         res = self.run_sanitizer_on('de', ['10', '20-28', '30'], r'[\s\S]*',
-                                    name='foo', ref_abc='foo', name_abcxx='bar', ref_pqr='baz')
+                                    name_abc='foo', ref_abc='foo', name_abcxx='bar', ref_pqr='baz')
 
         assert res == []
 

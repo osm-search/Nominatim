@@ -10,15 +10,10 @@ Tests for sanitizer configuration helper functions.
 import pytest
 
 from nominatim.errors import UsageError
-from nominatim.tokenizer.place_sanitizer import PlaceName
 from nominatim.tokenizer.sanitizers.config import SanitizerConfig
 
 def test_string_list_default_empty():
     assert SanitizerConfig().get_string_list('op') == []
-
-
-def test_string_list_default_none():
-    assert SanitizerConfig().get_string_list('op', default=None) is None
 
 
 def test_string_list_default_something():
@@ -78,36 +73,77 @@ def test_create_split_regex_empty_delimiter():
         regex = SanitizerConfig({'delimiters': ''}).get_delimiter()
 
 
-@pytest.mark.parametrize('inp', ('name', 'name:de', 'na\\me', '.*'))
-def test_create_kind_filter_no_params(inp):
-    filt = SanitizerConfig().get_filter_kind()
+@pytest.mark.parametrize('inp', ('name', 'name:de', 'na\\me', '.*', ''))
+def test_create_name_filter_no_param_no_default(inp):
+    filt = SanitizerConfig({'filter-kind': 'place'}).get_filter('name')
 
     assert filt(inp)
 
 
+@pytest.mark.parametrize('inp', ('name', 'name:de', 'na\\me', '.*', ''))
+def test_create_name_filter_no_param_default_pass_all(inp):
+    filt = SanitizerConfig().get_filter('name', 'PASS_ALL')
+
+    assert filt(inp)
+
+
+@pytest.mark.parametrize('inp', ('name', 'name:de', 'na\\me', '.*', ''))
+def test_create_name_filter_no_param_default_fail_all(inp):
+    filt = SanitizerConfig().get_filter('name', 'FAIL_ALL')
+
+    assert not filt(inp)
+
+
+def test_create_name_filter_no_param_default_invalid_string():
+    with pytest.raises(ValueError):
+        filt = SanitizerConfig().get_filter('name', 'abc')
+
+
+def test_create_name_filter_no_param_default_empty_list():
+    with pytest.raises(ValueError):
+        filt = SanitizerConfig().get_filter('name', [])
+
+
 @pytest.mark.parametrize('kind', ('de', 'name:de', 'ende'))
+def test_create_kind_filter_default_positive(kind):
+    filt = SanitizerConfig().get_filter('filter-kind', ['.*de'])
+
+    assert filt(kind)
+
+
+@pytest.mark.parametrize('kind', ('de', 'name:de', 'ende'))
+def test_create_kind_filter_default_negetive(kind):
+    filt = SanitizerConfig().get_filter('filter-kind', ['.*fr'])
+
+    assert not filt(kind)
+
+
+@pytest.mark.parametrize('kind', ('lang', 'lang:de', 'langxx'))
 def test_create_kind_filter_custom_regex_positive(kind):
-    filt = SanitizerConfig({'filter-kind': '.*de'}).get_filter_kind()
+    filt = SanitizerConfig({'filter-kind': 'lang.*'}
+    ).get_filter('filter-kind', ['.*fr'])
 
     assert filt(kind)
 
 
 @pytest.mark.parametrize('kind', ('de ', '123', '', 'bedece'))
 def test_create_kind_filter_custom_regex_negative(kind):
-    filt = SanitizerConfig({'filter-kind': '.*de'}).get_filter_kind()
+    filt = SanitizerConfig({'filter-kind': '.*de'}).get_filter('filter-kind')
 
     assert not filt(kind)
 
 
 @pytest.mark.parametrize('kind', ('name', 'fr', 'name:fr', 'frfr', '34'))
 def test_create_kind_filter_many_positive(kind):
-    filt = SanitizerConfig({'filter-kind': ['.*fr', 'name', r'\d+']}).get_filter_kind()
+    filt = SanitizerConfig({'filter-kind': ['.*fr', 'name', r'\d+']}
+    ).get_filter('filter-kind')
 
     assert filt(kind)
 
 
 @pytest.mark.parametrize('kind', ('name:de', 'fridge', 'a34', '.*', '\\'))
 def test_create_kind_filter_many_negative(kind):
-    filt = SanitizerConfig({'filter-kind': ['.*fr', 'name', r'\d+']}).get_filter_kind()
+    filt = SanitizerConfig({'filter-kind': ['.*fr', 'name', r'\d+']}
+    ).get_filter('filter-kind')
 
     assert not filt(kind)

@@ -25,7 +25,6 @@ Arguments:
                      expression that must match the full house number value.
 """
 from typing import Callable, Iterator, List
-import re
 
 from nominatim.tokenizer.sanitizers.base import ProcessInfo
 from nominatim.data.place_name import PlaceName
@@ -34,12 +33,10 @@ from nominatim.tokenizer.sanitizers.config import SanitizerConfig
 class _HousenumberSanitizer:
 
     def __init__(self, config: SanitizerConfig) -> None:
-        self.filter_kind = config.get_filter_kind('housenumber')
+        self.filter_kind = config.get_filter('filter-kind', ['housenumber'])
         self.split_regexp = config.get_delimiter()
 
-        nameregexps = config.get_string_list('convert-to-name', [])
-        self.is_name_regexp = [re.compile(r) for r in nameregexps]
-
+        self.filter_name = config.get_filter('convert-to-name', 'FAIL_ALL')
 
 
     def __call__(self, obj: ProcessInfo) -> None:
@@ -49,7 +46,7 @@ class _HousenumberSanitizer:
         new_address: List[PlaceName] = []
         for item in obj.address:
             if self.filter_kind(item.kind):
-                if self._treat_as_name(item.name):
+                if self.filter_name(item.name):
                     obj.names.append(item.clone(kind='housenumber'))
                 else:
                     new_address.extend(item.clone(kind='housenumber', name=n)
@@ -74,10 +71,6 @@ class _HousenumberSanitizer:
 
     def _regularize(self, hnr: str) -> Iterator[str]:
         yield hnr
-
-
-    def _treat_as_name(self, housenumber: str) -> bool:
-        return any(r.fullmatch(housenumber) is not None for r in self.is_name_regexp)
 
 
 def create(config: SanitizerConfig) -> Callable[[ProcessInfo], None]:

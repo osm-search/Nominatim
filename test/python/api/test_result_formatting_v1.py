@@ -59,14 +59,14 @@ def test_status_format_json_full():
     assert result == '{"status":0,"message":"OK","data_updated":"2010-02-07T20:20:03+00:00","software_version":"%s","database_version":"5.6"}' % (NOMINATIM_VERSION, )
 
 
-# SearchResult
+# DetailedResult
 
 def test_search_details_minimal():
-    search = napi.SearchResult(napi.SourceTable.PLACEX,
-                               ('place', 'thing'),
-                               napi.Point(1.0, 2.0))
+    search = napi.DetailedResult(napi.SourceTable.PLACEX,
+                                 ('place', 'thing'),
+                                 napi.Point(1.0, 2.0))
 
-    result = api_impl.format_result(search, 'details-json', {})
+    result = api_impl.format_result(search, 'json', {})
 
     assert json.loads(result) == \
            {'category': 'place',
@@ -83,8 +83,8 @@ def test_search_details_minimal():
 
 
 def test_search_details_full():
-    import_date = dt.datetime(2010, 2, 7, 20, 20, 3, 0)
-    search = napi.SearchResult(
+    import_date = dt.datetime(2010, 2, 7, 20, 20, 3, 0, tzinfo=dt.timezone.utc)
+    search = napi.DetailedResult(
                   source_table=napi.SourceTable.PLACEX,
                   category=('amenity', 'bank'),
                   centroid=napi.Point(56.947, -87.44),
@@ -106,7 +106,7 @@ def test_search_details_full():
                   indexed_date = import_date
                   )
 
-    result = api_impl.format_result(search, 'details-json', {})
+    result = api_impl.format_result(search, 'json', {})
 
     assert json.loads(result) == \
            {'place_id': 37563,
@@ -140,12 +140,12 @@ def test_search_details_full():
                                           ('ST_Polygon', True),
                                           ('ST_MultiPolygon', True)])
 def test_search_details_no_geometry(gtype, isarea):
-    search = napi.SearchResult(napi.SourceTable.PLACEX,
+    search = napi.DetailedResult(napi.SourceTable.PLACEX,
                                ('place', 'thing'),
                                napi.Point(1.0, 2.0),
                                geometry={'type': gtype})
 
-    result = api_impl.format_result(search, 'details-json', {})
+    result = api_impl.format_result(search, 'json', {})
     js = json.loads(result)
 
     assert js['geometry'] == {'type': 'Point', 'coordinates': [1.0, 2.0]}
@@ -153,12 +153,12 @@ def test_search_details_no_geometry(gtype, isarea):
 
 
 def test_search_details_with_geometry():
-    search = napi.SearchResult(napi.SourceTable.PLACEX,
-                               ('place', 'thing'),
-                               napi.Point(1.0, 2.0),
-                               geometry={'geojson': '{"type":"Point","coordinates":[56.947,-87.44]}'})
+    search = napi.DetailedResult(napi.SourceTable.PLACEX,
+                                 ('place', 'thing'),
+                                 napi.Point(1.0, 2.0),
+                                 geometry={'geojson': '{"type":"Point","coordinates":[56.947,-87.44]}'})
 
-    result = api_impl.format_result(search, 'details-json', {})
+    result = api_impl.format_result(search, 'json', {})
     js = json.loads(result)
 
     assert js['geometry'] == {'type': 'Point', 'coordinates': [56.947, -87.44]}
@@ -166,10 +166,10 @@ def test_search_details_with_geometry():
 
 
 def test_search_details_with_address_minimal():
-    search = napi.SearchResult(napi.SourceTable.PLACEX,
-                               ('place', 'thing'),
-                               napi.Point(1.0, 2.0),
-                               address_rows=[
+    search = napi.DetailedResult(napi.SourceTable.PLACEX,
+                                 ('place', 'thing'),
+                                 napi.Point(1.0, 2.0),
+                                 address_rows=[
                                    napi.AddressLine(place_id=None,
                                                     osm_object=None,
                                                     category=('bnd', 'note'),
@@ -180,9 +180,9 @@ def test_search_details_with_address_minimal():
                                                     isaddress=False,
                                                     rank_address=10,
                                                     distance=0.0)
-                               ])
+                                 ])
 
-    result = api_impl.format_result(search, 'details-json', {})
+    result = api_impl.format_result(search, 'json', {})
     js = json.loads(result)
 
     assert js['address'] == [{'localname': '',
@@ -194,10 +194,10 @@ def test_search_details_with_address_minimal():
 
 
 def test_search_details_with_address_full():
-    search = napi.SearchResult(napi.SourceTable.PLACEX,
-                               ('place', 'thing'),
-                               napi.Point(1.0, 2.0),
-                               address_rows=[
+    search = napi.DetailedResult(napi.SourceTable.PLACEX,
+                                 ('place', 'thing'),
+                                 napi.Point(1.0, 2.0),
+                                 address_rows=[
                                    napi.AddressLine(place_id=3498,
                                                     osm_object=('R', 442),
                                                     category=('bnd', 'note'),
@@ -209,9 +209,9 @@ def test_search_details_with_address_full():
                                                     isaddress=True,
                                                     rank_address=10,
                                                     distance=0.034)
-                               ])
+                                 ])
 
-    result = api_impl.format_result(search, 'details-json', {})
+    result = api_impl.format_result(search, 'json', {})
     js = json.loads(result)
 
     assert js['address'] == [{'localname': 'Trespass',

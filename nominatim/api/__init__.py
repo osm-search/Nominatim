@@ -28,5 +28,5 @@ from .results import (SourceTable as SourceTable,
                       AddressLines as AddressLines,
                       WordInfo as WordInfo,
                       WordInfos as WordInfos,
-                      SearchResult as SearchResult)
+                      DetailedResult as DetailedResult)
 from .localization import (Locales as Locales)

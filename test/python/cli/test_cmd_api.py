@@ -79,8 +79,8 @@ class TestCliDetailsCall:
 
     @pytest.fixture(autouse=True)
     def setup_status_mock(self, monkeypatch):
-        result = napi.SearchResult(napi.SourceTable.PLACEX, ('place', 'thing'),
-                                   napi.Point(1.0, -3.0))
+        result = napi.DetailedResult(napi.SourceTable.PLACEX, ('place', 'thing'),
+                                     napi.Point(1.0, -3.0))
 
         monkeypatch.setattr(napi.NominatimAPI, 'lookup',
                             lambda *args: result)

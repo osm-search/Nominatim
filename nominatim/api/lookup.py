@@ -8,6 +8,7 @@
 Implementation of place lookup by ID.
 """
 from typing import Optional
+import datetime as dt
 
 import sqlalchemy as sa
 
@@ -137,7 +138,7 @@ async def find_in_postcode(conn: SearchConnection, place: ntyp.PlaceRef,
 
 
 async def get_place_by_id(conn: SearchConnection, place: ntyp.PlaceRef,
-                          details: ntyp.LookupDetails) -> Optional[nres.SearchResult]:
+                          details: ntyp.LookupDetails) -> Optional[nres.DetailedResult]:
     """ Retrieve a place with additional details from the database.
     """
     log().function('get_place_by_id', place=place, details=details)
@@ -146,32 +147,35 @@ async def get_place_by_id(conn: SearchConnection, place: ntyp.PlaceRef,
         raise ValueError("lookup only supports geojosn polygon output.")
 
     row = await find_in_placex(conn, place, details)
+    log().var_dump('Result (placex)', row)
     if row is not None:
-        result = nres.create_from_placex_row(row)
-        log().var_dump('Result', result)
-        await nres.add_result_details(conn, result, details)
-        return result
+        result = nres.create_from_placex_row(row, nres.DetailedResult)
+    else:
+        row = await find_in_osmline(conn, place, details)
+        log().var_dump('Result (osmline)', row)
+        if row is not None:
+            result = nres.create_from_osmline_row(row, nres.DetailedResult)
+        else:
+            row = await find_in_postcode(conn, place, details)
+            log().var_dump('Result (postcode)', row)
+            if row is not None:
+                result = nres.create_from_postcode_row(row, nres.DetailedResult)
+            else:
+                row = await find_in_tiger(conn, place, details)
+                log().var_dump('Result (tiger)', row)
+                if row is not None:
+                    result = nres.create_from_tiger_row(row, nres.DetailedResult)
+                else:
+                    return None
 
-    row = await find_in_osmline(conn, place, details)
-    if row is not None:
-        result = nres.create_from_osmline_row(row)
-        log().var_dump('Result', result)
-        await nres.add_result_details(conn, result, details)
-        return result
+    # add missing details
+    assert result is not None
+    result.parent_place_id = row.parent_place_id
+    result.linked_place_id = getattr(row, 'linked_place_id', None)
+    indexed_date = getattr(row, 'indexed_date', None)
+    if indexed_date is not None:
+        result.indexed_date = indexed_date.replace(tzinfo=dt.timezone.utc)
 
-    row = await find_in_postcode(conn, place, details)
-    if row is not None:
-        result = nres.create_from_postcode_row(row)
-        log().var_dump('Result', result)
-        await nres.add_result_details(conn, result, details)
-        return result
+    await nres.add_result_details(conn, result, details)
 
-    row = await find_in_tiger(conn, place, details)
-    if row is not None:
-        result = nres.create_from_tiger_row(row)
-        log().var_dump('Result', result)
-        await nres.add_result_details(conn, result, details)
-        return result
-
-    # Nothing found under this ID.
-    return None
+    return result

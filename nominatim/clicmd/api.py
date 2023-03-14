@@ -282,7 +282,7 @@ class APIDetails:
         if result:
             output = api_output.format_result(
                         result,
-                        'details-json',
+                        'json',
                         {'locales': locales,
                          'group_hierarchy': args.group_hierarchy})
             # reformat the result, so it is pretty-printed

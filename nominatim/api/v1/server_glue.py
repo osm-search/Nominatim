@@ -210,8 +210,7 @@ async def details_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> 
         raise params.error('No place with that OSM ID found.', status=404)
 
     output = formatting.format_result(
-                 result,
-                 'details-json',
+                 result, 'json',
                  {'locales': locales,
                   'group_hierarchy': params.get_bool('group_hierarchy', False),
                   'icon_base_url': params.config().MAPICON_URL})

@@ -22,7 +22,7 @@ from nominatim.api.connection import SearchConnection
 from nominatim.api.status import get_status, StatusResult
 from nominatim.api.lookup import get_place_by_id
 from nominatim.api.types import PlaceRef, LookupDetails
-from nominatim.api.results import SearchResult
+from nominatim.api.results import DetailedResult
 
 
 class NominatimAPIAsync:
@@ -127,7 +127,7 @@ class NominatimAPIAsync:
 
 
     async def lookup(self, place: PlaceRef,
-                     details: LookupDetails) -> Optional[SearchResult]:
+                     details: LookupDetails) -> Optional[DetailedResult]:
         """ Get detailed information about a place in the database.
 
             Returns None if there is no entry under the given ID.
@@ -168,7 +168,7 @@ class NominatimAPI:
 
 
     def lookup(self, place: PlaceRef,
-               details: LookupDetails) -> Optional[SearchResult]:
+               details: LookupDetails) -> Optional[DetailedResult]:
         """ Get detailed information about a place in the database.
         """
         return self._loop.run_until_complete(self._async_api.lookup(place, details))

@@ -92,7 +92,10 @@ In terms of address details the zoom levels are as follows:
   5   | state
   8   | county
   10  | city
-  14  | suburb
+  12  | town / borough
+  13  | village / suburb
+  14  | neighbourhood
+  15  | locality
   16  | major streets
   17  | major and minor streets
   18  | building

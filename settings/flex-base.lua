@@ -223,14 +223,15 @@ function Place:write_row(k, v, save_extra_mains)
         return 0
     end
 
-    if save_extra_mains then
+    if save_extra_mains ~= nil then
         for extra_k, extra_v in pairs(self.object.tags) do
-            if extra_k ~= k then
+            if extra_k ~= k and save_extra_mains(extra_k, extra_v) then
                 self.extratags[extra_k] = extra_v
             end
         end
     end
 
+    print(k, v)
     place_table:insert{
         class = k,
         type = v,
@@ -243,7 +244,9 @@ function Place:write_row(k, v, save_extra_mains)
 
     if save_extra_mains then
         for k, v in pairs(self.object.tags) do
-            self.extratags[k] = nil
+            if save_extra_mains(k, v) then
+                self.extratags[k] = nil
+            end
         end
     end
 
@@ -437,7 +440,7 @@ function module.process_tags(o)
         return
     end
 
-    o:clean{delete = POST_DELETE, extra = POST_EXTRAS}
+    o:clean{delete = POST_DELETE}
 
     -- collect main keys
     for k, v in pairs(o.object.tags) do
@@ -484,13 +487,11 @@ end
 
 function module.set_unused_handling(data)
     if data.extra_keys == nil and data.extra_tags == nil then
-        POST_DELETE = module.tag_match{data.delete_keys, tags = data.delete_tags}
-        POST_EXTRAS = nil
-        SAVE_EXTRA_MAINS = true
+        POST_DELETE = module.tag_match{keys = data.delete_keys, tags = data.delete_tags}
+        SAVE_EXTRA_MAINS = function() return true end
     elseif data.delete_keys == nil and data.delete_tags == nil then
         POST_DELETE = nil
-        POST_EXTRAS = module.tag_match{data.extra_keys, tags = data.extra_tags}
-        SAVE_EXTRA_MAINS = false
+        SAVE_EXTRA_MAINS = module.tag_match{keys = data.extra_keys, tags = data.extra_tags}
     else
         error("unused handler can have only 'extra_keys' or 'delete_keys' set.")
     end

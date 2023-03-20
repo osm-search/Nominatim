@@ -50,7 +50,11 @@ flex.set_prefilters{delete_keys = {'note', 'note:*', 'source', '*source', 'attri
                                    'nhd:*', 'gnis:*', 'geobase:*', 'KSJ2:*', 'yh:*',
                                    'osak:*', 'naptan:*', 'CLC:*', 'import', 'it:fvg:*',
                                    'type', 'lacounty:*', 'ref:ruian:*', 'building:ruian:type',
-                                   'ref:linz:*', 'is_in:postcode'},
+                                   'ref:linz:*', 'is_in:postcode',
+                                   '*:prefix', '*:suffix', 'name:prefix:*', 'name:suffix:*',
+                                   'name:etymology', 'name:signed', 'name:botanical',
+                                   '*:wikidata', '*:wikipedia', 'brand:wikipedia:*',
+                                   'addr:street:name', 'addr:street:type'},
                     delete_tags = {emergency = {'yes', 'no', 'fire_hydrant'},
                                    historic = {'yes', 'no'},
                                    military = {'yes', 'no'},
@@ -74,11 +78,7 @@ flex.set_prefilters{delete_keys = {'note', 'note:*', 'source', '*source', 'attri
                                    waterway = {'riverbank'},
                                    building = {'no'},
                                    boundary = {'place'}},
-                    extratag_keys = {'*:prefix', '*:suffix', 'name:prefix:*', 'name:suffix:*',
-                               'name:etymology', 'name:signed', 'name:botanical',
-                               'wikidata', '*:wikidata',
-                               '*:wikipedia', 'brand:wikipedia:*',
-                               'addr:street:name', 'addr:street:type'}
+                    extra_keys = {'wikidata', 'wikipedia', 'wikipedia:*'}
                    }
 
 flex.set_name_tags{main = {'name', 'name:*',

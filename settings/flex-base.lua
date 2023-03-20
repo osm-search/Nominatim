@@ -231,7 +231,6 @@ function Place:write_row(k, v, save_extra_mains)
         end
     end
 
-    print(k, v)
     place_table:insert{
         class = k,
         type = v,

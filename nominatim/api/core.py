@@ -127,13 +127,13 @@ class NominatimAPIAsync:
 
 
     async def lookup(self, place: PlaceRef,
-                     details: LookupDetails) -> Optional[DetailedResult]:
+                     details: Optional[LookupDetails] = None) -> Optional[DetailedResult]:
         """ Get detailed information about a place in the database.
 
             Returns None if there is no entry under the given ID.
         """
-        async with self.begin() as db:
-            return await get_place_by_id(db, place, details)
+        async with self.begin() as conn:
+            return await get_place_by_id(conn, place, details or LookupDetails())
 
 
 class NominatimAPI:
@@ -168,7 +168,7 @@ class NominatimAPI:
 
 
     def lookup(self, place: PlaceRef,
-               details: LookupDetails) -> Optional[DetailedResult]:
+               details: Optional[LookupDetails] = None) -> Optional[DetailedResult]:
         """ Get detailed information about a place in the database.
         """
         return self._loop.run_until_complete(self._async_api.lookup(place, details))

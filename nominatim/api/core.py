@@ -21,8 +21,9 @@ from nominatim.config import Configuration
 from nominatim.api.connection import SearchConnection
 from nominatim.api.status import get_status, StatusResult
 from nominatim.api.lookup import get_place_by_id
-from nominatim.api.types import PlaceRef, LookupDetails
-from nominatim.api.results import DetailedResult
+from nominatim.api.reverse import reverse_lookup
+from nominatim.api.types import PlaceRef, LookupDetails, AnyPoint, DataLayer
+from nominatim.api.results import DetailedResult, ReverseResult
 
 
 class NominatimAPIAsync:
@@ -136,6 +137,29 @@ class NominatimAPIAsync:
             return await get_place_by_id(conn, place, details or LookupDetails())
 
 
+    async def reverse(self, coord: AnyPoint, max_rank: Optional[int] = None,
+                      layer: Optional[DataLayer] = None,
+                      details: Optional[LookupDetails] = None) -> Optional[ReverseResult]:
+        """ Find a place by its coordinates. Also known as reverse geocoding.
+
+            Returns the closest result that can be found or None if
+            no place matches the given criteria.
+        """
+        # The following negation handles NaN correctly. Don't change.
+        if not abs(coord[0]) <= 180 or not abs(coord[1]) <= 90:
+            # There are no results to be expected outside valid coordinates.
+            return None
+
+        if layer is None:
+            layer = DataLayer.ADDRESS | DataLayer.POI
+
+        max_rank = max(0, min(max_rank or 30, 30))
+
+        async with self.begin() as conn:
+            return await reverse_lookup(conn, coord, max_rank, layer,
+                                        details or LookupDetails())
+
+
 class NominatimAPI:
     """ API loader, synchronous version.
     """
@@ -172,3 +196,15 @@ class NominatimAPI:
         """ Get detailed information about a place in the database.
         """
         return self._loop.run_until_complete(self._async_api.lookup(place, details))
+
+
+    def reverse(self, coord: AnyPoint, max_rank: Optional[int] = None,
+                layer: Optional[DataLayer] = None,
+                details: Optional[LookupDetails] = None) -> Optional[ReverseResult]:
+        """ Find a place by its coordinates. Also known as reverse geocoding.
+
+            Returns the closest result that can be found or None if
+            no place matches the given criteria.
+        """
+        return self._loop.run_until_complete(
+                   self._async_api.reverse(coord, max_rank, layer, details))

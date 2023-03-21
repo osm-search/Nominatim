@@ -19,7 +19,7 @@ import datetime as dt
 import sqlalchemy as sa
 
 from nominatim.typing import SaSelect, SaRow
-from nominatim.api.types import Point, LookupDetails
+from nominatim.api.types import Point, Bbox, LookupDetails
 from nominatim.api.connection import SearchConnection
 from nominatim.api.logging import log
 
@@ -45,6 +45,8 @@ class AddressLine:
     category: Tuple[str, str]
     names: Dict[str, str]
     extratags: Optional[Dict[str, str]]
+
+    local_name: Optional[str] = None
 
     admin_level: Optional[int]
     fromarea: bool
@@ -134,6 +136,14 @@ class DetailedResult(BaseResult):
     parent_place_id: Optional[int] = None
     linked_place_id: Optional[int] = None
     indexed_date: Optional[dt.datetime] = None
+
+
+@dataclasses.dataclass
+class ReverseResult(BaseResult):
+    """ A search result for reverse geocoding.
+    """
+    distance: Optional[float] = None
+    bbox: Optional[Bbox] = None
 
 
 def _filter_geometries(row: SaRow) -> Dict[str, str]:

@@ -21,12 +21,15 @@ from .types import (PlaceID as PlaceID,
                     OsmID as OsmID,
                     PlaceRef as PlaceRef,
                     Point as Point,
+                    Bbox as Bbox,
                     GeometryFormat as GeometryFormat,
-                    LookupDetails as LookupDetails)
+                    LookupDetails as LookupDetails,
+                    DataLayer as DataLayer)
 from .results import (SourceTable as SourceTable,
                       AddressLine as AddressLine,
                       AddressLines as AddressLines,
                       WordInfo as WordInfo,
                       WordInfos as WordInfos,
-                      DetailedResult as DetailedResult)
+                      DetailedResult as DetailedResult,
+                      ReverseResult as ReverseResult)
 from .localization import (Locales as Locales)

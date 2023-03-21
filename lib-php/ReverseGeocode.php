@@ -40,10 +40,10 @@ class ReverseGeocode
                       9 => 12,
                       10 => 17, // City
                       11 => 17,
-                      12 => 18, // Town / Village
-                      13 => 18,
-                      14 => 22, // Suburb
-                      15 => 22,
+                      12 => 18, // Town
+                      13 => 19, // Village
+                      14 => 22, // Neighbourhood
+                      15 => 25, // Locality
                       16 => 26, // major street
                       17 => 27, // minor street
                       18 => 30, // or >, Building

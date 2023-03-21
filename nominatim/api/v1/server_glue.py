@@ -8,7 +8,7 @@
 Generic part of the server implementation of the v1 API.
 Combine with the scaffolding provided for the various Python ASGI frameworks.
 """
-from typing import Optional, Any, Type, Callable
+from typing import Optional, Any, Type, Callable, NoReturn
 import abc
 
 from nominatim.config import Configuration
@@ -19,7 +19,6 @@ from nominatim.api.v1.format import dispatch as formatting
 CONTENT_TYPE = {
   'text': 'text/plain; charset=utf-8',
   'xml': 'text/xml; charset=utf-8',
-  'jsonp': 'application/javascript',
   'debug': 'text/html; charset=utf-8'
 }
 
@@ -28,6 +27,7 @@ class ASGIAdaptor(abc.ABC):
     """ Adapter class for the different ASGI frameworks.
         Wraps functionality over concrete requests and responses.
     """
+    content_type: str = 'text/plain; charset=utf-8'
 
     @abc.abstractmethod
     def get(self, name: str, default: Optional[str] = None) -> Optional[str]:
@@ -50,7 +50,7 @@ class ASGIAdaptor(abc.ABC):
 
 
     @abc.abstractmethod
-    def create_response(self, status: int, output: str, content_type: str) -> Any:
+    def create_response(self, status: int, output: str) -> Any:
         """ Create a response from the given parameters. The result will
             be returned by the endpoint functions. The adaptor may also
             return None when the response is created internally with some
@@ -68,20 +68,42 @@ class ASGIAdaptor(abc.ABC):
         """
 
 
-    def build_response(self, output: str, media_type: str, status: int = 200) -> Any:
+    def build_response(self, output: str, status: int = 200) -> Any:
         """ Create a response from the given output. Wraps a JSONP function
             around the response, if necessary.
         """
-        if media_type == 'json' and status == 200:
+        if self.content_type == 'application/json' and status == 200:
             jsonp = self.get('json_callback')
             if jsonp is not None:
                 if any(not part.isidentifier() for part in jsonp.split('.')):
-                    raise self.error('Invalid json_callback value')
+                    self.raise_error('Invalid json_callback value')
                 output = f"{jsonp}({output})"
-                media_type = 'jsonp'
+                self.content_type = 'application/javascript'
 
-        return self.create_response(status, output,
-                                    CONTENT_TYPE.get(media_type, 'application/json'))
+        return self.create_response(status, output)
+
+
+    def raise_error(self, msg: str, status: int = 400) -> NoReturn:
+        """ Raise an exception resulting in the given HTTP status and
+            message. The message will be formatted according to the
+            output format chosen by the request.
+        """
+        if self.content_type == 'text/xml; charset=utf-8':
+            msg = f"""<?xml version="1.0" encoding="UTF-8" ?>
+                      <error>
+                        <code>{status}</code>
+                        <message>{msg}</message>
+                      </error>
+                   """
+        elif self.content_type == 'application/json':
+            msg = f"""{{"error":{{"code":{status},"message":"{msg}"}}}}"""
+        elif self.content_type == 'text/html; charset=utf-8':
+            loglib.log().section('Execution error')
+            loglib.log().var_dump('Status', status)
+            loglib.log().var_dump('Message', msg)
+            msg = loglib.get_and_disable()
+
+        raise self.error(msg, status)
 
 
     def get_int(self, name: str, default: Optional[int] = None) -> int:
@@ -98,13 +120,14 @@ class ASGIAdaptor(abc.ABC):
             if default is not None:
                 return default
 
-            raise self.error(f"Parameter '{name}' missing.")
+            self.raise_error(f"Parameter '{name}' missing.")
 
         try:
-            return int(value)
-        except ValueError as exc:
-            raise self.error(f"Parameter '{name}' must be a number.") from exc
+            intval = int(value)
+        except ValueError:
+            self.raise_error(f"Parameter '{name}' must be a number.")
 
+        return intval
 
     def get_bool(self, name: str, default: Optional[bool] = None) -> bool:
         """ Return an input parameter as bool. Only '0' is accepted as
@@ -120,13 +143,13 @@ class ASGIAdaptor(abc.ABC):
             if default is not None:
                 return default
 
-            raise self.error(f"Parameter '{name}' missing.")
+            self.raise_error(f"Parameter '{name}' missing.")
 
         return value != '0'
 
 
     def get_accepted_languages(self) -> str:
-        """ Return the accepted langauges.
+        """ Return the accepted languages.
         """
         return self.get('accept-language')\
                or self.get_header('http_accept_language')\
@@ -140,24 +163,26 @@ class ASGIAdaptor(abc.ABC):
         """
         if self.get_bool('debug', False):
             loglib.set_log_output('html')
+            self.content_type = 'text/html; charset=utf-8'
             return True
 
         return False
 
 
-def parse_format(params: ASGIAdaptor, result_type: Type[Any], default: str) -> str:
-    """ Get and check the 'format' parameter and prepare the formatter.
-        `fmtter` is a formatter and `default` the
-        format value to assume when no parameter is present.
-    """
-    fmt = params.get('format', default=default)
-    assert fmt is not None
+    def parse_format(self, result_type: Type[Any], default: str) -> str:
+        """ Get and check the 'format' parameter and prepare the formatter.
+            `result_type` is the type of result to be returned by the function
+            and `default` the format value to assume when no parameter is present.
+        """
+        fmt = self.get('format', default=default)
+        assert fmt is not None
 
-    if not formatting.supports_format(result_type, fmt):
-        raise params.error("Parameter 'format' must be one of: " +
-                           ', '.join(formatting.list_formats(result_type)))
+        if not formatting.supports_format(result_type, fmt):
+            self.raise_error("Parameter 'format' must be one of: " +
+                              ', '.join(formatting.list_formats(result_type)))
 
-    return fmt
+        self.content_type = CONTENT_TYPE.get(fmt, 'application/json')
+        return fmt
 
 
 async def status_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> Any:
@@ -165,20 +190,21 @@ async def status_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> A
     """
     result = await api.status()
 
-    fmt = parse_format(params, napi.StatusResult, 'text')
+    fmt = params.parse_format(napi.StatusResult, 'text')
 
     if fmt == 'text' and result.status:
         status_code = 500
     else:
         status_code = 200
 
-    return params.build_response(formatting.format_result(result, fmt, {}), fmt,
+    return params.build_response(formatting.format_result(result, fmt, {}),
                                  status=status_code)
 
 
 async def details_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> Any:
     """ Server glue for /details endpoint. See API docs for details.
     """
+    fmt = params.parse_format(napi.DetailedResult, 'json')
     place_id = params.get_int('place_id', 0)
     place: napi.PlaceRef
     if place_id:
@@ -186,7 +212,7 @@ async def details_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> 
     else:
         osmtype = params.get('osmtype')
         if osmtype is None:
-            raise params.error("Missing ID parameter 'place_id' or 'osmtype'.")
+            params.raise_error("Missing ID parameter 'place_id' or 'osmtype'.")
         place = napi.OsmID(osmtype, params.get_int('osmid'), params.get('class'))
 
     debug = params.setup_debugging()
@@ -204,18 +230,17 @@ async def details_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> 
     result = await api.lookup(place, details)
 
     if debug:
-        return params.build_response(loglib.get_and_disable(), 'debug')
+        return params.build_response(loglib.get_and_disable())
 
     if result is None:
-        raise params.error('No place with that OSM ID found.', status=404)
+        params.raise_error('No place with that OSM ID found.', status=404)
 
-    output = formatting.format_result(
-                 result, 'json',
+    output = formatting.format_result(result, fmt,
                  {'locales': locales,
                   'group_hierarchy': params.get_bool('group_hierarchy', False),
                   'icon_base_url': params.config().MAPICON_URL})
 
-    return params.build_response(output, 'json')
+    return params.build_response(output)
 
 
 EndpointFunc = Callable[[napi.NominatimAPIAsync, ASGIAdaptor], Any]

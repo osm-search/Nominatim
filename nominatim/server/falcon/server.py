@@ -46,10 +46,10 @@ class ParamWrapper(api_impl.ASGIAdaptor):
         return falcon.HTTPError(status, description=msg)
 
 
-    def create_response(self, status: int, output: str, content_type: str) -> None:
+    def create_response(self, status: int, output: str) -> None:
         self.response.status = status
         self.response.text = output
-        self.response.content_type = content_type
+        self.response.content_type = self.content_type
 
 
     def config(self) -> Configuration:

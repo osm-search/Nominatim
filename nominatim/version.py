@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2022 by the Nominatim developer community.
+# Copyright (C) 2023 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Version information for Nominatim.
@@ -25,7 +25,7 @@ from typing import Optional, Tuple
 # patch level when cherry-picking the commit with the migration.
 #
 # Released versions always have a database patch level of 0.
-NOMINATIM_VERSION = (4, 2, 1, 0)
+NOMINATIM_VERSION = (4, 2, 2, 0)
 
 POSTGRESQL_REQUIRED_VERSION = (9, 6)
 POSTGIS_REQUIRED_VERSION = (2, 2)

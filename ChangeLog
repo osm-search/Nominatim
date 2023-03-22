@@ -1,3 +1,18 @@
+4.2.2
+
+ * extend flex-style library to fully support all default styles
+ * fix handling of Hebrew aleph
+ * do not assign postcodes to rivers
+ * fix string matching in PHP code
+ * update osm2pgsql (various updates to flex)
+ * fix slow query when deleting places on update
+ * fix CLI details query
+ * fix recalculation of importance values
+ * fix polygon simplification in reverse results
+ * add class/type information to reverse geocodejson result
+ * minor improvements to default tokenizer configuration
+ * various smaller fixes to documentation
+
 4.2.1
 
  * fix XSS vulnerability in debug view

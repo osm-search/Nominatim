@@ -13,7 +13,7 @@ local POSTCODE_FALLBACK = true
 
 
 -- The single place table.
-place_table = osm2pgsql.define_table{
+local place_table = osm2pgsql.define_table{
     name = "place",
     ids = { type = 'any', id_column = 'osm_id', type_column = 'osm_type' },
     columns = {
@@ -108,38 +108,6 @@ function Place:grab_extratags(data)
     return count
 end
 
-function Place:grab_address(data)
-    local count = 0
-
-    if data.match ~= nil then
-        for k, v in pairs(self.object.tags) do
-            if data.match(k, v) then
-                self.object.tags[k] = nil
-
-                if data.include_on_name == true then
-                    self.has_name = true
-                end
-
-                if data.out_key ~= nil then
-                    self.address[data.out_key] = v
-                    return 1
-                end
-
-                if k:sub(1, 5) == 'addr:' then
-                    self.address[k:sub(6)] = v
-                elseif k:sub(1, 6) == 'is_in:' then
-                    self.address[k:sub(7)] = v
-                else
-                    self.address[k] = v
-                end
-                count = count + 1
-            end
-        end
-    end
-
-    return count
-end
-
 local function strip_address_prefix(k)
     if k:sub(1, 5) == 'addr:' then
         return k:sub(6)
@@ -178,24 +146,6 @@ function Place:grab_address_parts(data)
     return count
 end
 
-function Place:grab_name(data)
-    local count = 0
-
-    if data.match ~= nil then
-        for k, v in pairs(self.object.tags) do
-            if data.match(k, v) then
-                self.object.tags[k] = nil
-                self.names[k] = v
-                if data.include_on_name ~= false then
-                    self.has_name = true
-                end
-                count = count + 1
-            end
-        end
-    end
-
-    return count
-end
 
 function Place:grab_name_parts(data)
     local fallback = nil
@@ -220,9 +170,6 @@ function Place:grab_name_parts(data)
     return fallback
 end
 
-function Place:grab_tag(key)
-    return self.object:grab_tag(key)
-end
 
 function Place:write_place(k, v, mtype, save_extra_mains)
     if mtype == nil then
@@ -424,7 +371,7 @@ function module.tag_group(data)
 end
 
 -- Process functions for all data types
-function osm2pgsql.process_node(object)
+function module.process_node(object)
 
     local function geom_func(o)
         return o:as_point()
@@ -433,7 +380,7 @@ function osm2pgsql.process_node(object)
     module.process_tags(Place.new(object, geom_func))
 end
 
-function osm2pgsql.process_way(object)
+function module.process_way(object)
 
     local function geom_func(o)
         local geom = o:as_polygon()
@@ -448,13 +395,18 @@ function osm2pgsql.process_way(object)
     module.process_tags(Place.new(object, geom_func))
 end
 
-function osm2pgsql.process_relation(object)
+function module.process_relation(object)
     local geom_func = module.RELATION_TYPES[object.tags.type]
 
     if geom_func ~= nil then
         module.process_tags(Place.new(object, geom_func))
     end
 end
+
+-- The process functions are used by default by osm2pgsql.
+osm2pgsql.process_node = module.process_node
+osm2pgsql.process_way = module.process_way
+osm2pgsql.process_relation = module.process_relation
 
 function module.process_tags(o)
     o:clean{delete = PRE_DELETE, extra = PRE_EXTRAS}

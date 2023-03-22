@@ -1,4 +1,4 @@
-flex = require('flex-base')
+local flex = require('flex-base')
 
 flex.set_main_tags{
     boundary = {administrative = 'named'},

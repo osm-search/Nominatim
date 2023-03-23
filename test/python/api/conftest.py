@@ -42,6 +42,9 @@ class APITester:
         if isinstance(name, str):
             name = {'name': name}
 
+        centroid = kw.get('centroid', (23.0, 34.0))
+        geometry = kw.get('geometry', 'POINT(%f %f)' % centroid)
+
         self.add_data('placex',
                      {'place_id': kw.get('place_id', 1000),
                       'osm_type': kw.get('osm_type', 'W'),
@@ -61,10 +64,11 @@ class APITester:
                       'rank_search': kw.get('rank_search', 30),
                       'rank_address': kw.get('rank_address', 30),
                       'importance': kw.get('importance'),
-                      'centroid': 'SRID=4326;POINT(%f %f)' % kw.get('centroid', (23.0, 34.0)),
+                      'centroid': 'SRID=4326;POINT(%f %f)' % centroid,
+                      'indexed_status': kw.get('indexed_status', 0),
                       'indexed_date': kw.get('indexed_date',
                                              dt.datetime(2022, 12, 7, 14, 14, 46, 0)),
-                      'geometry': 'SRID=4326;' + kw.get('geometry', 'POINT(23 34)')})
+                      'geometry': 'SRID=4326;' + geometry})
 
 
     def add_address_placex(self, object_id, **kw):
@@ -118,6 +122,13 @@ class APITester:
                       'geometry': 'SRID=4326;' + kw.get('geometry', 'POINT(23 34)')})
 
 
+    def add_country(self, country_code, geometry):
+        self.add_data('country_grid',
+                      {'country_code': country_code,
+                       'area': 0.1,
+                       'geometry': 'SRID=4326;' + geometry})
+
+
     async def exec_async(self, sql, *args, **kwargs):
         async with self.api._async_api.begin() as conn:
             return await conn.execute(sql, *args, **kwargs)
@@ -136,8 +147,9 @@ def apiobj(temp_db_with_extensions, temp_db_conn, monkeypatch):
     testapi = APITester()
     testapi.async_to_sync(testapi.create_tables())
 
-    SQLPreprocessor(temp_db_conn, testapi.api.config)\
-        .run_sql_file(temp_db_conn, 'functions/address_lookup.sql')
+    proc = SQLPreprocessor(temp_db_conn, testapi.api.config)
+    proc.run_sql_file(temp_db_conn, 'functions/address_lookup.sql')
+    proc.run_sql_file(temp_db_conn, 'functions/ranking.sql')
 
     loglib.set_log_output('text')
     yield testapi

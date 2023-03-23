@@ -46,8 +46,6 @@ class AddressLine:
     names: Dict[str, str]
     extratags: Optional[Dict[str, str]]
 
-    local_name: Optional[str] = None
-
     admin_level: Optional[int]
     fromarea: bool
     isaddress: bool
@@ -81,7 +79,6 @@ class BaseResult:
 
     place_id : Optional[int] = None
     osm_object: Optional[Tuple[str, int]] = None
-    admin_level: int = 15
 
     names: Optional[Dict[str, str]] = None
     address: Optional[Dict[str, str]] = None
@@ -135,6 +132,7 @@ class DetailedResult(BaseResult):
     """
     parent_place_id: Optional[int] = None
     linked_place_id: Optional[int] = None
+    admin_level: int = 15
     indexed_date: Optional[dt.datetime] = None
 
 
@@ -164,7 +162,6 @@ def create_from_placex_row(row: Optional[SaRow],
                       place_id=row.place_id,
                       osm_object=(row.osm_type, row.osm_id),
                       category=(row.class_, row.type),
-                      admin_level=row.admin_level,
                       names=row.name,
                       address=row.address,
                       extratags=row.extratags,

@@ -64,7 +64,7 @@ else:
 
 SaSelect: TypeAlias = 'sa.Select[Any]'
 SaRow: TypeAlias = 'sa.Row[Any]'
-SaColumn: TypeAlias = 'sa.Column[Any]'
+SaColumn: TypeAlias = 'sa.ColumnElement[Any]'
 SaLabel: TypeAlias = 'sa.Label[Any]'
-SaTable: TypeAlias = 'sa.Table[Any]'
-SaClause: TypeAlias = 'sa.ClauseElement[Any]'
+SaFromClause: TypeAlias = 'sa.FromClause'
+SaSelectable: TypeAlias = 'sa.Selectable'

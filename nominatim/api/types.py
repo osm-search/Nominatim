@@ -85,6 +85,8 @@ class Point(NamedTuple):
 
 AnyPoint = Union[Point, Tuple[float, float]]
 
+WKB_BBOX_HEADER_LE = b'\x01\x03\x00\x00\x20\xE6\x10\x00\x00\x01\x00\x00\x00\x05\x00\x00\x00'
+WKB_BBOX_HEADER_BE = b'\x00\x20\x00\x00\x03\x00\x00\x10\xe6\x00\x00\x00\x01\x00\x00\x00\x05'
 
 class Bbox:
     """ A bounding box in WSG84 projection.
@@ -134,9 +136,9 @@ class Bbox:
 
         if len(wkb) != 97:
             raise ValueError("WKB must be a bounding box polygon")
-        if wkb.startswith(b'\x01\x03\x00\x00\x20\xE6\x10\x00\x00\x01\x00\x00\x00\x05\x00\x00\x00'):
+        if wkb.startswith(WKB_BBOX_HEADER_LE):
             x1, y1, _, _, x2, y2 = unpack('<dddddd', wkb[17:65])
-        elif wkb.startswith(b'\x00\x20\x00\x00\x03\x00\x00\x10\xe6\x00\x00\x00\x01\x00\x00\x00\x05'):
+        elif wkb.startswith(WKB_BBOX_HEADER_BE):
             x1, y1, _, _, x2, y2 = unpack('>dddddd', wkb[17:65])
         else:
             raise ValueError("WKB has wrong header")
@@ -144,6 +146,7 @@ class Bbox:
         return Bbox(min(x1, x2), min(y1, y2), max(x1, x2), max(y1, y2))
 
 
+    @staticmethod
     def from_point(pt: Point, buffer: float) -> 'Bbox':
         """ Return a Bbox around the point with the buffer added to all sides.
         """

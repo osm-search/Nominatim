@@ -21,7 +21,7 @@ from nominatim.config import Configuration
 from nominatim.api.connection import SearchConnection
 from nominatim.api.status import get_status, StatusResult
 from nominatim.api.lookup import get_place_by_id
-from nominatim.api.reverse import reverse_lookup
+from nominatim.api.reverse import ReverseGeocoder
 from nominatim.api.types import PlaceRef, LookupDetails, AnyPoint, DataLayer
 from nominatim.api.results import DetailedResult, ReverseResult
 
@@ -156,8 +156,9 @@ class NominatimAPIAsync:
         max_rank = max(0, min(max_rank or 30, 30))
 
         async with self.begin() as conn:
-            return await reverse_lookup(conn, coord, max_rank, layer,
-                                        details or LookupDetails())
+            geocoder = ReverseGeocoder(conn, max_rank, layer,
+                                       details or LookupDetails())
+            return await geocoder.lookup(coord)
 
 
 class NominatimAPI:

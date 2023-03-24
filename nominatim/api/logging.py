@@ -68,6 +68,8 @@ class BaseLogger:
                          .compile(conn.sync_engine, compile_kwargs={"literal_binds": True}))
         except sa.exc.CompileError:
             pass
+        except NotImplementedError:
+            pass
 
         return str(cast('sa.ClauseElement', statement).compile(conn.sync_engine))
 

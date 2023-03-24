@@ -13,6 +13,7 @@ import collections
 import nominatim.api as napi
 from nominatim.api.result_formatting import FormatDispatcher
 from nominatim.api.v1.classtypes import ICONS
+from nominatim.api.v1 import format_json, format_xml
 from nominatim.utils.json_writer import JsonWriter
 
 dispatch = FormatDispatcher()
@@ -93,7 +94,7 @@ def _add_parent_rows_grouped(writer: JsonWriter, rows: napi.AddressLines,
 
 
 @dispatch.format_func(napi.DetailedResult, 'json')
-def _format_search_json(result: napi.DetailedResult, options: Mapping[str, Any]) -> str:
+def _format_details_json(result: napi.DetailedResult, options: Mapping[str, Any]) -> str:
     locales = options.get('locales', napi.Locales())
     geom = result.geometry.get('geojson')
     centroid = result.centroid.to_geojson()
@@ -161,3 +162,36 @@ def _format_search_json(result: napi.DetailedResult, options: Mapping[str, Any])
     out.end_object()
 
     return out()
+
+
+@dispatch.format_func(napi.ReverseResults, 'xml')
+def _format_reverse_xml(results: napi.ReverseResults, options: Mapping[str, Any]) -> str:
+    return format_xml.format_base_xml(results,
+                                      options, True, 'reversegeocode',
+                                      {'querystring': 'TODO'})
+
+
+@dispatch.format_func(napi.ReverseResults, 'geojson')
+def _format_reverse_geojson(results: napi.ReverseResults,
+                            options: Mapping[str, Any]) -> str:
+    return format_json.format_base_geojson(results, options, True)
+
+
+@dispatch.format_func(napi.ReverseResults, 'geocodejson')
+def _format_reverse_geocodejson(results: napi.ReverseResults,
+                                options: Mapping[str, Any]) -> str:
+    return format_json.format_base_geocodejson(results, options, True)
+
+
+@dispatch.format_func(napi.ReverseResults, 'json')
+def _format_reverse_json(results: napi.ReverseResults,
+                         options: Mapping[str, Any]) -> str:
+    return format_json.format_base_json(results, options, True,
+                                        class_label='class')
+
+
+@dispatch.format_func(napi.ReverseResults, 'jsonv2')
+def _format_reverse_jsonv2(results: napi.ReverseResults,
+                           options: Mapping[str, Any]) -> str:
+    return format_json.format_base_json(results, options, True,
+                                        class_label='category')

@@ -11,7 +11,7 @@ Data classes are part of the public API while the functions are for
 internal use only. That's why they are implemented as free-standing functions
 instead of member functions.
 """
-from typing import Optional, Tuple, Dict, Sequence, TypeVar, Type
+from typing import Optional, Tuple, Dict, Sequence, TypeVar, Type, List
 import enum
 import dataclasses
 import datetime as dt
@@ -22,6 +22,7 @@ from nominatim.typing import SaSelect, SaRow
 from nominatim.api.types import Point, Bbox, LookupDetails
 from nominatim.api.connection import SearchConnection
 from nominatim.api.logging import log
+from nominatim.api.localization import Locales
 
 # This file defines complex result data classes.
 # pylint: disable=too-many-instance-attributes
@@ -52,8 +53,30 @@ class AddressLine:
     rank_address: int
     distance: float
 
+    local_name: Optional[str] = None
 
-AddressLines = Sequence[AddressLine]
+
+class AddressLines(List[AddressLine]):
+    """ Sequence of address lines order in descending order by their rank.
+    """
+
+    def localize(self, locales: Locales) -> List[str]:
+        """ Set the local name of address parts according to the chosen
+            locale. Return the list of local names without duplications.
+
+            Only address parts that are marked as isaddress are localized
+            and returned.
+        """
+        label_parts: List[str] = []
+
+        for line in self:
+            if line.isaddress and line.names:
+                line.local_name = locales.display_name(line.names)
+                if not label_parts or label_parts[-1] != line.local_name:
+                    label_parts.append(line.local_name)
+
+        return label_parts
+
 
 
 @dataclasses.dataclass
@@ -142,6 +165,12 @@ class ReverseResult(BaseResult):
     """
     distance: Optional[float] = None
     bbox: Optional[Bbox] = None
+
+
+class ReverseResults(List[ReverseResult]):
+    """ Sequence of reverse lookup results ordered by distance.
+        May be empty when no result was found.
+    """
 
 
 def _filter_geometries(row: SaRow) -> Dict[str, str]:
@@ -333,7 +362,7 @@ async def complete_address_details(conn: SearchConnection, result: BaseResult) -
     sql = sa.select(sfn).order_by(sa.column('rank_address').desc(),
                                   sa.column('isaddress').desc())
 
-    result.address_rows = []
+    result.address_rows = AddressLines()
     for row in await conn.execute(sql):
         result.address_rows.append(_result_row_to_address_row(row))
 
@@ -357,7 +386,7 @@ def _placex_select_address_row(conn: SearchConnection,
 async def complete_linked_places(conn: SearchConnection, result: BaseResult) -> None:
     """ Retrieve information about places that link to the result.
     """
-    result.linked_rows = []
+    result.linked_rows = AddressLines()
     if result.source_table != SourceTable.PLACEX:
         return
 
@@ -392,7 +421,7 @@ async def complete_parented_places(conn: SearchConnection, result: BaseResult) -
     """ Retrieve information about places that the result provides the
         address for.
     """
-    result.parented_rows = []
+    result.parented_rows = AddressLines()
     if result.source_table != SourceTable.PLACEX:
         return
 

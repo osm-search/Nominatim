@@ -10,6 +10,52 @@ Hard-coded information about tag catagories.
 These tables have been copied verbatim from the old PHP code. For future
 version a more flexible formatting is required.
 """
+from typing import Tuple, Optional, Mapping
+
+def get_label_tag(category: Tuple[str, str], extratags: Optional[Mapping[str, str]],
+                  rank: int, country: Optional[str]) -> str:
+    """ Create a label tag for the given place that can be used as an XML name.
+    """
+    if rank < 26 and extratags and 'place'in extratags:
+        label = extratags['place']
+    elif category == ('boundary', 'administrative'):
+        label = ADMIN_LABELS.get((country or '', int(rank/2)))\
+                or ADMIN_LABELS.get(('', int(rank/2)))\
+                or 'Administrative'
+    elif category[1] == 'postal_code':
+        label = 'postcode'
+    elif rank < 26:
+        label = category[1] if category[1] != 'yes' else category[0]
+    elif rank < 28:
+        label = 'road'
+    elif category[0] == 'place'\
+         and category[1] in ('house_number', 'house_name', 'country_code'):
+        label = category[1]
+    else:
+        label = category[0]
+
+    return label.lower().replace(' ', '_')
+
+
+ADMIN_LABELS = {
+  ('', 1): 'Continent',
+  ('', 2): 'Country',
+  ('', 3): 'Region',
+  ('', 4): 'State',
+  ('', 5): 'State District',
+  ('', 6): 'County',
+  ('', 7): 'Municipality',
+  ('', 8): 'City',
+  ('', 9): 'City District',
+  ('', 10): 'Suburb',
+  ('', 11): 'Neighbourhood',
+  ('', 12): 'City Block',
+  ('no', 3): 'State',
+  ('no', 4): 'County',
+  ('se', 3): 'State',
+  ('se', 4): 'County'
+}
+
 
 ICONS = {
     ('boundary', 'administrative'): 'poi_boundary_administrative',

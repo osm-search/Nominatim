@@ -31,5 +31,6 @@ from .results import (SourceTable as SourceTable,
                       WordInfo as WordInfo,
                       WordInfos as WordInfos,
                       DetailedResult as DetailedResult,
-                      ReverseResult as ReverseResult)
+                      ReverseResult as ReverseResult,
+                      ReverseResults as ReverseResults)
 from .localization import (Locales as Locales)

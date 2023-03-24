@@ -69,6 +69,22 @@ class ReverseGeocoder:
         self.layer = layer
         self.details = details
 
+    def layer_enabled(self, *layer: DataLayer) -> bool:
+        """ Return true when any of the given layer types are requested.
+        """
+        return any(self.layer & l for l in layer)
+
+
+    def layer_disabled(self, *layer: DataLayer) -> bool:
+        """ Return true when none of the given layer types is requested.
+        """
+        return not any(self.layer & l for l in layer)
+
+
+    def has_feature_layers(self) -> bool:
+        """ Return true if any layer other than ADDRESS or POI is requested.
+        """
+        return self.layer_enabled(DataLayer.RAILWAY, DataLayer.MANMADE, DataLayer.NATURAL)
 
     def _add_geometry_columns(self, sql: SaSelect, col: SaColumn) -> SaSelect:
         if not self.details.geometry_output:
@@ -92,18 +108,18 @@ class ReverseGeocoder:
 
 
     def _filter_by_layer(self, table: SaFromClause) -> SaColumn:
-        if self.layer & DataLayer.MANMADE:
+        if self.layer_enabled(DataLayer.MANMADE):
             exclude = []
-            if not self.layer & DataLayer.RAILWAY:
+            if self.layer_disabled(DataLayer.RAILWAY):
                 exclude.append('railway')
-            if not self.layer & DataLayer.NATURAL:
+            if self.layer_disabled(DataLayer.NATURAL):
                 exclude.extend(('natural', 'water', 'waterway'))
             return table.c.class_.not_in(tuple(exclude))
 
         include = []
-        if self.layer & DataLayer.RAILWAY:
+        if self.layer_enabled(DataLayer.RAILWAY):
             include.append('railway')
-        if self.layer & DataLayer.NATURAL:
+        if self.layer_enabled(DataLayer.NATURAL):
             include.extend(('natural', 'water', 'waterway'))
         return table.c.class_.in_(tuple(include))
 
@@ -129,16 +145,16 @@ class ReverseGeocoder:
 
         restrict: List[SaColumn] = []
 
-        if self.layer & DataLayer.ADDRESS:
+        if self.layer_enabled(DataLayer.ADDRESS):
             restrict.append(sa.and_(t.c.rank_address >= 26,
                                     t.c.rank_address <= min(29, self.max_rank)))
             if self.max_rank == 30:
                 restrict.append(_is_address_point(t))
-        if self.layer & DataLayer.POI and self.max_rank == 30:
+        if self.layer_enabled(DataLayer.POI) and self.max_rank == 30:
             restrict.append(sa.and_(t.c.rank_search == 30,
                                     t.c.class_.not_in(('place', 'building')),
                                     t.c.geometry.ST_GeometryType() != 'ST_LineString'))
-        if self.layer & (DataLayer.RAILWAY | DataLayer.MANMADE | DataLayer.NATURAL):
+        if self.has_feature_layers():
             restrict.append(sa.and_(t.c.rank_search.between(26, self.max_rank),
                                     t.c.rank_address == 0,
                                     self._filter_by_layer(t)))
@@ -240,7 +256,7 @@ class ReverseGeocoder:
         # check for a housenumber nearby which is part of the street.
         if row is not None:
             if self.max_rank > 27 \
-               and self.layer & DataLayer.ADDRESS \
+               and self.layer_enabled(DataLayer.ADDRESS) \
                and row.rank_address <= 27:
                 distance = 0.001
                 parent_place_id = row.place_id
@@ -263,7 +279,7 @@ class ReverseGeocoder:
 
         # Check for an interpolation that is either closer than our result
         # or belongs to a close street found.
-        if self.max_rank > 27 and self.layer & DataLayer.ADDRESS:
+        if self.max_rank > 27 and self.layer_enabled(DataLayer.ADDRESS):
             log().comment('Find interpolation for street')
             addr_row = await self._find_interpolation_for_street(parent_place_id,
                                                                  wkt, distance)
@@ -380,12 +396,12 @@ class ReverseGeocoder:
         """
         log().section('Reverse lookup by larger area features')
 
-        if self.layer & DataLayer.ADDRESS:
+        if self.layer_enabled(DataLayer.ADDRESS):
             address_row = await self._lookup_area_address(wkt)
         else:
             address_row = None
 
-        if self.layer & (~DataLayer.ADDRESS & ~DataLayer.POI):
+        if self.has_feature_layers():
             other_row = await self._lookup_area_others(wkt)
         else:
             other_row = None
@@ -474,7 +490,7 @@ class ReverseGeocoder:
             result = await self.lookup_street_poi(wkt)
         if result is None and self.max_rank > 4:
             result = await self.lookup_area(wkt)
-        if result is None and self.layer & DataLayer.ADDRESS:
+        if result is None and self.layer_enabled(DataLayer.ADDRESS):
             result = await self.lookup_country(wkt)
         if result is not None:
             await nres.add_result_details(self.conn, result, self.details)

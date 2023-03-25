@@ -7,7 +7,7 @@
 """
 Server implementation using the falcon webserver framework.
 """
-from typing import Optional, Mapping, cast
+from typing import Optional, Mapping, cast, Any
 from pathlib import Path
 
 import falcon
@@ -16,6 +16,22 @@ from falcon.asgi import App, Request, Response
 from nominatim.api import NominatimAPIAsync
 import nominatim.api.v1 as api_impl
 from nominatim.config import Configuration
+
+class HTTPNominatimError(Exception):
+    """ A special exception class for errors raised during processing.
+    """
+    def __init__(self, msg: str, status: int, content_type: str) -> None:
+        self.msg = msg
+        self.status = status
+        self.content_type = content_type
+
+
+async def nominatim_error_handler(req: Request, resp: Response,
+                                  exception: HTTPNominatimError,
+                                  _: Any) -> None:
+    resp.status = exception.status
+    resp.text = exception.msg
+    resp.content_type = exception.content_type
 
 
 class ParamWrapper(api_impl.ASGIAdaptor):
@@ -37,13 +53,8 @@ class ParamWrapper(api_impl.ASGIAdaptor):
         return cast(Optional[str], self.request.get_header(name, default=default))
 
 
-    def error(self, msg: str, status: int = 400) -> falcon.HTTPError:
-        if status == 400:
-            return falcon.HTTPBadRequest(description=msg)
-        if status == 404:
-            return falcon.HTTPNotFound(description=msg)
-
-        return falcon.HTTPError(status, description=msg)
+    def error(self, msg: str, status: int = 400) -> HTTPNominatimError:
+        return HTTPNominatimError(msg, status, self.content_type)
 
 
     def create_response(self, status: int, output: str) -> None:
@@ -78,6 +89,7 @@ def get_application(project_dir: Path,
     api = NominatimAPIAsync(project_dir, environ)
 
     app = App(cors_enable=api.config.get_bool('CORS_NOACCESSCONTROL'))
+    app.add_error_handler(HTTPNominatimError, nominatim_error_handler)
 
     legacy_urls = api.config.get_bool('SERVE_LEGACY_URLS')
     for name, func in api_impl.ROUTES:

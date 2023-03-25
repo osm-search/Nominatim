@@ -39,7 +39,8 @@ class ParamWrapper(api_impl.ASGIAdaptor):
 
 
     def error(self, msg: str, status: int = 400) -> HTTPException:
-        return HTTPException(status, detail=msg)
+        return HTTPException(status, detail=msg,
+                             headers={'content-type': self.content_type})
 
 
     def create_response(self, status: int, output: str) -> Response:

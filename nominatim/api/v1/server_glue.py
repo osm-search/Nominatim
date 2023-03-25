@@ -8,7 +8,7 @@
 Generic part of the server implementation of the v1 API.
 Combine with the scaffolding provided for the various Python ASGI frameworks.
 """
-from typing import Optional, Any, Type, Callable, NoReturn
+from typing import Optional, Any, Type, Callable, NoReturn, TypeVar
 import abc
 
 from nominatim.config import Configuration
@@ -22,6 +22,7 @@ CONTENT_TYPE = {
   'debug': 'text/html; charset=utf-8'
 }
 
+ConvT = TypeVar('ConvT', int, float)
 
 class ASGIAdaptor(abc.ABC):
     """ Adapter class for the different ASGI frameworks.
@@ -106,9 +107,10 @@ class ASGIAdaptor(abc.ABC):
         raise self.error(msg, status)
 
 
-    def get_int(self, name: str, default: Optional[int] = None) -> int:
-        """ Return an input parameter as an int. Raises an exception if
-            the parameter is given but not in an integer format.
+    def _get_typed(self, name: str, dest_type: Type[ConvT], type_name: str,
+                   default: Optional[ConvT] = None) -> ConvT:
+        """ Return an input parameter as the type 'dest_type'. Raises an
+            exception if the parameter is given but not in the given format.
 
             If 'default' is given, then it will be returned when the parameter
             is missing completely. When 'default' is None, an error will be
@@ -123,11 +125,34 @@ class ASGIAdaptor(abc.ABC):
             self.raise_error(f"Parameter '{name}' missing.")
 
         try:
-            intval = int(value)
+            intval = dest_type(value)
         except ValueError:
-            self.raise_error(f"Parameter '{name}' must be a number.")
+            self.raise_error(f"Parameter '{name}' must be a {type_name}.")
 
         return intval
+
+
+    def get_int(self, name: str, default: Optional[int] = None) -> int:
+        """ Return an input parameter as an int. Raises an exception if
+            the parameter is given but not in an integer format.
+
+            If 'default' is given, then it will be returned when the parameter
+            is missing completely. When 'default' is None, an error will be
+            raised on a missing parameter.
+        """
+        return self._get_typed(name, int, 'number', default)
+
+
+    def get_float(self, name: str, default: Optional[float] = None) -> int:
+        """ Return an input parameter as a flaoting-point number. Raises an
+            exception if the parameter is given but not in an float format.
+
+            If 'default' is given, then it will be returned when the parameter
+            is missing completely. When 'default' is None, an error will be
+            raised on a missing parameter.
+        """
+        return self._get_typed(name, float, 'number', default)
+
 
     def get_bool(self, name: str, default: Optional[bool] = None) -> bool:
         """ Return an input parameter as bool. Only '0' is accepted as
@@ -167,6 +192,17 @@ class ASGIAdaptor(abc.ABC):
             return True
 
         return False
+
+
+    def get_layers(self) -> napi.DataLayer:
+        """ Return a parsed version of the layer parameter.
+        """
+        param = self.get('layer', None)
+        if param is None:
+            return None
+
+        return reduce(napi.DataLayer.__or__,
+                      (getattr(napi.DataLayer, s.upper()) for s in param.split(',')))
 
 
     def parse_format(self, result_type: Type[Any], default: str) -> str:
@@ -243,9 +279,83 @@ async def details_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> 
     return params.build_response(output)
 
 
+async def reverse_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> Any:
+    """ Server glue for /reverse endpoint. See API docs for details.
+    """
+    fmt = params.parse_format(napi.ReverseResults, 'xml')
+    debug = params.setup_debugging()
+    coord = napi.Point(params.get_float('lon'), params.get_float('lat'))
+    locales = napi.Locales.from_accept_languages(params.get_accepted_languages())
+
+    zoom = max(0, min(18, params.get_int('zoom', 18)))
+
+    # Negation makes sure that NaN is handled. Don't change.
+    if not abs(coord[0]) <= 180 or not abs(coord[1]) <= 90:
+        params.raise_error('Invalid coordinates.')
+
+    details = napi.LookupDetails(address_details=True,
+                                 geometry_simplification=params.get_float('polygon_threshold', 0.0))
+    numgeoms = 0
+    if params.get_bool('polygon_geojson', False):
+        details.geometry_output |= napi.GeometryFormat.GEOJSON
+        numgeoms += 1
+    if fmt not in ('geojson', 'geocodejson'):
+        if params.get_bool('polygon_text', False):
+            details.geometry_output |= napi.GeometryFormat.TEXT
+            numgeoms += 1
+        if params.get_bool('polygon_kml', False):
+            details.geometry_output |= napi.GeometryFormat.KML
+            numgeoms += 1
+        if params.get_bool('polygon_svg', False):
+            details.geometry_output |= napi.GeometryFormat.SVG
+            numgeoms += 1
+
+    if numgeoms > params.config().get_int('POLYGON_OUTPUT_MAX_TYPES'):
+        params.raise_error(f'Too many polgyon output options selected.')
+
+    result = await api.reverse(coord, REVERSE_MAX_RANKS[zoom],
+                               params.get_layers() or
+                                 napi.DataLayer.ADDRESS | napi.DataLayer.POI,
+                               details)
+
+    if debug:
+        return params.build_response(loglib.get_and_disable())
+
+    fmt_options = {'locales': locales,
+                   'extratags': params.get_bool('extratags', False),
+                   'namedetails': params.get_bool('namedetails', False),
+                   'addressdetails': params.get_bool('addressdetails', True),
+                   'single_result': True}
+    if fmt == 'xml':
+        fmt_options['xml_roottag'] = 'reversegeocode'
+        fmt_options['xml_extra_info'] = {'querystring': 'TODO'}
+
+    output = formatting.format_result(napi.ReverseResults([result] if result else []),
+                                      fmt, fmt_options)
+
+    return params.build_response(output)
+
+
 EndpointFunc = Callable[[napi.NominatimAPIAsync, ASGIAdaptor], Any]
+
+REVERSE_MAX_RANKS = [2, 2, 2,   # 0-2   Continent/Sea
+                     4, 4,      # 3-4   Country
+                     8,         # 5     State
+                     10, 10,    # 6-7   Region
+                     12, 12,    # 8-9   County
+                     16, 17,    # 10-11 City
+                     18,        # 12    Town
+                     19,        # 13    Village/Suburb
+                     22,        # 14    Hamlet/Neighbourhood
+                     25,        # 15    Localities
+                     26,        # 16    Major Streets
+                     27,        # 17    Minor Streets
+                     30         # 18    Building
+                    ]
+
 
 ROUTES = [
     ('status', status_endpoint),
-    ('details', details_endpoint)
+    ('details', details_endpoint),
+    ('reverse', reverse_endpoint)
 ]

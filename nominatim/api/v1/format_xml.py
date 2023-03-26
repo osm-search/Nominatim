@@ -12,18 +12,20 @@ import datetime as dt
 import xml.etree.ElementTree as ET
 
 import nominatim.api as napi
-from nominatim.api.v1.constants import OSM_ATTRIBUTION, OSM_TYPE_NAME, bbox_from_result
-from nominatim.api.v1.classtypes import ICONS, get_label_tag
+import nominatim.api.v1.classtypes as cl
 
 def _write_xml_address(root: ET.Element, address: napi.AddressLines,
                        country_code: Optional[str]) -> None:
     parts = {}
     for line in address:
-        if line.isaddress and line.local_name:
-            label = get_label_tag(line.category, line.extratags,
-                                  line.rank_address, country_code)
-            if label not in parts:
-                parts[label] = line.local_name
+        if line.isaddress:
+            if line.local_name:
+                label = cl.get_label_tag(line.category, line.extratags,
+                                         line.rank_address, country_code)
+                if label not in parts:
+                    parts[label] = line.local_name
+            if line.names and 'ISO3166-2' in line.names and line.admin_level:
+                parts[f"ISO3166-2-lvl{line.admin_level}"] = line.names['ISO3166-2']
 
     for k,v in parts.items():
         ET.SubElement(root, k).text = v
@@ -44,18 +46,21 @@ def _create_base_entry(result: napi.ReverseResult, #pylint: disable=too-many-bra
     if result.place_id is not None:
         place.set('place_id', str(result.place_id))
     if result.osm_object:
-        osm_type = OSM_TYPE_NAME.get(result.osm_object[0], None)
+        osm_type = cl.OSM_TYPE_NAME.get(result.osm_object[0], None)
         if osm_type is not None:
             place.set('osm_type', osm_type)
         place.set('osm_id', str(result.osm_object[1]))
     if result.names and 'ref' in result.names:
-        place.set('place_id', result.names['ref'])
-    place.set('lat', str(result.centroid.lat))
-    place.set('lon', str(result.centroid.lon))
+        place.set('ref', result.names['ref'])
+    elif label_parts:
+        # bug reproduced from PHP
+        place.set('ref', label_parts[0])
+    place.set('lat', f"{result.centroid.lat:.7f}")
+    place.set('lon', f"{result.centroid.lon:.7f}")
 
-    bbox = bbox_from_result(result)
-    place.set('boundingbox', ','.join(map(str, [bbox.minlat, bbox.maxlat,
-                                                bbox.minlon, bbox.maxlon])))
+    bbox = cl.bbox_from_result(result)
+    place.set('boundingbox',
+              f"{bbox.minlat:.7f},{bbox.maxlat:.7f},{bbox.minlon:.7f},{bbox.maxlon:.7f}")
 
     place.set('place_rank', str(result.rank_search))
     place.set('address_rank', str(result.rank_address))
@@ -92,7 +97,7 @@ def format_base_xml(results: napi.ReverseResults,
 
     root = ET.Element(xml_root_tag)
     root.set('timestamp', dt.datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S +00:00'))
-    root.set('attribution', OSM_ATTRIBUTION)
+    root.set('attribution', cl.OSM_ATTRIBUTION)
     for k, v in xml_extra_info.items():
         root.set(k, v)
 
@@ -103,7 +108,7 @@ def format_base_xml(results: napi.ReverseResults,
         place = _create_base_entry(result, root, simple, locales)
 
         if not simple and options.get('icon_base_url', None):
-            icon = ICONS.get(result.category)
+            icon = cl.ICONS.get(result.category)
             if icon:
                 place.set('icon', icon)
 

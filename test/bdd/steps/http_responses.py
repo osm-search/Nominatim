@@ -134,8 +134,8 @@ class GenericResponse:
                         lon, lat = context.osm.grid_node(int(value))
                     else:
                         raise RuntimeError("Context needed when using grid coordinates")
-                    self.check_row_field(i, 'lat', Field(float(lat)), base=subdict)
-                    self.check_row_field(i, 'lon', Field(float(lon)), base=subdict)
+                    self.check_row_field(i, 'lat', Field(float(lat), abs_tol=1e-07), base=subdict)
+                    self.check_row_field(i, 'lon', Field(float(lon), abs_tol=1e-07), base=subdict)
                 else:
                     self.check_row_field(i, name, Field(value), base=subdict)
 

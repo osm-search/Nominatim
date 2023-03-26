@@ -10,7 +10,6 @@ Server implementation using the falcon webserver framework.
 from typing import Optional, Mapping, cast, Any
 from pathlib import Path
 
-import falcon
 from falcon.asgi import App, Request, Response
 
 from nominatim.api import NominatimAPIAsync
@@ -26,9 +25,12 @@ class HTTPNominatimError(Exception):
         self.content_type = content_type
 
 
-async def nominatim_error_handler(req: Request, resp: Response,
+async def nominatim_error_handler(req: Request, resp: Response, #pylint: disable=unused-argument
                                   exception: HTTPNominatimError,
                                   _: Any) -> None:
+    """ Special error handler that passes message and content type as
+        per exception info.
+    """
     resp.status = exception.status
     resp.text = exception.msg
     resp.content_type = exception.content_type

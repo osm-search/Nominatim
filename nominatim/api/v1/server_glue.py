@@ -8,8 +8,10 @@
 Generic part of the server implementation of the v1 API.
 Combine with the scaffolding provided for the various Python ASGI frameworks.
 """
-from typing import Optional, Any, Type, Callable, NoReturn, TypeVar
+from typing import Optional, Any, Type, Callable, NoReturn, cast
+from functools import reduce
 import abc
+import math
 
 from nominatim.config import Configuration
 import nominatim.api as napi
@@ -21,8 +23,6 @@ CONTENT_TYPE = {
   'xml': 'text/xml; charset=utf-8',
   'debug': 'text/html; charset=utf-8'
 }
-
-ConvT = TypeVar('ConvT', int, float)
 
 class ASGIAdaptor(abc.ABC):
     """ Adapter class for the different ASGI frameworks.
@@ -107,10 +107,9 @@ class ASGIAdaptor(abc.ABC):
         raise self.error(msg, status)
 
 
-    def _get_typed(self, name: str, dest_type: Type[ConvT], type_name: str,
-                   default: Optional[ConvT] = None) -> ConvT:
-        """ Return an input parameter as the type 'dest_type'. Raises an
-            exception if the parameter is given but not in the given format.
+    def get_int(self, name: str, default: Optional[int] = None) -> int:
+        """ Return an input parameter as an int. Raises an exception if
+            the parameter is given but not in an integer format.
 
             If 'default' is given, then it will be returned when the parameter
             is missing completely. When 'default' is None, an error will be
@@ -125,25 +124,14 @@ class ASGIAdaptor(abc.ABC):
             self.raise_error(f"Parameter '{name}' missing.")
 
         try:
-            intval = dest_type(value)
+            intval = int(value)
         except ValueError:
-            self.raise_error(f"Parameter '{name}' must be a {type_name}.")
+            self.raise_error(f"Parameter '{name}' must be a number.")
 
         return intval
 
 
-    def get_int(self, name: str, default: Optional[int] = None) -> int:
-        """ Return an input parameter as an int. Raises an exception if
-            the parameter is given but not in an integer format.
-
-            If 'default' is given, then it will be returned when the parameter
-            is missing completely. When 'default' is None, an error will be
-            raised on a missing parameter.
-        """
-        return self._get_typed(name, int, 'number', default)
-
-
-    def get_float(self, name: str, default: Optional[float] = None) -> int:
+    def get_float(self, name: str, default: Optional[float] = None) -> float:
         """ Return an input parameter as a flaoting-point number. Raises an
             exception if the parameter is given but not in an float format.
 
@@ -151,7 +139,23 @@ class ASGIAdaptor(abc.ABC):
             is missing completely. When 'default' is None, an error will be
             raised on a missing parameter.
         """
-        return self._get_typed(name, float, 'number', default)
+        value = self.get(name)
+
+        if value is None:
+            if default is not None:
+                return default
+
+            self.raise_error(f"Parameter '{name}' missing.")
+
+        try:
+            fval = float(value)
+        except ValueError:
+            self.raise_error(f"Parameter '{name}' must be a number.")
+
+        if math.isnan(fval) or math.isinf(fval):
+            self.raise_error(f"Parameter '{name}' must be a number.")
+
+        return fval
 
 
     def get_bool(self, name: str, default: Optional[bool] = None) -> bool:
@@ -194,15 +198,16 @@ class ASGIAdaptor(abc.ABC):
         return False
 
 
-    def get_layers(self) -> napi.DataLayer:
+    def get_layers(self) -> Optional[napi.DataLayer]:
         """ Return a parsed version of the layer parameter.
         """
         param = self.get('layer', None)
         if param is None:
             return None
 
-        return reduce(napi.DataLayer.__or__,
-                      (getattr(napi.DataLayer, s.upper()) for s in param.split(',')))
+        return cast(napi.DataLayer,
+                    reduce(napi.DataLayer.__or__,
+                           (getattr(napi.DataLayer, s.upper()) for s in param.split(','))))
 
 
     def parse_format(self, result_type: Type[Any], default: str) -> str:
@@ -289,10 +294,6 @@ async def reverse_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> 
 
     zoom = max(0, min(18, params.get_int('zoom', 18)))
 
-    # Negation makes sure that NaN is handled. Don't change.
-    if not abs(coord[0]) <= 180 or not abs(coord[1]) <= 90:
-        params.raise_error('Invalid coordinates.')
-
     details = napi.LookupDetails(address_details=True,
                                  geometry_simplification=params.get_float('polygon_threshold', 0.0))
     numgeoms = 0
@@ -311,7 +312,7 @@ async def reverse_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> 
             numgeoms += 1
 
     if numgeoms > params.config().get_int('POLYGON_OUTPUT_MAX_TYPES'):
-        params.raise_error(f'Too many polgyon output options selected.')
+        params.raise_error('Too many polgyon output options selected.')
 
     result = await api.reverse(coord, REVERSE_MAX_RANKS[zoom],
                                params.get_layers() or

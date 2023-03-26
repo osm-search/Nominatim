@@ -19,7 +19,7 @@ Feature: Geocodejson for Reverse API
           | Point | [9.5036065, 47.0660892] |
         And results contain in field __geocoding
           | version | licence | attribution |
-          | 0.1.0   | ODbL    | Data © OpenStreetMap contributors, ODbL 1.0. https://osm.org/copyright |
+          | 0.1.0   | ODbL    | ^Data © OpenStreetMap contributors, ODbL 1.0. https?://osm.org/copyright$ |
 
         Examples:
           | has_address | attributes     |

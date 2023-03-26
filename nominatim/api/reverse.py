@@ -7,7 +7,7 @@
 """
 Implementation of reverse geocoding.
 """
-from typing import Optional, List
+from typing import Optional, List, Callable, Type, Tuple
 
 import sqlalchemy as sa
 from geoalchemy2 import WKTElement
@@ -16,11 +16,13 @@ from nominatim.typing import SaColumn, SaSelect, SaFromClause, SaLabel, SaRow
 from nominatim.api.connection import SearchConnection
 import nominatim.api.results as nres
 from nominatim.api.logging import log
-from nominatim.api.types import AnyPoint, DataLayer, LookupDetails, GeometryFormat
+from nominatim.api.types import AnyPoint, DataLayer, LookupDetails, GeometryFormat, Bbox
 
 # In SQLAlchemy expression which compare with NULL need to be expressed with
 # the equal sign.
 # pylint: disable=singleton-comparison
+
+RowFunc = Callable[[Optional[SaRow], Type[nres.ReverseResult]], Optional[nres.ReverseResult]]
 
 def _select_from_placex(t: SaFromClause, wkt: Optional[str] = None) -> SaSelect:
     """ Create a select statement with the columns relevant for reverse
@@ -37,7 +39,11 @@ def _select_from_placex(t: SaFromClause, wkt: Optional[str] = None) -> SaSelect:
                      t.c.housenumber, t.c.postcode, t.c.country_code,
                      t.c.importance, t.c.wikipedia,
                      t.c.parent_place_id, t.c.rank_address, t.c.rank_search,
-                     t.c.centroid,
+                     sa.case(
+                       (t.c.geometry.ST_GeometryType().in_(('ST_LineString',
+                                                           'ST_MultiLineString')),
+                        t.c.geometry.ST_ClosestPoint(wkt)),
+                       else_=t.c.centroid).label('centroid'),
                      distance.label('distance'),
                      t.c.geometry.ST_Expand(0).label('bbox'))
 
@@ -47,6 +53,14 @@ def _interpolated_housenumber(table: SaFromClause) -> SaLabel:
                     + sa.func.round(((table.c.endnumber - table.c.startnumber) * table.c.position)
                                     / table.c.step) * table.c.step,
                    sa.Integer).label('housenumber')
+
+
+def _interpolated_position(table: SaFromClause) -> SaLabel:
+    fac = sa.cast(table.c.step, sa.Float) / (table.c.endnumber - table.c.startnumber)
+    rounded_pos = sa.func.round(table.c.position / fac) * fac
+    return sa.case(
+             (table.c.endnumber == table.c.startnumber, table.c.linegeo.ST_Centroid()),
+              else_=table.c.linegeo.ST_LineInterpolatePoint(rounded_pos)).label('centroid')
 
 
 def _is_address_point(table: SaFromClause) -> SaColumn:
@@ -203,8 +217,8 @@ class ReverseGeocoder:
         sql = sa.select(inner.c.place_id, inner.c.osm_id,
                         inner.c.parent_place_id, inner.c.address,
                         _interpolated_housenumber(inner),
+                        _interpolated_position(inner),
                         inner.c.postcode, inner.c.country_code,
-                        inner.c.linegeo.ST_LineInterpolatePoint(inner.c.position).label('centroid'),
                         inner.c.distance)
 
         if self.details.geometry_output:
@@ -215,6 +229,7 @@ class ReverseGeocoder:
 
 
     async def _find_tiger_number_for_street(self, parent_place_id: int,
+                                            parent_type: str, parent_id: int,
                                             wkt: WKTElement) -> Optional[SaRow]:
         t = self.conn.t.tiger
 
@@ -229,9 +244,11 @@ class ReverseGeocoder:
 
         sql = sa.select(inner.c.place_id,
                         inner.c.parent_place_id,
+                        sa.literal(parent_type).label('osm_type'),
+                        sa.literal(parent_id).label('osm_id'),
                         _interpolated_housenumber(inner),
+                        _interpolated_position(inner),
                         inner.c.postcode,
-                        inner.c.linegeo.ST_LineInterpolatePoint(inner.c.position).label('centroid'),
                         inner.c.distance)
 
         if self.details.geometry_output:
@@ -241,15 +258,16 @@ class ReverseGeocoder:
         return (await self.conn.execute(sql)).one_or_none()
 
 
-    async def lookup_street_poi(self, wkt: WKTElement) -> Optional[nres.ReverseResult]:
+    async def lookup_street_poi(self,
+                                wkt: WKTElement) -> Tuple[Optional[SaRow], RowFunc]:
         """ Find a street or POI/address for the given WKT point.
         """
         log().section('Reverse lookup on street/address level')
-        result = None
         distance = 0.006
         parent_place_id = None
 
         row = await self._find_closest_street_or_poi(wkt, distance)
+        row_func: RowFunc = nres.create_from_placex_row
         log().var_dump('Result (street/building)', row)
 
         # If the closest result was a street, but an address was requested,
@@ -266,14 +284,19 @@ class ReverseGeocoder:
 
                 if addr_row is not None:
                     row = addr_row
+                    row_func = nres.create_from_placex_row
                     distance = addr_row.distance
                 elif row.country_code == 'us' and parent_place_id is not None:
                     log().comment('Find TIGER housenumber for street')
-                    addr_row = await self._find_tiger_number_for_street(parent_place_id, wkt)
+                    addr_row = await self._find_tiger_number_for_street(parent_place_id,
+                                                                        row.osm_type,
+                                                                        row.osm_id,
+                                                                        wkt)
                     log().var_dump('Result (street Tiger housenumber)', addr_row)
 
                     if addr_row is not None:
-                        result = nres.create_from_tiger_row(addr_row, nres.ReverseResult)
+                        row = addr_row
+                        row_func = nres.create_from_tiger_row
             else:
                 distance = row.distance
 
@@ -285,9 +308,10 @@ class ReverseGeocoder:
                                                                  wkt, distance)
             log().var_dump('Result (street interpolation)', addr_row)
             if addr_row is not None:
-                result = nres.create_from_osmline_row(addr_row, nres.ReverseResult)
+                row = addr_row
+                row_func = nres.create_from_osmline_row
 
-        return result or nres.create_from_placex_row(row, nres.ReverseResult)
+        return row, row_func
 
 
     async def _lookup_area_address(self, wkt: WKTElement) -> Optional[SaRow]:
@@ -391,7 +415,7 @@ class ReverseGeocoder:
         return row
 
 
-    async def lookup_area(self, wkt: WKTElement) -> Optional[nres.ReverseResult]:
+    async def lookup_area(self, wkt: WKTElement) -> Optional[SaRow]:
         """ Lookup large areas for the given WKT point.
         """
         log().section('Reverse lookup by larger area features')
@@ -406,10 +430,10 @@ class ReverseGeocoder:
         else:
             other_row = None
 
-        return nres.create_from_placex_row(_get_closest(address_row, other_row), nres.ReverseResult)
+        return _get_closest(address_row, other_row)
 
 
-    async def lookup_country(self, wkt: WKTElement) -> Optional[nres.ReverseResult]:
+    async def lookup_country(self, wkt: WKTElement) -> Optional[SaRow]:
         """ Lookup the country for the given WKT point.
         """
         log().section('Reverse lookup by country code')
@@ -470,7 +494,7 @@ class ReverseGeocoder:
 
             address_row = (await self.conn.execute(sql)).one_or_none()
 
-        return nres.create_from_placex_row(address_row, nres.ReverseResult)
+        return address_row
 
 
     async def lookup(self, coord: AnyPoint) -> Optional[nres.ReverseResult]:
@@ -484,15 +508,24 @@ class ReverseGeocoder:
 
         wkt = WKTElement(f'POINT({coord[0]} {coord[1]})', srid=4326)
 
-        result: Optional[nres.ReverseResult] = None
+        row: Optional[SaRow] = None
+        row_func: RowFunc = nres.create_from_placex_row
 
         if self.max_rank >= 26:
-            result = await self.lookup_street_poi(wkt)
-        if result is None and self.max_rank > 4:
-            result = await self.lookup_area(wkt)
-        if result is None and self.layer_enabled(DataLayer.ADDRESS):
-            result = await self.lookup_country(wkt)
+            row, tmp_row_func = await self.lookup_street_poi(wkt)
+            if row is not None:
+                row_func = tmp_row_func
+        if row is None and self.max_rank > 4:
+            row = await self.lookup_area(wkt)
+        if row is None and self.layer_enabled(DataLayer.ADDRESS):
+            row = await self.lookup_country(wkt)
+
+        result = row_func(row, nres.ReverseResult)
         if result is not None:
+            assert row is not None
+            result.distance = row.distance
+            if hasattr(row, 'bbox'):
+                result.bbox = Bbox.from_wkb(row.bbox.data)
             await nres.add_result_details(self.conn, result, self.details)
 
         return result

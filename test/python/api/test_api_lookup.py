@@ -378,6 +378,10 @@ def test_lookup_in_tiger(apiobj):
                      startnumber=1, endnumber=4, step=1,
                      postcode='34425',
                      geometry='LINESTRING(23 34, 23 35)')
+    apiobj.add_placex(place_id=12,
+                      category=('highway', 'residential'),
+                      osm_type='W', osm_id=6601223,
+                      geometry='LINESTRING(23 34, 23 35)')
 
     result = apiobj.api.lookup(napi.PlaceID(4924), napi.LookupDetails())
 
@@ -390,7 +394,7 @@ def test_lookup_in_tiger(apiobj):
     assert result.place_id == 4924
     assert result.parent_place_id == 12
     assert result.linked_place_id is None
-    assert result.osm_object is None
+    assert result.osm_object == ('W', 6601223)
     assert result.admin_level == 15
 
     assert result.names is None

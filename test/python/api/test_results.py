@@ -58,9 +58,9 @@ def test_create_row_none(func):
 @pytest.mark.parametrize('func', (nresults.create_from_osmline_row,
                                   nresults.create_from_tiger_row))
 def test_create_row_with_housenumber(func):
-    row = FakeRow(place_id = 2345, osm_id = 111, housenumber = 4,
-                  address = None, postcode = '99900', country_code = 'xd',
-                  centroid = FakeCentroid(0, 0))
+    row = FakeRow(place_id=2345, osm_type='W', osm_id=111, housenumber=4,
+                  address=None, postcode='99900', country_code='xd',
+                  centroid=FakeCentroid(0, 0))
 
     res = func(row, DetailedResult)
 
@@ -72,7 +72,7 @@ def test_create_row_with_housenumber(func):
 @pytest.mark.parametrize('func', (nresults.create_from_osmline_row,
                                   nresults.create_from_tiger_row))
 def test_create_row_without_housenumber(func):
-    row = FakeRow(place_id=2345, osm_id=111,
+    row = FakeRow(place_id=2345, osm_type='W', osm_id=111,
                   startnumber=1, endnumber=11, step=2,
                   address=None, postcode='99900', country_code='xd',
                   centroid=FakeCentroid(0, 0))

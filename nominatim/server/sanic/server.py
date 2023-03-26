@@ -36,7 +36,6 @@ class ParamWrapper(api_impl.ASGIAdaptor):
 
     def error(self, msg: str, status: int = 400) -> SanicException:
         exception = SanicException(msg, status_code=status)
-        exception.headers = {'content-type': self.content_type}
 
         return exception
 

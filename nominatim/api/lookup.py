@@ -102,14 +102,17 @@ async def find_in_tiger(conn: SearchConnection, place: ntyp.PlaceRef,
     """
     log().section("Find in TIGER table")
     t = conn.t.tiger
+    parent = conn.t.placex
     sql = sa.select(t.c.place_id, t.c.parent_place_id,
+                    parent.c.osm_type, parent.c.osm_id,
                     t.c.startnumber, t.c.endnumber, t.c.step,
                     t.c.postcode,
                     t.c.linegeo.ST_Centroid().label('centroid'),
                     _select_column_geometry(t.c.linegeo, details.geometry_output))
 
     if isinstance(place, ntyp.PlaceID):
-        sql = sql.where(t.c.place_id == place.place_id)
+        sql = sql.where(t.c.place_id == place.place_id)\
+                 .join(parent, t.c.parent_place_id == parent.c.place_id, isouter=True)
     else:
         return None
 

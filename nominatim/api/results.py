@@ -255,6 +255,7 @@ def create_from_tiger_row(row: Optional[SaRow],
 
     res = class_type(source_table=SourceTable.TIGER,
                      place_id=row.place_id,
+                     osm_object=(row.osm_type, row.osm_id),
                      category=('place', 'houses' if hnr is None else 'house'),
                      postcode=row.postcode,
                      country_code='us',
@@ -315,8 +316,8 @@ def _result_row_to_address_row(row: SaRow) -> AddressLine:
     """ Create a new AddressLine from the results of a datbase query.
     """
     extratags: Dict[str, str] = getattr(row, 'extratags', {})
-    if 'place_type' in row:
-        extratags['place_type'] = row.place_type
+    if hasattr(row, 'place_type') and row.place_type:
+        extratags['place'] = row.place_type
 
     names = row.name
     if getattr(row, 'housenumber', None) is not None:

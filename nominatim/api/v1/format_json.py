@@ -10,13 +10,12 @@ Helper functions for output of results in json formats.
 from typing import Mapping, Any, Optional, Tuple
 
 import nominatim.api as napi
-from nominatim.api.v1.constants import OSM_ATTRIBUTION, OSM_TYPE_NAME, bbox_from_result
-from nominatim.api.v1.classtypes import ICONS, get_label_tag
+import nominatim.api.v1.classtypes as cl
 from nominatim.utils.json_writer import JsonWriter
 
 def _write_osm_id(out: JsonWriter, osm_object: Optional[Tuple[str, int]]) -> None:
     if osm_object is not None:
-        out.keyval_not_none('osm_type', OSM_TYPE_NAME.get(osm_object[0], None))\
+        out.keyval_not_none('osm_type', cl.OSM_TYPE_NAME.get(osm_object[0], None))\
            .keyval('osm_id', osm_object[1])
 
 
@@ -24,11 +23,15 @@ def _write_typed_address(out: JsonWriter, address: Optional[napi.AddressLines],
                                country_code: Optional[str]) -> None:
     parts = {}
     for line in (address or []):
-        if line.isaddress and line.local_name:
-            label = get_label_tag(line.category, line.extratags,
-                                  line.rank_address, country_code)
-            if label not in parts:
-                parts[label] = line.local_name
+        if line.isaddress:
+            if line.local_name:
+                label = cl.get_label_tag(line.category, line.extratags,
+                                         line.rank_address, country_code)
+                if label not in parts:
+                    print(label)
+                    parts[label] = line.local_name
+            if line.names and 'ISO3166-2' in line.names and line.admin_level:
+                parts[f"ISO3166-2-lvl{line.admin_level}"] = line.names['ISO3166-2']
 
     for k, v in parts.items():
         out.keyval(k, v)
@@ -79,7 +82,7 @@ def format_base_json(results: napi.ReverseResults, #pylint: disable=too-many-bra
 
         out.start_object()\
              .keyval_not_none('place_id', result.place_id)\
-             .keyval('licence', OSM_ATTRIBUTION)\
+             .keyval('licence', cl.OSM_ATTRIBUTION)\
 
         _write_osm_id(out, result.osm_object)
 
@@ -89,15 +92,15 @@ def format_base_json(results: napi.ReverseResults, #pylint: disable=too-many-bra
              .keyval('type', result.category[1])\
              .keyval('place_rank', result.rank_search)\
              .keyval('importance', result.calculated_importance())\
-             .keyval('addresstype', get_label_tag(result.category, result.extratags,
-                                                  result.rank_address,
-                                                  result.country_code))\
+             .keyval('addresstype', cl.get_label_tag(result.category, result.extratags,
+                                                     result.rank_address,
+                                                     result.country_code))\
              .keyval('name', locales.display_name(result.names))\
              .keyval('display_name', ', '.join(label_parts))
 
 
         if options.get('icon_base_url', None):
-            icon = ICONS.get(result.category)
+            icon = cl.ICONS.get(result.category)
             if icon:
                 out.keyval('icon', f"{options['icon_base_url']}/{icon}.p.20.png")
 
@@ -112,12 +115,12 @@ def format_base_json(results: napi.ReverseResults, #pylint: disable=too-many-bra
         if options.get('namedetails', False):
             out.keyval('namedetails', result.names)
 
-        bbox = bbox_from_result(result)
+        bbox = cl.bbox_from_result(result)
         out.key('boundingbox').start_array()\
-             .value(bbox.minlat).next()\
-             .value(bbox.maxlat).next()\
-             .value(bbox.minlon).next()\
-             .value(bbox.maxlon).next()\
+             .value(f"{bbox.minlat:0.7f}").next()\
+             .value(f"{bbox.maxlat:0.7f}").next()\
+             .value(f"{bbox.minlon:0.7f}").next()\
+             .value(f"{bbox.maxlon:0.7f}").next()\
            .end_array().next()
 
         if result.geometry:
@@ -153,7 +156,7 @@ def format_base_geojson(results: napi.ReverseResults,
 
     out.start_object()\
          .keyval('type', 'FeatureCollection')\
-         .keyval('licence', OSM_ATTRIBUTION)\
+         .keyval('licence', cl.OSM_ATTRIBUTION)\
          .key('features').start_array()
 
     for result in results:
@@ -174,9 +177,9 @@ def format_base_geojson(results: napi.ReverseResults,
            .keyval('category', result.category[0])\
            .keyval('type', result.category[1])\
            .keyval('importance', result.calculated_importance())\
-           .keyval('addresstype', get_label_tag(result.category, result.extratags,
-                                                result.rank_address,
-                                                result.country_code))\
+           .keyval('addresstype', cl.get_label_tag(result.category, result.extratags,
+                                                   result.rank_address,
+                                                   result.country_code))\
            .keyval('name', locales.display_name(result.names))\
            .keyval('display_name', ', '.join(label_parts))
 
@@ -193,8 +196,10 @@ def format_base_geojson(results: napi.ReverseResults,
 
         out.end_object().next() # properties
 
-        bbox = bbox_from_result(result)
-        out.keyval('bbox', bbox.coords)
+        out.key('bbox').start_array()
+        for coord in cl.bbox_from_result(result).coords:
+            out.float(coord, 7).next()
+        out.end_array().next()
 
         out.key('geometry').raw(result.geometry.get('geojson')
                                 or result.centroid.to_geojson()).next()
@@ -221,7 +226,7 @@ def format_base_geocodejson(results: napi.ReverseResults,
          .keyval('type', 'FeatureCollection')\
          .key('geocoding').start_object()\
            .keyval('version', '0.1.0')\
-           .keyval('attribution', OSM_ATTRIBUTION)\
+           .keyval('attribution', cl.OSM_ATTRIBUTION)\
            .keyval('licence', 'ODbL')\
            .keyval_not_none('query', options.get('query'))\
            .end_object().next()\
@@ -245,9 +250,9 @@ def format_base_geocodejson(results: napi.ReverseResults,
         out.keyval('osm_key', result.category[0])\
            .keyval('osm_value', result.category[1])\
            .keyval('type', GEOCODEJSON_RANKS[max(3, min(28, result.rank_address))])\
-           .keyval_not_none('accuracy', result.distance)\
+           .keyval_not_none('accuracy', result.distance, transform=int)\
            .keyval('label', ', '.join(label_parts))\
-           .keyval_not_none('name', locales.display_name(result.names))\
+           .keyval_not_none('name', result.names, transform=locales.display_name)\
 
         if options.get('addressdetails', False):
             _write_geocodejson_address(out, result.address_rows, result.place_id,

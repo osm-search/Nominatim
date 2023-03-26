@@ -325,8 +325,7 @@ async def reverse_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> 
     fmt_options = {'locales': locales,
                    'extratags': params.get_bool('extratags', False),
                    'namedetails': params.get_bool('namedetails', False),
-                   'addressdetails': params.get_bool('addressdetails', True),
-                   'single_result': True}
+                   'addressdetails': params.get_bool('addressdetails', True)}
     if fmt == 'xml':
         fmt_options['xml_roottag'] = 'reversegeocode'
         fmt_options['xml_extra_info'] = {'querystring': 'TODO'}

@@ -30,8 +30,15 @@ def _select_from_placex(t: SaFromClause, wkt: Optional[str] = None) -> SaSelect:
     """
     if wkt is None:
         distance = t.c.distance
+        centroid = t.c.centroid
     else:
         distance = t.c.geometry.ST_Distance(wkt)
+        centroid = sa.case(
+                       (t.c.geometry.ST_GeometryType().in_(('ST_LineString',
+                                                           'ST_MultiLineString')),
+                        t.c.geometry.ST_ClosestPoint(wkt)),
+                       else_=t.c.centroid).label('centroid')
+
 
     return sa.select(t.c.place_id, t.c.osm_type, t.c.osm_id, t.c.name,
                      t.c.class_, t.c.type,
@@ -39,11 +46,7 @@ def _select_from_placex(t: SaFromClause, wkt: Optional[str] = None) -> SaSelect:
                      t.c.housenumber, t.c.postcode, t.c.country_code,
                      t.c.importance, t.c.wikipedia,
                      t.c.parent_place_id, t.c.rank_address, t.c.rank_search,
-                     sa.case(
-                       (t.c.geometry.ST_GeometryType().in_(('ST_LineString',
-                                                           'ST_MultiLineString')),
-                        t.c.geometry.ST_ClosestPoint(wkt)),
-                       else_=t.c.centroid).label('centroid'),
+                     centroid,
                      distance.label('distance'),
                      t.c.geometry.ST_Expand(0).label('bbox'))
 

@@ -24,7 +24,6 @@ def test_no_api_without_phpcgi(endpoint):
 
 @pytest.mark.parametrize("params", [('search', '--query', 'new'),
                                     ('search', '--city', 'Berlin'),
-                                    ('reverse', '--lat', '0', '--lon', '0', '--zoom', '13'),
                                     ('lookup', '--id', 'N1')])
 class TestCliApiCallPhp:
 
@@ -98,6 +97,65 @@ class TestCliDetailsCall:
         json.loads(capsys.readouterr().out)
 
 
+class TestCliReverseCall:
+
+    @pytest.fixture(autouse=True)
+    def setup_reverse_mock(self, monkeypatch):
+        result = napi.ReverseResult(napi.SourceTable.PLACEX, ('place', 'thing'),
+                                    napi.Point(1.0, -3.0),
+                                    names={'name':'Name', 'name:fr': 'Nom'},
+                                    extratags={'extra':'Extra'})
+
+        monkeypatch.setattr(napi.NominatimAPI, 'reverse',
+                            lambda *args: result)
+
+
+    def test_reverse_simple(self, cli_call, tmp_path, capsys):
+        result = cli_call('reverse', '--project-dir', str(tmp_path),
+                          '--lat', '34', '--lon', '34')
+
+        assert result == 0
+
+        out = json.loads(capsys.readouterr().out)
+        assert out['name'] == 'Name'
+        assert 'address' not in out
+        assert 'extratags' not in out
+        assert 'namedetails' not in out
+
+
+    @pytest.mark.parametrize('param,field', [('--addressdetails', 'address'),
+                                             ('--extratags', 'extratags'),
+                                             ('--namedetails', 'namedetails')])
+    def test_reverse_extra_stuff(self, cli_call, tmp_path, capsys, param, field):
+        result = cli_call('reverse', '--project-dir', str(tmp_path),
+                          '--lat', '34', '--lon', '34', param)
+
+        assert result == 0
+
+        out = json.loads(capsys.readouterr().out)
+        assert field in out
+
+
+    def test_reverse_format(self, cli_call, tmp_path, capsys):
+        result = cli_call('reverse', '--project-dir', str(tmp_path),
+                          '--lat', '34', '--lon', '34', '--format', 'geojson')
+
+        assert result == 0
+
+        out = json.loads(capsys.readouterr().out)
+        assert out['type'] == 'FeatureCollection'
+
+
+    def test_reverse_language(self, cli_call, tmp_path, capsys):
+        result = cli_call('reverse', '--project-dir', str(tmp_path),
+                          '--lat', '34', '--lon', '34', '--lang', 'fr')
+
+        assert result == 0
+
+        out = json.loads(capsys.readouterr().out)
+        assert out['name'] == 'Nom'
+
+
 QUERY_PARAMS = {
  'search': ('--query', 'somewhere'),
  'reverse': ('--lat', '20', '--lon', '30'),
@@ -105,7 +163,7 @@ QUERY_PARAMS = {
  'details': ('--node', '324')
 }
 
-@pytest.mark.parametrize("endpoint", (('search', 'reverse', 'lookup')))
+@pytest.mark.parametrize("endpoint", (('search', 'lookup')))
 class TestCliApiCommonParameters:
 
     @pytest.fixture(autouse=True)

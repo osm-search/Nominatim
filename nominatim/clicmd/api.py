@@ -18,6 +18,7 @@ from nominatim.errors import UsageError
 from nominatim.clicmd.args import NominatimArgs
 import nominatim.api as napi
 import nominatim.api.v1 as api_output
+from nominatim.api.v1.server_glue import REVERSE_MAX_RANKS
 
 # Do not repeat documentation of subcommand classes.
 # pylint: disable=C0111
@@ -53,7 +54,8 @@ def _add_api_output_arguments(parser: argparse.ArgumentParser) -> None:
     group.add_argument('--polygon-output',
                        choices=['geojson', 'kml', 'svg', 'text'],
                        help='Output geometry of results as a GeoJSON, KML, SVG or WKT')
-    group.add_argument('--polygon-threshold', type=float, metavar='TOLERANCE',
+    group.add_argument('--polygon-threshold', type=float, default = 0.0,
+                       metavar='TOLERANCE',
                        help=("Simplify output geometry."
                              "Parameter is difference tolerance in degrees."))
 
@@ -150,26 +152,46 @@ class APIReverse:
                            help='Longitude of coordinate to look up (in WGS84)')
         group.add_argument('--zoom', type=int,
                            help='Level of detail required for the address')
+        group.add_argument('--layer', metavar='LAYER',
+                           choices=[n.name.lower() for n in napi.DataLayer if n.name],
+                           action='append', required=False, dest='layers',
+                           help='OSM id to lookup in format <NRW><id> (may be repeated)')
 
         _add_api_output_arguments(parser)
 
 
     def run(self, args: NominatimArgs) -> int:
-        params = dict(lat=args.lat, lon=args.lon, format=args.format)
-        if args.zoom is not None:
-            params['zoom'] = args.zoom
+        api = napi.NominatimAPI(args.project_dir)
 
-        for param, _ in EXTRADATA_PARAMS:
-            if getattr(args, param):
-                params[param] = '1'
-        if args.lang:
-            params['accept-language'] = args.lang
-        if args.polygon_output:
-            params['polygon_' + args.polygon_output] = '1'
-        if args.polygon_threshold:
-            params['polygon_threshold'] = args.polygon_threshold
+        details = napi.LookupDetails(address_details=True, # needed for display name
+                                     geometry_output=args.get_geometry_output(),
+                                     geometry_simplification=args.polygon_threshold or 0.0)
 
-        return _run_api('reverse', args, params)
+        result = api.reverse(napi.Point(args.lon, args.lat),
+                             REVERSE_MAX_RANKS[max(0, min(18, args.zoom or 18))],
+                             args.get_layers(napi.DataLayer.ADDRESS | napi.DataLayer.POI),
+                             details)
+
+        if result:
+            output = api_output.format_result(
+                        napi.ReverseResults([result]),
+                        args.format,
+                        {'locales': args.get_locales(api.config.DEFAULT_LANGUAGE),
+                         'extratags': args.extratags,
+                         'namedetails': args.namedetails,
+                         'addressdetails': args.addressdetails})
+            if args.format != 'xml':
+                # reformat the result, so it is pretty-printed
+                json.dump(json.loads(output), sys.stdout, indent=4, ensure_ascii=False)
+            else:
+                sys.stdout.write(output)
+            sys.stdout.write('\n')
+
+            return 0
+
+        LOG.error("Unable to geocode.")
+        return 42
+
 
 
 class APILookup:
@@ -270,23 +292,16 @@ class APIDetails:
         if args.polygon_geojson:
             details.geometry_output = napi.GeometryFormat.GEOJSON
 
-        if args.lang:
-            locales = napi.Locales.from_accept_languages(args.lang)
-        elif api.config.DEFAULT_LANGUAGE:
-            locales = napi.Locales.from_accept_languages(api.config.DEFAULT_LANGUAGE)
-        else:
-            locales = napi.Locales()
-
         result = api.lookup(place, details)
 
         if result:
             output = api_output.format_result(
                         result,
                         'json',
-                        {'locales': locales,
+                        {'locales': args.get_locales(api.config.DEFAULT_LANGUAGE),
                          'group_hierarchy': args.group_hierarchy})
             # reformat the result, so it is pretty-printed
-            json.dump(json.loads(output), sys.stdout, indent=4)
+            json.dump(json.loads(output), sys.stdout, indent=4, ensure_ascii=False)
             sys.stdout.write('\n')
 
             return 0

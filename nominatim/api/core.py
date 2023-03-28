@@ -53,13 +53,16 @@ class NominatimAPIAsync:
 
             dsn = self.config.get_database_params()
 
+            query = {k: v for k, v in dsn.items()
+                      if k not in ('user', 'password', 'dbname', 'host', 'port')}
+            query['prepared_statement_cache_size'] = '0'
+
             dburl = sa.engine.URL.create(
                        'postgresql+asyncpg',
                        database=dsn.get('dbname'),
                        username=dsn.get('user'), password=dsn.get('password'),
                        host=dsn.get('host'), port=int(dsn['port']) if 'port' in dsn else None,
-                       query={k: v for k, v in dsn.items()
-                              if k not in ('user', 'password', 'dbname', 'host', 'port')})
+                       query=query)
             engine = sa_asyncio.create_async_engine(
                              dburl, future=True,
                              connect_args={'server_settings': {

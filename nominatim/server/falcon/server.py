@@ -101,3 +101,11 @@ def get_application(project_dir: Path,
             app.add_route(f"/{name}.php", endpoint)
 
     return app
+
+
+def run_wsgi() -> App:
+    """ Entry point for uvicorn.
+
+        Make sure uvicorn is run from the project directory.
+    """
+    return get_application(Path('.'))

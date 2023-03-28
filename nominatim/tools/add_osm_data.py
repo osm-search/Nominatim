@@ -12,23 +12,34 @@ from pathlib import Path
 import logging
 import urllib
 
+from nominatim.db.connection import connect
 from nominatim.tools.exec_utils import run_osm2pgsql, get_url
 
 LOG = logging.getLogger()
 
-def add_data_from_file(fname: str, options: MutableMapping[str, Any]) -> int:
+def _run_osm2pgsql(dsn: str, options: MutableMapping[str, Any]) -> None:
+    run_osm2pgsql(options)
+
+    # Handle deletions
+    with connect(dsn) as conn:
+        with conn.cursor() as cur:
+            cur.execute('SELECT flush_deleted_places()')
+        conn.commit()
+
+
+def add_data_from_file(dsn: str, fname: str, options: MutableMapping[str, Any]) -> int:
     """ Adds data from a OSM file to the database. The file may be a normal
         OSM file or a diff file in all formats supported by libosmium.
     """
     options['import_file'] = Path(fname)
     options['append'] = True
-    run_osm2pgsql(options)
+    _run_osm2pgsql(dsn, options)
 
     # No status update. We don't know where the file came from.
     return 0
 
 
-def add_osm_object(osm_type: str, osm_id: int, use_main_api: bool,
+def add_osm_object(dsn: str, osm_type: str, osm_id: int, use_main_api: bool,
                    options: MutableMapping[str, Any]) -> int:
     """ Add or update a single OSM object from the latest version of the
         API.
@@ -51,6 +62,6 @@ def add_osm_object(osm_type: str, osm_id: int, use_main_api: bool,
     options['append'] = True
     options['import_data'] = get_url(base_url).encode('utf-8')
 
-    run_osm2pgsql(options)
+    _run_osm2pgsql(dsn, options)
 
     return 0

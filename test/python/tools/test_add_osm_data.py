@@ -24,10 +24,14 @@ class CaptureGetUrl:
         return '<xml></xml>'
 
 
-def test_import_osm_file_simple(table_factory, osm2pgsql_options, capfd):
-    table_factory('place', content=((1, ), ))
+@pytest.fixture(autouse=True)
+def setup_delete_postprocessing(temp_db_cursor):
+    temp_db_cursor.execute("""CREATE OR REPLACE FUNCTION flush_deleted_places()
+                              RETURNS INTEGER AS $$ SELECT 1 $$ LANGUAGE SQL""")
 
-    assert add_osm_data.add_data_from_file(Path('change.osm'), osm2pgsql_options) == 0
+def test_import_osm_file_simple(dsn, table_factory, osm2pgsql_options, capfd):
+
+    assert add_osm_data.add_data_from_file(dsn, Path('change.osm'), osm2pgsql_options) == 0
     captured = capfd.readouterr()
 
     assert '--append' in captured.out
@@ -41,11 +45,11 @@ def test_import_osm_file_simple(table_factory, osm2pgsql_options, capfd):
 @pytest.mark.parametrize("osm_type", ['node', 'way', 'relation'])
 @pytest.mark.parametrize("main_api,url", [(True, 'https://www.openstreetmap.org/api'),
                                           (False, 'https://overpass-api.de/api/interpreter?')])
-def test_import_osm_object_main_api(osm2pgsql_options, monkeypatch, capfd,
-                                    osm_type, main_api, url):
+def test_import_osm_object_main_api(dsn, osm2pgsql_options, monkeypatch,
+                                    capfd, osm_type, main_api, url):
     get_url_mock = CaptureGetUrl(monkeypatch)
 
-    add_osm_data.add_osm_object(osm_type, 4536, main_api, osm2pgsql_options)
+    add_osm_data.add_osm_object(dsn, osm_type, 4536, main_api, osm2pgsql_options)
     captured = capfd.readouterr()
 
     assert get_url_mock.url.startswith(url)

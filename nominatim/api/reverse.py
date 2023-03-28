@@ -209,6 +209,7 @@ class ReverseGeocoder:
                         t.c.linegeo.ST_Distance(wkt).label('distance'),
                         t.c.linegeo.ST_LineLocatePoint(wkt).label('position'))\
                 .where(t.c.linegeo.ST_DWithin(wkt, distance))\
+                .where(t.c.startnumber != None)\
                 .order_by('distance')\
                 .limit(1)
 

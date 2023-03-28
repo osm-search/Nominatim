@@ -60,7 +60,8 @@ def _wrap_endpoint(func: api_impl.EndpointFunc)\
 
 
 def get_application(project_dir: Path,
-                    environ: Optional[Mapping[str, str]] = None) -> Starlette:
+                    environ: Optional[Mapping[str, str]] = None,
+                    debug: bool = True) -> Starlette:
     """ Create a Nominatim falcon ASGI application.
     """
     config = Configuration(project_dir, environ)
@@ -77,8 +78,14 @@ def get_application(project_dir: Path,
     if config.get_bool('CORS_NOACCESSCONTROL'):
         middleware.append(Middleware(CORSMiddleware, allow_origins=['*']))
 
-    app = Starlette(debug=True, routes=routes, middleware=middleware)
+    app = Starlette(debug=debug, routes=routes, middleware=middleware)
 
     app.state.API = NominatimAPIAsync(project_dir, environ)
 
     return app
+
+
+def run_wsgi() -> Starlette:
+    """ Entry point for uvicorn.
+    """
+    return get_application(Path('.'), debug=False)

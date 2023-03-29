@@ -135,6 +135,23 @@ def test_reverse_housenumber_interpolation(apiobj):
     assert apiobj.api.reverse((10.0, 10.0)).place_id == 992
 
 
+def test_reverse_housenumber_point_interpolation(apiobj):
+    apiobj.add_placex(place_id=990, class_='highway', type='service',
+                      rank_search=27, rank_address=27,
+                      name = {'name': 'My Street'},
+                      centroid=(10.0, 10.0),
+                      geometry='LINESTRING(9.995 10, 10.005 10)')
+    apiobj.add_osmline(place_id=992,
+                       parent_place_id=990,
+                       startnumber=42, endnumber=42, step=1,
+                       centroid=(10.0, 10.00001),
+                       geometry='POINT(10.0 10.00001)')
+
+    res = apiobj.api.reverse((10.0, 10.0))
+    assert res.place_id == 992
+    assert res.housenumber == '42'
+
+
 def test_reverse_tiger_number(apiobj):
     apiobj.add_placex(place_id=990, class_='highway', type='service',
                       rank_search=27, rank_address=27,
@@ -150,6 +167,24 @@ def test_reverse_tiger_number(apiobj):
 
     assert apiobj.api.reverse((10.0, 10.0)).place_id == 992
     assert apiobj.api.reverse((10.0, 10.00001)).place_id == 992
+
+
+def test_reverse_point_tiger(apiobj):
+    apiobj.add_placex(place_id=990, class_='highway', type='service',
+                      rank_search=27, rank_address=27,
+                      name = {'name': 'My Street'},
+                      centroid=(10.0, 10.0),
+                      country_code='us',
+                      geometry='LINESTRING(9.995 10, 10.005 10)')
+    apiobj.add_tiger(place_id=992,
+                     parent_place_id=990,
+                     startnumber=1, endnumber=1, step=1,
+                     centroid=(10.0, 10.00001),
+                     geometry='POINT(10.0 10.00001)')
+
+    res = apiobj.api.reverse((10.0, 10.0))
+    assert res.place_id == 992
+    assert res.housenumber == '1'
 
 
 def test_reverse_low_zoom_address(apiobj):

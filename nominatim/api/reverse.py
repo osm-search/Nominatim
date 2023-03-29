@@ -66,6 +66,14 @@ def _interpolated_position(table: SaFromClause) -> SaLabel:
               else_=table.c.linegeo.ST_LineInterpolatePoint(rounded_pos)).label('centroid')
 
 
+def _locate_interpolation(table: SaFromClause, wkt: WKTElement) -> SaLabel:
+    """ Given a position, locate the closest point on the line.
+    """
+    return sa.case((table.c.linegeo.ST_GeometryType() == 'ST_LineString',
+                    sa.func.ST_LineLocatePoint(table.c.linegeo, wkt)),
+                   else_=0).label('position')
+
+
 def _is_address_point(table: SaFromClause) -> SaColumn:
     return sa.and_(table.c.rank_address == 30,
                    sa.or_(table.c.housenumber != None,
@@ -207,7 +215,7 @@ class ReverseGeocoder:
 
         sql = sa.select(t,
                         t.c.linegeo.ST_Distance(wkt).label('distance'),
-                        t.c.linegeo.ST_LineLocatePoint(wkt).label('position'))\
+                        _locate_interpolation(t, wkt))\
                 .where(t.c.linegeo.ST_DWithin(wkt, distance))\
                 .where(t.c.startnumber != None)\
                 .order_by('distance')\
@@ -239,7 +247,7 @@ class ReverseGeocoder:
 
         inner = sa.select(t,
                           t.c.linegeo.ST_Distance(wkt).label('distance'),
-                          sa.func.ST_LineLocatePoint(t.c.linegeo, wkt).label('position'))\
+                          _locate_interpolation(t, wkt))\
                   .where(t.c.linegeo.ST_DWithin(wkt, 0.001))\
                   .where(t.c.parent_place_id == parent_place_id)\
                   .order_by('distance')\

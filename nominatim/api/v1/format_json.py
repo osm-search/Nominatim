@@ -28,7 +28,6 @@ def _write_typed_address(out: JsonWriter, address: Optional[napi.AddressLines],
                 label = cl.get_label_tag(line.category, line.extratags,
                                          line.rank_address, country_code)
                 if label not in parts:
-                    print(label)
                     parts[label] = line.local_name
             if line.names and 'ISO3166-2' in line.names and line.admin_level:
                 parts[f"ISO3166-2-lvl{line.admin_level}"] = line.names['ISO3166-2']

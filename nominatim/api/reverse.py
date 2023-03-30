@@ -500,7 +500,8 @@ class ReverseGeocoder:
                       .where(t.c.rank_address == 4)\
                       .where(t.c.rank_search == 4)\
                       .where(t.c.linked_place_id == None)\
-                      .order_by('distance')
+                      .order_by('distance')\
+                      .limit(1)
 
             sql = self._add_geometry_columns(sql, t.c.geometry)
 

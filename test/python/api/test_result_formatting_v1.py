@@ -6,6 +6,9 @@
 # For a full list of authors see the git log.
 """
 Tests for formatting results for the V1 API.
+
+These test only ensure that the Python code is correct.
+For functional tests see BDD test suite.
 """
 import datetime as dt
 import json
@@ -59,14 +62,14 @@ def test_status_format_json_full():
     assert result == '{"status":0,"message":"OK","data_updated":"2010-02-07T20:20:03+00:00","software_version":"%s","database_version":"5.6"}' % (NOMINATIM_VERSION, )
 
 
-# SearchResult
+# DetailedResult
 
 def test_search_details_minimal():
-    search = napi.SearchResult(napi.SourceTable.PLACEX,
-                               ('place', 'thing'),
-                               napi.Point(1.0, 2.0))
+    search = napi.DetailedResult(napi.SourceTable.PLACEX,
+                                 ('place', 'thing'),
+                                 napi.Point(1.0, 2.0))
 
-    result = api_impl.format_result(search, 'details-json', {})
+    result = api_impl.format_result(search, 'json', {})
 
     assert json.loads(result) == \
            {'category': 'place',
@@ -83,8 +86,8 @@ def test_search_details_minimal():
 
 
 def test_search_details_full():
-    import_date = dt.datetime(2010, 2, 7, 20, 20, 3, 0)
-    search = napi.SearchResult(
+    import_date = dt.datetime(2010, 2, 7, 20, 20, 3, 0, tzinfo=dt.timezone.utc)
+    search = napi.DetailedResult(
                   source_table=napi.SourceTable.PLACEX,
                   category=('amenity', 'bank'),
                   centroid=napi.Point(56.947, -87.44),
@@ -106,7 +109,7 @@ def test_search_details_full():
                   indexed_date = import_date
                   )
 
-    result = api_impl.format_result(search, 'details-json', {})
+    result = api_impl.format_result(search, 'json', {})
 
     assert json.loads(result) == \
            {'place_id': 37563,
@@ -140,12 +143,12 @@ def test_search_details_full():
                                           ('ST_Polygon', True),
                                           ('ST_MultiPolygon', True)])
 def test_search_details_no_geometry(gtype, isarea):
-    search = napi.SearchResult(napi.SourceTable.PLACEX,
+    search = napi.DetailedResult(napi.SourceTable.PLACEX,
                                ('place', 'thing'),
                                napi.Point(1.0, 2.0),
                                geometry={'type': gtype})
 
-    result = api_impl.format_result(search, 'details-json', {})
+    result = api_impl.format_result(search, 'json', {})
     js = json.loads(result)
 
     assert js['geometry'] == {'type': 'Point', 'coordinates': [1.0, 2.0]}
@@ -153,23 +156,45 @@ def test_search_details_no_geometry(gtype, isarea):
 
 
 def test_search_details_with_geometry():
-    search = napi.SearchResult(napi.SourceTable.PLACEX,
-                               ('place', 'thing'),
-                               napi.Point(1.0, 2.0),
-                               geometry={'geojson': '{"type":"Point","coordinates":[56.947,-87.44]}'})
+    search = napi.DetailedResult(napi.SourceTable.PLACEX,
+                                 ('place', 'thing'),
+                                 napi.Point(1.0, 2.0),
+                                 geometry={'geojson': '{"type":"Point","coordinates":[56.947,-87.44]}'})
 
-    result = api_impl.format_result(search, 'details-json', {})
+    result = api_impl.format_result(search, 'json', {})
     js = json.loads(result)
 
     assert js['geometry'] == {'type': 'Point', 'coordinates': [56.947, -87.44]}
     assert js['isarea'] == False
 
 
+def test_search_details_with_icon_available():
+    search = napi.DetailedResult(napi.SourceTable.PLACEX,
+                                 ('amenity', 'restaurant'),
+                                 napi.Point(1.0, 2.0))
+
+    result = api_impl.format_result(search, 'json', {'icon_base_url': 'foo'})
+    js = json.loads(result)
+
+    assert js['icon'] == 'foo/food_restaurant.p.20.png'
+
+
+def test_search_details_with_icon_not_available():
+    search = napi.DetailedResult(napi.SourceTable.PLACEX,
+                                 ('amenity', 'tree'),
+                                 napi.Point(1.0, 2.0))
+
+    result = api_impl.format_result(search, 'json', {'icon_base_url': 'foo'})
+    js = json.loads(result)
+
+    assert 'icon' not in js
+
+
 def test_search_details_with_address_minimal():
-    search = napi.SearchResult(napi.SourceTable.PLACEX,
-                               ('place', 'thing'),
-                               napi.Point(1.0, 2.0),
-                               address_rows=[
+    search = napi.DetailedResult(napi.SourceTable.PLACEX,
+                                 ('place', 'thing'),
+                                 napi.Point(1.0, 2.0),
+                                 address_rows=[
                                    napi.AddressLine(place_id=None,
                                                     osm_object=None,
                                                     category=('bnd', 'note'),
@@ -180,9 +205,9 @@ def test_search_details_with_address_minimal():
                                                     isaddress=False,
                                                     rank_address=10,
                                                     distance=0.0)
-                               ])
+                                 ])
 
-    result = api_impl.format_result(search, 'details-json', {})
+    result = api_impl.format_result(search, 'json', {})
     js = json.loads(result)
 
     assert js['address'] == [{'localname': '',
@@ -193,28 +218,32 @@ def test_search_details_with_address_minimal():
                               'isaddress': False}]
 
 
-def test_search_details_with_address_full():
-    search = napi.SearchResult(napi.SourceTable.PLACEX,
-                               ('place', 'thing'),
-                               napi.Point(1.0, 2.0),
-                               address_rows=[
-                                   napi.AddressLine(place_id=3498,
-                                                    osm_object=('R', 442),
-                                                    category=('bnd', 'note'),
-                                                    names={'name': 'Trespass'},
-                                                    extratags={'access': 'no',
-                                                               'place_type': 'spec'},
-                                                    admin_level=4,
-                                                    fromarea=True,
-                                                    isaddress=True,
-                                                    rank_address=10,
-                                                    distance=0.034)
-                               ])
+@pytest.mark.parametrize('field,outfield', [('address_rows', 'address'),
+                                            ('linked_rows', 'linked_places'),
+                                            ('parented_rows', 'hierarchy')
+                                           ])
+def test_search_details_with_further_infos(field, outfield):
+    search = napi.DetailedResult(napi.SourceTable.PLACEX,
+                                 ('place', 'thing'),
+                                 napi.Point(1.0, 2.0))
 
-    result = api_impl.format_result(search, 'details-json', {})
+    setattr(search, field, [napi.AddressLine(place_id=3498,
+                                             osm_object=('R', 442),
+                                             category=('bnd', 'note'),
+                                             names={'name': 'Trespass'},
+                                             extratags={'access': 'no',
+                                                        'place_type': 'spec'},
+                                             admin_level=4,
+                                             fromarea=True,
+                                             isaddress=True,
+                                             rank_address=10,
+                                             distance=0.034)
+                            ])
+
+    result = api_impl.format_result(search, 'json', {})
     js = json.loads(result)
 
-    assert js['address'] == [{'localname': 'Trespass',
+    assert js[outfield] == [{'localname': 'Trespass',
                               'place_id': 3498,
                               'osm_id': 442,
                               'osm_type': 'R',
@@ -225,3 +254,70 @@ def test_search_details_with_address_full():
                               'rank_address': 10,
                               'distance': 0.034,
                               'isaddress': True}]
+
+
+def test_search_details_grouped_hierarchy():
+    search = napi.DetailedResult(napi.SourceTable.PLACEX,
+                                 ('place', 'thing'),
+                                 napi.Point(1.0, 2.0),
+                                 parented_rows =
+                                     [napi.AddressLine(place_id=3498,
+                                             osm_object=('R', 442),
+                                             category=('bnd', 'note'),
+                                             names={'name': 'Trespass'},
+                                             extratags={'access': 'no',
+                                                        'place_type': 'spec'},
+                                             admin_level=4,
+                                             fromarea=True,
+                                             isaddress=True,
+                                             rank_address=10,
+                                             distance=0.034)
+                                     ])
+
+    result = api_impl.format_result(search, 'json', {'group_hierarchy': True})
+    js = json.loads(result)
+
+    assert js['hierarchy'] == {'note': [{'localname': 'Trespass',
+                              'place_id': 3498,
+                              'osm_id': 442,
+                              'osm_type': 'R',
+                              'place_type': 'spec',
+                              'class': 'bnd',
+                              'type': 'note',
+                              'admin_level': 4,
+                              'rank_address': 10,
+                              'distance': 0.034,
+                              'isaddress': True}]}
+
+
+def test_search_details_keywords_name():
+    search = napi.DetailedResult(napi.SourceTable.PLACEX,
+                                 ('place', 'thing'),
+                                 napi.Point(1.0, 2.0),
+                                 name_keywords=[
+                                     napi.WordInfo(23, 'foo', 'mefoo'),
+                                     napi.WordInfo(24, 'foo', 'bafoo')])
+
+    result = api_impl.format_result(search, 'json', {'keywords': True})
+    js = json.loads(result)
+
+    assert js['keywords'] == {'name': [{'id': 23, 'token': 'foo'},
+                                      {'id': 24, 'token': 'foo'}],
+                              'address': []}
+
+
+def test_search_details_keywords_address():
+    search = napi.DetailedResult(napi.SourceTable.PLACEX,
+                                 ('place', 'thing'),
+                                 napi.Point(1.0, 2.0),
+                                 address_keywords=[
+                                     napi.WordInfo(23, 'foo', 'mefoo'),
+                                     napi.WordInfo(24, 'foo', 'bafoo')])
+
+    result = api_impl.format_result(search, 'json', {'keywords': True})
+    js = json.loads(result)
+
+    assert js['keywords'] == {'address': [{'id': 23, 'token': 'foo'},
+                                      {'id': 24, 'token': 'foo'}],
+                              'name': []}
+

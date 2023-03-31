@@ -7,7 +7,7 @@
 """
 Complex datatypes used by the Nominatim API.
 """
-from typing import Optional, Union, NamedTuple
+from typing import Optional, Union, Tuple, NamedTuple
 import dataclasses
 import enum
 from struct import unpack
@@ -83,6 +83,77 @@ class Point(NamedTuple):
         return Point(x, y)
 
 
+AnyPoint = Union[Point, Tuple[float, float]]
+
+WKB_BBOX_HEADER_LE = b'\x01\x03\x00\x00\x20\xE6\x10\x00\x00\x01\x00\x00\x00\x05\x00\x00\x00'
+WKB_BBOX_HEADER_BE = b'\x00\x20\x00\x00\x03\x00\x00\x10\xe6\x00\x00\x00\x01\x00\x00\x00\x05'
+
+class Bbox:
+    """ A bounding box in WSG84 projection.
+
+        The coordinates are available as an array in the 'coord'
+        property in the order (minx, miny, maxx, maxy).
+    """
+    def __init__(self, minx: float, miny: float, maxx: float, maxy: float) -> None:
+        self.coords = (minx, miny, maxx, maxy)
+
+
+    @property
+    def minlat(self) -> float:
+        """ Southern-most latitude, corresponding to the minimum y coordinate.
+        """
+        return self.coords[1]
+
+
+    @property
+    def maxlat(self) -> float:
+        """ Northern-most latitude, corresponding to the maximum y coordinate.
+        """
+        return self.coords[3]
+
+
+    @property
+    def minlon(self) -> float:
+        """ Western-most longitude, corresponding to the minimum x coordinate.
+        """
+        return self.coords[0]
+
+
+    @property
+    def maxlon(self) -> float:
+        """ Eastern-most longitude, corresponding to the maximum x coordinate.
+        """
+        return self.coords[2]
+
+
+    @staticmethod
+    def from_wkb(wkb: Optional[bytes]) -> 'Optional[Bbox]':
+        """ Create a Bbox from a bounding box polygon as returned by
+            the database. Return s None if the input value is None.
+        """
+        if wkb is None:
+            return None
+
+        if len(wkb) != 97:
+            raise ValueError("WKB must be a bounding box polygon")
+        if wkb.startswith(WKB_BBOX_HEADER_LE):
+            x1, y1, _, _, x2, y2 = unpack('<dddddd', wkb[17:65])
+        elif wkb.startswith(WKB_BBOX_HEADER_BE):
+            x1, y1, _, _, x2, y2 = unpack('>dddddd', wkb[17:65])
+        else:
+            raise ValueError("WKB has wrong header")
+
+        return Bbox(min(x1, x2), min(y1, y2), max(x1, x2), max(y1, y2))
+
+
+    @staticmethod
+    def from_point(pt: Point, buffer: float) -> 'Bbox':
+        """ Return a Bbox around the point with the buffer added to all sides.
+        """
+        return Bbox(pt[0] - buffer, pt[1] - buffer,
+                    pt[0] + buffer, pt[1] + buffer)
+
+
 class GeometryFormat(enum.Flag):
     """ Geometry output formats supported by Nominatim.
     """
@@ -117,3 +188,18 @@ class LookupDetails:
     keywords: bool = False
     """ Add information about the search terms used for this place.
     """
+    geometry_simplification: float = 0.0
+    """ Simplification factor for a geometry in degrees WGS. A factor of
+        0.0 means the original geometry is kept. The higher the value, the
+        more the geometry gets simplified.
+    """
+
+
+class DataLayer(enum.Flag):
+    """ Layer types that can be selected for reverse and forward search.
+    """
+    POI = enum.auto()
+    ADDRESS = enum.auto()
+    RAILWAY = enum.auto()
+    MANMADE = enum.auto()
+    NATURAL = enum.auto()

@@ -21,8 +21,9 @@ from nominatim.config import Configuration
 from nominatim.api.connection import SearchConnection
 from nominatim.api.status import get_status, StatusResult
 from nominatim.api.lookup import get_place_by_id
-from nominatim.api.types import PlaceRef, LookupDetails
-from nominatim.api.results import SearchResult
+from nominatim.api.reverse import ReverseGeocoder
+from nominatim.api.types import PlaceRef, LookupDetails, AnyPoint, DataLayer
+from nominatim.api.results import DetailedResult, ReverseResult
 
 
 class NominatimAPIAsync:
@@ -52,13 +53,16 @@ class NominatimAPIAsync:
 
             dsn = self.config.get_database_params()
 
+            query = {k: v for k, v in dsn.items()
+                      if k not in ('user', 'password', 'dbname', 'host', 'port')}
+            query['prepared_statement_cache_size'] = '0'
+
             dburl = sa.engine.URL.create(
                        'postgresql+asyncpg',
                        database=dsn.get('dbname'),
                        username=dsn.get('user'), password=dsn.get('password'),
                        host=dsn.get('host'), port=int(dsn['port']) if 'port' in dsn else None,
-                       query={k: v for k, v in dsn.items()
-                              if k not in ('user', 'password', 'dbname', 'host', 'port')})
+                       query=query)
             engine = sa_asyncio.create_async_engine(
                              dburl, future=True,
                              connect_args={'server_settings': {
@@ -127,13 +131,37 @@ class NominatimAPIAsync:
 
 
     async def lookup(self, place: PlaceRef,
-                     details: LookupDetails) -> Optional[SearchResult]:
+                     details: Optional[LookupDetails] = None) -> Optional[DetailedResult]:
         """ Get detailed information about a place in the database.
 
             Returns None if there is no entry under the given ID.
         """
-        async with self.begin() as db:
-            return await get_place_by_id(db, place, details)
+        async with self.begin() as conn:
+            return await get_place_by_id(conn, place, details or LookupDetails())
+
+
+    async def reverse(self, coord: AnyPoint, max_rank: Optional[int] = None,
+                      layer: Optional[DataLayer] = None,
+                      details: Optional[LookupDetails] = None) -> Optional[ReverseResult]:
+        """ Find a place by its coordinates. Also known as reverse geocoding.
+
+            Returns the closest result that can be found or None if
+            no place matches the given criteria.
+        """
+        # The following negation handles NaN correctly. Don't change.
+        if not abs(coord[0]) <= 180 or not abs(coord[1]) <= 90:
+            # There are no results to be expected outside valid coordinates.
+            return None
+
+        if layer is None:
+            layer = DataLayer.ADDRESS | DataLayer.POI
+
+        max_rank = max(0, min(max_rank or 30, 30))
+
+        async with self.begin() as conn:
+            geocoder = ReverseGeocoder(conn, max_rank, layer,
+                                       details or LookupDetails())
+            return await geocoder.lookup(coord)
 
 
 class NominatimAPI:
@@ -168,7 +196,19 @@ class NominatimAPI:
 
 
     def lookup(self, place: PlaceRef,
-               details: LookupDetails) -> Optional[SearchResult]:
+               details: Optional[LookupDetails] = None) -> Optional[DetailedResult]:
         """ Get detailed information about a place in the database.
         """
         return self._loop.run_until_complete(self._async_api.lookup(place, details))
+
+
+    def reverse(self, coord: AnyPoint, max_rank: Optional[int] = None,
+                layer: Optional[DataLayer] = None,
+                details: Optional[LookupDetails] = None) -> Optional[ReverseResult]:
+        """ Find a place by its coordinates. Also known as reverse geocoding.
+
+            Returns the closest result that can be found or None if
+            no place matches the given criteria.
+        """
+        return self._loop.run_until_complete(
+                   self._async_api.reverse(coord, max_rank, layer, details))

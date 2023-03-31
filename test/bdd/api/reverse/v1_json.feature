@@ -17,12 +17,12 @@ Feature: Json output for Reverse API
           | 1           | attributes     |
           | 0           | not attributes |
 
-    Scenario Outline: Siple OSM result
+    Scenario Outline: Simple OSM result
         When sending v1/reverse at 47.066,9.504 with format <format>
         Then result has attributes place_id
         And results contain
           | licence |
-          | Data © OpenStreetMap contributors, ODbL 1.0. https://osm.org/copyright |
+          | ^Data © OpenStreetMap contributors, ODbL 1.0. https?://osm.org/copyright$ |
         And results contain
           | osm_type | osm_id     |
           | node     | 6522627624 |
@@ -62,7 +62,7 @@ Feature: Json output for Reverse API
           | way      | 1      |
         And results contain
           | centroid                | boundingbox |
-          | 9.57054676 47.118545392 | ['47.118495392', '47.118595392', '9.57049676', '9.57059676'] |
+          | 9.57054676 47.118545392 | ^\['47.118495\d*', '47.118595\d*', '9.570496\d*', '9.570596\d*'\] |
         And results contain
           | display_name |
           | 1019, Grosssteg, Sücka, Triesenberg, Oberland, 9497, Liechtenstein |

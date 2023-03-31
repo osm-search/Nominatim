@@ -53,7 +53,7 @@ else:
 
 
 # SQLAlchemy introduced generic types in version 2.0 making typing
-# inclompatiple with older versions. Add wrappers here so we don't have
+# incompatible with older versions. Add wrappers here so we don't have
 # to litter the code with bare-string types.
 
 if TYPE_CHECKING:
@@ -64,5 +64,7 @@ else:
 
 SaSelect: TypeAlias = 'sa.Select[Any]'
 SaRow: TypeAlias = 'sa.Row[Any]'
-SaColumn: TypeAlias = 'sa.Column[Any]'
+SaColumn: TypeAlias = 'sa.ColumnElement[Any]'
 SaLabel: TypeAlias = 'sa.Label[Any]'
+SaFromClause: TypeAlias = 'sa.FromClause'
+SaSelectable: TypeAlias = 'sa.Selectable'

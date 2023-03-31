@@ -32,7 +32,7 @@ Feature: XML output for Reverse API
          | way      | 396009653 | 30          | 30           |
         And results contain
           | centroid                     | boundingbox |
-          | -86.4808553258 32.4753580256 | ^32.475308025\d*,32.475408025\d*,-86.480905325\d*,-86.480805325\d* |
+          | -86.4808553 32.4753580 | ^32.4753080\d*,32.4754080\d*,-86.4809053\d*,-86.4808053\d* |
         And results contain
           | display_name |
           | 707, Upper Kingston Road, Upper Kingston, Prattville, Autauga County, 36067, United States |
@@ -45,7 +45,7 @@ Feature: XML output for Reverse API
           | way      | 1      | 30         | 30           |
         And results contain
           | centroid                | boundingbox |
-          | 9.57054676 47.118545392 | 47.118495392,47.118595392,9.57049676,9.57059676 |
+          | 9.57054676 47.118545392 | ^47.118495\d*,47.118595\d*,9.570496\d*,9.570596\d* |
         And results contain
           | display_name |
           | 1019, Grosssteg, Sücka, Triesenberg, Oberland, 9497, Liechtenstein |

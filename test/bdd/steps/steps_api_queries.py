@@ -229,7 +229,8 @@ def validate_result_number(context, operator, number):
 @then(u'a HTTP (?P<status>\d+) is returned')
 def check_http_return_status(context, status):
     assert context.response.errorcode == int(status), \
-           f"Return HTTP status is {context.response.errorcode}."
+           f"Return HTTP status is {context.response.errorcode}."\
+           f" Full response:\n{context.response.page}"
 
 @then(u'the page contents equals "(?P<text>.+)"')
 def check_page_content_equals(context, text):

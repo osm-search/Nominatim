@@ -10,6 +10,80 @@ Hard-coded information about tag catagories.
 These tables have been copied verbatim from the old PHP code. For future
 version a more flexible formatting is required.
 """
+from typing import Tuple, Optional, Mapping
+
+import nominatim.api as napi
+
+def get_label_tag(category: Tuple[str, str], extratags: Optional[Mapping[str, str]],
+                  rank: int, country: Optional[str]) -> str:
+    """ Create a label tag for the given place that can be used as an XML name.
+    """
+    if rank < 26 and extratags and 'place' in extratags:
+        label = extratags['place']
+    elif rank < 26 and extratags and 'linked_place' in extratags:
+        label = extratags['linked_place']
+    elif category == ('boundary', 'administrative'):
+        label = ADMIN_LABELS.get((country or '', int(rank/2)))\
+                or ADMIN_LABELS.get(('', int(rank/2)))\
+                or 'Administrative'
+    elif category[1] == 'postal_code':
+        label = 'postcode'
+    elif rank < 26:
+        label = category[1] if category[1] != 'yes' else category[0]
+    elif rank < 28:
+        label = 'road'
+    elif category[0] == 'place'\
+         and category[1] in ('house_number', 'house_name', 'country_code'):
+        label = category[1]
+    else:
+        label = category[0]
+
+    return label.lower().replace(' ', '_')
+
+
+def bbox_from_result(result: napi.ReverseResult) -> napi.Bbox:
+    """ Compute a bounding box for the result. For ways and relations
+        a given boundingbox is used. For all other object, a box is computed
+        around the centroid according to dimensions dereived from the
+        search rank.
+    """
+    if (result.osm_object and result.osm_object[0] == 'N') or result.bbox is None:
+        extent = NODE_EXTENT.get(result.category, 0.00005)
+        return napi.Bbox.from_point(result.centroid, extent)
+
+    return result.bbox
+
+
+# pylint: disable=line-too-long
+OSM_ATTRIBUTION = 'Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright'
+
+
+OSM_TYPE_NAME = {
+    'N': 'node',
+    'W': 'way',
+    'R': 'relation'
+}
+
+
+ADMIN_LABELS = {
+  ('', 1): 'Continent',
+  ('', 2): 'Country',
+  ('', 3): 'Region',
+  ('', 4): 'State',
+  ('', 5): 'State District',
+  ('', 6): 'County',
+  ('', 7): 'Municipality',
+  ('', 8): 'City',
+  ('', 9): 'City District',
+  ('', 10): 'Suburb',
+  ('', 11): 'Neighbourhood',
+  ('', 12): 'City Block',
+  ('no', 3): 'State',
+  ('no', 4): 'County',
+  ('se', 3): 'State',
+  ('se', 4): 'County'
+}
+
 
 ICONS = {
     ('boundary', 'administrative'): 'poi_boundary_administrative',
@@ -95,4 +169,32 @@ ICONS = {
     ('railway', 'tram_stop'): 'transport_tram_stop',
     ('amenity', 'prison'): 'amenity_prison',
     ('highway', 'bus_stop'): 'transport_bus_stop2'
+}
+
+NODE_EXTENT = {
+    ('place', 'continent'): 25,
+    ('place', 'country'): 7,
+    ('place', 'state'): 2.6,
+    ('place', 'province'): 2.6,
+    ('place', 'region'): 1.0,
+    ('place', 'county'): 0.7,
+    ('place', 'city'): 0.16,
+    ('place', 'municipality'): 0.16,
+    ('place', 'island'): 0.32,
+    ('place', 'postcode'): 0.16,
+    ('place', 'town'): 0.04,
+    ('place', 'village'): 0.02,
+    ('place', 'hamlet'): 0.02,
+    ('place', 'district'): 0.02,
+    ('place', 'borough'): 0.02,
+    ('place', 'suburb'): 0.02,
+    ('place', 'locality'): 0.01,
+    ('place', 'neighbourhood'): 0.01,
+    ('place', 'quarter'): 0.01,
+    ('place', 'city_block'): 0.01,
+    ('landuse', 'farm'): 0.01,
+    ('place', 'farm'): 0.01,
+    ('place', 'airport'): 0.015,
+    ('aeroway', 'aerodrome'): 0.015,
+    ('railway', 'station'): 0.005
 }

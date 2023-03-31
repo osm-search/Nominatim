@@ -101,6 +101,11 @@ class JsonWriter:
         return self.raw(json.dumps(value, ensure_ascii=False))
 
 
+    def float(self, value: float, precision: int) -> 'JsonWriter':
+        """ Write out a float value with the given precision.
+        """
+        return self.raw(f"{value:0.{precision}f}")
+
     def next(self) -> 'JsonWriter':
         """ Write out a delimiter comma between JSON object or array elements.
         """

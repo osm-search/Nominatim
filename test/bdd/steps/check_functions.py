@@ -47,15 +47,16 @@ class Field:
     """ Generic comparator for fields, which looks at the type of the
         value compared.
     """
-    def __init__(self, value):
+    def __init__(self, value, **extra_args):
         self.value = value
+        self.extra_args = extra_args
 
     def __eq__(self, other):
         if isinstance(self.value, float):
-            return math.isclose(self.value, float(other))
+            return math.isclose(self.value, float(other), **self.extra_args)
 
         if self.value.startswith('^'):
-            return re.fullmatch(self.value, other)
+            return re.fullmatch(self.value, str(other))
 
         if isinstance(other, dict):
             return other == eval('{' + self.value + '}')

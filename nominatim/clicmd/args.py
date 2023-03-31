@@ -10,11 +10,13 @@ Provides custom functions over command-line arguments.
 from typing import Optional, List, Dict, Any, Sequence, Tuple
 import argparse
 import logging
+from functools import reduce
 from pathlib import Path
 
 from nominatim.errors import UsageError
 from nominatim.config import Configuration
 from nominatim.typing import Protocol
+import nominatim.api as napi
 
 LOG = logging.getLogger()
 
@@ -162,6 +164,7 @@ class NominatimArgs:
     lat: float
     lon: float
     zoom: Optional[int]
+    layers: Optional[Sequence[str]]
 
     # Arguments to 'lookup'
     ids: Sequence[str]
@@ -211,3 +214,45 @@ class NominatimArgs:
                 raise UsageError('Cannot access file.')
 
         return files
+
+
+    def get_geometry_output(self) -> napi.GeometryFormat:
+        """ Get the requested geometry output format in a API-compatible
+            format.
+        """
+        if not self.polygon_output:
+            return napi.GeometryFormat.NONE
+        if self.polygon_output == 'geojson':
+            return napi.GeometryFormat.GEOJSON
+        if self.polygon_output == 'kml':
+            return napi.GeometryFormat.KML
+        if self.polygon_output == 'svg':
+            return napi.GeometryFormat.SVG
+        if self.polygon_output == 'text':
+            return napi.GeometryFormat.TEXT
+
+        try:
+            return napi.GeometryFormat[self.polygon_output.upper()]
+        except KeyError as exp:
+            raise UsageError(f"Unknown polygon output format '{self.polygon_output}'.") from exp
+
+
+    def get_locales(self, default: Optional[str]) -> napi.Locales:
+        """ Get the locales from the language parameter.
+        """
+        if self.lang:
+            return napi.Locales.from_accept_languages(self.lang)
+        if default:
+            return napi.Locales.from_accept_languages(default)
+
+        return napi.Locales()
+
+
+    def get_layers(self, default: napi.DataLayer) -> Optional[napi.DataLayer]:
+        """ Get the list of selected layers as a DataLayer enum.
+        """
+        if not self.layers:
+            return default
+
+        return reduce(napi.DataLayer.__or__,
+                      (napi.DataLayer[s.upper()] for s in self.layers))

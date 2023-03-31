@@ -42,7 +42,7 @@ Feature: Geojson for Reverse API
           | way      | 1      | 30         | place    | house   | place       |
         And results contain
           | boundingbox |
-          | [47.118495392, 47.118595392, 9.57049676, 9.57059676] |
+          | ^\[47.118495\d*, 47.118595\d*, 9.570496\d*, 9.570596\d*\] |
         And results contain
           | display_name |
           | 1019, Grosssteg, Sücka, Triesenberg, Oberland, 9497, Liechtenstein |

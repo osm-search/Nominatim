@@ -60,6 +60,19 @@ class BaseLogger:
         """ Print the SQL for the given statement.
         """
 
+    def format_sql(self, conn: AsyncConnection, statement: 'sa.Executable') -> str:
+        """ Return the comiled version of the statement.
+        """
+        try:
+            return str(cast('sa.ClauseElement', statement)
+                         .compile(conn.sync_engine, compile_kwargs={"literal_binds": True}))
+        except sa.exc.CompileError:
+            pass
+        except NotImplementedError:
+            pass
+
+        return str(cast('sa.ClauseElement', statement).compile(conn.sync_engine))
+
 
 class HTMLLogger(BaseLogger):
     """ Logger that formats messages in HTML.
@@ -92,8 +105,7 @@ class HTMLLogger(BaseLogger):
 
 
     def sql(self, conn: AsyncConnection, statement: 'sa.Executable') -> None:
-        sqlstr = str(cast('sa.ClauseElement', statement)
-                      .compile(conn.sync_engine, compile_kwargs={"literal_binds": True}))
+        sqlstr = self.format_sql(conn, statement)
         if CODE_HIGHLIGHT:
             sqlstr = highlight(sqlstr, PostgresLexer(),
                                HtmlFormatter(nowrap=True, lineseparator='<br />'))
@@ -147,9 +159,7 @@ class TextLogger(BaseLogger):
 
 
     def sql(self, conn: AsyncConnection, statement: 'sa.Executable') -> None:
-        sqlstr = str(cast('sa.ClauseElement', statement)
-                      .compile(conn.sync_engine, compile_kwargs={"literal_binds": True}))
-        sqlstr = '\n| '.join(textwrap.wrap(sqlstr, width=78))
+        sqlstr = '\n| '.join(textwrap.wrap(self.format_sql(conn, statement), width=78))
         self._write(f"| {sqlstr}\n\n")
 
 

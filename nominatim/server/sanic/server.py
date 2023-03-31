@@ -35,12 +35,13 @@ class ParamWrapper(api_impl.ASGIAdaptor):
 
 
     def error(self, msg: str, status: int = 400) -> SanicException:
-        return SanicException(msg, status_code=status)
+        exception = SanicException(msg, status_code=status)
+
+        return exception
 
 
-    def create_response(self, status: int, output: str,
-                        content_type: str) -> HTTPResponse:
-        return TextResponse(output, status=status, content_type=content_type)
+    def create_response(self, status: int, output: str) -> HTTPResponse:
+        return TextResponse(output, status=status, content_type=self.content_type)
 
 
     def config(self) -> Configuration:

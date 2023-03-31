@@ -76,21 +76,25 @@ class UpdateAddData:
 
         osm2pgsql_params = args.osm2pgsql_options(default_cache=1000, default_threads=1)
         if args.file or args.diff:
-            return add_osm_data.add_data_from_file(cast(str, args.file or args.diff),
+            return add_osm_data.add_data_from_file(args.config.get_libpq_dsn(),
+                                                   cast(str, args.file or args.diff),
                                                    osm2pgsql_params)
 
         if args.node:
-            return add_osm_data.add_osm_object('node', args.node,
+            return add_osm_data.add_osm_object(args.config.get_libpq_dsn(),
+                                               'node', args.node,
                                                args.use_main_api,
                                                osm2pgsql_params)
 
         if args.way:
-            return add_osm_data.add_osm_object('way', args.way,
+            return add_osm_data.add_osm_object(args.config.get_libpq_dsn(),
+                                               'way', args.way,
                                                args.use_main_api,
                                                osm2pgsql_params)
 
         if args.relation:
-            return add_osm_data.add_osm_object('relation', args.relation,
+            return add_osm_data.add_osm_object(args.config.get_libpq_dsn(),
+                                               'relation', args.relation,
                                                args.use_main_api,
                                                osm2pgsql_params)
 

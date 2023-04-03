@@ -20,7 +20,7 @@ from nominatim.db.sqlalchemy_schema import SearchTables
 from nominatim.config import Configuration
 from nominatim.api.connection import SearchConnection
 from nominatim.api.status import get_status, StatusResult
-from nominatim.api.lookup import get_place_by_id
+from nominatim.api.lookup import get_detailed_place
 from nominatim.api.reverse import ReverseGeocoder
 from nominatim.api.types import PlaceRef, LookupDetails, AnyPoint, DataLayer
 from nominatim.api.results import DetailedResult, ReverseResult
@@ -137,7 +137,7 @@ class NominatimAPIAsync:
             Returns None if there is no entry under the given ID.
         """
         async with self.begin() as conn:
-            return await get_place_by_id(conn, place, details or LookupDetails())
+            return await get_detailed_place(conn, place, details or LookupDetails())
 
 
     async def reverse(self, coord: AnyPoint, max_rank: Optional[int] = None,

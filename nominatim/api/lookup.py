@@ -7,7 +7,7 @@
 """
 Implementation of place lookup by ID.
 """
-from typing import Optional
+from typing import Optional, Callable, Tuple, Type
 import datetime as dt
 
 import sqlalchemy as sa
@@ -17,6 +17,8 @@ from nominatim.api.connection import SearchConnection
 import nominatim.api.types as ntyp
 import nominatim.api.results as nres
 from nominatim.api.logging import log
+
+RowFunc = Callable[[Optional[SaRow], Type[nres.BaseResultT]], Optional[nres.BaseResultT]]
 
 def _select_column_geometry(column: SaColumn,
                             geometry_output: ntyp.GeometryFormat) -> SaLabel:
@@ -140,8 +142,34 @@ async def find_in_postcode(conn: SearchConnection, place: ntyp.PlaceRef,
     return (await conn.execute(sql)).one_or_none()
 
 
-async def get_place_by_id(conn: SearchConnection, place: ntyp.PlaceRef,
-                          details: ntyp.LookupDetails) -> Optional[nres.DetailedResult]:
+async def find_in_all_tables(conn: SearchConnection, place: ntyp.PlaceRef,
+                             details: ntyp.LookupDetails
+                            ) -> Tuple[Optional[SaRow], RowFunc[nres.BaseResultT]]:
+    """ Search for the given place in all data tables
+        and return the base information.
+    """
+    row = await find_in_placex(conn, place, details)
+    log().var_dump('Result (placex)', row)
+    if row is not None:
+        return row, nres.create_from_placex_row
+
+    row = await find_in_osmline(conn, place, details)
+    log().var_dump('Result (osmline)', row)
+    if row is not None:
+        return row, nres.create_from_osmline_row
+
+    row = await find_in_postcode(conn, place, details)
+    log().var_dump('Result (postcode)', row)
+    if row is not None:
+        return row, nres.create_from_postcode_row
+
+    row = await find_in_tiger(conn, place, details)
+    log().var_dump('Result (tiger)', row)
+    return row, nres.create_from_tiger_row
+
+
+async def get_detailed_place(conn: SearchConnection, place: ntyp.PlaceRef,
+                             details: ntyp.LookupDetails) -> Optional[nres.DetailedResult]:
     """ Retrieve a place with additional details from the database.
     """
     log().function('get_place_by_id', place=place, details=details)
@@ -149,27 +177,14 @@ async def get_place_by_id(conn: SearchConnection, place: ntyp.PlaceRef,
     if details.geometry_output and details.geometry_output != ntyp.GeometryFormat.GEOJSON:
         raise ValueError("lookup only supports geojosn polygon output.")
 
-    row = await find_in_placex(conn, place, details)
-    log().var_dump('Result (placex)', row)
-    if row is not None:
-        result = nres.create_from_placex_row(row, nres.DetailedResult)
-    else:
-        row = await find_in_osmline(conn, place, details)
-        log().var_dump('Result (osmline)', row)
-        if row is not None:
-            result = nres.create_from_osmline_row(row, nres.DetailedResult)
-        else:
-            row = await find_in_postcode(conn, place, details)
-            log().var_dump('Result (postcode)', row)
-            if row is not None:
-                result = nres.create_from_postcode_row(row, nres.DetailedResult)
-            else:
-                row = await find_in_tiger(conn, place, details)
-                log().var_dump('Result (tiger)', row)
-                if row is not None:
-                    result = nres.create_from_tiger_row(row, nres.DetailedResult)
-                else:
-                    return None
+    row_func: RowFunc[nres.DetailedResult]
+    row, row_func = await find_in_all_tables(conn, place, details)
+
+    if row is None:
+        return None
+
+    result = row_func(row, nres.DetailedResult)
+    assert result is not None
 
     # add missing details
     assert result is not None

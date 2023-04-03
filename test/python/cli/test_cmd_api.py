@@ -81,7 +81,7 @@ class TestCliDetailsCall:
         result = napi.DetailedResult(napi.SourceTable.PLACEX, ('place', 'thing'),
                                      napi.Point(1.0, -3.0))
 
-        monkeypatch.setattr(napi.NominatimAPI, 'lookup',
+        monkeypatch.setattr(napi.NominatimAPI, 'details',
                             lambda *args: result)
 
     @pytest.mark.parametrize("params", [('--node', '1'),

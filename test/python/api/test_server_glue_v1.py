@@ -335,7 +335,7 @@ class TestDetailsEndpoint:
             self.lookup_args.extend(args[1:])
             return self.result
 
-        monkeypatch.setattr(napi.NominatimAPIAsync, 'lookup', _lookup)
+        monkeypatch.setattr(napi.NominatimAPIAsync, 'details', _lookup)
 
 
     @pytest.mark.asyncio

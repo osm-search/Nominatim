@@ -268,7 +268,7 @@ async def details_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> 
 
     locales = napi.Locales.from_accept_languages(params.get_accepted_languages())
 
-    result = await api.lookup(place, details)
+    result = await api.details(place, details)
 
     if debug:
         return params.build_response(loglib.get_and_disable())

@@ -7,7 +7,7 @@
 """
 Implementation of classes for API access via libraries.
 """
-from typing import Mapping, Optional, Any, AsyncIterator, Dict
+from typing import Mapping, Optional, Any, AsyncIterator, Dict, Sequence
 import asyncio
 import contextlib
 from pathlib import Path
@@ -20,10 +20,10 @@ from nominatim.db.sqlalchemy_schema import SearchTables
 from nominatim.config import Configuration
 from nominatim.api.connection import SearchConnection
 from nominatim.api.status import get_status, StatusResult
-from nominatim.api.lookup import get_detailed_place
+from nominatim.api.lookup import get_detailed_place, get_simple_place
 from nominatim.api.reverse import ReverseGeocoder
 from nominatim.api.types import PlaceRef, LookupDetails, AnyPoint, DataLayer
-from nominatim.api.results import DetailedResult, ReverseResult
+from nominatim.api.results import DetailedResult, ReverseResult, SearchResults
 
 
 class NominatimAPIAsync:
@@ -130,14 +130,27 @@ class NominatimAPIAsync:
         return status
 
 
-    async def lookup(self, place: PlaceRef,
-                     details: Optional[LookupDetails] = None) -> Optional[DetailedResult]:
+    async def details(self, place: PlaceRef,
+                      details: Optional[LookupDetails] = None) -> Optional[DetailedResult]:
         """ Get detailed information about a place in the database.
 
             Returns None if there is no entry under the given ID.
         """
         async with self.begin() as conn:
             return await get_detailed_place(conn, place, details or LookupDetails())
+
+
+    async def lookup(self, places: Sequence[PlaceRef],
+                      details: Optional[LookupDetails] = None) -> SearchResults:
+        """ Get simple information about a list of places.
+
+            Returns a list of place information for all IDs that were found.
+        """
+        if details is None:
+            details = LookupDetails()
+        async with self.begin() as conn:
+            return SearchResults(filter(None,
+                                        [await get_simple_place(conn, p, details) for p in places]))
 
 
     async def reverse(self, coord: AnyPoint, max_rank: Optional[int] = None,
@@ -195,11 +208,20 @@ class NominatimAPI:
         return self._loop.run_until_complete(self._async_api.status())
 
 
-    def lookup(self, place: PlaceRef,
-               details: Optional[LookupDetails] = None) -> Optional[DetailedResult]:
+    def details(self, place: PlaceRef,
+                details: Optional[LookupDetails] = None) -> Optional[DetailedResult]:
         """ Get detailed information about a place in the database.
         """
-        return self._loop.run_until_complete(self._async_api.lookup(place, details))
+        return self._loop.run_until_complete(self._async_api.details(place, details))
+
+
+    def lookup(self, places: Sequence[PlaceRef],
+               details: Optional[LookupDetails] = None) -> SearchResults:
+        """ Get simple information about a list of places.
+
+            Returns a list of place information for all IDs that were found.
+        """
+        return self._loop.run_until_complete(self._async_api.lookup(places, details))
 
 
     def reverse(self, coord: AnyPoint, max_rank: Optional[int] = None,

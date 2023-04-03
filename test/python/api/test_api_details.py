@@ -31,7 +31,7 @@ def test_lookup_in_placex(apiobj, idobj):
                      indexed_date=import_date,
                      geometry='LINESTRING(23 34, 23.1 34, 23.1 34.1, 23 34)')
 
-    result = apiobj.api.lookup(idobj, napi.LookupDetails())
+    result = apiobj.api.details(idobj, napi.LookupDetails())
 
     assert result is not None
 
@@ -79,7 +79,7 @@ def test_lookup_in_placex_minimal_info(apiobj):
                      indexed_date=import_date,
                      geometry='LINESTRING(23 34, 23.1 34, 23.1 34.1, 23 34)')
 
-    result = apiobj.api.lookup(napi.PlaceID(332), napi.LookupDetails())
+    result = apiobj.api.details(napi.PlaceID(332), napi.LookupDetails())
 
     assert result is not None
 
@@ -121,7 +121,7 @@ def test_lookup_in_placex_with_geometry(apiobj):
     apiobj.add_placex(place_id=332,
                       geometry='LINESTRING(23 34, 23.1 34)')
 
-    result = apiobj.api.lookup(napi.PlaceID(332),
+    result = apiobj.api.details(napi.PlaceID(332),
                                napi.LookupDetails(geometry_output=napi.GeometryFormat.GEOJSON))
 
     assert result.geometry == {'geojson': '{"type":"LineString","coordinates":[[23,34],[23.1,34]]}'}
@@ -144,7 +144,7 @@ def test_lookup_placex_with_address_details(apiobj):
                               country_code='pl',
                               rank_search=17, rank_address=16)
 
-    result = apiobj.api.lookup(napi.PlaceID(332),
+    result = apiobj.api.details(napi.PlaceID(332),
                                napi.LookupDetails(address_details=True))
 
     assert result.address_rows == [
@@ -177,7 +177,7 @@ def test_lookup_place_with_linked_places_none_existing(apiobj):
                      country_code='pl', linked_place_id=45,
                      rank_search=27, rank_address=26)
 
-    result = apiobj.api.lookup(napi.PlaceID(332),
+    result = apiobj.api.details(napi.PlaceID(332),
                                napi.LookupDetails(linked_places=True))
 
     assert result.linked_rows == []
@@ -197,7 +197,7 @@ def test_lookup_place_with_linked_places_existing(apiobj):
                      country_code='pl', linked_place_id=332,
                      rank_search=27, rank_address=26)
 
-    result = apiobj.api.lookup(napi.PlaceID(332),
+    result = apiobj.api.details(napi.PlaceID(332),
                                napi.LookupDetails(linked_places=True))
 
     assert result.linked_rows == [
@@ -220,7 +220,7 @@ def test_lookup_place_with_parented_places_not_existing(apiobj):
                      country_code='pl', parent_place_id=45,
                      rank_search=27, rank_address=26)
 
-    result = apiobj.api.lookup(napi.PlaceID(332),
+    result = apiobj.api.details(napi.PlaceID(332),
                                napi.LookupDetails(parented_places=True))
 
     assert result.parented_rows == []
@@ -240,7 +240,7 @@ def test_lookup_place_with_parented_places_existing(apiobj):
                      country_code='pl', parent_place_id=332,
                      rank_search=27, rank_address=26)
 
-    result = apiobj.api.lookup(napi.PlaceID(332),
+    result = apiobj.api.details(napi.PlaceID(332),
                                napi.LookupDetails(parented_places=True))
 
     assert result.parented_rows == [
@@ -263,7 +263,7 @@ def test_lookup_in_osmline(apiobj, idobj):
                        indexed_date=import_date,
                        geometry='LINESTRING(23 34, 23 35)')
 
-    result = apiobj.api.lookup(idobj, napi.LookupDetails())
+    result = apiobj.api.details(idobj, napi.LookupDetails())
 
     assert result is not None
 
@@ -310,13 +310,13 @@ def test_lookup_in_osmline_split_interpolation(apiobj):
                        startnumber=11, endnumber=20, step=1)
 
     for i in range(1, 6):
-        result = apiobj.api.lookup(napi.OsmID('W', 9, str(i)), napi.LookupDetails())
+        result = apiobj.api.details(napi.OsmID('W', 9, str(i)), napi.LookupDetails())
         assert result.place_id == 1000
     for i in range(7, 11):
-        result = apiobj.api.lookup(napi.OsmID('W', 9, str(i)), napi.LookupDetails())
+        result = apiobj.api.details(napi.OsmID('W', 9, str(i)), napi.LookupDetails())
         assert result.place_id == 1001
     for i in range(12, 22):
-        result = apiobj.api.lookup(napi.OsmID('W', 9, str(i)), napi.LookupDetails())
+        result = apiobj.api.details(napi.OsmID('W', 9, str(i)), napi.LookupDetails())
         assert result.place_id == 1002
 
 
@@ -340,7 +340,7 @@ def test_lookup_osmline_with_address_details(apiobj):
                               country_code='pl',
                               rank_search=17, rank_address=16)
 
-    result = apiobj.api.lookup(napi.PlaceID(9000),
+    result = apiobj.api.details(napi.PlaceID(9000),
                                napi.LookupDetails(address_details=True))
 
     assert result.address_rows == [
@@ -383,7 +383,7 @@ def test_lookup_in_tiger(apiobj):
                       osm_type='W', osm_id=6601223,
                       geometry='LINESTRING(23 34, 23 35)')
 
-    result = apiobj.api.lookup(napi.PlaceID(4924), napi.LookupDetails())
+    result = apiobj.api.details(napi.PlaceID(4924), napi.LookupDetails())
 
     assert result is not None
 
@@ -441,7 +441,7 @@ def test_lookup_tiger_with_address_details(apiobj):
                               country_code='us',
                               rank_search=17, rank_address=16)
 
-    result = apiobj.api.lookup(napi.PlaceID(9000),
+    result = apiobj.api.details(napi.PlaceID(9000),
                                napi.LookupDetails(address_details=True))
 
     assert result.address_rows == [
@@ -483,7 +483,7 @@ def test_lookup_in_postcode(apiobj):
                         indexed_date=import_date,
                         geometry='POINT(-9.45 5.6)')
 
-    result = apiobj.api.lookup(napi.PlaceID(554), napi.LookupDetails())
+    result = apiobj.api.details(napi.PlaceID(554), napi.LookupDetails())
 
     assert result is not None
 
@@ -537,7 +537,7 @@ def test_lookup_postcode_with_address_details(apiobj):
                               country_code='gb',
                               rank_search=17, rank_address=16)
 
-    result = apiobj.api.lookup(napi.PlaceID(9000),
+    result = apiobj.api.details(napi.PlaceID(9000),
                                napi.LookupDetails(address_details=True))
 
     assert result.address_rows == [
@@ -570,7 +570,7 @@ def test_lookup_missing_object(apiobj, objid):
     apiobj.add_placex(place_id=1, osm_type='N', osm_id=55,
                       class_='place', type='suburb')
 
-    assert apiobj.api.lookup(objid, napi.LookupDetails()) is None
+    assert apiobj.api.details(objid, napi.LookupDetails()) is None
 
 
 @pytest.mark.parametrize('gtype', (napi.GeometryFormat.KML,
@@ -580,5 +580,5 @@ def test_lookup_unsupported_geometry(apiobj, gtype):
     apiobj.add_placex(place_id=332)
 
     with pytest.raises(ValueError):
-        apiobj.api.lookup(napi.PlaceID(332),
+        apiobj.api.details(napi.PlaceID(332),
                           napi.LookupDetails(geometry_output=gtype))

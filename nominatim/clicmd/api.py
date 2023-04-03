@@ -292,7 +292,7 @@ class APIDetails:
         if args.polygon_geojson:
             details.geometry_output = napi.GeometryFormat.GEOJSON
 
-        result = api.lookup(place, details)
+        result = api.details(place, details)
 
         if result:
             output = api_output.format_result(

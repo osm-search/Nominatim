@@ -335,7 +335,7 @@ class TestDetailsEndpoint:
             self.lookup_args.extend(args[1:])
             return self.result
 
-        monkeypatch.setattr(napi.NominatimAPIAsync, 'lookup', _lookup)
+        monkeypatch.setattr(napi.NominatimAPIAsync, 'details', _lookup)
 
 
     @pytest.mark.asyncio
@@ -384,3 +384,63 @@ class TestDetailsEndpoint:
 
         with pytest.raises(FakeError, match='^404 -- .*found'):
             await glue.details_endpoint(napi.NominatimAPIAsync(Path('/invalid')), a)
+
+
+# lookup_endpoint()
+
+class TestLookupEndpoint:
+
+    @pytest.fixture(autouse=True)
+    def patch_lookup_func(self, monkeypatch):
+        self.results = [napi.SearchResult(napi.SourceTable.PLACEX,
+                                          ('place', 'thing'),
+                                          napi.Point(1.0, 2.0))]
+        async def _lookup(*args, **kwargs):
+            return napi.SearchResults(self.results)
+
+        monkeypatch.setattr(napi.NominatimAPIAsync, 'lookup', _lookup)
+
+
+    @pytest.mark.asyncio
+    async def test_lookup_no_params(self):
+        a = FakeAdaptor()
+        a.params['format'] = 'json'
+
+        res = await glue.lookup_endpoint(napi.NominatimAPIAsync(Path('/invalid')), a)
+
+        assert res.output == '[]'
+
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('param', ['w', 'bad', ''])
+    async def test_lookup_bad_params(self, param):
+        a = FakeAdaptor()
+        a.params['format'] = 'json'
+        a.params['osm_ids'] = f'W34,{param},N33333'
+
+        res = await glue.lookup_endpoint(napi.NominatimAPIAsync(Path('/invalid')), a)
+
+        assert len(json.loads(res.output)) == 1
+
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('param', ['p234234', '4563'])
+    async def test_lookup_bad_osm_type(self, param):
+        a = FakeAdaptor()
+        a.params['format'] = 'json'
+        a.params['osm_ids'] = f'W34,{param},N33333'
+
+        res = await glue.lookup_endpoint(napi.NominatimAPIAsync(Path('/invalid')), a)
+
+        assert len(json.loads(res.output)) == 1
+
+
+    @pytest.mark.asyncio
+    async def test_lookup_working(self):
+        a = FakeAdaptor()
+        a.params['format'] = 'json'
+        a.params['osm_ids'] = 'N23,W34'
+
+        res = await glue.lookup_endpoint(napi.NominatimAPIAsync(Path('/invalid')), a)
+
+        assert len(json.loads(res.output)) == 1

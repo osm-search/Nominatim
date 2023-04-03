@@ -226,6 +226,33 @@ class ASGIAdaptor(abc.ABC):
         return fmt
 
 
+    def parse_geometry_details(self, fmt: str) -> napi.LookupDetails:
+        """ Create details strucutre from the supplied geometry parameters.
+        """
+        details = napi.LookupDetails(address_details=True,
+                                     geometry_simplification=
+                                       self.get_float('polygon_threshold', 0.0))
+        numgeoms = 0
+        if self.get_bool('polygon_geojson', False):
+            details.geometry_output |= napi.GeometryFormat.GEOJSON
+            numgeoms += 1
+        if fmt not in ('geojson', 'geocodejson'):
+            if self.get_bool('polygon_text', False):
+                details.geometry_output |= napi.GeometryFormat.TEXT
+                numgeoms += 1
+            if self.get_bool('polygon_kml', False):
+                details.geometry_output |= napi.GeometryFormat.KML
+                numgeoms += 1
+            if self.get_bool('polygon_svg', False):
+                details.geometry_output |= napi.GeometryFormat.SVG
+                numgeoms += 1
+
+        if numgeoms > self.config().get_int('POLYGON_OUTPUT_MAX_TYPES'):
+            self.raise_error('Too many polgyon output options selected.')
+
+        return details
+
+
 async def status_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> Any:
     """ Server glue for /status endpoint. See API docs for details.
     """
@@ -268,7 +295,7 @@ async def details_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> 
 
     locales = napi.Locales.from_accept_languages(params.get_accepted_languages())
 
-    result = await api.lookup(place, details)
+    result = await api.details(place, details)
 
     if debug:
         return params.build_response(loglib.get_and_disable())
@@ -291,28 +318,10 @@ async def reverse_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> 
     debug = params.setup_debugging()
     coord = napi.Point(params.get_float('lon'), params.get_float('lat'))
     locales = napi.Locales.from_accept_languages(params.get_accepted_languages())
+    details = params.parse_geometry_details(fmt)
 
     zoom = max(0, min(18, params.get_int('zoom', 18)))
 
-    details = napi.LookupDetails(address_details=True,
-                                 geometry_simplification=params.get_float('polygon_threshold', 0.0))
-    numgeoms = 0
-    if params.get_bool('polygon_geojson', False):
-        details.geometry_output |= napi.GeometryFormat.GEOJSON
-        numgeoms += 1
-    if fmt not in ('geojson', 'geocodejson'):
-        if params.get_bool('polygon_text', False):
-            details.geometry_output |= napi.GeometryFormat.TEXT
-            numgeoms += 1
-        if params.get_bool('polygon_kml', False):
-            details.geometry_output |= napi.GeometryFormat.KML
-            numgeoms += 1
-        if params.get_bool('polygon_svg', False):
-            details.geometry_output |= napi.GeometryFormat.SVG
-            numgeoms += 1
-
-    if numgeoms > params.config().get_int('POLYGON_OUTPUT_MAX_TYPES'):
-        params.raise_error('Too many polgyon output options selected.')
 
     result = await api.reverse(coord, REVERSE_MAX_RANKS[zoom],
                                params.get_layers() or
@@ -326,15 +335,43 @@ async def reverse_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> 
                    'extratags': params.get_bool('extratags', False),
                    'namedetails': params.get_bool('namedetails', False),
                    'addressdetails': params.get_bool('addressdetails', True)}
-    if fmt == 'xml':
-        fmt_options['xml_roottag'] = 'reversegeocode'
-        fmt_options['xml_extra_info'] = {'querystring': 'TODO'}
 
     output = formatting.format_result(napi.ReverseResults([result] if result else []),
                                       fmt, fmt_options)
 
     return params.build_response(output)
 
+
+async def lookup_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> Any:
+    """ Server glue for /lookup endpoint. See API docs for details.
+    """
+    fmt = params.parse_format(napi.SearchResults, 'xml')
+    debug = params.setup_debugging()
+    locales = napi.Locales.from_accept_languages(params.get_accepted_languages())
+    details = params.parse_geometry_details(fmt)
+
+    places = []
+    for oid in (params.get('osm_ids') or '').split(','):
+        oid = oid.strip()
+        if len(oid) > 1 and oid[0] in 'RNWrnw' and oid[1:].isdigit():
+            places.append(napi.OsmID(oid[0], int(oid[1:])))
+
+    if places:
+        results = await api.lookup(places, details)
+    else:
+        results = napi.SearchResults()
+
+    if debug:
+        return params.build_response(loglib.get_and_disable())
+
+    fmt_options = {'locales': locales,
+                   'extratags': params.get_bool('extratags', False),
+                   'namedetails': params.get_bool('namedetails', False),
+                   'addressdetails': params.get_bool('addressdetails', True)}
+
+    output = formatting.format_result(results, fmt, fmt_options)
+
+    return params.build_response(output)
 
 EndpointFunc = Callable[[napi.NominatimAPIAsync, ASGIAdaptor], Any]
 
@@ -357,5 +394,6 @@ REVERSE_MAX_RANKS = [2, 2, 2,   # 0-2   Continent/Sea
 ROUTES = [
     ('status', status_endpoint),
     ('details', details_endpoint),
-    ('reverse', reverse_endpoint)
+    ('reverse', reverse_endpoint),
+    ('lookup', lookup_endpoint)
 ]

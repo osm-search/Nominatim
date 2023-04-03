@@ -214,19 +214,31 @@ class APILookup:
 
 
     def run(self, args: NominatimArgs) -> int:
-        params: Dict[str, object] = dict(osm_ids=','.join(args.ids), format=args.format)
+        api = napi.NominatimAPI(args.project_dir)
 
-        for param, _ in EXTRADATA_PARAMS:
-            if getattr(args, param):
-                params[param] = '1'
-        if args.lang:
-            params['accept-language'] = args.lang
-        if args.polygon_output:
-            params['polygon_' + args.polygon_output] = '1'
-        if args.polygon_threshold:
-            params['polygon_threshold'] = args.polygon_threshold
+        details = napi.LookupDetails(address_details=True, # needed for display name
+                                     geometry_output=args.get_geometry_output(),
+                                     geometry_simplification=args.polygon_threshold or 0.0)
 
-        return _run_api('lookup', args, params)
+        places = [napi.OsmID(o[0], int(o[1:])) for o in args.ids]
+
+        results = api.lookup(places, details)
+
+        output = api_output.format_result(
+                    results,
+                    args.format,
+                    {'locales': args.get_locales(api.config.DEFAULT_LANGUAGE),
+                     'extratags': args.extratags,
+                     'namedetails': args.namedetails,
+                     'addressdetails': args.addressdetails})
+        if args.format != 'xml':
+            # reformat the result, so it is pretty-printed
+            json.dump(json.loads(output), sys.stdout, indent=4, ensure_ascii=False)
+        else:
+            sys.stdout.write(output)
+        sys.stdout.write('\n')
+
+        return 0
 
 
 class APIDetails:
@@ -292,7 +304,7 @@ class APIDetails:
         if args.polygon_geojson:
             details.geometry_output = napi.GeometryFormat.GEOJSON
 
-        result = api.lookup(place, details)
+        result = api.details(place, details)
 
         if result:
             output = api_output.format_result(

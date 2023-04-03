@@ -7,11 +7,13 @@
 """
 Helper functions for output of results in json formats.
 """
-from typing import Mapping, Any, Optional, Tuple
+from typing import Mapping, Any, Optional, Tuple, Union
 
 import nominatim.api as napi
 import nominatim.api.v1.classtypes as cl
 from nominatim.utils.json_writer import JsonWriter
+
+#pylint: disable=too-many-branches
 
 def _write_osm_id(out: JsonWriter, osm_object: Optional[Tuple[str, int]]) -> None:
     if osm_object is not None:
@@ -61,7 +63,7 @@ def _write_geocodejson_address(out: JsonWriter,
         out.keyval('country_code', country_code)
 
 
-def format_base_json(results: napi.ReverseResults, #pylint: disable=too-many-branches
+def format_base_json(results: Union[napi.ReverseResults, napi.SearchResults],
                      options: Mapping[str, Any], simple: bool,
                      class_label: str) -> str:
     """ Return the result list as a simple json string in custom Nominatim format.
@@ -141,7 +143,7 @@ def format_base_json(results: napi.ReverseResults, #pylint: disable=too-many-bra
     return out()
 
 
-def format_base_geojson(results: napi.ReverseResults,
+def format_base_geojson(results: Union[napi.ReverseResults, napi.SearchResults],
                         options: Mapping[str, Any],
                         simple: bool) -> str:
     """ Return the result list as a geojson string.
@@ -210,7 +212,7 @@ def format_base_geojson(results: napi.ReverseResults,
     return out()
 
 
-def format_base_geocodejson(results: napi.ReverseResults,
+def format_base_geocodejson(results: Union[napi.ReverseResults, napi.SearchResults],
                             options: Mapping[str, Any], simple: bool) -> str:
     """ Return the result list as a geocodejson string.
     """
@@ -249,7 +251,7 @@ def format_base_geocodejson(results: napi.ReverseResults,
         out.keyval('osm_key', result.category[0])\
            .keyval('osm_value', result.category[1])\
            .keyval('type', GEOCODEJSON_RANKS[max(3, min(28, result.rank_address))])\
-           .keyval_not_none('accuracy', result.distance, transform=int)\
+           .keyval_not_none('accuracy', getattr(result, 'distance', None), transform=int)\
            .keyval('label', ', '.join(label_parts))\
            .keyval_not_none('name', result.names, transform=locales.display_name)\
 

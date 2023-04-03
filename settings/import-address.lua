@@ -17,7 +17,7 @@ flex.set_main_tags{
                secondary_link = 'named',
                tertiary_link = 'named'},
     boundary = {administrative = 'named',
-                postal_code = 'named'},
+                postal_code = 'always'},
     landuse = 'fallback',
     place = 'always'
 }

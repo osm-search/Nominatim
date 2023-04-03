@@ -101,6 +101,19 @@ Feature: Tag evaluation
             | N6003  | shop  | -                   |
 
 
+    Scenario: Postcode areas
+        When loading osm data
+            """
+            n1 x12.36853 y51.50618
+            n2 x12.36853 y51.42362
+            n3 x12.63666 y51.42362
+            n4 x12.63666 y51.50618
+            w1 Tboundary=postal_code,ref=3456 Nn1,n2,n3,n4,n1
+            """
+        Then place contains exactly
+            | object | class    | type        | name          |
+            | W1     | boundary | postal_code | 'ref': '3456' |
+
     Scenario: Main with extra
         When loading osm data
             """

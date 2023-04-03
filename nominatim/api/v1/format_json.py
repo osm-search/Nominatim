@@ -249,7 +249,7 @@ def format_base_geocodejson(results: napi.ReverseResults,
         out.keyval('osm_key', result.category[0])\
            .keyval('osm_value', result.category[1])\
            .keyval('type', GEOCODEJSON_RANKS[max(3, min(28, result.rank_address))])\
-           .keyval_not_none('accuracy', result.distance, transform=int)\
+           .keyval_not_none('accuracy', getattr(result, 'distance', None), transform=int)\
            .keyval('label', ', '.join(label_parts))\
            .keyval_not_none('name', result.names, transform=locales.display_name)\
 

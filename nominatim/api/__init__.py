@@ -32,5 +32,7 @@ from .results import (SourceTable as SourceTable,
                       WordInfos as WordInfos,
                       DetailedResult as DetailedResult,
                       ReverseResult as ReverseResult,
-                      ReverseResults as ReverseResults)
+                      ReverseResults as ReverseResults,
+                      SearchResult as SearchResult,
+                      SearchResults as SearchResults)
 from .localization import (Locales as Locales)

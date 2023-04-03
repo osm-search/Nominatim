@@ -173,6 +173,19 @@ class ReverseResults(List[ReverseResult]):
     """
 
 
+@dataclasses.dataclass
+class SearchResult(BaseResult):
+    """ A search result for forward geocoding.
+    """
+    bbox: Optional[Bbox] = None
+
+
+class SearchResults(List[SearchResult]):
+    """ Sequence of forward lookup results ordered by relevance.
+        May be empty when no result was found.
+    """
+
+
 def _filter_geometries(row: SaRow) -> Dict[str, str]:
     return {k[9:]: v for k, v in row._mapping.items() # pylint: disable=W0212
             if k.startswith('geometry_')}

@@ -27,7 +27,7 @@ flex.set_main_tags{
     man_made = 'always',
     aerialway = 'always',
     boundary = {'named',
-                postal_code = 'named'},
+                postal_code = 'always'},
     aeroway = 'always',
     amenity = 'always',
     club = 'always',

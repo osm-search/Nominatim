@@ -5,7 +5,7 @@
 # Copyright (C) 2023 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
-Tests for lookup API call.
+Tests for details API call.
 """
 import datetime as dt
 

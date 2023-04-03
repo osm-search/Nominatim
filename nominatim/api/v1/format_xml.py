@@ -7,12 +7,14 @@
 """
 Helper functions for output of results in XML format.
 """
-from typing import Mapping, Any, Optional
+from typing import Mapping, Any, Optional, Union
 import datetime as dt
 import xml.etree.ElementTree as ET
 
 import nominatim.api as napi
 import nominatim.api.v1.classtypes as cl
+
+#pylint: disable=too-many-branches
 
 def _write_xml_address(root: ET.Element, address: napi.AddressLines,
                        country_code: Optional[str]) -> None:
@@ -34,7 +36,7 @@ def _write_xml_address(root: ET.Element, address: napi.AddressLines,
         ET.SubElement(root, 'country_code').text = country_code
 
 
-def _create_base_entry(result: napi.ReverseResult, #pylint: disable=too-many-branches
+def _create_base_entry(result: Union[napi.ReverseResult, napi.SearchResult],
                        root: ET.Element, simple: bool,
                        locales: napi.Locales) -> ET.Element:
     if result.address_rows:
@@ -86,7 +88,7 @@ def _create_base_entry(result: napi.ReverseResult, #pylint: disable=too-many-bra
     return place
 
 
-def format_base_xml(results: napi.ReverseResults,
+def format_base_xml(results: Union[napi.ReverseResults, napi.SearchResults],
                     options: Mapping[str, Any],
                     simple: bool, xml_root_tag: str,
                     xml_extra_info: Mapping[str, str]) -> str:

@@ -23,8 +23,7 @@ def test_no_api_without_phpcgi(endpoint):
 
 
 @pytest.mark.parametrize("params", [('search', '--query', 'new'),
-                                    ('search', '--city', 'Berlin'),
-                                    ('lookup', '--id', 'N1')])
+                                    ('search', '--city', 'Berlin')])
 class TestCliApiCallPhp:
 
     @pytest.fixture(autouse=True)
@@ -156,32 +155,49 @@ class TestCliReverseCall:
         assert out['name'] == 'Nom'
 
 
-QUERY_PARAMS = {
- 'search': ('--query', 'somewhere'),
- 'reverse': ('--lat', '20', '--lon', '30'),
- 'lookup': ('--id', 'R345345'),
- 'details': ('--node', '324')
-}
+class TestCliLookupCall:
 
-@pytest.mark.parametrize("endpoint", (('search', 'lookup')))
+    @pytest.fixture(autouse=True)
+    def setup_lookup_mock(self, monkeypatch):
+        result = napi.SearchResult(napi.SourceTable.PLACEX, ('place', 'thing'),
+                                    napi.Point(1.0, -3.0),
+                                    names={'name':'Name', 'name:fr': 'Nom'},
+                                    extratags={'extra':'Extra'})
+
+        monkeypatch.setattr(napi.NominatimAPI, 'lookup',
+                            lambda *args: napi.SearchResults([result]))
+
+    def test_lookup_simple(self, cli_call, tmp_path, capsys):
+        result = cli_call('lookup', '--project-dir', str(tmp_path),
+                          '--id', 'N34')
+
+        assert result == 0
+
+        out = json.loads(capsys.readouterr().out)
+        assert len(out) == 1
+        assert out[0]['name'] == 'Name'
+        assert 'address' not in out[0]
+        assert 'extratags' not in out[0]
+        assert 'namedetails' not in out[0]
+
+
 class TestCliApiCommonParameters:
 
     @pytest.fixture(autouse=True)
-    def setup_website_dir(self, cli_call, project_env, endpoint):
-        self.endpoint = endpoint
+    def setup_website_dir(self, cli_call, project_env):
         self.cli_call = cli_call
         self.project_dir = project_env.project_dir
         (self.project_dir / 'website').mkdir()
 
 
     def expect_param(self, param, expected):
-        (self.project_dir / 'website' / (self.endpoint + '.php')).write_text(f"""<?php
+        (self.project_dir / 'website' / ('search.php')).write_text(f"""<?php
         exit($_GET['{param}']  == '{expected}' ? 0 : 10);
         """)
 
 
     def call_nominatim(self, *params):
-        return self.cli_call(self.endpoint, *QUERY_PARAMS[self.endpoint],
+        return self.cli_call('search', '--query', 'somewhere',
                              '--project-dir', str(self.project_dir), *params)
 
 
@@ -221,7 +237,7 @@ def test_cli_search_param_bounded(cli_call, project_env):
         exit($_GET['bounded']  == '1' ? 0 : 10);
         """)
 
-    assert cli_call('search', *QUERY_PARAMS['search'], '--project-dir', str(project_env.project_dir),
+    assert cli_call('search', '--query', 'somewhere', '--project-dir', str(project_env.project_dir),
                     '--bounded') == 0
 
 
@@ -232,5 +248,5 @@ def test_cli_search_param_dedupe(cli_call, project_env):
         exit($_GET['dedupe']  == '0' ? 0 : 10);
         """)
 
-    assert cli_call('search', *QUERY_PARAMS['search'], '--project-dir', str(project_env.project_dir),
+    assert cli_call('search', '--query', 'somewhere', '--project-dir', str(project_env.project_dir),
                     '--no-dedupe') == 0

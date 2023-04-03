@@ -10,7 +10,7 @@ Hard-coded information about tag catagories.
 These tables have been copied verbatim from the old PHP code. For future
 version a more flexible formatting is required.
 """
-from typing import Tuple, Optional, Mapping
+from typing import Tuple, Optional, Mapping, Union
 
 import nominatim.api as napi
 
@@ -41,7 +41,7 @@ def get_label_tag(category: Tuple[str, str], extratags: Optional[Mapping[str, st
     return label.lower().replace(' ', '_')
 
 
-def bbox_from_result(result: napi.ReverseResult) -> napi.Bbox:
+def bbox_from_result(result: Union[napi.ReverseResult, napi.SearchResult]) -> napi.Bbox:
     """ Compute a bounding box for the result. For ways and relations
         a given boundingbox is used. For all other object, a box is computed
         around the centroid according to dimensions dereived from the

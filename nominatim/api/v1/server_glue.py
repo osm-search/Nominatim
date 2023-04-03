@@ -227,8 +227,11 @@ class ASGIAdaptor(abc.ABC):
 
 
     def parse_geometry_details(self, fmt: str) -> napi.LookupDetails:
+        """ Create details strucutre from the supplied geometry parameters.
+        """
         details = napi.LookupDetails(address_details=True,
-                                     geometry_simplification=self.get_float('polygon_threshold', 0.0))
+                                     geometry_simplification=
+                                       self.get_float('polygon_threshold', 0.0))
         numgeoms = 0
         if self.get_bool('polygon_geojson', False):
             details.geometry_output |= napi.GeometryFormat.GEOJSON
@@ -348,7 +351,7 @@ async def lookup_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> A
     details = params.parse_geometry_details(fmt)
 
     places = []
-    for oid in params.get('osm_ids', '').split(','):
+    for oid in (params.get('osm_ids') or '').split(','):
         oid = oid.strip()
         if len(oid) > 1 and oid[0] in 'RNWrnw' and oid[1:].isdigit():
             places.append(napi.OsmID(oid[0], int(oid[1:])))

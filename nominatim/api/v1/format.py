@@ -198,33 +198,33 @@ def _format_reverse_jsonv2(results: napi.ReverseResults,
 
 
 @dispatch.format_func(napi.SearchResults, 'xml')
-def _format_reverse_xml(results: napi.SearchResults, options: Mapping[str, Any]) -> str:
+def _format_search_xml(results: napi.SearchResults, options: Mapping[str, Any]) -> str:
     return format_xml.format_base_xml(results,
                                       options, False, 'searchresults',
                                       {'querystring': 'TODO'})
 
 
 @dispatch.format_func(napi.SearchResults, 'geojson')
-def _format_reverse_geojson(results: napi.SearchResults,
+def _format_search_geojson(results: napi.SearchResults,
                             options: Mapping[str, Any]) -> str:
     return format_json.format_base_geojson(results, options, False)
 
 
 @dispatch.format_func(napi.SearchResults, 'geocodejson')
-def _format_reverse_geocodejson(results: napi.SearchResults,
+def _format_search_geocodejson(results: napi.SearchResults,
                                 options: Mapping[str, Any]) -> str:
     return format_json.format_base_geocodejson(results, options, False)
 
 
 @dispatch.format_func(napi.SearchResults, 'json')
-def _format_reverse_json(results: napi.SearchResults,
+def _format_search_json(results: napi.SearchResults,
                          options: Mapping[str, Any]) -> str:
     return format_json.format_base_json(results, options, False,
                                         class_label='class')
 
 
 @dispatch.format_func(napi.SearchResults, 'jsonv2')
-def _format_reverse_jsonv2(results: napi.SearchResults,
+def _format_search_jsonv2(results: napi.SearchResults,
                            options: Mapping[str, Any]) -> str:
     return format_json.format_base_json(results, options, False,
                                         class_label='category')

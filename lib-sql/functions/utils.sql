@@ -429,9 +429,10 @@ BEGIN
   SELECT osm_type, osm_id, class, type FROM placex WHERE place_id = placeid INTO osmtype, osmid, pclass, ptype;
   DELETE FROM import_polygon_delete where osm_type = osmtype and osm_id = osmid and class = pclass and type = ptype;
   DELETE FROM import_polygon_error where osm_type = osmtype and osm_id = osmid and class = pclass and type = ptype;
-  -- force delete from place/placex by making it a very small geometry
-  UPDATE place set geometry = ST_SetSRID(ST_Point(0,0), 4326) where osm_type = osmtype and osm_id = osmid and class = pclass and type = ptype;
-  DELETE FROM place where osm_type = osmtype and osm_id = osmid and class = pclass and type = ptype;
+  -- force delete by directly entering it into the to-be-deleted table
+  INSERT INTO place_to_be_deleted (osm_type, osm_id, class, type, deferred)
+         VALUES(osmtype, osmid, pclass, ptype, false);
+  PERFORM flush_deleted_places();
 
   RETURN TRUE;
 END;

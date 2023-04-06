@@ -29,14 +29,14 @@ Feature: Import of address interpolations
           | N2  | place | house  | 8       |
         And the places
           | osm | class | type   | addr+interpolation | geometry |
-          | W1  | place | houses | even    | 1,2 |
+          | W1  | place | houses | even               | 2,1      |
         And the ways
           | id | nodes |
           | 1  | 2,1 |
         When importing
         Then W1 expands to interpolation
           | start | end | geometry |
-          | 4     | 6   | 8,9 |
+          | 4     | 6   | 9,8      |
 
     Scenario: Simple odd two point interpolation
         Given the grid with origin 1,1
@@ -341,7 +341,7 @@ Feature: Import of address interpolations
         Then W1 expands to interpolation
           | start | end | geometry |
           | 4     | 4   | 144.963016 -37.762946 |
-          | 8     | 8   | 144.963144 -37.7622237 |
+          | 8     | 8   | 144.96314407 -37.762223692 |
 
     Scenario: Place with missing address information
         Given the grid
@@ -456,3 +456,69 @@ Feature: Import of address interpolations
           | foo   |
           | x     |
           | 12-2  |
+
+
+    Scenario: Interpolation line where points have been moved (Github #3022)
+        Given the 0.00001 grid
+         | 1 | | | | | | | | 2 | 3 | 9 | | | | | | | | 4 |
+        Given the places
+          | osm | class | type   | housenr | geometry |
+          | N1  | place | house  | 2       | 1 |
+          | N2  | place | house  | 18      | 3 |
+          | N3  | place | house  | 24      | 9 |
+          | N4  | place | house  | 42      | 4 |
+        And the places
+          | osm | class | type   | addr+interpolation | geometry |
+          | W1  | place | houses | even               | 1,2,3,4  |
+        And the ways
+          | id | nodes   |
+          | 1  | 1,2,3,4 |
+        When importing
+        Then W1 expands to interpolation
+          | start | end |
+          | 4     | 16  |
+          | 20    | 22  |
+          | 26    | 40  |
+
+
+    Scenario: Interpolation line with duplicated points
+        Given the grid
+          | 7 | 10 | 8 | 11 | 9 |
+        Given the places
+          | osm | class | type   | housenr | geometry |
+          | N1  | place | house  | 2       | 7 |
+          | N2  | place | house  | 6       | 8 |
+          | N3  | place | house  | 10      | 8 |
+          | N4  | place | house  | 14      | 9 |
+        And the places
+          | osm | class | type   | addr+interpolation | geometry |
+          | W1  | place | houses | even               | 7,8,8,9  |
+        And the ways
+          | id | nodes   |
+          | 1  | 1,2,3,4 |
+        When importing
+        Then W1 expands to interpolation
+          | start | end | geometry |
+          | 4     | 4   | 10       |
+          | 12    | 12  | 11       |
+
+
+    Scenario: Interpolaton line with broken way geometry (Github #2986)
+        Given the grid
+          | 1 | 8 | 10 | 11 | 9 | 2 | 3 | 4 |
+        Given the places
+          | osm | class | type   | housenr |
+          | N1  | place | house  | 2       |
+          | N2  | place | house  | 8       |
+          | N3  | place | house  | 12      |
+          | N4  | place | house  | 14      |
+        And the places
+          | osm | class | type   | addr+interpolation | geometry |
+          | W1  | place | houses | even               | 8,9      |
+        And the ways
+          | id | nodes       |
+          | 1  | 1,8,9,2,3,4 |
+        When importing
+        Then W1 expands to interpolation
+          | start | end | geometry |
+          | 4     | 6   | 10,11    |

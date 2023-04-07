@@ -164,7 +164,7 @@ DECLARE
   newend INTEGER;
   moddiff SMALLINT;
   linegeo GEOMETRY;
-  splitline GEOMETRY;
+  splitpoint FLOAT;
   sectiongeo GEOMETRY;
   postcode TEXT;
   stepmod SMALLINT;
@@ -223,15 +223,27 @@ BEGIN
         FROM placex, generate_series(1, array_upper(waynodes, 1)) nodeidpos
         WHERE osm_type = 'N' and osm_id = waynodes[nodeidpos]::BIGINT
               and address is not NULL and address ? 'housenumber'
+              and ST_Distance(NEW.linegeo, geometry) < 0.0005
         ORDER BY nodeidpos
     LOOP
       {% if debug %}RAISE WARNING 'processing point % (%)', nextnode.hnr, ST_AsText(nextnode.geometry);{% endif %}
       IF linegeo is null THEN
         linegeo := NEW.linegeo;
       ELSE
-        splitline := ST_Split(ST_Snap(linegeo, nextnode.geometry, 0.0005), nextnode.geometry);
-        sectiongeo := ST_GeometryN(splitline, 1);
-        linegeo := ST_GeometryN(splitline, 2);
+        splitpoint := ST_LineLocatePoint(linegeo, nextnode.geometry);
+        IF splitpoint = 0 THEN
+          -- Corner case where the splitpoint falls on the first point
+          -- and thus would not return a geometry. Skip that section.
+          sectiongeo := NULL;
+        ELSEIF splitpoint = 1 THEN
+          -- Point is at the end of the line.
+          sectiongeo := linegeo;
+          linegeo := NULL;
+        ELSE
+          -- Split the line.
+          sectiongeo := ST_LineSubstring(linegeo, 0, splitpoint);
+          linegeo := ST_LineSubstring(linegeo, splitpoint, 1);
+        END IF;
       END IF;
 
       IF prevnode.hnr is not null
@@ -239,6 +251,9 @@ BEGIN
          -- regularly mapped housenumbers.
          -- (Conveniently also fails if one of the house numbers is not a number.)
          and abs(prevnode.hnr - nextnode.hnr) > NEW.step
+         -- If the interpolation geometry is broken or two nodes are at the
+         -- same place, then splitting might produce a point. Ignore that.
+         and ST_GeometryType(sectiongeo) = 'ST_LineString'
       THEN
         IF prevnode.hnr < nextnode.hnr THEN
           startnumber := prevnode.hnr;
@@ -300,12 +315,12 @@ BEGIN
                   NEW.address, postcode,
                   NEW.country_code, NEW.geometry_sector, 0);
         END IF;
+      END IF;
 
-        -- early break if we are out of line string,
-        -- might happen when a line string loops back on itself
-        IF ST_GeometryType(linegeo) != 'ST_LineString' THEN
-            RETURN NEW;
-        END IF;
+      -- early break if we are out of line string,
+      -- might happen when a line string loops back on itself
+      IF linegeo is null or ST_GeometryType(linegeo) != 'ST_LineString' THEN
+          RETURN NEW;
       END IF;
 
       prevnode := nextnode;

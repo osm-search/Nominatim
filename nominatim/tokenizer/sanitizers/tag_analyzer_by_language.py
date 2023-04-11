@@ -41,7 +41,7 @@ class _AnalyzerByLanguage:
     """
 
     def __init__(self, config: SanitizerConfig) -> None:
-        self.filter_kind = config.get_filter_kind()
+        self.filter_kind = config.get_filter('filter-kind')
         self.replace = config.get('mode', 'replace') != 'append'
         self.whitelist = config.get('whitelist')
 

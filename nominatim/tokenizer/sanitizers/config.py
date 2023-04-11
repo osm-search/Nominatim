@@ -7,7 +7,7 @@
 """
 Configuration for Sanitizers.
 """
-from typing import Sequence, Optional, Pattern, Callable, Any, TYPE_CHECKING
+from typing import Sequence, Union, Optional, Pattern, Callable, Any, TYPE_CHECKING
 from collections import UserDict
 import re
 
@@ -33,7 +33,11 @@ class SanitizerConfig(_BaseUserDict):
 
             Arguments:
                 param: Name of the configuration parameter.
-                default: Value to return, when the parameter is missing.
+                default: Takes a tuple or list of strings which will
+                         be returned if the parameter is missing in the
+                         sanitizer configuration.
+                         Note that if this default parameter is not
+                         provided then an empty list is returned.
 
             Returns:
                 If the parameter value is a simple string, it is returned as a
@@ -44,7 +48,7 @@ class SanitizerConfig(_BaseUserDict):
         values = self.data.get(param, None)
 
         if values is None:
-            return None if default is None else list(default)
+            return list(default)
 
         if isinstance(values, str):
             return [values] if values else []
@@ -74,7 +78,7 @@ class SanitizerConfig(_BaseUserDict):
         value = self.data.get(param, default)
 
         if not isinstance(value, bool):
-            raise UsageError(f"Parameter '{param}' must be a boolean value ('yes' or 'no'.")
+            raise UsageError(f"Parameter '{param}' must be a boolean value ('yes' or 'no').")
 
         return value
 
@@ -102,30 +106,46 @@ class SanitizerConfig(_BaseUserDict):
         return re.compile('\\s*[{}]+\\s*'.format(''.join('\\' + d for d in delimiter_set)))
 
 
-    def get_filter_kind(self, *default: str) -> Callable[[str], bool]:
-        """ Return a filter function for the name kind from the 'filter-kind'
-            config parameter.
+    def get_filter(self, param: str, default: Union[str, Sequence[str]] = 'PASS_ALL'
+                   ) -> Callable[[str], bool]:
+        """ Returns a filter function for the given parameter of the sanitizer
+            configuration.
 
-            If the 'filter-kind' parameter is empty, the filter lets all items
-            pass. If the parameter is a string, it is interpreted as a single
-            regular expression that must match the full kind string.
-            If the parameter is a list then
-            any of the regular expressions in the list must match to pass.
+            The value provided for the parameter in sanitizer configuration
+            should be a string or list of strings, where each string is a regular
+            expression. These regular expressions will later be used by the
+            filter function to filter strings.
 
             Arguments:
-                default: Filters to be used, when the 'filter-kind' parameter
-                         is not specified. If omitted then the default is to
-                         let all names pass.
+                param: The parameter for which the filter function
+                       will be created.
+                default: Defines the behaviour of filter function if
+                         parameter is missing in the sanitizer configuration.
+                         Takes a string(PASS_ALL or FAIL_ALL) or a list of strings.
+                         Any other value of string or an empty list is not allowed,
+                         and will raise a ValueError. If the value is PASS_ALL, the filter
+                         function will let all strings to pass, if the value is FAIL_ALL,
+                         filter function will let no strings to pass.
+                         If value provided is a list of strings each string
+                         is treated as a regular expression. In this case these regular
+                         expressions will be used by the filter function.
+                         By default allow filter function to let all strings pass.
 
             Returns:
-                A filter function which takes a name string and returns
-                True when the item passes the filter.
+                A filter function that takes a target string as the argument and
+                returns True if it fully matches any of the regular expressions
+                otherwise returns False.
         """
-        filters = self.get_string_list('filter-kind', default)
+        filters = self.get_string_list(param) or default
 
-        if not filters:
+        if filters == 'PASS_ALL':
             return lambda _: True
+        if filters == 'FAIL_ALL':
+            return lambda _: False
 
-        regexes = [re.compile(regex) for regex in filters]
+        if filters and isinstance(filters, (list, tuple)):
+            regexes = [re.compile(regex) for regex in filters]
+            return lambda target: any(regex.fullmatch(target) for regex in regexes)
 
-        return lambda name: any(regex.fullmatch(name) for regex in regexes)
+        raise ValueError("Default parameter must be a non-empty list or a string value \
+                          ('PASS_ALL' or 'FAIL_ALL').")

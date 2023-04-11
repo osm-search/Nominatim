@@ -1,3 +1,10 @@
+4.2.3
+
+ * fix deletion handling for 'nominatim add-data'
+ * adapt place_force_delete() to new deletion handling
+ * flex style: avoid dropping of postcode areas
+ * fix update errors on address interpolation handling
+
 4.2.2
 
  * extend flex-style library to fully support all default styles

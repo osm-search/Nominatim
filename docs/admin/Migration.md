@@ -15,6 +15,14 @@ breaking changes. **Please read them before running the migration.**
     If you are migrating from a version <3.6, then you still have to follow
     the manual migration steps up to 3.6.
 
+## 4.2.2 -> 4.2.3
+
+### Update interpolation functions
+
+When updating to this release, you need to run `nominatim refresh --functions`
+after updating and before restarting updates. Otherwise you may see an error
+`Splitting of Point geometries is unsupported` or similar.
+
 ## 4.0.0 -> 4.1.0
 
 ### ICU tokenizer is the new default

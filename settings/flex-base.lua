@@ -11,6 +11,11 @@ local ADDRESS_TAGS = nil
 local SAVE_EXTRA_MAINS = false
 local POSTCODE_FALLBACK = true
 
+-- tables required for taginfo
+module.TAGINFO_MAIN = {keys = {}, delete_tags = {}}
+module.TAGINFO_NAME_KEYS = {}
+module.TAGINFO_ADDRESS_KEYS = {}
+
 
 -- The single place table.
 local place_table = osm2pgsql.define_table{
@@ -372,6 +377,17 @@ function module.tag_group(data)
     end
 end
 
+-- Returns prefix part of the keys, and reject suffix matching keys
+local function process_key(key)
+    if key:sub(1, 1) == '*' then
+        return nil
+    end
+    if key:sub(#key, #key) == '*' then
+        return key:sub(1, #key - 2)
+    end
+    return key
+end
+
 -- Process functions for all data types
 function module.process_node(object)
 
@@ -465,14 +481,29 @@ function module.set_prefilters(data)
     PRE_DELETE = module.tag_match{keys = data.delete_keys, tags = data.delete_tags}
     PRE_EXTRAS = module.tag_match{keys = data.extra_keys,
                                   tags = data.extra_tags}
+    module.TAGINFO_MAIN.delete_tags = data.delete_tags
 end
 
 function module.set_main_tags(data)
     MAIN_KEYS = data
+    local keys = {}
+    for k, _ in pairs(data) do
+        table.insert(keys, k)
+    end
+    module.TAGINFO_MAIN.keys = keys
 end
 
 function module.set_name_tags(data)
     NAMES = module.tag_group(data)
+
+    for _, lst in pairs(data) do
+        for _, k in ipairs(lst) do
+            local key = process_key(k)
+            if key ~= nil then
+                module.TAGINFO_NAME_KEYS[key] = true
+            end
+        end
+    end
 end
 
 function module.set_address_tags(data)
@@ -480,8 +511,18 @@ function module.set_address_tags(data)
         POSTCODE_FALLBACK = data.postcode_fallback
         data.postcode_fallback = nil
     end
-
     ADDRESS_TAGS = module.tag_group(data)
+
+    for _, lst in pairs(data) do
+        if lst ~= nil then
+            for _, k in ipairs(lst) do
+                local key = process_key(k)
+                if key ~= nil then
+                    module.TAGINFO_ADDRESS_KEYS[key] = true
+                end
+            end
+        end
+    end
 end
 
 function module.set_unused_handling(data)

@@ -12,7 +12,7 @@ from textwrap import dedent
 
 import pytest
 
-from nominatim.tools import tiger_data
+from nominatim.tools import tiger_data, freeze
 from nominatim.errors import UsageError
 
 class MockTigerTable:
@@ -26,6 +26,9 @@ class MockTigerTable:
                                                interpol TEXT,
                                                token_info JSONB,
                                                postcode TEXT)""")
+
+            # We need this table to determine if the database is frozen or not
+            cur.execute("CREATE TABLE place (number INTEGER)")
 
     def count(self):
         with self.conn.cursor() as cur:
@@ -79,6 +82,17 @@ def test_add_tiger_data(def_config, src_dir, tiger_table, tokenizer_mock, thread
 
     assert tiger_table.count() == 6213
 
+
+def test_add_tiger_data_database_frozen(def_config, temp_db_conn, tiger_table, tokenizer_mock,
+                                 tmp_path):
+    freeze.drop_update_tables(temp_db_conn)
+
+    with pytest.raises(UsageError) as excinfo:
+        tiger_data.add_tiger_data(str(tmp_path), def_config, 1, tokenizer_mock())
+
+        assert "database frozen" in str(excinfo.value)
+
+    assert tiger_table.count() == 0
 
 def test_add_tiger_data_no_files(def_config, tiger_table, tokenizer_mock,
                                  tmp_path):

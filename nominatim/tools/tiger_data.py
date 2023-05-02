@@ -23,6 +23,7 @@ from nominatim.db.sql_preprocessor import SQLPreprocessor
 from nominatim.errors import UsageError
 from nominatim.data.place_info import PlaceInfo
 from nominatim.tokenizer.base import AbstractAnalyzer, AbstractTokenizer
+from nominatim.tools import freeze
 
 LOG = logging.getLogger()
 
@@ -112,6 +113,13 @@ def add_tiger_data(data_dir: str, config: Configuration, threads: int,
     """ Import tiger data from directory or tar file `data dir`.
     """
     dsn = config.get_libpq_dsn()
+
+    with connect(dsn) as conn:
+        is_frozen = freeze.is_frozen(conn)
+        conn.close()
+
+        if is_frozen:
+            raise UsageError("Tiger cannot be imported when database frozen (Github issue #3048)")
 
     with TigerInput(data_dir) as tar:
         if not tar:

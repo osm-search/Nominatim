@@ -30,6 +30,8 @@ def test_drop_tables(temp_db_conn, temp_db_cursor, table_factory):
     for table in NOMINATIM_RUNTIME_TABLES + NOMINATIM_DROP_TABLES:
         table_factory(table)
 
+    assert not freeze.is_frozen(temp_db_conn)
+
     freeze.drop_update_tables(temp_db_conn)
 
     for table in NOMINATIM_RUNTIME_TABLES:
@@ -37,6 +39,8 @@ def test_drop_tables(temp_db_conn, temp_db_cursor, table_factory):
 
     for table in NOMINATIM_DROP_TABLES:
         assert not temp_db_cursor.table_exists(table)
+
+    assert freeze.is_frozen(temp_db_conn)
 
 def test_drop_flatnode_file_no_file():
     freeze.drop_flatnode_file(None)
@@ -46,7 +50,7 @@ def test_drop_flatnode_file_file_already_gone(tmp_path):
     freeze.drop_flatnode_file(tmp_path / 'something.store')
 
 
-def test_drop_flatnode_file_delte(tmp_path):
+def test_drop_flatnode_file_delete(tmp_path):
     flatfile = tmp_path / 'flatnode.store'
     flatfile.write_text('Some content')
 

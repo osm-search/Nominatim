@@ -50,3 +50,9 @@ def drop_flatnode_file(fpath: Optional[Path]) -> None:
     """
     if fpath and fpath.exists():
         fpath.unlink()
+
+def is_frozen(conn: Connection) -> bool:
+    """ Returns true if database is in a frozen state
+    """
+
+    return conn.table_exists('place') is False

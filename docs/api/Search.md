@@ -31,7 +31,7 @@ The search term may be specified with two different sets of parameters:
     [birmingham, pilkington avenue](https://nominatim.openstreetmap.org/search?q=birmingham,+pilkington+avenue).
     Commas are optional, but improve performance by reducing the complexity of the search.
 
-
+* `amenity=<name and/or type of POI>`
 * `street=<housenumber> <streetname>`
 * `city=<city>`
 * `county=<county>`

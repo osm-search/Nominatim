@@ -235,7 +235,7 @@ class ReverseGeocoder:
         if parent_place_id is not None:
             sql = sql.where(t.c.parent_place_id == parent_place_id)
 
-        inner = sql.subquery()
+        inner = sql.subquery('ipol')
 
         sql = sa.select(inner.c.place_id, inner.c.osm_id,
                         inner.c.parent_place_id, inner.c.address,
@@ -245,8 +245,8 @@ class ReverseGeocoder:
                         inner.c.distance)
 
         if self.has_geometries():
-            sub = sql.subquery()
-            sql = self._add_geometry_columns(sql, sub.c.centroid)
+            sub = sql.subquery('geom')
+            sql = self._add_geometry_columns(sa.select(sub), sub.c.centroid)
 
         return (await self.conn.execute(sql)).one_or_none()
 
@@ -263,7 +263,7 @@ class ReverseGeocoder:
                   .where(t.c.parent_place_id == parent_place_id)\
                   .order_by('distance')\
                   .limit(1)\
-                  .subquery()
+                  .subquery('tiger')
 
         sql = sa.select(inner.c.place_id,
                         inner.c.parent_place_id,
@@ -275,8 +275,8 @@ class ReverseGeocoder:
                         inner.c.distance)
 
         if self.has_geometries():
-            sub = sql.subquery()
-            sql = self._add_geometry_columns(sql, sub.c.centroid)
+            sub = sql.subquery('geom')
+            sql = self._add_geometry_columns(sa.select(sub), sub.c.centroid)
 
         return (await self.conn.execute(sql)).one_or_none()
 
@@ -356,7 +356,7 @@ class ReverseGeocoder:
                   .where(t.c.type != 'postcode')\
                   .order_by(sa.desc(t.c.rank_search))\
                   .limit(50)\
-                  .subquery()
+                  .subquery('area')
 
         sql = _select_from_placex(inner)\
                   .where(inner.c.geometry.ST_Contains(wkt))\
@@ -385,7 +385,7 @@ class ReverseGeocoder:
                                 .intersects(wkt))\
                       .order_by(sa.desc(t.c.rank_search))\
                       .limit(50)\
-                      .subquery()
+                      .subquery('places')
 
             touter = self.conn.t.placex.alias('outer')
             sql = _select_from_placex(inner)\

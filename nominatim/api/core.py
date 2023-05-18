@@ -14,9 +14,10 @@ from pathlib import Path
 
 import sqlalchemy as sa
 import sqlalchemy.ext.asyncio as sa_asyncio
-import asyncpg
+
 
 from nominatim.db.sqlalchemy_schema import SearchTables
+from nominatim.db.async_core_library import PGCORE_LIB, PGCORE_ERROR
 from nominatim.config import Configuration
 from nominatim.api.connection import SearchConnection
 from nominatim.api.status import get_status, StatusResult
@@ -55,26 +56,22 @@ class NominatimAPIAsync:
 
             query = {k: v for k, v in dsn.items()
                       if k not in ('user', 'password', 'dbname', 'host', 'port')}
-            query['prepared_statement_cache_size'] = '0'
+            if PGCORE_LIB == 'asyncpg':
+                query['prepared_statement_cache_size'] = '0'
 
             dburl = sa.engine.URL.create(
-                       'postgresql+asyncpg',
+                       f'postgresql+{PGCORE_LIB}',
                        database=dsn.get('dbname'),
                        username=dsn.get('user'), password=dsn.get('password'),
                        host=dsn.get('host'), port=int(dsn['port']) if 'port' in dsn else None,
                        query=query)
-            engine = sa_asyncio.create_async_engine(
-                             dburl, future=True,
-                             connect_args={'server_settings': {
-                                'DateStyle': 'sql,european',
-                                'max_parallel_workers_per_gather': '0'
-                             }})
+            engine = sa_asyncio.create_async_engine(dburl, future=True)
 
             try:
                 async with engine.begin() as conn:
                     result = await conn.scalar(sa.text('SHOW server_version_num'))
                     server_version = int(result)
-            except asyncpg.PostgresError:
+            except (PGCORE_ERROR, sa.exc.OperationalError):
                 server_version = 0
 
             if server_version >= 110000:
@@ -82,6 +79,7 @@ class NominatimAPIAsync:
                 def _on_connect(dbapi_con: Any, _: Any) -> None:
                     cursor = dbapi_con.cursor()
                     cursor.execute("SET jit_above_cost TO '-1'")
+                    cursor.execute("SET max_parallel_workers_per_gather TO '0'")
                 # Make sure that all connections get the new settings
                 await self.close()
 
@@ -124,7 +122,7 @@ class NominatimAPIAsync:
         try:
             async with self.begin() as conn:
                 status = await get_status(conn)
-        except asyncpg.PostgresError:
+        except (PGCORE_ERROR, sa.exc.OperationalError):
             return StatusResult(700, 'Database connection failed')
 
         return status

@@ -19,6 +19,7 @@ from nominatim.clicmd.args import NominatimArgs
 import nominatim.api as napi
 import nominatim.api.v1 as api_output
 from nominatim.api.v1.helpers import zoom_to_rank
+import nominatim.api.logging as loglib
 
 # Do not repeat documentation of subcommand classes.
 # pylint: disable=C0111
@@ -44,7 +45,7 @@ EXTRADATA_PARAMS = (
 def _add_api_output_arguments(parser: argparse.ArgumentParser) -> None:
     group = parser.add_argument_group('Output arguments')
     group.add_argument('--format', default='jsonv2',
-                       choices=['xml', 'json', 'jsonv2', 'geojson', 'geocodejson'],
+                       choices=['xml', 'json', 'jsonv2', 'geojson', 'geocodejson', 'debug'],
                        help='Format of result')
     for name, desc in EXTRADATA_PARAMS:
         group.add_argument('--' + name, action='store_true', help=desc)
@@ -161,6 +162,9 @@ class APIReverse:
 
 
     def run(self, args: NominatimArgs) -> int:
+        if args.format == 'debug':
+            loglib.set_log_output('text')
+
         api = napi.NominatimAPI(args.project_dir)
 
         result = api.reverse(napi.Point(args.lon, args.lat),
@@ -169,6 +173,10 @@ class APIReverse:
                              address_details=True, # needed for display name
                              geometry_output=args.get_geometry_output(),
                              geometry_simplification=args.polygon_threshold)
+
+        if args.format == 'debug':
+            print(loglib.get_and_disable())
+            return 0
 
         if result:
             output = api_output.format_result(
@@ -212,7 +220,14 @@ class APILookup:
 
 
     def run(self, args: NominatimArgs) -> int:
+        if args.format == 'debug':
+            loglib.set_log_output('text')
+
         api = napi.NominatimAPI(args.project_dir)
+
+        if args.format == 'debug':
+            print(loglib.get_and_disable())
+            return 0
 
         places = [napi.OsmID(o[0], int(o[1:])) for o in args.ids]
 

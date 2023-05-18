@@ -17,6 +17,7 @@ from nominatim.config import Configuration
 import nominatim.api as napi
 import nominatim.api.logging as loglib
 from nominatim.api.v1.format import dispatch as formatting
+from nominatim.api.v1 import helpers
 
 CONTENT_TYPE = {
   'text': 'text/plain; charset=utf-8',
@@ -319,10 +320,9 @@ async def reverse_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> 
     debug = params.setup_debugging()
     coord = napi.Point(params.get_float('lon'), params.get_float('lat'))
     locales = napi.Locales.from_accept_languages(params.get_accepted_languages())
-    zoom = max(0, min(18, params.get_int('zoom', 18)))
 
     details = params.parse_geometry_details(fmt)
-    details['max_rank'] = REVERSE_MAX_RANKS[zoom]
+    details['max_rank'] = helpers.zoom_to_rank(params.get_int('zoom', 18))
     details['layers'] = params.get_layers()
 
     result = await api.reverse(coord, **details)
@@ -373,22 +373,6 @@ async def lookup_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> A
     return params.build_response(output)
 
 EndpointFunc = Callable[[napi.NominatimAPIAsync, ASGIAdaptor], Any]
-
-REVERSE_MAX_RANKS = [2, 2, 2,   # 0-2   Continent/Sea
-                     4, 4,      # 3-4   Country
-                     8,         # 5     State
-                     10, 10,    # 6-7   Region
-                     12, 12,    # 8-9   County
-                     16, 17,    # 10-11 City
-                     18,        # 12    Town
-                     19,        # 13    Village/Suburb
-                     22,        # 14    Hamlet/Neighbourhood
-                     25,        # 15    Localities
-                     26,        # 16    Major Streets
-                     27,        # 17    Minor Streets
-                     30         # 18    Building
-                    ]
-
 
 ROUTES = [
     ('status', status_endpoint),

@@ -18,7 +18,7 @@ from nominatim.errors import UsageError
 from nominatim.clicmd.args import NominatimArgs
 import nominatim.api as napi
 import nominatim.api.v1 as api_output
-from nominatim.api.v1.server_glue import REVERSE_MAX_RANKS
+from nominatim.api.v1.helpers import zoom_to_rank
 
 # Do not repeat documentation of subcommand classes.
 # pylint: disable=C0111
@@ -164,7 +164,7 @@ class APIReverse:
         api = napi.NominatimAPI(args.project_dir)
 
         result = api.reverse(napi.Point(args.lon, args.lat),
-                             max_rank=REVERSE_MAX_RANKS[max(0, min(18, args.zoom or 18))],
+                             max_rank=zoom_to_rank(args.zoom or 18),
                              layers=args.get_layers(napi.DataLayer.ADDRESS | napi.DataLayer.POI),
                              address_details=True, # needed for display name
                              geometry_output=args.get_geometry_output(),

@@ -84,7 +84,7 @@ def test_reverse_rank_30_layers(apiobj, y, layer, place_id):
                       rank_search=30,
                       centroid=(1.3, 0.70005))
 
-    assert apiobj.api.reverse((1.3, y), layer=layer).place_id == place_id
+    assert apiobj.api.reverse((1.3, y), layers=layer).place_id == place_id
 
 
 def test_reverse_poi_layer_with_no_pois(apiobj):
@@ -95,7 +95,7 @@ def test_reverse_poi_layer_with_no_pois(apiobj):
                       centroid=(1.3, 0.70001))
 
     assert apiobj.api.reverse((1.3, 0.70001), max_rank=29,
-                              layer=napi.DataLayer.POI) is None
+                              layers=napi.DataLayer.POI) is None
 
 
 def test_reverse_housenumber_on_street(apiobj):
@@ -245,7 +245,7 @@ def test_reverse_larger_area_layers(apiobj, layer, place_id):
                       rank_search=16,
                       centroid=(1.3, 0.70005))
 
-    assert apiobj.api.reverse((1.3, 0.7), layer=layer).place_id == place_id
+    assert apiobj.api.reverse((1.3, 0.7), layers=layer).place_id == place_id
 
 
 def test_reverse_country_lookup_no_objects(apiobj):
@@ -296,10 +296,8 @@ def test_reverse_geometry_output_placex(apiobj, gtype):
                       country_code='xx',
                       centroid=(0.5, 0.5))
 
-    details = napi.LookupDetails(geometry_output=gtype)
-
-    assert apiobj.api.reverse((59.3, 80.70001), details=details).place_id == 1001
-    assert apiobj.api.reverse((0.5, 0.5), details=details).place_id == 1003
+    assert apiobj.api.reverse((59.3, 80.70001), geometry_output=gtype).place_id == 1001
+    assert apiobj.api.reverse((0.5, 0.5), geometry_output=gtype).place_id == 1003
 
 
 def test_reverse_simplified_geometry(apiobj):
@@ -309,9 +307,9 @@ def test_reverse_simplified_geometry(apiobj):
                       rank_search=30,
                       centroid=(59.3, 80.70001))
 
-    details = napi.LookupDetails(geometry_output=napi.GeometryFormat.GEOJSON,
-                                 geometry_simplification=0.1)
-    assert apiobj.api.reverse((59.3, 80.70001), details=details).place_id == 1001
+    details = dict(geometry_output=napi.GeometryFormat.GEOJSON,
+                   geometry_simplification=0.1)
+    assert apiobj.api.reverse((59.3, 80.70001), **details).place_id == 1001
 
 
 def test_reverse_interpolation_geometry(apiobj):
@@ -321,8 +319,7 @@ def test_reverse_interpolation_geometry(apiobj):
                        centroid=(10.0, 10.00001),
                        geometry='LINESTRING(9.995 10.00001, 10.005 10.00001)')
 
-    details = napi.LookupDetails(geometry_output=napi.GeometryFormat.TEXT)
-    assert apiobj.api.reverse((10.0, 10.0), details=details)\
+    assert apiobj.api.reverse((10.0, 10.0), geometry_output=napi.GeometryFormat.TEXT)\
                      .geometry['text'] == 'POINT(10 10.00001)'
 
 
@@ -339,8 +336,8 @@ def test_reverse_tiger_geometry(apiobj):
                      centroid=(10.0, 10.00001),
                      geometry='LINESTRING(9.995 10.00001, 10.005 10.00001)')
 
-    details = napi.LookupDetails(geometry_output=napi.GeometryFormat.GEOJSON)
-    output = apiobj.api.reverse((10.0, 10.0), details=details).geometry['geojson']
+    output = apiobj.api.reverse((10.0, 10.0),
+                                geometry_output=napi.GeometryFormat.GEOJSON).geometry['geojson']
 
     assert json.loads(output) == {'coordinates': [10, 10.00001], 'type': 'Point'}
 

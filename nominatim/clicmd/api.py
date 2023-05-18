@@ -18,7 +18,7 @@ from nominatim.errors import UsageError
 from nominatim.clicmd.args import NominatimArgs
 import nominatim.api as napi
 import nominatim.api.v1 as api_output
-from nominatim.api.v1.server_glue import REVERSE_MAX_RANKS
+from nominatim.api.v1.helpers import zoom_to_rank
 
 # Do not repeat documentation of subcommand classes.
 # pylint: disable=C0111
@@ -163,14 +163,12 @@ class APIReverse:
     def run(self, args: NominatimArgs) -> int:
         api = napi.NominatimAPI(args.project_dir)
 
-        details = napi.LookupDetails(address_details=True, # needed for display name
-                                     geometry_output=args.get_geometry_output(),
-                                     geometry_simplification=args.polygon_threshold or 0.0)
-
         result = api.reverse(napi.Point(args.lon, args.lat),
-                             REVERSE_MAX_RANKS[max(0, min(18, args.zoom or 18))],
-                             args.get_layers(napi.DataLayer.ADDRESS | napi.DataLayer.POI),
-                             details)
+                             max_rank=zoom_to_rank(args.zoom or 18),
+                             layers=args.get_layers(napi.DataLayer.ADDRESS | napi.DataLayer.POI),
+                             address_details=True, # needed for display name
+                             geometry_output=args.get_geometry_output(),
+                             geometry_simplification=args.polygon_threshold)
 
         if result:
             output = api_output.format_result(
@@ -216,13 +214,12 @@ class APILookup:
     def run(self, args: NominatimArgs) -> int:
         api = napi.NominatimAPI(args.project_dir)
 
-        details = napi.LookupDetails(address_details=True, # needed for display name
-                                     geometry_output=args.get_geometry_output(),
-                                     geometry_simplification=args.polygon_threshold or 0.0)
-
         places = [napi.OsmID(o[0], int(o[1:])) for o in args.ids]
 
-        results = api.lookup(places, details)
+        results = api.lookup(places,
+                             address_details=True, # needed for display name
+                             geometry_output=args.get_geometry_output(),
+                             geometry_simplification=args.polygon_threshold or 0.0)
 
         output = api_output.format_result(
                     results,
@@ -297,14 +294,15 @@ class APIDetails:
 
         api = napi.NominatimAPI(args.project_dir)
 
-        details = napi.LookupDetails(address_details=args.addressdetails,
-                                     linked_places=args.linkedplaces,
-                                     parented_places=args.hierarchy,
-                                     keywords=args.keywords)
-        if args.polygon_geojson:
-            details.geometry_output = napi.GeometryFormat.GEOJSON
+        result = api.details(place,
+                             address_details=args.addressdetails,
+                             linked_places=args.linkedplaces,
+                             parented_places=args.hierarchy,
+                             keywords=args.keywords,
+                             geometry_output=napi.GeometryFormat.GEOJSON
+                                             if args.polygon_geojson
+                                             else napi.GeometryFormat.NONE)
 
-        result = api.details(place, details)
 
         if result:
             output = api_output.format_result(

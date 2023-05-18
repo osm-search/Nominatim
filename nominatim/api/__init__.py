@@ -23,7 +23,6 @@ from .types import (PlaceID as PlaceID,
                     Point as Point,
                     Bbox as Bbox,
                     GeometryFormat as GeometryFormat,
-                    LookupDetails as LookupDetails,
                     DataLayer as DataLayer)
 from .results import (SourceTable as SourceTable,
                       AddressLine as AddressLine,

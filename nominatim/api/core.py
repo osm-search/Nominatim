@@ -23,7 +23,7 @@ from nominatim.api.connection import SearchConnection
 from nominatim.api.status import get_status, StatusResult
 from nominatim.api.lookup import get_detailed_place, get_simple_place
 from nominatim.api.reverse import ReverseGeocoder
-from nominatim.api.types import PlaceRef, LookupDetails, AnyPoint, DataLayer
+import nominatim.api.types as ntyp
 from nominatim.api.results import DetailedResult, ReverseResult, SearchResults
 
 
@@ -128,32 +128,28 @@ class NominatimAPIAsync:
         return status
 
 
-    async def details(self, place: PlaceRef,
-                      details: Optional[LookupDetails] = None) -> Optional[DetailedResult]:
+    async def details(self, place: ntyp.PlaceRef, **params: Any) -> Optional[DetailedResult]:
         """ Get detailed information about a place in the database.
 
             Returns None if there is no entry under the given ID.
         """
         async with self.begin() as conn:
-            return await get_detailed_place(conn, place, details or LookupDetails())
+            return await get_detailed_place(conn, place,
+                                            ntyp.LookupDetails.from_kwargs(params))
 
 
-    async def lookup(self, places: Sequence[PlaceRef],
-                      details: Optional[LookupDetails] = None) -> SearchResults:
+    async def lookup(self, places: Sequence[ntyp.PlaceRef], **params: Any) -> SearchResults:
         """ Get simple information about a list of places.
 
             Returns a list of place information for all IDs that were found.
         """
-        if details is None:
-            details = LookupDetails()
+        details = ntyp.LookupDetails.from_kwargs(params)
         async with self.begin() as conn:
             return SearchResults(filter(None,
                                         [await get_simple_place(conn, p, details) for p in places]))
 
 
-    async def reverse(self, coord: AnyPoint, max_rank: Optional[int] = None,
-                      layer: Optional[DataLayer] = None,
-                      details: Optional[LookupDetails] = None) -> Optional[ReverseResult]:
+    async def reverse(self, coord: ntyp.AnyPoint, **params: Any) -> Optional[ReverseResult]:
         """ Find a place by its coordinates. Also known as reverse geocoding.
 
             Returns the closest result that can be found or None if
@@ -164,14 +160,8 @@ class NominatimAPIAsync:
             # There are no results to be expected outside valid coordinates.
             return None
 
-        if layer is None:
-            layer = DataLayer.ADDRESS | DataLayer.POI
-
-        max_rank = max(0, min(max_rank or 30, 30))
-
         async with self.begin() as conn:
-            geocoder = ReverseGeocoder(conn, max_rank, layer,
-                                       details or LookupDetails())
+            geocoder = ReverseGeocoder(conn, ntyp.ReverseDetails.from_kwargs(params))
             return await geocoder.lookup(coord)
 
 
@@ -206,29 +196,24 @@ class NominatimAPI:
         return self._loop.run_until_complete(self._async_api.status())
 
 
-    def details(self, place: PlaceRef,
-                details: Optional[LookupDetails] = None) -> Optional[DetailedResult]:
+    def details(self, place: ntyp.PlaceRef, **params: Any) -> Optional[DetailedResult]:
         """ Get detailed information about a place in the database.
         """
-        return self._loop.run_until_complete(self._async_api.details(place, details))
+        return self._loop.run_until_complete(self._async_api.details(place, **params))
 
 
-    def lookup(self, places: Sequence[PlaceRef],
-               details: Optional[LookupDetails] = None) -> SearchResults:
+    def lookup(self, places: Sequence[ntyp.PlaceRef], **params: Any) -> SearchResults:
         """ Get simple information about a list of places.
 
             Returns a list of place information for all IDs that were found.
         """
-        return self._loop.run_until_complete(self._async_api.lookup(places, details))
+        return self._loop.run_until_complete(self._async_api.lookup(places, **params))
 
 
-    def reverse(self, coord: AnyPoint, max_rank: Optional[int] = None,
-                layer: Optional[DataLayer] = None,
-                details: Optional[LookupDetails] = None) -> Optional[ReverseResult]:
+    def reverse(self, coord: ntyp.AnyPoint, **params: Any) -> Optional[ReverseResult]:
         """ Find a place by its coordinates. Also known as reverse geocoding.
 
             Returns the closest result that can be found or None if
             no place matches the given criteria.
         """
-        return self._loop.run_until_complete(
-                   self._async_api.reverse(coord, max_rank, layer, details))
+        return self._loop.run_until_complete(self._async_api.reverse(coord, **params))

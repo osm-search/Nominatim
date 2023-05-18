@@ -81,7 +81,7 @@ class TestCliDetailsCall:
                                      napi.Point(1.0, -3.0))
 
         monkeypatch.setattr(napi.NominatimAPI, 'details',
-                            lambda *args: result)
+                            lambda *args, **kwargs: result)
 
     @pytest.mark.parametrize("params", [('--node', '1'),
                                         ('--way', '1'),
@@ -106,7 +106,7 @@ class TestCliReverseCall:
                                     extratags={'extra':'Extra'})
 
         monkeypatch.setattr(napi.NominatimAPI, 'reverse',
-                            lambda *args: result)
+                            lambda *args, **kwargs: result)
 
 
     def test_reverse_simple(self, cli_call, tmp_path, capsys):
@@ -165,7 +165,7 @@ class TestCliLookupCall:
                                     extratags={'extra':'Extra'})
 
         monkeypatch.setattr(napi.NominatimAPI, 'lookup',
-                            lambda *args: napi.SearchResults([result]))
+                            lambda *args, **kwargs: napi.SearchResults([result]))
 
     def test_lookup_simple(self, cli_call, tmp_path, capsys):
         result = cli_call('lookup', '--project-dir', str(tmp_path),

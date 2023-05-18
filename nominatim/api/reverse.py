@@ -16,7 +16,7 @@ from nominatim.typing import SaColumn, SaSelect, SaFromClause, SaLabel, SaRow
 from nominatim.api.connection import SearchConnection
 import nominatim.api.results as nres
 from nominatim.api.logging import log
-from nominatim.api.types import AnyPoint, DataLayer, LookupDetails, GeometryFormat, Bbox
+from nominatim.api.types import AnyPoint, DataLayer, ReverseDetails, GeometryFormat, Bbox
 
 # In SQLAlchemy expression which compare with NULL need to be expressed with
 # the equal sign.
@@ -87,23 +87,34 @@ class ReverseGeocoder:
         coordinate.
     """
 
-    def __init__(self, conn: SearchConnection, max_rank: int, layer: DataLayer,
-                 details: LookupDetails) -> None:
+    def __init__(self, conn: SearchConnection, params: ReverseDetails) -> None:
         self.conn = conn
-        self.max_rank = max_rank
-        self.layer = layer
-        self.details = details
+        self.params = params
+
+
+    @property
+    def max_rank(self) -> int:
+        """ Return the maximum configured rank.
+        """
+        return self.params.max_rank
+
+
+    def has_geometries(self) -> bool:
+        """ Check if any geometries are requested.
+        """
+        return bool(self.params.geometry_output)
+
 
     def layer_enabled(self, *layer: DataLayer) -> bool:
         """ Return true when any of the given layer types are requested.
         """
-        return any(self.layer & l for l in layer)
+        return any(self.params.layers & l for l in layer)
 
 
     def layer_disabled(self, *layer: DataLayer) -> bool:
         """ Return true when none of the given layer types is requested.
         """
-        return not any(self.layer & l for l in layer)
+        return not any(self.params.layers & l for l in layer)
 
 
     def has_feature_layers(self) -> bool:
@@ -112,21 +123,21 @@ class ReverseGeocoder:
         return self.layer_enabled(DataLayer.RAILWAY, DataLayer.MANMADE, DataLayer.NATURAL)
 
     def _add_geometry_columns(self, sql: SaSelect, col: SaColumn) -> SaSelect:
-        if not self.details.geometry_output:
+        if not self.has_geometries():
             return sql
 
         out = []
 
-        if self.details.geometry_simplification > 0.0:
-            col = col.ST_SimplifyPreserveTopology(self.details.geometry_simplification)
+        if self.params.geometry_simplification > 0.0:
+            col = col.ST_SimplifyPreserveTopology(self.params.geometry_simplification)
 
-        if self.details.geometry_output & GeometryFormat.GEOJSON:
+        if self.params.geometry_output & GeometryFormat.GEOJSON:
             out.append(col.ST_AsGeoJSON().label('geometry_geojson'))
-        if self.details.geometry_output & GeometryFormat.TEXT:
+        if self.params.geometry_output & GeometryFormat.TEXT:
             out.append(col.ST_AsText().label('geometry_text'))
-        if self.details.geometry_output & GeometryFormat.KML:
+        if self.params.geometry_output & GeometryFormat.KML:
             out.append(col.ST_AsKML().label('geometry_kml'))
-        if self.details.geometry_output & GeometryFormat.SVG:
+        if self.params.geometry_output & GeometryFormat.SVG:
             out.append(col.ST_AsSVG().label('geometry_svg'))
 
         return sql.add_columns(*out)
@@ -233,7 +244,7 @@ class ReverseGeocoder:
                         inner.c.postcode, inner.c.country_code,
                         inner.c.distance)
 
-        if self.details.geometry_output:
+        if self.has_geometries():
             sub = sql.subquery()
             sql = self._add_geometry_columns(sql, sub.c.centroid)
 
@@ -263,7 +274,7 @@ class ReverseGeocoder:
                         inner.c.postcode,
                         inner.c.distance)
 
-        if self.details.geometry_output:
+        if self.has_geometries():
             sub = sql.subquery()
             sql = self._add_geometry_columns(sql, sub.c.centroid)
 
@@ -514,9 +525,7 @@ class ReverseGeocoder:
         """ Look up a single coordinate. Returns the place information,
             if a place was found near the coordinates or None otherwise.
         """
-        log().function('reverse_lookup',
-                       coord=coord, max_rank=self.max_rank,
-                       layer=self.layer, details=self.details)
+        log().function('reverse_lookup', coord=coord, params=self.params)
 
 
         wkt = WKTElement(f'POINT({coord[0]} {coord[1]})', srid=4326)
@@ -539,6 +548,6 @@ class ReverseGeocoder:
             result.distance = row.distance
             if hasattr(row, 'bbox'):
                 result.bbox = Bbox.from_wkb(row.bbox.data)
-            await nres.add_result_details(self.conn, result, self.details)
+            await nres.add_result_details(self.conn, result, self.params)
 
         return result

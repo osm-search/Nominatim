@@ -95,7 +95,7 @@ def test_lookup_multiple_places(apiobj):
 
     result = apiobj.api.lookup((napi.OsmID('W', 1),
                                 napi.OsmID('W', 4),
-                                napi.OsmID('W', 9928)), napi.LookupDetails())
+                                napi.OsmID('W', 9928)))
 
     assert len(result) == 2
 

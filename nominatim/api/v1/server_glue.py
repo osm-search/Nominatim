@@ -8,7 +8,7 @@
 Generic part of the server implementation of the v1 API.
 Combine with the scaffolding provided for the various Python ASGI frameworks.
 """
-from typing import Optional, Any, Type, Callable, NoReturn, cast
+from typing import Optional, Any, Type, Callable, NoReturn, Dict, cast
 from functools import reduce
 import abc
 import math
@@ -226,31 +226,32 @@ class ASGIAdaptor(abc.ABC):
         return fmt
 
 
-    def parse_geometry_details(self, fmt: str) -> napi.LookupDetails:
+    def parse_geometry_details(self, fmt: str) -> Dict[str, Any]:
         """ Create details strucutre from the supplied geometry parameters.
         """
-        details = napi.LookupDetails(address_details=True,
-                                     geometry_simplification=
-                                       self.get_float('polygon_threshold', 0.0))
         numgeoms = 0
+        output = napi.GeometryFormat.NONE
         if self.get_bool('polygon_geojson', False):
-            details.geometry_output |= napi.GeometryFormat.GEOJSON
+            output |= napi.GeometryFormat.GEOJSON
             numgeoms += 1
         if fmt not in ('geojson', 'geocodejson'):
             if self.get_bool('polygon_text', False):
-                details.geometry_output |= napi.GeometryFormat.TEXT
+                output |= napi.GeometryFormat.TEXT
                 numgeoms += 1
             if self.get_bool('polygon_kml', False):
-                details.geometry_output |= napi.GeometryFormat.KML
+                output |= napi.GeometryFormat.KML
                 numgeoms += 1
             if self.get_bool('polygon_svg', False):
-                details.geometry_output |= napi.GeometryFormat.SVG
+                output |= napi.GeometryFormat.SVG
                 numgeoms += 1
 
         if numgeoms > self.config().get_int('POLYGON_OUTPUT_MAX_TYPES'):
             self.raise_error('Too many polgyon output options selected.')
 
-        return details
+        return {'address_details': True,
+                'geometry_simplification': self.get_float('polygon_threshold', 0.0),
+                'geometry_output': output
+               }
 
 
 async def status_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> Any:
@@ -285,17 +286,17 @@ async def details_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> 
 
     debug = params.setup_debugging()
 
-    details = napi.LookupDetails(address_details=params.get_bool('addressdetails', False),
-                                 linked_places=params.get_bool('linkedplaces', False),
-                                 parented_places=params.get_bool('hierarchy', False),
-                                 keywords=params.get_bool('keywords', False))
-
-    if params.get_bool('polygon_geojson', False):
-        details.geometry_output = napi.GeometryFormat.GEOJSON
-
     locales = napi.Locales.from_accept_languages(params.get_accepted_languages())
 
-    result = await api.details(place, details)
+    result = await api.details(place,
+                               address_details=params.get_bool('addressdetails', False),
+                               linked_places=params.get_bool('linkedplaces', False),
+                               parented_places=params.get_bool('hierarchy', False),
+                               keywords=params.get_bool('keywords', False),
+                               geometry_output = napi.GeometryFormat.GEOJSON
+                                                 if params.get_bool('polygon_geojson', False)
+                                                 else napi.GeometryFormat.NONE
+                              )
 
     if debug:
         return params.build_response(loglib.get_and_disable())
@@ -318,15 +319,13 @@ async def reverse_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> 
     debug = params.setup_debugging()
     coord = napi.Point(params.get_float('lon'), params.get_float('lat'))
     locales = napi.Locales.from_accept_languages(params.get_accepted_languages())
-    details = params.parse_geometry_details(fmt)
-
     zoom = max(0, min(18, params.get_int('zoom', 18)))
 
+    details = params.parse_geometry_details(fmt)
+    details['max_rank'] = REVERSE_MAX_RANKS[zoom]
+    details['layers'] = params.get_layers()
 
-    result = await api.reverse(coord, REVERSE_MAX_RANKS[zoom],
-                               params.get_layers() or
-                                 napi.DataLayer.ADDRESS | napi.DataLayer.POI,
-                               details)
+    result = await api.reverse(coord, **details)
 
     if debug:
         return params.build_response(loglib.get_and_disable())
@@ -357,7 +356,7 @@ async def lookup_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> A
             places.append(napi.OsmID(oid[0], int(oid[1:])))
 
     if places:
-        results = await api.lookup(places, details)
+        results = await api.lookup(places, **details)
     else:
         results = napi.SearchResults()
 

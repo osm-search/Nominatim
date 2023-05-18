@@ -7,10 +7,12 @@
 """
 Complex datatypes used by the Nominatim API.
 """
-from typing import Optional, Union, Tuple, NamedTuple
+from typing import Optional, Union, Tuple, NamedTuple, TypeVar, Type, Dict, Any
 import dataclasses
 import enum
 from struct import unpack
+
+from nominatim.errors import UsageError
 
 @dataclasses.dataclass
 class PlaceID:
@@ -164,10 +166,22 @@ class GeometryFormat(enum.Flag):
     TEXT = enum.auto()
 
 
+class DataLayer(enum.Flag):
+    """ Layer types that can be selected for reverse and forward search.
+    """
+    POI = enum.auto()
+    ADDRESS = enum.auto()
+    RAILWAY = enum.auto()
+    MANMADE = enum.auto()
+    NATURAL = enum.auto()
+
+
+TParam = TypeVar('TParam', bound='LookupDetails') # pylint: disable=invalid-name
+
 @dataclasses.dataclass
 class LookupDetails:
     """ Collection of parameters that define the amount of details
-        returned with a search result.
+        returned with a lookup or details result.
     """
     geometry_output: GeometryFormat = GeometryFormat.NONE
     """ Add the full geometry of the place to the result. Multiple
@@ -194,12 +208,39 @@ class LookupDetails:
         more the geometry gets simplified.
     """
 
+    @classmethod
+    def from_kwargs(cls: Type[TParam], kwargs: Dict[str, Any]) -> TParam:
+        """ Load the data fields of the class from a dictionary.
+            Unknown entries in the dictionary are ignored, missing ones
+            get the default setting.
 
-class DataLayer(enum.Flag):
-    """ Layer types that can be selected for reverse and forward search.
+            The function supports type checking and throws a UsageError
+            when the value does not fit.
+        """
+        def _check_field(v: Any, field: 'dataclasses.Field[Any]') -> Any:
+            if v is None:
+                return field.default_factory() \
+                       if field.default_factory != dataclasses.MISSING \
+                       else field.default
+            if field.metadata and 'transform' in field.metadata:
+                return field.metadata['transform'](v)
+            if not isinstance(v, field.type):
+                raise UsageError(f"Parameter '{field.name}' needs to be of {field.type!s}.")
+            return v
+
+        return cls(**{f.name: _check_field(kwargs[f.name], f)
+                      for f in dataclasses.fields(cls) if f.name in kwargs})
+
+
+@dataclasses.dataclass
+class ReverseDetails(LookupDetails):
+    """ Collection of parameters for the reverse call.
     """
-    POI = enum.auto()
-    ADDRESS = enum.auto()
-    RAILWAY = enum.auto()
-    MANMADE = enum.auto()
-    NATURAL = enum.auto()
+    max_rank: int = dataclasses.field(default=30,
+                                      metadata={'transform': lambda v: max(0, min(v, 30))}
+                                     )
+    """ Highest address rank to return.
+    """
+    layers: DataLayer = DataLayer.ADDRESS | DataLayer.POI
+    """ Filter which kind of data to include.
+    """

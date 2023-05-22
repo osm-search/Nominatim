@@ -21,10 +21,7 @@ from nominatim.typing import SaRow
 from nominatim.api.connection import SearchConnection
 from nominatim.api.logging import log
 from nominatim.api.search import query as qmod
-
-# XXX: TODO
-class AbstractQueryAnalyzer:
-    pass
+from nominatim.api.search.query_analyzer_factory import AbstractQueryAnalyzer
 
 
 DB_TO_TOKEN_TYPE = {

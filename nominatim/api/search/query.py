@@ -114,6 +114,24 @@ class TokenRange(NamedTuple):
     start: int
     end: int
 
+    def replace_start(self, new_start: int) -> 'TokenRange':
+        """ Return a new token range with the new start.
+        """
+        return TokenRange(new_start, self.end)
+
+
+    def replace_end(self, new_end: int) -> 'TokenRange':
+        """ Return a new token range with the new end.
+        """
+        return TokenRange(self.start, new_end)
+
+
+    def split(self, index: int) -> Tuple['TokenRange', 'TokenRange']:
+        """ Split the span into two spans at the given index.
+            The index must be within the span.
+        """
+        return self.replace_end(index), self.replace_start(index)
+
 
 @dataclasses.dataclass
 class TokenList:

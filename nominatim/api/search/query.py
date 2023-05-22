@@ -7,7 +7,7 @@
 """
 Datastructures for a tokenized query.
 """
-from typing import List, Tuple, Optional, NamedTuple
+from typing import List, Tuple, Optional, NamedTuple, Iterator
 from abc import ABC, abstractmethod
 import dataclasses
 import enum
@@ -124,6 +124,13 @@ class TokenList:
     tokens: List[Token]
 
 
+    def add_penalty(self, penalty: float) -> None:
+        """ Add the given penalty to all tokens in the list.
+        """
+        for token in self.tokens:
+            token.penalty += penalty
+
+
 @dataclasses.dataclass
 class QueryNode:
     """ A node of the querry representing a break between terms.
@@ -224,6 +231,14 @@ class QueryStruct:
         """
         return [next(iter(self.get_tokens(TokenRange(i, i+1), TokenType.PARTIAL)))
                           for i in range(trange.start, trange.end)]
+
+
+    def iter_token_lists(self) -> Iterator[Tuple[int, QueryNode, TokenList]]:
+        """ Iterator over all token lists in the query.
+        """
+        for i, node in enumerate(self.nodes):
+            for tlist in node.starting:
+                yield i, node, tlist
 
 
     def find_lookup_word_by_id(self, token: int) -> str:

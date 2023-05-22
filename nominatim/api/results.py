@@ -23,6 +23,7 @@ from nominatim.api.types import Point, Bbox, LookupDetails
 from nominatim.api.connection import SearchConnection
 from nominatim.api.logging import log
 from nominatim.api.localization import Locales
+from nominatim.api.search.query_analyzer_factory import make_query_analyzer
 
 # This file defines complex result data classes.
 # pylint: disable=too-many-instance-attributes
@@ -420,10 +421,12 @@ async def complete_keywords(conn: SearchConnection, result: BaseResult) -> None:
 
     result.name_keywords = []
     result.address_keywords = []
-    for name_tokens, address_tokens in await conn.execute(sql):
-        t = conn.t.word
-        sel = sa.select(t.c.word_id, t.c.word_token, t.c.word)
 
+    await make_query_analyzer(conn)
+    t = conn.t.meta.tables['word']
+    sel = sa.select(t.c.word_id, t.c.word_token, t.c.word)
+
+    for name_tokens, address_tokens in await conn.execute(sql):
         for row in await conn.execute(sel.where(t.c.word_id == sa.any_(name_tokens))):
             result.name_keywords.append(WordInfo(*row))
 

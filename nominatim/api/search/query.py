@@ -169,7 +169,10 @@ class QueryNode:
             and ending at the node 'end'. Returns 'None' if no such
             tokens exist.
         """
-        return next((t.tokens for t in self.starting if t.end == end and t.ttype == ttype), None)
+        for tlist in self.starting:
+            if tlist.end == end and tlist.ttype == ttype:
+                return tlist.tokens
+        return None
 
 
 @dataclasses.dataclass

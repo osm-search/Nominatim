@@ -29,7 +29,7 @@ def make_query(*args):
 
         start = len(q.nodes) - 1
         for end, ttype in tlist:
-            q.add_token(TokenRange(start, end), ttype, [dummy])
+            q.add_token(TokenRange(start, end), ttype, dummy)
 
     q.add_node(BreakType.END, PhraseType.NONE)
 

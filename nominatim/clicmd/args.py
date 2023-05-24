@@ -147,6 +147,7 @@ class NominatimArgs:
 
     # Arguments to 'search'
     query: Optional[str]
+    amenity: Optional[str]
     street: Optional[str]
     city: Optional[str]
     county: Optional[str]
@@ -155,7 +156,7 @@ class NominatimArgs:
     postalcode: Optional[str]
     countrycodes: Optional[str]
     exclude_place_ids: Optional[str]
-    limit: Optional[int]
+    limit: int
     viewbox: Optional[str]
     bounded: bool
     dedupe: bool

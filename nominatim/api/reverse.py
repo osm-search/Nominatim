@@ -548,6 +548,6 @@ class ReverseGeocoder:
             result.distance = row.distance
             if hasattr(row, 'bbox'):
                 result.bbox = Bbox.from_wkb(row.bbox.data)
-            await nres.add_result_details(self.conn, result, self.params)
+            await nres.add_result_details(self.conn, [result], self.params)
 
         return result

@@ -189,13 +189,13 @@ async def get_detailed_place(conn: SearchConnection, place: ntyp.PlaceRef,
     if indexed_date is not None:
         result.indexed_date = indexed_date.replace(tzinfo=dt.timezone.utc)
 
-    await nres.add_result_details(conn, result, details)
+    await nres.add_result_details(conn, [result], details)
 
     return result
 
 
 async def get_simple_place(conn: SearchConnection, place: ntyp.PlaceRef,
-                             details: ntyp.LookupDetails) -> Optional[nres.SearchResult]:
+                           details: ntyp.LookupDetails) -> Optional[nres.SearchResult]:
     """ Retrieve a place as a simple search result from the database.
     """
     log().function('get_simple_place', place=place, details=details)
@@ -234,6 +234,6 @@ async def get_simple_place(conn: SearchConnection, place: ntyp.PlaceRef,
     assert result is not None
     result.bbox = getattr(row, 'bbox', None)
 
-    await nres.add_result_details(conn, result, details)
+    await nres.add_result_details(conn, [result], details)
 
     return result

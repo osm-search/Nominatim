@@ -17,6 +17,36 @@ import nominatim.api.search.db_search_fields as dbf
 import nominatim.api.search.db_searches as dbs
 from nominatim.api.logging import log
 
+
+def wrap_near_search(categories: List[Tuple[str, str]],
+                     search: dbs.AbstractSearch) -> dbs.NearSearch:
+    """ Create a new search that wraps the given search in a search
+        for near places of the given category.
+    """
+    return dbs.NearSearch(penalty=search.penalty,
+                          categories=dbf.WeightedCategories(categories,
+                                                            [0.0] * len(categories)),
+                          search=search)
+
+
+def build_poi_search(category: List[Tuple[str, str]],
+                     countries: Optional[List[str]]) -> dbs.PoiSearch:
+    """ Create a new search for places by the given category, possibly
+        constraint to the given countries.
+    """
+    if countries:
+        ccs = dbf.WeightedStrings(countries, [0.0] * len(countries))
+    else:
+        ccs = dbf.WeightedStrings([], [])
+
+    class _PoiData(dbf.SearchData):
+        penalty = 0.0
+        qualifiers = dbf.WeightedCategories(category, [0.0] * len(category))
+        countries=ccs
+
+    return dbs.PoiSearch(_PoiData())
+
+
 class SearchBuilder:
     """ Build the abstract search queries from token assignments.
     """

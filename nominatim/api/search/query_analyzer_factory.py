@@ -7,14 +7,16 @@
 """
 Factory for creating a query analyzer for the configured tokenizer.
 """
-from typing import List, cast
+from typing import List, cast, TYPE_CHECKING
 from abc import ABC, abstractmethod
 from pathlib import Path
 import importlib
 
 from nominatim.api.logging import log
 from nominatim.api.connection import SearchConnection
-from nominatim.api.search.query import Phrase, QueryStruct
+
+if TYPE_CHECKING:
+    from nominatim.api.search.query import Phrase, QueryStruct
 
 class AbstractQueryAnalyzer(ABC):
     """ Class for analysing incomming queries.
@@ -23,7 +25,7 @@ class AbstractQueryAnalyzer(ABC):
     """
 
     @abstractmethod
-    async def analyze_query(self, phrases: List[Phrase]) -> QueryStruct:
+    async def analyze_query(self, phrases: List['Phrase']) -> 'QueryStruct':
         """ Analyze the given phrases and return the tokenized query.
         """
 

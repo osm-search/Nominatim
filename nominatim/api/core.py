@@ -7,7 +7,7 @@
 """
 Implementation of classes for API access via libraries.
 """
-from typing import Mapping, Optional, Any, AsyncIterator, Dict, Sequence
+from typing import Mapping, Optional, Any, AsyncIterator, Dict, Sequence, List, Tuple
 import asyncio
 import contextlib
 from pathlib import Path
@@ -15,7 +15,7 @@ from pathlib import Path
 import sqlalchemy as sa
 import sqlalchemy.ext.asyncio as sa_asyncio
 
-
+from nominatim.errors import UsageError
 from nominatim.db.sqlalchemy_schema import SearchTables
 from nominatim.db.async_core_library import PGCORE_LIB, PGCORE_ERROR
 from nominatim.config import Configuration
@@ -23,6 +23,7 @@ from nominatim.api.connection import SearchConnection
 from nominatim.api.status import get_status, StatusResult
 from nominatim.api.lookup import get_detailed_place, get_simple_place
 from nominatim.api.reverse import ReverseGeocoder
+from nominatim.api.search import ForwardGeocoder, Phrase, PhraseType, make_query_analyzer
 import nominatim.api.types as ntyp
 from nominatim.api.results import DetailedResult, ReverseResult, SearchResults
 
@@ -133,9 +134,11 @@ class NominatimAPIAsync:
 
             Returns None if there is no entry under the given ID.
         """
+        details = ntyp.LookupDetails.from_kwargs(params)
         async with self.begin() as conn:
-            return await get_detailed_place(conn, place,
-                                            ntyp.LookupDetails.from_kwargs(params))
+            if details.keywords:
+                await make_query_analyzer(conn)
+            return await get_detailed_place(conn, place, details)
 
 
     async def lookup(self, places: Sequence[ntyp.PlaceRef], **params: Any) -> SearchResults:
@@ -145,6 +148,8 @@ class NominatimAPIAsync:
         """
         details = ntyp.LookupDetails.from_kwargs(params)
         async with self.begin() as conn:
+            if details.keywords:
+                await make_query_analyzer(conn)
             return SearchResults(filter(None,
                                         [await get_simple_place(conn, p, details) for p in places]))
 
@@ -160,9 +165,105 @@ class NominatimAPIAsync:
             # There are no results to be expected outside valid coordinates.
             return None
 
+        details = ntyp.ReverseDetails.from_kwargs(params)
         async with self.begin() as conn:
-            geocoder = ReverseGeocoder(conn, ntyp.ReverseDetails.from_kwargs(params))
+            if details.keywords:
+                await make_query_analyzer(conn)
+            geocoder = ReverseGeocoder(conn, details)
             return await geocoder.lookup(coord)
+
+
+    async def search(self, query: str, **params: Any) -> SearchResults:
+        """ Find a place by free-text search. Also known as forward geocoding.
+        """
+        query = query.strip()
+        if not query:
+            raise UsageError('Nothing to search for.')
+
+        async with self.begin() as conn:
+            geocoder = ForwardGeocoder(conn, ntyp.SearchDetails.from_kwargs(params))
+            phrases = [Phrase(PhraseType.NONE, p.strip()) for p in query.split(',')]
+            return await geocoder.lookup(phrases)
+
+
+    # pylint: disable=too-many-arguments,too-many-branches
+    async def search_address(self, amenity: Optional[str] = None,
+                             street: Optional[str] = None,
+                             city: Optional[str] = None,
+                             county: Optional[str] = None,
+                             state: Optional[str] = None,
+                             country: Optional[str] = None,
+                             postalcode: Optional[str] = None,
+                             **params: Any) -> SearchResults:
+        """ Find an address using structured search.
+        """
+        async with self.begin() as conn:
+            details = ntyp.SearchDetails.from_kwargs(params)
+
+            phrases: List[Phrase] = []
+
+            if amenity:
+                phrases.append(Phrase(PhraseType.AMENITY, amenity))
+            if street:
+                phrases.append(Phrase(PhraseType.STREET, street))
+            if city:
+                phrases.append(Phrase(PhraseType.CITY, city))
+            if county:
+                phrases.append(Phrase(PhraseType.COUNTY, county))
+            if state:
+                phrases.append(Phrase(PhraseType.STATE, state))
+            if postalcode:
+                phrases.append(Phrase(PhraseType.POSTCODE, postalcode))
+            if country:
+                phrases.append(Phrase(PhraseType.COUNTRY, country))
+
+            if not phrases:
+                raise UsageError('Nothing to search for.')
+
+            if amenity or street:
+                details.restrict_min_max_rank(26, 30)
+            elif city:
+                details.restrict_min_max_rank(13, 25)
+            elif county:
+                details.restrict_min_max_rank(10, 12)
+            elif state:
+                details.restrict_min_max_rank(5, 9)
+            elif postalcode:
+                details.restrict_min_max_rank(5, 11)
+            else:
+                details.restrict_min_max_rank(4, 4)
+
+            if 'layers' not in params:
+                details.layers = ntyp.DataLayer.ADDRESS
+                if amenity:
+                    details.layers |= ntyp.DataLayer.POI
+
+            geocoder = ForwardGeocoder(conn, details)
+            return await geocoder.lookup(phrases)
+
+
+    async def search_category(self, categories: List[Tuple[str, str]],
+                              near_query: Optional[str] = None,
+                              **params: Any) -> SearchResults:
+        """ Find an object of a certain category near another place.
+            The near place may either be given as an unstructured search
+            query in itself or as coordinates.
+        """
+        if not categories:
+            return SearchResults()
+
+        details = ntyp.SearchDetails.from_kwargs(params)
+        async with self.begin() as conn:
+            if near_query:
+                phrases = [Phrase(PhraseType.NONE, p) for p in near_query.split(',')]
+            else:
+                phrases = []
+                if details.keywords:
+                    await make_query_analyzer(conn)
+
+            geocoder = ForwardGeocoder(conn, details)
+            return await geocoder.lookup_pois(categories, phrases)
+
 
 
 class NominatimAPI:
@@ -217,3 +318,38 @@ class NominatimAPI:
             no place matches the given criteria.
         """
         return self._loop.run_until_complete(self._async_api.reverse(coord, **params))
+
+
+    def search(self, query: str, **params: Any) -> SearchResults:
+        """ Find a place by free-text search. Also known as forward geocoding.
+        """
+        return self._loop.run_until_complete(
+                   self._async_api.search(query, **params))
+
+
+    # pylint: disable=too-many-arguments
+    def search_address(self, amenity: Optional[str] = None,
+                       street: Optional[str] = None,
+                       city: Optional[str] = None,
+                       county: Optional[str] = None,
+                       state: Optional[str] = None,
+                       country: Optional[str] = None,
+                       postalcode: Optional[str] = None,
+                       **params: Any) -> SearchResults:
+        """ Find an address using structured search.
+        """
+        return self._loop.run_until_complete(
+                   self._async_api.search_address(amenity, street, city, county,
+                                                  state, country, postalcode, **params))
+
+
+    def search_category(self, categories: List[Tuple[str, str]],
+                        near_query: Optional[str] = None,
+                        **params: Any) -> SearchResults:
+        """ Find an object of a certain category near another place.
+            The near place may either be given as an unstructured search
+            query in itself or as a geographic area through the
+            viewbox or near parameters.
+        """
+        return self._loop.run_until_complete(
+                   self._async_api.search_category(categories, near_query, **params))

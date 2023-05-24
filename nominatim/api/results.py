@@ -103,6 +103,9 @@ class BaseResult:
     place_id : Optional[int] = None
     osm_object: Optional[Tuple[str, int]] = None
 
+    locale_name: Optional[str] = None
+    display_name: Optional[str] = None
+
     names: Optional[Dict[str, str]] = None
     address: Optional[Dict[str, str]] = None
     extratags: Optional[Dict[str, str]] = None
@@ -145,6 +148,18 @@ class BaseResult:
             search rank.
         """
         return self.importance or (0.7500001 - (self.rank_search/40.0))
+
+
+    def localize(self, locales: Locales) -> None:
+        """ Fill the locale_name and the display_name field for the
+            place and, if available, its address information.
+        """
+        self.locale_name = locales.display_name(self.names)
+        if self.address_rows:
+            self.display_name = ', '.join(self.address_rows.localize(locales))
+        else:
+            self.display_name = self.locale_name
+
 
 
 BaseResultT = TypeVar('BaseResultT', bound=BaseResult)

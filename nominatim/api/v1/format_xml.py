@@ -37,13 +37,7 @@ def _write_xml_address(root: ET.Element, address: napi.AddressLines,
 
 
 def _create_base_entry(result: Union[napi.ReverseResult, napi.SearchResult],
-                       root: ET.Element, simple: bool,
-                       locales: napi.Locales) -> ET.Element:
-    if result.address_rows:
-        label_parts = result.address_rows.localize(locales)
-    else:
-        label_parts = []
-
+                       root: ET.Element, simple: bool) -> ET.Element:
     place = ET.SubElement(root, 'result' if simple else 'place')
     if result.place_id is not None:
         place.set('place_id', str(result.place_id))
@@ -54,9 +48,9 @@ def _create_base_entry(result: Union[napi.ReverseResult, napi.SearchResult],
         place.set('osm_id', str(result.osm_object[1]))
     if result.names and 'ref' in result.names:
         place.set('ref', result.names['ref'])
-    elif label_parts:
+    elif result.locale_name:
         # bug reproduced from PHP
-        place.set('ref', label_parts[0])
+        place.set('ref', result.locale_name)
     place.set('lat', f"{result.centroid.lat:.7f}")
     place.set('lon', f"{result.centroid.lon:.7f}")
 
@@ -78,9 +72,9 @@ def _create_base_entry(result: Union[napi.ReverseResult, napi.SearchResult],
             place.set('geojson', result.geometry['geojson'])
 
     if simple:
-        place.text = ', '.join(label_parts)
+        place.text = result.display_name or ''
     else:
-        place.set('display_name', ', '.join(label_parts))
+        place.set('display_name', result.display_name or '')
         place.set('class', result.category[0])
         place.set('type', result.category[1])
         place.set('importance', str(result.calculated_importance()))
@@ -95,8 +89,6 @@ def format_base_xml(results: Union[napi.ReverseResults, napi.SearchResults],
     """ Format the result into an XML response. With 'simple' exactly one
         result will be output, otherwise a list.
     """
-    locales = options.get('locales', napi.Locales())
-
     root = ET.Element(xml_root_tag)
     root.set('timestamp', dt.datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S +00:00'))
     root.set('attribution', cl.OSM_ATTRIBUTION)
@@ -107,7 +99,7 @@ def format_base_xml(results: Union[napi.ReverseResults, napi.SearchResults],
         ET.SubElement(root, 'error').text = 'Unable to geocode'
 
     for result in results:
-        place = _create_base_entry(result, root, simple, locales)
+        place = _create_base_entry(result, root, simple)
 
         if not simple and options.get('icon_base_url', None):
             icon = cl.ICONS.get(result.category)

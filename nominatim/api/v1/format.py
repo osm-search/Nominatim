@@ -111,16 +111,16 @@ def _format_details_json(result: napi.DetailedResult, options: Mapping[str, Any]
     out.keyval('category', result.category[0])\
          .keyval('type', result.category[1])\
          .keyval('admin_level', result.admin_level)\
-         .keyval('localname', locales.display_name(result.names))\
-         .keyval_not_none('names', result.names or None)\
-         .keyval_not_none('addresstags', result.address or None)\
+         .keyval('localname', result.locale_name or '')\
+         .keyval('names', result.names or {})\
+         .keyval('addresstags', result.address or {})\
          .keyval_not_none('housenumber', result.housenumber)\
          .keyval_not_none('calculated_postcode', result.postcode)\
          .keyval_not_none('country_code', result.country_code)\
          .keyval_not_none('indexed_date', result.indexed_date, lambda v: v.isoformat())\
          .keyval_not_none('importance', result.importance)\
          .keyval('calculated_importance', result.calculated_importance())\
-         .keyval_not_none('extratags', result.extratags or None)\
+         .keyval('extratags', result.extratags or {})\
          .keyval_not_none('calculated_wikipedia', result.wikipedia)\
          .keyval('rank_address', result.rank_address)\
          .keyval('rank_search', result.rank_search)\

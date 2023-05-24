@@ -179,11 +179,11 @@ class APIReverse:
             return 0
 
         if result:
+            result.localize(args.get_locales(api.config.DEFAULT_LANGUAGE))
             output = api_output.format_result(
                         napi.ReverseResults([result]),
                         args.format,
-                        {'locales': args.get_locales(api.config.DEFAULT_LANGUAGE),
-                         'extratags': args.extratags,
+                        {'extratags': args.extratags,
                          'namedetails': args.namedetails,
                          'addressdetails': args.addressdetails})
             if args.format != 'xml':
@@ -236,11 +236,13 @@ class APILookup:
                              geometry_output=args.get_geometry_output(),
                              geometry_simplification=args.polygon_threshold or 0.0)
 
+        for result in results:
+            result.localize(args.get_locales(api.config.DEFAULT_LANGUAGE))
+
         output = api_output.format_result(
                     results,
                     args.format,
-                    {'locales': args.get_locales(api.config.DEFAULT_LANGUAGE),
-                     'extratags': args.extratags,
+                    {'extratags': args.extratags,
                      'namedetails': args.namedetails,
                      'addressdetails': args.addressdetails})
         if args.format != 'xml':
@@ -320,10 +322,13 @@ class APIDetails:
 
 
         if result:
+            locales = args.get_locales(api.config.DEFAULT_LANGUAGE)
+            result.localize(locales)
+
             output = api_output.format_result(
                         result,
                         'json',
-                        {'locales': args.get_locales(api.config.DEFAULT_LANGUAGE),
+                        {'locales': locales,
                          'group_hierarchy': args.group_hierarchy})
             # reformat the result, so it is pretty-printed
             json.dump(json.loads(output), sys.stdout, indent=4, ensure_ascii=False)

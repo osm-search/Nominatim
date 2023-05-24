@@ -305,6 +305,8 @@ async def details_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> 
     if result is None:
         params.raise_error('No place with that OSM ID found.', status=404)
 
+    result.localize(locales)
+
     output = formatting.format_result(result, fmt,
                  {'locales': locales,
                   'group_hierarchy': params.get_bool('group_hierarchy', False),
@@ -330,10 +332,12 @@ async def reverse_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> 
     if debug:
         return params.build_response(loglib.get_and_disable())
 
-    fmt_options = {'locales': locales,
-                   'extratags': params.get_bool('extratags', False),
+    fmt_options = {'extratags': params.get_bool('extratags', False),
                    'namedetails': params.get_bool('namedetails', False),
                    'addressdetails': params.get_bool('addressdetails', True)}
+
+    if result:
+        result.localize(locales)
 
     output = formatting.format_result(napi.ReverseResults([result] if result else []),
                                       fmt, fmt_options)
@@ -363,10 +367,12 @@ async def lookup_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> A
     if debug:
         return params.build_response(loglib.get_and_disable())
 
-    fmt_options = {'locales': locales,
-                   'extratags': params.get_bool('extratags', False),
+    fmt_options = {'extratags': params.get_bool('extratags', False),
                    'namedetails': params.get_bool('namedetails', False),
                    'addressdetails': params.get_bool('addressdetails', True)}
+
+    for result in results:
+        result.localize(locales)
 
     output = formatting.format_result(results, fmt, fmt_options)
 

@@ -15,6 +15,9 @@ import enum
 import math
 from struct import unpack
 
+from geoalchemy2 import WKTElement
+import geoalchemy2.functions
+
 from nominatim.errors import UsageError
 
 # pylint: disable=no-member,too-many-boolean-expressions,too-many-instance-attributes
@@ -119,6 +122,12 @@ class Point(NamedTuple):
         return Point(x, y)
 
 
+    def sql_value(self) -> WKTElement:
+        """ Create an SQL expression for the point.
+        """
+        return WKTElement(f'POINT({self.x} {self.y})', srid=4326)
+
+
 
 AnyPoint = Union[Point, Tuple[float, float]]
 
@@ -163,11 +172,25 @@ class Bbox:
         return self.coords[2]
 
 
+    @property
+    def area(self) -> float:
+        """ Return the area of the box in WGS84.
+        """
+        return (self.coords[2] - self.coords[0]) * (self.coords[3] - self.coords[1])
+
+
+    def sql_value(self) -> Any:
+        """ Create an SQL expression for the box.
+        """
+        return geoalchemy2.functions.ST_MakeEnvelope(*self.coords, 4326)
+
+
     def contains(self, pt: Point) -> bool:
         """ Check if the point is inside or on the boundary of the box.
         """
         return self.coords[0] <= pt[0] and self.coords[1] <= pt[1]\
                and self.coords[2] >= pt[0] and self.coords[3] >= pt[1]
+
 
     @staticmethod
     def from_wkb(wkb: Optional[bytes]) -> 'Optional[Bbox]':
@@ -418,7 +441,7 @@ class SearchDetails(LookupDetails):
         if self.viewbox is not None:
             xext = (self.viewbox.maxlon - self.viewbox.minlon)/2
             yext = (self.viewbox.maxlat - self.viewbox.minlat)/2
-            self.viewbox_x2 = Bbox(self.viewbox.minlon - xext, self.viewbox.maxlon - yext,
+            self.viewbox_x2 = Bbox(self.viewbox.minlon - xext, self.viewbox.minlat - yext,
                                    self.viewbox.maxlon + xext, self.viewbox.maxlat + yext)
 
 

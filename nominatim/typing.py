@@ -63,8 +63,10 @@ else:
     TypeAlias = str
 
 SaSelect: TypeAlias = 'sa.Select[Any]'
+SaScalarSelect: TypeAlias = 'sa.ScalarSelect[Any]'
 SaRow: TypeAlias = 'sa.Row[Any]'
 SaColumn: TypeAlias = 'sa.ColumnElement[Any]'
+SaExpression: TypeAlias = 'sa.ColumnElement[bool]'
 SaLabel: TypeAlias = 'sa.Label[Any]'
 SaFromClause: TypeAlias = 'sa.FromClause'
 SaSelectable: TypeAlias = 'sa.Selectable'

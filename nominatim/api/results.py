@@ -179,6 +179,15 @@ class SearchResult(BaseResult):
     """ A search result for forward geocoding.
     """
     bbox: Optional[Bbox] = None
+    accuracy: float = 0.0
+
+
+    @property
+    def ranking(self) -> float:
+        """ Return the ranking, a combined measure of accuracy and importance.
+        """
+        return (self.accuracy if self.accuracy is not None else 1) \
+               - self.calculated_importance()
 
 
 class SearchResults(List[SearchResult]):
@@ -304,6 +313,23 @@ def create_from_postcode_row(row: Optional[SaRow],
                       country_code=row.country_code,
                       centroid=Point.from_wkb(row.centroid.data),
                       geometry=_filter_geometries(row))
+
+
+def create_from_country_row(row: Optional[SaRow],
+                        class_type: Type[BaseResultT]) -> Optional[BaseResultT]:
+    """ Construct a new result and add the data from the result row
+        from the fallback country tables. 'class_type' defines
+        the type of result to return. Returns None if the row is None.
+    """
+    if row is None:
+        return None
+
+    return class_type(source_table=SourceTable.COUNTRY,
+                      category=('place', 'country'),
+                      centroid=Point.from_wkb(row.centroid.data),
+                      names=row.name,
+                      rank_address=4, rank_search=4,
+                      country_code=row.country_code)
 
 
 async def add_result_details(conn: SearchConnection, result: BaseResult,

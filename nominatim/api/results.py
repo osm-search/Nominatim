@@ -27,6 +27,24 @@ from nominatim.api.localization import Locales
 # This file defines complex result data classes.
 # pylint: disable=too-many-instance-attributes
 
+def _mingle_name_tags(names: Optional[Dict[str, str]]) -> Optional[Dict[str, str]]:
+    """ Mix-in names from linked places, so that they show up
+        as standard names where necessary.
+    """
+    if not names:
+        return None
+
+    out = {}
+    for k, v in names.items():
+        if k.startswith('_place_'):
+            outkey = k[7:]
+            out[k if outkey in names else outkey] = v
+        else:
+            out[k] = v
+
+    return out
+
+
 class SourceTable(enum.Enum):
     """ Enumeration of kinds of results.
     """
@@ -229,7 +247,7 @@ def create_from_placex_row(row: Optional[SaRow],
                       place_id=row.place_id,
                       osm_object=(row.osm_type, row.osm_id),
                       category=(row.class_, row.type),
-                      names=row.name,
+                      names=_mingle_name_tags(row.name),
                       address=row.address,
                       extratags=row.extratags,
                       housenumber=row.housenumber,
@@ -378,10 +396,8 @@ def _result_row_to_address_row(row: SaRow) -> AddressLine:
     if hasattr(row, 'place_type') and row.place_type:
         extratags['place'] = row.place_type
 
-    names = row.name
+    names = _mingle_name_tags(row.name) or {}
     if getattr(row, 'housenumber', None) is not None:
-        if names is None:
-            names = {}
         names['housenumber'] = row.housenumber
 
     return AddressLine(place_id=row.place_id,

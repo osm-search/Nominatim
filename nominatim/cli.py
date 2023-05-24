@@ -251,7 +251,7 @@ class AdminServe:
         return 0
 
 
-def get_set_parser(**kwargs: Any) -> CommandlineParser:
+def get_set_parser() -> CommandlineParser:
     """\
     Initializes the parser and adds various subcommands for
     nominatim cli.
@@ -287,6 +287,4 @@ def nominatim(**kwargs: Any) -> int:
     Command-line tools for importing, updating, administrating and
     querying the Nominatim database.
     """
-    parser = get_set_parser(**kwargs)
-
-    return parser.run(**kwargs)
+    return get_set_parser().run(**kwargs)

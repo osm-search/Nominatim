@@ -53,7 +53,7 @@ def feature_type_to_rank(feature_type: Optional[str]) -> Tuple[int, int]:
 
 
 #pylint: disable=too-many-arguments
-def extend_query_parts(queryparts: dict[str, Any], details: dict[str, Any],
+def extend_query_parts(queryparts: Dict[str, Any], details: Dict[str, Any],
                        feature_type: Optional[str],
                        namedetails: bool, extratags: bool,
                        excluded: Iterable[str]) -> None:

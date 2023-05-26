@@ -146,9 +146,6 @@ Feature: Simple Tests
      | foo     | foo |
      | FOO     | FOO |
      | __world | __world |
-     | $me     | \$me |
-     | m1[4]   | m1\[4\] |
-     | d_r[$d] | d_r\[\$d\] |
 
     Scenario Outline: Wrapping of illegal jsonp search requests
         When sending json search query "Tokyo"

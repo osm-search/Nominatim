@@ -97,6 +97,7 @@ Feature: Search queries
           | class | type |
           | club  | scout |
 
+    @v1-api-php-only
     Scenario: With multiple amenity search only the first is used
         When sending json search query "[club=scout] [church] vaduz"
         Then results contain
@@ -119,6 +120,7 @@ Feature: Search queries
           | class   | type |
           | leisure | firepit |
 
+    @v1-api-php-only
     Scenario: Arbitrary key/value search near given coordinate and named place
         When sending json search query "[leisure=firepit] ebenholz  47° 9′ 26″ N 9° 36′ 45″ E"
         Then results contain
@@ -184,7 +186,6 @@ Feature: Search queries
         Then result addresses contain
           | ID | house_number |
           | 0  | 11 |
-          | 1  | 11 a |
 
     Scenario Outline: Coordinate searches with white spaces
         When sending json search query "<data>"

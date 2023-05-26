@@ -370,6 +370,9 @@ async def lookup_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> A
         if len(oid) > 1 and oid[0] in 'RNWrnw' and oid[1:].isdigit():
             places.append(napi.OsmID(oid[0], int(oid[1:])))
 
+    if len(places) > params.config().get_int('LOOKUP_MAX_COUNT'):
+        params.raise_error('Too many object IDs.')
+
     if places:
         results = await api.lookup(places, **details)
     else:
@@ -439,6 +442,8 @@ async def search_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> A
 
     details['min_rank'], details['max_rank'] = \
         helpers.feature_type_to_rank(params.get('featureType', ''))
+    if params.get('featureType', None) is not None:
+        details['layers'] = napi.DataLayer.ADDRESS
 
     query = params.get('q', None)
     queryparts = {}

@@ -209,8 +209,8 @@ Feature: Import and search of names
         When importing
         And sending search query "Main St <nr>"
         Then results contain
-         | osm | display_name |
-         | N1  | <nr-list>, Main St |
+         | ID | osm | display_name |
+         | 0  | N1  | <nr-list>, Main St |
 
     Examples:
         | nr-list    | nr |

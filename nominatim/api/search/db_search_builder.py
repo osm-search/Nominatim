@@ -151,8 +151,10 @@ class SearchBuilder:
         """ Build abstract search queries for simple name or address searches.
         """
         if is_category or not sdata.housenumbers or self.configured_for_housenumbers:
-            sdata.rankings.append(self.get_name_ranking(name))
-            name_penalty = sdata.rankings[-1].normalize_penalty()
+            ranking = self.get_name_ranking(name)
+            name_penalty = ranking.normalize_penalty()
+            if ranking.rankings:
+                sdata.rankings.append(ranking)
             for penalty, count, lookup in self.yield_lookups(name, address):
                 sdata.lookups = lookup
                 yield dbs.PlaceSearch(penalty + name_penalty, sdata, count)

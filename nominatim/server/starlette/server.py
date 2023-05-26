@@ -78,7 +78,11 @@ def get_application(project_dir: Path,
     if config.get_bool('CORS_NOACCESSCONTROL'):
         middleware.append(Middleware(CORSMiddleware, allow_origins=['*']))
 
-    app = Starlette(debug=debug, routes=routes, middleware=middleware)
+    async def _shutdown() -> None:
+        await app.state.API.close()
+
+    app = Starlette(debug=debug, routes=routes, middleware=middleware,
+                    on_shutdown=[_shutdown])
 
     app.state.API = NominatimAPIAsync(project_dir, environ)
 

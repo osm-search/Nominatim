@@ -11,7 +11,7 @@ from typing import Optional, List, Tuple, Iterator
 import heapq
 
 from nominatim.api.types import SearchDetails, DataLayer
-from nominatim.api.search.query import QueryStruct, TokenType, TokenRange, BreakType
+from nominatim.api.search.query import QueryStruct, Token, TokenType, TokenRange, BreakType
 from nominatim.api.search.token_assignment import TokenAssignment
 import nominatim.api.search.db_search_fields as dbf
 import nominatim.api.search.db_searches as dbs
@@ -97,6 +97,10 @@ class SearchBuilder:
                 sdata.qualifiers = categories
                 categories = None
                 builder = self.build_poi_search(sdata)
+            elif assignment.housenumber:
+                hnr_tokens = self.query.get_tokens(assignment.housenumber,
+                                                   TokenType.HOUSENUMBER)
+                builder = self.build_housenumber_search(sdata, hnr_tokens, assignment.address)
             else:
                 builder = self.build_special_search(sdata, assignment.address,
                                                     bool(categories))
@@ -128,8 +132,8 @@ class SearchBuilder:
         """ Build abstract search queries for searches that do not involve
             a named place.
         """
-        if sdata.qualifiers or sdata.housenumbers:
-            # No special searches over housenumbers or qualifiers supported.
+        if sdata.qualifiers:
+            # No special searches over qualifiers supported.
             return
 
         if sdata.countries and not address and not sdata.postcodes \
@@ -143,6 +147,21 @@ class SearchBuilder:
                                                   for t in self.query.get_partials_list(r)],
                                                  'restrict')]
             yield dbs.PostcodeSearch(0.4, sdata)
+
+
+    def build_housenumber_search(self, sdata: dbf.SearchData, hnrs: List[Token],
+                                 address: List[TokenRange]) -> Iterator[dbs.AbstractSearch]:
+        """ Build a simple address search for special entries where the
+            housenumber is the main name token.
+        """
+        partial_tokens: List[int] = []
+        for trange in address:
+            partial_tokens.extend(t.token for t in self.query.get_partials_list(trange))
+
+        sdata.lookups = [dbf.FieldLookup('name_vector', [t.token for t in hnrs], 'lookup_any'),
+                         dbf.FieldLookup('nameaddress_vector', partial_tokens, 'lookup_all')
+                        ]
+        yield dbs.PlaceSearch(0.05, sdata, sum(t.count for t in hnrs))
 
 
     def build_name_search(self, sdata: dbf.SearchData,

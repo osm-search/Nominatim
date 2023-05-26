@@ -292,6 +292,10 @@ class _TokenSequence:
                                           penalty=self.penalty,
                                           address=base.address[:-1])
 
+            # variant for special housenumber searches
+            if base.housenumber:
+                yield dataclasses.replace(base, penalty=self.penalty)
+
             # Use beginning of first word as name
             if self.direction != -1:
                 first = base.address[0]

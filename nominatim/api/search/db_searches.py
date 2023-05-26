@@ -20,7 +20,7 @@ from nominatim.api.types import SearchDetails, DataLayer, GeometryFormat, Bbox
 import nominatim.api.results as nres
 from nominatim.api.search.db_search_fields import SearchData, WeightedCategories
 
-#pylint: disable=singleton-comparison
+#pylint: disable=singleton-comparison,not-callable
 #pylint: disable=too-many-branches,too-many-arguments,too-many-locals,too-many-statements
 
 def _select_placex(t: SaFromClause) -> SaSelect:

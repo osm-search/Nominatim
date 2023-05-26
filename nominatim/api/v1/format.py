@@ -168,7 +168,7 @@ def _format_details_json(result: napi.DetailedResult, options: Mapping[str, Any]
 def _format_reverse_xml(results: napi.ReverseResults, options: Mapping[str, Any]) -> str:
     return format_xml.format_base_xml(results,
                                       options, True, 'reversegeocode',
-                                      {'querystring': 'TODO'})
+                                      {'querystring': options.get('query', '')})
 
 
 @dispatch.format_func(napi.ReverseResults, 'geojson')
@@ -199,9 +199,13 @@ def _format_reverse_jsonv2(results: napi.ReverseResults,
 
 @dispatch.format_func(napi.SearchResults, 'xml')
 def _format_search_xml(results: napi.SearchResults, options: Mapping[str, Any]) -> str:
-    return format_xml.format_base_xml(results,
-                                      options, False, 'searchresults',
-                                      {'querystring': 'TODO'})
+    extra = {'querystring': options.get('query', '')}
+    for attr in ('more_url', 'exclude_place_ids', 'viewbox'):
+        if options.get(attr):
+            extra[attr] = options[attr]
+    return format_xml.format_base_xml(results, options, False, 'searchresults',
+                                      extra)
+
 
 
 @dispatch.format_func(napi.SearchResults, 'geojson')

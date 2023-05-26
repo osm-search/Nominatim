@@ -32,9 +32,9 @@ FakeResponse = namedtuple('FakeResponse', ['status', 'output', 'content_type'])
 
 class FakeAdaptor(glue.ASGIAdaptor):
 
-    def __init__(self, params={}, headers={}, config=None):
-        self.params = params
-        self.headers = headers
+    def __init__(self, params=None, headers=None, config=None):
+        self.params = params or {}
+        self.headers = headers or {}
         self._config = config or Configuration(None)
 
 
@@ -386,6 +386,63 @@ class TestDetailsEndpoint:
             await glue.details_endpoint(napi.NominatimAPIAsync(Path('/invalid')), a)
 
 
+# reverse_endpoint()
+class TestReverseEndPoint:
+
+    @pytest.fixture(autouse=True)
+    def patch_reverse_func(self, monkeypatch):
+        self.result = napi.ReverseResult(napi.SourceTable.PLACEX,
+                                          ('place', 'thing'),
+                                          napi.Point(1.0, 2.0))
+        async def _reverse(*args, **kwargs):
+            return self.result
+
+        monkeypatch.setattr(napi.NominatimAPIAsync, 'reverse', _reverse)
+
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('params', [{}, {'lat': '3.4'}, {'lon': '6.7'}])
+    async def test_reverse_no_params(self, params):
+        a = FakeAdaptor()
+        a.params = params
+        a.params['format'] = 'xml'
+
+        with pytest.raises(FakeError, match='^400 -- (?s:.*)missing'):
+            await glue.reverse_endpoint(napi.NominatimAPIAsync(Path('/invalid')), a)
+
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('params', [{'lat': '45.6', 'lon': '4563'}])
+    async def test_reverse_success(self, params):
+        a = FakeAdaptor()
+        a.params = params
+        a.params['format'] = 'json'
+
+        res = await glue.reverse_endpoint(napi.NominatimAPIAsync(Path('/invalid')), a)
+
+        assert res == ''
+
+
+    @pytest.mark.asyncio
+    async def test_reverse_success(self):
+        a = FakeAdaptor()
+        a.params['lat'] = '56.3'
+        a.params['lon'] = '6.8'
+
+        assert await glue.reverse_endpoint(napi.NominatimAPIAsync(Path('/invalid')), a)
+
+
+    @pytest.mark.asyncio
+    async def test_reverse_from_search(self):
+        a = FakeAdaptor()
+        a.params['q'] = '34.6 2.56'
+        a.params['format'] = 'json'
+
+        res = await glue.search_endpoint(napi.NominatimAPIAsync(Path('/invalid')), a)
+
+        assert len(json.loads(res.output)) == 1
+
+
 # lookup_endpoint()
 
 class TestLookupEndpoint:
@@ -442,5 +499,113 @@ class TestLookupEndpoint:
         a.params['osm_ids'] = 'N23,W34'
 
         res = await glue.lookup_endpoint(napi.NominatimAPIAsync(Path('/invalid')), a)
+
+        assert len(json.loads(res.output)) == 1
+
+
+# search_endpoint()
+
+class TestSearchEndPointSearch:
+
+    @pytest.fixture(autouse=True)
+    def patch_lookup_func(self, monkeypatch):
+        self.results = [napi.SearchResult(napi.SourceTable.PLACEX,
+                                          ('place', 'thing'),
+                                          napi.Point(1.0, 2.0))]
+        async def _search(*args, **kwargs):
+            return napi.SearchResults(self.results)
+
+        monkeypatch.setattr(napi.NominatimAPIAsync, 'search', _search)
+
+
+    @pytest.mark.asyncio
+    async def test_search_free_text(self):
+        a = FakeAdaptor()
+        a.params['q'] = 'something'
+
+        res = await glue.search_endpoint(napi.NominatimAPIAsync(Path('/invalid')), a)
+
+        assert len(json.loads(res.output)) == 1
+
+
+    @pytest.mark.asyncio
+    async def test_search_free_text_xml(self):
+        a = FakeAdaptor()
+        a.params['q'] = 'something'
+        a.params['format'] = 'xml'
+
+        res = await glue.search_endpoint(napi.NominatimAPIAsync(Path('/invalid')), a)
+
+        assert res.status == 200
+        assert res.output.index('something') > 0
+
+
+    @pytest.mark.asyncio
+    async def test_search_free_and_structured(self):
+        a = FakeAdaptor()
+        a.params['q'] = 'something'
+        a.params['city'] = 'ignored'
+
+        res = await glue.search_endpoint(napi.NominatimAPIAsync(Path('/invalid')), a)
+
+        assert len(json.loads(res.output)) == 1
+
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('dedupe,numres', [(True, 1), (False, 2)])
+    async def test_search_dedupe(self, dedupe, numres):
+        self.results = self.results * 2
+        a = FakeAdaptor()
+        a.params['q'] = 'something'
+        if not dedupe:
+            a.params['dedupe'] = '0'
+
+        res = await glue.search_endpoint(napi.NominatimAPIAsync(Path('/invalid')), a)
+
+        assert len(json.loads(res.output)) == numres
+
+
+class TestSearchEndPointSearchAddress:
+
+    @pytest.fixture(autouse=True)
+    def patch_lookup_func(self, monkeypatch):
+        self.results = [napi.SearchResult(napi.SourceTable.PLACEX,
+                                          ('place', 'thing'),
+                                          napi.Point(1.0, 2.0))]
+        async def _search(*args, **kwargs):
+            return napi.SearchResults(self.results)
+
+        monkeypatch.setattr(napi.NominatimAPIAsync, 'search_address', _search)
+
+
+    @pytest.mark.asyncio
+    async def test_search_structured(self):
+        a = FakeAdaptor()
+        a.params['street'] = 'something'
+
+        res = await glue.search_endpoint(napi.NominatimAPIAsync(Path('/invalid')), a)
+
+        assert len(json.loads(res.output)) == 1
+
+
+class TestSearchEndPointSearchCategory:
+
+    @pytest.fixture(autouse=True)
+    def patch_lookup_func(self, monkeypatch):
+        self.results = [napi.SearchResult(napi.SourceTable.PLACEX,
+                                          ('place', 'thing'),
+                                          napi.Point(1.0, 2.0))]
+        async def _search(*args, **kwargs):
+            return napi.SearchResults(self.results)
+
+        monkeypatch.setattr(napi.NominatimAPIAsync, 'search_category', _search)
+
+
+    @pytest.mark.asyncio
+    async def test_search_category(self):
+        a = FakeAdaptor()
+        a.params['q'] = '[shop=fog]'
+
+        res = await glue.search_endpoint(napi.NominatimAPIAsync(Path('/invalid')), a)
 
         assert len(json.loads(res.output)) == 1

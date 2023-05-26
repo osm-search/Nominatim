@@ -11,8 +11,11 @@ Combine with the scaffolding provided for the various Python ASGI frameworks.
 from typing import Optional, Any, Type, Callable, NoReturn, Dict, cast
 from functools import reduce
 import abc
+import dataclasses
 import math
+from urllib.parse import urlencode
 
+from nominatim.errors import UsageError
 from nominatim.config import Configuration
 import nominatim.api as napi
 import nominatim.api.logging as loglib
@@ -321,7 +324,6 @@ async def reverse_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> 
     fmt = params.parse_format(napi.ReverseResults, 'xml')
     debug = params.setup_debugging()
     coord = napi.Point(params.get_float('lon'), params.get_float('lat'))
-    locales = napi.Locales.from_accept_languages(params.get_accepted_languages())
 
     details = params.parse_geometry_details(fmt)
     details['max_rank'] = helpers.zoom_to_rank(params.get_int('zoom', 18))
@@ -332,12 +334,22 @@ async def reverse_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> 
     if debug:
         return params.build_response(loglib.get_and_disable())
 
-    fmt_options = {'extratags': params.get_bool('extratags', False),
+    if fmt == 'xml':
+        queryparts = {'lat': str(coord.lat), 'lon': str(coord.lon), 'format': 'xml'}
+        zoom = params.get('zoom', None)
+        if zoom:
+            queryparts['zoom'] = zoom
+        query = urlencode(queryparts)
+    else:
+        query = ''
+
+    fmt_options = {'query': query,
+                   'extratags': params.get_bool('extratags', False),
                    'namedetails': params.get_bool('namedetails', False),
                    'addressdetails': params.get_bool('addressdetails', True)}
 
     if result:
-        result.localize(locales)
+        result.localize(napi.Locales.from_accept_languages(params.get_accepted_languages()))
 
     output = formatting.format_result(napi.ReverseResults([result] if result else []),
                                       fmt, fmt_options)
@@ -350,7 +362,6 @@ async def lookup_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> A
     """
     fmt = params.parse_format(napi.SearchResults, 'xml')
     debug = params.setup_debugging()
-    locales = napi.Locales.from_accept_languages(params.get_accepted_languages())
     details = params.parse_geometry_details(fmt)
 
     places = []
@@ -371,12 +382,112 @@ async def lookup_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> A
                    'namedetails': params.get_bool('namedetails', False),
                    'addressdetails': params.get_bool('addressdetails', True)}
 
-    for result in results:
-        result.localize(locales)
+    results.localize(napi.Locales.from_accept_languages(params.get_accepted_languages()))
 
     output = formatting.format_result(results, fmt, fmt_options)
 
     return params.build_response(output)
+
+
+async def _unstructured_search(query: str, api: napi.NominatimAPIAsync,
+                              details: Dict[str, Any]) -> napi.SearchResults:
+    if not query:
+        return napi.SearchResults()
+
+    # Extract special format for coordinates from query.
+    query, x, y = helpers.extract_coords_from_query(query)
+    if x is not None:
+        assert y is not None
+        details['near'] = napi.Point(x, y)
+        details['near_radius'] = 0.1
+
+    # If no query is left, revert to reverse search.
+    if x is not None and not query:
+        result = await api.reverse(details['near'], **details)
+        if not result:
+            return napi.SearchResults()
+
+        return napi.SearchResults(
+                  [napi.SearchResult(**{f.name: getattr(result, f.name)
+                                        for f in dataclasses.fields(napi.SearchResult)
+                                        if hasattr(result, f.name)})])
+
+    query, cls, typ = helpers.extract_category_from_query(query)
+    if cls is not None:
+        assert typ is not None
+        return await api.search_category([(cls, typ)], near_query=query, **details)
+
+    return await api.search(query, **details)
+
+
+async def search_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> Any:
+    """ Server glue for /search endpoint. See API docs for details.
+    """
+    fmt = params.parse_format(napi.SearchResults, 'jsonv2')
+    debug = params.setup_debugging()
+    details = params.parse_geometry_details(fmt)
+
+    details['countries']  = params.get('countrycodes', None)
+    details['excluded'] = params.get('exclude_place_ids', None)
+    details['viewbox'] = params.get('viewbox', None) or params.get('viewboxlbrt', None)
+    details['bounded_viewbox'] = params.get_bool('bounded', False)
+    details['dedupe'] = params.get_bool('dedupe', True)
+
+    max_results = max(1, min(50, params.get_int('limit', 10)))
+    details['max_results'] = max_results + min(10, max_results) \
+                             if details['dedupe'] else max_results
+
+    details['min_rank'], details['max_rank'] = \
+        helpers.feature_type_to_rank(params.get('featureType', ''))
+
+    query = params.get('q', None)
+    queryparts = {}
+    try:
+        if query is not None:
+            queryparts['q'] = query
+            results = await _unstructured_search(query, api, details)
+        else:
+            for key in ('amenity', 'street', 'city', 'county', 'state', 'postalcode', 'country'):
+                details[key] = params.get(key, None)
+                if details[key]:
+                    queryparts[key] = details[key]
+            query = ', '.join(queryparts.values())
+
+            results = await api.search_address(**details)
+    except UsageError as err:
+        params.raise_error(str(err))
+
+    results.localize(napi.Locales.from_accept_languages(params.get_accepted_languages()))
+
+    if details['dedupe'] and len(results) > 1:
+        results = helpers.deduplicate_results(results, max_results)
+
+    if debug:
+        return params.build_response(loglib.get_and_disable())
+
+    if fmt == 'xml':
+        helpers.extend_query_parts(queryparts, details,
+                                   params.get('featureType', ''),
+                                   params.get_bool('namedetails', False),
+                                   params.get_bool('extratags', False),
+                                   (str(r.place_id) for r in results if r.place_id))
+        queryparts['format'] = fmt
+
+        moreurl = urlencode(queryparts)
+    else:
+        moreurl = ''
+
+    fmt_options = {'query': query, 'more_url': moreurl,
+                   'exclude_place_ids': queryparts.get('exclude_place_ids'),
+                   'viewbox': queryparts.get('viewbox'),
+                   'extratags': params.get_bool('extratags', False),
+                   'namedetails': params.get_bool('namedetails', False),
+                   'addressdetails': params.get_bool('addressdetails', False)}
+
+    output = formatting.format_result(results, fmt, fmt_options)
+
+    return params.build_response(output)
+
 
 EndpointFunc = Callable[[napi.NominatimAPIAsync, ASGIAdaptor], Any]
 
@@ -384,5 +495,6 @@ ROUTES = [
     ('status', status_endpoint),
     ('details', details_endpoint),
     ('reverse', reverse_endpoint),
-    ('lookup', lookup_endpoint)
+    ('lookup', lookup_endpoint),
+    ('search', search_endpoint)
 ]

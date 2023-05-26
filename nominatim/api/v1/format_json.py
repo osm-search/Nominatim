@@ -54,7 +54,10 @@ def _write_geocodejson_address(out: JsonWriter,
                 out.keyval('housenumber', line.local_name)
             elif (obj_place_id is None or obj_place_id != line.place_id) \
                  and line.rank_address >= 4 and line.rank_address < 28:
-                extra[GEOCODEJSON_RANKS[line.rank_address]] = line.local_name
+                rank_name = GEOCODEJSON_RANKS[line.rank_address]
+                if rank_name not in extra:
+                    extra[rank_name] = line.local_name
+
 
     for k, v in extra.items():
         out.keyval(k, v)

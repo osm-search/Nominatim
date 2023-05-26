@@ -400,7 +400,8 @@ class SearchDetails(LookupDetails):
                                      )
     """ Highest address rank to return.
     """
-    layers: Optional[DataLayer] = None
+    layers: Optional[DataLayer] = dataclasses.field(default=None,
+                                                    metadata={'transform': lambda r : r})
     """ Filter which kind of data to include. When 'None' (the default) then
         filtering by layers is disabled.
     """
@@ -427,7 +428,8 @@ class SearchDetails(LookupDetails):
                                               metadata={'transform': Point.from_param})
     """ Order results by distance to the given point.
     """
-    near_radius: Optional[float] = None
+    near_radius: Optional[float] = dataclasses.field(default=None,
+                                              metadata={'transform': lambda r : r})
     """ Use near point as a filter and drop results outside the given
         radius. Radius is given in degrees WSG84.
     """

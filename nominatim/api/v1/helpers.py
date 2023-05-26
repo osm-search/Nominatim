@@ -52,7 +52,7 @@ def feature_type_to_rank(feature_type: Optional[str]) -> Tuple[int, int]:
     return FEATURE_TYPE_TO_RANK.get(feature_type, (0, 30))
 
 
-#pylint: disable=too-many-arguments
+#pylint: disable=too-many-arguments,too-many-branches
 def extend_query_parts(queryparts: Dict[str, Any], details: Dict[str, Any],
                        feature_type: Optional[str],
                        namedetails: bool, extratags: bool,
@@ -62,9 +62,14 @@ def extend_query_parts(queryparts: Dict[str, Any], details: Dict[str, Any],
     """
     parsed = SearchDetails.from_kwargs(details)
     if parsed.geometry_output != GeometryFormat.NONE:
-        for flag in parsed.geometry_output:
-            assert flag.name
-            queryparts[f'polygon_{flag.name.lower()}'] = '1'
+        if parsed.geometry_output & GeometryFormat.GEOJSON:
+            queryparts['polygon_geojson'] = '1'
+        if parsed.geometry_output & GeometryFormat.KML:
+            queryparts['polygon_kml'] = '1'
+        if parsed.geometry_output & GeometryFormat.SVG:
+            queryparts['polygon_svg'] = '1'
+        if parsed.geometry_output & GeometryFormat.TEXT:
+            queryparts['polygon_text'] = '1'
     if parsed.address_details:
         queryparts['addressdetails'] = '1'
     if namedetails:

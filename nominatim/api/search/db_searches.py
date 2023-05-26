@@ -639,8 +639,8 @@ class PlaceSearch(AbstractSearch):
                                                                   numerals, details)
                                     ), else_=None)
             else:
-                interpol_sql = sa.literal(None)
-                tiger_sql = sa.literal(None)
+                interpol_sql = sa.literal_column('NULL')
+                tiger_sql = sa.literal_column('NULL')
 
             unsort = sa.select(inner, place_sql.scalar_subquery().label('placex_hnr'),
                                interpol_sql.label('interpol_hnr'),

@@ -54,7 +54,10 @@ def _write_geocodejson_address(out: JsonWriter,
                 out.keyval('housenumber', line.local_name)
             elif (obj_place_id is None or obj_place_id != line.place_id) \
                  and line.rank_address >= 4 and line.rank_address < 28:
-                extra[GEOCODEJSON_RANKS[line.rank_address]] = line.local_name
+                rank_name = GEOCODEJSON_RANKS[line.rank_address]
+                if rank_name not in extra:
+                    extra[rank_name] = line.local_name
+
 
     for k, v in extra.items():
         out.keyval(k, v)
@@ -68,8 +71,6 @@ def format_base_json(results: Union[napi.ReverseResults, napi.SearchResults],
                      class_label: str) -> str:
     """ Return the result list as a simple json string in custom Nominatim format.
     """
-    locales = options.get('locales', napi.Locales())
-
     out = JsonWriter()
 
     if simple:
@@ -79,8 +80,6 @@ def format_base_json(results: Union[napi.ReverseResults, napi.SearchResults],
         out.start_array()
 
     for result in results:
-        label_parts = result.address_rows.localize(locales) if result.address_rows else []
-
         out.start_object()\
              .keyval_not_none('place_id', result.place_id)\
              .keyval('licence', cl.OSM_ATTRIBUTION)\
@@ -96,8 +95,8 @@ def format_base_json(results: Union[napi.ReverseResults, napi.SearchResults],
              .keyval('addresstype', cl.get_label_tag(result.category, result.extratags,
                                                      result.rank_address,
                                                      result.country_code))\
-             .keyval('name', locales.display_name(result.names))\
-             .keyval('display_name', ', '.join(label_parts))
+             .keyval('name', result.locale_name or '')\
+             .keyval('display_name', result.display_name or '')
 
 
         if options.get('icon_base_url', None):
@@ -151,8 +150,6 @@ def format_base_geojson(results: Union[napi.ReverseResults, napi.SearchResults],
     if not results and simple:
         return '{"error":"Unable to geocode"}'
 
-    locales = options.get('locales', napi.Locales())
-
     out = JsonWriter()
 
     out.start_object()\
@@ -161,11 +158,6 @@ def format_base_geojson(results: Union[napi.ReverseResults, napi.SearchResults],
          .key('features').start_array()
 
     for result in results:
-        if result.address_rows:
-            label_parts = result.address_rows.localize(locales)
-        else:
-            label_parts = []
-
         out.start_object()\
              .keyval('type', 'Feature')\
              .key('properties').start_object()
@@ -181,8 +173,8 @@ def format_base_geojson(results: Union[napi.ReverseResults, napi.SearchResults],
            .keyval('addresstype', cl.get_label_tag(result.category, result.extratags,
                                                    result.rank_address,
                                                    result.country_code))\
-           .keyval('name', locales.display_name(result.names))\
-           .keyval('display_name', ', '.join(label_parts))
+           .keyval('name', result.locale_name or '')\
+           .keyval('display_name', result.display_name or '')
 
         if options.get('addressdetails', False):
             out.key('address').start_object()
@@ -219,8 +211,6 @@ def format_base_geocodejson(results: Union[napi.ReverseResults, napi.SearchResul
     if not results and simple:
         return '{"error":"Unable to geocode"}'
 
-    locales = options.get('locales', napi.Locales())
-
     out = JsonWriter()
 
     out.start_object()\
@@ -234,11 +224,6 @@ def format_base_geocodejson(results: Union[napi.ReverseResults, napi.SearchResul
          .key('features').start_array()
 
     for result in results:
-        if result.address_rows:
-            label_parts = result.address_rows.localize(locales)
-        else:
-            label_parts = []
-
         out.start_object()\
              .keyval('type', 'Feature')\
              .key('properties').start_object()\
@@ -252,8 +237,8 @@ def format_base_geocodejson(results: Union[napi.ReverseResults, napi.SearchResul
            .keyval('osm_value', result.category[1])\
            .keyval('type', GEOCODEJSON_RANKS[max(3, min(28, result.rank_address))])\
            .keyval_not_none('accuracy', getattr(result, 'distance', None), transform=int)\
-           .keyval('label', ', '.join(label_parts))\
-           .keyval_not_none('name', result.names, transform=locales.display_name)\
+           .keyval('label', result.display_name or '')\
+           .keyval_not_none('name', result.locale_name or None)\
 
         if options.get('addressdetails', False):
             _write_geocodejson_address(out, result.address_rows, result.place_id,

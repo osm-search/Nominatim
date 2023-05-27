@@ -101,6 +101,7 @@ def test_format_reverse_with_address(fmt):
                                                     rank_address=10,
                                                     distance=0.0)
                                  ]))
+    reverse.localize(napi.Locales())
 
     raw = api_impl.format_result(napi.ReverseResults([reverse]), fmt,
                                  {'addressdetails': True})
@@ -163,6 +164,8 @@ def test_format_reverse_geocodejson_special_parts():
                                                     rank_address=10,
                                                     distance=0.0)
                                  ]))
+
+    reverse.localize(napi.Locales())
 
     raw = api_impl.format_result(napi.ReverseResults([reverse]), 'geocodejson',
                                  {'addressdetails': True})

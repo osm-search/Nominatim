@@ -113,13 +113,6 @@ class SearchTables:
             sa.Column('postcode', sa.Text),
             sa.Column('country_code', sa.String(2)))
 
-        self.word = sa.Table('word', meta,
-            sa.Column('word_id', sa.Integer),
-            sa.Column('word_token', sa.Text, nullable=False),
-            sa.Column('type', sa.Text, nullable=False),
-            sa.Column('word', sa.Text),
-            sa.Column('info', self.types.Json))
-
         self.country_name = sa.Table('country_name', meta,
             sa.Column('country_code', sa.String(2)),
             sa.Column('name', self.types.Composite),

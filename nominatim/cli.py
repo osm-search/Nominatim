@@ -251,7 +251,7 @@ class AdminServe:
         return 0
 
 
-def get_set_parser(**kwargs: Any) -> CommandlineParser:
+def get_set_parser() -> CommandlineParser:
     """\
     Initializes the parser and adds various subcommands for
     nominatim cli.
@@ -273,14 +273,11 @@ def get_set_parser(**kwargs: Any) -> CommandlineParser:
     parser.add_subcommand('export', QueryExport())
     parser.add_subcommand('serve', AdminServe())
 
-    if kwargs.get('phpcgi_path'):
-        parser.add_subcommand('search', clicmd.APISearch())
-        parser.add_subcommand('reverse', clicmd.APIReverse())
-        parser.add_subcommand('lookup', clicmd.APILookup())
-        parser.add_subcommand('details', clicmd.APIDetails())
-        parser.add_subcommand('status', clicmd.APIStatus())
-    else:
-        parser.parser.epilog = 'php-cgi not found. Query commands not available.'
+    parser.add_subcommand('search', clicmd.APISearch())
+    parser.add_subcommand('reverse', clicmd.APIReverse())
+    parser.add_subcommand('lookup', clicmd.APILookup())
+    parser.add_subcommand('details', clicmd.APIDetails())
+    parser.add_subcommand('status', clicmd.APIStatus())
 
     return parser
 
@@ -290,6 +287,4 @@ def nominatim(**kwargs: Any) -> int:
     Command-line tools for importing, updating, administrating and
     querying the Nominatim database.
     """
-    parser = get_set_parser(**kwargs)
-
-    return parser.run(**kwargs)
+    return get_set_parser().run(**kwargs)

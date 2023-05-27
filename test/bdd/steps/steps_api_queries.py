@@ -265,7 +265,10 @@ def check_page_error(context, fmt):
 
 @then(u'result header contains')
 def check_header_attr(context):
+    context.execute_steps("Then a HTTP 200 is returned")
     for line in context.table:
+        assert line['attr'] in context.response.header, \
+               f"Field '{line['attr']}' missing in header. Full header:\n{context.response.header}"
         value = context.response.header[line['attr']]
         assert re.fullmatch(line['value'], value) is not None, \
                f"Attribute '{line['attr']}': expected: '{line['value']}', got '{value}'"

@@ -11,7 +11,7 @@ Data classes are part of the public API while the functions are for
 internal use only. That's why they are implemented as free-standing functions
 instead of member functions.
 """
-from typing import Optional, Tuple, Dict, Sequence, TypeVar, Type, List
+from typing import Optional, Tuple, Dict, Sequence, TypeVar, Type, List, Any
 import enum
 import dataclasses
 import datetime as dt
@@ -26,6 +26,24 @@ from nominatim.api.localization import Locales
 
 # This file defines complex result data classes.
 # pylint: disable=too-many-instance-attributes
+
+def _mingle_name_tags(names: Optional[Dict[str, str]]) -> Optional[Dict[str, str]]:
+    """ Mix-in names from linked places, so that they show up
+        as standard names where necessary.
+    """
+    if not names:
+        return None
+
+    out = {}
+    for k, v in names.items():
+        if k.startswith('_place_'):
+            outkey = k[7:]
+            out[k if outkey in names else outkey] = v
+        else:
+            out[k] = v
+
+    return out
+
 
 class SourceTable(enum.Enum):
     """ Enumeration of kinds of results.
@@ -103,6 +121,9 @@ class BaseResult:
     place_id : Optional[int] = None
     osm_object: Optional[Tuple[str, int]] = None
 
+    locale_name: Optional[str] = None
+    display_name: Optional[str] = None
+
     names: Optional[Dict[str, str]] = None
     address: Optional[Dict[str, str]] = None
     extratags: Optional[Dict[str, str]] = None
@@ -146,6 +167,19 @@ class BaseResult:
         """
         return self.importance or (0.7500001 - (self.rank_search/40.0))
 
+
+    def localize(self, locales: Locales) -> None:
+        """ Fill the locale_name and the display_name field for the
+            place and, if available, its address information.
+        """
+        self.locale_name = locales.display_name(self.names)
+        if self.address_rows:
+            self.display_name = ', '.join(self.address_rows.localize(locales))
+        else:
+            self.display_name = self.locale_name
+
+
+
 BaseResultT = TypeVar('BaseResultT', bound=BaseResult)
 
 @dataclasses.dataclass
@@ -178,12 +212,27 @@ class SearchResult(BaseResult):
     """ A search result for forward geocoding.
     """
     bbox: Optional[Bbox] = None
+    accuracy: float = 0.0
+
+
+    @property
+    def ranking(self) -> float:
+        """ Return the ranking, a combined measure of accuracy and importance.
+        """
+        return (self.accuracy if self.accuracy is not None else 1) \
+               - self.calculated_importance()
 
 
 class SearchResults(List[SearchResult]):
     """ Sequence of forward lookup results ordered by relevance.
         May be empty when no result was found.
     """
+
+    def localize(self, locales: Locales) -> None:
+        """ Apply the given locales to all results.
+        """
+        for result in self:
+            result.localize(locales)
 
 
 def _filter_geometries(row: SaRow) -> Dict[str, str]:
@@ -204,7 +253,7 @@ def create_from_placex_row(row: Optional[SaRow],
                       place_id=row.place_id,
                       osm_object=(row.osm_type, row.osm_id),
                       category=(row.class_, row.type),
-                      names=row.name,
+                      names=_mingle_name_tags(row.name),
                       address=row.address,
                       extratags=row.extratags,
                       housenumber=row.housenumber,
@@ -305,24 +354,45 @@ def create_from_postcode_row(row: Optional[SaRow],
                       geometry=_filter_geometries(row))
 
 
-async def add_result_details(conn: SearchConnection, result: BaseResult,
+def create_from_country_row(row: Optional[SaRow],
+                        class_type: Type[BaseResultT]) -> Optional[BaseResultT]:
+    """ Construct a new result and add the data from the result row
+        from the fallback country tables. 'class_type' defines
+        the type of result to return. Returns None if the row is None.
+    """
+    if row is None:
+        return None
+
+    return class_type(source_table=SourceTable.COUNTRY,
+                      category=('place', 'country'),
+                      centroid=Point.from_wkb(row.centroid.data),
+                      names=row.name,
+                      rank_address=4, rank_search=4,
+                      country_code=row.country_code)
+
+
+async def add_result_details(conn: SearchConnection, results: List[BaseResultT],
                              details: LookupDetails) -> None:
     """ Retrieve more details from the database according to the
         parameters specified in 'details'.
     """
-    log().section('Query details for result')
-    if details.address_details:
-        log().comment('Query address details')
-        await complete_address_details(conn, result)
-    if details.linked_places:
-        log().comment('Query linked places')
-        await complete_linked_places(conn, result)
-    if details.parented_places:
-        log().comment('Query parent places')
-        await complete_parented_places(conn, result)
-    if details.keywords:
-        log().comment('Query keywords')
-        await complete_keywords(conn, result)
+    if results:
+        log().section('Query details for result')
+        if details.address_details:
+            log().comment('Query address details')
+            await complete_address_details(conn, results)
+        if details.linked_places:
+            log().comment('Query linked places')
+            for result in results:
+                await complete_linked_places(conn, result)
+        if details.parented_places:
+            log().comment('Query parent places')
+            for result in results:
+                await complete_parented_places(conn, result)
+        if details.keywords:
+            log().comment('Query keywords')
+            for result in results:
+                await complete_keywords(conn, result)
 
 
 def _result_row_to_address_row(row: SaRow) -> AddressLine:
@@ -332,10 +402,8 @@ def _result_row_to_address_row(row: SaRow) -> AddressLine:
     if hasattr(row, 'place_type') and row.place_type:
         extratags['place'] = row.place_type
 
-    names = row.name
+    names = _mingle_name_tags(row.name) or {}
     if getattr(row, 'housenumber', None) is not None:
-        if names is None:
-            names = {}
         names['housenumber'] = row.housenumber
 
     return AddressLine(place_id=row.place_id,
@@ -350,35 +418,60 @@ def _result_row_to_address_row(row: SaRow) -> AddressLine:
                        distance=row.distance)
 
 
-async def complete_address_details(conn: SearchConnection, result: BaseResult) -> None:
+async def complete_address_details(conn: SearchConnection, results: List[BaseResultT]) -> None:
     """ Retrieve information about places that make up the address of the result.
     """
-    housenumber = -1
-    if result.source_table in (SourceTable.TIGER, SourceTable.OSMLINE):
-        if result.housenumber is not None:
-            housenumber = int(result.housenumber)
-        elif result.extratags is not None and 'startnumber' in result.extratags:
-            # details requests do not come with a specific house number
-            housenumber = int(result.extratags['startnumber'])
+    def get_hnr(result: BaseResult) -> Tuple[int, int]:
+        housenumber = -1
+        if result.source_table in (SourceTable.TIGER, SourceTable.OSMLINE):
+            if result.housenumber is not None:
+                housenumber = int(result.housenumber)
+            elif result.extratags is not None and 'startnumber' in result.extratags:
+                # details requests do not come with a specific house number
+                housenumber = int(result.extratags['startnumber'])
+        assert result.place_id
+        return result.place_id, housenumber
 
-    sfn = sa.func.get_addressdata(result.place_id, housenumber)\
-            .table_valued( # type: ignore[no-untyped-call]
-                sa.column('place_id', type_=sa.Integer),
-                'osm_type',
-                sa.column('osm_id', type_=sa.BigInteger),
-                sa.column('name', type_=conn.t.types.Composite),
-                'class', 'type', 'place_type',
-                sa.column('admin_level', type_=sa.Integer),
-                sa.column('fromarea', type_=sa.Boolean),
-                sa.column('isaddress', type_=sa.Boolean),
-                sa.column('rank_address', type_=sa.SmallInteger),
-                sa.column('distance', type_=sa.Float))
-    sql = sa.select(sfn).order_by(sa.column('rank_address').desc(),
-                                  sa.column('isaddress').desc())
+    data: List[Tuple[Any, ...]] = [get_hnr(r) for r in results if r.place_id]
 
-    result.address_rows = AddressLines()
+    if not data:
+        return
+
+    values = sa.values(sa.column('place_id', type_=sa.Integer),
+                       sa.column('housenumber', type_=sa.Integer),
+                       name='places',
+                       literal_binds=True).data(data)
+
+    sfn = sa.func.get_addressdata(values.c.place_id, values.c.housenumber)\
+                .table_valued( # type: ignore[no-untyped-call]
+                    sa.column('place_id', type_=sa.Integer),
+                    'osm_type',
+                    sa.column('osm_id', type_=sa.BigInteger),
+                    sa.column('name', type_=conn.t.types.Composite),
+                    'class', 'type', 'place_type',
+                    sa.column('admin_level', type_=sa.Integer),
+                    sa.column('fromarea', type_=sa.Boolean),
+                    sa.column('isaddress', type_=sa.Boolean),
+                    sa.column('rank_address', type_=sa.SmallInteger),
+                    sa.column('distance', type_=sa.Float),
+                    joins_implicitly=True)
+
+    sql = sa.select(values.c.place_id.label('result_place_id'), sfn)\
+            .order_by(values.c.place_id,
+                      sa.column('rank_address').desc(),
+                      sa.column('isaddress').desc())
+
+    current_result = None
     for row in await conn.execute(sql):
-        result.address_rows.append(_result_row_to_address_row(row))
+        if current_result is None or row.result_place_id != current_result.place_id:
+            for result in results:
+                if result.place_id == row.result_place_id:
+                    current_result = result
+                    break
+            else:
+                assert False
+            current_result.address_rows = AddressLines()
+        current_result.address_rows.append(_result_row_to_address_row(row))
 
 
 # pylint: disable=consider-using-f-string
@@ -413,6 +506,9 @@ async def complete_linked_places(conn: SearchConnection, result: BaseResult) -> 
 
 async def complete_keywords(conn: SearchConnection, result: BaseResult) -> None:
     """ Retrieve information about the search terms used for this place.
+
+        Requires that the query analyzer was initialised to get access to
+        the word table.
     """
     t = conn.t.search_name
     sql = sa.select(t.c.name_vector, t.c.nameaddress_vector)\
@@ -420,10 +516,11 @@ async def complete_keywords(conn: SearchConnection, result: BaseResult) -> None:
 
     result.name_keywords = []
     result.address_keywords = []
-    for name_tokens, address_tokens in await conn.execute(sql):
-        t = conn.t.word
-        sel = sa.select(t.c.word_id, t.c.word_token, t.c.word)
 
+    t = conn.t.meta.tables['word']
+    sel = sa.select(t.c.word_id, t.c.word_token, t.c.word)
+
+    for name_tokens, address_tokens in await conn.execute(sql):
         for row in await conn.execute(sel.where(t.c.word_id == sa.any_(name_tokens))):
             result.name_keywords.append(WordInfo(*row))
 

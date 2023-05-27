@@ -75,11 +75,14 @@ def test_search_details_minimal():
            {'category': 'place',
             'type': 'thing',
             'admin_level': 15,
+            'names': {},
             'localname': '',
             'calculated_importance': pytest.approx(0.0000001),
             'rank_address': 30,
             'rank_search': 30,
             'isarea': False,
+            'addresstags': {},
+            'extratags': {},
             'centroid': {'type': 'Point', 'coordinates': [1.0, 2.0]},
             'geometry': {'type': 'Point', 'coordinates': [1.0, 2.0]},
            }
@@ -108,6 +111,7 @@ def test_search_details_full():
                   country_code='ll',
                   indexed_date = import_date
                   )
+    search.localize(napi.Locales())
 
     result = api_impl.format_result(search, 'json', {})
 

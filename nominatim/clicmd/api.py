@@ -7,7 +7,7 @@
 """
 Subcommand definitions for API calls from the command line.
 """
-from typing import Mapping, Dict
+from typing import Mapping, Dict, Any
 import argparse
 import logging
 import json
@@ -18,7 +18,7 @@ from nominatim.errors import UsageError
 from nominatim.clicmd.args import NominatimArgs
 import nominatim.api as napi
 import nominatim.api.v1 as api_output
-from nominatim.api.v1.helpers import zoom_to_rank
+from nominatim.api.v1.helpers import zoom_to_rank, deduplicate_results
 import nominatim.api.logging as loglib
 
 # Do not repeat documentation of subcommand classes.
@@ -27,6 +27,7 @@ import nominatim.api.logging as loglib
 LOG = logging.getLogger()
 
 STRUCTURED_QUERY = (
+    ('amenity', 'name and/or type of POI'),
     ('street', 'housenumber and street'),
     ('city', 'city, town or village'),
     ('county', 'county'),
@@ -97,7 +98,7 @@ class APISearch:
                            help='Limit search results to one or more countries')
         group.add_argument('--exclude_place_ids', metavar='ID,..',
                            help='List of search object to be excluded')
-        group.add_argument('--limit', type=int,
+        group.add_argument('--limit', type=int, default=10,
                            help='Limit the number of returned results')
         group.add_argument('--viewbox', metavar='X1,Y1,X2,Y2',
                            help='Preferred area to find search results')
@@ -110,30 +111,58 @@ class APISearch:
 
 
     def run(self, args: NominatimArgs) -> int:
-        params: Dict[str, object]
+        if args.format == 'debug':
+            loglib.set_log_output('text')
+
+        api = napi.NominatimAPI(args.project_dir)
+
+        params: Dict[str, Any] = {'max_results': args.limit + min(args.limit, 10),
+                                  'address_details': True, # needed for display name
+                                  'geometry_output': args.get_geometry_output(),
+                                  'geometry_simplification': args.polygon_threshold,
+                                  'countries': args.countrycodes,
+                                  'excluded': args.exclude_place_ids,
+                                  'viewbox': args.viewbox,
+                                  'bounded_viewbox': args.bounded
+                                 }
+
         if args.query:
-            params = dict(q=args.query)
+            results = api.search(args.query, **params)
         else:
-            params = {k: getattr(args, k) for k, _ in STRUCTURED_QUERY if getattr(args, k)}
+            results = api.search_address(amenity=args.amenity,
+                                         street=args.street,
+                                         city=args.city,
+                                         county=args.county,
+                                         state=args.state,
+                                         postalcode=args.postalcode,
+                                         country=args.country,
+                                         **params)
 
-        for param, _ in EXTRADATA_PARAMS:
-            if getattr(args, param):
-                params[param] = '1'
-        for param in ('format', 'countrycodes', 'exclude_place_ids', 'limit', 'viewbox'):
-            if getattr(args, param):
-                params[param] = getattr(args, param)
-        if args.lang:
-            params['accept-language'] = args.lang
-        if args.polygon_output:
-            params['polygon_' + args.polygon_output] = '1'
-        if args.polygon_threshold:
-            params['polygon_threshold'] = args.polygon_threshold
-        if args.bounded:
-            params['bounded'] = '1'
-        if not args.dedupe:
-            params['dedupe'] = '0'
+        for result in results:
+            result.localize(args.get_locales(api.config.DEFAULT_LANGUAGE))
 
-        return _run_api('search', args, params)
+        if args.dedupe and len(results) > 1:
+            results = deduplicate_results(results, args.limit)
+
+        if args.format == 'debug':
+            print(loglib.get_and_disable())
+            return 0
+
+        output = api_output.format_result(
+                    results,
+                    args.format,
+                    {'extratags': args.extratags,
+                     'namedetails': args.namedetails,
+                     'addressdetails': args.addressdetails})
+        if args.format != 'xml':
+            # reformat the result, so it is pretty-printed
+            json.dump(json.loads(output), sys.stdout, indent=4, ensure_ascii=False)
+        else:
+            sys.stdout.write(output)
+        sys.stdout.write('\n')
+
+        return 0
+
 
 class APIReverse:
     """\
@@ -179,11 +208,11 @@ class APIReverse:
             return 0
 
         if result:
+            result.localize(args.get_locales(api.config.DEFAULT_LANGUAGE))
             output = api_output.format_result(
                         napi.ReverseResults([result]),
                         args.format,
-                        {'locales': args.get_locales(api.config.DEFAULT_LANGUAGE),
-                         'extratags': args.extratags,
+                        {'extratags': args.extratags,
                          'namedetails': args.namedetails,
                          'addressdetails': args.addressdetails})
             if args.format != 'xml':
@@ -236,11 +265,13 @@ class APILookup:
                              geometry_output=args.get_geometry_output(),
                              geometry_simplification=args.polygon_threshold or 0.0)
 
+        for result in results:
+            result.localize(args.get_locales(api.config.DEFAULT_LANGUAGE))
+
         output = api_output.format_result(
                     results,
                     args.format,
-                    {'locales': args.get_locales(api.config.DEFAULT_LANGUAGE),
-                     'extratags': args.extratags,
+                    {'extratags': args.extratags,
                      'namedetails': args.namedetails,
                      'addressdetails': args.addressdetails})
         if args.format != 'xml':
@@ -320,10 +351,13 @@ class APIDetails:
 
 
         if result:
+            locales = args.get_locales(api.config.DEFAULT_LANGUAGE)
+            result.localize(locales)
+
             output = api_output.format_result(
                         result,
                         'json',
-                        {'locales': args.get_locales(api.config.DEFAULT_LANGUAGE),
+                        {'locales': locales,
                          'group_hierarchy': args.group_hierarchy})
             # reformat the result, so it is pretty-printed
             json.dump(json.loads(output), sys.stdout, indent=4, ensure_ascii=False)

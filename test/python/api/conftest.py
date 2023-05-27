@@ -12,6 +12,8 @@ import pytest
 import time
 import datetime as dt
 
+import sqlalchemy as sa
+
 import nominatim.api as napi
 from nominatim.db.sql_preprocessor import SQLPreprocessor
 import nominatim.api.logging as loglib
@@ -127,6 +129,34 @@ class APITester:
                       {'country_code': country_code,
                        'area': 0.1,
                        'geometry': 'SRID=4326;' + geometry})
+
+
+    def add_country_name(self, country_code, names, partition=0):
+        self.add_data('country_name',
+                      {'country_code': country_code,
+                       'name': names,
+                       'partition': partition})
+
+
+    def add_search_name(self, place_id, **kw):
+        centroid = kw.get('centroid', (23.0, 34.0))
+        self.add_data('search_name',
+                      {'place_id': place_id,
+                       'importance': kw.get('importance', 0.00001),
+                       'search_rank': kw.get('search_rank', 30),
+                       'address_rank': kw.get('address_rank', 30),
+                       'name_vector': kw.get('names', []),
+                       'nameaddress_vector': kw.get('address', []),
+                       'country_code': kw.get('country_code', 'xx'),
+                       'centroid': 'SRID=4326;POINT(%f %f)' % centroid})
+
+
+    def add_class_type_table(self, cls, typ):
+        self.async_to_sync(
+            self.exec_async(sa.text(f"""CREATE TABLE place_classtype_{cls}_{typ}
+                                         AS (SELECT place_id, centroid FROM placex
+                                             WHERE class = '{cls}' AND type = '{typ}')
+                                     """)))
 
 
     async def exec_async(self, sql, *args, **kwargs):

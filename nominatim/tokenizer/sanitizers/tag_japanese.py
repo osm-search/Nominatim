@@ -1,5 +1,4 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
@@ -84,7 +83,8 @@ def reconbine_housenumber(
                 suffix=''
             )
         )
-  return new_address
+    return new_address
+>>>>>>> 965beac7 (parent fc8caf720243b4d2116756f85bc20cae83280d53)
 
 def reconbine_place(
     new_address: List[PlaceName],

@@ -10,11 +10,23 @@ def create(config):
 def tag_japanese(obj):
     if obj.place.country_code != 'ja':
         return
+    flag_house = 0
+    flag_block = 0
     for item in obj.address:
-        if item.kind == 'housenumber':
+        if item.kind == 'housenumber' and flag_block == 1:
+            # if both house and block exist, add them to name
+            obj.names.append(item.clone(kind=))
+        elif item.kind == 'housenumber':
+            flag_house = 1
             # item.kind = None
-            # obj.name.kind ?
+        elif item.kind == 'block_number' and flag_house ==1:
+            # same as above
+            # ? obj.names.append(item.clone(kind=))
         elif item.kind == 'block_number':
-            # item.kind = None
+            flag_block = 1
         elif item.kind == 'neighbourhood':
-            # item.kind = None
+            obj.names.append(item.clone(kind='place'))
+            # item.kind = Nonne
+    if flag_house == 1 or flag_block == 1:
+        # if only one of the two is available, the value is assigned as it is.
+        obj.names.appned(item.clone(kind=))

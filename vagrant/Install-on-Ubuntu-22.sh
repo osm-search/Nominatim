@@ -51,6 +51,11 @@ export DEBIAN_FRONTEND=noninteractive #DOCS:
 #
 # You may find a more suitable location if you wish.
 #
+# The following instructions assume you are logged in as this user.
+# You can also switch to the user with:
+#
+#     sudo -u nominatim bash
+#
 # To be able to copy and paste instructions from this manual, export
 # user name and home directory now like this:
 #

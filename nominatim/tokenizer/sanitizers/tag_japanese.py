@@ -3,6 +3,7 @@ import re
 
 from nominatim.tokenizer.sanitizers.base import ProcessInfo
 from nominatim.tokenizer.sanitizers.config import SanitizerConfig
+from nominatim.data.place_name import PlaceName
 
 def create(config):
     return tag_japanese
@@ -24,13 +25,14 @@ def tag_japanese(obj: ProcessInfo) -> None:
             tmp_neighbourhood = item.name
         else:
             new_address.append(item)
+        print(item)
 
     if tmp_blocknumber and tmp_housenumber:
-        new_address.append(PlaceName(kind='housenumber', name=f'{tmp_blocknumber}-{tmp_housenumber}'))
+        new_address.append(PlaceName(kind='housenumber', name=f'{tmp_blocknumber}-{tmp_housenumber}',suffix=''))
     elif tmp_blocknumber:
-        new_address.append(PlaceName(kind='housenumber', name=f'{tmp_blocknumber}'))
+        new_address.append(PlaceName(kind='housenumber', name=f'{tmp_blocknumber}',suffix=''))
     elif tmp_housenumber:
-        new_address.append(PlaceName(kind='housenumber', name=f'{tmp_housenumber}'))
+        new_address.append(PlaceName(kind='housenumber', name=f'{tmp_housenumber}',suffix=''))
 
     if tmp_neighbourhood:
         new_address.append(PlaceName(kind='place', name=tmp_neighbourhood))

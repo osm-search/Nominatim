@@ -23,7 +23,33 @@ class TestTagJapanese:
         res = self.run_sanitizer_on('address', name='foo', ref='bar', ref_abc='baz')
         assert res == [('bar','ref'),('baz','ref_abc'),('foo','name')]
 
-    def test_housenumber_type(self):
+    def test_housenumber(self):
+        res = self.run_sanitizer_on('address', housenumber='2')
+        assert res == [('2','housenumber')]
+
+    def test_blocknumber(self):
+        res = self.run_sanitizer_on('address', block_number='6')
+        assert res == [('6','housenumber')]
+
+    #def test_neighbourhood(self):
+    #    res = self.run_sanitizer_on('address',neighbourhood='8丁目')
+    #    assert res == [('8','place')]
+    def test_neighbourhood(self):
+        res = self.run_sanitizer_on('address', neighbourhood='8')
+        assert res == [('8','place')]
+
+    def test_housenumber_blocknumber(self):
         res = self.run_sanitizer_on('address', housenumber='2', block_number='6')
         assert res == [('6-2','housenumber')]
 
+    def test_housenumber_blocknumber(self):
+        res = self.run_sanitizer_on('address', housenumber='2', neighbourhood='8')
+        assert res == [('2','housenumber'),('8','place')]
+
+    def test_housenumber_blocknumber(self):
+        res = self.run_sanitizer_on('address', block_number='6', neighbourhood='8')
+        assert res == [('6','housenumber'),('8','place')]
+
+    def test_housenumber_blocknumber_neighbourhood(self):
+        res = self.run_sanitizer_on('address', housenumber='2', block_number='6', neighbourhood='8')
+        assert res == [('6-2','housenumber'),('8','place')]

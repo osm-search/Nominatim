@@ -7,10 +7,13 @@ assignees: ''
 
 ---
 
-<!-- Note: if you are installing Nominatim through a docker image, you should report issues with the installation process with the docker repository first. -->
+<!-- Note: if you are installing Nominatim through a docker image, you should report issues with the installation process with the docker repository first.
+
+     Do not send screen shots! Copy any console output directly into the issue.
+ -->
 
 **Describe the bug**
-<!-- A clear and concise description of what the bug is. -->
+<!-- A clear and concise description of what the bug is.-->
 
 **To Reproduce**
 <!-- Please describe what you did to get to the issue. -->
@@ -25,11 +28,14 @@ assignees: ''
 - RAM: 
 - number of CPUs:
 - type and size of disks:
-- bare metal/AWS/other cloud service: 
 
 **Postgresql Configuration:**
 
 <!-- List any configuration items you changed in your postgresql configuration. -->
+
+**Nominatim Configuration:**
+
+<!-- List the contents of your customized `.env` file. -->
 
 **Additional context**
 

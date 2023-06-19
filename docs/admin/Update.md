@@ -59,47 +59,6 @@ imported multiple country extracts and want to keep them
 up-to-date, [Advanced installations section](Advanced-Installations.md)
 contains instructions to set up and update multiple country extracts.
 
-#### Continuous updates
-
-This is the easiest mode. Simply run the replication command without any
-parameters:
-
-    nominatim replication
-
-The update application keeps running forever and retrieves and applies
-new updates from the server as they are published.
-
-You can run this command as a simple systemd service. Create a service
-description like that in `/etc/systemd/system/nominatim-updates.service`:
-
-```
-[Unit]
-Description=Continuous updates of Nominatim
-
-[Service]
-WorkingDirectory=/srv/nominatim
-ExecStart=nominatim replication
-StandardOutput=append:/var/log/nominatim-updates.log
-StandardError=append:/var/log/nominatim-updates.error.log
-User=nominatim
-Group=nominatim
-Type=simple
-
-[Install]
-WantedBy=multi-user.target
-```
-
-Replace the `WorkingDirectory` with your project directory. Also adapt user
-and group names as required.
-
-Now activate the service and start the updates:
-
-```
-sudo systemctl daemon-reload
-sudo systemctl enable nominatim-updates
-sudo systemctl start nominatim-updates
-```
-
 #### One-time mode
 
 When the `--once` parameter is given, then Nominatim will download exactly one
@@ -221,3 +180,53 @@ replication catch-up at whatever interval you desire.
     updated source with daily updates), use the
     continuous update mode. It ensures to re-request the newest update until it
     is published.
+
+
+#### Continuous updates
+
+!!! danger
+    This mode is no longer recommended to use and will removed in future
+    releases. systemd is much better
+    suited for running regular updates. Please refer to the setup
+    instructions for running one-time mode with systemd above.
+
+This is the easiest mode. Simply run the replication command without any
+parameters:
+
+    nominatim replication
+
+The update application keeps running forever and retrieves and applies
+new updates from the server as they are published.
+
+You can run this command as a simple systemd service. Create a service
+description like that in `/etc/systemd/system/nominatim-updates.service`:
+
+```
+[Unit]
+Description=Continuous updates of Nominatim
+
+[Service]
+WorkingDirectory=/srv/nominatim
+ExecStart=nominatim replication
+StandardOutput=append:/var/log/nominatim-updates.log
+StandardError=append:/var/log/nominatim-updates.error.log
+User=nominatim
+Group=nominatim
+Type=simple
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Replace the `WorkingDirectory` with your project directory. Also adapt user
+and group names as required.
+
+Now activate the service and start the updates:
+
+```
+sudo systemctl daemon-reload
+sudo systemctl enable nominatim-updates
+sudo systemctl start nominatim-updates
+```
+
+

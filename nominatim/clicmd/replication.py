@@ -147,10 +147,13 @@ class UpdateReplication:
         tokenizer = tokenizer_factory.get_tokenizer_for_db(args.config)
         indexer = Indexer(args.config.get_libpq_dsn(), tokenizer, args.threads or 1)
 
+        dsn = args.config.get_libpq_dsn()
+
         while True:
-            with connect(args.config.get_libpq_dsn()) as conn:
-                start = dt.datetime.now(dt.timezone.utc)
-                state = replication.update(conn, params, socket_timeout=args.socket_timeout)
+            start = dt.datetime.now(dt.timezone.utc)
+            state = replication.update(dsn, params, socket_timeout=args.socket_timeout)
+
+            with connect(dsn) as conn:
                 if state is not replication.UpdateState.NO_CHANGES:
                     status.log_status(conn, start, 'import')
                 batchdate, _, _ = status.get_status(conn)
@@ -160,7 +163,7 @@ class UpdateReplication:
                 index_start = dt.datetime.now(dt.timezone.utc)
                 indexer.index_full(analyse=False)
 
-                with connect(args.config.get_libpq_dsn()) as conn:
+                with connect(dsn) as conn:
                     status.set_indexed(conn, True)
                     status.log_status(conn, index_start, 'index')
                     conn.commit()

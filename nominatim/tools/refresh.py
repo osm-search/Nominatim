@@ -217,7 +217,7 @@ def setup_website(basedir: Path, config: Configuration, conn: Connection) -> Non
         basedir.mkdir()
 
     assert config.project_dir is not None
-    template = dedent(f"""\
+    basedata = dedent(f"""\
                       <?php
 
                       @define('CONST_Debug', $_GET['debug'] ?? false);
@@ -230,17 +230,19 @@ def setup_website(basedir: Path, config: Configuration, conn: Connection) -> Non
     for php_name, conf_name, var_type in PHP_CONST_DEFS:
         varout = _quote_php_variable(var_type, config, conf_name)
 
-        template += f"@define('CONST_{php_name}', {varout});\n"
+        basedata += f"@define('CONST_{php_name}', {varout});\n"
 
-    template += f"\nrequire_once('{config.lib_dir.php}/website/{{}}');\n"
+    template = "\nrequire_once(CONST_LibDir.'/website/{}');\n"
 
     search_name_table_exists = bool(conn and conn.table_exists('search_name'))
 
     for script in WEBSITE_SCRIPTS:
         if not search_name_table_exists and script == 'search.php':
-            (basedir / script).write_text(template.format('reverse-only-search.php'), 'utf-8')
+            out = template.format('reverse-only-search.php')
         else:
-            (basedir / script).write_text(template.format(script), 'utf-8')
+            out = template.format(script)
+
+        (basedir / script).write_text(basedata + out, 'utf-8')
 
 
 def invalidate_osm_object(osm_type: str, osm_id: int, conn: Connection,

@@ -95,3 +95,10 @@ def test_relative_log_file(project_env, monkeypatch, test_script, run_website_sc
 
     assert run_website_script() == 10
 
+def test_variable_with_bracket(project_env, monkeypatch, test_script, run_website_script):
+    monkeypatch.setenv('NOMINATIM_DATABASE_DSN', 'pgsql:dbname=nominatim;user=foo;password=4{5')
+
+    test_script('exit(CONST_Database_DSN === "pgsql:dbname=nominatim;user=foo;password=4{5" ? 10 : 20);')
+
+    assert run_website_script() == 10
+

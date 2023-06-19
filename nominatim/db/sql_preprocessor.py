@@ -57,9 +57,11 @@ def _setup_postgresql_features(conn: Connection) -> Dict[str, Any]:
     """
     pg_version = conn.server_version_tuple()
     postgis_version = conn.postgis_version_tuple()
+    pg11plus = pg_version >= (11, 0, 0)
+    ps3 = postgis_version >= (3, 0)
     return {
-        'has_index_non_key_column': pg_version >= (11, 0, 0),
-        'spgist_geom' : 'SPGIST' if postgis_version >= (3, 0) else 'GIST'
+        'has_index_non_key_column': pg11plus,
+        'spgist_geom' : 'SPGIST' if pg11plus and ps3 else 'GIST'
     }
 
 class SQLPreprocessor:

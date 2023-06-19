@@ -18,7 +18,7 @@ import urllib.request as urlrequest
 
 import requests
 from nominatim.db import status
-from nominatim.db.connection import Connection
+from nominatim.db.connection import Connection, connect
 from nominatim.tools.exec_utils import run_osm2pgsql
 from nominatim.errors import UsageError
 
@@ -92,12 +92,14 @@ class UpdateState(Enum):
     NO_CHANGES = 3
 
 
-def update(conn: Connection, options: MutableMapping[str, Any],
+def update(dsn: str, options: MutableMapping[str, Any],
            socket_timeout: int = 60) -> UpdateState:
     """ Update database from the next batch of data. Returns the state of
         updates according to `UpdateState`.
     """
-    startdate, startseq, indexed = status.get_status(conn)
+    with connect(dsn) as conn:
+        startdate, startseq, indexed = status.get_status(conn)
+        conn.commit()
 
     if startseq is None:
         LOG.error("Replication not set up. "
@@ -130,12 +132,14 @@ def update(conn: Connection, options: MutableMapping[str, Any],
         if endseq is None:
             return UpdateState.NO_CHANGES
 
-        run_osm2pgsql_updates(conn, options)
+        with connect(dsn) as conn:
+            run_osm2pgsql_updates(conn, options)
 
-        # Write the current status to the file
-        endstate = repl.get_state_info(endseq)
-        status.set_status(conn, endstate.timestamp if endstate else None,
-                          seq=endseq, indexed=False)
+            # Write the current status to the file
+            endstate = repl.get_state_info(endseq)
+            status.set_status(conn, endstate.timestamp if endstate else None,
+                              seq=endseq, indexed=False)
+            conn.commit()
 
     return UpdateState.UP_TO_DATE
 

@@ -100,19 +100,19 @@ def update_options(tmpdir):
                 import_file=tmpdir / 'foo.osm',
                 max_diff_size=1)
 
-def test_update_empty_status_table(temp_db_conn):
+def test_update_empty_status_table(dsn):
     with pytest.raises(UsageError):
-        nominatim.tools.replication.update(temp_db_conn, {})
+        nominatim.tools.replication.update(dsn, {})
 
 
-def test_update_already_indexed(temp_db_conn):
+def test_update_already_indexed(temp_db_conn, dsn):
     status.set_status(temp_db_conn, dt.datetime.now(dt.timezone.utc), seq=34, indexed=False)
 
-    assert nominatim.tools.replication.update(temp_db_conn, dict(indexed_only=True)) \
+    assert nominatim.tools.replication.update(dsn, dict(indexed_only=True)) \
              == nominatim.tools.replication.UpdateState.MORE_PENDING
 
 
-def test_update_no_data_no_sleep(monkeypatch, temp_db_conn, update_options):
+def test_update_no_data_no_sleep(monkeypatch, temp_db_conn, dsn, update_options):
     date = dt.datetime.now(dt.timezone.utc) - dt.timedelta(days=1)
     status.set_status(temp_db_conn, date, seq=34)
 
@@ -123,13 +123,13 @@ def test_update_no_data_no_sleep(monkeypatch, temp_db_conn, update_options):
     sleeptime = []
     monkeypatch.setattr(time, 'sleep', sleeptime.append)
 
-    assert nominatim.tools.replication.update(temp_db_conn, update_options) \
+    assert nominatim.tools.replication.update(dsn, update_options) \
              == nominatim.tools.replication.UpdateState.NO_CHANGES
 
     assert not sleeptime
 
 
-def test_update_no_data_sleep(monkeypatch, temp_db_conn, update_options):
+def test_update_no_data_sleep(monkeypatch, temp_db_conn, dsn, update_options):
     date = dt.datetime.now(dt.timezone.utc) - dt.timedelta(minutes=30)
     status.set_status(temp_db_conn, date, seq=34)
 
@@ -140,7 +140,7 @@ def test_update_no_data_sleep(monkeypatch, temp_db_conn, update_options):
     sleeptime = []
     monkeypatch.setattr(time, 'sleep', sleeptime.append)
 
-    assert nominatim.tools.replication.update(temp_db_conn, update_options) \
+    assert nominatim.tools.replication.update(dsn, update_options) \
              == nominatim.tools.replication.UpdateState.NO_CHANGES
 
     assert len(sleeptime) == 1

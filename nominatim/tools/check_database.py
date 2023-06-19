@@ -15,6 +15,7 @@ from nominatim.config import Configuration
 from nominatim.db.connection import connect, Connection
 from nominatim.errors import UsageError
 from nominatim.tokenizer import factory as tokenizer_factory
+from nominatim.tools import freeze
 
 CHECKLIST = []
 
@@ -222,6 +223,12 @@ def check_indexing(conn: Connection, _: Configuration) -> CheckResult:
 
     if cnt == 0:
         return CheckState.OK
+
+    if freeze.is_frozen(conn):
+        index_cmd="""\
+            Database is marked frozen, it cannot be updated.
+            Low counts of unindexed places are fine."""
+        return CheckState.WARN, dict(count=cnt, index_cmd=index_cmd)
 
     if conn.index_exists('idx_placex_rank_search'):
         # Likely just an interrupted update.

@@ -403,6 +403,12 @@ class CountrySearch(AbstractSearch):
                                       details: SearchDetails) -> nres.SearchResults:
         """ Look up the country in the fallback country tables.
         """
+        # Avoid the fallback search when this is a more search. Country results
+        # usually are in the first batch of results and it is not possible
+        # to exclude these fallbacks.
+        if details.excluded:
+            return nres.SearchResults()
+
         t = conn.t.country_name
         tgrid = conn.t.country_grid
 

@@ -562,6 +562,8 @@ class PlaceSearch(AbstractSearch):
             sql = sql.where(tsearch.c.country_code.in_(self.countries.values))
 
         if self.postcodes:
+            # if a postcode is given, don't search for state or country level objects
+            sql = sql.where(tsearch.c.address_rank > 9)
             tpc = conn.t.postcode
             if self.expected_count > 1000:
                 # Many results expected. Restrict by postcode.

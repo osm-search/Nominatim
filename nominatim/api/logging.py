@@ -178,7 +178,7 @@ class HTMLLogger(BaseLogger):
             self._write(f"rank={res.rank_address}, ")
             self._write(f"osm={format_osm(res.osm_object)}, ")
             self._write(f'cc={res.country_code}, ')
-            self._write(f'importance={res.importance or -1:.5f})</dd>')
+            self._write(f'importance={res.importance or float("nan"):.5f})</dd>')
             total += 1
         self._write(f'</dl><b>TOTAL:</b> {total}</p>')
 

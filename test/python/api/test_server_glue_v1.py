@@ -123,7 +123,7 @@ def test_accepted_languages_from_param():
 
 
 def test_accepted_languages_from_header():
-    a = FakeAdaptor(headers={'http_accept_language': 'de'})
+    a = FakeAdaptor(headers={'accept-language': 'de'})
     assert a.get_accepted_languages() == 'de'
 
 
@@ -135,13 +135,13 @@ def test_accepted_languages_from_default(monkeypatch):
 
 def test_accepted_languages_param_over_header():
     a = FakeAdaptor(params={'accept-language': 'de'},
-                    headers={'http_accept_language': 'en'})
+                    headers={'accept-language': 'en'})
     assert a.get_accepted_languages() == 'de'
 
 
 def test_accepted_languages_header_over_default(monkeypatch):
     monkeypatch.setenv('NOMINATIM_DEFAULT_LANGUAGE', 'en')
-    a = FakeAdaptor(headers={'http_accept_language': 'de'})
+    a = FakeAdaptor(headers={'accept-language': 'de'})
     assert a.get_accepted_languages() == 'de'
 
 
@@ -197,14 +197,14 @@ def test_raise_error_during_debug():
     loglib.log().section('Ongoing')
 
     with pytest.raises(FakeError) as excinfo:
-        a.raise_error('bad state')
+        a.raise_error('badstate')
 
     content = ET.fromstring(excinfo.value.msg)
 
     assert content.tag == 'html'
 
     assert '>Ongoing<' in excinfo.value.msg
-    assert 'bad state' in excinfo.value.msg
+    assert 'badstate' in excinfo.value.msg
 
 
 # ASGIAdaptor.build_response

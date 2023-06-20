@@ -185,7 +185,7 @@ class ASGIAdaptor(abc.ABC):
         """ Return the accepted languages.
         """
         return self.get('accept-language')\
-               or self.get_header('http_accept_language')\
+               or self.get_header('accept-language')\
                or self.config().DEFAULT_LANGUAGE
 
 

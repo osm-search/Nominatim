@@ -270,7 +270,12 @@ class _TokenSequence:
             if (base.postcode.start == 0 and self.direction != -1)\
                or (base.postcode.end == query.num_token_slots() and self.direction != 1):
                 log().comment('postcode search')
-                yield dataclasses.replace(base, penalty=self.penalty)
+                # <address>,<postcode> should give preference to address search
+                if base.postcode.start == 0:
+                    penalty = self.penalty
+                else:
+                    penalty = self.penalty + 0.1
+                yield dataclasses.replace(base, penalty=penalty)
 
         # Postcode or country-only search
         if not base.address:
@@ -278,6 +283,9 @@ class _TokenSequence:
                 log().comment('postcode/country search')
                 yield dataclasses.replace(base, penalty=self.penalty)
         else:
+            # <postcode>,<address> should give preference to postcode search
+            if base.postcode and base.postcode.start == 0:
+                self.penalty += 0.1
             # Use entire first word as name
             if self.direction != -1:
                 log().comment('first word = name')

@@ -253,7 +253,7 @@ def test_postcode_with_designation():
                    (BreakType.PHRASE, PhraseType.NONE, [(2, TokenType.PARTIAL)]))
 
     check_assignments(yield_token_assignments(q),
-                      TokenAssignment(name=TokenRange(1, 2),
+                      TokenAssignment(penalty=0.1, name=TokenRange(1, 2),
                                       postcode=TokenRange(0, 1)),
                       TokenAssignment(postcode=TokenRange(0, 1),
                                       address=[TokenRange(1, 2)]))
@@ -266,7 +266,7 @@ def test_postcode_with_designation_backwards():
     check_assignments(yield_token_assignments(q),
                       TokenAssignment(name=TokenRange(0, 1),
                                       postcode=TokenRange(1, 2)),
-                      TokenAssignment(postcode=TokenRange(1, 2),
+                      TokenAssignment(penalty=0.1, postcode=TokenRange(1, 2),
                                       address=[TokenRange(0, 1)]))
 
 

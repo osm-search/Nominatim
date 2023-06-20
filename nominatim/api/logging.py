@@ -196,7 +196,7 @@ class HTMLLogger(BaseLogger):
 
     def _python_var(self, var: Any) -> str:
         if CODE_HIGHLIGHT:
-            fmt = highlight(repr(var), PythonLexer(), HtmlFormatter(nowrap=True))
+            fmt = highlight(str(var), PythonLexer(), HtmlFormatter(nowrap=True))
             return f'<div class="highlight"><code class="lang-python">{fmt}</code></div>'
 
         return f'<code class="lang-python">{str(var)}</code>'

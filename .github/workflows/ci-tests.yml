@@ -113,7 +113,7 @@ jobs:
               if: matrix.flavour == 'oldstuff'
 
             - name: Install Python webservers
-              run: pip3 install falcon sanic sanic-testing sanic-cors starlette
+              run: pip3 install falcon starlette
 
             - name: Install latest pylint
               run: pip3 install -U pylint asgi_lifespan

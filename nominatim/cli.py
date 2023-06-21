@@ -215,7 +215,7 @@ class AdminServe:
         group.add_argument('--server', default='127.0.0.1:8088',
                            help='The address the server will listen to.')
         group.add_argument('--engine', default='php',
-                           choices=('php', 'sanic', 'falcon', 'starlette'),
+                           choices=('php', 'falcon', 'starlette'),
                            help='Webserver framework to run. (default: php)')
 
 
@@ -223,6 +223,7 @@ class AdminServe:
         if args.engine == 'php':
             run_php_server(args.server, args.project_dir / 'website')
         else:
+            import uvicorn # pylint: disable=import-outside-toplevel
             server_info = args.server.split(':', 1)
             host = server_info[0]
             if len(server_info) > 1:
@@ -232,21 +233,10 @@ class AdminServe:
             else:
                 port = 8088
 
-            if args.engine == 'sanic':
-                server_module = importlib.import_module('nominatim.server.sanic.server')
+            server_module = importlib.import_module(f'nominatim.server.{args.engine}.server')
 
-                app = server_module.get_application(args.project_dir)
-                app.run(host=host, port=port, debug=True, single_process=True)
-            else:
-                import uvicorn # pylint: disable=import-outside-toplevel
-
-                if args.engine == 'falcon':
-                    server_module = importlib.import_module('nominatim.server.falcon.server')
-                elif args.engine == 'starlette':
-                    server_module = importlib.import_module('nominatim.server.starlette.server')
-
-                app = server_module.get_application(args.project_dir)
-                uvicorn.run(app, host=host, port=port)
+            app = server_module.get_application(args.project_dir)
+            uvicorn.run(app, host=host, port=port)
 
         return 0
 

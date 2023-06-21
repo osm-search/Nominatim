@@ -350,20 +350,6 @@ class NominatimEnvironment:
         return _request
 
 
-    def create_api_request_func_sanic(self):
-        import nominatim.server.sanic.server
-
-        async def _request(endpoint, params, project_dir, environ, http_headers):
-            app = nominatim.server.sanic.server.get_application(project_dir, environ)
-
-            _, response = await app.asgi_client.get(f"/{endpoint}", params=params,
-                                                    headers=http_headers)
-
-            return response.text, response.status_code
-
-        return _request
-
-
     def create_api_request_func_falcon(self):
         import nominatim.server.falcon.server
         import falcon.testing

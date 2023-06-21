@@ -52,12 +52,12 @@ function print_taginfo()
 
     local format = {
         data_format = 1,
-        data_url = 'http://nominatim.openstreetmap.org/taginfo.json',
+        data_url = 'https://nominatim.openstreetmap.org/taginfo.json',
         project = {
             name = 'Nominatim',
             description = 'OSM search engine.',
-            project_url = 'http://nominatim.openstreetmap.org',
-            doc_url = 'http://wiki.osm.org/wiki/Nominatim',
+            project_url = 'https://nominatim.openstreetmap.org',
+            doc_url = 'https://nominatim.org/release-docs/develop/',
             contact_name = 'Sarah Hoffmann',
             contact_email = 'lonvia@denofr.de'
         }

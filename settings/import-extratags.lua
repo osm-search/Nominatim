@@ -7,7 +7,6 @@ flex.set_main_tags{
     historic = 'always',
     military = 'always',
     natural = 'named',
-    landuse = 'named',
     highway = {'always',
                street_lamp = 'named',
                traffic_signals = 'named',

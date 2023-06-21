@@ -233,12 +233,11 @@ class LegacyQueryAnalyzer(AbstractQueryAnalyzer):
                        and (repl.ttype != qmod.TokenType.HOUSENUMBER
                             or len(tlist.tokens[0].lookup_word) > 4):
                         repl.add_penalty(0.39)
-            elif tlist.ttype == qmod.TokenType.HOUSENUMBER:
+            elif tlist.ttype == qmod.TokenType.HOUSENUMBER \
+                 and len(tlist.tokens[0].lookup_word) <= 3:
                 if any(c.isdigit() for c in tlist.tokens[0].lookup_word):
                     for repl in node.starting:
-                        if repl.end == tlist.end and repl.ttype != qmod.TokenType.HOUSENUMBER \
-                           and (repl.ttype != qmod.TokenType.HOUSENUMBER
-                                or len(tlist.tokens[0].lookup_word) <= 3):
+                        if repl.end == tlist.end and repl.ttype != qmod.TokenType.HOUSENUMBER:
                             repl.add_penalty(0.5 - tlist.tokens[0].penalty)
 
 

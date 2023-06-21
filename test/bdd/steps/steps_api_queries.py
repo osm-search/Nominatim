@@ -111,7 +111,8 @@ def send_api_query_php(endpoint, params, context):
     LOG.debug("Environment:" + json.dumps(env, sort_keys=True, indent=2))
 
     if hasattr(context, 'http_headers'):
-        env.update(context.http_headers)
+        for k, v in context.http_headers.items():
+            env['HTTP_' + k.upper().replace('-', '_')] = v
 
     cmd = ['/usr/bin/env', 'php-cgi', '-f']
     if context.nominatim.code_coverage_path:
@@ -148,8 +149,7 @@ def add_http_header(context):
         context.http_headers = {}
 
     for h in context.table.headings:
-        envvar = 'HTTP_' + h.upper().replace('-', '_')
-        context.http_headers[envvar] = context.table[0][h]
+        context.http_headers[h] = context.table[0][h]
 
 
 @when(u'sending (?P<fmt>\S+ )?search query "(?P<query>.*)"(?P<addr> with address)?')

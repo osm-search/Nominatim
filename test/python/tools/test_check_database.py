@@ -76,7 +76,7 @@ def test_check_indexing_good(table_factory, temp_db_conn, def_config):
 def test_check_indexing_bad(table_factory, temp_db_conn, def_config):
     table_factory('placex', 'place_id int, indexed_status smallint',
                   content=((1, 0), (2, 2)))
-    assert chkdb.check_indexing(temp_db_conn, def_config) == chkdb.CheckState.FAIL
+    assert chkdb.check_indexing(temp_db_conn, def_config) == chkdb.CheckState.WARN
 
 
 def test_check_database_indexes_bad(temp_db_conn, def_config):

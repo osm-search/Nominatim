@@ -8,9 +8,9 @@ Feature: Update of names in place objects
           | 4 | 3 |
         Given the places
           | osm | class    | type        | postcode | geometry |
-          | R1  | boundary | postal_code | 12345    | (1,2,3,4,1) |
+          | R1  | boundary | postal_code | 123-45    | (1,2,3,4,1) |
         When importing
-        And sending search query "12345"
+        And sending search query "123-45"
         Then results contain
          | ID | osm |
          | 0  | R1 |

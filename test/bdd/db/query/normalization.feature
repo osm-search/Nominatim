@@ -160,10 +160,10 @@ Feature: Import and search of names
           |   | 2 |   |
           | 1 |   | 3 |
         Given the places
-          | osm | class    | type        | postcode | geometry |
-          | R1  | boundary | postal_code | 12345    | (1,2,3,1) |
+          | osm | class    | type        | postcode  | geometry |
+          | R1  | boundary | postal_code | 123-45    | (1,2,3,1) |
         When importing
-        When sending search query "12345"
+        When sending search query "123-45"
         Then results contain
          | ID | osm |
          | 0  | R1 |

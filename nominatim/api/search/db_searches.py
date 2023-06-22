@@ -403,6 +403,12 @@ class CountrySearch(AbstractSearch):
                                       details: SearchDetails) -> nres.SearchResults:
         """ Look up the country in the fallback country tables.
         """
+        # Avoid the fallback search when this is a more search. Country results
+        # usually are in the first batch of results and it is not possible
+        # to exclude these fallbacks.
+        if details.excluded:
+            return nres.SearchResults()
+
         t = conn.t.country_name
         tgrid = conn.t.country_grid
 
@@ -562,6 +568,8 @@ class PlaceSearch(AbstractSearch):
             sql = sql.where(tsearch.c.country_code.in_(self.countries.values))
 
         if self.postcodes:
+            # if a postcode is given, don't search for state or country level objects
+            sql = sql.where(tsearch.c.address_rank > 9)
             tpc = conn.t.postcode
             if self.expected_count > 1000:
                 # Many results expected. Restrict by postcode.

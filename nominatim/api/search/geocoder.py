@@ -180,7 +180,7 @@ def _dump_searches(searches: List[AbstractSearch], query: QueryStruct,
         return f'{c[0]}^{c[1]}'
 
     for search in searches[start:]:
-        fields = ('name_lookups', 'name_ranking', 'countries', 'housenumbers',
+        fields = ('lookups', 'rankings', 'countries', 'housenumbers',
                   'postcodes', 'qualifier')
         iters = itertools.zip_longest([f"{search.penalty:.3g}"],
                                       *(getattr(search, attr, []) for attr in fields),

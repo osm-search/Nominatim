@@ -141,12 +141,14 @@ class SearchBuilder:
             yield dbs.CountrySearch(sdata)
 
         if sdata.postcodes and (is_category or self.configured_for_postcode):
+            penalty = 0.0 if sdata.countries else 0.1
             if address:
                 sdata.lookups = [dbf.FieldLookup('nameaddress_vector',
                                                  [t.token for r in address
                                                   for t in self.query.get_partials_list(r)],
                                                  'restrict')]
-            yield dbs.PostcodeSearch(0.4, sdata)
+                penalty += 0.2
+            yield dbs.PostcodeSearch(penalty, sdata)
 
 
     def build_housenumber_search(self, sdata: dbf.SearchData, hnrs: List[Token],

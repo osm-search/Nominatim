@@ -41,7 +41,6 @@ It has the following additional requirements:
 For testing the Python search frontend, you need to install extra dependencies
 depending on your choice of webserver framework:
 
-* [sanic-testing](https://sanic.dev/en/plugins/sanic-testing/getting-started.html) (sanic only)
 * [httpx](https://www.python-httpx.org/) (starlette only)
 * [asgi-lifespan](https://github.com/florimondmanca/asgi-lifespan) (starlette only)
 
@@ -66,7 +65,7 @@ sudo apt install php-cgi phpunit php-codesniffer \
 pip3 install --user behave mkdocs mkdocstrings pytest pytest-asyncio pylint \
                     mypy types-PyYAML types-jinja2 types-psycopg2 types-psutil \
                     types-ujson types-requests types-Pygments typing-extensions\
-                    sanic-testing httpx asgi-lifespan
+                    httpx asgi-lifespan
 ```
 
 The `mkdocs` executable will be located in `.local/bin`. You may have to add

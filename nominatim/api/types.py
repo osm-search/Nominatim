@@ -302,10 +302,11 @@ def format_excluded(ids: Any) -> List[int]:
     else:
         raise UsageError("Parameter 'excluded' needs to be a comma-separated list "
                          "or a Python list of numbers.")
-    if not all(isinstance(i, int) or (isinstance(i, str) and i.isdigit()) for i in plist):
+    if not all(isinstance(i, int) or
+               (isinstance(i, str) and (not i or i.isdigit())) for i in plist):
         raise UsageError("Parameter 'excluded' only takes place IDs.")
 
-    return [int(id) for id in plist if id]
+    return [int(id) for id in plist if id] or [0]
 
 
 def format_categories(categories: List[Tuple[str, str]]) -> List[Tuple[str, str]]:

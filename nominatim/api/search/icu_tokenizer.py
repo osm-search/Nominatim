@@ -153,7 +153,7 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
         """
         log().section('Analyze query (using ICU tokenizer)')
         normalized = list(filter(lambda p: p.text,
-                                 (qmod.Phrase(p.ptype, self.normalizer.transliterate(p.text))
+                                 (qmod.Phrase(p.ptype, self.normalize_text(p.text))
                                   for p in phrases)))
         query = qmod.QueryStruct(normalized)
         log().var_dump('Normalized query', query.source)
@@ -185,6 +185,14 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
         log().table_dump('Word tokens', _dump_word_tokens(query))
 
         return query
+
+
+    def normalize_text(self, text: str) -> str:
+        """ Bring the given text into a normalized form. That is the
+            standardized form search will work with. All information removed
+            at this stage is inevitably lost.
+        """
+        return cast(str, self.normalizer.transliterate(text))
 
 
     def split_query(self, query: qmod.QueryStruct) -> Tuple[QueryParts, WordDict]:
@@ -248,12 +256,11 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
                        and (repl.ttype != qmod.TokenType.HOUSENUMBER
                             or len(tlist.tokens[0].lookup_word) > 4):
                         repl.add_penalty(0.39)
-            elif tlist.ttype == qmod.TokenType.HOUSENUMBER:
+            elif tlist.ttype == qmod.TokenType.HOUSENUMBER \
+                 and len(tlist.tokens[0].lookup_word) <= 3:
                 if any(c.isdigit() for c in tlist.tokens[0].lookup_word):
                     for repl in node.starting:
-                        if repl.end == tlist.end and repl.ttype != qmod.TokenType.HOUSENUMBER \
-                           and (repl.ttype != qmod.TokenType.HOUSENUMBER
-                                or len(tlist.tokens[0].lookup_word) <= 3):
+                        if repl.end == tlist.end and repl.ttype != qmod.TokenType.HOUSENUMBER:
                             repl.add_penalty(0.5 - tlist.tokens[0].penalty)
             elif tlist.ttype not in (qmod.TokenType.COUNTRY, qmod.TokenType.PARTIAL):
                 norm = parts[i].normalized

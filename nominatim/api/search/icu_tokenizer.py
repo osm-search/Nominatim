@@ -153,7 +153,7 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
         """
         log().section('Analyze query (using ICU tokenizer)')
         normalized = list(filter(lambda p: p.text,
-                                 (qmod.Phrase(p.ptype, self.normalizer.transliterate(p.text))
+                                 (qmod.Phrase(p.ptype, self.normalize_text(p.text))
                                   for p in phrases)))
         query = qmod.QueryStruct(normalized)
         log().var_dump('Normalized query', query.source)
@@ -185,6 +185,14 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
         log().table_dump('Word tokens', _dump_word_tokens(query))
 
         return query
+
+
+    def normalize_text(self, text: str) -> str:
+        """ Bring the given text into a normalized form. That is the
+            standardized form search will work with. All information removed
+            at this stage is inevitably lost.
+        """
+        return cast(str, self.normalizer.transliterate(text))
 
 
     def split_query(self, query: qmod.QueryStruct) -> Tuple[QueryParts, WordDict]:

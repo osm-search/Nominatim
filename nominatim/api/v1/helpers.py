@@ -62,13 +62,13 @@ def extend_query_parts(queryparts: Dict[str, Any], details: Dict[str, Any],
     """
     parsed = SearchDetails.from_kwargs(details)
     if parsed.geometry_output != GeometryFormat.NONE:
-        if parsed.geometry_output & GeometryFormat.GEOJSON:
+        if GeometryFormat.GEOJSON in parsed.geometry_output:
             queryparts['polygon_geojson'] = '1'
-        if parsed.geometry_output & GeometryFormat.KML:
+        if GeometryFormat.KML in parsed.geometry_output:
             queryparts['polygon_kml'] = '1'
-        if parsed.geometry_output & GeometryFormat.SVG:
+        if GeometryFormat.SVG in parsed.geometry_output:
             queryparts['polygon_svg'] = '1'
-        if parsed.geometry_output & GeometryFormat.TEXT:
+        if GeometryFormat.TEXT in parsed.geometry_output:
             queryparts['polygon_text'] = '1'
     if parsed.address_details:
         queryparts['addressdetails'] = '1'

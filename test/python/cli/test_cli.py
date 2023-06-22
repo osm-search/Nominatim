@@ -68,15 +68,6 @@ def test_cli_serve_php(cli_call, mock_func_factory):
     assert func.called == 1
 
 
-def test_cli_serve_sanic(cli_call, mock_func_factory):
-    mod = pytest.importorskip("sanic")
-    func = mock_func_factory(mod.Sanic, "run")
-
-    cli_call('serve', '--engine', 'sanic') == 0
-
-    assert func.called == 1
-
-
 def test_cli_serve_starlette_custom_server(cli_call, mock_func_factory):
     pytest.importorskip("starlette")
     mod = pytest.importorskip("uvicorn")

@@ -195,11 +195,10 @@ async def test_penalty_postcodes_and_housenumbers(conn, term, order):
 
     assert query.num_token_slots() == 1
 
-    torder = [(tl.tokens[0].penalty, tl.ttype) for tl in query.nodes[0].starting]
-    print(query.nodes[0].starting)
+    torder = [(tl.tokens[0].penalty, tl.ttype.name) for tl in query.nodes[0].starting]
     torder.sort()
 
-    assert [t[1] for t in torder] == [TokenType[o] for o in order]
+    assert [t[1] for t in torder] == order
 
 
 @pytest.mark.asyncio

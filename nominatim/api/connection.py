@@ -10,11 +10,11 @@ Extended SQLAlchemy connection class that also includes access to the schema.
 from typing import cast, Any, Mapping, Sequence, Union, Dict, Optional, Set
 
 import sqlalchemy as sa
-from geoalchemy2 import Geometry
 from sqlalchemy.ext.asyncio import AsyncConnection
 
 from nominatim.typing import SaFromClause
 from nominatim.db.sqlalchemy_schema import SearchTables
+from nominatim.db.sqlalchemy_types import Geometry
 from nominatim.api.logging import log
 
 class SearchConnection:
@@ -112,4 +112,4 @@ class SearchConnection:
 
         return sa.Table(tablename, self.t.meta,
                         sa.Column('place_id', sa.BigInteger),
-                        sa.Column('centroid', Geometry(srid=4326, spatial_index=False)))
+                        sa.Column('centroid', Geometry))

@@ -10,9 +10,10 @@ SQLAlchemy definitions for all tables used by the frontend.
 from typing import Any
 
 import sqlalchemy as sa
-from geoalchemy2 import Geometry
 from sqlalchemy.dialects.postgresql import HSTORE, ARRAY, JSONB
 from sqlalchemy.dialects.sqlite import JSON as sqlite_json
+
+from nominatim.db.sqlalchemy_types import Geometry
 
 class PostgresTypes:
     """ Type definitions for complex types as used in Postgres variants.
@@ -72,12 +73,12 @@ class SearchTables:
             sa.Column('name', self.types.Composite),
             sa.Column('address', self.types.Composite),
             sa.Column('extratags', self.types.Composite),
-            sa.Column('geometry', Geometry(srid=4326), nullable=False),
+            sa.Column('geometry', Geometry, nullable=False),
             sa.Column('wikipedia', sa.Text),
             sa.Column('country_code', sa.String(2)),
             sa.Column('housenumber', sa.Text),
             sa.Column('postcode', sa.Text),
-            sa.Column('centroid', Geometry(srid=4326, spatial_index=False)))
+            sa.Column('centroid', Geometry))
 
         self.addressline = sa.Table('place_addressline', meta,
             sa.Column('place_id', sa.BigInteger, index=True),
@@ -96,7 +97,7 @@ class SearchTables:
             sa.Column('indexed_date', sa.DateTime),
             sa.Column('country_code', sa.String(2)),
             sa.Column('postcode', sa.Text, index=True),
-            sa.Column('geometry', Geometry(srid=4326)))
+            sa.Column('geometry', Geometry))
 
         self.osmline = sa.Table('location_property_osmline', meta,
             sa.Column('place_id', sa.BigInteger, nullable=False, unique=True),
@@ -108,7 +109,7 @@ class SearchTables:
             sa.Column('step', sa.SmallInteger),
             sa.Column('partition', sa.SmallInteger),
             sa.Column('indexed_status', sa.SmallInteger),
-            sa.Column('linegeo', Geometry(srid=4326)),
+            sa.Column('linegeo', Geometry),
             sa.Column('address', self.types.Composite),
             sa.Column('postcode', sa.Text),
             sa.Column('country_code', sa.String(2)))
@@ -123,7 +124,7 @@ class SearchTables:
         self.country_grid = sa.Table('country_osm_grid', meta,
             sa.Column('country_code', sa.String(2)),
             sa.Column('area', sa.Float),
-            sa.Column('geometry', Geometry(srid=4326)))
+            sa.Column('geometry', Geometry))
 
         # The following tables are not necessarily present.
         self.search_name = sa.Table('search_name', meta,
@@ -134,7 +135,7 @@ class SearchTables:
             sa.Column('name_vector', self.types.IntArray, index=True),
             sa.Column('nameaddress_vector', self.types.IntArray, index=True),
             sa.Column('country_code', sa.String(2)),
-            sa.Column('centroid', Geometry(srid=4326)))
+            sa.Column('centroid', Geometry))
 
         self.tiger = sa.Table('location_property_tiger', meta,
             sa.Column('place_id', sa.BigInteger),
@@ -143,5 +144,5 @@ class SearchTables:
             sa.Column('endnumber', sa.Integer),
             sa.Column('step', sa.SmallInteger),
             sa.Column('partition', sa.SmallInteger),
-            sa.Column('linegeo', Geometry(srid=4326, spatial_index=False)),
+            sa.Column('linegeo', Geometry),
             sa.Column('postcode', sa.Text))

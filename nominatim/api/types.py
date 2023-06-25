@@ -15,8 +15,7 @@ import enum
 import math
 from struct import unpack
 
-from geoalchemy2 import WKTElement
-import geoalchemy2.functions
+import sqlalchemy as sa
 
 from nominatim.errors import UsageError
 
@@ -122,10 +121,10 @@ class Point(NamedTuple):
         return Point(x, y)
 
 
-    def sql_value(self) -> WKTElement:
+    def sql_value(self) -> str:
         """ Create an SQL expression for the point.
         """
-        return WKTElement(f'POINT({self.x} {self.y})', srid=4326)
+        return f'POINT({self.x} {self.y})'
 
 
 
@@ -182,7 +181,7 @@ class Bbox:
     def sql_value(self) -> Any:
         """ Create an SQL expression for the box.
         """
-        return geoalchemy2.functions.ST_MakeEnvelope(*self.coords, 4326)
+        return sa.func.ST_MakeEnvelope(*self.coords, 4326)
 
 
     def contains(self, pt: Point) -> bool:

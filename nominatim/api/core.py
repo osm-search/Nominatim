@@ -66,7 +66,8 @@ class NominatimAPIAsync:
                        username=dsn.get('user'), password=dsn.get('password'),
                        host=dsn.get('host'), port=int(dsn['port']) if 'port' in dsn else None,
                        query=query)
-            engine = sa_asyncio.create_async_engine(dburl, future=True)
+            engine = sa_asyncio.create_async_engine(dburl, future=True,
+                                                    echo=self.config.get_bool('DEBUG_SQL'))
 
             try:
                 async with engine.begin() as conn:

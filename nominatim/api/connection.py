@@ -38,7 +38,7 @@ class SearchConnection:
                     ) -> Any:
         """ Execute a 'scalar()' query on the connection.
         """
-        log().sql(self.connection, sql)
+        log().sql(self.connection, sql, params)
         return await self.connection.scalar(sql, params)
 
 
@@ -47,7 +47,7 @@ class SearchConnection:
                      ) -> 'sa.Result[Any]':
         """ Execute a 'execute()' query on the connection.
         """
-        log().sql(self.connection, sql)
+        log().sql(self.connection, sql, params)
         return await self.connection.execute(sql, params)
 
 

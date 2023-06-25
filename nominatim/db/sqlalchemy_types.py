@@ -48,6 +48,9 @@ class Geometry(types.UserDefinedType[Any]):
 
     class comparator_factory(types.UserDefinedType.Comparator):
 
+        def intersects(self, other: SaColumn) -> SaColumn:
+            return self.op('&&')(other)
+
         def is_line_like(self) -> SaColumn:
             return sa.func.ST_GeometryType(self, type_=sa.String).in_(('ST_LineString',
                                                                        'ST_MultiLineString'))

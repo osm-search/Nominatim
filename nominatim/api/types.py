@@ -14,6 +14,7 @@ import dataclasses
 import enum
 import math
 from struct import unpack
+from binascii import unhexlify
 
 import sqlalchemy as sa
 
@@ -72,9 +73,11 @@ class Point(NamedTuple):
 
 
     @staticmethod
-    def from_wkb(wkb: bytes) -> 'Point':
+    def from_wkb(wkb: Union[str, bytes]) -> 'Point':
         """ Create a point from EWKB as returned from the database.
         """
+        if isinstance(wkb, str):
+            wkb = unhexlify(wkb)
         if len(wkb) != 25:
             raise ValueError("Point wkb has unexpected length")
         if wkb[0] == 0:
@@ -192,12 +195,15 @@ class Bbox:
 
 
     @staticmethod
-    def from_wkb(wkb: Optional[bytes]) -> 'Optional[Bbox]':
+    def from_wkb(wkb: Union[None, str, bytes]) -> 'Optional[Bbox]':
         """ Create a Bbox from a bounding box polygon as returned by
             the database. Return s None if the input value is None.
         """
         if wkb is None:
             return None
+
+        if isinstance(wkb, str):
+            wkb = unhexlify(wkb)
 
         if len(wkb) != 97:
             raise ValueError("WKB must be a bounding box polygon")

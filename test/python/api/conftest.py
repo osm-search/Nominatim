@@ -66,11 +66,11 @@ class APITester:
                       'rank_search': kw.get('rank_search', 30),
                       'rank_address': kw.get('rank_address', 30),
                       'importance': kw.get('importance'),
-                      'centroid': 'SRID=4326;POINT(%f %f)' % centroid,
+                      'centroid': 'POINT(%f %f)' % centroid,
                       'indexed_status': kw.get('indexed_status', 0),
                       'indexed_date': kw.get('indexed_date',
                                              dt.datetime(2022, 12, 7, 14, 14, 46, 0)),
-                      'geometry': 'SRID=4326;' + geometry})
+                      'geometry': geometry})
 
 
     def add_address_placex(self, object_id, **kw):
@@ -97,7 +97,7 @@ class APITester:
                       'address': kw.get('address'),
                       'postcode': kw.get('postcode'),
                       'country_code': kw.get('country_code'),
-                      'linegeo': 'SRID=4326;' + kw.get('geometry', 'LINESTRING(1.1 -0.2, 1.09 -0.22)')})
+                      'linegeo': kw.get('geometry', 'LINESTRING(1.1 -0.2, 1.09 -0.22)')})
 
 
     def add_tiger(self, **kw):
@@ -108,7 +108,7 @@ class APITester:
                       'endnumber': kw.get('endnumber', 6),
                       'step': kw.get('step', 2),
                       'postcode': kw.get('postcode'),
-                      'linegeo': 'SRID=4326;' + kw.get('geometry', 'LINESTRING(1.1 -0.2, 1.09 -0.22)')})
+                      'linegeo': kw.get('geometry', 'LINESTRING(1.1 -0.2, 1.09 -0.22)')})
 
 
     def add_postcode(self, **kw):
@@ -121,14 +121,14 @@ class APITester:
                       'rank_address': kw.get('rank_address', 22),
                       'indexed_date': kw.get('indexed_date',
                                              dt.datetime(2022, 12, 7, 14, 14, 46, 0)),
-                      'geometry': 'SRID=4326;' + kw.get('geometry', 'POINT(23 34)')})
+                      'geometry': kw.get('geometry', 'POINT(23 34)')})
 
 
     def add_country(self, country_code, geometry):
         self.add_data('country_grid',
                       {'country_code': country_code,
                        'area': 0.1,
-                       'geometry': 'SRID=4326;' + geometry})
+                       'geometry': geometry})
 
 
     def add_country_name(self, country_code, names, partition=0):
@@ -148,7 +148,7 @@ class APITester:
                        'name_vector': kw.get('names', []),
                        'nameaddress_vector': kw.get('address', []),
                        'country_code': kw.get('country_code', 'xx'),
-                       'centroid': 'SRID=4326;POINT(%f %f)' % centroid})
+                       'centroid': 'POINT(%f %f)' % centroid})
 
 
     def add_class_type_table(self, cls, typ):

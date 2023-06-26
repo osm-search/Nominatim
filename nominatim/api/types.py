@@ -79,7 +79,7 @@ class Point(NamedTuple):
         if isinstance(wkb, str):
             wkb = unhexlify(wkb)
         if len(wkb) != 25:
-            raise ValueError("Point wkb has unexpected length")
+            raise ValueError(f"Point wkb has unexpected length {len(wkb)}")
         if wkb[0] == 0:
             gtype, srid, x, y = unpack('>iidd', wkb[1:])
         elif wkb[0] == 1:
@@ -124,8 +124,8 @@ class Point(NamedTuple):
         return Point(x, y)
 
 
-    def sql_value(self) -> str:
-        """ Create an SQL expression for the point.
+    def to_wkt(self) -> str:
+        """ Return the WKT representation of the point.
         """
         return f'POINT({self.x} {self.y})'
 
@@ -181,17 +181,18 @@ class Bbox:
         return (self.coords[2] - self.coords[0]) * (self.coords[3] - self.coords[1])
 
 
-    def sql_value(self) -> Any:
-        """ Create an SQL expression for the box.
-        """
-        return sa.func.ST_MakeEnvelope(*self.coords, 4326)
-
-
     def contains(self, pt: Point) -> bool:
         """ Check if the point is inside or on the boundary of the box.
         """
         return self.coords[0] <= pt[0] and self.coords[1] <= pt[1]\
                and self.coords[2] >= pt[0] and self.coords[3] >= pt[1]
+
+
+    def to_wkt(self) -> str:
+        """ Return the WKT representation of the Bbox. This
+            is a simple polygon with four points.
+        """
+        return 'POLYGON(({0} {1},{0} {3},{2} {3},{2} {1},{0} {1}))'.format(*self.coords)
 
 
     @staticmethod
@@ -451,6 +452,8 @@ class SearchDetails(LookupDetails):
             yext = (self.viewbox.maxlat - self.viewbox.minlat)/2
             self.viewbox_x2 = Bbox(self.viewbox.minlon - xext, self.viewbox.minlat - yext,
                                    self.viewbox.maxlon + xext, self.viewbox.maxlat + yext)
+        else:
+            self.viewbox_x2 = None
 
 
     def restrict_min_max_rank(self, new_min: int, new_max: int) -> None:

@@ -528,7 +528,7 @@ class ReverseGeocoder:
         log().function('reverse_lookup', coord=coord, params=self.params)
 
 
-        self.bind_params['wkt'] = f'SRID=4326;POINT({coord[0]} {coord[1]})'
+        self.bind_params['wkt'] = f'POINT({coord[0]} {coord[1]})'
 
         row: Optional[SaRow] = None
         row_func: RowFunc = nres.create_from_placex_row

@@ -30,8 +30,10 @@ class Geometry(types.UserDefinedType[Any]):
 
     def bind_processor(self, dialect: sa.Dialect) -> Callable[[Any], str]:
         def process(value: Any) -> str:
-            assert isinstance(value, str)
-            return value
+            if isinstance(value, str):
+                return 'SRID=4326;' + value
+
+            return 'SRID=4326;' + value.to_wkt()
         return process
 
 
@@ -82,6 +84,10 @@ class Geometry(types.UserDefinedType[Any]):
 
         def ST_Expand(self, other: SaColumn) -> SaColumn:
             return sa.func.ST_Expand(self, other, type_=Geometry)
+
+
+        def ST_Collect(self) -> SaColumn:
+            return sa.func.ST_Collect(self, type_=Geometry)
 
 
         def ST_Centroid(self) -> SaColumn:

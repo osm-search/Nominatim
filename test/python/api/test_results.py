@@ -8,6 +8,7 @@
 Tests for result datatype helper functions.
 """
 import struct
+from binascii import hexlify
 
 import pytest
 import pytest_asyncio
@@ -17,10 +18,8 @@ import sqlalchemy as sa
 from nominatim.api import SourceTable, DetailedResult, Point
 import nominatim.api.results as nresults
 
-class FakeCentroid:
-    def __init__(self, x, y):
-        self.data = struct.pack("=biidd", 1, 0x20000001, 4326,
-                                        x, y)
+def mkpoint(x, y):
+    return hexlify(struct.pack("=biidd", 1, 0x20000001, 4326, x, y)).decode('utf-8')
 
 class FakeRow:
     def __init__(self, **kwargs):
@@ -60,7 +59,7 @@ def test_create_row_none(func):
 def test_create_row_with_housenumber(func):
     row = FakeRow(place_id=2345, osm_type='W', osm_id=111, housenumber=4,
                   address=None, postcode='99900', country_code='xd',
-                  centroid=FakeCentroid(0, 0))
+                  centroid=mkpoint(0, 0))
 
     res = func(row, DetailedResult)
 
@@ -75,7 +74,7 @@ def test_create_row_without_housenumber(func):
     row = FakeRow(place_id=2345, osm_type='W', osm_id=111,
                   startnumber=1, endnumber=11, step=2,
                   address=None, postcode='99900', country_code='xd',
-                  centroid=FakeCentroid(0, 0))
+                  centroid=mkpoint(0, 0))
 
     res = func(row, DetailedResult)
 

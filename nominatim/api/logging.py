@@ -93,6 +93,14 @@ class BaseLogger:
             for k in extra_params[0]:
                 params[k] = f':{k}'
 
+        sqlstr = str(compiled)
+
+        if '%s' in sqlstr:
+            try:
+                return sqlstr % tuple((repr(compiled.params[name]) for name in compiled.positiontup))
+            except TypeError:
+                return sqlstr
+
         return str(compiled) % params
 
 

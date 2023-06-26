@@ -28,7 +28,7 @@ class Geometry(types.UserDefinedType[Any]):
         return f'GEOMETRY({self.subtype}, 4326)'
 
 
-    def bind_processor(self, dialect: sa.Dialect) -> Callable[[Any], str]:
+    def bind_processor(self, dialect: 'sa.Dialect') -> Callable[[Any], str]:
         def process(value: Any) -> str:
             if isinstance(value, str):
                 return 'SRID=4326;' + value
@@ -37,14 +37,14 @@ class Geometry(types.UserDefinedType[Any]):
         return process
 
 
-    def result_processor(self, dialect: sa.Dialect, coltype: object) -> Callable[[Any], str]:
+    def result_processor(self, dialect: 'sa.Dialect', coltype: object) -> Callable[[Any], str]:
         def process(value: Any) -> str:
             assert isinstance(value, str)
             return value
         return process
 
 
-    def bind_expression(self, bindvalue: sa.BindParameter[Any]) -> SaColumn:
+    def bind_expression(self, bindvalue: 'sa.BindParameter[Any]') -> SaColumn:
         return sa.func.ST_GeomFromText(bindvalue, type_=self)
 
 

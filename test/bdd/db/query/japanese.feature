@@ -1,7 +1,6 @@
 @DB
 Feature: Searches in Japan
     Test specifically for searches of Japanese addresses and in Japanese language.
-
     Scenario: A block house-number is parented to the neighbourhood
         Given the grid with origin JP
           | 1 |   |   | 2 |
@@ -20,7 +19,6 @@ Feature: Searches in Japan
         Then placex contains
           | object | parent_place_id |
           | N3     | N9              |
-
         When sending search query "2丁目 6-2"
         Then results contain
           | osm |

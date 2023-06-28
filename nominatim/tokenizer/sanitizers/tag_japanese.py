@@ -9,13 +9,17 @@ def create(config):
     return tag_japanese
 
 def tag_japanese(obj: ProcessInfo) -> None:
-    if obj.place.country_code != 'ja':
+    #print('!!!!!', obj)
+    if obj.place.country_code != 'jp':
+        #print('!!!',obj.place.country_code)
         return
+    #print('!!!!!!',obj)
     tmp_housenumber = None
     tmp_blocknumber = None
     tmp_neighbourhood = None
 
     new_address = []
+    #print('herehere')
     for item in obj.address:
         if item.kind == 'housenumber':
             tmp_housenumber = item.name
@@ -23,6 +27,7 @@ def tag_japanese(obj: ProcessInfo) -> None:
             tmp_blocknumber = item.name
         elif item.kind == 'neighbourhood':
             tmp_neighbourhood = item.name
+            print(tmp_neighbourhood)
         else:
             new_address.append(item)
         print(item)

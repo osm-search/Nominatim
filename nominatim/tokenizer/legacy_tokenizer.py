@@ -564,14 +564,13 @@ class _TokenInfo:
     def add_street(self, conn: Connection, street: str) -> None:
         """ Add addr:street match terms.
         """
-        def _get_street(name: str) -> List[int]:
+        def _get_street(name: str) -> Optional[str]:
             with conn.cursor() as cur:
-                return cast(List[int],
+                return cast(Optional[str],
                             cur.scalar("SELECT word_ids_from_name(%s)::text", (name, )))
 
         tokens = self.cache.streets.get(street, _get_street)
-        if tokens:
-            self.data['street'] = tokens
+        self.data['street'] = tokens or '{}'
 
 
     def add_place(self, conn: Connection, place: str) -> None:

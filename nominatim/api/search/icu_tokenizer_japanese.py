@@ -13,8 +13,9 @@ def transliterate(text: str) -> str:
 
     split_text = wakati.parse(result.group(3)).split()
     #print(text,split_text)
+    joined_group = ''.join([result.group(1),', ',result.group(2),','])
     joined_group3 = ' '.join(split_text)
-    joined_text = ' '.join([result.group(1), result.group(2), joined_group3])
+    joined_text = ' '.join([joined_group, joined_group3])
     return joined_text
-#tmp = '東京都千代田区丸の内１－２'
-#print(transliterate(tmp))
+tmp = '東京都千代田区丸の内１－２'
+print(transliterate(tmp))

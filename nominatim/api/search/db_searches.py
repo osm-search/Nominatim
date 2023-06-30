@@ -633,7 +633,7 @@ class PlaceSearch(AbstractSearch):
             hnr_regexp = f"\\m({'|'.join(self.housenumbers.values)})\\M"
             sql = sql.where(tsearch.c.address_rank.between(16, 30))\
                      .where(sa.or_(tsearch.c.address_rank < 30,
-                                  t.c.housenumber.regexp_match(hnr_regexp, flags='i')))
+                                  t.c.housenumber.op('~*')(hnr_regexp)))
 
             # Cross check for housenumbers, need to do that on a rather large
             # set. Worst case there are 40.000 main streets in OSM.
@@ -644,7 +644,7 @@ class PlaceSearch(AbstractSearch):
             pid_list = array_agg(thnr.c.place_id) # type: ignore[no-untyped-call]
             place_sql = sa.select(pid_list)\
                           .where(thnr.c.parent_place_id == inner.c.place_id)\
-                          .where(thnr.c.housenumber.regexp_match(hnr_regexp, flags='i'))\
+                          .where(thnr.c.housenumber.op('~*')(hnr_regexp))\
                           .where(thnr.c.linked_place_id == None)\
                           .where(thnr.c.indexed_status == 0)
 

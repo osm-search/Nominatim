@@ -190,6 +190,28 @@ be listed with a semicolon as delimiter. Must be NULL when the place has no
 house numbers.
 
 ```sql
+FUNCTION token_is_street_address(info JSONB) RETURNS BOOLEAN
+```
+
+Return true if this is an object that should be parented against a street.
+Only relevant for objects with address rank 30.
+
+```sql
+FUNCTION token_has_addr_street(info JSONB) RETURNS BOOLEAN
+```
+
+Return true if there are street names to match against for finding the
+parent of the object.
+
+
+```sql
+FUNCTION token_has_addr_place(info JSONB) RETURNS BOOLEAN
+```
+
+Return true if there are place names to match against for finding the
+parent of the object.
+
+```sql
 FUNCTION token_matches_street(info JSONB, street_tokens INTEGER[]) RETURNS BOOLEAN
 ```
 

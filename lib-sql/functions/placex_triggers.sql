@@ -996,7 +996,7 @@ BEGIN
 
     {% if debug %}RAISE WARNING 'finding street for % %', NEW.osm_type, NEW.osm_id;{% endif %}
     NEW.parent_place_id := null;
-    is_place_address := coalesce(not NEW.address ? 'street' and NEW.address ? 'place', FALSE);
+    is_place_address := not token_is_street_address(NEW.token_info);
 
     -- We have to find our parent road.
     NEW.parent_place_id := find_parent_for_poi(NEW.osm_type, NEW.osm_id,
@@ -1013,7 +1013,7 @@ BEGIN
       SELECT p.country_code, p.postcode, p.name FROM placex p
        WHERE p.place_id = NEW.parent_place_id INTO location;
 
-      IF is_place_address THEN
+      IF is_place_address and NEW.address ? 'place' THEN
         -- Check if the addr:place tag is part of the parent name
         SELECT count(*) INTO i
           FROM svals(location.name) AS pname WHERE pname = NEW.address->'place';

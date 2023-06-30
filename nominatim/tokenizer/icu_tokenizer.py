@@ -720,7 +720,7 @@ class _TokenInfo:
         self.names: Optional[str] = None
         self.housenumbers: Set[str] = set()
         self.housenumber_tokens: Set[int] = set()
-        self.street_tokens: Set[int] = set()
+        self.street_tokens: Optional[Set[int]] = None
         self.place_tokens: Set[int] = set()
         self.address_tokens: Dict[str, str] = {}
         self.postcode: Optional[str] = None
@@ -742,7 +742,7 @@ class _TokenInfo:
             out['hnr'] = ';'.join(self.housenumbers)
             out['hnr_tokens'] = self._mk_array(self.housenumber_tokens)
 
-        if self.street_tokens:
+        if self.street_tokens is not None:
             out['street'] = self._mk_array(self.street_tokens)
 
         if self.place_tokens:
@@ -776,6 +776,8 @@ class _TokenInfo:
     def add_street(self, tokens: Iterable[int]) -> None:
         """ Add addr:street match terms.
         """
+        if self.street_tokens is None:
+            self.street_tokens = set()
         self.street_tokens.update(tokens)
 
 

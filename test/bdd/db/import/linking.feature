@@ -290,3 +290,23 @@ Feature: Linking of places
          | R1     | 'linked_place' : 'city', 'wikidata': 'Q1234'  |
          | R2     | 'wikidata': 'Q1234'                     |
 
+
+    Scenario: Boundaries without names inherit names from linked places
+        Given the 0.05 grid
+         | 1 |   | 2 |
+         |   | 9 |   |
+         | 4 |   | 3 |
+        Given the places
+         | osm | class    | type           | extra+wikidata | admin | geometry    |
+         | R1  | boundary | administrative | 34             | 8     | (1,2,3,4,1) |
+        And the places
+         | osm | class    | type           | name+name  |
+         | N9  | place    | city           | LabelPlace |
+        And the relations
+         | id | members  |
+         | 1  | N9:label |
+        When importing
+        Then placex contains
+         | object     | name+_place_name  |
+         | R1         | LabelPlace |
+

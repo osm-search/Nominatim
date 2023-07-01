@@ -80,7 +80,8 @@ class BaseLogger:
         """
 
     def format_sql(self, conn: AsyncConnection, statement: 'sa.Executable',
-                   extra_params: Union[Mapping[str, Any], Sequence[Mapping[str, Any]], None]) -> str:
+                   extra_params: Union[Mapping[str, Any],
+                                 Sequence[Mapping[str, Any]], None]) -> str:
         """ Return the comiled version of the statement.
         """
         compiled = cast('sa.ClauseElement', statement).compile(conn.sync_engine)
@@ -95,13 +96,14 @@ class BaseLogger:
 
         sqlstr = str(compiled)
 
-        if '%s' in sqlstr:
+        if sa.__version__.startswith('1'):
             try:
-                return sqlstr % tuple((repr(compiled.params[name]) for name in compiled.positiontup))
+                return sqlstr % tuple((repr(params.get(name, None))
+                                      for name in compiled.positiontup)) # type: ignore
             except TypeError:
                 return sqlstr
 
-        return str(compiled) % params
+        return sqlstr % params
 
 
 class HTMLLogger(BaseLogger):

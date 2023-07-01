@@ -14,7 +14,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import ARRAY, array_agg
 
 from nominatim.typing import SaFromClause, SaScalarSelect, SaColumn, \
-                             SaExpression, SaSelect, SaRow
+                             SaExpression, SaSelect, SaRow, SaBind
 from nominatim.api.connection import SearchConnection
 from nominatim.api.types import SearchDetails, DataLayer, GeometryFormat, Bbox
 import nominatim.api.results as nres
@@ -39,15 +39,15 @@ def _details_to_bind_params(details: SearchDetails) -> Dict[str, Any]:
             'countries': details.countries}
 
 
-LIMIT_PARAM = sa.bindparam('limit')
-MIN_RANK_PARAM = sa.bindparam('min_rank')
-MAX_RANK_PARAM = sa.bindparam('max_rank')
-VIEWBOX_PARAM = sa.bindparam('viewbox', type_=Geometry)
-VIEWBOX2_PARAM = sa.bindparam('viewbox2', type_=Geometry)
-NEAR_PARAM = sa.bindparam('near', type_=Geometry)
-NEAR_RADIUS_PARAM = sa.bindparam('near_radius')
-EXCLUDED_PARAM = sa.bindparam('excluded')
-COUNTRIES_PARAM = sa.bindparam('countries')
+LIMIT_PARAM: SaBind = sa.bindparam('limit')
+MIN_RANK_PARAM: SaBind = sa.bindparam('min_rank')
+MAX_RANK_PARAM: SaBind = sa.bindparam('max_rank')
+VIEWBOX_PARAM: SaBind = sa.bindparam('viewbox', type_=Geometry)
+VIEWBOX2_PARAM: SaBind = sa.bindparam('viewbox2', type_=Geometry)
+NEAR_PARAM: SaBind = sa.bindparam('near', type_=Geometry)
+NEAR_RADIUS_PARAM: SaBind = sa.bindparam('near_radius')
+EXCLUDED_PARAM: SaBind = sa.bindparam('excluded')
+COUNTRIES_PARAM: SaBind = sa.bindparam('countries')
 
 def _select_placex(t: SaFromClause) -> SaSelect:
     return sa.select(t.c.place_id, t.c.osm_type, t.c.osm_id, t.c.name,

@@ -16,8 +16,6 @@ import math
 from struct import unpack
 from binascii import unhexlify
 
-import sqlalchemy as sa
-
 from nominatim.errors import UsageError
 
 # pylint: disable=no-member,too-many-boolean-expressions,too-many-instance-attributes
@@ -192,7 +190,8 @@ class Bbox:
         """ Return the WKT representation of the Bbox. This
             is a simple polygon with four points.
         """
-        return 'POLYGON(({0} {1},{0} {3},{2} {3},{2} {1},{0} {1}))'.format(*self.coords)
+        return 'POLYGON(({0} {1},{0} {3},{2} {3},{2} {1},{0} {1}))'\
+                  .format(*self.coords) # pylint: disable=consider-using-f-string
 
 
     @staticmethod
@@ -445,6 +444,7 @@ class SearchDetails(LookupDetails):
     """ Restrict search to places with one of the given class/type categories.
         An empty list (the default) will disable this filter.
     """
+    viewbox_x2: Optional[Bbox] = None
 
     def __post_init__(self) -> None:
         if self.viewbox is not None:
@@ -452,8 +452,6 @@ class SearchDetails(LookupDetails):
             yext = (self.viewbox.maxlat - self.viewbox.minlat)/2
             self.viewbox_x2 = Bbox(self.viewbox.minlon - xext, self.viewbox.minlat - yext,
                                    self.viewbox.maxlon + xext, self.viewbox.maxlat + yext)
-        else:
-            self.viewbox_x2 = None
 
 
     def restrict_min_max_rank(self, new_min: int, new_max: int) -> None:

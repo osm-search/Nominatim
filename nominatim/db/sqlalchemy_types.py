@@ -10,9 +10,11 @@ Custom types for SQLAlchemy.
 from typing import Callable, Any
 
 import sqlalchemy as sa
-import sqlalchemy.types as types
+from sqlalchemy import types
 
-from nominatim.typing import SaColumn
+from nominatim.typing import SaColumn, SaBind
+
+#pylint: disable=all
 
 class Geometry(types.UserDefinedType[Any]):
     """ Simplified type decorator for PostGIS geometry. This type
@@ -44,13 +46,13 @@ class Geometry(types.UserDefinedType[Any]):
         return process
 
 
-    def bind_expression(self, bindvalue: 'sa.BindParameter[Any]') -> SaColumn:
+    def bind_expression(self, bindvalue: SaBind) -> SaColumn:
         return sa.func.ST_GeomFromText(bindvalue, type_=self)
 
 
     class comparator_factory(types.UserDefinedType.Comparator):
 
-        def intersects(self, other: SaColumn) -> SaColumn:
+        def intersects(self, other: SaColumn) -> 'sa.Operators':
             return self.op('&&')(other)
 
         def is_line_like(self) -> SaColumn:

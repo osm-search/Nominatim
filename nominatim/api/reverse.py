@@ -7,11 +7,11 @@
 """
 Implementation of reverse geocoding.
 """
-from typing import Optional, List, Callable, Type, Tuple
+from typing import Optional, List, Callable, Type, Tuple, Dict, Any
 
 import sqlalchemy as sa
 
-from nominatim.typing import SaColumn, SaSelect, SaFromClause, SaLabel, SaRow
+from nominatim.typing import SaColumn, SaSelect, SaFromClause, SaLabel, SaRow, SaBind
 from nominatim.api.connection import SearchConnection
 import nominatim.api.results as nres
 from nominatim.api.logging import log
@@ -24,8 +24,8 @@ from nominatim.db.sqlalchemy_types import Geometry
 
 RowFunc = Callable[[Optional[SaRow], Type[nres.ReverseResult]], Optional[nres.ReverseResult]]
 
-WKT_PARAM = sa.bindparam('wkt', type_=Geometry)
-MAX_RANK_PARAM = sa.bindparam('max_rank')
+WKT_PARAM: SaBind = sa.bindparam('wkt', type_=Geometry)
+MAX_RANK_PARAM: SaBind = sa.bindparam('max_rank')
 
 def _select_from_placex(t: SaFromClause, use_wkt: bool = True) -> SaSelect:
     """ Create a select statement with the columns relevant for reverse
@@ -93,7 +93,7 @@ class ReverseGeocoder:
         self.conn = conn
         self.params = params
 
-        self.bind_params = {'max_rank': params.max_rank}
+        self.bind_params: Dict[str, Any] = {'max_rank': params.max_rank}
 
 
     @property

@@ -46,7 +46,6 @@ def migrate(config: Configuration, paths: Any) -> int:
             db_version = _guess_version(conn)
 
 
-        has_run_migration = False
         for version, func in _MIGRATION_FUNCTIONS:
             if db_version < version or \
                (db_version == (3, 5, 0, 99) and version == (3, 5, 0, 99)):
@@ -55,13 +54,11 @@ def migrate(config: Configuration, paths: Any) -> int:
                 kwargs = dict(conn=conn, config=config, paths=paths)
                 func(**kwargs)
                 conn.commit()
-                has_run_migration = True
 
-        if has_run_migration:
-            LOG.warning('Updating SQL functions.')
-            refresh.create_functions(conn, config)
-            tokenizer = tokenizer_factory.get_tokenizer_for_db(config)
-            tokenizer.update_sql_functions(config)
+        LOG.warning('Updating SQL functions.')
+        refresh.create_functions(conn, config)
+        tokenizer = tokenizer_factory.get_tokenizer_for_db(config)
+        tokenizer.update_sql_functions(config)
 
         properties.set_property(conn, 'database_version', str(NOMINATIM_VERSION))
 

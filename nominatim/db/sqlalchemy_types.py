@@ -7,7 +7,8 @@
 """
 Custom types for SQLAlchemy.
 """
-from typing import Callable, Any
+from typing import Callable, Any, cast
+import sys
 
 import sqlalchemy as sa
 from sqlalchemy import types
@@ -16,7 +17,7 @@ from nominatim.typing import SaColumn, SaBind
 
 #pylint: disable=all
 
-class Geometry(types.UserDefinedType[Any]):
+class Geometry(types.UserDefinedType): # type: ignore[type-arg]
     """ Simplified type decorator for PostGIS geometry. This type
         only supports geometries in 4326 projection.
     """
@@ -35,7 +36,7 @@ class Geometry(types.UserDefinedType[Any]):
             if isinstance(value, str):
                 return 'SRID=4326;' + value
 
-            return 'SRID=4326;' + value.to_wkt()
+            return 'SRID=4326;' + cast(str, value.to_wkt())
         return process
 
 
@@ -50,7 +51,7 @@ class Geometry(types.UserDefinedType[Any]):
         return sa.func.ST_GeomFromText(bindvalue, type_=self)
 
 
-    class comparator_factory(types.UserDefinedType.Comparator):
+    class comparator_factory(types.UserDefinedType.Comparator): # type: ignore[type-arg]
 
         def intersects(self, other: SaColumn) -> 'sa.Operators':
             return self.op('&&')(other)

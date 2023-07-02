@@ -12,6 +12,7 @@ from contextvars import ContextVar
 import datetime as dt
 import textwrap
 import io
+import re
 
 import sqlalchemy as sa
 from sqlalchemy.ext.asyncio import AsyncConnection
@@ -103,6 +104,9 @@ class BaseLogger:
             except TypeError:
                 return sqlstr
 
+        # Fixes an odd issue with Python 3.7 where percentages are not
+        # quoted correctly.
+        sqlstr = re.sub(r'%(?!\()', '%%', sqlstr)
         return sqlstr % params
 
 

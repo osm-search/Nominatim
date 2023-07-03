@@ -12,7 +12,7 @@ class TestTagJapanese:
     def run_sanitizer_on(self,type, **kwargs):
         place = PlaceInfo({
             'address': kwargs,
-            'country_code': 'ja'
+            'country_code': 'jp'
         })
         sanitizer_args = {'step': 'tag-japanese'}
         _, address = PlaceSanitizer([sanitizer_args], self.config).process_names(place)
@@ -37,6 +37,9 @@ class TestTagJapanese:
     def test_neighbourhood(self):
         res = self.run_sanitizer_on('address', neighbourhood='8')
         assert res == [('8','place')]
+    def test_quarter(self):
+        res = self.run_sanitizer_on('address', quarter='kase')
+        assert res==[('kase','place')]
 
     def test_housenumber_blocknumber(self):
         res = self.run_sanitizer_on('address', housenumber='2', block_number='6')
@@ -53,3 +56,10 @@ class TestTagJapanese:
     def test_housenumber_blocknumber_neighbourhood(self):
         res = self.run_sanitizer_on('address', housenumber='2', block_number='6', neighbourhood='8')
         assert res == [('6-2','housenumber'),('8','place')]
+
+    def test_housenumber_blocknumber_neighbourhood_quarter(self):
+        res = self.run_sanitizer_on('address', housenumber='2', block_number='6', neighbourhood='8',quarter='kase')
+        assert res == [('6-2','housenumber'),('kase-8','place')]
+    def test_neighbourhood_quarter(self):
+        res = self.run_sanitizer_on('address', neighbourhood='8',quarter='kase')
+        assert res == [('kase-8','place')] 

@@ -43,3 +43,4 @@ def tag_japanese(obj: ProcessInfo) -> None:
         new_address.append(PlaceName(kind='place', name=tmp_neighbourhood,suffix=''))
 
     obj.address = [item for item in new_address if item.name is not None]
+    print(obj.address)

@@ -22,7 +22,7 @@ from nominatim.api.connection import SearchConnection
 from nominatim.api.logging import log
 from nominatim.api.search import query as qmod
 from nominatim.api.search.query_analyzer_factory import AbstractQueryAnalyzer
-import icu_tokenizer_japanese
+from nominatim.api.search import icu_tokenizer_japanese
 
 DB_TO_TOKEN_TYPE = {
     'W': qmod.TokenType.WORD,

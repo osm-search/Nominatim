@@ -129,10 +129,11 @@ class FieldRanking:
         """
         assert self.rankings
 
-        col = table.c[self.column]
-
-        return sa.case(*((col.contains(r.tokens),r.penalty) for r in self.rankings),
-                       else_=self.default)
+        return sa.func.weigh_search(table.c[self.column],
+                                    [f"{{{','.join((str(s) for s in r.tokens))}}}"
+                                     for r in self.rankings],
+                                    [r.penalty for r in self.rankings],
+                                    self.default)
 
 
 @dataclasses.dataclass

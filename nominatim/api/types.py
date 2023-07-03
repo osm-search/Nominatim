@@ -14,9 +14,7 @@ import dataclasses
 import enum
 import math
 from struct import unpack
-
-from geoalchemy2 import WKTElement
-import geoalchemy2.functions
+from binascii import unhexlify
 
 from nominatim.errors import UsageError
 
@@ -73,11 +71,13 @@ class Point(NamedTuple):
 
 
     @staticmethod
-    def from_wkb(wkb: bytes) -> 'Point':
+    def from_wkb(wkb: Union[str, bytes]) -> 'Point':
         """ Create a point from EWKB as returned from the database.
         """
+        if isinstance(wkb, str):
+            wkb = unhexlify(wkb)
         if len(wkb) != 25:
-            raise ValueError("Point wkb has unexpected length")
+            raise ValueError(f"Point wkb has unexpected length {len(wkb)}")
         if wkb[0] == 0:
             gtype, srid, x, y = unpack('>iidd', wkb[1:])
         elif wkb[0] == 1:
@@ -122,10 +122,10 @@ class Point(NamedTuple):
         return Point(x, y)
 
 
-    def sql_value(self) -> WKTElement:
-        """ Create an SQL expression for the point.
+    def to_wkt(self) -> str:
+        """ Return the WKT representation of the point.
         """
-        return WKTElement(f'POINT({self.x} {self.y})', srid=4326)
+        return f'POINT({self.x} {self.y})'
 
 
 
@@ -179,12 +179,6 @@ class Bbox:
         return (self.coords[2] - self.coords[0]) * (self.coords[3] - self.coords[1])
 
 
-    def sql_value(self) -> Any:
-        """ Create an SQL expression for the box.
-        """
-        return geoalchemy2.functions.ST_MakeEnvelope(*self.coords, 4326)
-
-
     def contains(self, pt: Point) -> bool:
         """ Check if the point is inside or on the boundary of the box.
         """
@@ -192,13 +186,24 @@ class Bbox:
                and self.coords[2] >= pt[0] and self.coords[3] >= pt[1]
 
 
+    def to_wkt(self) -> str:
+        """ Return the WKT representation of the Bbox. This
+            is a simple polygon with four points.
+        """
+        return 'POLYGON(({0} {1},{0} {3},{2} {3},{2} {1},{0} {1}))'\
+                  .format(*self.coords) # pylint: disable=consider-using-f-string
+
+
     @staticmethod
-    def from_wkb(wkb: Optional[bytes]) -> 'Optional[Bbox]':
+    def from_wkb(wkb: Union[None, str, bytes]) -> 'Optional[Bbox]':
         """ Create a Bbox from a bounding box polygon as returned by
             the database. Return s None if the input value is None.
         """
         if wkb is None:
             return None
+
+        if isinstance(wkb, str):
+            wkb = unhexlify(wkb)
 
         if len(wkb) != 97:
             raise ValueError("WKB must be a bounding box polygon")
@@ -439,6 +444,7 @@ class SearchDetails(LookupDetails):
     """ Restrict search to places with one of the given class/type categories.
         An empty list (the default) will disable this filter.
     """
+    viewbox_x2: Optional[Bbox] = None
 
     def __post_init__(self) -> None:
         if self.viewbox is not None:

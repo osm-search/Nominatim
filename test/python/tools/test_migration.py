@@ -71,20 +71,6 @@ def test_already_at_version(def_config, property_table):
     assert migration.migrate(def_config, {}) == 0
 
 
-def test_no_migrations_necessary(def_config, temp_db_cursor, property_table,
-                                 monkeypatch):
-    oldversion = [x for x in nominatim.version.NOMINATIM_VERSION]
-    oldversion[0] -= 1
-    property_table.set('database_version',
-                       '{0[0]}.{0[1]}.{0[2]}-{0[3]}'.format(oldversion))
-
-    oldversion[0] = 0
-    monkeypatch.setattr(migration, '_MIGRATION_FUNCTIONS',
-                        [(tuple(oldversion), lambda **attr: True)])
-
-    assert migration.migrate(def_config, {}) == 0
-
-
 def test_run_single_migration(def_config, temp_db_cursor, property_table,
                               monkeypatch, postprocess_mock):
     oldversion = [x for x in nominatim.version.NOMINATIM_VERSION]

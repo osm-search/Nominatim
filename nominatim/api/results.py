@@ -263,7 +263,7 @@ def create_from_placex_row(row: Optional[SaRow],
                       rank_search=row.rank_search,
                       importance=row.importance,
                       country_code=row.country_code,
-                      centroid=Point.from_wkb(row.centroid.data),
+                      centroid=Point.from_wkb(row.centroid),
                       geometry=_filter_geometries(row))
 
 
@@ -288,7 +288,7 @@ def create_from_osmline_row(row: Optional[SaRow],
                      address=row.address,
                      postcode=row.postcode,
                      country_code=row.country_code,
-                     centroid=Point.from_wkb(row.centroid.data),
+                     centroid=Point.from_wkb(row.centroid),
                      geometry=_filter_geometries(row))
 
     if hnr is None:
@@ -321,7 +321,7 @@ def create_from_tiger_row(row: Optional[SaRow],
                      category=('place', 'houses' if hnr is None else 'house'),
                      postcode=row.postcode,
                      country_code='us',
-                     centroid=Point.from_wkb(row.centroid.data),
+                     centroid=Point.from_wkb(row.centroid),
                      geometry=_filter_geometries(row))
 
     if hnr is None:
@@ -350,7 +350,7 @@ def create_from_postcode_row(row: Optional[SaRow],
                       rank_search=row.rank_search,
                       rank_address=row.rank_address,
                       country_code=row.country_code,
-                      centroid=Point.from_wkb(row.centroid.data),
+                      centroid=Point.from_wkb(row.centroid),
                       geometry=_filter_geometries(row))
 
 
@@ -365,7 +365,7 @@ def create_from_country_row(row: Optional[SaRow],
 
     return class_type(source_table=SourceTable.COUNTRY,
                       category=('place', 'country'),
-                      centroid=Point.from_wkb(row.centroid.data),
+                      centroid=Point.from_wkb(row.centroid),
                       names=row.name,
                       rank_address=4, rank_search=4,
                       country_code=row.country_code)

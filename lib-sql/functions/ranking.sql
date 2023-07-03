@@ -284,3 +284,26 @@ BEGIN
 END;
 $$
 LANGUAGE plpgsql IMMUTABLE;
+
+
+CREATE OR REPLACE FUNCTION weigh_search(search_vector INT[],
+                                        term_vectors TEXT[],
+                                        weight_vectors FLOAT[],
+                                        def_weight FLOAT)
+  RETURNS FLOAT
+  AS $$
+DECLARE
+  pos INT := 1;
+  terms TEXT;
+BEGIN
+  FOREACH terms IN ARRAY term_vectors
+  LOOP
+    IF search_vector @> terms::INTEGER[] THEN
+      RETURN weight_vectors[pos];
+    END IF;
+    pos := pos + 1;
+  END LOOP;
+  RETURN def_weight;
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE;

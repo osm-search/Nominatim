@@ -7,3 +7,12 @@ build
 
 .vagrant
 data/country_osm_grid.sql.gz
+
+nominatim/clicmd/admin-buffer.py
+nominatim/data/place_info-buffer.py
+nominatim/tools/admin-buffer.py
+test/bdd/test.dat
+test/python/tokenizer/sanitizers/test_tag_japanese,py
+test/python/tokenizer/sanitizers/test_tag_japanese2.py
+test/python/tokenizer/sanitizers/test_tag_japanese3.py
+

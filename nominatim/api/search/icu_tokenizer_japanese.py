@@ -1,4 +1,5 @@
 import MeCab
+
 import re
 
 def transliterate(text: str) -> str:
@@ -36,3 +37,4 @@ def transliterate(text: str) -> str:
 # this is for debug
 '''tmp = '東京都千代田区丸の内１－２'
 print(transliterate(tmp))'''
+

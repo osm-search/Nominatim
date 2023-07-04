@@ -34,9 +34,9 @@ class Geometry(types.UserDefinedType): # type: ignore[type-arg]
     def bind_processor(self, dialect: 'sa.Dialect') -> Callable[[Any], str]:
         def process(value: Any) -> str:
             if isinstance(value, str):
-                return 'SRID=4326;' + value
+                return value
 
-            return 'SRID=4326;' + cast(str, value.to_wkt())
+            return cast(str, value.to_wkt())
         return process
 
 
@@ -48,7 +48,9 @@ class Geometry(types.UserDefinedType): # type: ignore[type-arg]
 
 
     def bind_expression(self, bindvalue: SaBind) -> SaColumn:
-        return sa.func.ST_GeomFromText(bindvalue, type_=self)
+        return sa.func.ST_GeomFromText(bindvalue,
+                                       sa.bindparam('geometry_srid', value=4326, literal_execute=True),
+                                       type_=self)
 
 
     class comparator_factory(types.UserDefinedType.Comparator): # type: ignore[type-arg]

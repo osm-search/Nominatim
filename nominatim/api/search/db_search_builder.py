@@ -210,7 +210,9 @@ class SearchBuilder:
         exp_addr_count = min(t.count for t in addr_partials) if addr_partials else exp_name_count
         if exp_addr_count < 1000 and partials_indexed:
             # Lookup by address partials and restrict results through name terms.
-            yield penalty, exp_addr_count,\
+            # Give this a small penalty because lookups in the address index are
+            # more expensive
+            yield penalty + exp_addr_count/5000, exp_addr_count,\
                   [dbf.FieldLookup('name_vector', [t.token for t in name_partials], 'restrict'),
                    dbf.FieldLookup('nameaddress_vector', addr_tokens, 'lookup_all')]
             return

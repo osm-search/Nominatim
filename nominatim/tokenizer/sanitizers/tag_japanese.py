@@ -27,7 +27,12 @@ def tag_japanese(obj: ProcessInfo) -> None:
         elif item.kind == 'block_number':
             tmp_blocknumber = item.name
         elif item.kind == 'neighbourhood':
-            tmp_neighbourhood = item.name
+            # this is temporary change
+            if item.name == '3丁目':
+              tmp = '三丁目'
+              tmp_neighbourhood = tmp
+            else:
+              tmp_neighbourhood = item.name
             #print(tmp_neighbourhood)
         elif item.kind == 'quarter':
             tmp_quarter = item.name
@@ -44,8 +49,8 @@ def tag_japanese(obj: ProcessInfo) -> None:
         new_address.append(PlaceName(kind='housenumber', name=f'{tmp_housenumber}',suffix=''))
 
     if tmp_neighbourhood and tmp_quarter:
-        new_address.append(PlaceName(kind='place', name=f'{tmp_quarter}-{tmp_neighbourhood}',suffix=''))
-        print('new_address',new_address)
+        new_address.append(PlaceName(kind='place', name=f'{tmp_quarter}{tmp_neighbourhood}',suffix=''))
+        #print('new_address',new_address)
     elif tmp_neighbourhood:
         new_address.append(PlaceName(kind='place', name=f'{tmp_neighbourhood}',suffix=''))
     elif tmp_quarter:

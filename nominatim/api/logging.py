@@ -99,6 +99,7 @@ class BaseLogger:
 
         if sa.__version__.startswith('1'):
             try:
+                sqlstr = re.sub(r'__\[POSTCOMPILE_[^]]*\]', '%s', sqlstr)
                 return sqlstr % tuple((repr(params.get(name, None))
                                       for name in compiled.positiontup)) # type: ignore
             except TypeError:
@@ -107,8 +108,9 @@ class BaseLogger:
         # Fixes an odd issue with Python 3.7 where percentages are not
         # quoted correctly.
         sqlstr = re.sub(r'%(?!\()', '%%', sqlstr)
+        sqlstr = re.sub(r'__\[POSTCOMPILE_([^]]*)\]', r'%(\1)s', sqlstr)
+        print(sqlstr)
         return sqlstr % params
-
 
 class HTMLLogger(BaseLogger):
     """ Logger that formats messages in HTML.

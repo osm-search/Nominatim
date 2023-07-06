@@ -120,6 +120,7 @@ PHP_CONST_DEFS = (
     ('Search_NameOnlySearchFrequencyThreshold', 'SEARCH_NAME_ONLY_THRESHOLD', str),
     ('Use_US_Tiger_Data', 'USE_US_TIGER_DATA', bool),
     ('MapIcon_URL', 'MAPICON_URL', str),
+    ('Search_Diam', 'SEARCH_DIAM', float),
 )
 
 
@@ -195,6 +196,9 @@ def _quote_php_variable(var_type: Type[Any], config: Configuration,
         return 'true' if config.get_bool(conf_name) else 'false'
 
     if var_type == int:
+        return cast(str, getattr(config, conf_name))
+
+    if var_type == float:
         return cast(str, getattr(config, conf_name))
 
     if not getattr(config, conf_name):

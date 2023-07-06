@@ -255,7 +255,7 @@ class ReverseGeocode
     {
         Debug::newFunction('lookupPoint');
         // Find the nearest point
-        $fSearchDiam = 0.006;
+        $fSearchDiam = CONST_Search_Diam;
         $oResult = null;
         $aPlace = null;
 

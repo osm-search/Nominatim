@@ -13,20 +13,20 @@ CREATE OR REPLACE FUNCTION reverse_place_diameter(rank_search SMALLINT)
   AS $$
 BEGIN
   IF rank_search <= 4 THEN
-    RETURN 5.0;
+    RETURN  {{config.REVERSE_SEARCH_DIAM}}  * 250;
   ELSIF rank_search <= 8 THEN
-    RETURN 1.8;
+    RETURN  {{config.REVERSE_SEARCH_DIAM}}  * 90;
   ELSIF rank_search <= 12 THEN
-    RETURN 0.6;
+    RETURN  {{config.REVERSE_SEARCH_DIAM}}  * 30;
   ELSIF rank_search <= 17 THEN
-    RETURN 0.16;
+    RETURN  {{config.REVERSE_SEARCH_DIAM}}  * 8;
   ELSIF rank_search <= 18 THEN
-    RETURN 0.08;
+    RETURN  {{config.REVERSE_SEARCH_DIAM}}  * 4;
   ELSIF rank_search <= 19 THEN
-    RETURN 0.04;
+    RETURN  {{config.REVERSE_SEARCH_DIAM}}  * 2;
   END IF;
 
-  RETURN 0.02;
+  RETURN  {{config.REVERSE_SEARCH_DIAM}} ;
 END;
 $$
 LANGUAGE plpgsql IMMUTABLE;

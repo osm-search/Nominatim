@@ -438,6 +438,23 @@ NOMINATIM_TABLESPACE_AUX_INDEX
 :    Indexes on auxiliary data tables.
 
 
+#### NOMINATIM_SEARCH_DIAM
+
+| Summary            |                                                     |
+| --------------     | --------------------------------------------------- |
+| **Description:**   | Threshold distance for point searches |
+| **Format:**        | float |
+| **Default:**       | 0.006 |
+| **After Changes:** | run `nominatim refresh --website --functions` |
+
+When modified, it will affect the search for points with a search range
+greater than or equal to 16 (streets and buildings). It will represent
+the maximum distance a feature can be away from the search point to be returned.
+If no element is found, it will return "Unable to geocode".
+
+Since SRID 4326 is being used, the parameter unit will be decimal degrees.
+
+
 ### Replication Update Settings
 
 #### NOMINATIM_REPLICATION_URL
@@ -626,6 +643,27 @@ setting to restrict the number of geometry types that may be requested
 with a single query.
 
 Setting this parameter to 0 disables polygon output completely.
+
+
+#### NOMINATIM_SEARCH_ACCURACY
+
+| Summary            |                                                     |
+| --------------     | --------------------------------------------------- |
+| **Description:**   | Accuracy for search diameter |
+| **Format:**        | float |
+| **Default:**       | 1 |
+| **After Changes:** | run `nominatim refresh --website` |
+
+The accuracy with which the point search will be performed, varying the initial search
+diameter which depends on NOMINATIM_REVERSE_SEARCH_DIAM parameter. It will be a
+multiplicative factor from 0 to 1.
+
+With the value 0 the accuracy will be maximum since 0 will be multiplied by the search
+diameter and the distance between the point obtained from latitude and longitude will
+have to be less than or equal to 0.
+
+At value 1 the search distance will be the default one asociated to the search diameter.
+
 
 ### Logging Settings
 

@@ -41,6 +41,8 @@ loadSettings($aCMDResult['project-dir'] ?? getcwd());
 @define('CONST_Use_US_Tiger_Data', getSettingBool('USE_US_TIGER_DATA'));
 @define('CONST_MapIcon_URL', getSetting('MAPICON_URL', false));
 @define('CONST_TokenizerDir', CONST_InstallDir.'/tokenizer');
+@define('CONST_ReverseSearchDiam', getSetting('REVERSE_SEARCH_DIAM', 0.006));
+@define('CONST_ReverseSearchAccuracy', getSetting('REVERSE_SEARCH_ACCURACY', 1));
 
 require_once(CONST_LibDir.'/Geocode.php');
 

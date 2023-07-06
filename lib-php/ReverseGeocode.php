@@ -129,7 +129,7 @@ class ReverseGeocode
                 $sSQL .= ' and indexed_status = 0 and linked_place_id is null';
                 $sSQL .= ' AND ST_Buffer(geometry, reverse_place_diameter(rank_search)) && '.$sPointSQL;
                 $sSQL .= ') as a ';
-                $sSQL .= 'WHERE distance <= reverse_place_diameter(rank_search)';
+                $sSQL .= 'WHERE distance <= ('.CONST_ReverseSearchAccuracy.' * reverse_place_diameter(rank_search))';
                 $sSQL .= ' ORDER BY rank_search DESC, distance ASC';
                 $sSQL .= ' LIMIT 1';
                 Debug::printSQL($sSQL);
@@ -227,7 +227,7 @@ class ReverseGeocode
                 $sSQL .= ' ORDER BY rank_search DESC, distance ASC';
                 $sSQL .= ' limit 100) as a';
                 $sSQL .= ' WHERE ST_Contains((SELECT geometry FROM placex WHERE place_id = '.$iPlaceID.'), geometry )';
-                $sSQL .= ' AND distance <= reverse_place_diameter(rank_search)';
+                $sSQL .= ' AND distance <= ('.CONST_ReverseSearchAccuracy. '* reverse_place_diameter(rank_search))';
                 $sSQL .= ' ORDER BY rank_search DESC, distance ASC';
                 $sSQL .= ' LIMIT 1';
                 Debug::printSQL($sSQL);
@@ -255,7 +255,7 @@ class ReverseGeocode
     {
         Debug::newFunction('lookupPoint');
         // Find the nearest point
-        $fSearchDiam = CONST_Search_Diam;
+        $fSearchDiam = CONST_ReverseSearchAccuracy * CONST_ReverseSearchDiam;
         $oResult = null;
         $aPlace = null;
 

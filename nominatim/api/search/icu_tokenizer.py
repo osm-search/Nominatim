@@ -156,9 +156,17 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
         #normalized = list(filter(lambda p: p.text,
         #                         (qmod.Phrase(p.ptype, self.normalizer.transliterate(p.text))
         #                          for p in phrases)))
-        normalized = list(filter(lambda p: p.text,
+        splited_address = list(filter(lambda p: p.text,
                                  (qmod.Phrase(p.ptype, icu_tokenizer_japanese.transliterate(p.text))
                                   for p in phrases)))
+        normalized = []
+        for p in splited_address:
+          if p.text:
+            if ',' in p.text:
+              normalized.extend([qmod.Phrase(p.ptype, phrase) for phrase in p.text.split(',')])
+            else:
+              normalized.append(qmod.Phrase(p.ptype, p.text))
+
         query = qmod.QueryStruct(normalized)
         log().var_dump('Normalized query', query.source)
         if not query.source:

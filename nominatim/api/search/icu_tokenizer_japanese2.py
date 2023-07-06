@@ -54,14 +54,11 @@ def transliterate(text: str) -> str:
     # split all words first using the normalization library
     text = convert_kanji_sequence_to_number(text)    
     text = convert_zenkaku_sequence_to_number(text)
-    wakati = MeCab.Tagger("-Owakati")
+    #wakati = MeCab.Tagger("-Owakati")
+    wakati = MeCab.Tagger('-Owakati -d /var/lib/mecab/dic/debian -u /home/miku/mecab/addr.dic')
     split_text = wakati.parse(text).split()
-    trigger_words = ['都','道','府','県','市','区','町','村','群','丁目']
-    for i in range(len(split_text)):
-      if split_text[i] in trigger_words and i > 0:
-        split_text[i-1] += split_text[i] + ','
-        split_text[i] = ''
-    combined_text = ' '.join(filter(None, split_text))
+    #print(split_text)    
+    combined_text = ', '.join(split_text[:3]) + ' ' + ' '.join(split_text[3:])
     return combined_text
 # this is for debug
 tmp = '東京都千代田区丸の内１－２'

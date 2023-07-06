@@ -8,6 +8,31 @@ from nominatim.data.place_name import PlaceName
 def create(config):
     return tag_japanese
 
+def convert_kanji_sequence_to_number(sequence):
+    kanji_map = {
+      '一': '1',
+      '二': '2',
+      '三': '3',
+      '四': '4',
+      '五': '5',
+      '六': '6',
+      '七': '7',
+      '八': '8',
+      '九': '9'
+    }
+    converted = ''
+    current_number = ''
+    for char in sequence:
+      if char in kanji_map:
+        current_number += kanji_map[char]
+      else:
+        converted += current_number
+        current_number = ''
+        converted += char
+    converted += current_number
+    return converted
+
+
 def tag_japanese(obj: ProcessInfo) -> None:
     #print('!!!!!', obj)
     if obj.place.country_code != 'jp':
@@ -21,18 +46,27 @@ def tag_japanese(obj: ProcessInfo) -> None:
 
     new_address = []
     #print('herehere')
+    #print(obj.names)
+    
+    for item in obj.names:
+      item.name = convert_kanji_sequence_to_number(item.name) 
+    #print(obj.names)
+
+
     for item in obj.address:
+        item.name = convert_kanji_sequence_to_number(item.name)
+        #print(item.name)
         if item.kind == 'housenumber':
             tmp_housenumber = item.name
         elif item.kind == 'block_number':
             tmp_blocknumber = item.name
         elif item.kind == 'neighbourhood':
             # this is temporary change
-            if item.name == '3丁目':
-              tmp = '三丁目'
-              tmp_neighbourhood = tmp
-            else:
-              tmp_neighbourhood = item.name
+            #if item.name == '3丁目':
+            #  tmp = '三丁目'
+            #  tmp_neighbourhood = tmp
+            #else:
+            tmp_neighbourhood = item.name
             #print(tmp_neighbourhood)
         elif item.kind == 'quarter':
             tmp_quarter = item.name

@@ -85,6 +85,11 @@ class ReverseGeocode
 
     protected function lookupLargeArea($sPointSQL, $iMaxRank)
     {
+        if(CONST_Search_WithinCountries
+            and $this->lookupInCountry($sPointSQL, $iMaxRank) == null){
+                return  null;
+        }
+
         if ($iMaxRank > 4) {
             $aPlace = $this->lookupPolygon($sPointSQL, $iMaxRank);
             if ($aPlace) {

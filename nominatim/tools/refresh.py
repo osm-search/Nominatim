@@ -120,6 +120,7 @@ PHP_CONST_DEFS = (
     ('Search_NameOnlySearchFrequencyThreshold', 'SEARCH_NAME_ONLY_THRESHOLD', str),
     ('Use_US_Tiger_Data', 'USE_US_TIGER_DATA', bool),
     ('MapIcon_URL', 'MAPICON_URL', str),
+    ('Search_WithinCountries', 'SEARCH_WITHIN_COUNTRIES', bool),
 )
 
 

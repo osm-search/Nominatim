@@ -48,9 +48,7 @@ class Geometry(types.UserDefinedType): # type: ignore[type-arg]
 
 
     def bind_expression(self, bindvalue: SaBind) -> SaColumn:
-        return sa.func.ST_GeomFromText(bindvalue,
-                                       sa.bindparam('geometry_srid', value=4326, literal_execute=True),
-                                       type_=self)
+        return sa.func.ST_GeomFromText(bindvalue, sa.text('4326'), type_=self)
 
 
     class comparator_factory(types.UserDefinedType.Comparator): # type: ignore[type-arg]

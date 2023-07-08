@@ -210,7 +210,9 @@ class SearchBuilder:
         exp_addr_count = min(t.count for t in addr_partials) if addr_partials else exp_name_count
         if exp_addr_count < 1000 and partials_indexed:
             # Lookup by address partials and restrict results through name terms.
-            yield penalty, exp_addr_count,\
+            # Give this a small penalty because lookups in the address index are
+            # more expensive
+            yield penalty + exp_addr_count/5000, exp_addr_count,\
                   [dbf.FieldLookup('name_vector', [t.token for t in name_partials], 'restrict'),
                    dbf.FieldLookup('nameaddress_vector', addr_tokens, 'lookup_all')]
             return
@@ -233,19 +235,21 @@ class SearchBuilder:
             yield penalty, sum(t.count for t in rare_names), lookup
 
         # To catch remaining results, lookup by name and address
-        if all(t.is_indexed for t in name_partials):
-            lookup = [dbf.FieldLookup('name_vector',
-                                      [t.token for t in name_partials], 'lookup_all')]
-        else:
-            # we don't have the partials, try with the non-rare names
-            non_rare_names = [t.token for t in name_fulls if t.count >= 1000]
-            if not non_rare_names:
-                return
-            lookup = [dbf.FieldLookup('name_vector', non_rare_names, 'lookup_any')]
-        if addr_tokens:
-            lookup.append(dbf.FieldLookup('nameaddress_vector', addr_tokens, 'lookup_all'))
-        yield penalty + 0.1 * max(0, 5 - len(name_partials) - len(addr_tokens)),\
-              min(exp_name_count, exp_addr_count), lookup
+        # We only do this if there is a reasonable number of results expected.
+        if min(exp_name_count, exp_addr_count) < 10000:
+            if all(t.is_indexed for t in name_partials):
+                lookup = [dbf.FieldLookup('name_vector',
+                                          [t.token for t in name_partials], 'lookup_all')]
+            else:
+                # we don't have the partials, try with the non-rare names
+                non_rare_names = [t.token for t in name_fulls if t.count >= 1000]
+                if not non_rare_names:
+                    return
+                lookup = [dbf.FieldLookup('name_vector', non_rare_names, 'lookup_any')]
+            if addr_tokens:
+                lookup.append(dbf.FieldLookup('nameaddress_vector', addr_tokens, 'lookup_all'))
+            yield penalty + 0.1 * max(0, 5 - len(name_partials) - len(addr_tokens)),\
+                  min(exp_name_count, exp_addr_count), lookup
 
 
     def get_name_ranking(self, trange: TokenRange) -> dbf.FieldRanking:

@@ -10,7 +10,7 @@ SQLAlchemy definitions for all tables used by the frontend.
 from typing import Any
 
 import sqlalchemy as sa
-from sqlalchemy.dialects.postgresql import HSTORE, ARRAY, JSONB
+from sqlalchemy.dialects.postgresql import HSTORE, ARRAY, JSONB, array
 from sqlalchemy.dialects.sqlite import JSON as sqlite_json
 
 from nominatim.db.sqlalchemy_types import Geometry
@@ -21,6 +21,7 @@ class PostgresTypes:
     Composite = HSTORE
     Json = JSONB
     IntArray = ARRAY(sa.Integer()) #pylint: disable=invalid-name
+    to_array = array
 
 
 class SqliteTypes:
@@ -29,6 +30,12 @@ class SqliteTypes:
     Composite = sqlite_json
     Json = sqlite_json
     IntArray = sqlite_json
+
+    @staticmethod
+    def to_array(arr: Any) -> Any:
+        """ Sqlite has no special conversion for arrays.
+        """
+        return arr
 
 
 #pylint: disable=too-many-instance-attributes

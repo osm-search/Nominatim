@@ -382,7 +382,7 @@ def test_frequent_partials_in_name_but_not_in_address():
 
 
 def test_frequent_partials_in_name_and_address():
-    searches = make_counted_searches(10000, 1, 10000, 1)
+    searches = make_counted_searches(9999, 1, 9999, 1)
 
     assert len(searches) == 2
 
@@ -393,3 +393,15 @@ def test_frequent_partials_in_name_and_address():
             {('name_vector', 'lookup_any'), ('nameaddress_vector', 'restrict')}
     assert set((l.column, l.lookup_type) for l in searches[1].lookups) == \
             {('nameaddress_vector', 'lookup_all'), ('name_vector', 'lookup_all')}
+
+
+def test_too_frequent_partials_in_name_and_address():
+    searches = make_counted_searches(10000, 1, 10000, 1)
+
+    assert len(searches) == 1
+
+    assert all(isinstance(s, dbs.PlaceSearch) for s in searches)
+    searches.sort(key=lambda s: s.penalty)
+
+    assert set((l.column, l.lookup_type) for l in searches[0].lookups) == \
+            {('name_vector', 'lookup_any'), ('nameaddress_vector', 'restrict')}

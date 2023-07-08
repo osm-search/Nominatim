@@ -57,8 +57,6 @@ class NominatimAPIAsync:
 
             query = {k: v for k, v in dsn.items()
                       if k not in ('user', 'password', 'dbname', 'host', 'port')}
-            if PGCORE_LIB == 'asyncpg':
-                query['prepared_statement_cache_size'] = '0'
 
             dburl = sa.engine.URL.create(
                        f'postgresql+{PGCORE_LIB}',

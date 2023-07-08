@@ -17,6 +17,7 @@ import nominatim.api.results as nres
 from nominatim.api.logging import log
 from nominatim.api.types import AnyPoint, DataLayer, ReverseDetails, GeometryFormat, Bbox
 from nominatim.db.sqlalchemy_types import Geometry
+import nominatim.db.sqlalchemy_functions as snfn
 
 # In SQLAlchemy expression which compare with NULL need to be expressed with
 # the equal sign.
@@ -348,13 +349,8 @@ class ReverseGeocoder:
         # later only a minimum of results needs to be checked with ST_Contains.
         inner = sa.select(t, sa.literal(0.0).label('distance'))\
                   .where(t.c.rank_search.between(5, MAX_RANK_PARAM))\
-                  .where(t.c.rank_address.between(5, 25))\
-                  .where(t.c.geometry.is_area())\
                   .where(t.c.geometry.intersects(WKT_PARAM))\
-                  .where(t.c.name != None)\
-                  .where(t.c.indexed_status == 0)\
-                  .where(t.c.linked_place_id == None)\
-                  .where(t.c.type != 'postcode')\
+                  .where(snfn.select_index_placex_geometry_reverse_lookuppolygon('placex'))\
                   .order_by(sa.desc(t.c.rank_search))\
                   .limit(50)\
                   .subquery('area')
@@ -373,14 +369,10 @@ class ReverseGeocoder:
             log().comment('Search for better matching place nodes inside the area')
             inner = sa.select(t,
                               t.c.geometry.ST_Distance(WKT_PARAM).label('distance'))\
-                      .where(t.c.osm_type == 'N')\
                       .where(t.c.rank_search > address_row.rank_search)\
                       .where(t.c.rank_search <= MAX_RANK_PARAM)\
-                      .where(t.c.rank_address.between(5, 25))\
-                      .where(t.c.name != None)\
                       .where(t.c.indexed_status == 0)\
-                      .where(t.c.linked_place_id == None)\
-                      .where(t.c.type != 'postcode')\
+                      .where(snfn.select_index_placex_geometry_reverse_lookupplacenode('placex'))\
                       .where(t.c.geometry
                                 .ST_Buffer(sa.func.reverse_place_diameter(t.c.rank_search))
                                 .intersects(WKT_PARAM))\
@@ -476,15 +468,11 @@ class ReverseGeocoder:
 
             inner = sa.select(t,
                               t.c.geometry.ST_Distance(WKT_PARAM).label('distance'))\
-                      .where(t.c.osm_type == 'N')\
                       .where(t.c.rank_search > 4)\
                       .where(t.c.rank_search <= MAX_RANK_PARAM)\
-                      .where(t.c.rank_address.between(5, 25))\
-                      .where(t.c.name != None)\
                       .where(t.c.indexed_status == 0)\
-                      .where(t.c.linked_place_id == None)\
-                      .where(t.c.type != 'postcode')\
                       .where(t.c.country_code.in_(ccodes))\
+                      .where(snfn.select_index_placex_geometry_reverse_lookupplacenode('placex'))\
                       .where(t.c.geometry
                                 .ST_Buffer(sa.func.reverse_place_diameter(t.c.rank_search))
                                 .intersects(WKT_PARAM))\

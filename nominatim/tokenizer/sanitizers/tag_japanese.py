@@ -10,6 +10,7 @@ def create(config):
 
 def convert_kanji_sequence_to_number(sequence):
     kanji_map = {
+      '零': '0',
       '一': '1',
       '二': '2',
       '三': '3',
@@ -84,7 +85,7 @@ def tag_japanese(obj: ProcessInfo) -> None:
 
     if tmp_neighbourhood and tmp_quarter:
         new_address.append(PlaceName(kind='place', name=f'{tmp_quarter}{tmp_neighbourhood}',suffix=''))
-        #print('new_address',new_address)
+        print('new_address',new_address)
     elif tmp_neighbourhood:
         new_address.append(PlaceName(kind='place', name=f'{tmp_neighbourhood}',suffix=''))
     elif tmp_quarter:

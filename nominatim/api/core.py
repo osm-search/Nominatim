@@ -54,6 +54,7 @@ class NominatimAPIAsync:
                 return
 
             dsn = self.config.get_database_params()
+            pool_size = self.config.get_int('API_POOL_SIZE')
 
             query = {k: v for k, v in dsn.items()
                       if k not in ('user', 'password', 'dbname', 'host', 'port')}
@@ -65,6 +66,7 @@ class NominatimAPIAsync:
                        host=dsn.get('host'), port=int(dsn['port']) if 'port' in dsn else None,
                        query=query)
             engine = sa_asyncio.create_async_engine(dburl, future=True,
+                                                    max_overflow=0, pool_size=pool_size,
                                                     echo=self.config.get_bool('DEBUG_SQL'))
 
             try:

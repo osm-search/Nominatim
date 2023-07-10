@@ -55,17 +55,18 @@ def convert_zenkaku_sequence_to_number(sequence):
 def transliterate(text: str) -> str:
     # split all words first using the normalization library
     text = convert_kanji_sequence_to_number(text)    
-    pattern = r'''
-           (...??[都道府県])            # [group1] prefecture
-           (.+?[市区町村])              # [group2] municipalities (city/wards/towns/villages)
-           (.+)                        # [group3] other words
-           '''
-    result = re.match(pattern, text, re.VERBOSE) # perform normalization using the pattern
-    joined_group = ''.join([result.group(1),', ',result.group(2),', ',result.group(3)])
-    #print(joined_group)
-    return joined_group
-    
+    # text = convert_zenkaku_sequence_to_number(text)
+    wakati = MeCab.Tagger("-Owakati")
+    split_text = wakati.parse(text).split()
+    #trigger_words = ['都','道','府','県','市','区','町','村','群','丁目']
+    trigger_words = ['都','道','府','県','市','区','町','村','群']
+    for i in range(len(split_text)):
+      if split_text[i] in trigger_words and i > 0:
+        split_text[i-1] += split_text[i] + ','
+        split_text[i] = ''
+    combined_text = ' '.join(filter(None, split_text))
+    return combined_text
 # this is for debug
-#tmp = '東京都千代田区丸の内１－２'
-#print(transliterate(tmp))
+tmp = '東京都千代田区丸の内１－２'
+print(transliterate(tmp))
 

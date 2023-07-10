@@ -3,7 +3,6 @@ import re
 
 def convert_kanji_sequence_to_number(sequence):
   kanji_map = {
-    '零': '0',
     '一': '1',
     '二': '2',
     '三': '3',
@@ -55,17 +54,14 @@ def convert_zenkaku_sequence_to_number(sequence):
 def transliterate(text: str) -> str:
     # split all words first using the normalization library
     text = convert_kanji_sequence_to_number(text)    
-    pattern = r'''
-           (...??[都道府県])            # [group1] prefecture
-           (.+?[市区町村])              # [group2] municipalities (city/wards/towns/villages)
-           (.+)                        # [group3] other words
-           '''
-    result = re.match(pattern, text, re.VERBOSE) # perform normalization using the pattern
-    joined_group = ''.join([result.group(1),', ',result.group(2),', ',result.group(3)])
-    #print(joined_group)
-    return joined_group
-    
+    # text = convert_zenkaku_sequence_to_number(text)
+    # wakati = MeCab.Tagger("-Owakati")
+    wakati = MeCab.Tagger('-Owakati -d /var/lib/mecab/dic/debian -u /home/miku/mecab/addr.dic')
+    split_text = wakati.parse(text).split()
+    #print(split_text)    
+    combined_text = ', '.join(split_text[:3]) + ' ' + ' '.join(split_text[3:])
+    return combined_text
 # this is for debug
-#tmp = '東京都千代田区丸の内１－２'
-#print(transliterate(tmp))
+tmp = '東京都千代田区丸の内１－２'
+print(transliterate(tmp))
 

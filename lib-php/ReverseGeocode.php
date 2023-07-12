@@ -85,6 +85,11 @@ class ReverseGeocode
 
     protected function lookupLargeArea($sPointSQL, $iMaxRank)
     {
+        $sCountryCode = $this->getCountryCode($sPointSQL);
+        if (CONST_Search_WithinCountries and $sCountryCode == null) {
+            return  null;
+        }
+
         if ($iMaxRank > 4) {
             $aPlace = $this->lookupPolygon($sPointSQL, $iMaxRank);
             if ($aPlace) {
@@ -94,12 +99,12 @@ class ReverseGeocode
 
         // If no polygon which contains the searchpoint is found,
         // searches in the country_osm_grid table for a polygon.
-        return  $this->lookupInCountry($sPointSQL, $iMaxRank);
+        return  $this->lookupInCountry($sPointSQL, $iMaxRank, $sCountryCode);
     }
 
-    protected function lookupInCountry($sPointSQL, $iMaxRank)
+    protected function getCountryCode($sPointSQL)
     {
-        Debug::newFunction('lookupInCountry');
+        Debug::newFunction('getCountryCode');
         // searches for polygon in table country_osm_grid which contains the searchpoint
         // and searches for the nearest place node to the searchpoint in this polygon
         $sSQL = 'SELECT country_code FROM country_osm_grid';
@@ -111,8 +116,12 @@ class ReverseGeocode
             null,
             'Could not determine country polygon containing the point.'
         );
-        Debug::printVar('Country code', $sCountryCode);
+        return $sCountryCode;
+    }
 
+    protected function lookupInCountry($sPointSQL, $iMaxRank, $sCountryCode)
+    {
+        Debug::newFunction('lookupInCountry');
         if ($sCountryCode) {
             if ($iMaxRank > 4) {
                 // look for place nodes with the given country code

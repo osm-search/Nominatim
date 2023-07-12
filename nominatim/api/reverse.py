@@ -7,7 +7,7 @@
 """
 Implementation of reverse geocoding.
 """
-from typing import Optional, List, Callable, Type, Tuple, Dict, Any, cast
+from typing import Optional, List, Callable, Type, Tuple, Dict, Any, cast, Union
 import functools
 
 import sqlalchemy as sa
@@ -195,16 +195,17 @@ class ReverseGeocoder:
         if self.has_geometries():
             sql = self._add_geometry_columns(sql, t.c.geometry)
 
-        restrict: List[SaColumn] = []
+        restrict: List[Union[SaColumn, Callable[[], SaColumn]]] = []
 
         if self.layer_enabled(DataLayer.ADDRESS):
-            restrict.append(no_index(t.c.rank_address).between(26, min(29, self.max_rank)))
+            max_rank = min(29, self.max_rank)
+            restrict.append(lambda: no_index(t.c.rank_address).between(26, max_rank))
             if self.max_rank == 30:
-                restrict.append(_is_address_point(t))
+                restrict.append(lambda: _is_address_point(t))
         if self.layer_enabled(DataLayer.POI) and self.max_rank == 30:
-            restrict.append(sa.and_(no_index(t.c.rank_search) == 30,
-                                    t.c.class_.not_in(('place', 'building')),
-                                    sa.not_(t.c.geometry.is_line_like())))
+            restrict.append(lambda: sa.and_(no_index(t.c.rank_search) == 30,
+                                            t.c.class_.not_in(('place', 'building')),
+                                            sa.not_(t.c.geometry.is_line_like())))
         if self.has_feature_layers():
             restrict.append(sa.and_(no_index(t.c.rank_search).between(26, MAX_RANK_PARAM),
                                     no_index(t.c.rank_address) == 0,

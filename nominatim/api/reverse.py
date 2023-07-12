@@ -7,7 +7,8 @@
 """
 Implementation of reverse geocoding.
 """
-from typing import Optional, List, Callable, Type, Tuple, Dict, Any
+from typing import Optional, List, Callable, Type, Tuple, Dict, Any, cast
+import functools
 
 import sqlalchemy as sa
 
@@ -270,9 +271,7 @@ class ReverseGeocoder:
         return (await self.conn.execute(sql, self.bind_params)).one_or_none()
 
 
-    async def _find_tiger_number_for_street(self, parent_place_id: int,
-                                            parent_type: str,
-                                            parent_id: int) -> Optional[SaRow]:
+    async def _find_tiger_number_for_street(self, parent_place_id: int) -> Optional[SaRow]:
         t = self.conn.t.tiger
 
         def _base_query() -> SaSelect:
@@ -287,8 +286,6 @@ class ReverseGeocoder:
 
             return sa.select(inner.c.place_id,
                              inner.c.parent_place_id,
-                             sa.sql.expression.label('osm_type', parent_type),
-                             sa.sql.expression.label('osm_id', parent_id),
                              _interpolated_housenumber(inner),
                              _interpolated_position(inner),
                              inner.c.postcode,
@@ -332,14 +329,15 @@ class ReverseGeocoder:
                     distance = addr_row.distance
                 elif row.country_code == 'us' and parent_place_id is not None:
                     log().comment('Find TIGER housenumber for street')
-                    addr_row = await self._find_tiger_number_for_street(parent_place_id,
-                                                                        row.osm_type,
-                                                                        row.osm_id)
+                    addr_row = await self._find_tiger_number_for_street(parent_place_id)
                     log().var_dump('Result (street Tiger housenumber)', addr_row)
 
                     if addr_row is not None:
+                        row_func = cast(RowFunc,
+                                        functools.partial(nres.create_from_tiger_row,
+                                                          osm_type=row.osm_type,
+                                                          osm_id=row.osm_id))
                         row = addr_row
-                        row_func = nres.create_from_tiger_row
             else:
                 distance = row.distance
 

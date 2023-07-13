@@ -228,7 +228,13 @@ The following is a list of sanitizers that are shipped with Nominatim.
         members: False
     rendering:
         heading_level: 6
+#### tag-japanese
 
+::: nominatim.tokenizer.sanitizers.tag_japanese
+    selection:
+        members: False
+    rendering:
+        heading_level: 6
 #### Token Analysis
 
 Token analyzers take a full name and transform it into one or more normalized

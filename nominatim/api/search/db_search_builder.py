@@ -163,6 +163,7 @@ class SearchBuilder:
         sdata.lookups = [dbf.FieldLookup('name_vector', [t.token for t in hnrs], 'lookup_any'),
                          dbf.FieldLookup('nameaddress_vector', partial_tokens, 'lookup_all')
                         ]
+        sdata.housenumbers = dbf.WeightedStrings([], [])
         yield dbs.PlaceSearch(0.05, sdata, sum(t.count for t in hnrs))
 
 

@@ -309,9 +309,12 @@ class _TokenSequence:
                 first = base.address[0]
                 if (not base.housenumber or first.end >= base.housenumber.start)\
                    and (not base.qualifier or first.start >= base.qualifier.end):
+                    base_penalty = self.penalty
+                    if base.housenumber and base.housenumber.start > first.start:
+                        base_penalty += 0.25
                     for i in range(first.start + 1, first.end):
                         name, addr = first.split(i)
-                        penalty = self.penalty + PENALTY_TOKENCHANGE[query.nodes[i].btype]
+                        penalty = base_penalty + PENALTY_TOKENCHANGE[query.nodes[i].btype]
                         log().comment(f'split first word = name ({i - first.start})')
                         yield dataclasses.replace(base, name=name, penalty=penalty,
                                                   address=[addr] + base.address[1:])
@@ -321,9 +324,12 @@ class _TokenSequence:
                 last = base.address[-1]
                 if (not base.housenumber or last.start <= base.housenumber.end)\
                    and (not base.qualifier or last.end <= base.qualifier.start):
+                    base_penalty = self.penalty
+                    if base.housenumber and base.housenumber.start < last.start:
+                        base_penalty += 0.4
                     for i in range(last.start + 1, last.end):
                         addr, name = last.split(i)
-                        penalty = self.penalty + PENALTY_TOKENCHANGE[query.nodes[i].btype]
+                        penalty = base_penalty + PENALTY_TOKENCHANGE[query.nodes[i].btype]
                         log().comment(f'split last word = name ({i - last.start})')
                         yield dataclasses.replace(base, name=name, penalty=penalty,
                                                   address=base.address[:-1] + [addr])

@@ -225,9 +225,7 @@ class SearchBuilder:
         # This might yield wrong results, nothing we can do about that.
         if not partials_indexed:
             addr_tokens = [t.token for t in addr_partials if t.is_indexed]
-            log().var_dump('before', penalty)
             penalty += 1.2 * sum(t.penalty for t in addr_partials if not t.is_indexed)
-            log().var_dump('after', penalty)
         if rare_names:
             # Any of the full names applies with all of the partials from the address
             lookup = [dbf.FieldLookup('name_vector', [t.token for t in rare_names], 'lookup_any')]

@@ -220,7 +220,7 @@ class SearchBuilder:
 
         # Partial term to frequent. Try looking up by rare full names first.
         name_fulls = self.query.get_tokens(name, TokenType.WORD)
-        rare_names = list(filter(lambda t: t.count < 1000, name_fulls))
+        rare_names = list(filter(lambda t: t.count < 10000, name_fulls))
         # At this point drop unindexed partials from the address.
         # This might yield wrong results, nothing we can do about that.
         if not partials_indexed:

@@ -247,8 +247,12 @@ class SearchBuilder:
                 lookup = [dbf.FieldLookup('name_vector', non_rare_names, 'lookup_any')]
             if addr_tokens:
                 lookup.append(dbf.FieldLookup('nameaddress_vector', addr_tokens, 'lookup_all'))
-            yield penalty + 0.1 * max(0, 5 - len(name_partials) - len(addr_tokens)),\
-                  min(exp_name_count, exp_addr_count), lookup
+            penalty += 0.1 * max(0, 5 - len(name_partials) - len(addr_tokens))
+            if len(rare_names) == len(name_fulls):
+                # if there already was a search for all full tokens,
+                # avoid this if anything has been found
+                penalty += 0.25
+            yield penalty, min(exp_name_count, exp_addr_count), lookup
 
 
     def get_name_ranking(self, trange: TokenRange) -> dbf.FieldRanking:

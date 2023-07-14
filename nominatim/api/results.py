@@ -302,7 +302,9 @@ def create_from_osmline_row(row: Optional[SaRow],
 
 
 def create_from_tiger_row(row: Optional[SaRow],
-                          class_type: Type[BaseResultT]) -> Optional[BaseResultT]:
+                          class_type: Type[BaseResultT],
+                          osm_type: Optional[str] = None,
+                          osm_id: Optional[int] = None) -> Optional[BaseResultT]:
     """ Construct a new result and add the data from the result row
         from the Tiger data interpolation table. 'class_type' defines
         the type of result to return. Returns None if the row is None.
@@ -317,7 +319,7 @@ def create_from_tiger_row(row: Optional[SaRow],
 
     res = class_type(source_table=SourceTable.TIGER,
                      place_id=row.place_id,
-                     osm_object=(row.osm_type, row.osm_id),
+                     osm_object=(osm_type or row.osm_type, osm_id or row.osm_id),
                      category=('place', 'houses' if hnr is None else 'house'),
                      postcode=row.postcode,
                      country_code='us',

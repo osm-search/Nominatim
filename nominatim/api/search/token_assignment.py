@@ -310,7 +310,8 @@ class _TokenSequence:
                 if (not base.housenumber or first.end >= base.housenumber.start)\
                    and (not base.qualifier or first.start >= base.qualifier.end):
                     base_penalty = self.penalty
-                    if base.housenumber and base.housenumber.start > first.start:
+                    if (base.housenumber and base.housenumber.start > first.start) \
+                       or len(query.source) > 1:
                         base_penalty += 0.25
                     for i in range(first.start + 1, first.end):
                         name, addr = first.split(i)
@@ -327,6 +328,8 @@ class _TokenSequence:
                     base_penalty = self.penalty
                     if base.housenumber and base.housenumber.start < last.start:
                         base_penalty += 0.4
+                    if len(query.source) > 1:
+                        base_penalty += 0.25
                     for i in range(last.start + 1, last.end):
                         addr, name = last.split(i)
                         penalty = base_penalty + PENALTY_TOKENCHANGE[query.nodes[i].btype]

@@ -265,6 +265,10 @@ class _TokenSequence:
         """
         base = TokenAssignment.from_ranges(self.seq)
 
+        num_addr_tokens = sum(t.end - t.start for t in base.address)
+        if num_addr_tokens > 50:
+            return
+
         # Postcode search (postcode-only search is covered in next case)
         if base.postcode is not None and base.address:
             if (base.postcode.start == 0 and self.direction != -1)\

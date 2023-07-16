@@ -13,6 +13,7 @@ from typing import List, Tuple, Dict, Any, Optional, Iterable
 from pathlib import Path
 
 from nominatim.config import Configuration
+from nominatim.db.connection import Connection
 from nominatim.data.place_info import PlaceInfo
 from nominatim.typing import Protocol
 
@@ -230,6 +231,13 @@ class AbstractTokenizer(ABC):
 
             When used outside the with construct, the caller must ensure to
             call the close() function before destructing the analyzer.
+        """
+
+
+    @abstractmethod
+    def most_frequent_words(self, conn: Connection, num: int) -> List[str]:
+        """ Return a list of the `num` most frequent full words
+            in the database.
         """
 
 

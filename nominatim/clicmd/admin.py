@@ -9,9 +9,11 @@ Implementation of the 'admin' subcommand.
 """
 import logging
 import argparse
+import random
 
-from nominatim.tools.exec_utils import run_legacy_script
+from nominatim.db.connection import connect
 from nominatim.clicmd.args import NominatimArgs
+import nominatim.api as napi
 
 # Do not repeat documentation of subcommand classes.
 # pylint: disable=C0111
@@ -81,11 +83,25 @@ class AdminFuncs:
 
         return 1
 
+
     def _warm(self, args: NominatimArgs) -> int:
         LOG.warning('Warming database caches')
-        params = ['warm.php']
-        if args.target == 'reverse':
-            params.append('--reverse-only')
-        if args.target == 'search':
-            params.append('--search-only')
-        return run_legacy_script(*params, config=args.config)
+
+        api = napi.NominatimAPI(args.project_dir)
+
+        if args.target != 'reverse':
+            for _ in range(1000):
+                api.reverse((random.uniform(-90, 90), random.uniform(-180, 180)),
+                            address_details=True)
+
+        if args.target != 'search':
+            from ..tokenizer import factory as tokenizer_factory
+
+            tokenizer = tokenizer_factory.get_tokenizer_for_db(args.config)
+            with connect(args.config.get_libpq_dsn()) as conn:
+                words = tokenizer.most_frequent_words(conn, 1000)
+
+            for word in words:
+                api.search(word)
+
+        return 0

@@ -256,6 +256,16 @@ class LegacyTokenizer(AbstractTokenizer):
         return LegacyNameAnalyzer(self.dsn, normalizer)
 
 
+    def most_frequent_words(self, conn: Connection, num: int) -> List[str]:
+        """ Return a list of the `num` most frequent full words
+            in the database.
+        """
+        with conn.cursor() as cur:
+            cur.execute(""" SELECT word FROM word WHERE word is not null
+                              ORDER BY search_name_count DESC LIMIT %s""", (num,))
+            return list(s[0] for s in cur)
+
+
     def _install_php(self, config: Configuration, overwrite: bool = True) -> None:
         """ Install the php script for the tokenizer.
         """

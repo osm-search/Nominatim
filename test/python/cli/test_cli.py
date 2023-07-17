@@ -100,35 +100,6 @@ def test_cli_serve_uvicorn_based(cli_call, engine, mock_func_factory):
     assert func.last_kwargs['host'] == '127.0.0.1'
     assert func.last_kwargs['port'] == 8088
 
-def test_cli_export_command(cli_call, mock_run_legacy):
-    assert cli_call('export', '--output-all-postcodes') == 0
-
-    assert mock_run_legacy.called == 1
-    assert mock_run_legacy.last_args[0] == 'export.php'
-
-
-@pytest.mark.parametrize("param,value", [('output-type', 'country'),
-                                         ('output-format', 'street;city'),
-                                         ('language', 'xf'),
-                                         ('restrict-to-country', 'us'),
-                                         ('restrict-to-osm-node', '536'),
-                                         ('restrict-to-osm-way', '727'),
-                                         ('restrict-to-osm-relation', '197532')
-                                        ])
-def test_export_parameters(src_dir, tmp_path, param, value, monkeypatch):
-    (tmp_path / 'admin').mkdir()
-    (tmp_path / 'admin' / 'export.php').write_text(f"""<?php
-        exit(strpos(implode(' ', $_SERVER['argv']), '--{param} {value}') >= 0 ? 0 : 10);
-        """)
-
-    monkeypatch.setattr(nominatim.paths, 'PHPLIB_DIR', tmp_path)
-
-    assert nominatim.cli.nominatim(module_dir='MODULE NOT AVAILABLE',
-                                   osm2pgsql_path='OSM2PGSQL NOT AVAILABLE',
-                                   phpcgi_path='/usr/bin/php-cgi',
-                                   cli_args=['export', '--' + param, value]) == 0
-
-
 
 class TestCliWithDb:
 

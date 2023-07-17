@@ -2,13 +2,13 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2022 by the Nominatim developer community.
+# Copyright (C) 2023 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Command-line interface to the Nominatim functions for import, update,
 database administration and querying.
 """
-from typing import Optional, Any, List, Union
+from typing import Optional, Any
 import importlib
 import logging
 import os
@@ -17,7 +17,7 @@ import argparse
 from pathlib import Path
 
 from nominatim.config import Configuration
-from nominatim.tools.exec_utils import run_legacy_script, run_php_server
+from nominatim.tools.exec_utils import run_php_server
 from nominatim.errors import UsageError
 from nominatim import clicmd
 from nominatim import version
@@ -140,60 +140,6 @@ class CommandlineParser:
 #
 # No need to document the functions each time.
 # pylint: disable=C0111
-class QueryExport:
-    """\
-    Export addresses as CSV file from the database.
-    """
-
-    def add_args(self, parser: argparse.ArgumentParser) -> None:
-        group = parser.add_argument_group('Output arguments')
-        group.add_argument('--output-type', default='street',
-                           choices=('continent', 'country', 'state', 'county',
-                                    'city', 'suburb', 'street', 'path'),
-                           help='Type of places to output (default: street)')
-        group.add_argument('--output-format',
-                           default='street;suburb;city;county;state;country',
-                           help=("Semicolon-separated list of address types "
-                                 "(see --output-type). Multiple ranks can be "
-                                 "merged into one column by simply using a "
-                                 "comma-separated list."))
-        group.add_argument('--output-all-postcodes', action='store_true',
-                           help=("List all postcodes for address instead of "
-                                 "just the most likely one"))
-        group.add_argument('--language',
-                           help=("Preferred language for output "
-                                 "(use local name, if omitted)"))
-        group = parser.add_argument_group('Filter arguments')
-        group.add_argument('--restrict-to-country', metavar='COUNTRY_CODE',
-                           help='Export only objects within country')
-        group.add_argument('--restrict-to-osm-node', metavar='ID', type=int,
-                           help='Export only children of this OSM node')
-        group.add_argument('--restrict-to-osm-way', metavar='ID', type=int,
-                           help='Export only children of this OSM way')
-        group.add_argument('--restrict-to-osm-relation', metavar='ID', type=int,
-                           help='Export only children of this OSM relation')
-
-
-    def run(self, args: NominatimArgs) -> int:
-        params: List[Union[int, str]] = [
-                             '--output-type', args.output_type,
-                             '--output-format', args.output_format]
-        if args.output_all_postcodes:
-            params.append('--output-all-postcodes')
-        if args.language:
-            params.extend(('--language', args.language))
-        if args.restrict_to_country:
-            params.extend(('--restrict-to-country', args.restrict_to_country))
-        if args.restrict_to_osm_node:
-            params.extend(('--restrict-to-osm-node', args.restrict_to_osm_node))
-        if args.restrict_to_osm_way:
-            params.extend(('--restrict-to-osm-way', args.restrict_to_osm_way))
-        if args.restrict_to_osm_relation:
-            params.extend(('--restrict-to-osm-relation', args.restrict_to_osm_relation))
-
-        return run_legacy_script('export.php', *params, config=args.config)
-
-
 class AdminServe:
     """\
     Start a simple web server for serving the API.
@@ -260,7 +206,7 @@ def get_set_parser() -> CommandlineParser:
 
     parser.add_subcommand('admin', clicmd.AdminFuncs())
 
-    parser.add_subcommand('export', QueryExport())
+    parser.add_subcommand('export', clicmd.QueryExport())
     parser.add_subcommand('serve', AdminServe())
 
     parser.add_subcommand('search', clicmd.APISearch())

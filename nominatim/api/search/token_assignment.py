@@ -288,18 +288,29 @@ class _TokenSequence:
         yield dataclasses.replace(base, penalty=self.penalty,
                                   name=first, address=base.address[1:])
 
-        if (not base.housenumber or first.end >= base.housenumber.start)\
-           and (not base.qualifier or first.start >= base.qualifier.end):
-            base_penalty = self.penalty
-            if (base.housenumber and base.housenumber.start > first.start) \
-               or len(query.source) > 1:
-                base_penalty += 0.25
-            for i in range(first.start + 1, first.end):
-                name, addr = first.split(i)
-                penalty = base_penalty + PENALTY_TOKENCHANGE[query.nodes[i].btype]
-                log().comment(f'split first word = name ({i - first.start})')
-                yield dataclasses.replace(base, name=name, penalty=penalty,
-                                          address=[addr] + base.address[1:])
+        # To paraphrase:
+        #  * if another name term comes after the first one and before the
+        #    housenumber
+        #  * a qualifier comes after the name
+        #  * the containing phrase is strictly typed
+        if (base.housenumber and first.end < base.housenumber.start)\
+           or (base.qualifier and base.qualifier > first)\
+           or (query.nodes[first.start].ptype != qmod.PhraseType.NONE):
+            return
+
+        penalty = self.penalty
+
+        # Penalty for:
+        #  * <name>, <street>, <housenumber> , ...
+        #  * queries that are comma-separated
+        if (base.housenumber and base.housenumber > first) or len(query.source) > 1:
+            penalty += 0.25
+
+        for i in range(first.start + 1, first.end):
+            name, addr = first.split(i)
+            log().comment(f'split first word = name ({i - first.start})')
+            yield dataclasses.replace(base, name=name, address=[addr] + base.address[1:],
+                                      penalty=penalty + PENALTY_TOKENCHANGE[query.nodes[i].btype])
 
 
     def _get_assignments_address_backward(self, base: TokenAssignment,
@@ -314,19 +325,27 @@ class _TokenSequence:
             yield dataclasses.replace(base, penalty=self.penalty,
                                       name=last, address=base.address[:-1])
 
-        if (not base.housenumber or last.start <= base.housenumber.end)\
-           and (not base.qualifier or last.end <= base.qualifier.start):
-            base_penalty = self.penalty
-            if base.housenumber and base.housenumber.start < last.start:
-                base_penalty += 0.4
-            if len(query.source) > 1:
-                base_penalty += 0.25
-            for i in range(last.start + 1, last.end):
-                addr, name = last.split(i)
-                penalty = base_penalty + PENALTY_TOKENCHANGE[query.nodes[i].btype]
-                log().comment(f'split last word = name ({i - last.start})')
-                yield dataclasses.replace(base, name=name, penalty=penalty,
-                                          address=base.address[:-1] + [addr])
+        # To paraphrase:
+        #  * if another name term comes before the last one and after the
+        #    housenumber
+        #  * a qualifier comes before the name
+        #  * the containing phrase is strictly typed
+        if (base.housenumber and last.start > base.housenumber.end)\
+           or (base.qualifier and base.qualifier < last)\
+           or (query.nodes[last.start].ptype != qmod.PhraseType.NONE):
+            return
+
+        penalty = self.penalty
+        if base.housenumber and base.housenumber < last:
+            penalty += 0.4
+        if len(query.source) > 1:
+            penalty += 0.25
+
+        for i in range(last.start + 1, last.end):
+            addr, name = last.split(i)
+            log().comment(f'split last word = name ({i - last.start})')
+            yield dataclasses.replace(base, name=name, address=base.address[:-1] + [addr],
+                                      penalty=penalty + PENALTY_TOKENCHANGE[query.nodes[i].btype])
 
 
     def get_assignments(self, query: qmod.QueryStruct) -> Iterator[TokenAssignment]:

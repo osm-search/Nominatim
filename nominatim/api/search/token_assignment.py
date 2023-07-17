@@ -257,6 +257,26 @@ class _TokenSequence:
         return True
 
 
+    def _get_assignments_postcode(self, base: TokenAssignment,
+                                  query_len: int)  -> Iterator[TokenAssignment]:
+        """ Yield possible assignments of Postcode searches with an
+            address component.
+        """
+        assert base.postcode is not None
+
+        if (base.postcode.start == 0 and self.direction != -1)\
+           or (base.postcode.end == query_len and self.direction != 1):
+            log().comment('postcode search')
+            # <address>,<postcode> should give preference to address search
+            if base.postcode.start == 0:
+                penalty = self.penalty
+                self.direction = -1 # name searches are only possbile backwards
+            else:
+                penalty = self.penalty + 0.1
+                self.direction = 1 # name searches are only possbile forewards
+            yield dataclasses.replace(base, penalty=penalty)
+
+
     def get_assignments(self, query: qmod.QueryStruct) -> Iterator[TokenAssignment]:
         """ Yield possible assignments for the current sequence.
 
@@ -271,15 +291,7 @@ class _TokenSequence:
 
         # Postcode search (postcode-only search is covered in next case)
         if base.postcode is not None and base.address:
-            if (base.postcode.start == 0 and self.direction != -1)\
-               or (base.postcode.end == query.num_token_slots() and self.direction != 1):
-                log().comment('postcode search')
-                # <address>,<postcode> should give preference to address search
-                if base.postcode.start == 0:
-                    penalty = self.penalty
-                else:
-                    penalty = self.penalty + 0.1
-                yield dataclasses.replace(base, penalty=penalty)
+            yield from self._get_assignments_postcode(base, query.num_token_slots())
 
         # Postcode or country-only search
         if not base.address:

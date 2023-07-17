@@ -273,8 +273,60 @@ class _TokenSequence:
                 self.direction = -1 # name searches are only possbile backwards
             else:
                 penalty = self.penalty + 0.1
-                self.direction = 1 # name searches are only possbile forewards
+                self.direction = 1 # name searches are only possbile forwards
             yield dataclasses.replace(base, penalty=penalty)
+
+
+    def _get_assignments_address_forward(self, base: TokenAssignment,
+                                         query: qmod.QueryStruct) -> Iterator[TokenAssignment]:
+        """ Yield possible assignments of address searches with
+            left-to-right reading.
+        """
+        first = base.address[0]
+
+        log().comment('first word = name')
+        yield dataclasses.replace(base, penalty=self.penalty,
+                                  name=first, address=base.address[1:])
+
+        if (not base.housenumber or first.end >= base.housenumber.start)\
+           and (not base.qualifier or first.start >= base.qualifier.end):
+            base_penalty = self.penalty
+            if (base.housenumber and base.housenumber.start > first.start) \
+               or len(query.source) > 1:
+                base_penalty += 0.25
+            for i in range(first.start + 1, first.end):
+                name, addr = first.split(i)
+                penalty = base_penalty + PENALTY_TOKENCHANGE[query.nodes[i].btype]
+                log().comment(f'split first word = name ({i - first.start})')
+                yield dataclasses.replace(base, name=name, penalty=penalty,
+                                          address=[addr] + base.address[1:])
+
+
+    def _get_assignments_address_backward(self, base: TokenAssignment,
+                                          query: qmod.QueryStruct) -> Iterator[TokenAssignment]:
+        """ Yield possible assignments of address searches with
+            right-to-left reading.
+        """
+        last = base.address[-1]
+
+        if self.direction == -1 or len(base.address) > 1:
+            log().comment('last word = name')
+            yield dataclasses.replace(base, penalty=self.penalty,
+                                      name=last, address=base.address[:-1])
+
+        if (not base.housenumber or last.start <= base.housenumber.end)\
+           and (not base.qualifier or last.end <= base.qualifier.start):
+            base_penalty = self.penalty
+            if base.housenumber and base.housenumber.start < last.start:
+                base_penalty += 0.4
+            if len(query.source) > 1:
+                base_penalty += 0.25
+            for i in range(last.start + 1, last.end):
+                addr, name = last.split(i)
+                penalty = base_penalty + PENALTY_TOKENCHANGE[query.nodes[i].btype]
+                log().comment(f'split last word = name ({i - last.start})')
+                yield dataclasses.replace(base, name=name, penalty=penalty,
+                                          address=base.address[:-1] + [addr])
 
 
     def get_assignments(self, query: qmod.QueryStruct) -> Iterator[TokenAssignment]:
@@ -302,57 +354,18 @@ class _TokenSequence:
             # <postcode>,<address> should give preference to postcode search
             if base.postcode and base.postcode.start == 0:
                 self.penalty += 0.1
-            # Use entire first word as name
-            if self.direction != -1:
-                log().comment('first word = name')
-                yield dataclasses.replace(base, name=base.address[0],
-                                          penalty=self.penalty,
-                                          address=base.address[1:])
 
-            # Use entire last word as name
-            if self.direction == -1 or (self.direction == 0 and len(base.address) > 1):
-                log().comment('last word = name')
-                yield dataclasses.replace(base, name=base.address[-1],
-                                          penalty=self.penalty,
-                                          address=base.address[:-1])
+            # Right-to-left reading of the address
+            if self.direction != -1:
+                yield from self._get_assignments_address_forward(base, query)
+
+            # Left-to-right reading of the address
+            if self.direction != 1:
+                yield from self._get_assignments_address_backward(base, query)
 
             # variant for special housenumber searches
             if base.housenumber:
                 yield dataclasses.replace(base, penalty=self.penalty)
-
-            # Use beginning of first word as name
-            if self.direction != -1:
-                first = base.address[0]
-                if (not base.housenumber or first.end >= base.housenumber.start)\
-                   and (not base.qualifier or first.start >= base.qualifier.end):
-                    base_penalty = self.penalty
-                    if (base.housenumber and base.housenumber.start > first.start) \
-                       or len(query.source) > 1:
-                        base_penalty += 0.25
-                    for i in range(first.start + 1, first.end):
-                        name, addr = first.split(i)
-                        penalty = base_penalty + PENALTY_TOKENCHANGE[query.nodes[i].btype]
-                        log().comment(f'split first word = name ({i - first.start})')
-                        yield dataclasses.replace(base, name=name, penalty=penalty,
-                                                  address=[addr] + base.address[1:])
-
-            # Use end of last word as name
-            if self.direction != 1:
-                last = base.address[-1]
-                if (not base.housenumber or last.start <= base.housenumber.end)\
-                   and (not base.qualifier or last.end <= base.qualifier.start):
-                    base_penalty = self.penalty
-                    if base.housenumber and base.housenumber.start < last.start:
-                        base_penalty += 0.4
-                    if len(query.source) > 1:
-                        base_penalty += 0.25
-                    for i in range(last.start + 1, last.end):
-                        addr, name = last.split(i)
-                        penalty = base_penalty + PENALTY_TOKENCHANGE[query.nodes[i].btype]
-                        log().comment(f'split last word = name ({i - last.start})')
-                        yield dataclasses.replace(base, name=name, penalty=penalty,
-                                                  address=base.address[:-1] + [addr])
-
 
 
 def yield_token_assignments(query: qmod.QueryStruct) -> Iterator[TokenAssignment]:

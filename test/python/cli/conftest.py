@@ -60,13 +60,6 @@ def cli_call(src_dir):
 
 
 @pytest.fixture
-def mock_run_legacy(monkeypatch):
-    mock = MockParamCapture()
-    monkeypatch.setattr(nominatim.cli, 'run_legacy_script', mock)
-    return mock
-
-
-@pytest.fixture
 def mock_func_factory(monkeypatch):
     def get_mock(module, func):
         mock = MockParamCapture()

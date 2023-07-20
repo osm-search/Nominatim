@@ -155,13 +155,21 @@ class SearchBuilder:
         """ Build a simple address search for special entries where the
             housenumber is the main name token.
         """
-        partial_tokens: List[int] = []
-        for trange in address:
-            partial_tokens.extend(t.token for t in self.query.get_partials_list(trange))
+        sdata.lookups = [dbf.FieldLookup('name_vector', [t.token for t in hnrs], 'lookup_any')]
 
-        sdata.lookups = [dbf.FieldLookup('name_vector', [t.token for t in hnrs], 'lookup_any'),
-                         dbf.FieldLookup('nameaddress_vector', partial_tokens, 'lookup_all')
-                        ]
+        partials = [t for trange in address
+                       for t in self.query.get_partials_list(trange)]
+
+        if len(partials) != 1 or partials[0].count < 10000:
+            sdata.lookups.append(dbf.FieldLookup('nameaddress_vector',
+                                                 [t.token for t in partials], 'lookup_all'))
+        else:
+            sdata.lookups.append(
+                dbf.FieldLookup('nameaddress_vector',
+                                [t.token for t
+                                 in self.query.get_tokens(address[0], TokenType.WORD)],
+                                'lookup_any'))
+
         sdata.housenumbers = dbf.WeightedStrings([], [])
         yield dbs.PlaceSearch(0.05, sdata, sum(t.count for t in hnrs))
 

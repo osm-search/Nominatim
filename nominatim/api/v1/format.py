@@ -7,7 +7,7 @@
 """
 Output formatters for API version v1.
 """
-from typing import Mapping, Any
+from typing import List, Dict, Mapping, Any
 import collections
 
 import nominatim.api as napi
@@ -15,6 +15,10 @@ from nominatim.api.result_formatting import FormatDispatcher
 from nominatim.api.v1.classtypes import ICONS
 from nominatim.api.v1 import format_json, format_xml
 from nominatim.utils.json_writer import JsonWriter
+
+class RawDataList(List[Dict[str, Any]]):
+    """ Data type for formatting raw data lists 'as is' in json.
+    """
 
 dispatch = FormatDispatcher()
 
@@ -232,3 +236,17 @@ def _format_search_jsonv2(results: napi.SearchResults,
                            options: Mapping[str, Any]) -> str:
     return format_json.format_base_json(results, options, False,
                                         class_label='category')
+
+@dispatch.format_func(RawDataList, 'json')
+def _format_raw_data_json(results: RawDataList,  _: Mapping[str, Any]) -> str:
+    out = JsonWriter()
+    out.start_array()
+    for res in results:
+        out.start_object()
+        for k, v in res.items():
+            out.keyval(k, v)
+        out.end_object().next()
+
+    out.end_array()
+
+    return out()

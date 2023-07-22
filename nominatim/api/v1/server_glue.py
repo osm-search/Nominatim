@@ -15,11 +15,14 @@ import dataclasses
 import math
 from urllib.parse import urlencode
 
+import sqlalchemy as sa
+
 from nominatim.errors import UsageError
 from nominatim.config import Configuration
 import nominatim.api as napi
 import nominatim.api.logging as loglib
 from nominatim.api.v1.format import dispatch as formatting
+from nominatim.api.v1.format import RawDataList
 from nominatim.api.v1 import helpers
 
 CONTENT_TYPE = {
@@ -494,6 +497,28 @@ async def search_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> A
     return params.build_response(output)
 
 
+async def deletable_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> Any:
+    """ Server glue for /deletable endpoint.
+        This is a special endpoint that shows polygons that have been
+        deleted or are broken in the OSM data but are kept in the
+        Nominatim database to minimize disruption.
+    """
+    fmt = params.parse_format(RawDataList, 'json')
+
+    async with api.begin() as conn:
+        sql = sa.text(""" SELECT p.place_id, country_code,
+                                 name->'name' as name, i.*
+                          FROM placex p, import_polygon_delete i
+                          WHERE p.osm_id = i.osm_id AND p.osm_type = i.osm_type
+                                AND p.class = i.class AND p.type = i.type
+                      """)
+        results = RawDataList(r._asdict() for r in await conn.execute(sql))
+
+
+    return params.build_response(formatting.format_result(results, fmt, {}))
+
+
+
 EndpointFunc = Callable[[napi.NominatimAPIAsync, ASGIAdaptor], Any]
 
 ROUTES = [
@@ -501,5 +526,6 @@ ROUTES = [
     ('details', details_endpoint),
     ('reverse', reverse_endpoint),
     ('lookup', lookup_endpoint),
-    ('search', search_endpoint)
+    ('search', search_endpoint),
+    ('deletable', deletable_endpoint),
 ]

@@ -109,7 +109,6 @@ class BaseLogger:
         # quoted correctly.
         sqlstr = re.sub(r'%(?!\()', '%%', sqlstr)
         sqlstr = re.sub(r'__\[POSTCOMPILE_([^]]*)\]', r'%(\1)s', sqlstr)
-        print(sqlstr)
         return sqlstr % params
 
 class HTMLLogger(BaseLogger):

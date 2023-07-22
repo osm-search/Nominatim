@@ -7,7 +7,7 @@
 """
 Datastructures for a tokenized query.
 """
-from typing import List, Tuple, Optional, NamedTuple, Iterator
+from typing import List, Tuple, Optional, Iterator
 from abc import ABC, abstractmethod
 import dataclasses
 import enum
@@ -107,12 +107,28 @@ class Token(ABC):
             category objects.
         """
 
-
-class TokenRange(NamedTuple):
+@dataclasses.dataclass
+class TokenRange:
     """ Indexes of query nodes over which a token spans.
     """
     start: int
     end: int
+
+    def __lt__(self, other: 'TokenRange') -> bool:
+        return self.end <= other.start
+
+
+    def __le__(self, other: 'TokenRange') -> bool:
+        return NotImplemented
+
+
+    def __gt__(self, other: 'TokenRange') -> bool:
+        return self.start >= other.end
+
+
+    def __ge__(self, other: 'TokenRange') -> bool:
+        return NotImplemented
+
 
     def replace_start(self, new_start: int) -> 'TokenRange':
         """ Return a new token range with the new start.

@@ -211,3 +211,34 @@ class SearchData:
                 self.rankings.append(ranking)
             else:
                 self.penalty += ranking.default
+
+
+def lookup_by_names(name_tokens: List[int], addr_tokens: List[int]) -> List[FieldLookup]:
+    """ Create a lookup list where name tokens are looked up via index
+        and potential address tokens are used to restrict the search further.
+    """
+    lookup = [FieldLookup('name_vector', name_tokens, 'lookup_all')]
+    if addr_tokens:
+        lookup.append(FieldLookup('nameaddress_vector', addr_tokens, 'restrict'))
+
+    return lookup
+
+
+def lookup_by_any_name(name_tokens: List[int], addr_tokens: List[int]) -> List[FieldLookup]:
+    """ Create a lookup list where name tokens are looked up via index
+        and only one of the name tokens must be present.
+        Potential address tokens are used to restrict the search further.
+    """
+    lookup = [FieldLookup('name_vector', name_tokens, 'lookup_any')]
+    if addr_tokens:
+        lookup.append(FieldLookup('nameaddress_vector', addr_tokens, 'restrict'))
+
+    return lookup
+
+
+def lookup_by_addr(name_tokens: List[int], addr_tokens: List[int]) -> List[FieldLookup]:
+    """ Create a lookup list where address tokens are looked up via index
+        and the name tokens are only used to restrict the search further.
+    """
+    return [FieldLookup('name_vector', name_tokens, 'restrict'),
+            FieldLookup('nameaddress_vector', addr_tokens, 'lookup_all')]

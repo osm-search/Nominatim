@@ -514,9 +514,39 @@ async def deletable_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -
                       """)
         results = RawDataList(r._asdict() for r in await conn.execute(sql))
 
-
     return params.build_response(formatting.format_result(results, fmt, {}))
 
+
+async def polygons_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> Any:
+    """ Server glue for /polygons endpoint.
+        This is a special endpoint that shows polygons that have changed
+        thier size but are kept in the Nominatim database with their
+        old area to minimize disruption.
+    """
+    fmt = params.parse_format(RawDataList, 'json')
+    sql_params: Dict[str, Any] = {
+        'days': params.get_int('days', -1),
+        'cls': params.get('class')
+    }
+    reduced = params.get_bool('reduced', False)
+
+    async with api.begin() as conn:
+        sql = sa.select(sa.text("""osm_type, osm_id, class, type,
+                                   name->'name' as name,
+                                   country_code, errormessage, updated"""))\
+                .select_from(sa.text('import_polygon_error'))
+        if sql_params['days'] > 0:
+            sql = sql.where(sa.text("updated > 'now'::timestamp - make_interval(days => :days)"))
+        if reduced:
+            sql = sql.where(sa.text("errormessage like 'Area reduced%'"))
+        if sql_params['cls'] is not None:
+            sql = sql.where(sa.text("class = :cls"))
+
+        sql = sql.order_by(sa.literal_column('updated').desc()).limit(1000)
+
+        results = RawDataList(r._asdict() for r in await conn.execute(sql, sql_params))
+
+    return params.build_response(formatting.format_result(results, fmt, {}))
 
 
 EndpointFunc = Callable[[napi.NominatimAPIAsync, ASGIAdaptor], Any]
@@ -528,4 +558,5 @@ ROUTES = [
     ('lookup', lookup_endpoint),
     ('search', search_endpoint),
     ('deletable', deletable_endpoint),
+    ('polygons', polygons_endpoint),
 ]

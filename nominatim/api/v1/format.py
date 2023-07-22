@@ -9,6 +9,7 @@ Output formatters for API version v1.
 """
 from typing import List, Dict, Mapping, Any
 import collections
+import datetime as dt
 
 import nominatim.api as napi
 from nominatim.api.result_formatting import FormatDispatcher
@@ -244,7 +245,10 @@ def _format_raw_data_json(results: RawDataList,  _: Mapping[str, Any]) -> str:
     for res in results:
         out.start_object()
         for k, v in res.items():
-            out.keyval(k, v)
+            if isinstance(v, dt.datetime):
+                out.keyval(k, v.isoformat(sep= ' ', timespec='seconds'))
+            else:
+                out.keyval(k, v)
         out.end_object().next()
 
     out.end_array()

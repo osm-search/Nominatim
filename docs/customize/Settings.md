@@ -627,6 +627,23 @@ with a single query.
 
 Setting this parameter to 0 disables polygon output completely.
 
+
+#### NOMINATIM_SEARCH_WITHIN_COUNTRIES
+
+| Summary            |                                                     |
+| --------------     | --------------------------------------------------- |
+| **Description:**   | Disable search for elements that are not in the country grid |
+| **Format:**        | boolean |
+| **Default:**       | no |
+| **After Changes:** | run `nominatim refresh --website` |
+
+Enable to search elements just within countries.
+
+When enabled, if, despite not finding a point within the static grid of countries, it
+finds a geometry of a region, do not return the geometry.
+Return "Unable to geocode" instead.
+
+
 ### Logging Settings
 
 #### NOMINATIM_LOG_DB

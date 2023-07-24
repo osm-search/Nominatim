@@ -523,7 +523,7 @@ class TestPlaceAddress:
     def test_process_place_nonexisting_street(self):
         info = self.process_address(street='Grand Road')
 
-        assert 'street' not in info
+        assert info['street'] == '{}'
 
 
     def test_process_place_multiple_street_tags(self):
@@ -538,7 +538,7 @@ class TestPlaceAddress:
     def test_process_place_street_empty(self):
         info = self.process_address(street='🜵')
 
-        assert 'street' not in info
+        assert info['street'] == '{}'
 
 
     def test_process_place_street_from_cache(self):

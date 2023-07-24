@@ -41,10 +41,17 @@ AS $$
 $$ LANGUAGE SQL IMMUTABLE STRICT;
 
 
+CREATE OR REPLACE FUNCTION token_is_street_address(info JSONB)
+  RETURNS BOOLEAN
+AS $$
+  SELECT info->>'street' is not null or info->>'place' is null;
+$$ LANGUAGE SQL IMMUTABLE;
+
+
 CREATE OR REPLACE FUNCTION token_has_addr_street(info JSONB)
   RETURNS BOOLEAN
 AS $$
-  SELECT info->>'street' is not null;
+  SELECT info->>'street' is not null and info->>'street' != '{}';
 $$ LANGUAGE SQL IMMUTABLE;
 
 

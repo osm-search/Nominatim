@@ -549,7 +549,7 @@ class TestPlaceAddress:
     def test_process_place_street_empty(self):
         info = self.process_address(street='🜵')
 
-        assert 'street' not in info
+        assert info['street'] == '{}'
 
 
     def test_process_place_place(self):

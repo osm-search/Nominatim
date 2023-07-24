@@ -88,12 +88,18 @@ BEGIN
       -- Add all names from the place nodes that deviate from the name
       -- in the relation with the prefix '_place_'. Deviation means that
       -- either the value is different or a given key is missing completely
-      SELECT hstore(array_agg('_place_' || key), array_agg(value)) INTO extra_names
-        FROM each(location.name - result.name);
-      {% if debug %}RAISE WARNING 'Extra names: %', extra_names;{% endif %}
+      IF result.name is null THEN
+        SELECT hstore(array_agg('_place_' || key), array_agg(value))
+          INTO result.name
+          FROM each(location.name);
+      ELSE
+        SELECT hstore(array_agg('_place_' || key), array_agg(value)) INTO extra_names
+          FROM each(location.name - result.name);
+        {% if debug %}RAISE WARNING 'Extra names: %', extra_names;{% endif %}
 
-      IF extra_names is not null THEN
-          result.name := result.name || extra_names;
+        IF extra_names is not null THEN
+            result.name := result.name || extra_names;
+        END IF;
       END IF;
 
       {% if debug %}RAISE WARNING 'Final names: %', result.name;{% endif %}
@@ -996,7 +1002,7 @@ BEGIN
 
     {% if debug %}RAISE WARNING 'finding street for % %', NEW.osm_type, NEW.osm_id;{% endif %}
     NEW.parent_place_id := null;
-    is_place_address := coalesce(not NEW.address ? 'street' and NEW.address ? 'place', FALSE);
+    is_place_address := not token_is_street_address(NEW.token_info);
 
     -- We have to find our parent road.
     NEW.parent_place_id := find_parent_for_poi(NEW.osm_type, NEW.osm_id,
@@ -1013,7 +1019,7 @@ BEGIN
       SELECT p.country_code, p.postcode, p.name FROM placex p
        WHERE p.place_id = NEW.parent_place_id INTO location;
 
-      IF is_place_address THEN
+      IF is_place_address and NEW.address ? 'place' THEN
         -- Check if the addr:place tag is part of the parent name
         SELECT count(*) INTO i
           FROM svals(location.name) AS pname WHERE pname = NEW.address->'place';

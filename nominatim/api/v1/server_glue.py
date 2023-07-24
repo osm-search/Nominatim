@@ -250,7 +250,7 @@ class ASGIAdaptor(abc.ABC):
                 numgeoms += 1
 
         if numgeoms > self.config().get_int('POLYGON_OUTPUT_MAX_TYPES'):
-            self.raise_error('Too many polgyon output options selected.')
+            self.raise_error('Too many polygon output options selected.')
 
         return {'address_details': True,
                 'geometry_simplification': self.get_float('polygon_threshold', 0.0),

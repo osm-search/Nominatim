@@ -34,7 +34,7 @@ class PlaceName:
 
 
     def __repr__(self) -> str:
-        return f"PlaceName(name='{self.name}',kind='{self.kind}',suffix='{self.suffix}')"
+        return f"PlaceName(name={self.name!r},kind={self.kind!r},suffix={self.suffix!r})"
 
 
     def clone(self, name: Optional[str] = None,

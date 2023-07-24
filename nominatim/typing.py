@@ -62,6 +62,7 @@ if TYPE_CHECKING:
 else:
     TypeAlias = str
 
+SaLambdaSelect: TypeAlias = 'Union[sa.Select[Any], sa.StatementLambdaElement]'
 SaSelect: TypeAlias = 'sa.Select[Any]'
 SaScalarSelect: TypeAlias = 'sa.ScalarSelect[Any]'
 SaRow: TypeAlias = 'sa.Row[Any]'
@@ -70,3 +71,4 @@ SaExpression: TypeAlias = 'sa.ColumnElement[bool]'
 SaLabel: TypeAlias = 'sa.Label[Any]'
 SaFromClause: TypeAlias = 'sa.FromClause'
 SaSelectable: TypeAlias = 'sa.Selectable'
+SaBind: TypeAlias = 'sa.BindParameter[Any]'

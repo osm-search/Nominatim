@@ -15,11 +15,14 @@ import dataclasses
 import math
 from urllib.parse import urlencode
 
+import sqlalchemy as sa
+
 from nominatim.errors import UsageError
 from nominatim.config import Configuration
 import nominatim.api as napi
 import nominatim.api.logging as loglib
 from nominatim.api.v1.format import dispatch as formatting
+from nominatim.api.v1.format import RawDataList
 from nominatim.api.v1 import helpers
 
 CONTENT_TYPE = {
@@ -494,6 +497,58 @@ async def search_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> A
     return params.build_response(output)
 
 
+async def deletable_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> Any:
+    """ Server glue for /deletable endpoint.
+        This is a special endpoint that shows polygons that have been
+        deleted or are broken in the OSM data but are kept in the
+        Nominatim database to minimize disruption.
+    """
+    fmt = params.parse_format(RawDataList, 'json')
+
+    async with api.begin() as conn:
+        sql = sa.text(""" SELECT p.place_id, country_code,
+                                 name->'name' as name, i.*
+                          FROM placex p, import_polygon_delete i
+                          WHERE p.osm_id = i.osm_id AND p.osm_type = i.osm_type
+                                AND p.class = i.class AND p.type = i.type
+                      """)
+        results = RawDataList(r._asdict() for r in await conn.execute(sql))
+
+    return params.build_response(formatting.format_result(results, fmt, {}))
+
+
+async def polygons_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> Any:
+    """ Server glue for /polygons endpoint.
+        This is a special endpoint that shows polygons that have changed
+        thier size but are kept in the Nominatim database with their
+        old area to minimize disruption.
+    """
+    fmt = params.parse_format(RawDataList, 'json')
+    sql_params: Dict[str, Any] = {
+        'days': params.get_int('days', -1),
+        'cls': params.get('class')
+    }
+    reduced = params.get_bool('reduced', False)
+
+    async with api.begin() as conn:
+        sql = sa.select(sa.text("""osm_type, osm_id, class, type,
+                                   name->'name' as name,
+                                   country_code, errormessage, updated"""))\
+                .select_from(sa.text('import_polygon_error'))
+        if sql_params['days'] > 0:
+            sql = sql.where(sa.text("updated > 'now'::timestamp - make_interval(days => :days)"))
+        if reduced:
+            sql = sql.where(sa.text("errormessage like 'Area reduced%'"))
+        if sql_params['cls'] is not None:
+            sql = sql.where(sa.text("class = :cls"))
+
+        sql = sql.order_by(sa.literal_column('updated').desc()).limit(1000)
+
+        results = RawDataList(r._asdict() for r in await conn.execute(sql, sql_params))
+
+    return params.build_response(formatting.format_result(results, fmt, {}))
+
+
 EndpointFunc = Callable[[napi.NominatimAPIAsync, ASGIAdaptor], Any]
 
 ROUTES = [
@@ -501,5 +556,7 @@ ROUTES = [
     ('details', details_endpoint),
     ('reverse', reverse_endpoint),
     ('lookup', lookup_endpoint),
-    ('search', search_endpoint)
+    ('search', search_endpoint),
+    ('deletable', deletable_endpoint),
+    ('polygons', polygons_endpoint),
 ]

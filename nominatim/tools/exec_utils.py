@@ -7,77 +7,17 @@
 """
 Helper functions for executing external programs.
 """
-from typing import Any, Optional, Mapping, IO
-from pathlib import Path
+from typing import Any, Mapping, IO
 import logging
 import os
 import subprocess
 import urllib.request as urlrequest
-from urllib.parse import urlencode
 
 from nominatim.typing import StrPath
 from nominatim.version import NOMINATIM_VERSION
 from nominatim.db.connection import get_pg_env
 
 LOG = logging.getLogger()
-
-def run_api_script(endpoint: str, project_dir: Path,
-                   extra_env: Optional[Mapping[str, str]] = None,
-                   phpcgi_bin: Optional[Path] = None,
-                   params: Optional[Mapping[str, Any]] = None) -> int:
-    """ Execute a Nominatim API function.
-
-        The function needs a project directory that contains the website
-        directory with the scripts to be executed. The scripts will be run
-        using php_cgi. Query parameters can be added as named arguments.
-
-        Returns the exit code of the script.
-    """
-    log = logging.getLogger()
-    webdir = str(project_dir / 'website')
-    query_string = urlencode(params or {})
-
-    env = dict(QUERY_STRING=query_string,
-               SCRIPT_NAME=f'/{endpoint}.php',
-               REQUEST_URI=f'/{endpoint}.php?{query_string}',
-               CONTEXT_DOCUMENT_ROOT=webdir,
-               SCRIPT_FILENAME=f'{webdir}/{endpoint}.php',
-               HTTP_HOST='localhost',
-               HTTP_USER_AGENT='nominatim-tool',
-               REMOTE_ADDR='0.0.0.0',
-               DOCUMENT_ROOT=webdir,
-               REQUEST_METHOD='GET',
-               SERVER_PROTOCOL='HTTP/1.1',
-               GATEWAY_INTERFACE='CGI/1.1',
-               REDIRECT_STATUS='CGI')
-
-    if extra_env:
-        env.update(extra_env)
-
-    if phpcgi_bin is None:
-        cmd = ['/usr/bin/env', 'php-cgi']
-    else:
-        cmd = [str(phpcgi_bin)]
-
-    proc = subprocess.run(cmd, cwd=str(project_dir), env=env,
-                          stdout=subprocess.PIPE,
-                          stderr=subprocess.PIPE,
-                          check=False)
-
-    if proc.returncode != 0 or proc.stderr:
-        if proc.stderr:
-            log.error(proc.stderr.decode('utf-8').replace('\\n', '\n'))
-        else:
-            log.error(proc.stdout.decode('utf-8').replace('\\n', '\n'))
-        return proc.returncode or 1
-
-    result = proc.stdout.decode('utf-8')
-    content_start = result.find('\r\n\r\n')
-
-    print(result[content_start + 4:].replace('\\n', '\n'))
-
-    return 0
-
 
 def run_php_server(server_address: str, base_dir: StrPath) -> None:
     """ Run the built-in server from the given directory.

@@ -7,14 +7,12 @@
 """
 Subcommand definitions for API calls from the command line.
 """
-from typing import Mapping, Dict, Any
+from typing import Dict, Any
 import argparse
 import logging
 import json
 import sys
 
-from nominatim.tools.exec_utils import run_api_script
-from nominatim.errors import UsageError
 from nominatim.clicmd.args import NominatimArgs
 import nominatim.api as napi
 import nominatim.api.v1 as api_output
@@ -61,18 +59,6 @@ def _add_api_output_arguments(parser: argparse.ArgumentParser) -> None:
                        help=("Simplify output geometry."
                              "Parameter is difference tolerance in degrees."))
 
-
-def _run_api(endpoint: str, args: NominatimArgs, params: Mapping[str, object]) -> int:
-    script_file = args.project_dir / 'website' / (endpoint + '.php')
-
-    if not script_file.exists():
-        LOG.error("Cannot find API script file.\n\n"
-                  "Make sure to run 'nominatim' from the project directory \n"
-                  "or use the option --project-dir.")
-        raise UsageError("API script not found.")
-
-    return run_api_script(endpoint, args.project_dir,
-                          phpcgi_bin=args.phpcgi_path, params=params)
 
 class APISearch:
     """\

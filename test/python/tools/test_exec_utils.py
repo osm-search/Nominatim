@@ -17,49 +17,6 @@ import nominatim.tools.exec_utils as exec_utils
 import nominatim.paths
 
 
-class TestRunApiScript:
-
-    @staticmethod
-    @pytest.fixture(autouse=True)
-    def setup_project_dir(tmp_path):
-        webdir = tmp_path / 'website'
-        webdir.mkdir()
-        (webdir / 'test.php').write_text("<?php\necho 'OK\n';")
-
-
-    @staticmethod
-    def test_run_api(tmp_path):
-        assert exec_utils.run_api_script('test', tmp_path) == 0
-
-    @staticmethod
-    def test_run_api_execution_error(tmp_path):
-        assert exec_utils.run_api_script('badname', tmp_path) != 0
-
-    @staticmethod
-    def test_run_api_with_extra_env(tmp_path):
-        extra_env = dict(SCRIPT_FILENAME=str(tmp_path / 'website' / 'test.php'))
-        assert exec_utils.run_api_script('badname', tmp_path, extra_env=extra_env) == 0
-
-    @staticmethod
-    def test_custom_phpcgi(tmp_path, capfd):
-        assert exec_utils.run_api_script('test', tmp_path, phpcgi_bin='env',
-                                         params={'q' : 'Berlin'}) == 0
-        captured = capfd.readouterr()
-
-        assert '?q=Berlin' in captured.out
-
-    @staticmethod
-    def test_fail_on_error_output(tmp_path):
-        # Starting PHP 8 the PHP CLI no longer has STDERR defined as constant
-        php = """
-        <?php
-        if(!defined('STDERR')) define('STDERR', fopen('php://stderr', 'wb'));
-        fwrite(STDERR, 'WARNING'.PHP_EOL);
-        """
-        (tmp_path / 'website' / 'bad.php').write_text(php)
-
-        assert exec_utils.run_api_script('bad', tmp_path) == 1
-
 ### run_osm2pgsql
 
 def test_run_osm2pgsql(osm2pgsql_options):

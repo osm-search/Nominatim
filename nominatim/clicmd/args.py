@@ -44,7 +44,6 @@ class NominatimArgs:
     # Basic environment set by root program.
     config: Configuration
     project_dir: Path
-    phpcgi_path: Path
 
     # Global switches
     version: bool

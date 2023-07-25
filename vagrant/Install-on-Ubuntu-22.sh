@@ -20,7 +20,6 @@ export DEBIAN_FRONTEND=noninteractive #DOCS:
 
 # Now you can install all packages needed for Nominatim:
 
-    sudo apt install -y php-cgi
     sudo apt install -y build-essential cmake g++ libboost-dev libboost-system-dev \
                         libboost-filesystem-dev libexpat1-dev zlib1g-dev \
                         libbz2-dev libpq-dev liblua5.3-dev lua5.3 lua-dkjson \

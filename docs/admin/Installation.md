@@ -56,7 +56,6 @@ For running Nominatim:
   * [PHP](https://php.net) (7.3+)
   * PHP-pgsql
   * PHP-intl (bundled with PHP)
-  * PHP-cgi (for running queries from the command line)
 
 For running continuous updates:
 

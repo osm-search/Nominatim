@@ -7,6 +7,6 @@ sys.path.append('@PROJECT_SOURCE_DIR@')
 from nominatim.cli import get_set_parser
 
 def get_parser():
-    parser = get_set_parser(phpcgi_path='@PHPCGI_BIN@')
+    parser = get_set_parser()
 
     return parser.parser

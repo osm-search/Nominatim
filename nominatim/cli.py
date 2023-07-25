@@ -101,7 +101,6 @@ class CommandlineParser:
             self.parser.print_help()
             return 1
 
-        args.phpcgi_path = Path(kwargs['phpcgi_path'])
         args.project_dir = Path(args.project_dir).resolve()
 
         if 'cli_args' not in kwargs:

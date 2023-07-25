@@ -59,7 +59,7 @@ class TestTagJapanese:
 
     def test_housenumber_blocknumber_neighbourhood_quarter(self):
         res = self.run_sanitizer_on('address', housenumber='2', block_number='6', neighbourhood='8',quarter='kase')
-        assert res == [('6-2','housenumber'),('kase-8','place')]
+        assert res == [('6-2','housenumber'),('kase8','place')]
     def test_neighbourhood_quarter(self):
         res = self.run_sanitizer_on('address', neighbourhood='8',quarter='kase')
-        assert res == [('kase-8','place')] 
+        assert res == [('kase8','place')] 

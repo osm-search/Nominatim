@@ -16,6 +16,7 @@ import from this file, not from the source files directly.
 
 from .core import (NominatimAPI as NominatimAPI,
                    NominatimAPIAsync as NominatimAPIAsync)
+from .connection import (SearchConnection as SearchConnection)
 from .status import (StatusResult as StatusResult)
 from .types import (PlaceID as PlaceID,
                     OsmID as OsmID,

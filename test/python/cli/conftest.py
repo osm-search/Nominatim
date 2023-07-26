@@ -46,24 +46,16 @@ class DummyTokenizer:
 
 
 @pytest.fixture
-def cli_call(src_dir):
+def cli_call():
     """ Call the nominatim main function with the correct paths set.
         Returns a function that can be called with the desired CLI arguments.
     """
     def _call_nominatim(*args):
         return nominatim.cli.nominatim(module_dir='MODULE NOT AVAILABLE',
                                        osm2pgsql_path='OSM2PGSQL NOT AVAILABLE',
-                                       phpcgi_path='/usr/bin/php-cgi',
                                        cli_args=args)
 
     return _call_nominatim
-
-
-@pytest.fixture
-def mock_run_legacy(monkeypatch):
-    mock = MockParamCapture()
-    monkeypatch.setattr(nominatim.cli, 'run_legacy_script', mock)
-    return mock
 
 
 @pytest.fixture

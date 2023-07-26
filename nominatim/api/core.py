@@ -9,6 +9,7 @@ Implementation of classes for API access via libraries.
 """
 from typing import Mapping, Optional, Any, AsyncIterator, Dict, Sequence, List, Tuple
 import asyncio
+import sys
 import contextlib
 from pathlib import Path
 
@@ -32,11 +33,15 @@ class NominatimAPIAsync:
     """ API loader asynchornous version.
     """
     def __init__(self, project_dir: Path,
-                 environ: Optional[Mapping[str, str]] = None) -> None:
+                 environ: Optional[Mapping[str, str]] = None,
+                 loop: Optional[asyncio.AbstractEventLoop] = None) -> None:
         self.config = Configuration(project_dir, environ)
         self.server_version = 0
 
-        self._engine_lock = asyncio.Lock()
+        if sys.version_info >= (3, 10):
+            self._engine_lock = asyncio.Lock()
+        else:
+            self._engine_lock = asyncio.Lock(loop=loop) # pylint: disable=unexpected-keyword-arg
         self._engine: Optional[sa_asyncio.AsyncEngine] = None
         self._tables: Optional[SearchTables] = None
         self._property_cache: Dict[str, Any] = {'DB:server_version': 0}
@@ -274,7 +279,7 @@ class NominatimAPI:
     def __init__(self, project_dir: Path,
                  environ: Optional[Mapping[str, str]] = None) -> None:
         self._loop = asyncio.new_event_loop()
-        self._async_api = NominatimAPIAsync(project_dir, environ)
+        self._async_api = NominatimAPIAsync(project_dir, environ, loop=self._loop)
 
 
     def close(self) -> None:

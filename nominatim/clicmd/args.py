@@ -44,7 +44,6 @@ class NominatimArgs:
     # Basic environment set by root program.
     config: Configuration
     project_dir: Path
-    phpcgi_path: Path
 
     # Global switches
     version: bool
@@ -100,9 +99,6 @@ class NominatimArgs:
     output_all_postcodes: bool
     language: Optional[str]
     restrict_to_country: Optional[str]
-    restrict_to_osm_node: Optional[int]
-    restrict_to_osm_way: Optional[int]
-    restrict_to_osm_relation: Optional[int]
 
     # Arguments to 'refresh'
     postcodes: bool

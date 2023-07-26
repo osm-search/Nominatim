@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2022 by the Nominatim developer community.
+# Copyright (C) 2023 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Subcommand definitions for the command-line tool.
@@ -24,3 +24,4 @@ from nominatim.clicmd.add_data import UpdateAddData as UpdateAddData
 from nominatim.clicmd.admin import AdminFuncs as AdminFuncs
 from nominatim.clicmd.freeze import SetupFreeze as SetupFreeze
 from nominatim.clicmd.special_phrases import ImportSpecialPhrases as ImportSpecialPhrases
+from nominatim.clicmd.export import QueryExport as QueryExport

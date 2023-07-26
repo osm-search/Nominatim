@@ -183,6 +183,18 @@ class ICUTokenizer(AbstractTokenizer):
                                self.loader.make_token_analysis())
 
 
+    def most_frequent_words(self, conn: Connection, num: int) -> List[str]:
+        """ Return a list of the `num` most frequent full words
+            in the database.
+        """
+        with conn.cursor() as cur:
+            cur.execute("""SELECT word, sum((info->>'count')::int) as count
+                             FROM word WHERE type = 'W'
+                             GROUP BY word
+                             ORDER BY count DESC LIMIT %s""", (num,))
+            return list(s[0].split('@')[0] for s in cur)
+
+
     def _install_php(self, phpdir: Path, overwrite: bool = True) -> None:
         """ Install the php script for the tokenizer.
         """

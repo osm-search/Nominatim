@@ -19,17 +19,6 @@ import nominatim.tools.migration
 import nominatim.clicmd.admin
 
 
-@pytest.mark.parametrize("params", [('--warm', ),
-                                    ('--warm', '--reverse-only'),
-                                    ('--warm', '--search-only')])
-def test_admin_command_legacy(cli_call, mock_func_factory, params):
-    mock_run_legacy = mock_func_factory(nominatim.clicmd.admin, 'run_legacy_script')
-
-    assert cli_call('admin', *params) == 0
-
-    assert mock_run_legacy.called == 1
-
-
 def test_admin_command_check_database(cli_call, mock_func_factory):
     mock = mock_func_factory(nominatim.tools.check_database, 'check_database')
 

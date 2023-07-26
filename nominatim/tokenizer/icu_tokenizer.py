@@ -188,7 +188,7 @@ class ICUTokenizer(AbstractTokenizer):
             in the database.
         """
         with conn.cursor() as cur:
-            cur.execute("""SELECT word, sum((info->'count')::int) as count
+            cur.execute("""SELECT word, sum((info->>'count')::int) as count
                              FROM word WHERE type = 'W'
                              GROUP BY word
                              ORDER BY count DESC LIMIT %s""", (num,))

@@ -12,11 +12,12 @@ and quarter and neighbourhood with place.
 
 
 from typing import Callable
-from typing import List
+from typing import List, Optional
 
 from nominatim.tokenizer.sanitizers.base import ProcessInfo
 from nominatim.tokenizer.sanitizers.config import SanitizerConfig
 from nominatim.data.place_name import PlaceName
+from nominatim.tokenizer.sanitizers.kanji_utils import convert_kanji_sequence_to_number
 
 def create(_: SanitizerConfig) -> Callable[[ProcessInfo], None]:
 #def create(config: SanitizerConfig) -> Callable[[ProcessInfo],None]:
@@ -25,37 +26,10 @@ def create(_: SanitizerConfig) -> Callable[[ProcessInfo], None]:
     return tag_japanese
     #return tag_japanese(config)
 
-def convert_kanji_sequence_to_number(sequence: str) -> str:
-    """Converts Kanji numbers to Arabic numbers
-    """
-    kanji_map = {
-      '零': '0',
-      '一': '1',
-      '二': '2',
-      '三': '3',
-      '四': '4',
-      '五': '5',
-      '六': '6',
-      '七': '7',
-      '八': '8',
-      '九': '9'
-    }
-    converted = ''
-    current_number = ''
-    for char in sequence:
-        if char in kanji_map:
-            current_number += kanji_map[char]
-        else:
-            converted += current_number
-            current_number = ''
-            converted += char
-    converted += current_number
-    return converted
-
 def reconbine_housenumber(
     new_address: List[PlaceName],
-    tmp_housenumber: str | None,
-    tmp_blocknumber: str | None
+    tmp_housenumber: Optional[str],
+    tmp_blocknumber: Optional[str]
 ) -> List[PlaceName]:
     """ Recombine the tag of housenumber by using housenumber and blocknumber
     """
@@ -87,8 +61,8 @@ def reconbine_housenumber(
 
 def reconbine_place(
     new_address: List[PlaceName],
-    tmp_neighbourhood: str | None,
-    tmp_quarter: str | None
+    tmp_neighbourhood: Optional[str],
+    tmp_quarter: Optional[str]
 ) -> List[PlaceName]:
     """ Recombine the tag of place by using neighbourhood and quarter
     """

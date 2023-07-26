@@ -17,7 +17,34 @@ from typing import List, Optional
 from nominatim.tokenizer.sanitizers.base import ProcessInfo
 from nominatim.tokenizer.sanitizers.config import SanitizerConfig
 from nominatim.data.place_name import PlaceName
-from nominatim.tokenizer.sanitizers.kanji_utils import convert_kanji_sequence_to_number
+
+KANJI_MAP = {
+      '零': '0',
+      '一': '1',
+      '二': '2',
+      '三': '3',
+      '四': '4',
+      '五': '5',
+      '六': '6',
+      '七': '7',
+      '八': '8',
+      '九': '9'
+    }
+
+def convert_kanji_sequence_to_number(sequence: str) -> str:
+    """Converts Kanji numbers to Arabic numbers
+    """
+    converted = ''
+    current_number = ''
+    for char in sequence:
+        if char in KANJI_MAP:
+            current_number += KANJI_MAP[char]
+        else:
+            converted += current_number
+            current_number = ''
+            converted += char
+    converted += current_number
+    return converted
 
 def create(_: SanitizerConfig) -> Callable[[ProcessInfo], None]:
 #def create(config: SanitizerConfig) -> Callable[[ProcessInfo],None]:

@@ -89,19 +89,22 @@ class AdminFuncs:
 
         api = napi.NominatimAPI(args.project_dir)
 
-        if args.target != 'reverse':
-            for _ in range(1000):
-                api.reverse((random.uniform(-90, 90), random.uniform(-180, 180)),
-                            address_details=True)
+        try:
+            if args.target != 'reverse':
+                for _ in range(1000):
+                    api.reverse((random.uniform(-90, 90), random.uniform(-180, 180)),
+                                address_details=True)
 
-        if args.target != 'search':
-            from ..tokenizer import factory as tokenizer_factory
+            if args.target != 'search':
+                from ..tokenizer import factory as tokenizer_factory
 
-            tokenizer = tokenizer_factory.get_tokenizer_for_db(args.config)
-            with connect(args.config.get_libpq_dsn()) as conn:
-                words = tokenizer.most_frequent_words(conn, 1000)
+                tokenizer = tokenizer_factory.get_tokenizer_for_db(args.config)
+                with connect(args.config.get_libpq_dsn()) as conn:
+                    words = tokenizer.most_frequent_words(conn, 1000)
 
-            for word in words:
-                api.search(word)
+                for word in words:
+                    api.search(word)
+        finally:
+            api.close()
 
         return 0

@@ -46,7 +46,7 @@ class DummyTokenizer:
 
 
 @pytest.fixture
-def cli_call(src_dir):
+def cli_call():
     """ Call the nominatim main function with the correct paths set.
         Returns a function that can be called with the desired CLI arguments.
     """

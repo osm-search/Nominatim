@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2023 Nominatim developer community <https://nominatim.org>
+#
+# SPDX-License-Identifier: GPL-3.0-later
+
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 # This file is part of Nominatim. (https://nominatim.org)

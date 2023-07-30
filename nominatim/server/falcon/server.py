@@ -9,6 +9,7 @@ Server implementation using the falcon webserver framework.
 """
 from typing import Optional, Mapping, cast, Any
 from pathlib import Path
+import datetime as dt
 
 from falcon.asgi import App, Request, Response
 
@@ -59,7 +60,8 @@ class ParamWrapper(api_impl.ASGIAdaptor):
         return HTTPNominatimError(msg, status, self.content_type)
 
 
-    def create_response(self, status: int, output: str) -> None:
+    def create_response(self, status: int, output: str, num_results: int) -> None:
+        self.response.context.num_results = num_results
         self.response.status = status
         self.response.text = output
         self.response.content_type = self.content_type
@@ -73,7 +75,8 @@ class EndpointWrapper:
     """ Converter for server glue endpoint functions to Falcon request handlers.
     """
 
-    def __init__(self, func: api_impl.EndpointFunc, api: NominatimAPIAsync) -> None:
+    def __init__(self, name: str, func: api_impl.EndpointFunc, api: NominatimAPIAsync) -> None:
+        self.name = name
         self.func = func
         self.api = api
 
@@ -84,18 +87,59 @@ class EndpointWrapper:
         await self.func(self.api, ParamWrapper(req, resp, self.api.config))
 
 
+class FileLoggingMiddleware:
+    """ Middleware to log selected requests into a file.
+    """
+
+    def __init__(self, file_name: str):
+        self.fd = open(file_name, 'a', buffering=1, encoding='utf8') # pylint: disable=R1732
+
+
+    async def process_request(self, req: Request, _: Response) -> None:
+        """ Callback before the request starts timing.
+        """
+        req.context.start = dt.datetime.now(tz=dt.timezone.utc)
+
+
+    async def process_response(self, req: Request, resp: Response,
+                               resource: Optional[EndpointWrapper],
+                               req_succeeded: bool) -> None:
+        """ Callback after requests writes to the logfile. It only
+            writes logs for sucessful requests for search, reverse and lookup.
+        """
+        if not req_succeeded or resource is None or resp.status != 200\
+            or resource.name not in ('reverse', 'search', 'lookup'):
+            return
+
+        finish = dt.datetime.now(tz=dt.timezone.utc)
+        duration = (finish - req.context.start).total_seconds()
+        params = req.scope['query_string'].decode('utf8')
+        start = req.context.start.replace(tzinfo=None)\
+                                 .isoformat(sep=' ', timespec='milliseconds')
+
+        self.fd.write(f"[{start}] "
+                      f"{duration:.4f} {getattr(resp.context, 'num_results', 0)} "
+                      f'{resource.name} "{params}"\n')
+
+
 def get_application(project_dir: Path,
                     environ: Optional[Mapping[str, str]] = None) -> App:
     """ Create a Nominatim Falcon ASGI application.
     """
     api = NominatimAPIAsync(project_dir, environ)
 
-    app = App(cors_enable=api.config.get_bool('CORS_NOACCESSCONTROL'))
+    middleware: Optional[object] = None
+    log_file = api.config.LOG_FILE
+    if log_file:
+        middleware = FileLoggingMiddleware(log_file)
+
+    app = App(cors_enable=api.config.get_bool('CORS_NOACCESSCONTROL'),
+              middleware=middleware)
     app.add_error_handler(HTTPNominatimError, nominatim_error_handler)
 
     legacy_urls = api.config.get_bool('SERVE_LEGACY_URLS')
     for name, func in api_impl.ROUTES:
-        endpoint = EndpointWrapper(func, api)
+        endpoint = EndpointWrapper(name, func, api)
         app.add_route(f"/{name}", endpoint)
         if legacy_urls:
             app.add_route(f"/{name}.php", endpoint)

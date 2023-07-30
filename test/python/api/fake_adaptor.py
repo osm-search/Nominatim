@@ -43,7 +43,7 @@ class FakeAdaptor(glue.ASGIAdaptor):
         return FakeError(msg, status)
 
 
-    def create_response(self, status, output):
+    def create_response(self, status, output, num_results):
         return FakeResponse(status, output, self.content_type)
 
 

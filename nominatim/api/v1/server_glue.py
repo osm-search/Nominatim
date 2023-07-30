@@ -58,7 +58,7 @@ class ASGIAdaptor(abc.ABC):
 
 
     @abc.abstractmethod
-    def create_response(self, status: int, output: str) -> Any:
+    def create_response(self, status: int, output: str, num_results: int) -> Any:
         """ Create a response from the given parameters. The result will
             be returned by the endpoint functions. The adaptor may also
             return None when the response is created internally with some
@@ -76,7 +76,7 @@ class ASGIAdaptor(abc.ABC):
         """
 
 
-    def build_response(self, output: str, status: int = 200) -> Any:
+    def build_response(self, output: str, status: int = 200, num_results: int = 0) -> Any:
         """ Create a response from the given output. Wraps a JSONP function
             around the response, if necessary.
         """
@@ -88,7 +88,7 @@ class ASGIAdaptor(abc.ABC):
                 output = f"{jsonp}({output})"
                 self.content_type = 'application/javascript'
 
-        return self.create_response(status, output)
+        return self.create_response(status, output, num_results)
 
 
     def raise_error(self, msg: str, status: int = 400) -> NoReturn:
@@ -318,7 +318,7 @@ async def details_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> 
                   'group_hierarchy': params.get_bool('group_hierarchy', False),
                   'icon_base_url': params.config().MAPICON_URL})
 
-    return params.build_response(output)
+    return params.build_response(output, num_results=1)
 
 
 async def reverse_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> Any:
@@ -335,7 +335,7 @@ async def reverse_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> 
     result = await api.reverse(coord, **details)
 
     if debug:
-        return params.build_response(loglib.get_and_disable())
+        return params.build_response(loglib.get_and_disable(), num_results=1 if result else 0)
 
     if fmt == 'xml':
         queryparts = {'lat': str(coord.lat), 'lon': str(coord.lon), 'format': 'xml'}
@@ -357,7 +357,7 @@ async def reverse_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> 
     output = formatting.format_result(napi.ReverseResults([result] if result else []),
                                       fmt, fmt_options)
 
-    return params.build_response(output)
+    return params.build_response(output, num_results=1 if result else 0)
 
 
 async def lookup_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> Any:
@@ -382,7 +382,7 @@ async def lookup_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> A
         results = napi.SearchResults()
 
     if debug:
-        return params.build_response(loglib.get_and_disable())
+        return params.build_response(loglib.get_and_disable(), num_results=len(results))
 
     fmt_options = {'extratags': params.get_bool('extratags', False),
                    'namedetails': params.get_bool('namedetails', False),
@@ -392,7 +392,7 @@ async def lookup_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> A
 
     output = formatting.format_result(results, fmt, fmt_options)
 
-    return params.build_response(output)
+    return params.build_response(output, num_results=len(results))
 
 
 async def _unstructured_search(query: str, api: napi.NominatimAPIAsync,
@@ -471,7 +471,7 @@ async def search_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> A
         results = helpers.deduplicate_results(results, max_results)
 
     if debug:
-        return params.build_response(loglib.get_and_disable())
+        return params.build_response(loglib.get_and_disable(), num_results=len(results))
 
     if fmt == 'xml':
         helpers.extend_query_parts(queryparts, details,
@@ -494,7 +494,7 @@ async def search_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> A
 
     output = formatting.format_result(results, fmt, fmt_options)
 
-    return params.build_response(output)
+    return params.build_response(output, num_results=len(results))
 
 
 async def deletable_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> Any:

@@ -287,10 +287,11 @@ class NearSearch(AbstractSearch):
             # radius for the lookup.
             sql = sql.join(table, t.c.place_id == table.c.place_id)\
                      .join(tgeom,
-                           sa.case((sa.and_(tgeom.c.rank_address < 9,
-                                            tgeom.c.geometry.is_area()),
-                                    tgeom.c.geometry.ST_Contains(table.c.centroid)),
-                                   else_ = tgeom.c.centroid.ST_DWithin(table.c.centroid, 0.05)))\
+                           table.c.centroid.ST_CoveredBy(
+                               sa.case((sa.and_(tgeom.c.rank_address < 9,
+                                                tgeom.c.geometry.is_area()),
+                                        tgeom.c.geometry),
+                                       else_ = tgeom.c.centroid.ST_Expand(0.05))))\
                      .order_by(tgeom.c.centroid.ST_Distance(table.c.centroid))
 
         sql = sql.where(t.c.rank_address.between(MIN_RANK_PARAM, MAX_RANK_PARAM))

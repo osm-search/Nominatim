@@ -212,7 +212,7 @@ class SearchBuilder:
 
         exp_count = min(exp_count, min(t.count for t in addr_partials)) \
                     if addr_partials else exp_count
-        if exp_count < 1000 and partials_indexed:
+        if exp_count < 1000 and len(addr_tokens) > 3 and partials_indexed:
             # Lookup by address partials and restrict results through name terms.
             # Give this a small penalty because lookups in the address index are
             # more expensive

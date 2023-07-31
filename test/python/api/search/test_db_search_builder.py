@@ -332,9 +332,10 @@ def test_name_only_search_with_countries():
     assert not search.housenumbers.values
 
 
-def make_counted_searches(name_part, name_full, address_part, address_full):
+def make_counted_searches(name_part, name_full, address_part, address_full,
+                          num_address_parts=1):
     q = QueryStruct([Phrase(PhraseType.NONE, '')])
-    for i in range(2):
+    for i in range(1 + num_address_parts):
         q.add_node(BreakType.WORD, PhraseType.NONE)
     q.add_node(BreakType.END, PhraseType.NONE)
 
@@ -342,15 +343,16 @@ def make_counted_searches(name_part, name_full, address_part, address_full):
                 MyToken(0.5, 1, name_part, 'name_part', True))
     q.add_token(TokenRange(0, 1), TokenType.WORD,
                 MyToken(0, 101, name_full, 'name_full', True))
-    q.add_token(TokenRange(1, 2), TokenType.PARTIAL,
-                MyToken(0.5, 2, address_part, 'address_part', True))
-    q.add_token(TokenRange(1, 2), TokenType.WORD,
-                MyToken(0, 102, address_full, 'address_full', True))
+    for i in range(num_address_parts):
+        q.add_token(TokenRange(i + 1, i + 2), TokenType.PARTIAL,
+                    MyToken(0.5, 2, address_part, 'address_part', True))
+        q.add_token(TokenRange(i + 1, i + 2), TokenType.WORD,
+                    MyToken(0, 102, address_full, 'address_full', True))
 
     builder = SearchBuilder(q, SearchDetails())
 
     return list(builder.build(TokenAssignment(name=TokenRange(0, 1),
-                                              address=[TokenRange(1, 2)])))
+                                              address=[TokenRange(1, 1 + num_address_parts)])))
 
 
 def test_infrequent_partials_in_name():
@@ -368,7 +370,7 @@ def test_infrequent_partials_in_name():
 
 
 def test_frequent_partials_in_name_but_not_in_address():
-    searches = make_counted_searches(10000, 1, 1, 1)
+    searches = make_counted_searches(10000, 1, 1, 1, num_address_parts=4)
 
     assert len(searches) == 1
     search = searches[0]

@@ -31,12 +31,10 @@ class TestTagJapanese:
         res = self.run_sanitizer_on('address', block_number='6')
         assert res == [('6','housenumber')]
 
-    #def test_neighbourhood(self):
-    #    res = self.run_sanitizer_on('address',neighbourhood='8丁目')
-    #    assert res == [('8','place')]
     def test_neighbourhood(self):
         res = self.run_sanitizer_on('address', neighbourhood='8')
         assert res == [('8','place')]
+
     def test_quarter(self):
         res = self.run_sanitizer_on('address', quarter='kase')
         assert res==[('kase','place')]
@@ -45,21 +43,42 @@ class TestTagJapanese:
         res = self.run_sanitizer_on('address', housenumber='2', block_number='6')
         assert res == [('6-2','housenumber')]
 
-    def test_housenumber_blocknumber(self):
-        res = self.run_sanitizer_on('address', housenumber='2', neighbourhood='8')
-        assert res == [('2','housenumber'),('8','place')]
+    def test_quarter_neighbourhood(self):
+        res = self.run_sanitizer_on('address', quarter='kase', neighbourhood='8')
+        assert res == [('kase8','place')]
 
-    def test_housenumber_blocknumber(self):
-        res = self.run_sanitizer_on('address', block_number='6', neighbourhood='8')
-        assert res == [('6','housenumber'),('8','place')]
+    def test_blocknumber_housenumber_quarter(self):
+        res = self.run_sanitizer_on('address', block_number='6', housenumber='2', quarter='kase')
+        assert res == [('6-2','housenumber'),('kase','place')]
 
-    def test_housenumber_blocknumber_neighbourhood(self):
-        res = self.run_sanitizer_on('address', housenumber='2', block_number='6', neighbourhood='8')
+    def test_blocknumber_housenumber_quarter_neighbourhood(self):
+        res = self.run_sanitizer_on('address', block_number='6', housenumber='2', neighbourhood='8')
         assert res == [('6-2','housenumber'),('8','place')]
 
+    def test_blocknumber_quarter_neighbourhood(self):
+        res = self.run_sanitizer_on('address',block_number='6', quarter='kase', neighbourhood='8')
+        assert res == [('6','housenumber'),('kase8','place')]
+
+    def test_blocknumber_quarter(self):
+        res = self.run_sanitizer_on('address',block_number='6', quarter='kase')
+        assert res == [('6','housenumber'),('kase','place')]
+
+    def test_blocknumber_neighbourhood(self):
+        res = self.run_sanitizer_on('address',block_number='6', neighbourhood='8')
+        assert res == [('6','housenumber'),('8','place')]
+
+    def test_housenumber_quarter_neighbourhood(self):
+        res = self.run_sanitizer_on('address',housenumber='2', quarter='kase', neighbourhood='8')
+        assert res == [('2','housenumber'),('kase8','place')]
+
+    def test_housenumber_quarter(self):
+        res = self.run_sanitizer_on('address',housenumber='2', quarter='kase')
+        assert res == [('2','housenumber'),('kase','place')]
+
     def test_housenumber_blocknumber_neighbourhood_quarter(self):
-        res = self.run_sanitizer_on('address', housenumber='2', block_number='6', neighbourhood='8',quarter='kase')
+        res = self.run_sanitizer_on('address', block_number='6', housenumber='2', quarter='kase', neighbourhood='8')
         assert res == [('6-2','housenumber'),('kase8','place')]
-    def test_neighbourhood_quarter(self):
-        res = self.run_sanitizer_on('address', neighbourhood='8',quarter='kase')
-        assert res == [('kase8','place')]
+
+    def test_KANJI_MAP(self):
+        res = self.run_sanitizer_on('address', block_number='六', housenumber='二', quarter='kase', neighbourhood='八')
+        assert res == [('6-2','housenumber'),('kase8','place')]

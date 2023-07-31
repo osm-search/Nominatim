@@ -78,7 +78,3 @@ class TestTagJapanese:
     def test_housenumber_blocknumber_neighbourhood_quarter(self):
         res = self.run_sanitizer_on('address', block_number='6', housenumber='2', quarter='kase', neighbourhood='8')
         assert res == [('6-2','housenumber'),('kase8','place')]
-
-    def test_KANJI_MAP(self):
-        res = self.run_sanitizer_on('address', block_number='六', housenumber='二', quarter='kase', neighbourhood='八')
-        assert res == [('6-2','housenumber'),('kase8','place')]

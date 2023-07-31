@@ -74,7 +74,11 @@ class Geometry(types.UserDefinedType): # type: ignore[type-arg]
 
 
         def ST_Contains(self, other: SaColumn) -> SaColumn:
-            return sa.func.ST_Contains(self, other, type_=sa.Float)
+            return sa.func.ST_Contains(self, other, type_=sa.Boolean)
+
+
+        def ST_CoveredBy(self, other: SaColumn) -> SaColumn:
+            return sa.func.ST_CoveredBy(self, other, type_=sa.Boolean)
 
 
         def ST_ClosestPoint(self, other: SaColumn) -> SaColumn:

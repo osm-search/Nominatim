@@ -114,7 +114,10 @@ def get_application(project_dir: Path,
 
     middleware = []
     if config.get_bool('CORS_NOACCESSCONTROL'):
-        middleware.append(Middleware(CORSMiddleware, allow_origins=['*']))
+        middleware.append(Middleware(CORSMiddleware,
+                                     allow_origins=['*'],
+                                     allow_methods=['GET', 'OPTIONS'],
+                                     max_age=86400))
 
     log_file = config.LOG_FILE
     if log_file:

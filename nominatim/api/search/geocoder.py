@@ -55,8 +55,9 @@ class ForwardGeocoder:
             num_searches = 0
             for assignment in yield_token_assignments(query):
                 searches.extend(search_builder.build(assignment))
-                log().table_dump('Searches for assignment',
-                                 _dump_searches(searches, query, num_searches))
+                if num_searches < len(searches):
+                    log().table_dump('Searches for assignment',
+                                     _dump_searches(searches, query, num_searches))
                 num_searches = len(searches)
             searches.sort(key=lambda s: s.penalty)
 

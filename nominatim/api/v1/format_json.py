@@ -86,8 +86,8 @@ def format_base_json(results: Union[napi.ReverseResults, napi.SearchResults],
 
         _write_osm_id(out, result.osm_object)
 
-        out.keyval('lat', result.centroid.lat)\
-             .keyval('lon', result.centroid.lon)\
+        out.keyval('lat', f"{result.centroid.lat}")\
+             .keyval('lon', f"{result.centroid.lon}")\
              .keyval(class_label, result.category[0])\
              .keyval('type', result.category[1])\
              .keyval('place_rank', result.rank_search)\

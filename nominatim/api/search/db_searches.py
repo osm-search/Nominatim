@@ -406,9 +406,9 @@ class CountrySearch(AbstractSearch):
         t = conn.t.placex
 
         ccodes = self.countries.values
-        sql: SaLambdaSelect = sa.lambda_stmt(lambda: _select_placex(t)\
+        sql = _select_placex(t)\
                 .where(t.c.country_code.in_(ccodes))\
-                .where(t.c.rank_address == 4))
+                .where(t.c.rank_address == 4)
 
         if details.geometry_output:
             sql = _add_geometry_columns(sql, t.c.geometry, details)
@@ -495,12 +495,11 @@ class PostcodeSearch(AbstractSearch):
         t = conn.t.postcode
         pcs = self.postcodes.values
 
-        sql: SaLambdaSelect = sa.lambda_stmt(lambda:
-                sa.select(t.c.place_id, t.c.parent_place_id,
+        sql = sa.select(t.c.place_id, t.c.parent_place_id,
                         t.c.rank_search, t.c.rank_address,
                         t.c.postcode, t.c.country_code,
-                        t.c.geometry.label('centroid'))
-                .where(t.c.postcode.in_(pcs)))
+                        t.c.geometry.label('centroid'))\
+                .where(t.c.postcode.in_(pcs))
 
         if details.geometry_output:
             sql = _add_geometry_columns(sql, t.c.geometry, details)
@@ -609,7 +608,7 @@ class PlaceSearch(AbstractSearch):
             pcs = self.postcodes.values
             if self.expected_count > 1000:
                 # Many results expected. Restrict by postcode.
-                sql = sql.where(lambda: sa.select(tpc.c.postcode)
+                sql = sql.where(sa.select(tpc.c.postcode)
                                   .where(tpc.c.postcode.in_(pcs))
                                   .where(tsearch.c.centroid.ST_DWithin(tpc.c.geometry, 0.12))
                                   .exists())

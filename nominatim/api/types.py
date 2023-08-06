@@ -247,9 +247,10 @@ class Bbox:
         except ValueError as exc:
             raise UsageError('Bounding box parameter needs to be numbers.') from exc
 
-        if x1 < -180.0 or x1 > 180.0 or y1 < -90.0 or y1 > 90.0 \
-           or x2 < -180.0 or x2 > 180.0 or y2 < -90.0 or y2 > 90.0:
-            raise UsageError('Bounding box coordinates invalid.')
+        x1 = min(180, max(-180, x1))
+        x2 = min(180, max(-180, x2))
+        y1 = min(90, max(-90, y1))
+        y2 = min(90, max(-90, y2))
 
         if x1 == x2 or y1 == y2:
             raise UsageError('Bounding box with invalid parameters.')

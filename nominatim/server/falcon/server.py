@@ -67,6 +67,9 @@ class ParamWrapper(api_impl.ASGIAdaptor):
         self.response.content_type = self.content_type
 
 
+    def base_uri(self) -> str:
+        return cast (str, self.request.forwarded_prefix)
+
     def config(self) -> Configuration:
         return self._config
 

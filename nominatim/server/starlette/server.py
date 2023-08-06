@@ -50,6 +50,19 @@ class ParamWrapper(api_impl.ASGIAdaptor):
         return Response(output, status_code=status, media_type=self.content_type)
 
 
+    def base_uri(self) -> str:
+        scheme = self.request.url.scheme
+        host = self.request.url.hostname
+        port = self.request.url.port
+        root = self.request.scope['root_path']
+        if (scheme == 'http' and port == 80) or (scheme == 'https' and port == 443):
+            port = None
+        if port is not None:
+            return f"{scheme}://{host}:{port}{root}"
+
+        return f"{scheme}://{host}{root}"
+
+
     def config(self) -> Configuration:
         return cast(Configuration, self.request.app.state.API.config)
 

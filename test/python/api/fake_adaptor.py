@@ -47,6 +47,9 @@ class FakeAdaptor(glue.ASGIAdaptor):
         return FakeResponse(status, output, self.content_type)
 
 
+    def base_uri(self) -> str:
+        return 'http://test'
+
     def config(self):
         return self._config
 

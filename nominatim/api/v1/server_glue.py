@@ -69,6 +69,11 @@ class ASGIAdaptor(abc.ABC):
             body of the response to 'output'.
         """
 
+    @abc.abstractmethod
+    def base_uri(self) -> str:
+        """ Return the URI of the original request.
+        """
+
 
     @abc.abstractmethod
     def config(self) -> Configuration:
@@ -481,7 +486,7 @@ async def search_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> A
                                    (str(r.place_id) for r in results if r.place_id))
         queryparts['format'] = fmt
 
-        moreurl = urlencode(queryparts)
+        moreurl = params.base_uri() + '/search?' + urlencode(queryparts)
     else:
         moreurl = ''
 

@@ -68,7 +68,7 @@ def test_country_search_with_country_restriction():
     assert set(search.countries.values) == {'en'}
 
 
-def test_country_search_with_confllicting_country_restriction():
+def test_country_search_with_conflicting_country_restriction():
     q = make_query([(1, TokenType.COUNTRY, [(2, 'de'), (3, 'en')])])
     builder = SearchBuilder(q, SearchDetails.from_kwargs({'countries': 'fr'}))
 
@@ -367,20 +367,6 @@ def test_infrequent_partials_in_name():
 
     assert set((l.column, l.lookup_type) for l in search.lookups) == \
             {('name_vector', 'lookup_all'), ('nameaddress_vector', 'restrict')}
-
-
-def test_frequent_partials_in_name_but_not_in_address():
-    searches = make_counted_searches(10000, 1, 1, 1, num_address_parts=4)
-
-    assert len(searches) == 1
-    search = searches[0]
-
-    assert isinstance(search, dbs.PlaceSearch)
-    assert len(search.lookups) == 2
-    assert len(search.rankings) == 2
-
-    assert set((l.column, l.lookup_type) for l in search.lookups) == \
-            {('nameaddress_vector', 'lookup_all'), ('name_vector', 'restrict')}
 
 
 def test_frequent_partials_in_name_and_address():

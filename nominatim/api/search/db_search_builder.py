@@ -212,13 +212,6 @@ class SearchBuilder:
 
         exp_count = min(exp_count, min(t.count for t in addr_partials)) \
                     if addr_partials else exp_count
-        if exp_count < 1000 and len(addr_tokens) > 3 and partials_indexed:
-            # Lookup by address partials and restrict results through name terms.
-            # Give this a small penalty because lookups in the address index are
-            # more expensive
-            yield penalty + exp_count/5000, exp_count,\
-                  dbf.lookup_by_addr(name_tokens, addr_tokens)
-            return
 
         # Partial term to frequent. Try looking up by rare full names first.
         name_fulls = self.query.get_tokens(name, TokenType.WORD)

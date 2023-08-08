@@ -100,3 +100,54 @@ def test_lookup_multiple_places(apiobj):
     assert len(result) == 2
 
     assert set(r.place_id for r in result) == {332, 4924}
+
+
+@pytest.mark.parametrize('gtype', list(napi.GeometryFormat))
+def test_simple_place_with_geometry(apiobj, gtype):
+    apiobj.add_placex(place_id=332, osm_type='W', osm_id=4,
+                     class_='highway', type='residential',
+                     name={'name': 'Road'}, address={'city': 'Barrow'},
+                     extratags={'surface': 'paved'},
+                     parent_place_id=34, linked_place_id=55,
+                     admin_level=15, country_code='gb',
+                     housenumber='4',
+                     postcode='34425', wikipedia='en:Faa',
+                     rank_search=27, rank_address=26,
+                     importance=0.01,
+                     centroid=(23, 34),
+                     geometry='POLYGON((23 34, 23.1 34, 23.1 34.1, 23 34))')
+
+    result = apiobj.api.lookup([napi.OsmID('W', 4)],
+                               geometry_output=gtype)
+
+    assert len(result) == 1
+    assert result[0].place_id == 332
+
+    if gtype == napi.GeometryFormat.NONE:
+        assert list(result[0].geometry.keys()) == []
+    else:
+        assert list(result[0].geometry.keys()) == [gtype.name.lower()]
+
+
+def test_simple_place_with_geometry_simplified(apiobj):
+    apiobj.add_placex(place_id=332, osm_type='W', osm_id=4,
+                     class_='highway', type='residential',
+                     name={'name': 'Road'}, address={'city': 'Barrow'},
+                     extratags={'surface': 'paved'},
+                     parent_place_id=34, linked_place_id=55,
+                     admin_level=15, country_code='gb',
+                     housenumber='4',
+                     postcode='34425', wikipedia='en:Faa',
+                     rank_search=27, rank_address=26,
+                     importance=0.01,
+                     centroid=(23, 34),
+                     geometry='POLYGON((23 34, 22.999 34, 23.1 34, 23.1 34.1, 23 34))')
+
+    result = apiobj.api.lookup([napi.OsmID('W', 4)],
+                               geometry_output=napi.GeometryFormat.TEXT,
+                               geometry_simplification=0.1)
+
+    assert len(result) == 1
+    assert result[0].place_id == 332
+    assert result[0].geometry == {'text': 'POLYGON((23 34,23.1 34,23.1 34.1,23 34))'}
+

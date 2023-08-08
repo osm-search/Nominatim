@@ -207,16 +207,16 @@ async def get_simple_place(conn: SearchConnection, place: ntyp.PlaceRef,
         out = []
 
         if details.geometry_simplification > 0.0:
-            col = col.ST_SimplifyPreserveTopology(details.geometry_simplification)
+            col = sa.func.ST_SimplifyPreserveTopology(col, details.geometry_simplification)
 
         if details.geometry_output & ntyp.GeometryFormat.GEOJSON:
-            out.append(col.ST_AsGeoJSON().label('geometry_geojson'))
+            out.append(sa.func.ST_AsGeoJSON(col).label('geometry_geojson'))
         if details.geometry_output & ntyp.GeometryFormat.TEXT:
-            out.append(col.ST_AsText().label('geometry_text'))
+            out.append(sa.func.ST_AsText(col).label('geometry_text'))
         if details.geometry_output & ntyp.GeometryFormat.KML:
-            out.append(col.ST_AsKML().label('geometry_kml'))
+            out.append(sa.func.ST_AsKML(col).label('geometry_kml'))
         if details.geometry_output & ntyp.GeometryFormat.SVG:
-            out.append(col.ST_AsSVG().label('geometry_svg'))
+            out.append(sa.func.ST_AsSVG(col).label('geometry_svg'))
 
         return sql.add_columns(*out)
 

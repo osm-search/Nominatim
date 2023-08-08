@@ -508,9 +508,8 @@ class TestSearchEndPointSearch:
         a.params['q'] = 'something'
         a.params['city'] = 'ignored'
 
-        res = await glue.search_endpoint(napi.NominatimAPIAsync(Path('/invalid')), a)
-
-        assert len(json.loads(res.output)) == 1
+        with pytest.raises(FakeError, match='^400 -- .*cannot be used together'):
+            res = await glue.search_endpoint(napi.NominatimAPIAsync(Path('/invalid')), a)
 
 
     @pytest.mark.asyncio

@@ -453,17 +453,24 @@ async def search_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> A
     if params.get('featureType', None) is not None:
         details['layers'] = napi.DataLayer.ADDRESS
 
+    # unstructured query parameters
     query = params.get('q', None)
+    # structured query parameters
     queryparts = {}
+    for key in ('amenity', 'street', 'city', 'county', 'state', 'postalcode', 'country'):
+        details[key] = params.get(key, None)
+        if details[key]:
+            queryparts[key] = details[key]
+
     try:
         if query is not None:
+            if queryparts:
+                params.raise_error("Structured query parameters"
+                                   "(amenity, street, city, county, state, postalcode, country)"
+                                   " cannot be used together with 'q' parameter.")
             queryparts['q'] = query
             results = await _unstructured_search(query, api, details)
         else:
-            for key in ('amenity', 'street', 'city', 'county', 'state', 'postalcode', 'country'):
-                details[key] = params.get(key, None)
-                if details[key]:
-                    queryparts[key] = details[key]
             query = ', '.join(queryparts.values())
 
             results = await api.search_address(**details)

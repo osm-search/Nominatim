@@ -23,7 +23,7 @@ $aLangPrefOrder = $oParams->getPreferredLanguages();
 
 $sPlaceId = $oParams->getString('place_id');
 $sOsmType = $oParams->getSet('osmtype', array('N', 'W', 'R'));
-$iOsmId = $oParams->getInt('osmid', -1);
+$iOsmId = $oParams->getInt('osmid', 0);
 $sClass = $oParams->getString('class');
 
 $bIncludeKeywords = $oParams->getBool('keywords', false);
@@ -38,7 +38,7 @@ $oDB->connect();
 
 $sLanguagePrefArraySQL = $oDB->getArraySQL($oDB->getDBQuotedList($aLangPrefOrder));
 
-if ($sOsmType && $iOsmId > 0) {
+if ($sOsmType && $iOsmId !== 0) {
     $sSQL = 'SELECT place_id FROM placex WHERE osm_type = :type AND osm_id = :id';
     $aSQLParams = array(':type' => $sOsmType, ':id' => $iOsmId);
     // osm_type and osm_id are not unique enough

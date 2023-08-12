@@ -70,11 +70,12 @@ class Geometry(types.UserDefinedType): # type: ignore[type-arg]
 
 
         def ST_DWithin_no_index(self, other: SaColumn, distance: SaColumn) -> SaColumn:
-            return sa.func._ST_DWithin(self, other, distance, type_=sa.Boolean)
+            return sa.func.ST_DWithin(sa.func.coalesce(sa.null(), self),
+                                      other, distance, type_=sa.Boolean)
 
 
-        def ST_Intersects_no_index(self, other: SaColumn) -> SaColumn:
-            return sa.func._ST_Intersects(self, other, type_=sa.Boolean)
+        def ST_Intersects_no_index(self, other: SaColumn) -> 'sa.Operators':
+            return sa.func.coalesce(sa.null(), self).op('&&')(other)
 
 
         def ST_Distance(self, other: SaColumn) -> SaColumn:

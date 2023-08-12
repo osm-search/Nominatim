@@ -111,9 +111,11 @@ class SearchBuilder:
             penalty = min(categories.penalties)
             categories.penalties = [p - penalty for p in categories.penalties]
             for search in builder:
-                yield dbs.NearSearch(penalty, categories, search)
+                yield dbs.NearSearch(penalty + assignment.penalty, categories, search)
         else:
-            yield from builder
+            for search in builder:
+                search.penalty += assignment.penalty
+                yield search
 
 
     def build_poi_search(self, sdata: dbf.SearchData) -> Iterator[dbs.AbstractSearch]:
@@ -210,8 +212,7 @@ class SearchBuilder:
             yield penalty, exp_count, dbf.lookup_by_names(name_tokens, addr_tokens)
             return
 
-        exp_count = min(exp_count, min(t.count for t in addr_partials)) \
-                    if addr_partials else exp_count
+        exp_count = exp_count / (2**len(addr_partials)) if addr_partials else exp_count
 
         # Partial term to frequent. Try looking up by rare full names first.
         name_fulls = self.query.get_tokens(name, TokenType.WORD)

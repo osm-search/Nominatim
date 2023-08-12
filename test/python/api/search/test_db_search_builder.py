@@ -161,7 +161,7 @@ def test_category_only(kwargs):
     search = searches[0]
 
     assert isinstance(search, dbs.PoiSearch)
-    assert search.categories.values == [('this', 'that')]
+    assert search.qualifiers.values == [('this', 'that')]
 
 
 @pytest.mark.parametrize('kwargs', [{'viewbox': '0,0,1,1'},
@@ -384,7 +384,7 @@ def test_frequent_partials_in_name_and_address():
 
 
 def test_too_frequent_partials_in_name_and_address():
-    searches = make_counted_searches(10000, 1, 10000, 1)
+    searches = make_counted_searches(20000, 1, 10000, 1)
 
     assert len(searches) == 1
 

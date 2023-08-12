@@ -152,7 +152,7 @@ class ForwardGeocoder:
 # pylint: disable=invalid-name,too-many-locals
 def _dump_searches(searches: List[AbstractSearch], query: QueryStruct,
                    start: int = 0) -> Iterator[Optional[List[Any]]]:
-    yield ['Penalty', 'Lookups', 'Housenr', 'Postcode', 'Countries', 'Qualifier', 'Rankings']
+    yield ['Penalty', 'Lookups', 'Housenr', 'Postcode', 'Countries', 'Qualifier', 'Catgeory', 'Rankings']
 
     def tk(tl: List[int]) -> str:
         tstr = [f"{query.find_lookup_word_by_id(t)}({t})" for t in tl]
@@ -182,11 +182,18 @@ def _dump_searches(searches: List[AbstractSearch], query: QueryStruct,
 
     for search in searches[start:]:
         fields = ('lookups', 'rankings', 'countries', 'housenumbers',
-                  'postcodes', 'qualifier')
-        iters = itertools.zip_longest([f"{search.penalty:.3g}"],
-                                      *(getattr(search, attr, []) for attr in fields),
-                                      fillvalue= '')
-        for penalty, lookup, rank, cc, hnr, pc, qual in iters:
+                  'postcodes', 'qualifiers')
+        if hasattr(search, 'search'):
+            iters = itertools.zip_longest([f"{search.penalty:.3g}"],
+                                          *(getattr(search.search, attr, []) for attr in fields),
+                                          getattr(search, 'categories', []),
+                                          fillvalue='')
+        else:
+            iters = itertools.zip_longest([f"{search.penalty:.3g}"],
+                                          *(getattr(search, attr, []) for attr in fields),
+                                          [],
+                                          fillvalue='')
+        for penalty, lookup, rank, cc, hnr, pc, qual, cat in iters:
             yield [penalty, fmt_lookup(lookup), fmt_cstr(hnr),
-                   fmt_cstr(pc), fmt_cstr(cc), fmt_cstr(qual), fmt_ranking(rank)]
+                   fmt_cstr(pc), fmt_cstr(cc), fmt_cstr(qual), fmt_cstr(cat), fmt_ranking(rank)]
         yield None

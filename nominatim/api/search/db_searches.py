@@ -317,7 +317,7 @@ class PoiSearch(AbstractSearch):
     """
     def __init__(self, sdata: SearchData) -> None:
         super().__init__(sdata.penalty)
-        self.categories = sdata.qualifiers
+        self.qualifiers = sdata.qualifiers
         self.countries = sdata.countries
 
 
@@ -339,7 +339,7 @@ class PoiSearch(AbstractSearch):
                            .order_by(t.c.centroid.ST_Distance(NEAR_PARAM)) \
                            .limit(LIMIT_PARAM)
 
-            classtype = self.categories.values
+            classtype = self.qualifiers.values
             if len(classtype) == 1:
                 cclass, ctype = classtype[0]
                 sql: SaLambdaSelect = sa.lambda_stmt(lambda: _base_query()
@@ -358,7 +358,7 @@ class PoiSearch(AbstractSearch):
             rows.extend(await conn.execute(sql, bind_params))
         else:
             # use the class type tables
-            for category in self.categories.values:
+            for category in self.qualifiers.values:
                 table = await conn.get_class_table(*category)
                 if table is not None:
                     sql = _select_placex(t)\
@@ -384,7 +384,7 @@ class PoiSearch(AbstractSearch):
         for row in rows:
             result = nres.create_from_placex_row(row, nres.SearchResult)
             assert result
-            result.accuracy = self.penalty + self.categories.get_penalty((row.class_, row.type))
+            result.accuracy = self.penalty + self.qualifiers.get_penalty((row.class_, row.type))
             result.bbox = Bbox.from_wkb(row.bbox)
             results.append(result)
 

@@ -253,6 +253,8 @@ class _TokenSequence:
                 priors = sum(1 for t in self.seq[hnrpos+1:] if t.ttype == qmod.TokenType.PARTIAL)
                 if not self._adapt_penalty_from_priors(priors, 1):
                     return False
+            if any(t.ttype == qmod.TokenType.CATEGORY for t in self.seq):
+                self.penalty += 1.0
 
         return True
 

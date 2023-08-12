@@ -622,7 +622,10 @@ class PlaceSearch(AbstractSearch):
 
         if details.viewbox is not None:
             if details.bounded_viewbox:
-                sql = sql.where(tsearch.c.centroid.intersects(VIEWBOX_PARAM))
+                if details.viewbox.area < 0.2:
+                    sql = sql.where(tsearch.c.centroid.intersects(VIEWBOX_PARAM))
+                else:
+                    sql = sql.where(tsearch.c.centroid.ST_Intersects_no_index(VIEWBOX_PARAM))
             else:
                 penalty += sa.case((t.c.geometry.intersects(VIEWBOX_PARAM), 0.0),
                                    (t.c.geometry.intersects(VIEWBOX2_PARAM), 1.0),
@@ -630,7 +633,11 @@ class PlaceSearch(AbstractSearch):
 
         if details.near is not None:
             if details.near_radius is not None:
-                sql = sql.where(tsearch.c.centroid.ST_DWithin(NEAR_PARAM, NEAR_RADIUS_PARAM))
+                if details.near_radius < 0.1:
+                    sql = sql.where(tsearch.c.centroid.ST_DWithin(NEAR_PARAM, NEAR_RADIUS_PARAM))
+                else:
+                    sql = sql.where(tsearch.c.centroid.ST_DWithin_no_index(NEAR_PARAM,
+                                                                           NEAR_RADIUS_PARAM))
             sql = sql.add_columns(-tsearch.c.centroid.ST_Distance(NEAR_PARAM)
                                       .label('importance'))
             sql = sql.order_by(sa.desc(sa.text('importance')))

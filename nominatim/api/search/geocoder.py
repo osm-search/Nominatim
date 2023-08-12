@@ -152,7 +152,8 @@ class ForwardGeocoder:
 # pylint: disable=invalid-name,too-many-locals
 def _dump_searches(searches: List[AbstractSearch], query: QueryStruct,
                    start: int = 0) -> Iterator[Optional[List[Any]]]:
-    yield ['Penalty', 'Lookups', 'Housenr', 'Postcode', 'Countries', 'Qualifier', 'Catgeory', 'Rankings']
+    yield ['Penalty', 'Lookups', 'Housenr', 'Postcode', 'Countries',
+           'Qualifier', 'Catgeory', 'Rankings']
 
     def tk(tl: List[int]) -> str:
         tstr = [f"{query.find_lookup_word_by_id(t)}({t})" for t in tl]

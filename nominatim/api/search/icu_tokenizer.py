@@ -83,7 +83,7 @@ class ICUToken(qmod.Token):
         seq = difflib.SequenceMatcher(a=self.lookup_word, b=norm)
         distance = 0
         for tag, afrom, ato, bfrom, bto in seq.get_opcodes():
-            if tag == 'delete' and (afrom == 0 or ato == len(self.lookup_word)):
+            if tag in ('delete', 'insert') and (afrom == 0 or ato == len(self.lookup_word)):
                 distance += 1
             elif tag == 'replace':
                 distance += max((ato-afrom), (bto-bfrom))

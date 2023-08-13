@@ -670,7 +670,7 @@ class PlaceSearch(AbstractSearch):
                           .where(thnr.c.indexed_status == 0)
 
             if details.excluded:
-                place_sql = place_sql.where(_exclude_places(thnr))
+                place_sql = place_sql.where(thnr.c.place_id.not_in(sa.bindparam('excluded')))
             if self.qualifiers:
                 place_sql = place_sql.where(self.qualifiers.sql_restrict(thnr))
 

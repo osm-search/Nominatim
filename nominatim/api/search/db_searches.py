@@ -638,7 +638,7 @@ class PlaceSearch(AbstractSearch):
                 else:
                     sql = sql.where(tsearch.c.centroid.ST_DWithin_no_index(NEAR_PARAM,
                                                                            NEAR_RADIUS_PARAM))
-            sql = sql.add_columns(-tsearch.c.centroid.ST_Distance(NEAR_PARAM)
+            sql = sql.add_columns((-tsearch.c.centroid.ST_Distance(NEAR_PARAM))
                                       .label('importance'))
             sql = sql.order_by(sa.desc(sa.text('importance')))
         else:

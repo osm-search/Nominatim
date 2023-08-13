@@ -302,7 +302,7 @@ async def details_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> 
 
     result = await api.details(place,
                                address_details=params.get_bool('addressdetails', False),
-                               linked_places=params.get_bool('linkedplaces', False),
+                               linked_places=params.get_bool('linkedplaces', True),
                                parented_places=params.get_bool('hierarchy', False),
                                keywords=params.get_bool('keywords', False),
                                geometry_output = napi.GeometryFormat.GEOJSON

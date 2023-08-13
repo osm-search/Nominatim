@@ -141,7 +141,7 @@ def _format_details_json(result: napi.DetailedResult, options: Mapping[str, Any]
     if result.address_rows is not None:
         _add_address_rows(out, 'address', result.address_rows, locales)
 
-    if result.linked_rows is not None:
+    if result.linked_rows:
         _add_address_rows(out, 'linked_places', result.linked_rows, locales)
 
     if result.name_keywords is not None or result.address_keywords is not None:

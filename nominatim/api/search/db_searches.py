@@ -427,6 +427,7 @@ class CountrySearch(AbstractSearch):
             result = nres.create_from_placex_row(row, nres.SearchResult)
             assert result
             result.accuracy = self.penalty + self.countries.get_penalty(row.country_code, 5.0)
+            result.bbox = Bbox.from_wkb(row.bbox)
             results.append(result)
 
         return results or await self.lookup_in_country_table(conn, details)

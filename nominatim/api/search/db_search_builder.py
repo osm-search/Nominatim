@@ -208,7 +208,7 @@ class SearchBuilder:
                            and all(t.is_indexed for t in addr_partials)
         exp_count = min(t.count for t in name_partials)
 
-        if (len(name_partials) > 3 or exp_count < 1000) and partials_indexed:
+        if (len(name_partials) > 3 or exp_count < 3000) and partials_indexed:
             yield penalty, exp_count, dbf.lookup_by_names(name_tokens, addr_tokens)
             return
 

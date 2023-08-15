@@ -133,10 +133,19 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
     async def setup(self) -> None:
         """ Set up static data structures needed for the analysis.
         """
-        rules = await self.conn.get_property('tokenizer_import_normalisation')
-        self.normalizer = Transliterator.createFromRules("normalization", rules)
-        rules = await self.conn.get_property('tokenizer_import_transliteration')
-        self.transliterator = Transliterator.createFromRules("transliteration", rules)
+        async def _make_normalizer() -> Any:
+            rules = await self.conn.get_property('tokenizer_import_normalisation')
+            return Transliterator.createFromRules("normalization", rules)
+
+        self.normalizer = await self.conn.get_cached_value('ICUTOK', 'normalizer',
+                                                           _make_normalizer)
+
+        async def _make_transliterator() -> Any:
+            rules = await self.conn.get_property('tokenizer_import_transliteration')
+            return Transliterator.createFromRules("transliteration", rules)
+
+        self.transliterator = await self.conn.get_cached_value('ICUTOK', 'transliterator',
+                                                               _make_transliterator)
 
         if 'word' not in self.conn.t.meta.tables:
             sa.Table('word', self.conn.t.meta,

@@ -7,7 +7,8 @@
 """
 Extended SQLAlchemy connection class that also includes access to the schema.
 """
-from typing import cast, Any, Mapping, Sequence, Union, Dict, Optional, Set
+from typing import cast, Any, Mapping, Sequence, Union, Dict, Optional, Set, \
+                   Awaitable, Callable, TypeVar
 
 import sqlalchemy as sa
 from sqlalchemy.ext.asyncio import AsyncConnection
@@ -16,6 +17,8 @@ from nominatim.typing import SaFromClause
 from nominatim.db.sqlalchemy_schema import SearchTables
 from nominatim.db.sqlalchemy_types import Geometry
 from nominatim.api.logging import log
+
+T = TypeVar('T')
 
 class SearchConnection:
     """ An extended SQLAlchemy connection class, that also contains
@@ -61,11 +64,10 @@ class SearchConnection:
 
             Raises a ValueError if the property does not exist.
         """
-        if name.startswith('DB:'):
-            raise ValueError(f"Illegal property value '{name}'.")
+        lookup_name = f'DBPROP:{name}'
 
-        if cached and name in self._property_cache:
-            return cast(str, self._property_cache[name])
+        if cached and lookup_name in self._property_cache:
+            return cast(str, self._property_cache[lookup_name])
 
         sql = sa.select(self.t.properties.c.value)\
             .where(self.t.properties.c.property == name)
@@ -74,7 +76,7 @@ class SearchConnection:
         if value is None:
             raise ValueError(f"Property '{name}' not found in database.")
 
-        self._property_cache[name] = cast(str, value)
+        self._property_cache[lookup_name] = cast(str, value)
 
         return cast(str, value)
 
@@ -90,6 +92,29 @@ class SearchConnection:
             raise ValueError(f"DB setting '{name}' not found in database.")
 
         return self._property_cache['DB:server_version']
+
+
+    async def get_cached_value(self, group: str, name: str,
+                               factory: Callable[[], Awaitable[T]]) -> T:
+        """ Access the cache for this Nominatim instance.
+            Each cache value needs to belong to a group and have a name.
+            This function is for internal API use only.
+
+            `factory` is an async callback function that produces
+            the value if it is not already cached.
+
+            Returns the cached value or the result of factory (also caching
+            the result).
+        """
+        full_name = f'{group}:{name}'
+
+        if full_name in self._property_cache:
+            return cast(T, self._property_cache[full_name])
+
+        value = await factory()
+        self._property_cache[full_name] = value
+
+        return value
 
 
     async def get_class_table(self, cls: str, typ: str) -> Optional[SaFromClause]:

@@ -29,6 +29,7 @@ class BreakType(enum.Enum):
     """ Break created as a result of tokenization.
         This may happen in languages without spaces between words.
     """
+    SOFT_PHRASE = ':'
 
 
 class TokenType(enum.Enum):

@@ -30,7 +30,8 @@ PENALTY_TOKENCHANGE = {
     qmod.BreakType.PHRASE: 0.0,
     qmod.BreakType.WORD: 0.1,
     qmod.BreakType.PART: 0.2,
-    qmod.BreakType.TOKEN: 0.4
+    qmod.BreakType.TOKEN: 0.4,
+    qmod.BreakType.SOFT_PHRASE: 0.0
 }
 
 TypedRangeSeq = List[TypedRange]

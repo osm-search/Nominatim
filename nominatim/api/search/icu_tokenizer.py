@@ -7,7 +7,7 @@
 """
 Implementation of query analysis for the ICU tokenizer.
 """
-from typing import Tuple, Dict, List, Optional, NamedTuple, Iterator, Any, cast
+from typing import Tuple, Dict, List, Optional, NamedTuple, Iterator, Any, cast, Set
 from copy import copy
 from collections import defaultdict
 import dataclasses
@@ -22,7 +22,7 @@ from nominatim.api.connection import SearchConnection
 from nominatim.api.logging import log
 from nominatim.api.search import query as qmod
 from nominatim.api.search.query_analyzer_factory import AbstractQueryAnalyzer
-
+from nominatim.api.search import icu_tokenizer_japanese
 
 DB_TO_TOKEN_TYPE = {
     'W': qmod.TokenType.WORD,
@@ -161,10 +161,14 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
             tokenized query.
         """
         log().section('Analyze query (using ICU tokenizer)')
-        normalized = list(filter(lambda p: p.text,
-                                 (qmod.Phrase(p.ptype, self.normalize_text(p.text))
-                                  for p in phrases)))
-        query = qmod.QueryStruct(normalized)
+        preprocess_query_functions = [
+            self.normalize_phrases,
+            icu_tokenizer_japanese.split_key_japanese_phrases
+        ]
+        for func in preprocess_query_functions:
+            phrases = func(phrases)
+
+        query = qmod.QueryStruct(phrases)
         log().var_dump('Normalized query', query.source)
         if not query.source:
             return query
@@ -203,6 +207,25 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
         """
         return cast(str, self.normalizer.transliterate(text))
 
+    def normalize_phrases(
+        self, phrases: List[qmod.Phrase]
+    ) -> List[qmod.Phrase]:
+        """Normalize the phrases
+        """
+        normalized = list(filter(lambda p: p.text,
+                                 (qmod.Phrase(p.ptype, self.normalize_text(p.text))
+                                  for p in phrases)))
+        return normalized
+
+    def split_key_japanese_phrases(
+        self, phrases: List[qmod.Phrase]
+    ) -> List[qmod.Phrase]:
+        """Split a Japanese address using japanese_tokenizer.
+        """
+        splited_address = list(filter(lambda p: p.text,
+                                (qmod.Phrase(p.ptype, icu_tokenizer_japanese.transliterate(p.text))
+                                for p in phrases)))
+        return splited_address
 
     def split_query(self, query: qmod.QueryStruct) -> Tuple[QueryParts, WordDict]:
         """ Transliterate the phrases and split them into tokens.
@@ -224,7 +247,10 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
                         if term:
                             parts.append(QueryPart(term, word, wordnr))
                             query.add_node(qmod.BreakType.TOKEN, phrase.ptype)
-                    query.nodes[-1].btype = qmod.BreakType.WORD
+                    if word[-1] == ',':
+                        query.nodes[-1].btype = qmod.BreakType.SOFT_PHRASE
+                    else:
+                        query.nodes[-1].btype = qmod.BreakType.WORD
                 wordnr += 1
             query.nodes[-1].btype = qmod.BreakType.PHRASE
 
@@ -254,11 +280,34 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
                 query.add_token(qmod.TokenRange(i, i+1), qmod.TokenType.HOUSENUMBER,
                                 ICUToken(0.5, 0, 1, part.token, True, part.token, None))
 
+    def collect_soft_phrase_indexes(self, query: qmod.QueryStruct) -> Set[int]:
+        """Create a set of indexes of nodes with soft_phrase.
+        """
+        soft_phrase_idx_set = set()
+        for i, node in enumerate(query.nodes):
+            if node.btype == qmod.BreakType.SOFT_PHRASE:
+                soft_phrase_idx_set.add(i)
+        return soft_phrase_idx_set
+
+    def add_soft_phrase_penalties(
+        self,
+        i: int,
+        tlist: qmod.TokenList,
+        soft_phrase_idx_set: Set[int]
+    ) -> None:
+        """This function adds penalties to tokens based on the presence of soft phrases.
+        """
+        for key in soft_phrase_idx_set:
+            if i < key and key < tlist.end:
+                tlist.add_penalty(0.5)
 
     def rerank_tokens(self, query: qmod.QueryStruct, parts: QueryParts) -> None:
         """ Add penalties to tokens that depend on presence of other token.
         """
+        soft_phrase_idx_set = self.collect_soft_phrase_indexes(query)
+
         for i, node, tlist in query.iter_token_lists():
+            self.add_soft_phrase_penalties(i, tlist, soft_phrase_idx_set)
             if tlist.ttype == qmod.TokenType.POSTCODE:
                 for repl in node.starting:
                     if repl.end == tlist.end and repl.ttype != qmod.TokenType.POSTCODE \

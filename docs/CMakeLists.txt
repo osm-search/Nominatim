@@ -11,6 +11,7 @@ set (DOC_SOURCES
      develop
      api
      customize
+     library
      index.md
      extra.css
      styles.css

@@ -35,6 +35,10 @@ nav:
         - 'Special Phrases': 'customize/Special-Phrases.md'
         - 'External data: US housenumbers from TIGER': 'customize/Tiger.md'
         - 'External data: Postcodes': 'customize/Postcodes.md'
+    - 'Library Guide':
+        - 'Introduction': 'library/Introduction.md'
+        - 'Getting Started': 'library/Getting-Started.md'
+        - 'Reference': 'library/Reference.md'
     - 'Developers Guide':
         - 'Architecture Overview' : 'develop/overview.md'
         - 'Database Layout' : 'develop/Database-Layout.md'

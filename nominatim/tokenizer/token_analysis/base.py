@@ -28,8 +28,8 @@ class Analyzer(Protocol):
 
             Returns:
                 ID string with a canonical form of the name. The string may
-                be empty, when the analyzer cannot analyze the name at all,
-                for example because the character set in use does not match.
+                    be empty, when the analyzer cannot analyze the name at all,
+                    for example because the character set in use does not match.
         """
 
     def compute_variants(self, canonical_id: str) -> List[str]:
@@ -42,13 +42,13 @@ class Analyzer(Protocol):
 
             Returns:
                 A list of possible spelling variants. All strings must have
-                been transformed with the global normalizer and
-                transliterator ICU rules. Otherwise they cannot be matched
-                against the input by the query frontend.
-                The list may be empty, when there are no useful
-                spelling variants. This may happen when an analyzer only
-                usually outputs additional variants to the canonical spelling
-                and there are no such variants.
+                    been transformed with the global normalizer and
+                    transliterator ICU rules. Otherwise they cannot be matched
+                    against the input by the query frontend.
+                    The list may be empty, when there are no useful
+                    spelling variants. This may happen when an analyzer only
+                    usually outputs additional variants to the canonical spelling
+                    and there are no such variants.
         """
 
 
@@ -74,8 +74,8 @@ class AnalysisModule(Protocol):
 
             Returns:
                 A data object with configuration data. This will be handed
-                as is into the `create()` function and may be
-                used freely by the analysis module as needed.
+                    as is into the `create()` function and may be
+                    used freely by the analysis module as needed.
         """
 
     def create(self, normalizer: Any, transliterator: Any, config: Any) -> Analyzer:
@@ -92,5 +92,5 @@ class AnalysisModule(Protocol):
 
             Returns:
                 A new analyzer instance. This must be an object that implements
-                the Analyzer protocol.
+                    the Analyzer protocol.
         """

@@ -59,7 +59,8 @@ plugins:
     - search
     - mkdocstrings:
         handlers:
-          python-legacy:
-            rendering:
-              show_source: false
-              show_signature_annotations: false
+          python:
+            paths: ["${PROJECT_SOURCE_DIR}"]
+            options:
+              show_source: False
+              show_bases: False

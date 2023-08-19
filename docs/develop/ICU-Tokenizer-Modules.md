@@ -54,7 +54,7 @@ the function.
 
 ::: nominatim.tokenizer.sanitizers.config.SanitizerConfig
     options:
-        heading_level: 3
+        heading_level: 6
 
 ### The main filter function of the sanitizer
 
@@ -75,14 +75,14 @@ adding extra attributes) or completely replace the list with a different one.
 
 ::: nominatim.data.place_info.PlaceInfo
     options:
-        heading_level: 3
+        heading_level: 6
 
 
 #### PlaceName - extended naming information
 
 ::: nominatim.data.place_name.PlaceName
     options:
-        heading_level: 3
+        heading_level: 6
 
 
 ### Example: Filter for US street prefixes
@@ -141,12 +141,12 @@ They can be found in the directory
 
 ::: nominatim.tokenizer.token_analysis.base.AnalysisModule
     options:
-        heading_level: 3
+        heading_level: 6
 
 
 ::: nominatim.tokenizer.token_analysis.base.Analyzer
     options:
-        heading_level: 3
+        heading_level: 6
 
 ### Example: Creating acronym variants for long names
 

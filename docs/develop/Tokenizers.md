@@ -135,13 +135,13 @@ and implement the abstract functions defined there.
 
 ::: nominatim.tokenizer.base.AbstractTokenizer
     options:
-        heading_level: 3
+        heading_level: 6
 
 ### Python Analyzer Class
 
 ::: nominatim.tokenizer.base.AbstractAnalyzer
     options:
-        heading_level: 3
+        heading_level: 6
 
 ### PL/pgSQL Functions
 

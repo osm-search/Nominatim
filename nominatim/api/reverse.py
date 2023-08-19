@@ -87,7 +87,7 @@ def _locate_interpolation(table: SaFromClause) -> SaLabel:
 def _is_address_point(table: SaFromClause) -> SaColumn:
     return sa.and_(table.c.rank_address == 30,
                    sa.or_(table.c.housenumber != None,
-                          table.c.name.has_key('housename')))
+                          table.c.name.has_key('addr:housename')))
 
 
 def _get_closest(*rows: Optional[SaRow]) -> Optional[SaRow]:

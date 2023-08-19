@@ -111,7 +111,7 @@ def _filter_by_layer(table: SaFromClause, layers: DataLayer) -> SaColumn:
         orexpr.append(table.c.rank_address.between(1, 29))
         orexpr.append(sa.and_(table.c.rank_address == 30,
                               sa.or_(table.c.housenumber != None,
-                                     table.c.address.has_key('housename'))))
+                                     table.c.address.has_key('addr:housename'))))
     elif layers & DataLayer.POI:
         orexpr.append(sa.and_(table.c.rank_address == 30,
                               table.c.class_.not_in(('place', 'building'))))

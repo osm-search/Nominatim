@@ -419,7 +419,7 @@ class SearchDetails(LookupDetails):
     """
     excluded: List[int] = dataclasses.field(default_factory=list,
                                             metadata={'transform': format_excluded})
-    """ List of OSM objects to exclude from the results. Currenlty only
+    """ List of OSM objects to exclude from the results. Currently only
         works when the internal place ID is given.
         An empty list (the default) will disable this filter.
     """

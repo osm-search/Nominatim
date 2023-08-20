@@ -60,7 +60,8 @@ def test_reverse_ignore_unindexed(apiobj):
                                               (0.7, napi.DataLayer.RAILWAY, 226),
                                               (0.7, napi.DataLayer.NATURAL, 227),
                                               (0.70003, napi.DataLayer.MANMADE | napi.DataLayer.RAILWAY, 225),
-                                              (0.70003, napi.DataLayer.MANMADE | napi.DataLayer.NATURAL, 225)])
+                                              (0.70003, napi.DataLayer.MANMADE | napi.DataLayer.NATURAL, 225),
+                                              (5, napi.DataLayer.ADDRESS, 229)])
 def test_reverse_rank_30_layers(apiobj, y, layer, place_id):
     apiobj.add_placex(place_id=223, class_='place', type='house',
                       housenumber='1',
@@ -83,6 +84,11 @@ def test_reverse_rank_30_layers(apiobj, y, layer, place_id):
                       rank_address=0,
                       rank_search=30,
                       centroid=(1.3, 0.70005))
+    apiobj.add_placex(place_id=229, class_='place', type='house',
+                      name={'addr:housename': 'Old Cottage'},
+                      rank_address=30,
+                      rank_search=30,
+                      centroid=(1.3, 5))
 
     assert apiobj.api.reverse((1.3, y), layers=layer).place_id == place_id
 

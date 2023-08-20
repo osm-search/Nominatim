@@ -47,17 +47,22 @@ def flatten_config_list(content: Any, section: str = '') -> List[Any]:
 
 
 class Configuration:
-    """ Load and manage the project configuration.
+    """ The `Configuration` class wraps access to the local configuration
+        options as described in the [Configuration page](../customize/Settings.md).
 
         Nominatim uses dotenv to configure the software. Configuration options
         are resolved in the following order:
 
-         * from the OS environment (or the dictionary given in `environ`)
-         * from the .env file in the project directory of the installation
-         * from the default installation in the configuration directory
+        * from the OS environment (or the dictionary given in `environ`)
+        * from the .env file in the project directory of the installation
+        * from the default installation in the configuration directory
 
         All Nominatim configuration options are prefixed with 'NOMINATIM_' to
-        avoid conflicts with other environment variables.
+        avoid conflicts with other environment variables. All settings can
+        be accessed as properties of the class under the same name as the
+        setting but with the `NOMINATIM_` prefix removed. In addition, there
+        are accessor functions that convert the setting values to types
+        other than string.
     """
 
     def __init__(self, project_dir: Optional[Path],
@@ -101,12 +106,29 @@ class Configuration:
         """ Return the given configuration parameter as a boolean.
             Values of '1', 'yes' and 'true' are accepted as truthy values,
             everything else is interpreted as false.
+
+            Parameters:
+              name: Name of the configuration parameter with the NOMINATIM_
+                prefix removed.
+
+            Returns:
+              `True` for values of '1', 'yes' and 'true', `False` otherwise.
         """
         return getattr(self, name).lower() in ('1', 'yes', 'true')
 
 
     def get_int(self, name: str) -> int:
         """ Return the given configuration parameter as an int.
+
+            Parameters:
+              name: Name of the configuration parameter with the NOMINATIM_
+                prefix removed.
+
+            Returns:
+              The configuration value converted to int.
+
+            Raises:
+              ValueError: when the value is not a number.
         """
         try:
             return int(getattr(self, name))

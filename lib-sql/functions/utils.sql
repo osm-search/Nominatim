@@ -273,8 +273,8 @@ BEGIN
   END IF;
 
   RETURN ST_Envelope(ST_Collect(
-                     ST_Project(geom, radius, 0.785398)::geometry,
-                     ST_Project(geom, radius, 3.9269908)::geometry));
+                     ST_Project(geom::geography, radius, 0.785398)::geometry,
+                     ST_Project(geom::geography, radius, 3.9269908)::geometry));
 END;
 $$
 LANGUAGE plpgsql IMMUTABLE;

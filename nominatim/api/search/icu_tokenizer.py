@@ -217,16 +217,6 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
                                   for p in phrases)))
         return normalized
 
-    def split_key_japanese_phrases(
-        self, phrases: List[qmod.Phrase]
-    ) -> List[qmod.Phrase]:
-        """Split a Japanese address using japanese_tokenizer.
-        """
-        splited_address = list(filter(lambda p: p.text,
-                                (qmod.Phrase(p.ptype, icu_tokenizer_japanese.transliterate(p.text))
-                                for p in phrases)))
-        return splited_address
-
     def split_query(self, query: qmod.QueryStruct) -> Tuple[QueryParts, WordDict]:
         """ Transliterate the phrases and split them into tokens.
 

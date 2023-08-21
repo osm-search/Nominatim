@@ -30,7 +30,11 @@ class BreakType(enum.Enum):
         This may happen in languages without spaces between words.
     """
     SOFT_PHRASE = ':'
-
+    """ Break created as a result of a module of Japanese tokenization
+        (icu_tokenizer_japanese.py).
+        This may happen between the words administrative divisions:
+        cities, municipalities, and below.
+    """
 
 class TokenType(enum.Enum):
     """ Type of token.

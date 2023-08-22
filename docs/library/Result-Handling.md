@@ -14,6 +14,10 @@
 
 ## Localization
 
+Results are always returned with the full list of available names.
+
+### Locale
+
 ::: nominatim.api.Locales
     options:
         heading_level: 6

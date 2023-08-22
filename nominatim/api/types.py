@@ -22,18 +22,40 @@ from nominatim.errors import UsageError
 
 @dataclasses.dataclass
 class PlaceID:
-    """ Reference an object by Nominatim's internal ID.
+    """ Reference a place by Nominatim's internal ID.
+
+        A PlaceID may reference place from the main table placex, from
+        the interpolation tables or the postcode tables. Place IDs are not
+        stable between installations. You may use this type theefore only
+        with place IDs obtained from the same database.
     """
     place_id: int
+    """
+    The internal ID of the place to reference.
+    """
 
 
 @dataclasses.dataclass
 class OsmID:
-    """ Reference by the OSM ID and potentially the basic category.
+    """ Reference a place by its OSM ID and potentially the basic category.
+
+        The OSM ID may refer to places in the main table placex and OSM
+        interpolation lines.
     """
     osm_type: str
+    """ OSM type of the object. Must be one of `N`(node), `W`(way) or
+        `R`(relation).
+    """
     osm_id: int
+    """ The OSM ID of the object.
+    """
     osm_class: Optional[str] = None
+    """ The same OSM object may appear multiple times in the database under
+        different categories. The optional class parameter allows to distinguish
+        the different categories and corresponds to the key part of the category.
+        If there are multiple objects in the database and `osm_class` is
+        left out, then one of the objects is returned at random.
+    """
 
     def __post_init__(self) -> None:
         if self.osm_type not in ('N', 'W', 'R'):
@@ -135,12 +157,15 @@ WKB_BBOX_HEADER_LE = b'\x01\x03\x00\x00\x20\xE6\x10\x00\x00\x01\x00\x00\x00\x05\
 WKB_BBOX_HEADER_BE = b'\x00\x20\x00\x00\x03\x00\x00\x10\xe6\x00\x00\x00\x01\x00\x00\x00\x05'
 
 class Bbox:
-    """ A bounding box in WSG84 projection.
+    """ A bounding box in WGS84 projection.
 
         The coordinates are available as an array in the 'coord'
         property in the order (minx, miny, maxx, maxy).
     """
     def __init__(self, minx: float, miny: float, maxx: float, maxy: float) -> None:
+        """ Create a new bounding box with the given coordinates in WGS84
+            projection.
+        """
         self.coords = (minx, miny, maxx, maxy)
 
 
@@ -197,7 +222,7 @@ class Bbox:
     @staticmethod
     def from_wkb(wkb: Union[None, str, bytes]) -> 'Optional[Bbox]':
         """ Create a Bbox from a bounding box polygon as returned by
-            the database. Return s None if the input value is None.
+            the database. Returns `None` if the input value is None.
         """
         if wkb is None:
             return None
@@ -259,13 +284,30 @@ class Bbox:
 
 
 class GeometryFormat(enum.Flag):
-    """ Geometry output formats supported by Nominatim.
+    """ All search functions support returning the full geometry of a place in
+        various formats. The internal geometry is converted by PostGIS to
+        the desired format and then returned as a string. It is possible to
+        request multiple formats at the same time.
     """
     NONE = 0
+    """ No geometry requested. Alias for a empty flag.
+    """
     GEOJSON = enum.auto()
+    """
+    [GeoJSON](https://geojson.org/) format
+    """
     KML = enum.auto()
+    """
+    [KML](https://en.wikipedia.org/wiki/Keyhole_Markup_Language) format
+    """
     SVG = enum.auto()
+    """
+    [SVG](http://www.w3.org/TR/SVG/paths.html) format
+    """
     TEXT = enum.auto()
+    """
+    [WKT](https://en.wikipedia.org/wiki/Well-known_text_representation_of_geometry) format
+    """
 
 
 class DataLayer(enum.Flag):

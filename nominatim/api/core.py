@@ -373,7 +373,8 @@ class NominatimAPI:
             or `None` if the place could not be found in the database.
 
             Parameters:
-              place: Description of the place to look up. See PlaceRef below
+              place: Description of the place to look up. See
+                     [Place identification](Input-Parameter-Types.md#place-identification)
                      for the various ways to reference a place.
 
             Other parameters:
@@ -455,7 +456,8 @@ class NominatimAPI:
             Each result is a dataclass with the fields detailed below.
 
             Parameters:
-              places: List of descriptions of the place to look up. See PlaceRef below
+              places: List of descriptions of the place to look up. See
+                      [Place identification](Input-Parameter-Types.md#place-identification)
                       for the various ways to reference a place.
 
             Other parameters:

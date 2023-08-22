@@ -47,10 +47,10 @@ class NominatimAPIAsync:
               project_dir: Path to the
                   [project directory](../admin/Import.md#creating-the-project-directory)
                   of the local Nominatim installation.
-              environ: Mapping of additional
-                  [configuration parameters](../customize/Settings.md).
-                  These will override default configuration and configuration
-                  from the project directory.
+              environ: Mapping of [configuration parameters](../customize/Settings.md).
+                  When set, replaces any configuration via environment variables.
+                  Settings in this mapping also have precedence over any
+                  parameters found in the `.env` file of the project directory.
               loop: The asyncio event loop that will be used when calling
                   functions. Only needed, when a custom event loop is used
                   and the Python version is 3.9 or earlier.
@@ -321,10 +321,10 @@ class NominatimAPI:
               project_dir: Path to the
                   [project directory](../admin/Import.md#creating-the-project-directory)
                   of the local Nominatim installation.
-              environ: Mapping of additional
-                  [configuration parameters](../customize/Settings.md).
-                  These will override default configuration and configuration
-                  from the project directory.
+              environ: Mapping of [configuration parameters](../customize/Settings.md).
+                  When set, replaces any configuration via environment variables.
+                  Settings in this mapping also have precedence over any
+                  parameters found in the `.env` file of the project directory.
         """
         self._loop = asyncio.new_event_loop()
         self._async_api = NominatimAPIAsync(project_dir, environ, loop=self._loop)

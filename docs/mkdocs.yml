@@ -36,9 +36,12 @@ nav:
         - 'External data: US housenumbers from TIGER': 'customize/Tiger.md'
         - 'External data: Postcodes': 'customize/Postcodes.md'
     - 'Library Guide':
-        - 'Introduction': 'library/Introduction.md'
         - 'Getting Started': 'library/Getting-Started.md'
-        - 'Reference': 'library/Reference.md'
+        - 'Nominatim API class': 'library/NominatimAPI.md'
+        - 'Configuration': 'library/Configuration.md'
+        - 'Input Parameter Types': 'library/Input-Parameter-Types.md'
+        - 'Result Handling': 'library/Result-Handling.md'
+        - 'Low-level DB Access': 'library/Low-Level-DB-Access.md'
     - 'Developers Guide':
         - 'Architecture Overview' : 'develop/overview.md'
         - 'Database Layout' : 'develop/Database-Layout.md'

@@ -643,13 +643,16 @@ class PlaceSearch(AbstractSearch):
                                       .label('importance'))
             sql = sql.order_by(sa.desc(sa.text('importance')))
         else:
-            sql = sql.order_by(penalty - sa.case((tsearch.c.importance > 0, tsearch.c.importance),
-                                  else_=0.75001-(sa.cast(tsearch.c.search_rank, sa.Float())/40)))
+            if self.expected_count < 10000:
+                sql = sql.order_by(penalty - sa.case((tsearch.c.importance > 0, tsearch.c.importance),
+                                                     else_=0.75001-(sa.cast(tsearch.c.search_rank, sa.Float())/40)))
             sql = sql.add_columns(t.c.importance)
 
 
-        sql = sql.add_columns(penalty.label('accuracy'))\
-                 .order_by(sa.text('accuracy'))
+        sql = sql.add_columns(penalty.label('accuracy'))
+
+        if self.expected_count < 10000:
+            sql = sql.order_by(sa.text('accuracy'))
 
         if self.housenumbers:
             hnr_regexp = f"\\m({'|'.join(self.housenumbers.values)})\\M"

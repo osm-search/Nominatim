@@ -67,7 +67,7 @@ def test_adaptor_parse_format_use_configured():
     adaptor = FakeAdaptor(params={'format': 'json'})
 
     assert adaptor.parse_format(napi.StatusResult, 'text') == 'json'
-    assert adaptor.content_type == 'application/json'
+    assert adaptor.content_type == 'application/json; charset=utf-8'
 
 
 def test_adaptor_parse_format_invalid_value():
@@ -132,7 +132,7 @@ class TestAdaptorRaiseError:
 
 
     def test_json(self):
-        self.adaptor.content_type = 'application/json'
+        self.adaptor.content_type = 'application/json; charset=utf-8'
 
         err = self.run_raise_error('TEST', 501)
 
@@ -189,7 +189,7 @@ def test_build_response_with_status():
     assert isinstance(resp, FakeResponse)
     assert resp.status == 404
     assert resp.output == 'stuff\nmore stuff'
-    assert resp.content_type == 'application/json'
+    assert resp.content_type == 'application/json; charset=utf-8'
 
 
 def test_build_response_jsonp_with_json():
@@ -201,7 +201,7 @@ def test_build_response_jsonp_with_json():
     assert isinstance(resp, FakeResponse)
     assert resp.status == 200
     assert resp.output == 'test.func({})'
-    assert resp.content_type == 'application/javascript'
+    assert resp.content_type == 'application/javascript; charset=utf-8'
 
 
 def test_build_response_jsonp_without_json():
@@ -270,7 +270,7 @@ class TestStatusEndpoint:
 
         assert isinstance(resp, FakeResponse)
         assert resp.status == 200
-        assert resp.content_type == 'application/json'
+        assert resp.content_type == 'application/json; charset=utf-8'
 
 
     @pytest.mark.asyncio

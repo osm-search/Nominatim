@@ -28,7 +28,7 @@ export DEBIAN_FRONTEND=noninteractive #DOCS:
                         php-cli php-pgsql php-intl libicu-dev python3-dotenv \
                         python3-psycopg2 python3-psutil python3-jinja2 \
                         python3-icu python3-datrie python3-sqlalchemy \
-                        python3-asyncpg git
+                        python3-asyncpg python3-yaml git
 
 #
 # System Configuration

@@ -35,6 +35,7 @@ For compiling:
   * [bzip2](http://www.bzip.org/)
   * [zlib](https://www.zlib.net/)
   * [ICU](http://site.icu-project.org/)
+  * [nlohmann/json](https://json.nlohmann.me/)
   * [Boost libraries](https://www.boost.org/), including system and filesystem
   * PostgreSQL client libraries
   * a recent C++ compiler (gcc 5+ or Clang 3.8+)

@@ -311,13 +311,33 @@ class GeometryFormat(enum.Flag):
 
 
 class DataLayer(enum.Flag):
-    """ Layer types that can be selected for reverse and forward search.
+    """ The `DataLayer` flag type defines the layers that can be selected
+        for reverse and forward search.
+    """
+    ADDRESS = enum.auto()
+    """ The address layer contains all places that have a fully qualified
+        address that includes a house number (or a house name equivalent,
+        for some addresses) and places that can be part of an address like
+        roads, cities, states.
     """
     POI = enum.auto()
-    ADDRESS = enum.auto()
+    """ Layer for points of interest like shops, restaurants but also
+        recycling bins or postboxes.
+    """
     RAILWAY = enum.auto()
-    MANMADE = enum.auto()
+    """ Layer with railway features including tracks and other infrastructure.
+        Note that in Nominatim's standard configuration, only very few railway
+        features are imported into the database. Thus a custom configuration
+        is required to make full use of this layer.
+    """
     NATURAL = enum.auto()
+    """ Layer with natural features like rivers, lakes and mountains.
+    """
+    MANMADE = enum.auto()
+    """ Layer with other human-made features and boundaries. This layer is
+        the catch-all and includes all features not covered by the other
+        layers. A typical example for this layer are national park boundaries.
+    """
 
 
 def format_country(cc: Any) -> List[str]:

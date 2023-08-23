@@ -617,10 +617,15 @@ class NominatimAPI:
             Other parameters:
               max_results (int): Maximum number of results to return. The
                 actual number of results may be less. (Default: 10)
-              min_rank (int): Lowest [address rank](../customize/Ranking.md#address-rank) to return.
-              max_rank (int): Highest address rank to return.
+              min_rank (int): Lowest permissible rank for the result.
+                For addressable places this is the minimum
+                [address rank](../customize/Ranking.md#address-rank). For all
+                other places the [search rank](../customize/Ranking.md#search-rank)
+                is used.
+              max_rank (int): Highest permissible rank for the result. See min_rank above.
               layers (enum): Defines the kind of data to take into account.
-                See description of layers below. (Default: addresses and POIs)
+                See [layers section](Input-Parameter-Types.md#layers) for details.
+                (Default: addresses and POIs)
               countries (list[str]): Restrict search to countries with the given
                 ISO 3166-1 alpha-2 country code. An empty list (the default)
                 disables this filter.
@@ -729,10 +734,15 @@ class NominatimAPI:
             Other parameters:
               max_results (int): Maximum number of results to return. The
                 actual number of results may be less. (Default: 10)
-              min_rank (int): Lowest [address rank](../customize/Ranking.md#address-rank) to return.
-              max_rank (int): Highest address rank to return.
+              min_rank (int): Lowest permissible rank for the result.
+                For addressable places this is the minimum
+                [address rank](../customize/Ranking.md#address-rank). For all
+                other places the [search rank](../customize/Ranking.md#search-rank)
+                is used.
+              max_rank (int): Highest permissible rank for the result. See min_rank above.
               layers (enum): Defines the kind of data to take into account.
-                See description of layers below. (Default: addresses and POIs)
+                See [layers section](Input-Parameter-Types.md#layers) for details.
+                (Default: addresses and POIs)
               countries (list[str]): Restrict search to countries with the given
                 ISO 3166-1 alpha-2 country code. An empty list (the default)
                 disables this filter. Do not use, when the country parameter
@@ -836,10 +846,15 @@ class NominatimAPI:
             Other parameters:
               max_results (int): Maximum number of results to return. The
                 actual number of results may be less. (Default: 10)
-              min_rank (int): Lowest [address rank](../customize/Ranking.md#address-rank) to return.
-              max_rank (int): Highest address rank to return.
+              min_rank (int): Lowest permissible rank for the result.
+                For addressable places this is the minimum
+                [address rank](../customize/Ranking.md#address-rank). For all
+                other places the [search rank](../customize/Ranking.md#search-rank)
+                is used.
+              max_rank (int): Highest permissible rank for the result. See min_rank above.
               layers (enum): Defines the kind of data to take into account.
-                See description of layers below. (Default: addresses and POIs)
+                See [layers section](Input-Parameter-Types.md#layers) for details.
+                (Default: addresses and POIs)
               countries (list[str]): Restrict search to countries with the given
                 ISO 3166-1 alpha-2 country code. An empty list (the default)
                 disables this filter.

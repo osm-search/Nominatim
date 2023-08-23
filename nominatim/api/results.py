@@ -46,32 +46,88 @@ def _mingle_name_tags(names: Optional[Dict[str, str]]) -> Optional[Dict[str, str
 
 
 class SourceTable(enum.Enum):
-    """ Enumeration of kinds of results.
+    """ The `SourceTable` type lists the possible sources a result can have.
     """
     PLACEX = 1
+    """ The placex table is the main source for result usually containing
+        OSM data.
+    """
     OSMLINE = 2
+    """ The osmline table contains address interpolations from OSM data.
+        Interpolation addresses are always approximate. The OSM id in the
+        result refers to the OSM way with the interpolation line object.
+    """
     TIGER = 3
+    """ TIGER address data contains US addresses imported on the side,
+        see [Installing TIGER data](../../customize/Tiger.md).
+        TIGER address are also interpolations. The addresses always refer
+        to a street from OSM data. The OSM id in the result refers to
+        that street.
+    """
     POSTCODE = 4
+    """ The postcode table contains artificial centroids for postcodes,
+        computed from the postcodes available with address points. Results
+        are always approximate.
+    """
     COUNTRY = 5
+    """ The country table provides a fallback, when country data is missing
+        in the OSM data.
+    """
 
 
 @dataclasses.dataclass
 class AddressLine:
-    """ Detailed information about a related place.
+    """ The `AddressLine` may contain the following fields about a related place
+        and its function as an address object. Most fields are optional.
+        Their presence depends on the kind and function of the address part.
     """
     place_id: Optional[int]
+    """ Internal ID of the place.
+    """
     osm_object: Optional[Tuple[str, int]]
+    """ OSM type and ID of the place, if such an object exists.
+    """
     category: Tuple[str, str]
+    """ Main category of the place, described by a key-value pair.
+    """
     names: Dict[str, str]
+    """ All available names for the place including references, alternative
+        names and translations.
+    """
     extratags: Optional[Dict[str, str]]
+    """ Any extra information available about the place. This is a dictionary
+        that usually contains OSM tag key-value pairs.
+    """
 
     admin_level: Optional[int]
+    """ The administrative level of a boundary as tagged in the input data.
+        This field is only meaningful for places of the category
+        (boundary, administrative).
+    """
     fromarea: bool
+    """ If true, then the exact area of the place is known. Without area
+        information, Nominatim has to make an educated guess if an address
+        belongs to one place or another.
+    """
     isaddress: bool
+    """ If true, this place should be considered for the final address display.
+        Nominatim will sometimes include more than one candidate for
+        the address in the list when it cannot reliably determine where the
+        place belongs. It will consider names of all candidates when searching
+        but when displaying the result, only the most likely candidate should
+        be shown.
+    """
     rank_address: int
+    """ [Address rank](../customize/Ranking.md#address-rank) of the place.
+    """
     distance: float
+    """ Distance in degrees between the result place and this address part.
+    """
 
     local_name: Optional[str] = None
+    """ Place holder for localization of this address part. See
+        [Localization](#localization) below.
+    """
 
 
 class AddressLines(List[AddressLine]):
@@ -80,7 +136,7 @@ class AddressLines(List[AddressLine]):
 
     def localize(self, locales: Locales) -> List[str]:
         """ Set the local name of address parts according to the chosen
-            locale. Return the list of local names without duplications.
+            locale. Return the list of local names without duplicates.
 
             Only address parts that are marked as isaddress are localized
             and returned.
@@ -99,11 +155,19 @@ class AddressLines(List[AddressLine]):
 
 @dataclasses.dataclass
 class WordInfo:
-    """ Detailed information about a search term.
+    """ Each entry in the list of search terms contains the
+        following detailed information.
     """
     word_id: int
+    """ Internal identifier for the word.
+    """
     word_token: str
+    """ Normalised and transliterated form of the word.
+        This form is used for searching.
+    """
     word: Optional[str] = None
+    """ Untransliterated form, if available.
+    """
 
 
 WordInfos = Sequence[WordInfo]

@@ -49,8 +49,14 @@ types for place identification. All types are dataclasses.
 
 ## Layers
 
+Layers allow to restrict the search result to thematic groups. This is
+orthogonal to restriction by address ranks, which groups places by their
+geographic extent.
+
+
 ::: nominatim.api.DataLayer
     options:
         heading_level: 6
+        members_order: source
 
 

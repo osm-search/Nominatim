@@ -174,116 +174,136 @@ This overrides the specified machine readable format. (Default: 0)
 ## Examples
 
 
-##### XML with kml polygon
+##### XML with KML polygon
 
-* [https://nominatim.openstreetmap.org/search?q=135+pilkington+avenue,+birmingham&format=xml&polygon_geojson=1&addressdetails=1](https://nominatim.openstreetmap.org/search?q=135+pilkington+avenue,+birmingham&format=xml&polygon_geojson=1&addressdetails=1)
+* [https://nominatim.openstreetmap.org/search?q=135+pilkington+avenue,+birmingham&format=xml&polygon_kml=1&addressdetails=1](https://nominatim.openstreetmap.org/search?q=135+pilkington+avenue,+birmingham&format=xml&polygon_kml=1&addressdetails=1)
 
 ```xml
-  <searchresults timestamp="Sat, 07 Nov 09 14:42:10 +0000" querystring="135 pilkington, avenue birmingham" polygon="true">
-    <place
-      place_id="1620612" osm_type="node" osm_id="452010817"
-      boundingbox="52.548641204834,52.5488433837891,-1.81612110137939,-1.81592094898224"
-      lat="52.5487429714954" lon="-1.81602098644987"
-      display_name="135, Pilkington Avenue, Wylde Green, City of Birmingham, West Midlands (county), B72, United Kingdom"
-      class="place" type="house">
-      <geokml>
-        <Polygon>
-          <outerBoundaryIs>
-            <LinearRing>
-              <coordinates>-1.816513,52.548756599999997 -1.816434,52.548747300000002 -1.816429,52.5487629 -1.8163717,52.548756099999999 -1.8163464,52.548834599999999 -1.8164599,52.548848100000001 -1.8164685,52.5488213 -1.8164913,52.548824000000003 -1.816513,52.548756599999997</coordinates>
-            </LinearRing>
-          </outerBoundaryIs>
-        </Polygon>
-      </geokml>
-      <house_number>135</house_number>
-      <road>Pilkington Avenue</road>
-      <village>Wylde Green</village>
-      <town>Sutton Coldfield</town>
-      <city>City of Birmingham</city>
-      <county>West Midlands (county)</county>
-      <postcode>B72</postcode>
-      <country>United Kingdom</country>
-      <country_code>gb</country_code>
-    </place>
-  </searchresults>
+<?xml version="1.0" encoding="UTF-8" ?>
+<searchresults timestamp="Tue, 08 Aug 2023 15:45:41 +00:00"
+               attribution="Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright"
+               querystring="135 pilkington avenue, birmingham"
+               more_url="https://nominatim.openstreetmap.org/search?q=135+pilkington+avenue%2C+birmingham&amp;polygon_kml=1&amp;addressdetails=1&amp;limit=20&amp;exclude_place_ids=125279639&amp;format=xml"
+               exclude_place_ids="125279639">
+  <place place_id="125279639"
+         osm_type="way"
+         osm_id="90394480"
+         lat="52.5487921"
+         lon="-1.8164308"
+         boundingbox="52.5487473,52.5488481,-1.8165130,-1.8163464"
+         place_rank="30"
+         address_rank="30"
+         display_name="135, Pilkington Avenue, Maney, Sutton Coldfield, Wylde Green, Birmingham, West Midlands Combined Authority, England, B72 1LH, United Kingdom"
+         class="building"
+         type="residential"
+         importance="9.999999994736442e-08">
+    <geokml>
+      <Polygon>
+        <outerBoundaryIs>
+          <LinearRing>
+            <coordinates>-1.816513,52.5487566 -1.816434,52.5487473 -1.816429,52.5487629 -1.8163717,52.5487561 -1.8163464,52.5488346 -1.8164599,52.5488481 -1.8164685,52.5488213 -1.8164913,52.548824 -1.816513,52.5487566</coordinates>
+          </LinearRing>
+        </outerBoundaryIs>
+      </Polygon>
+    </geokml>
+    <house_number>135</house_number>
+    <road>Pilkington Avenue</road>
+    <hamlet>Maney</hamlet>
+    <town>Sutton Coldfield</town>
+    <village>Wylde Green</village>
+    <city>Birmingham</city>
+    <ISO3166-2-lvl8>GB-BIR</ISO3166-2-lvl8>
+    <state_district>West Midlands Combined Authority</state_district>
+    <state>England</state>
+    <ISO3166-2-lvl4>GB-ENG</ISO3166-2-lvl4>
+    <postcode>B72 1LH</postcode>
+    <country>United Kingdom</country>
+    <country_code>gb</country_code>
+  </place>
+</searchresults>
 ```
 
 ##### JSON with SVG polygon
 
-[https://nominatim.openstreetmap.org/search/Unter%20den%20Linden%201%20Berlin?format=json&addressdetails=1&limit=1&polygon_svg=1](https://nominatim.openstreetmap.org/search/Unter%20den%20Linden%201%20Berlin?format=json&addressdetails=1&limit=1&polygon_svg=1)
+[https://nominatim.openstreetmap.org/search?q=Unter%20den%20Linden%201%20Berlin&format=json&addressdetails=1&limit=1&polygon_svg=1](https://nominatim.openstreetmap.org/search?q=Unter%20den%20Linden%201%20Berlin&format=json&addressdetails=1&limit=1&polygon_svg=1)
 
 ```json
-    {
-        "address": {
-            "city": "Berlin",
-            "city_district": "Mitte",
-            "construction": "Unter den Linden",
-            "continent": "European Union",
-            "country": "Deutschland",
-            "country_code": "de",
-            "house_number": "1",
-            "neighbourhood": "Scheunenviertel",
-            "postcode": "10117",
-            "public_building": "Kommandantenhaus",
-            "state": "Berlin",
-            "suburb": "Mitte"
-        },
-        "boundingbox": [
-            "52.5170783996582",
-            "52.5173187255859",
-            "13.3975105285645",
-            "13.3981599807739"
-        ],
-        "class": "amenity",
-        "display_name": "Kommandantenhaus, 1, Unter den Linden, Scheunenviertel, Mitte, Berlin, 10117, Deutschland, European Union",
-        "importance": 0.73606775332943,
-        "lat": "52.51719785",
-        "licence": "Data \u00a9 OpenStreetMap contributors, ODbL 1.0. https://www.openstreetmap.org/copyright",
-        "lon": "13.3978352028938",
-        "osm_id": "15976890",
-        "osm_type": "way",
-        "place_id": "30848715",
-        "svg": "M 13.397511 -52.517283599999999 L 13.397829400000001 -52.517299800000004 13.398131599999999 -52.517315099999998 13.398159400000001 -52.517112099999999 13.3975388 -52.517080700000001 Z",
-        "type": "public_building"
-    }
+[
+  {
+    "address": {
+      "ISO3166-2-lvl4": "DE-BE",
+      "borough": "Mitte",
+      "city": "Berlin",
+      "country": "Deutschland",
+      "country_code": "de",
+      "historic": "Kommandantenhaus",
+      "house_number": "1",
+      "neighbourhood": "Friedrichswerder",
+      "postcode": "10117",
+      "road": "Unter den Linden",
+      "suburb": "Mitte"
+    },
+    "boundingbox": [
+      "52.5170798",
+      "52.5173311",
+      "13.3975116",
+      "13.3981577"
+    ],
+    "class": "historic",
+    "display_name": "Kommandantenhaus, 1, Unter den Linden, Friedrichswerder, Mitte, Berlin, 10117, Deutschland",
+    "importance": 0.8135042058306902,
+    "lat": "52.51720765",
+    "licence": "Data © OpenStreetMap contributors, ODbL 1.0. https://osm.org/copyright",
+    "lon": "13.397834399325466",
+    "osm_id": 15976890,
+    "osm_type": "way",
+    "place_id": 108681845,
+    "svg": "M 13.3975116 -52.5172905 L 13.397549 -52.5170798 13.397715 -52.5170906 13.3977122 -52.5171064 13.3977392 -52.5171086 13.3977417 -52.5170924 13.3979655 -52.5171069 13.3979623 -52.5171233 13.3979893 -52.5171248 13.3979922 -52.5171093 13.3981577 -52.5171203 13.398121 -52.5173311 13.3978115 -52.5173103 Z",
+    "type": "house"
+  }
+]
 ```
 
 ##### JSON with address details
 
-[https://nominatim.openstreetmap.org/?addressdetails=1&q=bakery+in+berlin+wedding&format=json&limit=1](https://nominatim.openstreetmap.org/?addressdetails=1&q=bakery+in+berlin+wedding&format=json&limit=1)
+[https://nominatim.openstreetmap.org/search?addressdetails=1&q=bakery+in+berlin+wedding&format=jsonv2&limit=1](https://nominatim.openstreetmap.org/search?addressdetails=1&q=bakery+in+berlin+wedding&format=jsonv2&limit=1)
 
 ```json
-    {
-        "address": {
-            "bakery": "B\u00e4cker Kamps",
-            "city_district": "Mitte",
-            "continent": "European Union",
-            "country": "Deutschland",
-            "country_code": "de",
-            "footway": "Bahnsteig U6",
-            "neighbourhood": "Sprengelkiez",
-            "postcode": "13353",
-            "state": "Berlin",
-            "suburb": "Wedding"
-        },
-        "boundingbox": [
-            "52.5460929870605",
-            "52.5460968017578",
-            "13.3591794967651",
-            "13.3591804504395"
-        ],
-        "class": "shop",
-        "display_name": "B\u00e4cker Kamps, Bahnsteig U6, Sprengelkiez, Wedding, Mitte, Berlin, 13353, Deutschland, European Union",
-        "icon": "https://nominatim.openstreetmap.org/images/mapicons/shopping_bakery.p.20.png",
-        "importance": 0.201,
-        "lat": "52.5460941",
-        "licence": "Data \u00a9 OpenStreetMap contributors, ODbL 1.0. https://www.openstreetmap.org/copyright",
-        "lon": "13.35918",
-        "osm_id": "317179427",
-        "osm_type": "node",
-        "place_id": "1453068",
-        "type": "bakery"
-    }
+[
+  {
+    "address": {
+      "ISO3166-2-lvl4": "DE-BE",
+      "borough": "Mitte",
+      "city": "Berlin",
+      "country": "Deutschland",
+      "country_code": "de",
+      "neighbourhood": "Sprengelkiez",
+      "postcode": "13347",
+      "road": "Lindower Straße",
+      "shop": "Ditsch",
+      "suburb": "Wedding"
+    },
+    "addresstype": "shop",
+    "boundingbox": [
+      "52.5427201",
+      "52.5427654",
+      "13.3668619",
+      "13.3669442"
+    ],
+    "category": "shop",
+    "display_name": "Ditsch, Lindower Straße, Sprengelkiez, Wedding, Mitte, Berlin, 13347, Deutschland",
+    "importance": 9.99999999995449e-06,
+    "lat": "52.54274275",
+    "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+    "lon": "13.36690305710228",
+    "name": "Ditsch",
+    "osm_id": 437595031,
+    "osm_type": "way",
+    "place_id": 204751033,
+    "place_rank": 30,
+    "type": "bakery"
+  }
+]
 ```
 
 ##### GeoJSON

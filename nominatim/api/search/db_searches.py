@@ -627,6 +627,11 @@ class PlaceSearch(AbstractSearch):
                     sql = sql.where(tsearch.c.centroid.intersects(VIEWBOX_PARAM))
                 else:
                     sql = sql.where(tsearch.c.centroid.ST_Intersects_no_index(VIEWBOX_PARAM))
+            elif self.expected_count >= 10000:
+                if details.viewbox.area < 0.5:
+                    sql = sql.where(tsearch.c.centroid.intersects(VIEWBOX2_PARAM))
+                else:
+                    sql = sql.where(tsearch.c.centroid.ST_Intersects_no_index(VIEWBOX2_PARAM))
             else:
                 penalty += sa.case((t.c.geometry.intersects(VIEWBOX_PARAM), 0.0),
                                    (t.c.geometry.intersects(VIEWBOX2_PARAM), 1.0),
@@ -643,9 +648,11 @@ class PlaceSearch(AbstractSearch):
                                       .label('importance'))
             sql = sql.order_by(sa.desc(sa.text('importance')))
         else:
-            if self.expected_count < 10000:
-                sql = sql.order_by(penalty - sa.case((tsearch.c.importance > 0, tsearch.c.importance),
-                                                     else_=0.75001-(sa.cast(tsearch.c.search_rank, sa.Float())/40)))
+            if self.expected_count < 10000\
+               or (details.viewbox is not None and details.viewbox.area < 0.5):
+                sql = sql.order_by(
+                        penalty - sa.case((tsearch.c.importance > 0, tsearch.c.importance),
+                                    else_=0.75001-(sa.cast(tsearch.c.search_rank, sa.Float())/40)))
             sql = sql.add_columns(t.c.importance)
 
 

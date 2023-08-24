@@ -36,6 +36,8 @@ class NominatimAPIAsync:
                  environ: Optional[Mapping[str, str]] = None,
                  loop: Optional[asyncio.AbstractEventLoop] = None) -> None:
         self.config = Configuration(project_dir, environ)
+        self.query_timeout = self.config.get_int('QUERY_TIMEOUT') \
+                             if self.config.QUERY_TIMEOUT else None
         self.server_version = 0
 
         if sys.version_info >= (3, 10):
@@ -128,6 +130,7 @@ class NominatimAPIAsync:
         """
         try:
             async with self.begin() as conn:
+                conn.set_query_timeout(self.query_timeout)
                 status = await get_status(conn)
         except (PGCORE_ERROR, sa.exc.OperationalError):
             return StatusResult(700, 'Database connection failed')
@@ -142,6 +145,7 @@ class NominatimAPIAsync:
         """
         details = ntyp.LookupDetails.from_kwargs(params)
         async with self.begin() as conn:
+            conn.set_query_timeout(self.query_timeout)
             if details.keywords:
                 await make_query_analyzer(conn)
             return await get_detailed_place(conn, place, details)
@@ -154,6 +158,7 @@ class NominatimAPIAsync:
         """
         details = ntyp.LookupDetails.from_kwargs(params)
         async with self.begin() as conn:
+            conn.set_query_timeout(self.query_timeout)
             if details.keywords:
                 await make_query_analyzer(conn)
             return SearchResults(filter(None,
@@ -173,6 +178,7 @@ class NominatimAPIAsync:
 
         details = ntyp.ReverseDetails.from_kwargs(params)
         async with self.begin() as conn:
+            conn.set_query_timeout(self.query_timeout)
             if details.keywords:
                 await make_query_analyzer(conn)
             geocoder = ReverseGeocoder(conn, details)
@@ -187,6 +193,7 @@ class NominatimAPIAsync:
             raise UsageError('Nothing to search for.')
 
         async with self.begin() as conn:
+            conn.set_query_timeout(self.query_timeout)
             geocoder = ForwardGeocoder(conn, ntyp.SearchDetails.from_kwargs(params))
             phrases = [Phrase(PhraseType.NONE, p.strip()) for p in query.split(',')]
             return await geocoder.lookup(phrases)
@@ -204,6 +211,7 @@ class NominatimAPIAsync:
         """ Find an address using structured search.
         """
         async with self.begin() as conn:
+            conn.set_query_timeout(self.query_timeout)
             details = ntyp.SearchDetails.from_kwargs(params)
 
             phrases: List[Phrase] = []
@@ -260,6 +268,7 @@ class NominatimAPIAsync:
 
         details = ntyp.SearchDetails.from_kwargs(params)
         async with self.begin() as conn:
+            conn.set_query_timeout(self.query_timeout)
             if near_query:
                 phrases = [Phrase(PhraseType.NONE, p) for p in near_query.split(',')]
             else:

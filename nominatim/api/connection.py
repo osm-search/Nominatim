@@ -9,6 +9,7 @@ Extended SQLAlchemy connection class that also includes access to the schema.
 """
 from typing import cast, Any, Mapping, Sequence, Union, Dict, Optional, Set, \
                    Awaitable, Callable, TypeVar
+import asyncio
 
 import sqlalchemy as sa
 from sqlalchemy.ext.asyncio import AsyncConnection
@@ -34,6 +35,14 @@ class SearchConnection:
         self.t = tables # pylint: disable=invalid-name
         self._property_cache = properties
         self._classtables: Optional[Set[str]] = None
+        self.query_timeout: Optional[int] = None
+
+
+    def set_query_timeout(self, timeout: Optional[int]) -> None:
+        """ Set the timeout after which a query over this connection
+            is cancelled.
+        """
+        self.query_timeout = timeout
 
 
     async def scalar(self, sql: sa.sql.base.Executable,
@@ -42,7 +51,8 @@ class SearchConnection:
         """ Execute a 'scalar()' query on the connection.
         """
         log().sql(self.connection, sql, params)
-        return await self.connection.scalar(sql, params)
+        async with asyncio.timeout(self.query_timeout):
+            return await self.connection.scalar(sql, params)
 
 
     async def execute(self, sql: 'sa.Executable',
@@ -51,7 +61,8 @@ class SearchConnection:
         """ Execute a 'execute()' query on the connection.
         """
         log().sql(self.connection, sql, params)
-        return await self.connection.execute(sql, params)
+        async with asyncio.timeout(self.query_timeout):
+            return await self.connection.execute(sql, params)
 
 
     async def get_property(self, name: str, cached: bool = True) -> str:

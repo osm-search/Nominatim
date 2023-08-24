@@ -214,14 +214,14 @@ class SearchBuilder:
 
         # Partial term to frequent. Try looking up by rare full names first.
         name_fulls = self.query.get_tokens(name, TokenType.WORD)
-        fulls_count = sum(t.count for t in name_fulls) / (2**len(addr_partials))
+        fulls_count = sum(t.count for t in name_fulls)
         # At this point drop unindexed partials from the address.
         # This might yield wrong results, nothing we can do about that.
         if not partials_indexed:
             addr_tokens = [t.token for t in addr_partials if t.is_indexed]
             penalty += 1.2 * sum(t.penalty for t in addr_partials if not t.is_indexed)
         # Any of the full names applies with all of the partials from the address
-        yield penalty, fulls_count,\
+        yield penalty, fulls_count / (2**len(addr_partials)),\
               dbf.lookup_by_any_name([t.token for t in name_fulls], addr_tokens,
                                      'restrict' if fulls_count < 10000 else 'lookup_all')
 

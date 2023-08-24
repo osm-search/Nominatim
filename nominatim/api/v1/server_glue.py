@@ -25,17 +25,18 @@ from nominatim.api.v1.format import dispatch as formatting
 from nominatim.api.v1.format import RawDataList
 from nominatim.api.v1 import helpers
 
-CONTENT_TYPE = {
-  'text': 'text/plain; charset=utf-8',
-  'xml': 'text/xml; charset=utf-8',
-  'debug': 'text/html; charset=utf-8'
-}
+CONTENT_TEXT = 'text/plain; charset=utf-8'
+CONTENT_XML = 'text/xml; charset=utf-8'
+CONTENT_HTML = 'text/html; charset=utf-8'
+CONTENT_JSON = 'application/json; charset=utf-8'
+
+CONTENT_TYPE = {'text': CONTENT_TEXT, 'xml': CONTENT_XML, 'debug': CONTENT_HTML}
 
 class ASGIAdaptor(abc.ABC):
     """ Adapter class for the different ASGI frameworks.
         Wraps functionality over concrete requests and responses.
     """
-    content_type: str = 'text/plain; charset=utf-8'
+    content_type: str = CONTENT_TEXT
 
     @abc.abstractmethod
     def get(self, name: str, default: Optional[str] = None) -> Optional[str]:
@@ -85,13 +86,13 @@ class ASGIAdaptor(abc.ABC):
         """ Create a response from the given output. Wraps a JSONP function
             around the response, if necessary.
         """
-        if self.content_type == 'application/json' and status == 200:
+        if self.content_type == CONTENT_JSON and status == 200:
             jsonp = self.get('json_callback')
             if jsonp is not None:
                 if any(not part.isidentifier() for part in jsonp.split('.')):
                     self.raise_error('Invalid json_callback value')
                 output = f"{jsonp}({output})"
-                self.content_type = 'application/javascript'
+                self.content_type = 'application/javascript; charset=utf-8'
 
         return self.create_response(status, output, num_results)
 
@@ -101,16 +102,16 @@ class ASGIAdaptor(abc.ABC):
             message. The message will be formatted according to the
             output format chosen by the request.
         """
-        if self.content_type == 'text/xml; charset=utf-8':
+        if self.content_type == CONTENT_XML:
             msg = f"""<?xml version="1.0" encoding="UTF-8" ?>
                       <error>
                         <code>{status}</code>
                         <message>{msg}</message>
                       </error>
                    """
-        elif self.content_type == 'application/json':
+        elif self.content_type == CONTENT_JSON:
             msg = f"""{{"error":{{"code":{status},"message":"{msg}"}}}}"""
-        elif self.content_type == 'text/html; charset=utf-8':
+        elif self.content_type == CONTENT_HTML:
             loglib.log().section('Execution error')
             loglib.log().var_dump('Status', status)
             loglib.log().var_dump('Message', msg)
@@ -204,7 +205,7 @@ class ASGIAdaptor(abc.ABC):
         """
         if self.get_bool('debug', False):
             loglib.set_log_output('html')
-            self.content_type = 'text/html; charset=utf-8'
+            self.content_type = CONTENT_HTML
             return True
 
         return False
@@ -234,7 +235,7 @@ class ASGIAdaptor(abc.ABC):
             self.raise_error("Parameter 'format' must be one of: " +
                               ', '.join(formatting.list_formats(result_type)))
 
-        self.content_type = CONTENT_TYPE.get(fmt, 'application/json')
+        self.content_type = CONTENT_TYPE.get(fmt, CONTENT_JSON)
         return fmt
 
 

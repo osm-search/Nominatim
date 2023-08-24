@@ -51,8 +51,7 @@ class SearchConnection:
         """ Execute a 'scalar()' query on the connection.
         """
         log().sql(self.connection, sql, params)
-        async with asyncio.timeout(self.query_timeout):
-            return await self.connection.scalar(sql, params)
+        return await asyncio.wait_for(self.connection.scalar(sql, params), self.query_timeout)
 
 
     async def execute(self, sql: 'sa.Executable',
@@ -61,8 +60,7 @@ class SearchConnection:
         """ Execute a 'execute()' query on the connection.
         """
         log().sql(self.connection, sql, params)
-        async with asyncio.timeout(self.query_timeout):
-            return await self.connection.execute(sql, params)
+        return await asyncio.wait_for(self.connection.execute(sql, params), self.query_timeout)
 
 
     async def get_property(self, name: str, cached: bool = True) -> str:

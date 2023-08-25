@@ -9,6 +9,7 @@ Public interface to the search code.
 """
 from typing import List, Any, Optional, Iterator, Tuple
 import itertools
+import datetime as dt
 
 from nominatim.api.connection import SearchConnection
 from nominatim.api.types import SearchDetails
@@ -24,9 +25,11 @@ class ForwardGeocoder:
     """ Main class responsible for place search.
     """
 
-    def __init__(self, conn: SearchConnection, params: SearchDetails) -> None:
+    def __init__(self, conn: SearchConnection,
+                 params: SearchDetails, timeout: Optional[int]) -> None:
         self.conn = conn
         self.params = params
+        self.timeout = dt.timedelta(seconds=timeout or 1000000)
         self.query_analyzer: Optional[AbstractQueryAnalyzer] = None
 
 
@@ -71,6 +74,7 @@ class ForwardGeocoder:
         """
         log().section('Execute database searches')
         results = SearchResults()
+        end_time = dt.datetime.now() + self.timeout
 
         num_results = 0
         min_ranking = 1000.0
@@ -85,6 +89,8 @@ class ForwardGeocoder:
             log().result_dump('Results', ((r.accuracy, r) for r in results[num_results:]))
             num_results = len(results)
             prev_penalty = search.penalty
+            if dt.datetime.now() >= end_time:
+                break
 
         if results:
             min_ranking = min(r.ranking for r in results)

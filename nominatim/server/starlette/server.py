@@ -7,14 +7,14 @@
 """
 Server implementation using the starlette webserver framework.
 """
-from typing import Any, Optional, Mapping, Callable, cast, Coroutine
+from typing import Any, Optional, Mapping, Callable, cast, Coroutine, Dict, Awaitable
 from pathlib import Path
 import datetime as dt
 
 from starlette.applications import Starlette
 from starlette.routing import Route
 from starlette.exceptions import HTTPException
-from starlette.responses import Response
+from starlette.responses import Response, PlainTextResponse
 from starlette.requests import Request
 from starlette.middleware import Middleware
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
@@ -110,6 +110,13 @@ class FileLoggingMiddleware(BaseHTTPMiddleware):
         return response
 
 
+async def timeout_error(request: Request, #pylint: disable=unused-argument
+                        _: Exception) -> Response:
+    """ Error handler for query timeouts.
+    """
+    return PlainTextResponse("Query took too long to process.", status_code=503)
+
+
 def get_application(project_dir: Path,
                     environ: Optional[Mapping[str, str]] = None,
                     debug: bool = True) -> Starlette:
@@ -136,10 +143,15 @@ def get_application(project_dir: Path,
     if log_file:
         middleware.append(Middleware(FileLoggingMiddleware, file_name=log_file))
 
+    exceptions: Dict[Any, Callable[[Request, Exception], Awaitable[Response]]] = {
+        TimeoutError: timeout_error
+    }
+
     async def _shutdown() -> None:
         await app.state.API.close()
 
     app = Starlette(debug=debug, routes=routes, middleware=middleware,
+                    exception_handlers=exceptions,
                     on_shutdown=[_shutdown])
 
     app.state.API = NominatimAPIAsync(project_dir, environ)

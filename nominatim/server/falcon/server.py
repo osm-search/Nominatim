@@ -37,6 +37,17 @@ async def nominatim_error_handler(req: Request, resp: Response, #pylint: disable
     resp.content_type = exception.content_type
 
 
+async def timeout_error_handler(req: Request, resp: Response, #pylint: disable=unused-argument
+                                exception: TimeoutError, #pylint: disable=unused-argument
+                                _: Any) -> None:
+    """ Special error handler that passes message and content type as
+        per exception info.
+    """
+    resp.status = 503
+    resp.text = "Query took too long to process."
+    resp.content_type = 'text/plain; charset=utf-8'
+
+
 class ParamWrapper(api_impl.ASGIAdaptor):
     """ Adaptor class for server glue to Falcon framework.
     """
@@ -139,6 +150,7 @@ def get_application(project_dir: Path,
     app = App(cors_enable=api.config.get_bool('CORS_NOACCESSCONTROL'),
               middleware=middleware)
     app.add_error_handler(HTTPNominatimError, nominatim_error_handler)
+    app.add_error_handler(TimeoutError, timeout_error_handler)
 
     legacy_urls = api.config.get_bool('SERVE_LEGACY_URLS')
     for name, func in api_impl.ROUTES:

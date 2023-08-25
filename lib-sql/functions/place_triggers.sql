@@ -37,7 +37,7 @@ BEGIN
   -- Remove the place from the list of places to be deleted
   DELETE FROM place_to_be_deleted pdel
     WHERE pdel.osm_type = NEW.osm_type and pdel.osm_id = NEW.osm_id
-          and pdel.class = NEW.class;
+          and pdel.class = NEW.class and pdel.type = NEW.type;
 
   -- Have we already done this place?
   SELECT * INTO existing

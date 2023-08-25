@@ -194,7 +194,9 @@ class NominatimAPIAsync:
 
         async with self.begin() as conn:
             conn.set_query_timeout(self.query_timeout)
-            geocoder = ForwardGeocoder(conn, ntyp.SearchDetails.from_kwargs(params))
+            geocoder = ForwardGeocoder(conn, ntyp.SearchDetails.from_kwargs(params),
+                                       self.config.get_int('REQUEST_TIMEOUT') \
+                                         if self.config.REQUEST_TIMEOUT else None)
             phrases = [Phrase(PhraseType.NONE, p.strip()) for p in query.split(',')]
             return await geocoder.lookup(phrases)
 
@@ -252,7 +254,9 @@ class NominatimAPIAsync:
                 if amenity:
                     details.layers |= ntyp.DataLayer.POI
 
-            geocoder = ForwardGeocoder(conn, details)
+            geocoder = ForwardGeocoder(conn, details,
+                                       self.config.get_int('REQUEST_TIMEOUT') \
+                                         if self.config.REQUEST_TIMEOUT else None)
             return await geocoder.lookup(phrases)
 
 
@@ -276,7 +280,9 @@ class NominatimAPIAsync:
                 if details.keywords:
                     await make_query_analyzer(conn)
 
-            geocoder = ForwardGeocoder(conn, details)
+            geocoder = ForwardGeocoder(conn, details,
+                                       self.config.get_int('REQUEST_TIMEOUT') \
+                                         if self.config.REQUEST_TIMEOUT else None)
             return await geocoder.lookup_pois(categories, phrases)
 
 

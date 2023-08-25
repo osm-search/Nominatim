@@ -488,3 +488,26 @@ Feature: Tag evaluation
         Then placex contains exactly
           | object       | type     | admin_level |
           | R10:boundary | informal | 4           |
+
+
+    Scenario: Main tag and geometry is changed
+        When loading osm data
+          """
+          n1 x40 y40
+          n2 x40.0001 y40
+          n3 x40.0001 y40.0001
+          n4 x40 y40.0001
+          w5 Tbuilding=house,name=Foo Nn1,n2,n3,n4,n1
+          """
+        Then place contains exactly
+          | object      | type  |
+          | W5:building | house |
+
+        When updating osm data
+          """
+          n1 x39.999 y40
+          w5 Tbuilding=terrace,name=Bar Nn1,n2,n3,n4,n1
+          """
+        Then place contains exactly
+          | object      | type    |
+          | W5:building | terrace |

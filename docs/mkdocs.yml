@@ -1,5 +1,8 @@
 site_name: Nominatim Documentation
-theme: readthedocs
+theme:
+  name: material
+  features:
+    - navigation.tabs
 docs_dir: ${CMAKE_CURRENT_BINARY_DIR}
 site_url: https://nominatim.org
 repo_url: https://github.com/openstreetmap/Nominatim
@@ -58,7 +61,8 @@ markdown_extensions:
     - codehilite
     - admonition
     - pymdownx.superfences
-    - pymdownx.tabbed
+    - pymdownx.tabbed:
+        alternate_style: true
     - def_list
     - toc:
         permalink: 

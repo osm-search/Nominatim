@@ -30,7 +30,6 @@ under `/usr/local/share/nominatim/lib-python`. If you have installed
 Nominatim under a different prefix, adapt the `/usr/local/` part accordingly.
 You can also point the PYTHONPATH to the Nominatim source code.
 
-
 ### A simple search example
 
 To query the Nominatim database you need to first set up a connection. This

@@ -91,7 +91,7 @@ The option is only used by the Legacy tokenizer and ignored otherwise.
 | --------------     | --------------------------------------------------- |
 | **Description:**   | Tokenizer used for normalizing and parsing queries and names |
 | **Format:**        | string |
-| **Default:**       | legacy |
+| **Default:**       | icu |
 | **After Changes:** | cannot be changed after import |
 
 Sets the tokenizer type to use for the import. For more information on
@@ -147,29 +147,6 @@ in the state to make the new name searchable in conjunction with addresses.
 Setting this option to 'yes' means that Nominatim skips reindexing of contained
 objects when the area becomes too large.
 
-
-#### NOMINATIM_UPDATE_FORWARD_DEPENDENCIES
-
-| Summary            |                                                     |
-| --------------     | --------------------------------------------------- |
-| **Description:**   | Forward geometry changes to dependet objects |
-| **Format:**        | bool |
-| **Default:**       | no |
-| **Comment:**       | EXPERT ONLY. Must not be enabled after import. |
-
-The geometry of OSM ways and relations may change when a node that is part
-of the object is moved around. These changes are not propagated per default.
-The geometry of ways/relations is only updated the next time that the object
-itself is touched. When enabling this option, then dependent objects will
-be marked for update when one of its member objects changes.
-
-Enabling this option may slow down updates significantly.
-
-!!! warning
-    If you want to enable this option, it must be set already on import.
-    Do not enable this option on an existing database that was imported with
-    NOMINATIM_UPDATE_FORWARD_DEPENDENCIES=no.
-    Updates will become unusably slow.
 
 #### NOMINATIM_LANGUAGES
 
@@ -575,6 +552,8 @@ used.
 | **Format:**        | boolean |
 | **Default:**       | no |
 | **After Changes:** | run `nominatim refresh --website` |
+| **Comment:**       | PHP frontend only |
+
 
 This feature is currently undocumented and potentially broken.
 
@@ -587,6 +566,7 @@ This feature is currently undocumented and potentially broken.
 | **Format:**        | integer |
 | **Default:**       | 500 |
 | **After Changes:** | run `nominatim refresh --website` |
+| **Comment:**       | PHP frontend only |
 
 This setting defines the threshold over which a name is no longer considered
 as rare. When searching for places with rare names, only the name is used
@@ -636,6 +616,7 @@ Setting this parameter to 0 disables polygon output completely.
 | **Format:**        | boolean |
 | **Default:**       | no |
 | **After Changes:** | run `nominatim refresh --website` |
+| **Comment:**       | PHP frontend only |
 
 Enable to search elements just within countries.
 
@@ -643,6 +624,68 @@ When enabled, if, despite not finding a point within the static grid of countrie
 finds a geometry of a region, do not return the geometry.
 Return "Unable to geocode" instead.
 
+
+#### NOMINATIM_SERVE_LEGACY_URLS
+
+| Summary            |                                                     |
+| --------------     | --------------------------------------------------- |
+| **Description:**   | Enable serving via URLs with a .php suffix |
+| **Format:**        | boolean |
+| **Default:**       | yes |
+| **Comment:**       | Python frontend only |
+
+When enabled, then endpoints are reachable as `/<name>` as well as `/<name>.php`.
+This can be useful when you want to be backwards-compatible with previous
+versions of Nominatim.
+
+
+#### NOMINATIM_API_POOL_SIZE
+
+| Summary            |                                                     |
+| --------------     | --------------------------------------------------- |
+| **Description:**   | Number of parallel database connections per worker |
+| **Format:**        | number |
+| **Default:**       | 10 |
+| **Comment:**       | Python frontend only |
+
+Sets the maximum number of database connections available for a single instance
+of Nominatim. When configuring the maximum number of connections that your
+PostgreSQL database can handle, you need at least `<pool size> * <worker>`
+connections.
+
+#### NOMINATIM_QUERY_TIMEOUT
+
+| Summary            |                                                     |
+| --------------     | --------------------------------------------------- |
+| **Description:**   | Timeout for SQL queries to the database |
+| **Format:**        | number (seconds) |
+| **Default:**       | 10 |
+| **Comment:**       | Python frontend only |
+
+When this timeout is set, then all SQL queries that run longer than the
+specified numbers of seconds will be cancelled and the user receives a
+timeout exceptions. Users of the API see a 503 HTTP error.
+
+The timeout does ont apply when using the
+[low-level DB access](../library/Low-Level-DB-Access.md)
+of the library. A timeout can be manually set, if required.
+
+
+#### NOMINATIM_REQUEST_TIMEOUT
+
+| Summary            |                                                     |
+| --------------     | --------------------------------------------------- |
+| **Description:**   | Timeout for search queries |
+| **Format:**        | number (seconds) |
+| **Default:**       | 60 |
+| **Comment:**       | Python frontend only |
+
+When this timeout is set, a search query will finish sending queries
+to the database after the timeout has passed and immediately return the
+results gathered so far.
+
+Note that under high load you may observe that users receive different results
+than usual without seeing an error. This may cause some confusion.
 
 ### Logging Settings
 
@@ -687,3 +730,20 @@ given in seconds and corresponds to the time the query took executing in PHP.
 type contains the name of the endpoint used.
 
 Can be used as the same time as NOMINATIM_LOG_DB.
+
+#### NOMINATIM_DEBUG_SQL
+
+| Summary            |                                                     |
+| --------------     | --------------------------------------------------- |
+| **Description:**   | Enable printing of raw SQL by SQLAlchemy |
+| **Format:**        | boolean |
+| **Default:**       | no |
+| **Comment:**       | **For developers only.** |
+
+This settings enables
+[SQL debugging](https://docs.sqlalchemy.org/en/20/core/engines.html#dbengine-logging)
+by SQLAlchemy. This can be helpful when debugging some bugs with internal
+query handling. It should only be used together with the CLI query functions.
+Enabling it for server mode may have intended consequences. Use the `debug`
+parameter instead, which prints information on how the search is executed
+including SQL statements.

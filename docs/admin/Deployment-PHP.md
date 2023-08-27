@@ -1,4 +1,4 @@
-# Deploying Nominatim
+# Deploying Nominatim using the PHP frontend
 
 The Nominatim API is implemented as a PHP application. The `website/` directory
 in the project directory contains the configured website. You can serve this

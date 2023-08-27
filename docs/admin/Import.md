@@ -268,8 +268,9 @@ You can also run a search query, e.g. `http://localhost:8088/search.php?q=Berlin
 Note that search query is not supported for reverse-only imports. You can run a
 reverse query, e.g. `http://localhost:8088/reverse.php?lat=27.1750090510034&lon=78.04209025`.
 
-To run Nominatim via webservers like Apache or nginx, please read the
-[Deployment chapter](Deployment.md).
+To run Nominatim via webservers like Apache or nginx, please continue reading
+[Deploy the PHP frontend](Deployment-PHP.md) or
+[Deploy the Python frontend](Deployment-Python.md).
 
 ## Adding search through category phrases
 

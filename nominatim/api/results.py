@@ -59,7 +59,7 @@ class SourceTable(enum.Enum):
     """
     TIGER = 3
     """ TIGER address data contains US addresses imported on the side,
-        see [Installing TIGER data](../../customize/Tiger.md).
+        see [Installing TIGER data](../customize/Tiger.md).
         TIGER address are also interpolations. The addresses always refer
         to a street from OSM data. The OSM id in the result refers to
         that street.

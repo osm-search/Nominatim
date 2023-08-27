@@ -21,7 +21,6 @@ to instantiate a separate instance for each thread.
             - search_category
         heading_level: 6
         group_by_category: False
-        show_signature_annotations: True
 
 
 ### NominatimAPIAsync
@@ -35,4 +34,3 @@ to instantiate a separate instance for each thread.
             - begin
         heading_level: 6
         group_by_category: False
-        show_signature_annotations: True

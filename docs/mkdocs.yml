@@ -3,6 +3,7 @@ theme:
   name: material
   features:
     - navigation.tabs
+copyright: Copyright &copy; 2023 Nominatim developer community
 docs_dir: ${CMAKE_CURRENT_BINARY_DIR}
 site_url: https://nominatim.org
 repo_url: https://github.com/openstreetmap/Nominatim

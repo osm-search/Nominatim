@@ -29,3 +29,8 @@ th {
 
 .doc-children .doc-contents {
     margin-left: 3em;
+}
+
+.md-footer__inner {
+    display: none;
+}

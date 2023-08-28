@@ -1,35 +1,50 @@
 # Status
 
-Useful for checking if the service and database is running. The JSON output also shows
+Report on the state of the service and database. Useful for checking if the
+service is up and running. The JSON output also reports
 when the database was last updated.
+
+## Endpoint
+
+The status API has the following format:
+
+```
+https://nominatim.openstreetmap.org/status
+```
+
+!!! danger "Deprecation warning"
+    The API can also be used with the URL
+    `https://nominatim.openstreetmap.org/status.php`. This is now deprecated
+    and will be removed in future versions.
+
 
 ## Parameters
 
-* `format=[text|json]` (defaults to 'text')
+The status endpoint takes a single optional parameter:
+
+| Parameter | Value | Default |
+|-----------| ----- | ------- |
+| format    | one of: `text`, `json` | 'text' |
+
+Selects the output format. See below.
 
 
 ## Output
 
 #### Text format
 
-```
-   https://nominatim.openstreetmap.org/status.php
-```
+When everything is okay, a status code 200 is returned and a simple message: `OK`
 
-will return HTTP status code 200 and print `OK`.
-
-On error it will return HTTP status code 500 and print a message, e.g.
+On error it will return HTTP status code 500 and print a detailed error message, e.g.
 `ERROR: Database connection failed`.
 
 
 
 #### JSON format
 
-```
-   https://nominatim.openstreetmap.org/status.php?format=json
-```
+Always returns a HTTP code 200, when the status call could be executed.
 
-will return HTTP code 200 and a structure
+On success a JSON dictionary with the following structure is returned:
 
 ```json
   {
@@ -45,8 +60,8 @@ The `software_version` field contains the version of Nominatim used to serve
 the API. The `database_version` field contains the version of the data format
 in the database.
 
-On error will also return HTTP status code 200 and a structure with error
-code and message, e.g.
+On error will return a shorter JSON dictionary with the error message
+and status only, e.g.
 
 ```json
    {
@@ -54,14 +69,3 @@ code and message, e.g.
        "message": "Database connection failed"
    }
 ```
-
-Possible status codes are
-
-|     | message                        | notes                                                             |
-| --- | ------------------------------ | ----------------------------------------------------------------- |
-| 700 | "No database"                  | connection failed                                                 |
-| 701 | "Module failed"                | database could not load nominatim.so                              |
-| 702 | "Module call failed"           | nominatim.so loaded but calling a function failed                 |
-| 703 | "Query failed"                 | test query against a database table failed                        |
-| 704 | "No value"                     | test query worked but returned no results                         |
-| 705 | "Import date is not available" | No import dates were returned (enabling replication can fix this) |

@@ -2,13 +2,18 @@
 
 Show all details about a single place saved in the database.
 
+This API endpoint is meant for visual inspection of the data in the database
+and is meant for use with [Nominatim-UI](https://github.com/osm-search/nominatim-ui/).
+The parameters of the endpoint and the output may change occasionally between
+versions of Nominatim. Do not rely on the output in scripts or applications.
+
+
 !!! warning
-    The details page exists for debugging only. You may not use it in scripts
-    or to automatically query details about a result.
+    The details endpoint at https://nominatim.openstreetmap.org
+    may not used in scripts or bots at all.
     See [Nominatim Usage Policy](https://operations.osmfoundation.org/policies/nominatim/).
 
 
-## Parameters
 
 The details API supports the following two request formats:
 
@@ -35,59 +40,90 @@ for a place is different between Nominatim installation (servers) and
 changes when data gets reimported. Therefore it cannot be used as
 a permanent id and shouldn't be used in bug reports.
 
+!!! danger "Deprecation warning"
+    The API can also be used with the URL
+    `https://nominatim.openstreetmap.org/details.php`. This is now deprecated
+    and will be removed in future versions.
 
-Additional optional parameters are explained below.
+
+## Parameters
+
+This section lists additional optional parameters.
 
 ### Output format
 
-* `json_callback=<string>`
+| Parameter | Value | Default |
+|-----------| ----- | ------- |
+| json_callback | function name | _unset_ |
 
-Wrap JSON output in a callback function (JSONP) i.e. `<string>(<json>)`.
+When given, then JSON output will be wrapped in a callback function with
+the given name. See [JSONP](https://en.wikipedia.org/wiki/JSONP) for more
+information.
 
-* `pretty=[0|1]`
+| Parameter | Value | Default |
+|-----------| ----- | ------- |
+| pretty    | 0 or 1 | 0 |
 
-Add indentation to make it more human-readable. (Default: 0)
+`[PHP-only]` Add indentation to the output to make it more human-readable.
 
 
 ### Output details
 
-* `addressdetails=[0|1]`
+| Parameter | Value | Default |
+|-----------| ----- | ------- |
+| addressdetails | 0 or 1 | 0 |
 
-Include a breakdown of the address into elements. (Default: 0)
+When set to 1, include a breakdown of the address into elements.
 
-* `keywords=[0|1]`
+| Parameter | Value | Default |
+|-----------| ----- | ------- |
+| keywords  | 0 or 1 | 0 |
 
-Include a list of name keywords and address keywords (word ids). (Default: 0)
+When set to 1, include a list of name keywords and address keywords
+in the result.
 
-* `linkedplaces=[0|1]`
+| Parameter | Value | Default |
+|-----------| ----- | ------- |
+| linkedplaces  | 0 or 1 | 1 |
 
-Include a details of places that are linked with this one. Places get linked
+Include details of places that are linked with this one. Places get linked
 together when they are different forms of the same physical object. Nominatim
 links two kinds of objects together: place nodes get linked with the
 corresponding administrative boundaries. Waterway relations get linked together with their
 members.
-(Default: 1)
 
-* `hierarchy=[0|1]`
+| Parameter | Value | Default |
+|-----------| ----- | ------- |
+| hierarchy  | 0 or 1 | 0 |
 
-Include details of places lower in the address hierarchy. (Default: 0)
+Include details of places lower in the address hierarchy.
 
-* `group_hierarchy=[0|1]`
+`[Python-only]` will only return properly parented places. These are address
+or POI-like places that reuse the address of their parent street or place.
 
-For JSON output will group the places by type. (Default: 0)
+| Parameter | Value | Default |
+|-----------| ----- | ------- |
+| group_hierarchy  | 0 or 1 | 0 |
 
-* `polygon_geojson=[0|1]`
+When set to 1, the output of the address hierarchy will be
+grouped by type.
 
-Include geometry of result. (Default: 0)
+| Parameter | Value  | Default |
+|-----------| -----  | ------- |
+| polygon_geojson | 0 or 1 | 0 |
+
+
+Include geometry of result.
 
 ### Language of results
 
-* `accept-language=<browser language string>`
+| Parameter | Value | Default |
+|-----------| ----- | ------- |
+| accept-language | browser language string | content of "Accept-Language" HTTP header |
 
-Preferred language order for showing result, overrides the value
-specified in the "Accept-Language" HTTP header.
-Either use a standard RFC2616 accept-language string or a simple
-comma-separated list of language codes.
+Preferred language order for showing search results. This may either be
+a simple comma-separated list of language codes or have the same format
+as the ["Accept-Language" HTTP header](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Accept-Language).
 
 
 ## Examples

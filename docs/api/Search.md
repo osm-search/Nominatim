@@ -8,12 +8,12 @@ The search query may also contain
 which are translated into specific OpenStreetMap (OSM) tags (e.g. Pub => `amenity=pub`).
 This can be used to narrow down the kind of objects to be returned.
 
-!!! warning
+!!! note
     Special phrases are not suitable to query all objects of a certain type in an
     area. Nominatim will always just return a collection of the best matches. To
     download OSM data by object type, use the [Overpass API](https://overpass-api.de/).
 
-## Parameters
+## Endpoint
 
 The search API has the following format:
 
@@ -21,35 +21,62 @@ The search API has the following format:
    https://nominatim.openstreetmap.org/search?<params>
 ```
 
-The search term may be specified with two different sets of parameters:
+!!! danger "Deprecation warning"
+    The API can also be used with the URL
+    `https://nominatim.openstreetmap.org/search.php`. This is now deprecated
+    and will be removed in future versions.
 
-* `q=<query>`
+The query term can be given in two different forms: free-form or structured.
 
-    Free-form query string to search for.
-    Free-form queries are processed first left-to-right and then right-to-left if that fails. So you may search for
-    [pilkington avenue, birmingham](https://nominatim.openstreetmap.org/search?q=pilkington+avenue,birmingham) as well as for
-    [birmingham, pilkington avenue](https://nominatim.openstreetmap.org/search?q=birmingham,+pilkington+avenue).
-    Commas are optional, but improve performance by reducing the complexity of the search.
+### Free-form query
 
-* `amenity=<name and/or type of POI>`
-* `street=<housenumber> <streetname>`
-* `city=<city>`
-* `county=<county>`
-* `state=<state>`
-* `country=<country>`
-* `postalcode=<postalcode>`
+| Parameter | Value |
+|-----------| ----- |
+| q         | Free-form query string to search for |
 
-    Alternative query string format split into several parameters for structured requests.
-    Structured requests are faster but are less robust against alternative
-    OSM tagging schemas. **Do not combine with** `q=<query>` **parameter**.
+In this form, the query can be unstructured.
+Free-form queries are processed first left-to-right and then right-to-left if that fails. So you may search for
+[pilkington avenue, birmingham](https://nominatim.openstreetmap.org/search?q=pilkington+avenue,birmingham) as well as for
+[birmingham, pilkington avenue](https://nominatim.openstreetmap.org/search?q=birmingham,+pilkington+avenue).
+Commas are optional, but improve performance by reducing the complexity of the search.
 
-Both query forms accept the additional parameters listed below.
+The free-form may also contain special phrases to describe the type of
+place to be returned or a coordinate to search close to a position.
+
+### Structured query
+
+| Parameter  | Value |
+|----------- | ----- |
+| amenity    | name and/or type of POI |
+| street     | housenumber and streetname |
+| city       | city |
+| county     | county |
+| state      | state |
+| country    | country |
+| postalcode | postal code |
+
+The structured form of the search query allows to lookup up an address
+that is already split into its components. Each parameter represents a field
+of the address. All parameters are optional. You should only use the ones
+that are relevant for the address you want to geocode.
+
+!!! Attention
+    Cannot be combined with the `q=<query>` parameter. Newer versions of
+    the API will return an error if you do so. Older versions simply return
+    unexpected results.
+
+## Parameters
+
+The following parameters can be used to further restrict the search and
+change the output. They are usable for both forms of the search query.
 
 ### Output format
 
-* `format=[xml|json|jsonv2|geojson|geocodejson]`
+| Parameter | Value | Default |
+|-----------| ----- | ------- |
+| format    | one of: `xml`, `json`, `jsonv2`, `geojson`, `geocodejson` | `jsonv2` |
 
-See [Place Output Formats](Output.md) for details on each format. (Default: jsonv2)
+See [Place Output Formats](Output.md) for details on each format.
 
 !!! note
     The Nominatim service at
@@ -57,52 +84,148 @@ See [Place Output Formats](Output.md) for details on each format. (Default: json
     has a different default behaviour for historical reasons. When the
     `format` parameter is omitted, the request will be forwarded to the Web UI.
 
-* `json_callback=<string>`
 
-Wrap JSON output in a callback function ([JSONP](https://en.wikipedia.org/wiki/JSONP)) i.e. `<string>(<json>)`.
+| Parameter | Value | Default |
+|-----------| ----- | ------- |
+| json_callback | function name | _unset_ |
+
+When given, then JSON output will be wrapped in a callback function with
+the given name. See [JSONP](https://en.wikipedia.org/wiki/JSONP) for more
+information.
+
 Only has an effect for JSON output formats.
+
+| Parameter | Value | Default |
+|-----------| ----- | ------- |
+| limit     | number | 10 |
+
+Limit the maximum number of returned results. Cannot be more than 40.
+Nominatim may decide to return less results than given, if additional
+results do not sufficiently match the query.
+
 
 ### Output details
 
-* `addressdetails=[0|1]`
+| Parameter | Value | Default |
+|-----------| ----- | ------- |
+| addressdetails | 0 or 1 | 0 |
 
-Include a breakdown of the address into elements. (Default: 0)
+When set to 1, include a breakdown of the address into elements.
+The exact content of the address breakdown depends on the output format.
+
+!!! tip
+    If you are interested in a stable classification of address categories
+    (suburb, city, state, etc), have a look at the `geocodejson` format.
+    All other formats return classifications according to OSM tagging.
+    There is a much larger set of categories and they are not always consistent,
+    which makes them very hard to work with.
 
 
-* `extratags=[0|1]`
+| Parameter | Value | Default |
+|-----------| ----- | ------- |
+| extratags | 0 or 1 | 0 |
 
-Include additional information in the result if available,
-e.g. wikipedia link, opening hours. (Default: 0)
+When set to 1, the response include any additional information in the result
+that is available in the database, e.g. wikipedia link, opening hours.
 
 
-* `namedetails=[0|1]`
+| Parameter | Value | Default |
+|-----------| ----- | ------- |
+| namedetails | 0 or 1 | 0 |
 
-Include a list of alternative names in the results. These may include
-language variants, references, operator and brand. (Default: 0)
+When set to 1, include a full list of names for the result. These may include
+language variants, older names, references and brand.
 
 
 ### Language of results
 
-* `accept-language=<browser language string>`
+| Parameter | Value | Default |
+|-----------| ----- | ------- |
+| accept-language | browser language string | content of "Accept-Language" HTTP header |
 
-Preferred language order for showing search results, overrides the value
-specified in the ["Accept-Language" HTTP header](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Accept-Language).
-Either use a standard RFC2616 accept-language string or a simple
-comma-separated list of language codes.
+Preferred language order for showing search results. This may either be
+a simple comma-separated list of language codes or have the same format
+as the ["Accept-Language" HTTP header](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Accept-Language).
 
-### Result limitation
+!!! tip
+    First-time users of Nominatim tend to be confused that they get different
+    results when using Nominatim in the browser versus in a command-line tool
+    like wget or curl. The command-line tools
+    usually don't send any Accept-Language header, prompting Nominatim
+    to show results in the local language. Browsers on the contratry always
+    send the currently chosen browser language.
 
-* `countrycodes=<countrycode>[,<countrycode>][,<countrycode>]...`
+### Result restriction
 
-Limit search results to one or more countries. `<countrycode>` must be the
-[ISO 3166-1alpha2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2) code,
-e.g. `gb` for the United Kingdom, `de` for Germany.
+There are two ways to influence the results. *Filters* exclude certain
+kinds of results completely. *Boost parameters* only change the order of the
+results and thus give a preference to some results over others.
+
+| Parameter | Value | Default |
+|-----------| ----- | ------- |
+| countrycodes | comma-separated list of country codes | _unset_ |
+
+Filer that limits the search results to one or more countries.
+The country code must be the
+[ISO 3166-1alpha2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2) code
+of the country, e.g. `gb` for the United Kingdom, `de` for Germany.
 
 Each place in Nominatim is assigned to one country code based
 on OSM country boundaries. In rare cases a place may not be in any country
-at all, for example, in international waters.
+at all, for example, when it is in international waters. These places are
+also excluded when the filter is set.
 
-* `exclude_place_ids=<place_id,[place_id],[place_id]`
+!!! Note
+    This parameter should not be confused with the 'country' parameter of
+    the structured query. The 'country' parameter contains a search term
+    and will be handled with some fuzziness. The `countrycodes` parameter
+    is a hard filter and as such should be prefered. Having both parameters
+    in the same query will work. If the parameters contradict each other,
+    the search will come up empty.
+
+| Parameter | Value | Default |
+|-----------| ----- | ------- |
+| layers    | comma-separated list of: `address`, `poi`, `railway`, `natural`, `manmade` | _unset_ (no restriction) |
+
+The layers filter allows to select places by themes.
+
+The `address` layer contains all places that make up an address:
+address points with house numbers, streets, inhabited places (suburbs, villages,
+cities, states tec.) and administrative boundaries.
+
+The `poi` layer selects all point of interest. This includes classic POIs like
+restaurants, shops, hotels but also less obvious features like recycling bins,
+guideposts or benches.
+
+The `railway` layer includes railway infrastructure like tracks.
+Note that in Nominatim's standard configuration, only very few railway
+features are imported into the database.
+
+The `natural` layer collects feautures like rivers, lakes and mountains. While
+the `manmade` layer functions as a catch-all for features not covered by the
+other layers.
+
+| Parameter | Value | Default |
+|-----------| ----- | ------- |
+| featureType | one of: `country`, `state`, `city`, `settlement` | _unset_ |
+
+The featureType allows to have a more fine-grained selection for places
+from the address layer. Results can be restricted to places that make up
+the 'state', 'country' or 'city' part of an address. A featureType of
+settlement selects any human inhabited feature from 'state' down to
+'neighbourhood'.
+
+When featureType ist set, then results are automatically restricted
+to the address layer (see above).
+
+!!! tip
+    Instead of using the featureType filters `country`, `state` or `city`,
+    you can also use a structured query without the finer-grained parameters
+    amenity or street.
+
+| Parameter | Value | Default |
+|-----------| ----- | ------- |
+| exclude_place_ids | comma-separeted list of place ids |
 
 If you do not want certain OSM objects to appear in the search
 result, give a comma separated list of the `place_id`s you want to skip.
@@ -110,65 +233,77 @@ This can be used to retrieve additional search results. For example, if a
 previous query only returned a few results, then including those here would
 cause the search to return other, less accurate, matches (if possible).
 
+| Parameter | Value | Default |
+|-----------| ----- | ------- |
+| viewbox   | `<x1>,<y1>,<x2>,<y2>` | _unset_ |
 
-* `limit=<integer>`
+Boost parameter which focuses the search on the given area.
+Any two corner points of the box are accepted as long as they make a proper
+box. `x` is longitude, `y` is latitude.
 
-Limit the number of returned results. (Default: 10, Maximum: 50)
+| Parameter | Value  | Default |
+|-----------| -----  | ------- |
+| bounded   | 0 or 1 | 0       |
 
+When set to 1, then it turns the 'viewbox' parameter (see above) into
+a filter paramter, excluding any results outside the viewbox.
 
-* `viewbox=<x1>,<y1>,<x2>,<y2>`
-
-The preferred area to find search results. Any two corner points of the box
-are accepted as long as they span a real box. `x` is longitude,
-`y` is latitude.
-
-
-* `bounded=[0|1]`
-
-When a viewbox is given, restrict the result to items contained within that
-viewbox (see above). When `viewbox` and `bounded=1` are given, an amenity
-only search is allowed. Give the special keyword for the amenity in square
+When `bounded=1` is given and the viewbox is small enough, then an amenity-only
+search is allowed. Give the special keyword for the amenity in square
 brackets, e.g. `[pub]` and a selection of objects of this type is returned.
-There is no guarantee that the result is complete. (Default: 0)
+There is no guarantee that the result returns all objects in the area.
 
 
 ### Polygon output
 
-* `polygon_geojson=1`
-* `polygon_kml=1`
-* `polygon_svg=1`
-* `polygon_text=1`
+| Parameter | Value  | Default |
+|-----------| -----  | ------- |
+| polygon_geojson | 0 or 1 | 0 |
+| polygon_kml     | 0 or 1 | 0 |
+| polygon_svg     | 0 or 1 | 0 |
+| polygon_text    | 0 or 1 | 0 |
 
-Output geometry of results as a GeoJSON, KML, SVG or WKT. Only one of these
-options can be used at a time. (Default: 0)
+Add the full geometry of the place to the result output. Output formats
+in GeoJSON, KML, SVG or WKT are supported. Only one of these
+options can be used at a time.
 
-* `polygon_threshold=0.0`
+| Parameter | Value  | Default |
+|-----------| -----  | ------- |
+| polygon_threshold | floating-point number | 0.0 |
 
-Return a simplified version of the output geometry. The parameter is the
+When one og the polygon_* outputs is chosen, return a simplified version
+of the output geometry. The parameter describes the
 tolerance in degrees with which the geometry may differ from the original
-geometry. Topology is preserved in the result. (Default: 0.0)
+geometry. Topology is preserved in the geometry.
 
 ### Other
 
-* `email=<valid email address>`
+| Parameter | Value  | Default |
+|-----------| -----  | ------- |
+| email     | valid email address | _unset_ |
 
 If you are making large numbers of request please include an appropriate email
-address to identify your requests. See Nominatim's [Usage Policy](https://operations.osmfoundation.org/policies/nominatim/) for more details.
+address to identify your requests. See Nominatim's
+[Usage Policy](https://operations.osmfoundation.org/policies/nominatim/) for more details.
 
-* `dedupe=[0|1]`
+| Parameter | Value  | Default |
+|-----------| -----  | ------- |
+| dedupe    | 0 or 1 | 1       |
 
 Sometimes you have several objects in OSM identifying the same place or
 object in reality. The simplest case is a street being split into many
 different OSM ways due to different characteristics. Nominatim will
-attempt to detect such duplicates and only return one match unless
-this parameter is set to 0. (Default: 1)
+attempt to detect such duplicates and only return one match. Setting
+this parameter is set to 0 disables this deduplication mechanism and
+ensures that all results are returned.
 
-* `debug=[0|1]`
+| Parameter | Value  | Default |
+|-----------| -----  | ------- |
+| debug     | 0 or 1 | 0       |
 
 Output assorted developer debug information. Data on internals of Nominatim's
-"Search Loop" logic, and SQL queries. The output is (rough) HTML format.
-This overrides the specified machine readable format. (Default: 0)
-
+"search loop" logic, and SQL queries. The output is HTML format.
+This overrides the specified machine readable format.
 
 
 ## Examples

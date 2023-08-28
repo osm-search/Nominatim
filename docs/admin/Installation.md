@@ -54,6 +54,8 @@ For running Nominatim:
   * [PyICU](https://pypi.org/project/PyICU/)
   * [PyYaml](https://pyyaml.org/) (5.1+)
   * [datrie](https://github.com/pytries/datrie)
+
+When running the PHP frontend:
   * [PHP](https://php.net) (7.3+)
   * PHP-pgsql
   * PHP-intl (bundled with PHP)
@@ -83,7 +85,7 @@ Take into account that the OSM database is growing fast.
 Fast disks are essential. Using NVME disks is recommended.
 
 Even on a well configured machine the import of a full planet takes
-around 2 days. On traditional spinning disks, 7-8 days are more realistic.
+around 2 days. When using traditional SSDs, 4-5 days are more realistic.
 
 ## Tuning the PostgreSQL database
 
@@ -114,15 +116,6 @@ you might consider setting:
 
 and even reduce `autovacuum_work_mem` further. This will reduce the amount
 of memory that autovacuum takes away from the import process.
-
-For the initial import, you should also set:
-
-    fsync = off
-    full_page_writes = off
-
-Don't forget to re-enable them after the initial import or you risk database
-corruption.
-
 
 ## Downloading and building Nominatim
 

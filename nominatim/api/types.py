@@ -315,8 +315,8 @@ class DataLayer(enum.Flag):
         for reverse and forward search.
     """
     ADDRESS = enum.auto()
-    """ The address layer contains all places that have a fully qualified
-        address that includes a house number (or a house name equivalent,
+    """ The address layer contains all places relavant for addresses:
+        fully qualified addresses with a house number (or a house name equivalent,
         for some addresses) and places that can be part of an address like
         roads, cities, states.
     """

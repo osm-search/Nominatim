@@ -1,13 +1,13 @@
 # Low-level connections
 
 The `NominatimAPIAsync` class allows to directly access the underlying
-database connection to explore the data more directly. Nominatim uses
+database connection to explore the raw data. Nominatim uses
 [SQLAlchemy](https://docs.sqlalchemy.org/) for building queries. Please
 refer to the documentation of the library to understand how to write SQL.
 
 To get access to a search connection, use the `begin()` function of your
-API object. The function returns a context manager. Use with a `with`
-statement. This returns a `SearchConnection` object described below. Its
+API object. This returns a `SearchConnection` object described below
+wrapped in a context manager. Its
 `t` property has definitions for all Nominatim search tables. For an
 overview of available tables, refer to the
 [Development Layout](../develop/Database-Layout.md) in in the development

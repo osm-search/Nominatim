@@ -650,8 +650,10 @@ versions of Nominatim.
 
 Sets the maximum number of database connections available for a single instance
 of Nominatim. When configuring the maximum number of connections that your
-PostgreSQL database can handle, you need at least `<pool size> * <worker>`
-connections.
+PostgreSQL database can handle, you need at least
+`NOMINATIM_API_POOL_SIZE` * `<number of configured workers>` connections.
+For configuring the number of workers, refer to the section about
+[Deploying the Python frontend](../admin/Deployment-Python.md).
 
 #### NOMINATIM_QUERY_TIMEOUT
 
@@ -744,6 +746,6 @@ This settings enables
 [SQL debugging](https://docs.sqlalchemy.org/en/20/core/engines.html#dbengine-logging)
 by SQLAlchemy. This can be helpful when debugging some bugs with internal
 query handling. It should only be used together with the CLI query functions.
-Enabling it for server mode may have intended consequences. Use the `debug`
+Enabling it for server mode may have unintended consequences. Use the `debug`
 parameter instead, which prints information on how the search is executed
 including SQL statements.

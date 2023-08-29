@@ -153,17 +153,17 @@ The layers filter allows to select places by themes.
 
 The `address` layer contains all places that make up an address:
 address points with house numbers, streets, inhabited places (suburbs, villages,
-cities, states tec.) and administrative boundaries.
+cities, states etc.) and administrative boundaries.
 
-The `poi` layer selects all point of interest. This includes classic POIs like
-restaurants, shops, hotels but also less obvious features like recycling bins,
-guideposts or benches.
+The `poi` layer selects all point of interest. This includes classic points
+of interest like restaurants, shops, hotels but also less obvious features
+like recycling bins, guideposts or benches.
 
 The `railway` layer includes railway infrastructure like tracks.
 Note that in Nominatim's standard configuration, only very few railway
 features are imported into the database.
 
-The `natural` layer collects feautures like rivers, lakes and mountains. While
+The `natural` layer collects feautures like rivers, lakes and mountains while
 the `manmade` layer functions as a catch-all for features not covered by the
 other layers.
 
@@ -185,7 +185,7 @@ options can be used at a time.
 |-----------| -----  | ------- |
 | polygon_threshold | floating-point number | 0.0 |
 
-When one og the polygon_* outputs is chosen, return a simplified version
+When one of the polygon_* outputs is chosen, return a simplified version
 of the output geometry. The parameter describes the
 tolerance in degrees with which the geometry may differ from the original
 geometry. Topology is preserved in the geometry.

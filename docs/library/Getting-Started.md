@@ -3,8 +3,7 @@
 The Nominatim search frontend can directly be used as a Python library in
 scripts and applications. When you have imported your own Nominatim database,
 then it is no longer necessary to run a full web service for it and access
-the database through http requests. With the Nominatim library it is possible
-to access all search functionality directly from your Python code. There are
+the database through http requests. There are
 also less constraints on the kinds of data that can be accessed. The library
 allows to get access to more detailed information about the objects saved
 in the database.
@@ -14,8 +13,8 @@ in the database.
     be some smaller adjustments to the public interface until the next version.
 
     The library also misses a proper installation routine, so some manipulation
-    of the PYTHONPATH is required. Use is only recommended for advanced Python
-    programmers at the moment.
+    of the PYTHONPATH is required. At the moment, use is only recommended for
+    developers wit some experience in Python.
 
 ## Installation
 
@@ -55,7 +54,7 @@ This code snippet implements a simple search for the town if 'Brugge':
         if not results:
             print('Cannot find Brugge')
         else:
-            print(f'Found a place at {results[0].centroid.x},{results[1].centroid.y}')
+            print(f'Found a place at {results[0].centroid.x},{results[0].centroid.y}')
         ```
 
     === "NominatimAPI"
@@ -71,7 +70,7 @@ This code snippet implements a simple search for the town if 'Brugge':
         if not results:
             print('Cannot find Brugge')
         else:
-            print(f'Found a place at {results[0].centroid.x},{results[1].centroid.y}')
+            print(f'Found a place at {results[0].centroid.x},{results[0].centroid.y}')
         ```
 
 The Nominatim library is designed around
@@ -83,8 +82,8 @@ significantly.
 For smaller scripts there is also a synchronous wrapper around the API. By
 using `NominatimAPI`, you get exactly the same interface using classic functions.
 
-The examples in this chapter will always show how work with both of the
-implementations. The documentation itself will refer usually only to
+The examples in this chapter will always show-case both
+implementations. The documentation itself will usually refer only to
 'Nominatim API class' when both flavours are meant. If a functionality is
 available only for the synchronous or asynchronous version, this will be
 explicitly mentioned.
@@ -104,7 +103,7 @@ You should have set up this directory as part of the Nominatim import.
 Any configuration found in the `.env` file in this directory will automatically
 used.
 
-The second way to configure your Nominatim setup is through environment variables.
+Yo may also configure Nominatim be setting environment variables.
 Normally, Nominatim will check the operating system environment. This can be
 overwritten by giving the constructor a dictionary of configuration parameters.
 
@@ -209,8 +208,8 @@ results should be presented. As with the names in the result itself, the
 places in `address_rows` contain all possible name translation for each row.
 
 The library has a helper class `Locale` which helps extracting a name of a
-place in the preferred language. It gets a list of language code in the
-order of preference. So
+place in the preferred language. It takes a single parameter with a list
+of language codes in the order of preference. So
 
 ``` python
 locale = napi.Locale(['fr', 'en'])

@@ -1,16 +1,18 @@
 # Deploying the Nominatim Python frontend
 
-The Nominatim can be run as a Python-based web application. You have the
+The Nominatim can be run as a Python-based 
+[ASGI web application](https://asgi.readthedocs.io/en/latest/). You have the
 choice between [Falcon](https://falcon.readthedocs.io/en/stable/)
 and [Starlette](https://www.starlette.io/) as the ASGI framework.
 
-This section gives a quick overview on how to configure Nginx to server
+This section gives a quick overview on how to configure Nginx to serve
 Nominatim. Please refer to the documentation of
-[Nginx](https://nginx.org/en/docs/) for background information on how to configure it.
+[Nginx](https://nginx.org/en/docs/) for background information on how
+to configure it.
 
 !!! Note
-    Throughout this page, we assume that your Nominatim project directory is
-    located in `/srv/nominatim-project` and that you have installed Nominatim
+    Throughout this page, we assume your Nominatim project directory is
+    located in `/srv/nominatim-project` and you have installed Nominatim
     using the default installation prefix `/usr/local`. If you have put it
     somewhere else, you need to adjust the commands and configuration
     accordingly.
@@ -21,7 +23,7 @@ Nominatim. Please refer to the documentation of
 
 ### Installing the required packages
 
-The recommended way to deploy Python ASGI application is to run
+The recommended way to deploy a Python ASGI application is to run
 the ASGI runner (uvicorn)[https://uvicorn.org/]
 together with (gunicorn)[https://gunicorn.org/] HTTP server. We use
 Falcon here as the web framework.
@@ -38,7 +40,7 @@ virtualenv /srv/nominatim-venv
 
 ### Setting up Nominatim as a systemd job
 
-Next you need to set up the application that serves Nominatim. This is
+Next you need to set up the service that runs the Nominatim frontend. This is
 easiest done with a systemd job.
 
 Create the following file `/etc/systemd/system/nominatim.service`:
@@ -55,9 +57,9 @@ Environment="PYTHONPATH=/usr/local/lib/nominatim/lib-python/"
 User=www-data
 Group=www-data
 WorkingDirectory=/srv/nominatim-project
-ExecStart=/srv/nominatim-venv/bin/gunicorn -b unix:/run/nominatim.sock -w 14 -k uvicorn.workers.UvicornWorker nominatim.server.falcon.server:run_wsgi
+ExecStart=/srv/nominatim-venv/bin/gunicorn -b unix:/run/nominatim.sock -w 4 -k uvicorn.workers.UvicornWorker nominatim.server.falcon.server:run_wsgi
 ExecReload=/bin/kill -s HUP $MAINPID
-StandardOutput=append:/ssd/nominatim/log/gunicorn.log
+StandardOutput=append:/var/log/gunicorn-nominatim.log
 StandardError=inherit
 PrivateTmp=true
 TimeoutStopSec=5
@@ -66,6 +68,11 @@ KillMode=mixed
 [Install]
 WantedBy=multi-user.target
 ```
+
+This sets up gunicorn with 4 workers (`-w 4` in ExecStart). Each worker runs
+its own Python process using
+[`NOMINATIM_API_POOL_SIZE`](../customize/Settings.md#nominatim_api_pool_size)
+connections to the database to serve requests in parallel.
 
 Make the new service known to systemd and start it:
 

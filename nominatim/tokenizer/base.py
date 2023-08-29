@@ -238,7 +238,7 @@ class AbstractTokenizer(ABC):
 
             Arguments:
               conn: Open connection to the database which may be used to
-                    retrive the words.
+                    retrieve the words.
               num: Maximum number of words to return.
         """
 

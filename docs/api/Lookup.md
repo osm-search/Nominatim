@@ -114,7 +114,7 @@ options can be used at a time.
 |-----------| -----  | ------- |
 | polygon_threshold | floating-point number | 0.0 |
 
-When one og the polygon_* outputs is chosen, return a simplified version
+When one of the polygon_* outputs is chosen, return a simplified version
 of the output geometry. The parameter describes the
 tolerance in degrees with which the geometry may differ from the original
 geometry. Topology is preserved in the geometry.

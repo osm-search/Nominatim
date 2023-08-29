@@ -2,11 +2,10 @@
 
 Show all details about a single place saved in the database.
 
-This API endpoint is meant for visual inspection of the data in the database
-and is meant for use with [Nominatim-UI](https://github.com/osm-search/nominatim-ui/).
+This API endpoint is meant for visual inspection of the data in the database,
+mainly together with [Nominatim-UI](https://github.com/osm-search/nominatim-ui/).
 The parameters of the endpoint and the output may change occasionally between
 versions of Nominatim. Do not rely on the output in scripts or applications.
-
 
 !!! warning
     The details endpoint at https://nominatim.openstreetmap.org
@@ -56,7 +55,7 @@ This section lists additional optional parameters.
 |-----------| ----- | ------- |
 | json_callback | function name | _unset_ |
 
-When given, then JSON output will be wrapped in a callback function with
+When set, then JSON output will be wrapped in a callback function with
 the given name. See [JSONP](https://en.wikipedia.org/wiki/JSONP) for more
 information.
 

@@ -201,7 +201,7 @@ The `railway` layer includes railway infrastructure like tracks.
 Note that in Nominatim's standard configuration, only very few railway
 features are imported into the database.
 
-The `natural` layer collects feautures like rivers, lakes and mountains. While
+The `natural` layer collects feautures like rivers, lakes and mountains while
 the `manmade` layer functions as a catch-all for features not covered by the
 other layers.
 
@@ -271,7 +271,7 @@ options can be used at a time.
 |-----------| -----  | ------- |
 | polygon_threshold | floating-point number | 0.0 |
 
-When one og the polygon_* outputs is chosen, return a simplified version
+When one of the polygon_* outputs is chosen, return a simplified version
 of the output geometry. The parameter describes the
 tolerance in degrees with which the geometry may differ from the original
 geometry. Topology is preserved in the geometry.
@@ -294,7 +294,7 @@ Sometimes you have several objects in OSM identifying the same place or
 object in reality. The simplest case is a street being split into many
 different OSM ways due to different characteristics. Nominatim will
 attempt to detect such duplicates and only return one match. Setting
-this parameter is set to 0 disables this deduplication mechanism and
+this parameter to 0 disables this deduplication mechanism and
 ensures that all results are returned.
 
 | Parameter | Value  | Default |

@@ -7,8 +7,8 @@ in the query functions of the API object.
 
 The [details](NominatimAPI.md#nominatim.api.core.NominatimAPI.details) and
 [lookup](NominatimAPI.md#nominatim.api.core.NominatimAPI.lookup) functions
-require references to places in the database. Below are listed the possible
-types for place identification. All types are dataclasses.
+require references to places in the database. Below the possible
+types for place identification are listed. All types are dataclasses.
 
 ### PlaceID
 

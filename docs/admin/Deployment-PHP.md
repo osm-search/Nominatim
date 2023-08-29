@@ -13,8 +13,8 @@ to run a web service. Please refer to the documentation of
 for background information on configuring the services.
 
 !!! Note
-    Throughout this page, we assume that your Nominatim project directory is
-    located in `/srv/nominatim-project` and that you have installed Nominatim
+    Throughout this page, we assume your Nominatim project directory is
+    located in `/srv/nominatim-project` and you have installed Nominatim
     using the default installation prefix `/usr/local`. If you have put it
     somewhere else, you need to adjust the commands and configuration
     accordingly.

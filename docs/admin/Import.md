@@ -317,7 +317,7 @@ To run Nominatim via webservers like Apache or nginx, please continue reading
 
 ## Enabling search by category phrases
 
-If you want to be able to search for places by their type using
+To be able to search for places by their type using
 [special phrases](https://wiki.openstreetmap.org/wiki/Nominatim/Special_Phrases)
 you also need to import these key phrases like this:
 

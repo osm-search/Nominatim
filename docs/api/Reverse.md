@@ -147,9 +147,9 @@ In terms of address details the zoom levels are as follows:
 
 | Parameter | Value | Default |
 |-----------| ----- | ------- |
-| layers    | comma-separated list of: `address`, `poi`, `railway`, `natural`, `manmade` | _unset_ (no restriction) |
+| layer     | comma-separated list of: `address`, `poi`, `railway`, `natural`, `manmade` | _unset_ (no restriction) |
 
-The layers filter allows to select places by themes.
+The layer filter allows to select places by themes.
 
 The `address` layer contains all places that make up an address:
 address points with house numbers, streets, inhabited places (suburbs, villages,

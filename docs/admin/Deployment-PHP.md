@@ -8,7 +8,7 @@ PHP scripts.
 This section gives a quick overview on how to configure Apache and Nginx to
 serve Nominatim. It is not meant as a full system administration guide on how
 to run a web service. Please refer to the documentation of
-[Apache](http://httpd.apache.org/docs/current/) and
+[Apache](https://httpd.apache.org/docs/current/) and
 [Nginx](https://nginx.org/en/docs/)
 for background information on configuring the services.
 

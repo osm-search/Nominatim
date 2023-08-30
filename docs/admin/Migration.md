@@ -27,7 +27,7 @@ therefore either remove traffic from the machine before attempting a
 version update or create the index manually **before** starting the update
 using the following SQL:
 
-```
+```sql
 CREATE INDEX IF NOT EXISTS idx_placex_geometry_reverse_lookupPlaceNode
   ON placex USING gist (ST_Buffer(geometry, reverse_place_diameter(rank_search)))
   WHERE rank_address between 4 and 25 AND type != 'postcode'

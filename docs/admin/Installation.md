@@ -56,6 +56,7 @@ For running Nominatim:
   * [datrie](https://github.com/pytries/datrie)
 
 When running the PHP frontend:
+
   * [PHP](https://php.net) (7.3+)
   * PHP-pgsql
   * PHP-intl (bundled with PHP)

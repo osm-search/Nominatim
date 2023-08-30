@@ -271,7 +271,7 @@ class NearSearch(AbstractSearch):
         """
         table = await conn.get_class_table(*category)
 
-        t = conn.t.placex.alias('p')
+        t = conn.t.placex
         tgeom = conn.t.placex.alias('pgeom')
 
         sql = _select_placex(t).where(tgeom.c.place_id.in_(ids))\

@@ -73,8 +73,8 @@ fi                                 #DOCS:
 # ---------------------
 #
 # Tune the postgresql configuration, which is located in 
-# `/etc/postgresql/14/main/postgresql.conf`. See section *Postgres Tuning* in
-# [the installation page](../admin/Installation.md#postgresql-tuning)
+# `/etc/postgresql/14/main/postgresql.conf`. See section *Tuning the PostgreSQL database*
+# in [the installation page](../admin/Installation.md#tuning-the-postgresql-database)
 # for the parameters to change.
 #
 # Restart the postgresql service after updating this config file.

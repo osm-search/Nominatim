@@ -36,16 +36,15 @@ which has the following structure:
 
 ```bash
 update
-    ├── europe
-    │   ├── andorra
-    │   │   └── sequence.state
-    │   └── monaco
-    │       └── sequence.state
-    └── tmp
-        └── europe
-                ├── andorra-latest.osm.pbf
-                └── monaco-latest.osm.pbf
-
+ ├── europe
+ │    ├── andorra
+ │    │    └── sequence.state
+ │    └── monaco
+ │         └── sequence.state
+ └── tmp
+      └── europe
+           ├── andorra-latest.osm.pbf
+           └── monaco-latest.osm.pbf
 
 ```
 
@@ -99,7 +98,7 @@ Change into the project directory and run the following command:
 
 This will get diffs from the replication server, import diffs and index
 the database. The default replication server in the
-script([Geofabrik](https://download.geofabrik.de)) provides daily updates.
+script ([Geofabrik](https://download.geofabrik.de)) provides daily updates.
 
 ## Using an external PostgreSQL database
 

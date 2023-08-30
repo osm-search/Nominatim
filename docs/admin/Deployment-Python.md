@@ -24,8 +24,8 @@ to configure it.
 ### Installing the required packages
 
 The recommended way to deploy a Python ASGI application is to run
-the ASGI runner (uvicorn)[https://uvicorn.org/]
-together with (gunicorn)[https://gunicorn.org/] HTTP server. We use
+the ASGI runner [uvicorn](https://uvicorn.org/)
+together with [gunicorn](https://gunicorn.org/) HTTP server. We use
 Falcon here as the web framework.
 
 Create a virtual environment for the Python packages and install the necessary
@@ -34,7 +34,7 @@ dependencies:
 ``` sh
 sudo apt install virtualenv
 virtualenv /srv/nominatim-venv
-/srv/nominatim-venv/bin/pip install SQLAlchemy PyICU psycopg[binary]\
+/srv/nominatim-venv/bin/pip install SQLAlchemy PyICU psycopg[binary] \
    psycopg2-binary python-dotenv PyYAML falcon uvicorn gunicorn
 ```
 

@@ -19,15 +19,15 @@ in the database.
 ## Installation
 
 To use the Nominatim library, you need access to a local Nominatim database.
-Follow the [installation and import instructions](../admin/) to set up your
-database.
+Follow the [installation](../admin/Installation.md) and
+[import](../admin/Import.md) instructions to set up your database.
 
 It is not yet possible to install it in the usual way via pip or inside a
 virtualenv. To get access to the library you need to set an appropriate
-PYTHONPATH. With the default installation, the python library can be found
+`PYTHONPATH`. With the default installation, the python library can be found
 under `/usr/local/share/nominatim/lib-python`. If you have installed
 Nominatim under a different prefix, adapt the `/usr/local/` part accordingly.
-You can also point the PYTHONPATH to the Nominatim source code.
+You can also point the `PYTHONPATH` to the Nominatim source code.
 
 ### A simple search example
 
@@ -35,7 +35,7 @@ To query the Nominatim database you need to first set up a connection. This
 is done by creating an Nominatim API object. This object exposes all the
 search functions of Nominatim that are also known from its web API.
 
-This code snippet implements a simple search for the town if 'Brugge':
+This code snippet implements a simple search for the town of 'Brugge':
 
 !!! example
     === "NominatimAPIAsync"
@@ -219,7 +219,7 @@ creates a helper class that returns the name preferably in French. If that is
 not possible, it tries English and eventually falls back to the default `name`
 or `ref`.
 
-The Locale object can be applied to a name dictionary to return the best-matching
+The `Locale` object can be applied to a name dictionary to return the best-matching
 name out of it:
 
 ``` python

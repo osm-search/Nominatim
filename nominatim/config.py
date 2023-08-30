@@ -47,17 +47,15 @@ def flatten_config_list(content: Any, section: str = '') -> List[Any]:
 
 
 class Configuration:
-    """ Load and manage the project configuration.
-
-        Nominatim uses dotenv to configure the software. Configuration options
-        are resolved in the following order:
-
-         * from the OS environment (or the dictionary given in `environ`)
-         * from the .env file in the project directory of the installation
-         * from the default installation in the configuration directory
+    """ This class wraps access to the configuration settings
+        for the Nominatim instance in use.
 
         All Nominatim configuration options are prefixed with 'NOMINATIM_' to
-        avoid conflicts with other environment variables.
+        avoid conflicts with other environment variables. All settings can
+        be accessed as properties of the class under the same name as the
+        setting but with the `NOMINATIM_` prefix removed. In addition, there
+        are accessor functions that convert the setting values to types
+        other than string.
     """
 
     def __init__(self, project_dir: Optional[Path],
@@ -99,14 +97,29 @@ class Configuration:
 
     def get_bool(self, name: str) -> bool:
         """ Return the given configuration parameter as a boolean.
-            Values of '1', 'yes' and 'true' are accepted as truthy values,
-            everything else is interpreted as false.
+
+            Parameters:
+              name: Name of the configuration parameter with the NOMINATIM_
+                prefix removed.
+
+            Returns:
+              `True` for values of '1', 'yes' and 'true', `False` otherwise.
         """
         return getattr(self, name).lower() in ('1', 'yes', 'true')
 
 
     def get_int(self, name: str) -> int:
         """ Return the given configuration parameter as an int.
+
+            Parameters:
+              name: Name of the configuration parameter with the NOMINATIM_
+                prefix removed.
+
+            Returns:
+              The configuration value converted to int.
+
+            Raises:
+              ValueError: when the value is not a number.
         """
         try:
             return int(getattr(self, name))
@@ -118,8 +131,17 @@ class Configuration:
     def get_str_list(self, name: str) -> Optional[List[str]]:
         """ Return the given configuration parameter as a list of strings.
             The values are assumed to be given as a comma-sparated list and
-            will be stripped before returning them. On empty values None
-            is returned.
+            will be stripped before returning them. 
+
+            Parameters:
+              name: Name of the configuration parameter with the NOMINATIM_
+                prefix removed.
+
+            Returns:
+              (List[str]): The comma-split parameter as a list. The
+                elements are stripped of leading and final spaces before
+                being returned.
+              (None): The configuration parameter was unset or empty.
         """
         raw = getattr(self, name)
 
@@ -128,9 +150,16 @@ class Configuration:
 
     def get_path(self, name: str) -> Optional[Path]:
         """ Return the given configuration parameter as a Path.
-            If a relative path is configured, then the function converts this
-            into an absolute path with the project directory as root path.
-            If the configuration is unset, None is returned.
+
+            Parameters:
+              name: Name of the configuration parameter with the NOMINATIM_
+                prefix removed.
+
+            Returns:
+              (Path): A Path object of the parameter value.
+                  If a relative path is configured, then the function converts this
+                  into an absolute path with the project directory as root path.
+              (None): The configuration parameter was unset or empty.
         """
         value = getattr(self, name)
         if not value:

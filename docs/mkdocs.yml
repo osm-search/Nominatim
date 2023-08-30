@@ -1,5 +1,9 @@
-site_name: Nominatim Documentation
-theme: readthedocs
+site_name: Nominatim Manual
+theme:
+  name: material
+  features:
+    - navigation.tabs
+copyright: Copyright &copy; Nominatim developer community
 docs_dir: ${CMAKE_CURRENT_BINARY_DIR}
 site_url: https://nominatim.org
 repo_url: https://github.com/openstreetmap/Nominatim
@@ -18,7 +22,8 @@ nav:
         - 'Basic Installation': 'admin/Installation.md'
         - 'Import' : 'admin/Import.md'
         - 'Update' : 'admin/Update.md'
-        - 'Deploy' : 'admin/Deployment.md'
+        - 'Deploy (PHP frontend)' : 'admin/Deployment-PHP.md'
+        - 'Deploy (Python frontend)' : 'admin/Deployment-Python.md'
         - 'Nominatim UI'  : 'admin/Setup-Nominatim-UI.md'
         - 'Advanced Installations' : 'admin/Advanced-Installations.md'
         - 'Maintenance' : 'admin/Maintenance.md'
@@ -35,6 +40,13 @@ nav:
         - 'Special Phrases': 'customize/Special-Phrases.md'
         - 'External data: US housenumbers from TIGER': 'customize/Tiger.md'
         - 'External data: Postcodes': 'customize/Postcodes.md'
+    - 'Library Guide':
+        - 'Getting Started': 'library/Getting-Started.md'
+        - 'Nominatim API class': 'library/NominatimAPI.md'
+        - 'Configuration': 'library/Configuration.md'
+        - 'Input Parameter Types': 'library/Input-Parameter-Types.md'
+        - 'Result Handling': 'library/Result-Handling.md'
+        - 'Low-level DB Access': 'library/Low-Level-DB-Access.md'
     - 'Developers Guide':
         - 'Architecture Overview' : 'develop/overview.md'
         - 'Database Layout' : 'develop/Database-Layout.md'
@@ -51,6 +63,8 @@ markdown_extensions:
     - codehilite
     - admonition
     - pymdownx.superfences
+    - pymdownx.tabbed:
+        alternate_style: true
     - def_list
     - toc:
         permalink: 
@@ -59,7 +73,8 @@ plugins:
     - search
     - mkdocstrings:
         handlers:
-          python-legacy:
-            rendering:
-              show_source: false
-              show_signature_annotations: false
+          python:
+            paths: ["${PROJECT_SOURCE_DIR}"]
+            options:
+              show_source: False
+              show_bases: False

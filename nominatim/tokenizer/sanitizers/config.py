@@ -41,9 +41,9 @@ class SanitizerConfig(_BaseUserDict):
 
             Returns:
                 If the parameter value is a simple string, it is returned as a
-                one-item list. If the parameter value does not exist, the given
-                default is returned. If the parameter value is a list, it is
-                checked to contain only strings before being returned.
+                    one-item list. If the parameter value does not exist, the given
+                    default is returned. If the parameter value is a list, it is
+                    checked to contain only strings before being returned.
         """
         values = self.data.get(param, None)
 
@@ -94,10 +94,10 @@ class SanitizerConfig(_BaseUserDict):
 
             Returns:
                 A regular expression pattern which can be used to
-                split a string. The regular expression makes sure that the
-                resulting names are stripped and that repeated delimiters
-                are ignored. It may still create empty fields on occasion. The
-                code needs to filter those.
+                    split a string. The regular expression makes sure that the
+                    resulting names are stripped and that repeated delimiters
+                    are ignored. It may still create empty fields on occasion. The
+                    code needs to filter those.
         """
         delimiter_set = set(self.data.get('delimiters', default))
         if not delimiter_set:
@@ -133,8 +133,8 @@ class SanitizerConfig(_BaseUserDict):
 
             Returns:
                 A filter function that takes a target string as the argument and
-                returns True if it fully matches any of the regular expressions
-                otherwise returns False.
+                    returns True if it fully matches any of the regular expressions
+                    otherwise returns False.
         """
         filters = self.get_string_list(param) or default
 

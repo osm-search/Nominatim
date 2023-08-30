@@ -11,6 +11,7 @@ set (DOC_SOURCES
      develop
      api
      customize
+     library
      index.md
      extra.css
      styles.css
@@ -25,10 +26,10 @@ endforeach()
 ADD_CUSTOM_TARGET(doc
    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/bash2md.sh ${PROJECT_SOURCE_DIR}/vagrant/Install-on-Ubuntu-20.sh ${CMAKE_CURRENT_BINARY_DIR}/appendix/Install-on-Ubuntu-20.md
    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/bash2md.sh ${PROJECT_SOURCE_DIR}/vagrant/Install-on-Ubuntu-22.sh ${CMAKE_CURRENT_BINARY_DIR}/appendix/Install-on-Ubuntu-22.md
-   COMMAND PYTHONPATH=${PROJECT_SOURCE_DIR} mkdocs build -d ${CMAKE_CURRENT_BINARY_DIR}/../site-html -f ${CMAKE_CURRENT_BINARY_DIR}/../mkdocs.yml
+   COMMAND mkdocs build -d ${CMAKE_CURRENT_BINARY_DIR}/../site-html -f ${CMAKE_CURRENT_BINARY_DIR}/../mkdocs.yml
 )
 
 ADD_CUSTOM_TARGET(serve-doc
-    COMMAND PYTHONPATH=${PROJECT_SOURCE_DIR} mkdocs serve
-    WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
+    COMMAND mkdocs serve -f ${CMAKE_CURRENT_BINARY_DIR}/../mkdocs.yml
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
 )

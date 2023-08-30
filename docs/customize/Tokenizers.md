@@ -176,66 +176,66 @@ The following is a list of sanitizers that are shipped with Nominatim.
 ##### split-name-list
 
 ::: nominatim.tokenizer.sanitizers.split_name_list
-    selection:
+    options:
         members: False
-    rendering:
         heading_level: 6
+        docstring_section_style: spacy
 
 ##### strip-brace-terms
 
 ::: nominatim.tokenizer.sanitizers.strip_brace_terms
-    selection:
+    options:
         members: False
-    rendering:
         heading_level: 6
+        docstring_section_style: spacy
 
 ##### tag-analyzer-by-language
 
 ::: nominatim.tokenizer.sanitizers.tag_analyzer_by_language
-    selection:
+    options:
         members: False
-    rendering:
         heading_level: 6
+        docstring_section_style: spacy
 
 ##### clean-housenumbers
 
 ::: nominatim.tokenizer.sanitizers.clean_housenumbers
-    selection:
+    options:
         members: False
-    rendering:
         heading_level: 6
+        docstring_section_style: spacy
 
 ##### clean-postcodes
 
 ::: nominatim.tokenizer.sanitizers.clean_postcodes
-    selection:
+    options:
         members: False
-    rendering:
         heading_level: 6
+        docstring_section_style: spacy
 
 ##### clean-tiger-tags
 
 ::: nominatim.tokenizer.sanitizers.clean_tiger_tags
-    selection:
+    options:
         members: False
-    rendering:
         heading_level: 6
+        docstring_section_style: spacy
 
 #### delete-tags
 
 ::: nominatim.tokenizer.sanitizers.delete_tags
-    selection:
+    options:
         members: False
-    rendering:
         heading_level: 6
+        docstring_section_style: spacy
 
 #### tag-japanese
 
 ::: nominatim.tokenizer.sanitizers.tag_japanese
-    selection:
+    options:
         members: False
-    rendering:
         heading_level: 6
+        docstring_section_style: spacy
 
 #### Token Analysis
 

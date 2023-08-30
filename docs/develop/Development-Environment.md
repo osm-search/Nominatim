@@ -47,8 +47,8 @@ depending on your choice of webserver framework:
 The documentation is built with mkdocs:
 
 * [mkdocs](https://www.mkdocs.org/) >= 1.1.2
-* [mkdocstrings](https://mkdocstrings.github.io/) >= 0.16
-* [mkdocstrings-python-legacy](https://mkdocstrings.github.io/python-legacy/)
+* [mkdocstrings](https://mkdocstrings.github.io/) >= 0.18
+* [mkdocstrings-python](https://mkdocstrings.github.io/python/)
 
 ### Installing prerequisites on Ubuntu/Debian
 

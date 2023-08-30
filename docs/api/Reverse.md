@@ -1,6 +1,7 @@
 # Reverse Geocoding
 
-Reverse geocoding generates an address from a latitude and longitude.
+Reverse geocoding generates an address from a coordinate given as
+latitude and longitude.
 
 ## How it works
 
@@ -18,8 +19,7 @@ The other issue to be aware of is that the closest OSM object may not always
 have a similar enough address to the coordinate you were requesting. For
 example, in dense city areas it may belong to a completely different street.
 
-
-## Parameters
+## Endpoint
 
 The main format of the reverse API is
 
@@ -31,57 +31,101 @@ where `lat` and `lon` are latitude and longitude of a coordinate in WGS84
 projection. The API returns exactly one result or an error when the coordinate
 is in an area with no OSM data coverage.
 
-Additional parameters are accepted as listed below.
 
-!!! warning "Deprecation warning"
+!!! danger "Deprecation warning"
     The reverse API used to allow address lookup for a single OSM object by
-    its OSM id. This use is now deprecated. Use the [Address Lookup API](Lookup.md)
-    instead.
+    its OSM id for `[PHP-only]`. The use is considered deprecated.
+    Use the [Address Lookup API](Lookup.md) instead.
+
+!!! danger "Deprecation warning"
+    The API can also be used with the URL
+    `https://nominatim.openstreetmap.org/reverse.php`. This is now deprecated
+    and will be removed in future versions.
+
+
+## Parameters
+
+This section lists additional parameters to further influence the output.
 
 ### Output format
 
-* `format=[xml|json|jsonv2|geojson|geocodejson]`
+| Parameter | Value | Default |
+|-----------| ----- | ------- |
+| format    | one of: `xml`, `json`, `jsonv2`, `geojson`, `geocodejson` | `xml` |
 
-See [Place Output Formats](Output.md) for details on each format. (Default: xml)
+See [Place Output Formats](Output.md) for details on each format.
 
-* `json_callback=<string>`
 
-Wrap JSON output in a callback function ([JSONP](https://en.wikipedia.org/wiki/JSONP)) i.e. `<string>(<json>)`.
+| Parameter | Value | Default |
+|-----------| ----- | ------- |
+| json_callback | function name | _unset_ |
+
+When given, then JSON output will be wrapped in a callback function with
+the given name. See [JSONP](https://en.wikipedia.org/wiki/JSONP) for more
+information.
+
 Only has an effect for JSON output formats.
+
 
 ### Output details
 
-* `addressdetails=[0|1]`
+| Parameter | Value | Default |
+|-----------| ----- | ------- |
+| addressdetails | 0 or 1 | 1 |
 
-Include a breakdown of the address into elements. (Default: 1)
+When set to 1, include a breakdown of the address into elements.
+The exact content of the address breakdown depends on the output format.
+
+!!! tip
+    If you are interested in a stable classification of address categories
+    (suburb, city, state, etc), have a look at the `geocodejson` format.
+    All other formats return classifications according to OSM tagging.
+    There is a much larger set of categories and they are not always consistent,
+    which makes them very hard to work with.
 
 
-* `extratags=[0|1]`
+| Parameter | Value | Default |
+|-----------| ----- | ------- |
+| extratags | 0 or 1 | 0 |
 
-Include additional information in the result if available,
-e.g. wikipedia link, opening hours. (Default: 0)
+When set to 1, the response include any additional information in the result
+that is available in the database, e.g. wikipedia link, opening hours.
 
 
-* `namedetails=[0|1]`
+| Parameter | Value | Default |
+|-----------| ----- | ------- |
+| namedetails | 0 or 1 | 0 |
 
-Include a list of alternative names in the results. These may include
-language variants, references, operator and brand. (Default: 0)
+When set to 1, include a full list of names for the result. These may include
+language variants, older names, references and brand.
 
 
 ### Language of results
 
-* `accept-language=<browser language string>`
+| Parameter | Value | Default |
+|-----------| ----- | ------- |
+| accept-language | browser language string | content of "Accept-Language" HTTP header |
 
-Preferred language order for showing search results, overrides the value
-specified in the "Accept-Language" HTTP header.
-Either use a standard RFC2616 accept-language string or a simple
-comma-separated list of language codes.
+Preferred language order for showing search results. This may either be
+a simple comma-separated list of language codes or have the same format
+as the ["Accept-Language" HTTP header](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Accept-Language).
 
-### Result limitation
+!!! tip
+    First-time users of Nominatim tend to be confused that they get different
+    results when using Nominatim in the browser versus in a command-line tool
+    like wget or curl. The command-line tools
+    usually don't send any Accept-Language header, prompting Nominatim
+    to show results in the local language. Browsers on the contratry always
+    send the currently chosen browser language.
 
-* `zoom=[0-18]`
 
-Level of detail required for the address. Default: 18. This is a number that
+### Result restriction
+
+| Parameter | Value | Default |
+|-----------| ----- | ------- |
+| zoom      | 0-18  | 18      |
+
+Level of detail required for the address. This is a number that
 corresponds roughly to the zoom level used in XYZ tile sources in frameworks
 like Leaflet.js, Openlayers etc.
 In terms of address details the zoom levels are as follows:
@@ -95,41 +139,76 @@ In terms of address details the zoom levels are as follows:
   12  | town / borough
   13  | village / suburb
   14  | neighbourhood
-  15  | locality
+  15  | any settlement
   16  | major streets
   17  | major and minor streets
   18  | building
 
 
+| Parameter | Value | Default |
+|-----------| ----- | ------- |
+| layers    | comma-separated list of: `address`, `poi`, `railway`, `natural`, `manmade` | _unset_ (no restriction) |
+
+The layers filter allows to select places by themes.
+
+The `address` layer contains all places that make up an address:
+address points with house numbers, streets, inhabited places (suburbs, villages,
+cities, states etc.) and administrative boundaries.
+
+The `poi` layer selects all point of interest. This includes classic points
+of interest like restaurants, shops, hotels but also less obvious features
+like recycling bins, guideposts or benches.
+
+The `railway` layer includes railway infrastructure like tracks.
+Note that in Nominatim's standard configuration, only very few railway
+features are imported into the database.
+
+The `natural` layer collects feautures like rivers, lakes and mountains while
+the `manmade` layer functions as a catch-all for features not covered by the
+other layers.
+
+
 ### Polygon output
 
-* `polygon_geojson=1`
-* `polygon_kml=1`
-* `polygon_svg=1`
-* `polygon_text=1`
+| Parameter | Value  | Default |
+|-----------| -----  | ------- |
+| polygon_geojson | 0 or 1 | 0 |
+| polygon_kml     | 0 or 1 | 0 |
+| polygon_svg     | 0 or 1 | 0 |
+| polygon_text    | 0 or 1 | 0 |
 
-Output geometry of results as a GeoJSON, KML, SVG or WKT. Only one of these
-options can be used at a time. (Default: 0)
+Add the full geometry of the place to the result output. Output formats
+in GeoJSON, KML, SVG or WKT are supported. Only one of these
+options can be used at a time.
 
-* `polygon_threshold=0.0`
+| Parameter | Value  | Default |
+|-----------| -----  | ------- |
+| polygon_threshold | floating-point number | 0.0 |
 
-Return a simplified version of the output geometry. The parameter is the
+When one of the polygon_* outputs is chosen, return a simplified version
+of the output geometry. The parameter describes the
 tolerance in degrees with which the geometry may differ from the original
-geometry. Topology is preserved in the result. (Default: 0.0)
+geometry. Topology is preserved in the geometry.
+
 
 ### Other
 
-* `email=<valid email address>`
+| Parameter | Value  | Default |
+|-----------| -----  | ------- |
+| email     | valid email address | _unset_ |
 
-If you are making a large number of requests, please include an appropriate email
-address to identify your requests. See Nominatim's [Usage Policy](https://operations.osmfoundation.org/policies/nominatim/) for more details.
+If you are making large numbers of request please include an appropriate email
+address to identify your requests. See Nominatim's
+[Usage Policy](https://operations.osmfoundation.org/policies/nominatim/) for more details.
 
 
-* `debug=[0|1]`
+| Parameter | Value  | Default |
+|-----------| -----  | ------- |
+| debug     | 0 or 1 | 0       |
 
 Output assorted developer debug information. Data on internals of Nominatim's
-"Search Loop" logic, and SQL queries. The output is (rough) HTML format.
-This overrides the specified machine readable format. (Default: 0)
+"search loop" logic, and SQL queries. The output is HTML format.
+This overrides the specified machine readable format.
 
 
 ## Examples

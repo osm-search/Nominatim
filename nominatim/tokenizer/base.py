@@ -53,8 +53,8 @@ class AbstractAnalyzer(ABC):
 
             Returns:
                 The function returns the list of all tuples that could be
-                found for the given words. Each list entry is a tuple of
-                (original word, word token, word id).
+                    found for the given words. Each list entry is a tuple of
+                    (original word, word token, word id).
         """
 
 
@@ -118,7 +118,7 @@ class AbstractAnalyzer(ABC):
 
             Returns:
                 A JSON-serialisable structure that will be handed into
-                the database via the `token_info` field.
+                    the database via the `token_info` field.
         """
 
 
@@ -144,8 +144,6 @@ class AbstractTokenizer(ABC):
                 tables should be skipped. This option is only required for
                 migration purposes and can be safely ignored by custom
                 tokenizers.
-
-            TODO: can we move the init_db parameter somewhere else?
         """
 
 
@@ -197,8 +195,8 @@ class AbstractTokenizer(ABC):
 
             Returns:
               If an issue was found, return an error message with the
-              description of the issue as well as hints for the user on
-              how to resolve the issue. If everything is okay, return `None`.
+                  description of the issue as well as hints for the user on
+                  how to resolve the issue. If everything is okay, return `None`.
         """
 
 
@@ -236,8 +234,12 @@ class AbstractTokenizer(ABC):
 
     @abstractmethod
     def most_frequent_words(self, conn: Connection, num: int) -> List[str]:
-        """ Return a list of the `num` most frequent full words
-            in the database.
+        """ Return a list of the most frequent full words in the database.
+
+            Arguments:
+              conn: Open connection to the database which may be used to
+                    retrieve the words.
+              num: Maximum number of words to return.
         """
 
 

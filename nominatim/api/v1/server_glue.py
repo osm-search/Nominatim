@@ -453,6 +453,8 @@ async def search_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> A
         helpers.feature_type_to_rank(params.get('featureType', ''))
     if params.get('featureType', None) is not None:
         details['layers'] = napi.DataLayer.ADDRESS
+    else:
+        details['layers'] = params.get_layers()
 
     # unstructured query parameters
     query = params.get('q', None)

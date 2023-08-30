@@ -3,7 +3,7 @@
 The lookup API allows to query the address and other details of one or
 multiple OSM objects like node, way or relation.
 
-## Parameters
+## Endpoint
 
 The lookup API has the following format:
 
@@ -15,75 +15,129 @@ The lookup API has the following format:
 prefixed with its type, one of node(N), way(W) or relation(R). Up to 50 ids
 can be queried at the same time.
 
-Additional optional parameters are explained below.
+!!! danger "Deprecation warning"
+    The API can also be used with the URL
+    `https://nominatim.openstreetmap.org/lookup.php`. This is now deprecated
+    and will be removed in future versions.
+
+
+## Parameters
+
+This section lists additional optional parameters.
 
 ### Output format
 
-* `format=[xml|json|jsonv2|geojson|geocodejson]`
+| Parameter | Value | Default |
+|-----------| ----- | ------- |
+| format    | one of: `xml`, `json`, `jsonv2`, `geojson`, `geocodejson` | `jsonv2` |
 
-See [Place Output Formats](Output.md) for details on each format. (Default: xml)
+See [Place Output Formats](Output.md) for details on each format.
 
-* `json_callback=<string>`
 
-Wrap JSON output in a callback function (JSONP) i.e. `<string>(<json>)`.
+| Parameter | Value | Default |
+|-----------| ----- | ------- |
+| json_callback | function name | _unset_ |
+
+When given, then JSON output will be wrapped in a callback function with
+the given name. See [JSONP](https://en.wikipedia.org/wiki/JSONP) for more
+information.
+
 Only has an effect for JSON output formats.
+
 
 ### Output details
 
-* `addressdetails=[0|1]`
+| Parameter | Value | Default |
+|-----------| ----- | ------- |
+| addressdetails | 0 or 1 | 0 |
 
-Include a breakdown of the address into elements. (Default: 0)
+When set to 1, include a breakdown of the address into elements.
+The exact content of the address breakdown depends on the output format.
+
+!!! tip
+    If you are interested in a stable classification of address categories
+    (suburb, city, state, etc), have a look at the `geocodejson` format.
+    All other formats return classifications according to OSM tagging.
+    There is a much larger set of categories and they are not always consistent,
+    which makes them very hard to work with.
 
 
-* `extratags=[0|1]`
+| Parameter | Value | Default |
+|-----------| ----- | ------- |
+| extratags | 0 or 1 | 0 |
 
-Include additional information in the result if available,
-e.g. wikipedia link, opening hours. (Default: 0)
+When set to 1, the response include any additional information in the result
+that is available in the database, e.g. wikipedia link, opening hours.
 
 
-* `namedetails=[0|1]`
+| Parameter | Value | Default |
+|-----------| ----- | ------- |
+| namedetails | 0 or 1 | 0 |
 
-Include a list of alternative names in the results. These may include
-language variants, references, operator and brand. (Default: 0)
+When set to 1, include a full list of names for the result. These may include
+language variants, older names, references and brand.
 
 
 ### Language of results
 
-* `accept-language=<browser language string>`
+| Parameter | Value | Default |
+|-----------| ----- | ------- |
+| accept-language | browser language string | content of "Accept-Language" HTTP header |
 
-Preferred language order for showing search results, overrides the value
-specified in the "Accept-Language" HTTP header.
-Either use a standard RFC2616 accept-language string or a simple
-comma-separated list of language codes.
+Preferred language order for showing search results. This may either be
+a simple comma-separated list of language codes or have the same format
+as the ["Accept-Language" HTTP header](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Accept-Language).
+
+!!! tip
+    First-time users of Nominatim tend to be confused that they get different
+    results when using Nominatim in the browser versus in a command-line tool
+    like wget or curl. The command-line tools
+    usually don't send any Accept-Language header, prompting Nominatim
+    to show results in the local language. Browsers on the contratry always
+    send the currently chosen browser language.
+
 
 ### Polygon output
 
-* `polygon_geojson=1`
-* `polygon_kml=1`
-* `polygon_svg=1`
-* `polygon_text=1`
+| Parameter | Value  | Default |
+|-----------| -----  | ------- |
+| polygon_geojson | 0 or 1 | 0 |
+| polygon_kml     | 0 or 1 | 0 |
+| polygon_svg     | 0 or 1 | 0 |
+| polygon_text    | 0 or 1 | 0 |
 
-Output geometry of results as a GeoJSON, KML, SVG or WKT. Only one of these
-options can be used at a time. (Default: 0)
+Add the full geometry of the place to the result output. Output formats
+in GeoJSON, KML, SVG or WKT are supported. Only one of these
+options can be used at a time.
 
-* `polygon_threshold=0.0`
+| Parameter | Value  | Default |
+|-----------| -----  | ------- |
+| polygon_threshold | floating-point number | 0.0 |
 
-Return a simplified version of the output geometry. The parameter is the
+When one of the polygon_* outputs is chosen, return a simplified version
+of the output geometry. The parameter describes the
 tolerance in degrees with which the geometry may differ from the original
-geometry. Topology is preserved in the result. (Default: 0.0)
+geometry. Topology is preserved in the geometry.
+
 
 ### Other
 
-* `email=<valid email address>`
+| Parameter | Value  | Default |
+|-----------| -----  | ------- |
+| email     | valid email address | _unset_ |
 
 If you are making large numbers of request please include an appropriate email
-address to identify your requests. See Nominatim's [Usage Policy](https://operations.osmfoundation.org/policies/nominatim/) for more details.
+address to identify your requests. See Nominatim's
+[Usage Policy](https://operations.osmfoundation.org/policies/nominatim/) for more details.
 
-* `debug=[0|1]`
+
+| Parameter | Value  | Default |
+|-----------| -----  | ------- |
+| debug     | 0 or 1 | 0       |
 
 Output assorted developer debug information. Data on internals of Nominatim's
-"Search Loop" logic, and SQL queries. The output is (rough) HTML format.
-This overrides the specified machine readable format. (Default: 0)
+"search loop" logic, and SQL queries. The output is HTML format.
+This overrides the specified machine readable format.
 
 
 ## Examples

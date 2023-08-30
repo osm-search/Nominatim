@@ -254,26 +254,70 @@ successfully.
 nominatim admin --check-database
 ```
 
-Now you can try out your installation by running:
+Now you can try out your installation by executing a simple query on the
+command line:
+
+``` sh
+nominatim search --query Berlin
+```
+
+or, when you have a reverse-only installation:
+
+``` sh
+nominatim reverse --lat 51 --lon 45
+```
+
+If you want to run Nominatim as a service, you need to make a choice between
+running the traditional PHP frontend or the new experimental Python frontend.
+Make sure you have installed the right packages as per
+[Installation](Installation.md#software).
+
+#### Testing the PHP frontend
+
+You can run a small test server with the PHP frontend like this:
 
 ```sh
 nominatim serve
 ```
 
-This runs a small test server normally used for development. You can use it
-to verify that your installation is working. Go to
-`http://localhost:8088/status.php` and you should see the message `OK`.
-You can also run a search query, e.g. `http://localhost:8088/search.php?q=Berlin`.
+Go to `http://localhost:8088/status.php` and you should see the message `OK`.
+You can also run a search query, e.g. `http://localhost:8088/search.php?q=Berlin`
+or, for reverse-only installations a reverse query,
+e.g. `http://localhost:8088/reverse.php?lat=27.1750090510034&lon=78.04209025`.
 
-Note that search query is not supported for reverse-only imports. You can run a
-reverse query, e.g. `http://localhost:8088/reverse.php?lat=27.1750090510034&lon=78.04209025`.
+Do not use this test server in production.
+To run Nominatim via webservers like Apache or nginx, please continue reading
+[Deploy the PHP frontend](Deployment-PHP.md).
 
-To run Nominatim via webservers like Apache or nginx, please read the
-[Deployment chapter](Deployment.md).
+#### Testing the Python frontend
 
-## Adding search through category phrases
+To run the test server against the Python frontend, you must choose a
+web framework to use, either starlette or falcon. Make sure the appropriate
+packages are installed. Then run
 
-If you want to be able to search for places by their type through
+``` sh
+nominatim serve --engine falcon
+```
+
+or
+
+``` sh
+nominatim serve --engine starlette
+```
+
+Go to `http://localhost:8088/status.php` and you should see the message `OK`.
+You can also run a search query, e.g. `http://localhost:8088/search.php?q=Berlin`
+or, for reverse-only installations a reverse query,
+e.g. `http://localhost:8088/reverse.php?lat=27.1750090510034&lon=78.04209025`.
+
+Do not use this test server in production.
+To run Nominatim via webservers like Apache or nginx, please continue reading
+[Deploy the Python frontend](Deployment-Python.md).
+
+
+## Enabling search by category phrases
+
+To be able to search for places by their type using
 [special phrases](https://wiki.openstreetmap.org/wiki/Nominatim/Special_Phrases)
 you also need to import these key phrases like this:
 

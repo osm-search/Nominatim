@@ -134,14 +134,14 @@ All tokenizers must inherit from `nominatim.tokenizer.base.AbstractTokenizer`
 and implement the abstract functions defined there.
 
 ::: nominatim.tokenizer.base.AbstractTokenizer
-    rendering:
-        heading_level: 4
+    options:
+        heading_level: 6
 
 ### Python Analyzer Class
 
 ::: nominatim.tokenizer.base.AbstractAnalyzer
-    rendering:
-        heading_level: 4
+    options:
+        heading_level: 6
 
 ### PL/pgSQL Functions
 

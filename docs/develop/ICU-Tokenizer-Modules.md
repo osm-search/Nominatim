@@ -53,8 +53,7 @@ the function.
 ### Sanitizer configuration
 
 ::: nominatim.tokenizer.sanitizers.config.SanitizerConfig
-    rendering:
-        show_source: no
+    options:
         heading_level: 6
 
 ### The main filter function of the sanitizer
@@ -62,12 +61,10 @@ the function.
 The filter function receives a single object of type `ProcessInfo`
 which has with three members:
 
- * `place`: read-only information about the place being processed.
+ * `place: PlaceInfo`: read-only information about the place being processed.
    See PlaceInfo below.
- * `names`: The current list of names for the place. Each name is a
-   PlaceName object.
- * `address`: The current list of address names for the place. Each name
-   is a PlaceName object.
+ * `names: List[PlaceName]`: The current list of names for the place.
+ * `address: List[PlaceName]`: The current list of address names for the place.
 
 While the `place` member is provided for information only, the `names` and
 `address` lists are meant to be manipulated by the sanitizer. It may add and
@@ -77,16 +74,14 @@ adding extra attributes) or completely replace the list with a different one.
 #### PlaceInfo - information about the place
 
 ::: nominatim.data.place_info.PlaceInfo
-    rendering:
-        show_source: no
+    options:
         heading_level: 6
 
 
 #### PlaceName - extended naming information
 
 ::: nominatim.data.place_name.PlaceName
-    rendering:
-        show_source: no
+    options:
         heading_level: 6
 
 
@@ -145,14 +140,12 @@ They can be found in the directory
 ## Custom token analysis module
 
 ::: nominatim.tokenizer.token_analysis.base.AnalysisModule
-    rendering:
-        show_source: no
+    options:
         heading_level: 6
 
 
 ::: nominatim.tokenizer.token_analysis.base.Analyzer
-    rendering:
-        show_source: no
+    options:
         heading_level: 6
 
 ### Example: Creating acronym variants for long names

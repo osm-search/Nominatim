@@ -7,7 +7,7 @@
 """
 Server implementation using the falcon webserver framework.
 """
-from typing import Optional, Mapping, cast, Any
+from typing import Optional, Mapping, cast, Any, List
 from pathlib import Path
 import datetime as dt
 
@@ -136,16 +136,29 @@ class FileLoggingMiddleware:
                       f'{resource.name} "{params}"\n')
 
 
+class APIShutdown:
+    """ Middleware that closes any open database connections.
+    """
+
+    def __init__(self, api: NominatimAPIAsync) -> None:
+        self.api = api
+
+    async def process_shutdown(self, *_: Any) -> None:
+        """Process the ASGI lifespan shutdown event.
+        """
+        await self.api.close()
+
+
 def get_application(project_dir: Path,
                     environ: Optional[Mapping[str, str]] = None) -> App:
     """ Create a Nominatim Falcon ASGI application.
     """
     api = NominatimAPIAsync(project_dir, environ)
 
-    middleware: Optional[object] = None
+    middleware: List[object] = [APIShutdown(api)]
     log_file = api.config.LOG_FILE
     if log_file:
-        middleware = FileLoggingMiddleware(log_file)
+        middleware.append(FileLoggingMiddleware(log_file))
 
     app = App(cors_enable=api.config.get_bool('CORS_NOACCESSCONTROL'),
               middleware=middleware)

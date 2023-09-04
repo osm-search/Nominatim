@@ -30,6 +30,8 @@ local place_table = osm2pgsql.define_table{
         { column = 'extratags', type = 'hstore' },
         { column = 'geometry', type = 'geometry', projection = 'WGS84', not_null = true },
     },
+    data_tablespace = os.getenv("NOMINATIM_TABLESPACE_PLACE_DATA"),
+    index_tablespace = os.getenv("NOMINATIM_TABLESPACE_PLACE_INDEX"),
     indexes = {}
 }
 

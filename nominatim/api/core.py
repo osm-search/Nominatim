@@ -29,7 +29,7 @@ import nominatim.api.types as ntyp
 from nominatim.api.results import DetailedResult, ReverseResult, SearchResults
 
 
-class NominatimAPIAsync:
+class NominatimAPIAsync: #pylint: disable=too-many-instance-attributes
     """ The main frontend to the Nominatim database implements the
         functions for lookup, forward and reverse geocoding using
         asynchronous functions.
@@ -58,6 +58,7 @@ class NominatimAPIAsync:
         self.config = Configuration(project_dir, environ)
         self.query_timeout = self.config.get_int('QUERY_TIMEOUT') \
                              if self.config.QUERY_TIMEOUT else None
+        self.reverse_restrict_to_country_area = self.config.get_bool('SEARCH_WITHIN_COUNTRIES')
         self.server_version = 0
 
         if sys.version_info >= (3, 10):
@@ -201,7 +202,8 @@ class NominatimAPIAsync:
             conn.set_query_timeout(self.query_timeout)
             if details.keywords:
                 await make_query_analyzer(conn)
-            geocoder = ReverseGeocoder(conn, details)
+            geocoder = ReverseGeocoder(conn, details,
+                                       self.reverse_restrict_to_country_area)
             return await geocoder.lookup(coord)
 
 

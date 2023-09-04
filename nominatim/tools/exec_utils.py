@@ -57,6 +57,11 @@ def run_osm2pgsql(options: Mapping[str, Any]) -> None:
         if options['tablespaces'][key]:
             cmd.extend((param, options['tablespaces'][key]))
 
+    if options['tablespaces']['main_data']:
+        env['NOMINATIM_TABLESPACE_PLACE_DATA'] = options['tablespaces']['main_data']
+    if options['tablespaces']['main_index']:
+        env['NOMINATIM_TABLESPACE_PLACE_INDEX'] = options['tablespaces']['main_index']
+
     if options.get('disable_jit', False):
         env['PGOPTIONS'] = '-c jit=off -c max_parallel_workers_per_gather=0'
 

@@ -377,7 +377,7 @@ async def lookup_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> A
     for oid in (params.get('osm_ids') or '').split(','):
         oid = oid.strip()
         if len(oid) > 1 and oid[0] in 'RNWrnw' and oid[1:].isdigit():
-            places.append(napi.OsmID(oid[0], int(oid[1:])))
+            places.append(napi.OsmID(oid[0].upper(), int(oid[1:])))
 
     if len(places) > params.config().get_int('LOOKUP_MAX_COUNT'):
         params.raise_error('Too many object IDs.')

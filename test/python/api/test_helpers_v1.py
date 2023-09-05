@@ -11,7 +11,11 @@ import pytest
 
 import nominatim.api.v1.helpers as helper
 
-@pytest.mark.parametrize('inp', ['', 'abc', '12 23', 'abc -78.90, 12.456 def'])
+@pytest.mark.parametrize('inp', ['',
+                                 'abc',
+                                 '12 23',
+                                 'abc -78.90, 12.456 def',
+                                 '40 N 60 W'])
 def test_extract_coords_no_coords(inp):
     query, x, y = helper.extract_coords_from_query(inp)
 

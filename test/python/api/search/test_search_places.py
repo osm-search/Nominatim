@@ -267,6 +267,26 @@ class TestStreetWithHousenumber:
         assert all(geom.name.lower() in r.geometry for r in results)
 
 
+def test_very_large_housenumber(apiobj):
+    apiobj.add_placex(place_id=93, class_='place', type='house',
+                      parent_place_id=2000,
+                      housenumber='2467463524544', country_code='pt')
+    apiobj.add_placex(place_id=2000, class_='highway', type='residential',
+                      rank_search=26, rank_address=26,
+                      country_code='pt')
+    apiobj.add_search_name(2000, names=[1,2],
+                           search_rank=26, address_rank=26,
+                           country_code='pt')
+
+    lookup = FieldLookup('name_vector', [1, 2], 'lookup_all')
+
+    results = run_search(apiobj, 0.1, [lookup], [], hnrs=['2467463524544'],
+                         details=SearchDetails())
+
+    assert results
+    assert [r.place_id for r in results] == [93, 2000]
+
+
 class TestInterpolations:
 
     @pytest.fixture(autouse=True)

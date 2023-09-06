@@ -1,3 +1,35 @@
+4.3.0
+ * fix failing importance recalculation command
+ * fix merging of linked names into unnamed boundaries
+ * fix a number of corner cases with interpolation splitting resulting in
+   invalid geometries
+ * fix failure in website generation when password contains curly brackets
+ * fix broken use of ST_Project in PostGIS 3.4
+ * new NOMINATIM_SEARCH_WITHIN_COUNTRIES setting to restrict reverse lookups
+   to known countries (thanks @alfmarcua)
+ * allow negative OSM IDs (thanks @alfmarcua)
+ * disallow import of Tiger data in a frozen DB
+ * avoid UPDATE to change settings to be compatible with r/o DBs (thanks @t-tomek)
+ * update bundled osm2pgsql to 1.9.2
+ * reorganise osm2pgsql flex style and make it the default
+ * exclude names ending in :wikipedia from indexing
+ * no longer accept comma as a list separator in name tags
+ * process forward dependencies on update to catch updates in geometries
+   of ways and relations
+ * fix handling of isolated silent letters during transliteration
+ * no longer assign postcodes to large linear features like rivers
+ * introduce nominatim.paths module for finding data and libraries
+ * documentation layout changed to material theme
+ * new documentation section for library
+ * various smaller fixes to existing documentation
+   (thanks @woodpeck, @bloom256, @biswajit-k)
+ * updates to vagrant install scripts, drop support for Ubunut 18
+   (thanks @n-timofeev)
+ * removed obsolete configuration variables from env.defaults
+ * add script for generating a taginfo description (thanks @biswajit-k)
+ * modernize Python code around BDD test and add testing of Python frontend
+ * lots of new BDD tests for API output
+
 4.2.2
 
  * extend flex-style library to fully support all default styles

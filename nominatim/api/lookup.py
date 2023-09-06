@@ -38,6 +38,7 @@ async def find_in_placex(conn: SearchConnection, place: ntyp.PlaceRef,
                     t.c.importance, t.c.wikipedia, t.c.indexed_date,
                     t.c.parent_place_id, t.c.rank_address, t.c.rank_search,
                     t.c.linked_place_id,
+                    t.c.geometry.ST_Expand(0).label('bbox'),
                     t.c.centroid)
 
     if isinstance(place, ntyp.PlaceID):
@@ -232,7 +233,8 @@ async def get_simple_place(conn: SearchConnection, place: ntyp.PlaceRef,
 
     # add missing details
     assert result is not None
-    result.bbox = getattr(row, 'bbox', None)
+    if hasattr(row, 'bbox'):
+        result.bbox = ntyp.Bbox.from_wkb(row.bbox)
 
     await nres.add_result_details(conn, [result], details)
 

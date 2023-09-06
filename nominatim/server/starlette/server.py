@@ -93,7 +93,7 @@ class FileLoggingMiddleware(BaseHTTPMiddleware):
 
         finish = dt.datetime.now(tz=dt.timezone.utc)
 
-        for endpoint in ('reverse', 'search', 'lookup'):
+        for endpoint in ('reverse', 'search', 'lookup', 'details'):
             if request.url.path.startswith('/' + endpoint):
                 qtype = endpoint
                 break

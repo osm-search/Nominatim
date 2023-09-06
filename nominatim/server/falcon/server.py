@@ -122,7 +122,7 @@ class FileLoggingMiddleware:
             writes logs for sucessful requests for search, reverse and lookup.
         """
         if not req_succeeded or resource is None or resp.status != 200\
-            or resource.name not in ('reverse', 'search', 'lookup'):
+            or resource.name not in ('reverse', 'search', 'lookup', 'details'):
             return
 
         finish = dt.datetime.now(tz=dt.timezone.utc)

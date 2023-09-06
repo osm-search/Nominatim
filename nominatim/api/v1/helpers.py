@@ -108,15 +108,18 @@ def deduplicate_results(results: SearchResults, max_results: int) -> SearchResul
             assert result.names and 'ref' in result.names
             if any(_is_postcode_relation_for(r, result.names['ref']) for r in results):
                 continue
-        classification = (result.osm_object[0] if result.osm_object else None,
-                          result.category,
-                          result.display_name,
-                          result.rank_address)
-        if result.osm_object not in osm_ids_done \
-           and classification not in classification_done:
+        if result.source_table == SourceTable.PLACEX:
+            classification = (result.osm_object[0] if result.osm_object else None,
+                              result.category,
+                              result.display_name,
+                              result.rank_address)
+            if result.osm_object not in osm_ids_done \
+               and classification not in classification_done:
+                deduped.append(result)
+            osm_ids_done.add(result.osm_object)
+            classification_done.add(classification)
+        else:
             deduped.append(result)
-        osm_ids_done.add(result.osm_object)
-        classification_done.add(classification)
         if len(deduped) >= max_results:
             break
 

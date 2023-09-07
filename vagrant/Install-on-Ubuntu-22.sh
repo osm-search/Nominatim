@@ -28,7 +28,7 @@ export DEBIAN_FRONTEND=noninteractive #DOCS:
                         php-cli php-pgsql php-intl libicu-dev python3-dotenv \
                         python3-psycopg2 python3-psutil python3-jinja2 \
                         python3-icu python3-datrie python3-sqlalchemy \
-                        python3-asyncpg python3-yaml git
+                        python3-asyncpg python3-yaml
 
 #
 # System Configuration
@@ -104,17 +104,10 @@ fi                                    #DOCS:
 #
 if [ "x$1" == "xyes" ]; then  #DOCS:    :::sh
     cd $USERHOME
-    git clone --recursive https://github.com/openstreetmap/Nominatim.git
-    cd Nominatim
+    wget https://nominatim.org/release/Nominatim-4.3.0.tar.bz2
+    tar xf Nominatim-4.3.0.tar.bz2
 else                               #DOCS:
     cd $USERHOME/Nominatim         #DOCS:
-fi                                 #DOCS:
-
-# When installing the latest source from github, you also need to
-# download the country grid:
-
-if [ ! -f data/country_osm_grid.sql.gz ]; then       #DOCS:    :::sh
-    wget -O data/country_osm_grid.sql.gz https://nominatim.org/data/country_grid.sql.gz
 fi                                 #DOCS:
 
 # The code must be built in a separate directory. Create this directory,
@@ -122,7 +115,7 @@ fi                                 #DOCS:
 
     mkdir $USERHOME/build
     cd $USERHOME/build
-    cmake $USERHOME/Nominatim
+    cmake $USERHOME/Nominatim-4.3.0
     make
     sudo make install
 

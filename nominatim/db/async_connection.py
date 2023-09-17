@@ -69,8 +69,8 @@ class DBConnection:
         self.current_params: Optional[Sequence[Any]] = None
         self.ignore_sql_errors = ignore_sql_errors
 
-        self.conn: Optional['psycopg2.connection'] = None
-        self.cursor: Optional['psycopg2.cursor'] = None
+        self.conn: Optional['psycopg2._psycopg.connection'] = None
+        self.cursor: Optional['psycopg2._psycopg.cursor'] = None
         self.connect(cursor_factory=cursor_factory)
 
     def close(self) -> None:
@@ -78,7 +78,7 @@ class DBConnection:
         """
         if self.conn is not None:
             if self.cursor is not None:
-                self.cursor.close() # type: ignore[no-untyped-call]
+                self.cursor.close()
                 self.cursor = None
             self.conn.close()
 

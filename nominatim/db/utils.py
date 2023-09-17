@@ -118,4 +118,4 @@ class CopyBuffer:
         """
         if self.buffer.tell() > 0:
             self.buffer.seek(0)
-            cur.copy_from(self.buffer, table, columns=columns) # type: ignore[no-untyped-call]
+            cur.copy_from(self.buffer, table, columns=columns) # type: ignore[arg-type]

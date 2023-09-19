@@ -109,7 +109,8 @@ class APISearch:
                                   'countries': args.countrycodes,
                                   'excluded': args.exclude_place_ids,
                                   'viewbox': args.viewbox,
-                                  'bounded_viewbox': args.bounded
+                                  'bounded_viewbox': args.bounded,
+                                  'locales': args.get_locales(api.config.DEFAULT_LANGUAGE)
                                  }
 
         if args.query:
@@ -123,9 +124,6 @@ class APISearch:
                                          postalcode=args.postalcode,
                                          country=args.country,
                                          **params)
-
-        for result in results:
-            result.localize(args.get_locales(api.config.DEFAULT_LANGUAGE))
 
         if args.dedupe and len(results) > 1:
             results = deduplicate_results(results, args.limit)
@@ -187,14 +185,14 @@ class APIReverse:
                              layers=args.get_layers(napi.DataLayer.ADDRESS | napi.DataLayer.POI),
                              address_details=True, # needed for display name
                              geometry_output=args.get_geometry_output(),
-                             geometry_simplification=args.polygon_threshold)
+                             geometry_simplification=args.polygon_threshold,
+                             locales=args.get_locales(api.config.DEFAULT_LANGUAGE))
 
         if args.format == 'debug':
             print(loglib.get_and_disable())
             return 0
 
         if result:
-            result.localize(args.get_locales(api.config.DEFAULT_LANGUAGE))
             output = api_output.format_result(
                         napi.ReverseResults([result]),
                         args.format,
@@ -249,10 +247,8 @@ class APILookup:
         results = api.lookup(places,
                              address_details=True, # needed for display name
                              geometry_output=args.get_geometry_output(),
-                             geometry_simplification=args.polygon_threshold or 0.0)
-
-        for result in results:
-            result.localize(args.get_locales(api.config.DEFAULT_LANGUAGE))
+                             geometry_simplification=args.polygon_threshold or 0.0,
+                             locales=args.get_locales(api.config.DEFAULT_LANGUAGE))
 
         output = api_output.format_result(
                     results,
@@ -326,6 +322,7 @@ class APIDetails:
 
         api = napi.NominatimAPI(args.project_dir)
 
+        locales = args.get_locales(api.config.DEFAULT_LANGUAGE)
         result = api.details(place,
                              address_details=args.addressdetails,
                              linked_places=args.linkedplaces,
@@ -333,13 +330,11 @@ class APIDetails:
                              keywords=args.keywords,
                              geometry_output=napi.GeometryFormat.GEOJSON
                                              if args.polygon_geojson
-                                             else napi.GeometryFormat.NONE)
+                                             else napi.GeometryFormat.NONE,
+                            locales=locales)
 
 
         if result:
-            locales = args.get_locales(api.config.DEFAULT_LANGUAGE)
-            result.localize(locales)
-
             output = api_output.format_result(
                         result,
                         'json',

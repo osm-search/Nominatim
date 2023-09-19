@@ -30,6 +30,15 @@ class AbstractQueryAnalyzer(ABC):
         """
 
 
+    @abstractmethod
+    def normalize_text(self, text: str) -> str:
+        """ Bring the given text into a normalized form. That is the
+            standardized form search will work with. All information removed
+            at this stage is inevitably lost.
+        """
+
+
+
 async def make_query_analyzer(conn: SearchConnection) -> AbstractQueryAnalyzer:
     """ Create a query analyzer for the tokenizer used by the database.
     """

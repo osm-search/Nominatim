@@ -65,6 +65,8 @@ class SetupAll:
                            help='Continue import even when errors in SQL are present')
         group3.add_argument('--index-noanalyse', action='store_true',
                            help='Do not perform analyse operations during index (expert only)')
+        group3.add_argument('--no-superuser', action='store_true',
+                            help='Do not attempt to create the database')
 
 
     def run(self, args: NominatimArgs) -> int: # pylint: disable=too-many-statements
@@ -81,9 +83,10 @@ class SetupAll:
             if not files:
                 raise UsageError("No input files (use --osm-file).")
 
-            LOG.warning('Creating database')
-            database_import.setup_database_skeleton(args.config.get_libpq_dsn(),
-                                                    rouser=args.config.DATABASE_WEBUSER)
+            if not args.no_superuser:
+                LOG.warning('Creating database')
+                database_import.setup_database_skeleton(args.config.get_libpq_dsn(),
+                                                        rouser=args.config.DATABASE_WEBUSER)
 
             LOG.warning('Setting up country tables')
             country_info.setup_country_tables(args.config.get_libpq_dsn(),

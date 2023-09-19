@@ -86,6 +86,7 @@ class NominatimArgs:
     offline: bool
     ignore_errors: bool
     index_noanalyse: bool
+    no_superuser: bool
 
     # Arguments to 'index'
     boundaries_only: bool

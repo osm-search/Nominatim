@@ -7,7 +7,7 @@
 """
 Public interface to the search code.
 """
-from typing import List, Any, Optional, Iterator, Tuple
+from typing import List, Any, Optional, Iterator, Tuple, Dict
 import itertools
 import re
 import datetime as dt
@@ -15,7 +15,7 @@ import difflib
 
 from nominatim.api.connection import SearchConnection
 from nominatim.api.types import SearchDetails
-from nominatim.api.results import SearchResults, add_result_details
+from nominatim.api.results import SearchResult, SearchResults, add_result_details
 from nominatim.api.search.token_assignment import yield_token_assignments
 from nominatim.api.search.db_search_builder import SearchBuilder, build_poi_search, wrap_near_search
 from nominatim.api.search.db_searches import AbstractSearch
@@ -75,26 +75,32 @@ class ForwardGeocoder:
             is found.
         """
         log().section('Execute database searches')
-        results = SearchResults()
+        results: Dict[Any, SearchResult] = {}
+
         end_time = dt.datetime.now() + self.timeout
 
-        num_results = 0
         min_ranking = 1000.0
         prev_penalty = 0.0
         for i, search in enumerate(searches):
             if search.penalty > prev_penalty and (search.penalty > min_ranking or i > 20):
                 break
             log().table_dump(f"{i + 1}. Search", _dump_searches([search], query))
-            for result in await search.lookup(self.conn, self.params):
-                results.append(result)
+            lookup_results = await search.lookup(self.conn, self.params)
+            for result in lookup_results:
+                rhash = (result.source_table, result.place_id,
+                         result.housenumber, result.country_code)
+                prevresult = results.get(rhash)
+                if prevresult:
+                    prevresult.accuracy = min(prevresult.accuracy, result.accuracy)
+                else:
+                    results[rhash] = result
                 min_ranking = min(min_ranking, result.ranking + 0.5, search.penalty + 0.3)
-            log().result_dump('Results', ((r.accuracy, r) for r in results[num_results:]))
-            num_results = len(results)
+            log().result_dump('Results', ((r.accuracy, r) for r in lookup_results))
             prev_penalty = search.penalty
             if dt.datetime.now() >= end_time:
                 break
 
-        return results
+        return SearchResults(results.values())
 
 
     def sort_and_cut_results(self, results: SearchResults) -> SearchResults:
@@ -141,7 +147,12 @@ class ForwardGeocoder:
                     distance += len(qword)
                 else:
                     distance += (1.0 - wdist) * len(qword)
-            result.accuracy += distance * 0.5 / sum(len(w) for w in qwords)
+            # Compensate for the fact that country names do not get a
+            # match penalty yet by the tokenizer.
+            # Temporary hack that needs to be removed!
+            if result.rank_address == 4:
+                distance *= 2
+            result.accuracy += distance * 0.4 / sum(len(w) for w in qwords)
 
 
     async def lookup_pois(self, categories: List[Tuple[str, str]],

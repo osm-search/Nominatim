@@ -88,6 +88,7 @@ class NominatimArgs:
     ignore_errors: bool
     index_noanalyse: bool
     no_superuser: bool
+    prepare_database: bool
 
     # Arguments to 'index'
     boundaries_only: bool

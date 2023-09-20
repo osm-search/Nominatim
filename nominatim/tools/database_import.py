@@ -38,6 +38,16 @@ def _require_version(module: str, actual: Tuple[int, int], expected: Tuple[int, 
         raise UsageError(f'{module} is too old.')
 
 
+def check_existing_database_plugins(dsn: str):
+    with connect(dsn) as conn:
+        _require_version('PostgreSQL server',
+                         conn.server_version_tuple(),
+                         POSTGRESQL_REQUIRED_VERSION)
+        _require_version('PostGIS',
+                         conn.postgis_version_tuple(),
+                         POSTGIS_REQUIRED_VERSION)
+
+
 def setup_database_skeleton(dsn: str, rouser: Optional[str] = None) -> None:
     """ Create a new database for Nominatim and populate it with the
         essential extensions.

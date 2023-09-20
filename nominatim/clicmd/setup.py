@@ -99,6 +99,8 @@ class SetupAll:
                     return 0
                 
             if not args.prepare_database or args.no_superuser or complete_import:
+                # Check if the correct plugins are installed
+                database_import.check_existing_database_plugins(args.config.get_libpq_dsn())
                 LOG.warning('Setting up country tables')
                 country_info.setup_country_tables(args.config.get_libpq_dsn(),
                                                 args.config.lib_dir.data,

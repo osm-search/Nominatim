@@ -67,6 +67,8 @@ class SetupAll:
                            help='Do not perform analyse operations during index (expert only)')
         group3.add_argument('--no-superuser', action='store_true',
                             help='Do not attempt to create the database')
+        group3.add_argument('--prepare-database', action='store_true',
+                            help='Create the database but do not import any data')
 
 
     def run(self, args: NominatimArgs) -> int: # pylint: disable=too-many-statements
@@ -82,38 +84,47 @@ class SetupAll:
             files = args.get_osm_file_list()
             if not files:
                 raise UsageError("No input files (use --osm-file).")
+            
+            if args.no_superuser and args.prepare_database:
+                raise UsageError("Cannot use --no-superuser and --prepare-database together.")
 
-            if not args.no_superuser:
+            complete_import = not args.no_superuser and not args.prepare_database
+
+            if args.prepare_database or complete_import:
                 LOG.warning('Creating database')
                 database_import.setup_database_skeleton(args.config.get_libpq_dsn(),
                                                         rouser=args.config.DATABASE_WEBUSER)
+                
+                if not complete_import:
+                    return 0
+                
+            if not args.prepare_database or args.no_superuser or complete_import:
+                LOG.warning('Setting up country tables')
+                country_info.setup_country_tables(args.config.get_libpq_dsn(),
+                                                args.config.lib_dir.data,
+                                                args.no_partitions)
 
-            LOG.warning('Setting up country tables')
-            country_info.setup_country_tables(args.config.get_libpq_dsn(),
-                                              args.config.lib_dir.data,
-                                              args.no_partitions)
+                LOG.warning('Importing OSM data file')
+                database_import.import_osm_data(files,
+                                                args.osm2pgsql_options(0, 1),
+                                                drop=args.no_updates,
+                                                ignore_errors=args.ignore_errors)
 
-            LOG.warning('Importing OSM data file')
-            database_import.import_osm_data(files,
-                                            args.osm2pgsql_options(0, 1),
-                                            drop=args.no_updates,
-                                            ignore_errors=args.ignore_errors)
+                LOG.warning('Importing wikipedia importance data')
+                data_path = Path(args.config.WIKIPEDIA_DATA_PATH or args.project_dir)
+                if refresh.import_wikipedia_articles(args.config.get_libpq_dsn(),
+                                                    data_path) > 0:
+                    LOG.error('Wikipedia importance dump file not found. '
+                            'Calculating importance values of locations will not '
+                            'use Wikipedia importance data.')
 
-            LOG.warning('Importing wikipedia importance data')
-            data_path = Path(args.config.WIKIPEDIA_DATA_PATH or args.project_dir)
-            if refresh.import_wikipedia_articles(args.config.get_libpq_dsn(),
-                                                 data_path) > 0:
-                LOG.error('Wikipedia importance dump file not found. '
-                          'Calculating importance values of locations will not '
-                          'use Wikipedia importance data.')
+                LOG.warning('Importing secondary importance raster data')
+                if refresh.import_secondary_importance(args.config.get_libpq_dsn(),
+                                                    args.project_dir) != 0:
+                    LOG.error('Secondary importance file not imported. '
+                            'Falling back to default ranking.')
 
-            LOG.warning('Importing secondary importance raster data')
-            if refresh.import_secondary_importance(args.config.get_libpq_dsn(),
-                                                   args.project_dir) != 0:
-                LOG.error('Secondary importance file not imported. '
-                          'Falling back to default ranking.')
-
-            self._setup_tables(args.config, args.reverse_only)
+                self._setup_tables(args.config, args.reverse_only)
 
         if args.continue_at is None or args.continue_at == 'load-data':
             LOG.warning('Initialise tables')

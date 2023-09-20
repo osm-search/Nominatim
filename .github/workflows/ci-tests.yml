@@ -306,7 +306,9 @@ jobs:
               working-directory: /home/nominatim/nominatim-project
 
             - name: Import
-              run: nominatim import --osm-file ../test.pbf
+              run: |
+                  nominatim import --prepare-database --osm-file ../test.pbf
+                  nominatim import --no-superuser --osm-file ../test.pbf
               working-directory: /home/nominatim/nominatim-project
 
             - name: Import special phrases

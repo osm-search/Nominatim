@@ -170,7 +170,7 @@ class SetupAll:
         self._finalize_database(args.config.get_libpq_dsn(), args.offline)
 
         return 0
-    
+
     def _is_complete_import(self, args: NominatimArgs) -> bool:
         """ Determine if the import is complete or if only the database should be prepared.
         """

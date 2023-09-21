@@ -38,6 +38,7 @@ NOMINATIM_VERSION = NominatimVersion(4, 3, 0, 0)
 
 POSTGRESQL_REQUIRED_VERSION = (9, 6)
 POSTGIS_REQUIRED_VERSION = (2, 2)
+HSTORE_REQUIRED_VERSION = (1, 3)
 
 # Cmake sets a variable @GIT_HASH@ by executing 'git --log'. It is not run
 # on every execution of 'make'.

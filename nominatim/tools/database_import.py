@@ -23,7 +23,7 @@ from nominatim.db.async_connection import DBConnection
 from nominatim.db.sql_preprocessor import SQLPreprocessor
 from nominatim.tools.exec_utils import run_osm2pgsql
 from nominatim.errors import UsageError
-from nominatim.version import POSTGRESQL_REQUIRED_VERSION, POSTGIS_REQUIRED_VERSION
+from nominatim.version import POSTGRESQL_REQUIRED_VERSION, POSTGIS_REQUIRED_VERSION, HSTORE_REQUIRED_VERSION
 
 LOG = logging.getLogger()
 
@@ -47,6 +47,9 @@ def check_existing_database_plugins(dsn: str):
         _require_version('PostGIS',
                          conn.postgis_version_tuple(),
                          POSTGIS_REQUIRED_VERSION)
+        _require_version('hstore',
+                         conn.hstore_version_tuple(),
+                         HSTORE_REQUIRED_VERSION)
 
 
 def setup_database_skeleton(dsn: str, rouser: Optional[str] = None) -> None:

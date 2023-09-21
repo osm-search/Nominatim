@@ -56,7 +56,7 @@ Feature: Structured search queries
           | Liechtenstein |
         And  results contain
           | class   | type |
-          | amenity | ^(pub)\|(bar) |
+          | amenity | ^(pub)\|(bar)\|(restaurant) |
 
     #176
     Scenario: Structured search restricts rank

@@ -127,6 +127,15 @@ class LegacyQueryAnalyzer(AbstractQueryAnalyzer):
         return query
 
 
+    def normalize_text(self, text: str) -> str:
+        """ Bring the given text into a normalized form.
+
+            This only removes case, so some difference with the normalization
+            in the phrase remains.
+        """
+        return text.lower()
+
+
     def split_query(self, query: qmod.QueryStruct) -> Tuple[List[str],
                                                             Dict[str, List[qmod.TokenRange]]]:
         """ Transliterate the phrases and split them into tokens.

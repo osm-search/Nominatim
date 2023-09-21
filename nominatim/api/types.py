@@ -17,6 +17,7 @@ from struct import unpack
 from binascii import unhexlify
 
 from nominatim.errors import UsageError
+from nominatim.api.localization import Locales
 
 # pylint: disable=no-member,too-many-boolean-expressions,too-many-instance-attributes
 
@@ -386,7 +387,7 @@ TParam = TypeVar('TParam', bound='LookupDetails') # pylint: disable=invalid-name
 
 @dataclasses.dataclass
 class LookupDetails:
-    """ Collection of parameters that define the amount of details
+    """ Collection of parameters that define which kind of details are
         returned with a lookup or details result.
     """
     geometry_output: GeometryFormat = GeometryFormat.NONE
@@ -412,6 +413,9 @@ class LookupDetails:
     """ Simplification factor for a geometry in degrees WGS. A factor of
         0.0 means the original geometry is kept. The higher the value, the
         more the geometry gets simplified.
+    """
+    locales: Locales = Locales()
+    """ Prefered languages for localization of results.
     """
 
     @classmethod

@@ -7,13 +7,15 @@
 """
 Public interface to the search code.
 """
-from typing import List, Any, Optional, Iterator, Tuple
+from typing import List, Any, Optional, Iterator, Tuple, Dict
 import itertools
+import re
 import datetime as dt
+import difflib
 
 from nominatim.api.connection import SearchConnection
 from nominatim.api.types import SearchDetails
-from nominatim.api.results import SearchResults, add_result_details
+from nominatim.api.results import SearchResult, SearchResults, add_result_details
 from nominatim.api.search.token_assignment import yield_token_assignments
 from nominatim.api.search.db_search_builder import SearchBuilder, build_poi_search, wrap_near_search
 from nominatim.api.search.db_searches import AbstractSearch
@@ -73,40 +75,84 @@ class ForwardGeocoder:
             is found.
         """
         log().section('Execute database searches')
-        results = SearchResults()
+        results: Dict[Any, SearchResult] = {}
+
         end_time = dt.datetime.now() + self.timeout
 
-        num_results = 0
         min_ranking = 1000.0
         prev_penalty = 0.0
         for i, search in enumerate(searches):
             if search.penalty > prev_penalty and (search.penalty > min_ranking or i > 20):
                 break
             log().table_dump(f"{i + 1}. Search", _dump_searches([search], query))
-            for result in await search.lookup(self.conn, self.params):
-                results.append(result)
+            lookup_results = await search.lookup(self.conn, self.params)
+            for result in lookup_results:
+                rhash = (result.source_table, result.place_id,
+                         result.housenumber, result.country_code)
+                prevresult = results.get(rhash)
+                if prevresult:
+                    prevresult.accuracy = min(prevresult.accuracy, result.accuracy)
+                else:
+                    results[rhash] = result
                 min_ranking = min(min_ranking, result.ranking + 0.5, search.penalty + 0.3)
-            log().result_dump('Results', ((r.accuracy, r) for r in results[num_results:]))
-            num_results = len(results)
+            log().result_dump('Results', ((r.accuracy, r) for r in lookup_results))
             prev_penalty = search.penalty
             if dt.datetime.now() >= end_time:
                 break
 
+        return SearchResults(results.values())
+
+
+    def sort_and_cut_results(self, results: SearchResults) -> SearchResults:
+        """ Remove badly matching results, sort by ranking and
+            limit to the configured number of results.
+        """
         if results:
             min_ranking = min(r.ranking for r in results)
             results = SearchResults(r for r in results if r.ranking < min_ranking + 0.5)
+            results.sort(key=lambda r: r.ranking)
 
         if results:
-            min_rank = min(r.rank_search for r in results)
-
+            min_rank = results[0].rank_search
             results = SearchResults(r for r in results
                                     if r.ranking + 0.05 * (r.rank_search - min_rank)
                                        < min_ranking + 0.5)
 
-            results.sort(key=lambda r: r.accuracy - r.calculated_importance())
             results = SearchResults(results[:self.limit])
 
         return results
+
+
+    def rerank_by_query(self, query: QueryStruct, results: SearchResults) -> None:
+        """ Adjust the accuracy of the localized result according to how well
+            they match the original query.
+        """
+        assert self.query_analyzer is not None
+        qwords = [word for phrase in query.source
+                       for word in re.split('[, ]+', phrase.text) if word]
+        if not qwords:
+            return
+
+        for result in results:
+            if not result.display_name:
+                continue
+            distance = 0.0
+            norm = self.query_analyzer.normalize_text(result.display_name)
+            words = set((w for w in norm.split(' ') if w))
+            if not words:
+                continue
+            for qword in qwords:
+                wdist = max(difflib.SequenceMatcher(a=qword, b=w).quick_ratio() for w in words)
+                if wdist < 0.5:
+                    distance += len(qword)
+                else:
+                    distance += (1.0 - wdist) * len(qword)
+            # Compensate for the fact that country names do not get a
+            # match penalty yet by the tokenizer.
+            # Temporary hack that needs to be removed!
+            if result.rank_address == 4:
+                distance *= 2
+            result.accuracy += distance * 0.4 / sum(len(w) for w in qwords)
 
 
     async def lookup_pois(self, categories: List[Tuple[str, str]],
@@ -123,13 +169,16 @@ class ForwardGeocoder:
             if query:
                 searches = [wrap_near_search(categories, s) for s in searches[:50]]
                 results = await self.execute_searches(query, searches)
+                await add_result_details(self.conn, results, self.params)
+                log().result_dump('Preliminary Results', ((r.accuracy, r) for r in results))
+                results = self.sort_and_cut_results(results)
             else:
                 results = SearchResults()
         else:
             search = build_poi_search(categories, self.params.countries)
             results = await search.lookup(self.conn, self.params)
+            await add_result_details(self.conn, results, self.params)
 
-        await add_result_details(self.conn, results, self.params)
         log().result_dump('Final Results', ((r.accuracy, r) for r in results))
 
         return results
@@ -150,6 +199,10 @@ class ForwardGeocoder:
             # Execute SQL until an appropriate result is found.
             results = await self.execute_searches(query, searches[:50])
             await add_result_details(self.conn, results, self.params)
+            log().result_dump('Preliminary Results', ((r.accuracy, r) for r in results))
+            self.rerank_by_query(query, results)
+            log().result_dump('Results after reranking', ((r.accuracy, r) for r in results))
+            results = self.sort_and_cut_results(results)
             log().result_dump('Final Results', ((r.accuracy, r) for r in results))
 
         return results

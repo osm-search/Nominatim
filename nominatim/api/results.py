@@ -292,12 +292,6 @@ class SearchResults(List[SearchResult]):
         May be empty when no result was found.
     """
 
-    def localize(self, locales: Locales) -> None:
-        """ Apply the given locales to all results.
-        """
-        for result in self:
-            result.localize(locales)
-
 
 def _filter_geometries(row: SaRow) -> Dict[str, str]:
     return {k[9:]: v for k, v in row._mapping.items() # pylint: disable=W0212
@@ -459,6 +453,8 @@ async def add_result_details(conn: SearchConnection, results: List[BaseResultT],
             log().comment('Query keywords')
             for result in results:
                 await complete_keywords(conn, result)
+        for result in results:
+            result.localize(details.locales)
 
 
 def _result_row_to_address_row(row: SaRow) -> AddressLine:

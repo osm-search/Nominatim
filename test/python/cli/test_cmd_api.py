@@ -67,7 +67,9 @@ class TestCliReverseCall:
         result = napi.ReverseResult(napi.SourceTable.PLACEX, ('place', 'thing'),
                                     napi.Point(1.0, -3.0),
                                     names={'name':'Name', 'name:fr': 'Nom'},
-                                    extratags={'extra':'Extra'})
+                                    extratags={'extra':'Extra'},
+                                    locale_name='Name',
+                                    display_name='Name')
 
         monkeypatch.setattr(napi.NominatimAPI, 'reverse',
                             lambda *args, **kwargs: result)
@@ -109,16 +111,6 @@ class TestCliReverseCall:
         assert out['type'] == 'FeatureCollection'
 
 
-    def test_reverse_language(self, cli_call, tmp_path, capsys):
-        result = cli_call('reverse', '--project-dir', str(tmp_path),
-                          '--lat', '34', '--lon', '34', '--lang', 'fr')
-
-        assert result == 0
-
-        out = json.loads(capsys.readouterr().out)
-        assert out['name'] == 'Nom'
-
-
 class TestCliLookupCall:
 
     @pytest.fixture(autouse=True)
@@ -126,7 +118,9 @@ class TestCliLookupCall:
         result = napi.SearchResult(napi.SourceTable.PLACEX, ('place', 'thing'),
                                     napi.Point(1.0, -3.0),
                                     names={'name':'Name', 'name:fr': 'Nom'},
-                                    extratags={'extra':'Extra'})
+                                    extratags={'extra':'Extra'},
+                                    locale_name='Name',
+                                    display_name='Name')
 
         monkeypatch.setattr(napi.NominatimAPI, 'lookup',
                             lambda *args, **kwargs: napi.SearchResults([result]))
@@ -150,9 +144,11 @@ class TestCliLookupCall:
                                              ])
 def test_search(cli_call, tmp_path, capsys, monkeypatch, endpoint, params):
     result = napi.SearchResult(napi.SourceTable.PLACEX, ('place', 'thing'),
-                                napi.Point(1.0, -3.0),
-                                names={'name':'Name', 'name:fr': 'Nom'},
-                                extratags={'extra':'Extra'})
+                               napi.Point(1.0, -3.0),
+                               names={'name':'Name', 'name:fr': 'Nom'},
+                               extratags={'extra':'Extra'},
+                               locale_name='Name',
+                               display_name='Name')
 
     monkeypatch.setattr(napi.NominatimAPI, endpoint,
                         lambda *args, **kwargs: napi.SearchResults([result]))

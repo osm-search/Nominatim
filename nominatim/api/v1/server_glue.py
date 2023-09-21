@@ -308,7 +308,8 @@ async def details_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> 
                                keywords=params.get_bool('keywords', False),
                                geometry_output = napi.GeometryFormat.GEOJSON
                                                  if params.get_bool('polygon_geojson', False)
-                                                 else napi.GeometryFormat.NONE
+                                                 else napi.GeometryFormat.NONE,
+                               locales=locales
                               )
 
     if debug:
@@ -316,8 +317,6 @@ async def details_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> 
 
     if result is None:
         params.raise_error('No place with that OSM ID found.', status=404)
-
-    result.localize(locales)
 
     output = formatting.format_result(result, fmt,
                  {'locales': locales,
@@ -337,6 +336,7 @@ async def reverse_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> 
     details = params.parse_geometry_details(fmt)
     details['max_rank'] = helpers.zoom_to_rank(params.get_int('zoom', 18))
     details['layers'] = params.get_layers()
+    details['locales'] = napi.Locales.from_accept_languages(params.get_accepted_languages())
 
     result = await api.reverse(coord, **details)
 
@@ -357,9 +357,6 @@ async def reverse_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> 
                    'namedetails': params.get_bool('namedetails', False),
                    'addressdetails': params.get_bool('addressdetails', True)}
 
-    if result:
-        result.localize(napi.Locales.from_accept_languages(params.get_accepted_languages()))
-
     output = formatting.format_result(napi.ReverseResults([result] if result else []),
                                       fmt, fmt_options)
 
@@ -372,6 +369,7 @@ async def lookup_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> A
     fmt = params.parse_format(napi.SearchResults, 'xml')
     debug = params.setup_debugging()
     details = params.parse_geometry_details(fmt)
+    details['locales'] = napi.Locales.from_accept_languages(params.get_accepted_languages())
 
     places = []
     for oid in (params.get('osm_ids') or '').split(','):
@@ -393,8 +391,6 @@ async def lookup_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> A
     fmt_options = {'extratags': params.get_bool('extratags', False),
                    'namedetails': params.get_bool('namedetails', False),
                    'addressdetails': params.get_bool('addressdetails', True)}
-
-    results.localize(napi.Locales.from_accept_languages(params.get_accepted_languages()))
 
     output = formatting.format_result(results, fmt, fmt_options)
 
@@ -456,6 +452,8 @@ async def search_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> A
     else:
         details['layers'] = params.get_layers()
 
+    details['locales'] = napi.Locales.from_accept_languages(params.get_accepted_languages())
+
     # unstructured query parameters
     query = params.get('q', None)
     # structured query parameters
@@ -479,8 +477,6 @@ async def search_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> A
             results = await api.search_address(**details)
     except UsageError as err:
         params.raise_error(str(err))
-
-    results.localize(napi.Locales.from_accept_languages(params.get_accepted_languages()))
 
     if details['dedupe'] and len(results) > 1:
         results = helpers.deduplicate_results(results, max_results)

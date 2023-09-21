@@ -39,6 +39,7 @@ def _require_version(module: str, actual: Tuple[int, int], expected: Tuple[int, 
 
 
 def check_existing_database_plugins(dsn: str):
+    """ Check that the database has the required plugins installed."""
     with connect(dsn) as conn:
         _require_version('PostgreSQL server',
                          conn.server_version_tuple(),

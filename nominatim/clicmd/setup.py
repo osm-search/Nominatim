@@ -84,21 +84,19 @@ class SetupAll:
             files = args.get_osm_file_list()
             if not files:
                 raise UsageError("No input files (use --osm-file).")
-            
+
             if args.no_superuser and args.prepare_database:
                 raise UsageError("Cannot use --no-superuser and --prepare-database together.")
 
-            complete_import = not args.no_superuser and not args.prepare_database
-
-            if args.prepare_database or complete_import:
+            if args.prepare_database or self.is_complete_import(args):
                 LOG.warning('Creating database')
                 database_import.setup_database_skeleton(args.config.get_libpq_dsn(),
                                                         rouser=args.config.DATABASE_WEBUSER)
-                
-                if not complete_import:
+
+                if not self.is_complete_import(args):
                     return 0
-                
-            if not args.prepare_database or args.no_superuser or complete_import:
+
+            if not args.prepare_database or args.no_superuser or self.is_complete_import(args):
                 # Check if the correct plugins are installed
                 database_import.check_existing_database_plugins(args.config.get_libpq_dsn())
                 LOG.warning('Setting up country tables')
@@ -172,6 +170,11 @@ class SetupAll:
         self._finalize_database(args.config.get_libpq_dsn(), args.offline)
 
         return 0
+    
+    def _is_complete_import(self, args: NominatimArgs) -> bool:
+        """ Determine if the import is complete or if only the database should be prepared.
+        """
+        return not args.no_superuser and not args.prepare_database
 
 
     def _setup_tables(self, config: Configuration, reverse_only: bool) -> None:

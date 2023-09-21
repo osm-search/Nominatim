@@ -88,15 +88,15 @@ class SetupAll:
             if args.no_superuser and args.prepare_database:
                 raise UsageError("Cannot use --no-superuser and --prepare-database together.")
 
-            if args.prepare_database or self.is_complete_import(args):
+            if args.prepare_database or self._is_complete_import(args):
                 LOG.warning('Creating database')
                 database_import.setup_database_skeleton(args.config.get_libpq_dsn(),
                                                         rouser=args.config.DATABASE_WEBUSER)
 
-                if not self.is_complete_import(args):
+                if not self._is_complete_import(args):
                     return 0
 
-            if not args.prepare_database or args.no_superuser or self.is_complete_import(args):
+            if not args.prepare_database or args.no_superuser or self._is_complete_import(args):
                 # Check if the correct plugins are installed
                 database_import.check_existing_database_plugins(args.config.get_libpq_dsn())
                 LOG.warning('Setting up country tables')

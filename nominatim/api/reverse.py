@@ -57,6 +57,7 @@ def _select_from_placex(t: SaFromClause, use_wkt: bool = True) -> SaSelect:
                      t.c.importance, t.c.wikipedia,
                      t.c.parent_place_id, t.c.rank_address, t.c.rank_search,
                      centroid,
+                     t.c.linked_place_id, t.c.admin_level,
                      distance.label('distance'),
                      t.c.geometry.ST_Expand(0).label('bbox'))
 

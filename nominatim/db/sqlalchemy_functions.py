@@ -7,8 +7,15 @@
 """
 Custom functions and expressions for SQLAlchemy.
 """
+from typing import Any
 
 import sqlalchemy as sa
+from sqlalchemy.sql.expression import FunctionElement
+from sqlalchemy.ext.compiler import compiles
+
+from nominatim.typing import SaColumn
+
+# pylint: disable=abstract-method,missing-function-docstring,consider-using-f-string
 
 def select_index_placex_geometry_reverse_lookuppolygon(table: str) -> 'sa.TextClause':
     """ Create an expression with the necessary conditions over a placex
@@ -32,3 +39,18 @@ def select_index_placex_geometry_reverse_lookupplacenode(table: str) -> 'sa.Text
                    f" AND {table}.name is not null"
                    f" AND {table}.linked_place_id is null"
                    f" AND {table}.osm_type = 'N'")
+
+
+class CrosscheckNames(FunctionElement[Any]):
+    """ Check if in the given list of names in parameters 1 any of the names
+        from the JSON array in parameter 2 are contained.
+    """
+    name = 'CrosscheckNames'
+    inherit_cache = True
+
+@compiles(CrosscheckNames) # type: ignore[no-untyped-call, misc]
+def compile_crosscheck_names(element: SaColumn,
+                             compiler: 'sa.Compiled', **kw: Any) -> str:
+    arg1, arg2 = list(element.clauses)
+    return "coalesce(avals(%s) && ARRAY(SELECT * FROM json_array_elements_text(%s)), false)" % (
+            compiler.process(arg1, **kw), compiler.process(arg2, **kw))

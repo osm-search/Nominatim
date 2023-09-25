@@ -82,11 +82,13 @@ class SetupAll:
 
         if args.continue_at is None:
             files = args.get_osm_file_list()
-            if not files:
+            if not files and not args.only_prepare_database:
                 raise UsageError("No input files (use --osm-file).")
 
             if args.only_import_data and args.only_prepare_database:
-                raise UsageError("Cannot use --no-superuser and --prepare-database together.")
+                raise UsageError(
+                    "Cannot use --only-import-data and --only-prepare-database together."
+                )
 
             if args.only_prepare_database or self._is_complete_import(args):
                 LOG.warning('Creating database')

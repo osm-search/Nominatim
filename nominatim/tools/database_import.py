@@ -24,8 +24,7 @@ from nominatim.db.sql_preprocessor import SQLPreprocessor
 from nominatim.tools.exec_utils import run_osm2pgsql
 from nominatim.errors import UsageError
 from nominatim.version import POSTGRESQL_REQUIRED_VERSION, \
-                              POSTGIS_REQUIRED_VERSION, \
-                              HSTORE_REQUIRED_VERSION
+                              POSTGIS_REQUIRED_VERSION
 
 LOG = logging.getLogger()
 
@@ -40,6 +39,13 @@ def _require_version(module: str, actual: Tuple[int, int], expected: Tuple[int, 
         raise UsageError(f'{module} is too old.')
 
 
+def _require_loaded(extension_name: str, conn: Connection):
+    """ Check that the given extension is loaded. """
+    if not conn.extension_loaded(extension_name):
+        LOG.fatal('Required module %s is not loaded.', extension_name)
+        raise UsageError(f'{extension_name} is not loaded.')
+
+
 def check_existing_database_plugins(dsn: str):
     """ Check that the database has the required plugins installed."""
     with connect(dsn) as conn:
@@ -49,9 +55,7 @@ def check_existing_database_plugins(dsn: str):
         _require_version('PostGIS',
                          conn.postgis_version_tuple(),
                          POSTGIS_REQUIRED_VERSION)
-        _require_version('hstore',
-                         conn.hstore_version_tuple(),
-                         HSTORE_REQUIRED_VERSION)
+        _require_loaded('hstore', conn)
 
 
 def setup_database_skeleton(dsn: str, rouser: Optional[str] = None) -> None:

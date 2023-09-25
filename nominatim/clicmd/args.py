@@ -87,8 +87,8 @@ class NominatimArgs:
     offline: bool
     ignore_errors: bool
     index_noanalyse: bool
-    no_superuser: bool
-    prepare_database: bool
+    only_import_data: bool
+    only_prepare_database: bool
 
     # Arguments to 'index'
     boundaries_only: bool

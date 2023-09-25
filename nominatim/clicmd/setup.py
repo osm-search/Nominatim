@@ -65,9 +65,9 @@ class SetupAll:
                            help='Continue import even when errors in SQL are present')
         group3.add_argument('--index-noanalyse', action='store_true',
                            help='Do not perform analyse operations during index (expert only)')
-        group3.add_argument('--no-superuser', action='store_true',
+        group3.add_argument('--only-import-data', action='store_true',
                             help='Do not attempt to create the database')
-        group3.add_argument('--prepare-database', action='store_true',
+        group3.add_argument('--only-prepare-database', action='store_true',
                             help='Create the database but do not import any data')
 
 
@@ -85,10 +85,10 @@ class SetupAll:
             if not files:
                 raise UsageError("No input files (use --osm-file).")
 
-            if args.no_superuser and args.prepare_database:
+            if args.only_import_data and args.only_prepare_database:
                 raise UsageError("Cannot use --no-superuser and --prepare-database together.")
 
-            if args.prepare_database or self._is_complete_import(args):
+            if args.only_prepare_database or self._is_complete_import(args):
                 LOG.warning('Creating database')
                 database_import.setup_database_skeleton(args.config.get_libpq_dsn(),
                                                         rouser=args.config.DATABASE_WEBUSER)
@@ -96,7 +96,9 @@ class SetupAll:
                 if not self._is_complete_import(args):
                     return 0
 
-            if not args.prepare_database or args.no_superuser or self._is_complete_import(args):
+            if not args.only_prepare_database or \
+                    args.only_import_data or \
+                    self._is_complete_import(args):
                 # Check if the correct plugins are installed
                 database_import.check_existing_database_plugins(args.config.get_libpq_dsn())
                 LOG.warning('Setting up country tables')
@@ -174,7 +176,7 @@ class SetupAll:
     def _is_complete_import(self, args: NominatimArgs) -> bool:
         """ Determine if the import is complete or if only the database should be prepared.
         """
-        return not args.no_superuser and not args.prepare_database
+        return not args.only_import_data and not args.only_prepare_database
 
 
     def _setup_tables(self, config: Configuration, reverse_only: bool) -> None:

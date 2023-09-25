@@ -307,7 +307,7 @@ jobs:
 
             - name: Import
               run: |
-                  nominatim import --prepare-database --osm-file ../test.pbf
+                  nominatim import --prepare-database
                   nominatim import --no-superuser --osm-file ../test.pbf
               working-directory: /home/nominatim/nominatim-project
 

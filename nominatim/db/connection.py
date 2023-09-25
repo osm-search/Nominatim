@@ -174,22 +174,13 @@ class Connection(psycopg2.extensions.connection):
 
         return (int(version_parts[0]), int(version_parts[1]))
 
-    def hstore_version_tuple(self) -> Tuple[int, int]:
-        """ Return the hstore version installed in the database as a
-            tuple of (major, minor). Assumes that the hstore extension
-            has been installed already.
+
+    def extension_loaded(self, extension_name: str) -> bool:
+        """ Return True if the hstore extension is loaded in the database.
         """
         with self.cursor() as cur:
-            version = cur.scalar(
-                'SELECT extversion FROM pg_extension WHERE extname = %s',
-                ('hstore')
-            )
-
-        version_parts = version.split('.')
-        if len(version_parts) < 2:
-            raise UsageError(f"Error fetching hstore version. Bad format: {version}")
-
-        return (int(version_parts[0]), int(version_parts[1]))
+            cur.execute('SELECT extname FROM pg_extension WHERE extname = %s', (extension_name))
+            return cur.rowcount > 0
 
 
 class ConnectionContext(ContextManager[Connection]):

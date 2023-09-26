@@ -40,13 +40,15 @@ class SetupAll:
 
     def add_args(self, parser: argparse.ArgumentParser) -> None:
         group_name = parser.add_argument_group('Required arguments')
-        group1 = group_name.add_mutually_exclusive_group(required=True)
+        group1 = group_name.add_argument_group()
         group1.add_argument('--osm-file', metavar='FILE', action='append',
                            help='OSM file to be imported'
-                                ' (repeat for importing multiple files)')
+                                ' (repeat for importing multiple files)',
+                                default=None)
         group1.add_argument('--continue', dest='continue_at',
                            choices=['import-from-file', 'load-data', 'indexing', 'db-postprocess'],
-                           help='Continue an import that was interrupted')
+                           help='Continue an import that was interrupted',
+                           default=None)
         group2 = parser.add_argument_group('Optional arguments')
         group2.add_argument('--osm2pgsql-cache', metavar='SIZE', type=int,
                            help='Size of cache to be used by osm2pgsql (in MB)')
@@ -78,15 +80,24 @@ class SetupAll:
 
         country_info.setup_country_config(args.config)
 
-        if args.continue_at is None:
+        # Check if osm-file or continue_at is set, if both are set, or none are set, throw an error
+        if args.osm_file is None and args.continue_at is None:
+            raise UsageError("No input files (use --osm-file).")
+
+        if args.osm_file is not None and args.continue_at not in ('import-from-file', None):
+            raise UsageError(f"Cannot use --continue {args.continue_at} and --osm-file together.")
+
+        if args.continue_at is not None and args.prepare_database:
+            raise UsageError(
+                "Cannot use --continue and --prepare-database together."
+            )
+
+
+
+        if args.continue_at in (None, 'import-from-file'):
             files = args.get_osm_file_list()
             if not files and not args.prepare_database:
                 raise UsageError("No input files (use --osm-file).")
-
-            if args.continue_at is not None and args.prepare_database:
-                raise UsageError(
-                    "Cannot use --continue and --prepare-database together."
-                )
 
             if args.prepare_database or self._is_complete_import(args):
                 LOG.warning('Creating database')
@@ -139,12 +150,13 @@ class SetupAll:
         LOG.warning("Setting up tokenizer")
         tokenizer = self._get_tokenizer(args.continue_at, args.config)
 
-        if args.continue_at is None or args.continue_at in ('import-from-file', 'load-data'):
+        if args.continue_at in ('import-from-file', 'load-data', None):
             LOG.warning('Calculate postcodes')
             postcodes.update_postcodes(args.config.get_libpq_dsn(),
                                        args.project_dir, tokenizer)
 
-        if args.continue_at is None or args.continue_at in ('import-from-file', 'load-data', 'indexing'):
+        if args.continue_at in \
+            ('import-from-file', 'load-data', 'indexing', None):
             LOG.warning('Indexing places')
             indexer = Indexer(args.config.get_libpq_dsn(), tokenizer, num_threads)
             indexer.index_full(analyse=not args.index_noanalyse)

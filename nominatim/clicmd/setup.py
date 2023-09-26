@@ -45,7 +45,7 @@ class SetupAll:
                            help='OSM file to be imported'
                                 ' (repeat for importing multiple files)')
         group1.add_argument('--continue', dest='continue_at',
-                           choices=['load-data', 'indexing', 'db-postprocess'],
+                           choices=['import-from-file', 'load-data', 'indexing', 'db-postprocess'],
                            help='Continue an import that was interrupted')
         group2 = parser.add_argument_group('Optional arguments')
         group2.add_argument('--osm2pgsql-cache', metavar='SIZE', type=int,
@@ -65,9 +65,7 @@ class SetupAll:
                            help='Continue import even when errors in SQL are present')
         group3.add_argument('--index-noanalyse', action='store_true',
                            help='Do not perform analyse operations during index (expert only)')
-        group3.add_argument('--only-import-data', action='store_true',
-                            help='Do not attempt to create the database')
-        group3.add_argument('--only-prepare-database', action='store_true',
+        group3.add_argument('--prepare-database', action='store_true',
                             help='Create the database but do not import any data')
 
 
@@ -82,15 +80,15 @@ class SetupAll:
 
         if args.continue_at is None:
             files = args.get_osm_file_list()
-            if not files and not args.only_prepare_database:
+            if not files and not args.prepare_database:
                 raise UsageError("No input files (use --osm-file).")
 
-            if args.only_import_data and args.only_prepare_database:
+            if args.continue_at is not None and args.prepare_database:
                 raise UsageError(
-                    "Cannot use --only-import-data and --only-prepare-database together."
+                    "Cannot use --continue and --prepare-database together."
                 )
 
-            if args.only_prepare_database or self._is_complete_import(args):
+            if args.prepare_database or self._is_complete_import(args):
                 LOG.warning('Creating database')
                 database_import.setup_database_skeleton(args.config.get_libpq_dsn(),
                                                         rouser=args.config.DATABASE_WEBUSER)
@@ -98,8 +96,8 @@ class SetupAll:
                 if not self._is_complete_import(args):
                     return 0
 
-            if not args.only_prepare_database or \
-                    args.only_import_data or \
+            if not args.prepare_database or \
+                    args.continue_at == 'import-from-file' or \
                     self._is_complete_import(args):
                 # Check if the correct plugins are installed
                 database_import.check_existing_database_plugins(args.config.get_libpq_dsn())
@@ -130,7 +128,7 @@ class SetupAll:
 
                 self._setup_tables(args.config, args.reverse_only)
 
-        if args.continue_at is None or args.continue_at == 'load-data':
+        if args.continue_at is None or args.continue_at in ('import-from-file', 'load-data'):
             LOG.warning('Initialise tables')
             with connect(args.config.get_libpq_dsn()) as conn:
                 database_import.truncate_data_tables(conn)
@@ -141,12 +139,12 @@ class SetupAll:
         LOG.warning("Setting up tokenizer")
         tokenizer = self._get_tokenizer(args.continue_at, args.config)
 
-        if args.continue_at is None or args.continue_at == 'load-data':
+        if args.continue_at is None or args.continue_at in ('import-from-file', 'load-data'):
             LOG.warning('Calculate postcodes')
             postcodes.update_postcodes(args.config.get_libpq_dsn(),
                                        args.project_dir, tokenizer)
 
-        if args.continue_at is None or args.continue_at in ('load-data', 'indexing'):
+        if args.continue_at is None or args.continue_at in ('import-from-file', 'load-data', 'indexing'):
             LOG.warning('Indexing places')
             indexer = Indexer(args.config.get_libpq_dsn(), tokenizer, num_threads)
             indexer.index_full(analyse=not args.index_noanalyse)
@@ -178,7 +176,7 @@ class SetupAll:
     def _is_complete_import(self, args: NominatimArgs) -> bool:
         """ Determine if the import is complete or if only the database should be prepared.
         """
-        return not args.only_import_data and not args.only_prepare_database
+        return args.continue_at is None and not args.prepare_database
 
 
     def _setup_tables(self, config: Configuration, reverse_only: bool) -> None:

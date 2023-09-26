@@ -302,10 +302,24 @@ jobs:
               run: nominatim admin --collect-os-info
               working-directory: /home/nominatim/nominatim-project
 
-            - name: Import
+            - name: Prepare Database
               run: |
                   nominatim import --prepare-database
-                  nominatim import --no-superuser --osm-file ../test.pbf
+              working-directory: /home/nominatim/nominatim-project
+
+            - name: Create import user
+              run: |
+                  sudo -u postgres createuser -S osm-import -P osm-import
+              working-directory: /home/nominatim/nominatim-project
+
+            - name: Grant import user rights
+              run: |
+                  sudo -u postgres psql -c "GRANT INSERT, UPDATE ON ALL TABLES IN SCHEMA public TO \"osm-import\";"
+              working-directory: /home/nominatim/nominatim-project
+
+            - name: Run import
+              run: |
+                  NOMINATIM_DATABASE_DSN="pgsql:dbname=nominatim;user=osm-import;password=osm-import" nominatim import --continue import-from-file --osm-file ../test.pbf
               working-directory: /home/nominatim/nominatim-project
 
             - name: Import special phrases

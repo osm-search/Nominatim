@@ -340,12 +340,6 @@ def test_lookup_osmline_with_address_details(apiobj):
     result = apiobj.api.details(napi.PlaceID(9000), address_details=True)
 
     assert result.address_rows == [
-               napi.AddressLine(place_id=None, osm_object=None,
-                                category=('place', 'house_number'),
-                                names={'ref': '2'}, extratags={},
-                                admin_level=None, fromarea=True, isaddress=True,
-                                rank_address=28, distance=0.0,
-                                local_name='2'),
                napi.AddressLine(place_id=332, osm_object=('W', 4),
                                 category=('highway', 'residential'),
                                 names={'name': 'Street'}, extratags={},
@@ -444,12 +438,6 @@ def test_lookup_tiger_with_address_details(apiobj):
     result = apiobj.api.details(napi.PlaceID(9000), address_details=True)
 
     assert result.address_rows == [
-               napi.AddressLine(place_id=None, osm_object=None,
-                                category=('place', 'house_number'),
-                                names={'ref': '2'}, extratags={},
-                                admin_level=None, fromarea=True, isaddress=True,
-                                rank_address=28, distance=0.0,
-                                local_name='2'),
                napi.AddressLine(place_id=332, osm_object=('W', 4),
                                 category=('highway', 'residential'),
                                 names={'name': 'Street'}, extratags={},
@@ -543,6 +531,12 @@ def test_lookup_postcode_with_address_details(apiobj):
     result = apiobj.api.details(napi.PlaceID(9000), address_details=True)
 
     assert result.address_rows == [
+               napi.AddressLine(place_id=9000, osm_object=None,
+                                category=('place', 'postcode'),
+                                names={'ref': '34 425'}, extratags={},
+                                admin_level=15, fromarea=True, isaddress=True,
+                                rank_address=25, distance=0.0,
+                                local_name='34 425'),
                napi.AddressLine(place_id=332, osm_object=('N', 3333),
                                 category=('place', 'suburb'),
                                 names={'name': 'Smallplace'}, extratags={},
@@ -555,12 +549,6 @@ def test_lookup_postcode_with_address_details(apiobj):
                                 admin_level=15, fromarea=True, isaddress=True,
                                 rank_address=16, distance=0.0,
                                 local_name='Bigplace'),
-               napi.AddressLine(place_id=None, osm_object=None,
-                                category=('place', 'postcode'),
-                                names={'ref': '34 425'}, extratags={},
-                                admin_level=None, fromarea=False, isaddress=True,
-                                rank_address=5, distance=0.0,
-                                local_name='34 425'),
                napi.AddressLine(place_id=None, osm_object=None,
                                 category=('place', 'country_code'),
                                 names={'ref': 'gb'}, extratags={},

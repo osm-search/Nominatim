@@ -61,6 +61,7 @@ def _select_placex(t: SaFromClause) -> SaSelect:
                      t.c.housenumber, t.c.postcode, t.c.country_code,
                      t.c.importance, t.c.wikipedia,
                      t.c.parent_place_id, t.c.rank_address, t.c.rank_search,
+                     t.c.linked_place_id, t.c.admin_level,
                      t.c.centroid,
                      t.c.geometry.ST_Expand(0).label('bbox'))
 
@@ -580,7 +581,7 @@ class PlaceSearch(AbstractSearch):
         sql: SaLambdaSelect = sa.lambda_stmt(lambda:
                   sa.select(t.c.place_id, t.c.osm_type, t.c.osm_id, t.c.name,
                             t.c.class_, t.c.type,
-                            t.c.address, t.c.extratags,
+                            t.c.address, t.c.extratags, t.c.admin_level,
                             t.c.housenumber, t.c.postcode, t.c.country_code,
                             t.c.wikipedia,
                             t.c.parent_place_id, t.c.rank_address, t.c.rank_search,

@@ -187,6 +187,7 @@ BEGIN
 
   -- --- Return the record for the base entry.
 
+  current_rank_address := 1000;
   FOR location IN
     SELECT placex.place_id, osm_type, osm_id, name,
            coalesce(extratags->'linked_place', extratags->'place') as place_type,

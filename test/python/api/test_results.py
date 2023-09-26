@@ -23,6 +23,8 @@ def mkpoint(x, y):
 
 class FakeRow:
     def __init__(self, **kwargs):
+        if 'parent_place_id' not in kwargs:
+            kwargs['parent_place_id'] = None
         for k, v in kwargs.items():
             setattr(self, k, v)
         self._mapping = kwargs

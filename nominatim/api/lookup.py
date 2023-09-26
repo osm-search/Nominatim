@@ -183,9 +183,6 @@ async def get_detailed_place(conn: SearchConnection, place: ntyp.PlaceRef,
 
     # add missing details
     assert result is not None
-    result.parent_place_id = row.parent_place_id
-    result.linked_place_id = getattr(row, 'linked_place_id', None)
-    result.admin_level = getattr(row, 'admin_level', 15)
     indexed_date = getattr(row, 'indexed_date', None)
     if indexed_date is not None:
         result.indexed_date = indexed_date.replace(tzinfo=dt.timezone.utc)

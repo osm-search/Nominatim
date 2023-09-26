@@ -449,7 +449,8 @@ class CountrySearch(AbstractSearch):
 
         sql = sa.select(tgrid.c.country_code,
                         tgrid.c.geometry.ST_Centroid().ST_Collect().ST_Centroid()
-                              .label('centroid'))\
+                              .label('centroid'),
+                        tgrid.c.geometry.ST_Collect().ST_Expand(0).label('bbox'))\
                 .where(tgrid.c.country_code.in_(self.countries.values))\
                 .group_by(tgrid.c.country_code)
 
@@ -465,13 +466,17 @@ class CountrySearch(AbstractSearch):
                          + sa.func.coalesce(t.c.derived_name,
                                             sa.cast('', type_=conn.t.types.Composite))
                         ).label('name'),
-                        sub.c.centroid)\
+                        sub.c.centroid, sub.c.bbox)\
                 .join(sub, t.c.country_code == sub.c.country_code)
+
+        if details.geometry_output:
+            sql = _add_geometry_columns(sql, sub.c.centroid, details)
 
         results = nres.SearchResults()
         for row in await conn.execute(sql, _details_to_bind_params(details)):
             result = nres.create_from_country_row(row, nres.SearchResult)
             assert result
+            result.bbox = Bbox.from_wkb(row.bbox)
             result.accuracy = self.penalty + self.countries.get_penalty(row.country_code, 5.0)
             results.append(result)
 

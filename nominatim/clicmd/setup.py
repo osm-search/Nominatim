@@ -208,7 +208,7 @@ class SetupAll:
         """
         from ..tokenizer import factory as tokenizer_factory
 
-        if continue_at is None or continue_at == 'load-data':
+        if continue_at in ('import-from-file', 'load-data', None):
             # (re)initialise the tokenizer data
             return tokenizer_factory.create_tokenizer(config)
 

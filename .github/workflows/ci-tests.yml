@@ -421,7 +421,9 @@ jobs:
 
           - name: Create import user
             run: |
-                sudo -u postgres createuser -S osm-import -P osm-import
+                sudo -u postgres createuser -S osm-import
+                sudo -u postgres psql -c "ALTER USER \"osm-import\" WITH PASSWORD 'osm-import';"
+                sudo -u postgres createuser -S www-data
             working-directory: /home/nominatim/nominatim-project
 
           - name: Grant import user rights

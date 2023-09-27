@@ -71,7 +71,7 @@ class SetupAll:
                             help='Create the database but do not import any data')
 
 
-    def run(self, args: NominatimArgs) -> int: # pylint: disable=too-many-statements
+    def run(self, args: NominatimArgs) -> int: # pylint: disable=too-many-statements, too-many-branches
         from ..data import country_info
         from ..tools import database_import, refresh, postcodes, freeze
         from ..indexer.indexer import Indexer

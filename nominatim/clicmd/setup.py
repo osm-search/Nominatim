@@ -99,17 +99,14 @@ class SetupAll:
             if not files and not args.prepare_database:
                 raise UsageError("No input files (use --osm-file).")
 
-            if args.prepare_database or self._is_complete_import(args):
+            if args.prepare_database:
                 LOG.warning('Creating database')
                 database_import.setup_database_skeleton(args.config.get_libpq_dsn(),
                                                         rouser=args.config.DATABASE_WEBUSER)
-
-                if not self._is_complete_import(args):
-                    return 0
+                return 0
 
             if not args.prepare_database or \
-                    args.continue_at == 'import-from-file' or \
-                    self._is_complete_import(args):
+                    args.continue_at == 'import-from-file':
                 # Check if the correct plugins are installed
                 database_import.check_existing_database_plugins(args.config.get_libpq_dsn())
                 LOG.warning('Setting up country tables')
@@ -139,7 +136,7 @@ class SetupAll:
 
                 self._setup_tables(args.config, args.reverse_only)
 
-        if args.continue_at is None or args.continue_at in ('import-from-file', 'load-data'):
+        if args.continue_at in ('import-from-file', 'load-data', None):
             LOG.warning('Initialise tables')
             with connect(args.config.get_libpq_dsn()) as conn:
                 database_import.truncate_data_tables(conn)
@@ -184,11 +181,6 @@ class SetupAll:
         self._finalize_database(args.config.get_libpq_dsn(), args.offline)
 
         return 0
-
-    def _is_complete_import(self, args: NominatimArgs) -> bool:
-        """ Determine if the import is complete or if only the database should be prepared.
-        """
-        return args.continue_at is None and not args.prepare_database
 
 
     def _setup_tables(self, config: Configuration, reverse_only: bool) -> None:

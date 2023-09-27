@@ -179,7 +179,7 @@ class Connection(psycopg2.extensions.connection):
         """ Return True if the hstore extension is loaded in the database.
         """
         with self.cursor() as cur:
-            cur.execute('SELECT extname FROM pg_extension WHERE extname = %s', (extension_name))
+            cur.execute('SELECT extname FROM pg_extension WHERE extname = %s', (extension_name, ))
             return cur.rowcount > 0
 
 

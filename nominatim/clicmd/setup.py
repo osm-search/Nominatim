@@ -105,8 +105,7 @@ class SetupAll:
                                                         rouser=args.config.DATABASE_WEBUSER)
                 return 0
 
-            if not args.prepare_database or \
-                    args.continue_at == 'import-from-file':
+            if args.continue_at == 'import-from-file':
                 # Check if the correct plugins are installed
                 database_import.check_existing_database_plugins(args.config.get_libpq_dsn())
                 LOG.warning('Setting up country tables')

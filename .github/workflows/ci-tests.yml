@@ -305,24 +305,8 @@ jobs:
               run: nominatim admin --collect-os-info
               working-directory: /home/nominatim/nominatim-project
 
-            - name: Prepare Database
-              run: |
-                  nominatim import --prepare-database
-              working-directory: /home/nominatim/nominatim-project
-
-            - name: Create import user
-              run: |
-                  sudo -u postgres createuser -S osm-import -P osm-import
-              working-directory: /home/nominatim/nominatim-project
-
-            - name: Grant import user rights
-              run: |
-                  sudo -u postgres psql -c "GRANT INSERT, UPDATE ON ALL TABLES IN SCHEMA public TO \"osm-import\";"
-              working-directory: /home/nominatim/nominatim-project
-
-            - name: Run import
-              run: |
-                  NOMINATIM_DATABASE_DSN="pgsql:dbname=nominatim;user=osm-import;password=osm-import" nominatim import --continue import-from-file --osm-file ../test.pbf
+            - name: Import
+              run: nominatim import --osm-file ../test.pbf
               working-directory: /home/nominatim/nominatim-project
 
             - name: Import special phrases
@@ -364,4 +348,95 @@ jobs:
 
             - name: Clean up database (reverse-only import)
               run: nominatim refresh --postcodes --word-tokens
+              working-directory: /home/nominatim/nominatim-project
+
+      install-no-superuser:
+        runs-on: ubuntu-latest
+        needs: create-archive
+
+        strategy:
+            matrix:
+                name: [Ubuntu-22]
+                include:
+                    - name: Ubuntu-22
+                      image: "ubuntu:22.04"
+                      ubuntu: 22
+                      install_mode: install-apache
+
+        container:
+            image: ${{ matrix.image }}
+            env:
+                LANG: en_US.UTF-8
+
+        defaults:
+            run:
+                shell: sudo -Hu nominatim bash --noprofile --norc -eo pipefail {0}
+
+        steps:
+            - name: Prepare container (Ubuntu)
+              run: |
+                  export APT_LISTCHANGES_FRONTEND=none
+                  export DEBIAN_FRONTEND=noninteractive
+                  apt-get update -qq
+                  apt-get install -y git sudo wget
+                  ln -snf /usr/share/zoneinfo/$CONTAINER_TIMEZONE /etc/localtime && echo $CONTAINER_TIMEZONE > /etc/timezone
+              shell: bash
+
+            - name: Setup import user
+              run: |
+                  useradd -m nominatim
+                  echo 'nominatim   ALL=(ALL:ALL) NOPASSWD: ALL' > /etc/sudoers.d/nominiatim
+                  echo "/home/nominatim/Nominatim/vagrant/Install-on-${OS}.sh no $INSTALL_MODE" > /home/nominatim/vagrant.sh
+              shell: bash
+              env:
+                OS: ${{ matrix.name }}
+                INSTALL_MODE: ${{ matrix.install_mode }}
+
+            - uses: actions/download-artifact@v3
+              with:
+                  name: full-source
+                  path: /home/nominatim
+
+            - name: Install Nominatim
+              run: |
+                export USERNAME=nominatim
+                export USERHOME=/home/nominatim
+                export NOSYSTEMD=yes
+                export HAVE_SELINUX=no
+                tar xf nominatim-src.tar.bz2
+                . vagrant.sh
+              working-directory: /home/nominatim
+
+            - name: Prepare import environment
+              run: |
+                  mv Nominatim/test/testdb/apidb-test-data.pbf test.pbf
+                  mv Nominatim/settings/flex-base.lua flex-base.lua
+                  mv Nominatim/settings/import-extratags.lua import-extratags.lua
+                  mv Nominatim/settings/taginfo.lua taginfo.lua
+                  rm -rf Nominatim
+                  mkdir data-env-reverse
+              working-directory: /home/nominatim
+
+            - name: Prepare Database
+              run: |
+                  nominatim import --prepare-database
+              working-directory: /home/nominatim/nominatim-project
+
+            - name: Create import user
+              run: |
+                  sudo -u postgres createuser -S osm-import -P osm-import
+              working-directory: /home/nominatim/nominatim-project
+
+            - name: Grant import user rights
+              run: |
+                  sudo -u postgres psql -c "GRANT INSERT, UPDATE ON ALL TABLES IN SCHEMA public TO \"osm-import\";"
+              working-directory: /home/nominatim/nominatim-project
+
+            - name: Run import
+              run: |
+                  NOMINATIM_DATABASE_DSN="pgsql:dbname=nominatim;user=osm-import;password=osm-import" nominatim import --continue import-from-file --osm-file ../test.pbf
+              working-directory: /home/nominatim/nominatim-project
+
+            - name: Check full import
+              run: nominatim admin --check-database
               working-directory: /home/nominatim/nominatim-project

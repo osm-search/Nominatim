@@ -80,8 +80,7 @@ class SetupAll:
 
         country_info.setup_country_config(args.config)
 
-        # Check if osm-file or continue_at is set, if both are set, or none are set, throw an error
-        if args.osm_file is None and args.continue_at is None:
+        if args.osm_file is None and args.continue_at is None and not args.prepare_database:
             raise UsageError("No input files (use --osm-file).")
 
         if args.osm_file is not None and args.continue_at not in ('import-from-file', None):

@@ -99,13 +99,13 @@ class SetupAll:
             if not files and not args.prepare_database:
                 raise UsageError("No input files (use --osm-file).")
 
-            if args.prepare_database:
+            if args.prepare_database or args.continue_at is None:
                 LOG.warning('Creating database')
                 database_import.setup_database_skeleton(args.config.get_libpq_dsn(),
                                                         rouser=args.config.DATABASE_WEBUSER)
                 return 0
 
-            if args.continue_at == 'import-from-file':
+            if args.continue_at in ('import-from-file', None):
                 # Check if the correct plugins are installed
                 database_import.check_existing_database_plugins(args.config.get_libpq_dsn())
                 LOG.warning('Setting up country tables')

@@ -90,12 +90,12 @@ class AdminFuncs:
         api = napi.NominatimAPI(args.project_dir)
 
         try:
-            if args.target != 'reverse':
+            if args.target == 'reverse':
                 for _ in range(1000):
                     api.reverse((random.uniform(-90, 90), random.uniform(-180, 180)),
                                 address_details=True)
 
-            if args.target != 'search':
+            if args.target == 'search':
                 from ..tokenizer import factory as tokenizer_factory
 
                 tokenizer = tokenizer_factory.get_tokenizer_for_db(args.config)

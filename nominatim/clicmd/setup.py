@@ -102,7 +102,8 @@ class SetupAll:
                 LOG.warning('Creating database')
                 database_import.setup_database_skeleton(args.config.get_libpq_dsn(),
                                                         rouser=args.config.DATABASE_WEBUSER)
-                return 0
+                if args.prepare_database:
+                    return 0
 
             if args.continue_at in ('import-from-file', None):
                 # Check if the correct plugins are installed

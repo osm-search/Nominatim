@@ -39,14 +39,14 @@ def _require_version(module: str, actual: Tuple[int, int], expected: Tuple[int, 
         raise UsageError(f'{module} is too old.')
 
 
-def _require_loaded(extension_name: str, conn: Connection):
+def _require_loaded(extension_name: str, conn: Connection) -> None:
     """ Check that the given extension is loaded. """
     if not conn.extension_loaded(extension_name):
         LOG.fatal('Required module %s is not loaded.', extension_name)
         raise UsageError(f'{extension_name} is not loaded.')
 
 
-def check_existing_database_plugins(dsn: str):
+def check_existing_database_plugins(dsn: str) -> None:
     """ Check that the database has the required plugins installed."""
     with connect(dsn) as conn:
         _require_version('PostgreSQL server',

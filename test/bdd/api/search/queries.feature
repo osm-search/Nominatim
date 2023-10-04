@@ -2,6 +2,14 @@
 Feature: Search queries
     Generic search result correctness
 
+    Scenario: Search for natural object
+        When sending json search query "Samina"
+          | accept-language |
+          | en |
+        Then results contain
+          | ID | class    | type  | display_name    |
+          | 0  | waterway | river | Samina, Austria |
+
     Scenario: House number search for non-street address
         When sending json search query "6 Silum, Liechtenstein" with address
           | accept-language |

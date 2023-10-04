@@ -1,3 +1,9 @@
+4.3.1
+ * reintroduce result rematching
+ * improve search of multi-part names
+ * fix accidentally switched meaning of --reverse-only and --search-only in
+   warm command
+
 4.3.0
  * fix failing importance recalculation command
  * fix merging of linked names into unnamed boundaries

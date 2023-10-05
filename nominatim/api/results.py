@@ -435,7 +435,8 @@ def create_from_country_row(row: Optional[SaRow],
                       centroid=Point.from_wkb(row.centroid),
                       names=row.name,
                       rank_address=4, rank_search=4,
-                      country_code=row.country_code)
+                      country_code=row.country_code,
+                      geometry=_filter_geometries(row))
 
 
 async def add_result_details(conn: SearchConnection, results: List[BaseResultT],

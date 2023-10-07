@@ -518,8 +518,8 @@ class PostcodeSearch(AbstractSearch):
                 sql = sql.where(t.c.geometry.intersects(VIEWBOX_PARAM))
             else:
                 penalty += sa.case((t.c.geometry.intersects(VIEWBOX_PARAM), 0.0),
-                                   (t.c.geometry.intersects(VIEWBOX2_PARAM), 1.0),
-                                   else_=2.0)
+                                   (t.c.geometry.intersects(VIEWBOX2_PARAM), 0.5),
+                                   else_=1.0)
 
         if details.near is not None:
             if details.near_radius is not None:
@@ -640,8 +640,8 @@ class PlaceSearch(AbstractSearch):
                     sql = sql.where(tsearch.c.centroid.ST_Intersects_no_index(VIEWBOX2_PARAM))
             else:
                 penalty += sa.case((t.c.geometry.intersects(VIEWBOX_PARAM), 0.0),
-                                   (t.c.geometry.intersects(VIEWBOX2_PARAM), 1.0),
-                                   else_=2.0)
+                                   (t.c.geometry.intersects(VIEWBOX2_PARAM), 0.5),
+                                   else_=1.0)
 
         if details.near is not None:
             if details.near_radius is not None:

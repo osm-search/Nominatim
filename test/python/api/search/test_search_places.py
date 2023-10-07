@@ -159,7 +159,7 @@ class TestNameOnlySearches:
     @pytest.mark.parametrize('wcount,rids', [(2, [100, 101]), (20000, [100])])
     def test_prefer_viewbox(self, apiobj, viewbox, wcount, rids):
         lookup = FieldLookup('name_vector', [1, 2], 'lookup_all')
-        ranking = FieldRanking('name_vector', 0.9, [RankedTokens(0.0, [21])])
+        ranking = FieldRanking('name_vector', 0.2, [RankedTokens(0.0, [21])])
 
         results = run_search(apiobj, 0.1, [lookup], [ranking])
         assert [r.place_id for r in results] == [101, 100]

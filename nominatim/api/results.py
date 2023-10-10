@@ -491,24 +491,6 @@ def _result_row_to_address_row(row: SaRow, isaddress: Optional[bool] = None) -> 
                        distance=row.distance)
 
 
-def _get_housenumber_details(results: List[BaseResultT]) -> Tuple[List[int], List[int]]:
-    places = []
-    hnrs = []
-    for result in results:
-        if result.place_id:
-            housenumber = -1
-            if result.source_table in (SourceTable.TIGER, SourceTable.OSMLINE):
-                if result.housenumber is not None:
-                    housenumber = int(result.housenumber)
-                elif result.extratags is not None and 'startnumber' in result.extratags:
-                    # details requests do not come with a specific house number
-                    housenumber = int(result.extratags['startnumber'])
-            places.append(result.place_id)
-            hnrs.append(housenumber)
-
-    return places, hnrs
-
-
 def _get_address_lookup_id(result: BaseResultT) -> int:
     assert result.place_id
     if result.source_table != SourceTable.PLACEX or result.rank_search > 27:
@@ -569,7 +551,7 @@ def _setup_address_details(result: BaseResultT) -> None:
             extratags=result.extratags or {},
             admin_level=result.admin_level,
             fromarea=True, isaddress=True,
-            rank_address=result.rank_address, distance=0.0))
+            rank_address=result.rank_address or 100, distance=0.0))
     if result.source_table == SourceTable.PLACEX and result.address:
         housenumber = result.address.get('housenumber')\
                       or result.address.get('streetnumber')\

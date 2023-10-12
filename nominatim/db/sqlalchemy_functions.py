@@ -7,6 +7,7 @@
 """
 Custom functions and expressions for SQLAlchemy.
 """
+from __future__ import annotations
 from typing import Any
 
 import sqlalchemy as sa

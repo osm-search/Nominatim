@@ -10,7 +10,6 @@ Custom functions and expressions for SQLAlchemy.
 from typing import Any
 
 import sqlalchemy as sa
-from sqlalchemy.sql.expression import FunctionElement
 from sqlalchemy.ext.compiler import compiles
 
 from nominatim.typing import SaColumn
@@ -41,10 +40,11 @@ def select_index_placex_geometry_reverse_lookupplacenode(table: str) -> 'sa.Text
                    f" AND {table}.osm_type = 'N'")
 
 
-class CrosscheckNames(FunctionElement[Any]):
+class CrosscheckNames(sa.sql.functions.GenericFunction[bool]):
     """ Check if in the given list of names in parameters 1 any of the names
         from the JSON array in parameter 2 are contained.
     """
+    type = sa.Boolean()
     name = 'CrosscheckNames'
     inherit_cache = True
 
@@ -54,3 +54,42 @@ def compile_crosscheck_names(element: SaColumn,
     arg1, arg2 = list(element.clauses)
     return "coalesce(avals(%s) && ARRAY(SELECT * FROM json_array_elements_text(%s)), false)" % (
             compiler.process(arg1, **kw), compiler.process(arg2, **kw))
+
+
+@compiles(CrosscheckNames, 'sqlite') # type: ignore[no-untyped-call, misc]
+def compile_sqlite_crosscheck_names(element: SaColumn,
+                                    compiler: 'sa.Compiled', **kw: Any) -> str:
+    arg1, arg2 = list(element.clauses)
+    return "EXISTS(SELECT *"\
+           " FROM json_each(%s) as name, json_each(%s) as match_name"\
+           " WHERE name.value = match_name.value)"\
+           % (compiler.process(arg1, **kw), compiler.process(arg2, **kw))
+
+
+class JsonArrayEach(sa.sql.functions.GenericFunction[Any]):
+    """ Return elements of a json array as a set.
+    """
+    name = 'JsonArrayEach'
+    inherit_cache = True
+
+
+@compiles(JsonArrayEach) # type: ignore[no-untyped-call, misc]
+def default_json_array_each(element: SaColumn, compiler: 'sa.Compiled', **kw: Any) -> str:
+    return "json_array_elements(%s)" % compiler.process(element.clauses, **kw)
+
+
+@compiles(JsonArrayEach, 'sqlite') # type: ignore[no-untyped-call, misc]
+def sqlite_json_array_each(element: SaColumn, compiler: 'sa.Compiled', **kw: Any) -> str:
+    return "json_each(%s)" % compiler.process(element.clauses, **kw)
+
+
+class Greatest(sa.sql.functions.GenericFunction[Any]):
+    """ Function to compute maximum of all its input parameters.
+    """
+    name = 'greatest'
+    inherit_cache = True
+
+
+@compiles(Greatest, 'sqlite') # type: ignore[no-untyped-call, misc]
+def sqlite_greatest(element: SaColumn, compiler: 'sa.Compiled', **kw: Any) -> str:
+    return "max(%s)" % compiler.process(element.clauses, **kw)

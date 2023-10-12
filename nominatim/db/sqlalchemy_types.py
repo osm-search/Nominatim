@@ -18,29 +18,26 @@ from nominatim.typing import SaColumn, SaBind
 
 #pylint: disable=all
 
-SQLITE_FUNCTION_ALIAS = (
-    ('ST_AsEWKB', sa.Text, 'AsEWKB'),
-    ('ST_AsGeoJSON', sa.Text, 'AsGeoJSON'),
-    ('ST_AsKML', sa.Text, 'AsKML'),
-    ('ST_AsSVG', sa.Text, 'AsSVG'),
-)
+class Geometry_DistanceSpheroid(sa.sql.expression.FunctionElement[float]):
+    """ Function to compute the spherical distance in meters.
+    """
+    type = sa.Float()
+    name = 'Geometry_DistanceSpheroid'
+    inherit_cache = True
 
-def _add_function_alias(func: str, ftype: type, alias: str) -> None:
-    _FuncDef = type(func, (sa.sql.functions.GenericFunction, ), {
-        "type": ftype,
-        "name": func,
-        "identifier": func,
-        "inherit_cache": True})
 
-    func_templ = f"{alias}(%s)"
+@compiles(Geometry_DistanceSpheroid) # type: ignore[no-untyped-call, misc]
+def _default_distance_spheroid(element: SaColumn,
+                               compiler: 'sa.Compiled', **kw: Any) -> str:
+    return "ST_DistanceSpheroid(%s,"\
+           " 'SPHEROID[\"WGS 84\",6378137,298.257223563, AUTHORITY[\"EPSG\",\"7030\"]]')"\
+             % compiler.process(element.clauses, **kw)
 
-    def _sqlite_impl(element: Any, compiler: Any, **kw: Any) -> Any:
-        return func_templ % compiler.process(element.clauses, **kw)
 
-    compiles(_FuncDef, 'sqlite')(_sqlite_impl) # type: ignore[no-untyped-call]
-
-for alias in SQLITE_FUNCTION_ALIAS:
-    _add_function_alias(*alias)
+@compiles(Geometry_DistanceSpheroid, 'sqlite') # type: ignore[no-untyped-call, misc]
+def _spatialite_distance_spheroid(element: SaColumn,
+                                  compiler: 'sa.Compiled', **kw: Any) -> str:
+    return "Distance(%s, true)" % compiler.process(element.clauses, **kw)
 
 
 class Geometry(types.UserDefinedType): # type: ignore[type-arg]
@@ -148,6 +145,39 @@ class Geometry(types.UserDefinedType): # type: ignore[type-arg]
             return sa.func.ST_LineLocatePoint(self, other, type_=sa.Float)
 
 
+        def distance_spheroid(self, other: SaColumn) -> SaColumn:
+            return Geometry_DistanceSpheroid(self, other)
+
+
 @compiles(Geometry, 'sqlite') # type: ignore[no-untyped-call]
 def get_col_spec(self, *args, **kwargs): # type: ignore[no-untyped-def]
     return 'GEOMETRY'
+
+
+SQLITE_FUNCTION_ALIAS = (
+    ('ST_AsEWKB', sa.Text, 'AsEWKB'),
+    ('ST_GeomFromEWKT', Geometry, 'GeomFromEWKT'),
+    ('ST_AsGeoJSON', sa.Text, 'AsGeoJSON'),
+    ('ST_AsKML', sa.Text, 'AsKML'),
+    ('ST_AsSVG', sa.Text, 'AsSVG'),
+)
+
+def _add_function_alias(func: str, ftype: type, alias: str) -> None:
+    _FuncDef = type(func, (sa.sql.functions.GenericFunction, ), {
+        "type": ftype,
+        "name": func,
+        "identifier": func,
+        "inherit_cache": True})
+
+    func_templ = f"{alias}(%s)"
+
+    def _sqlite_impl(element: Any, compiler: Any, **kw: Any) -> Any:
+        return func_templ % compiler.process(element.clauses, **kw)
+
+    compiles(_FuncDef, 'sqlite')(_sqlite_impl) # type: ignore[no-untyped-call]
+
+for alias in SQLITE_FUNCTION_ALIAS:
+    _add_function_alias(*alias)
+
+
+

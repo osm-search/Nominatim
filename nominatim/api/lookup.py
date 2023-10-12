@@ -77,8 +77,8 @@ async def find_in_osmline(conn: SearchConnection, place: ntyp.PlaceRef,
         sql = sql.where(t.c.osm_id == place.osm_id).limit(1)
         if place.osm_class and place.osm_class.isdigit():
             sql = sql.order_by(sa.func.greatest(0,
-                                    sa.func.least(int(place.osm_class) - t.c.endnumber),
-                                           t.c.startnumber - int(place.osm_class)))
+                                                int(place.osm_class) - t.c.endnumber,
+                                                t.c.startnumber - int(place.osm_class)))
     else:
         return None
 
@@ -163,11 +163,10 @@ async def get_detailed_place(conn: SearchConnection, place: ntyp.PlaceRef,
 
     if details.geometry_output & ntyp.GeometryFormat.GEOJSON:
         def _add_geometry(sql: SaSelect, column: SaColumn) -> SaSelect:
-            return sql.add_columns(sa.literal_column(f"""
-                      ST_AsGeoJSON(CASE WHEN ST_NPoints({column.name}) > 5000
-                                   THEN ST_SimplifyPreserveTopology({column.name}, 0.0001)
-                                   ELSE {column.name} END)
-                       """).label('geometry_geojson'))
+            return sql.add_columns(sa.func.ST_AsGeoJSON(
+                                    sa.case((sa.func.ST_NPoints(column) > 5000,
+                                             sa.func.ST_SimplifyPreserveTopology(column, 0.0001)),
+                                            else_=column)).label('geometry_geojson'))
     else:
         def _add_geometry(sql: SaSelect, column: SaColumn) -> SaSelect:
             return sql.add_columns(sa.func.ST_GeometryType(column).label('geometry_type'))
@@ -183,6 +182,9 @@ async def get_detailed_place(conn: SearchConnection, place: ntyp.PlaceRef,
 
     # add missing details
     assert result is not None
+    if 'type' in result.geometry:
+        result.geometry['type'] = GEOMETRY_TYPE_MAP.get(result.geometry['type'],
+                                                        result.geometry['type'])
     indexed_date = getattr(row, 'indexed_date', None)
     if indexed_date is not None:
         result.indexed_date = indexed_date.replace(tzinfo=dt.timezone.utc)
@@ -236,3 +238,14 @@ async def get_simple_place(conn: SearchConnection, place: ntyp.PlaceRef,
     await nres.add_result_details(conn, [result], details)
 
     return result
+
+
+GEOMETRY_TYPE_MAP = {
+    'POINT': 'ST_Point',
+    'MULTIPOINT': 'ST_MultiPoint',
+    'LINESTRING': 'ST_LineString',
+    'MULTILINESTRING': 'ST_MultiLineString',
+    'POLYGON': 'ST_Polygon',
+    'MULTIPOLYGON': 'ST_MultiPolygon',
+    'GEOMETRYCOLLECTION': 'ST_GeometryCollection'
+}

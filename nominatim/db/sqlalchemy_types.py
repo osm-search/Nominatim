@@ -28,7 +28,7 @@ class Geometry(types.UserDefinedType): # type: ignore[type-arg]
 
 
     def get_col_spec(self) -> str:
-        return f'GEOMETRY({self.subtype}, 4326)'
+        return f'GEOMETRY'
 
 
     def bind_processor(self, dialect: 'sa.Dialect') -> Callable[[Any], str]:

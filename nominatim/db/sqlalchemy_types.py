@@ -11,11 +11,37 @@ from typing import Callable, Any, cast
 import sys
 
 import sqlalchemy as sa
+from sqlalchemy.ext.compiler import compiles
 from sqlalchemy import types
 
 from nominatim.typing import SaColumn, SaBind
 
 #pylint: disable=all
+
+SQLITE_FUNCTION_ALIAS = (
+    ('ST_AsEWKB', sa.Text, 'AsEWKB'),
+    ('ST_AsGeoJSON', sa.Text, 'AsGeoJSON'),
+    ('ST_AsKML', sa.Text, 'AsKML'),
+    ('ST_AsSVG', sa.Text, 'AsSVG'),
+)
+
+def _add_function_alias(func: str, ftype: type, alias: str) -> None:
+    _FuncDef = type(func, (sa.sql.functions.GenericFunction, ), {
+        "type": ftype,
+        "name": func,
+        "identifier": func,
+        "inherit_cache": True})
+
+    func_templ = f"{alias}(%s)"
+
+    def _sqlite_impl(element: Any, compiler: Any, **kw: Any) -> Any:
+        return func_templ % compiler.process(element.clauses, **kw)
+
+    compiles(_FuncDef, 'sqlite')(_sqlite_impl) # type: ignore[no-untyped-call]
+
+for alias in SQLITE_FUNCTION_ALIAS:
+    _add_function_alias(*alias)
+
 
 class Geometry(types.UserDefinedType): # type: ignore[type-arg]
     """ Simplified type decorator for PostGIS geometry. This type
@@ -28,7 +54,7 @@ class Geometry(types.UserDefinedType): # type: ignore[type-arg]
 
 
     def get_col_spec(self) -> str:
-        return f'GEOMETRY'
+        return f'GEOMETRY({self.subtype}, 4326)'
 
 
     def bind_processor(self, dialect: 'sa.Dialect') -> Callable[[Any], str]:
@@ -45,6 +71,10 @@ class Geometry(types.UserDefinedType): # type: ignore[type-arg]
             assert isinstance(value, str)
             return value
         return process
+
+
+    def column_expression(self, col: SaColumn) -> SaColumn:
+        return sa.func.ST_AsEWKB(col)
 
 
     def bind_expression(self, bindvalue: SaBind) -> SaColumn:
@@ -116,3 +146,8 @@ class Geometry(types.UserDefinedType): # type: ignore[type-arg]
 
         def ST_LineLocatePoint(self, other: SaColumn) -> SaColumn:
             return sa.func.ST_LineLocatePoint(self, other, type_=sa.Float)
+
+
+@compiles(Geometry, 'sqlite') # type: ignore[no-untyped-call]
+def get_col_spec(self, *args, **kwargs): # type: ignore[no-untyped-def]
+    return 'GEOMETRY'

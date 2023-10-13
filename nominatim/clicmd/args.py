@@ -72,10 +72,12 @@ class NominatimArgs:
     check_database: bool
     migrate: bool
     collect_os_info: bool
+    clean_deleted: bool
     analyse_indexing: bool
     target: Optional[str]
     osm_id: Optional[str]
     place_id: Optional[int]
+    age: str
 
     # Arguments to 'import'
     osm_file: List[str]

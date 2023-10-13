@@ -41,6 +41,8 @@ class AdminFuncs:
                           help='Print performance analysis of the indexing process')
         objs.add_argument('--collect-os-info', action="store_true",
                           help="Generate a report about the host system information")
+        objs.add_argument('--clean-deleted', action='store_true',
+                          help='Clean up deleted relations')
         group = parser.add_argument_group('Arguments for cache warming')
         group.add_argument('--search-only', action='store_const', dest='target',
                            const='search',
@@ -54,8 +56,13 @@ class AdminFuncs:
                             help='Analyse indexing of the given OSM object')
         mgroup.add_argument('--place-id', type=int,
                             help='Analyse indexing of the given Nominatim object')
+        group = parser.add_argument_group('Arguments for cleaning deleted')
+        group.add_argument('--age', type=str,
+                           help='Delete relations older than the given PostgreSQL time interval')
+
 
     def run(self, args: NominatimArgs) -> int:
+        # pylint: disable=too-many-return-statements
         if args.warm:
             return self._warm(args)
 
@@ -79,6 +86,12 @@ class AdminFuncs:
             LOG.warning("Reporting System Information")
             from ..tools import collect_os_info
             collect_os_info.report_system_information(args.config)
+            return 0
+
+        if args.clean_deleted:
+            LOG.warning('Cleaning up deleted relations')
+            from ..tools import admin
+            admin.clean_deleted_relations(args.config, age=args.age)
             return 0
 
         return 1

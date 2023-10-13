@@ -13,6 +13,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import HSTORE, ARRAY, JSONB, array
 from sqlalchemy.dialects.sqlite import JSON as sqlite_json
 
+import nominatim.db.sqlalchemy_functions #pylint: disable=unused-import
 from nominatim.db.sqlalchemy_types import Geometry
 
 class PostgresTypes:

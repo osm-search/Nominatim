@@ -41,6 +41,71 @@ def _spatialite_distance_spheroid(element: SaColumn,
     return "Distance(%s, true)" % compiler.process(element.clauses, **kw)
 
 
+class Geometry_IsLineLike(sa.sql.expression.FunctionElement[bool]):
+    """ Check if the geometry is a line or multiline.
+    """
+    type = sa.Boolean()
+    name = 'Geometry_IsLineLike'
+    inherit_cache = True
+
+
+@compiles(Geometry_IsLineLike) # type: ignore[no-untyped-call, misc]
+def _default_is_line_like(element: SaColumn,
+                          compiler: 'sa.Compiled', **kw: Any) -> str:
+    return "ST_GeometryType(%s) IN ('ST_LineString', 'ST_MultiLineString')" % \
+               compiler.process(element.clauses, **kw)
+
+
+@compiles(Geometry_IsLineLike, 'sqlite') # type: ignore[no-untyped-call, misc]
+def _sqlite_is_line_like(element: SaColumn,
+                         compiler: 'sa.Compiled', **kw: Any) -> str:
+    return "ST_GeometryType(%s) IN ('LINESTRING', 'MULTILINESTRING')" % \
+               compiler.process(element.clauses, **kw)
+
+
+class Geometry_IsAreaLike(sa.sql.expression.FunctionElement[bool]):
+    """ Check if the geometry is a polygon or multipolygon.
+    """
+    type = sa.Boolean()
+    name = 'Geometry_IsLineLike'
+    inherit_cache = True
+
+
+@compiles(Geometry_IsAreaLike) # type: ignore[no-untyped-call, misc]
+def _default_is_area_like(element: SaColumn,
+                          compiler: 'sa.Compiled', **kw: Any) -> str:
+    return "ST_GeometryType(%s) IN ('ST_Polygon', 'ST_MultiPolygon')" % \
+               compiler.process(element.clauses, **kw)
+
+
+@compiles(Geometry_IsAreaLike, 'sqlite') # type: ignore[no-untyped-call, misc]
+def _sqlite_is_area_like(element: SaColumn,
+                         compiler: 'sa.Compiled', **kw: Any) -> str:
+    return "ST_GeometryType(%s) IN ('POLYGON', 'MULTIPOLYGON')" % \
+               compiler.process(element.clauses, **kw)
+
+
+class Geometry_IntersectsBbox(sa.sql.expression.FunctionElement[bool]):
+    """ Check if the bounding boxes of the given geometries intersect.
+    """
+    type = sa.Boolean()
+    name = 'Geometry_IntersectsBbox'
+    inherit_cache = True
+
+
+@compiles(Geometry_IntersectsBbox) # type: ignore[no-untyped-call, misc]
+def _default_intersects(element: SaColumn,
+                        compiler: 'sa.Compiled', **kw: Any) -> str:
+    arg1, arg2 = list(element.clauses)
+    return "%s && %s" % (compiler.process(arg1, **kw), compiler.process(arg2, **kw))
+
+
+@compiles(Geometry_IntersectsBbox, 'sqlite') # type: ignore[no-untyped-call, misc]
+def _sqlite_intersects(element: SaColumn,
+                       compiler: 'sa.Compiled', **kw: Any) -> str:
+    return "MbrIntersects(%s)" % compiler.process(element.clauses, **kw)
+
+
 class Geometry(types.UserDefinedType): # type: ignore[type-arg]
     """ Simplified type decorator for PostGIS geometry. This type
         only supports geometries in 4326 projection.
@@ -82,15 +147,15 @@ class Geometry(types.UserDefinedType): # type: ignore[type-arg]
     class comparator_factory(types.UserDefinedType.Comparator): # type: ignore[type-arg]
 
         def intersects(self, other: SaColumn) -> 'sa.Operators':
-            return self.op('&&')(other)
+            return Geometry_IntersectsBbox(self, other)
+
 
         def is_line_like(self) -> SaColumn:
-            return sa.func.ST_GeometryType(self, type_=sa.String).in_(('ST_LineString',
-                                                                       'ST_MultiLineString'))
+            return Geometry_IsLineLike(self)
+
 
         def is_area(self) -> SaColumn:
-            return sa.func.ST_GeometryType(self, type_=sa.String).in_(('ST_Polygon',
-                                                                       'ST_MultiPolygon'))
+            return Geometry_IsAreaLike(self)
 
 
         def ST_DWithin(self, other: SaColumn, distance: SaColumn) -> SaColumn:
@@ -119,7 +184,8 @@ class Geometry(types.UserDefinedType): # type: ignore[type-arg]
 
 
         def ST_ClosestPoint(self, other: SaColumn) -> SaColumn:
-            return sa.func.ST_ClosestPoint(self, other, type_=Geometry)
+            return sa.func.coalesce(sa.func.ST_ClosestPoint(self, other, type_=Geometry),
+                                    other)
 
 
         def ST_Buffer(self, other: SaColumn) -> SaColumn:
@@ -161,11 +227,13 @@ SQLITE_FUNCTION_ALIAS = (
     ('ST_AsGeoJSON', sa.Text, 'AsGeoJSON'),
     ('ST_AsKML', sa.Text, 'AsKML'),
     ('ST_AsSVG', sa.Text, 'AsSVG'),
+    ('ST_LineLocatePoint', sa.Float, 'ST_Line_Locate_Point'),
+    ('ST_LineInterpolatePoint', sa.Float, 'ST_Line_Interpolate_Point'),
 )
 
 def _add_function_alias(func: str, ftype: type, alias: str) -> None:
     _FuncDef = type(func, (sa.sql.functions.GenericFunction, ), {
-        "type": ftype,
+        "type": ftype(),
         "name": func,
         "identifier": func,
         "inherit_cache": True})
@@ -181,4 +249,17 @@ for alias in SQLITE_FUNCTION_ALIAS:
     _add_function_alias(*alias)
 
 
+class ST_DWithin(sa.sql.functions.GenericFunction[bool]):
+    type = sa.Boolean()
+    name = 'ST_DWithin'
+    inherit_cache = True
 
+
+@compiles(ST_DWithin, 'sqlite') # type: ignore[no-untyped-call, misc]
+def default_json_array_each(element: SaColumn, compiler: 'sa.Compiled', **kw: Any) -> str:
+    geom1, geom2, dist = list(element.clauses)
+    return "(MbrIntersects(%s, ST_Expand(%s, %s)) = 1 AND ST_Distance(%s, %s) <= %s)" % (
+        compiler.process(geom1, **kw), compiler.process(geom2, **kw),
+        compiler.process(dist, **kw),
+        compiler.process(geom1, **kw), compiler.process(geom2, **kw),
+        compiler.process(dist, **kw))

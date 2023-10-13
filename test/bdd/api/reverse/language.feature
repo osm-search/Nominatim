@@ -1,3 +1,4 @@
+@SQLITE
 @APIDB
 Feature: Localization of reverse search results
 

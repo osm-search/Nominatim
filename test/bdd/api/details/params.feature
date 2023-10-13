@@ -2,6 +2,7 @@
 Feature: Object details
     Testing different parameter options for details API.
 
+    @SQLITE
     Scenario: JSON Details
         When sending json details query for W297699560
         Then the result is valid json
@@ -11,6 +12,7 @@ Feature: Object details
             | type  |
             | Point |
 
+    @SQLITE
     Scenario: JSON Details with pretty printing
         When sending json details query for W297699560
             | pretty |
@@ -19,6 +21,7 @@ Feature: Object details
         And result has attributes geometry
         And result has not attributes keywords,address,linked_places,parentof
 
+    @SQLITE
      Scenario: JSON Details with addressdetails
         When sending json details query for W297699560
             | addressdetails |
@@ -26,6 +29,7 @@ Feature: Object details
         Then the result is valid json
         And result has attributes address
 
+    @SQLITE
     Scenario: JSON Details with linkedplaces
         When sending json details query for R123924
             | linkedplaces |
@@ -33,6 +37,7 @@ Feature: Object details
         Then the result is valid json
         And result has attributes linked_places
 
+    @SQLITE
     Scenario: JSON Details with hierarchy
         When sending json details query for W297699560
             | hierarchy |
@@ -40,6 +45,7 @@ Feature: Object details
         Then the result is valid json
         And result has attributes hierarchy
 
+    @SQLITE
     Scenario: JSON Details with grouped hierarchy
         When sending json details query for W297699560
             | hierarchy | group_hierarchy |
@@ -69,6 +75,7 @@ Feature: Object details
         Then the result is valid json
         And result has attributes keywords
 
+    @SQLITE
     Scenario Outline: JSON details with full geometry
         When sending json details query for <osmid>
             | polygon_geojson |

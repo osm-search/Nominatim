@@ -46,7 +46,10 @@ def before_all(context):
 
 
 def before_scenario(context, scenario):
-    if 'DB' in context.tags:
+    if not 'SQLITE' in context.tags \
+       and context.config.userdata['API_TEST_DB'].startswith('sqlite:'):
+        context.scenario.skip("Not usable with Sqlite database.")
+    elif 'DB' in context.tags:
         context.nominatim.setup_db(context)
     elif 'APIDB' in context.tags:
         context.nominatim.setup_api_db()

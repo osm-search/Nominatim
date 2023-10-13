@@ -1,3 +1,4 @@
+@SQLITE
 @APIDB
 Feature: Layer parameter in reverse geocoding
     Testing correct function of layer selection while reverse geocoding
@@ -57,7 +58,7 @@ Feature: Layer parameter in reverse geocoding
 
     @v1-api-python-only
     Scenario Outline: Search for mountain peaks begins at level 12
-        When sending v1/reverse at 47.08221,9.56769
+        When sending v1/reverse at 47.08293,9.57109
           | layer   | zoom   |
           | natural | <zoom> |
         Then results contain
@@ -71,7 +72,7 @@ Feature: Layer parameter in reverse geocoding
 
 
     @v1-api-python-only
-     Scenario Outline: Reverse serach with manmade layers
+     Scenario Outline: Reverse search with manmade layers
         When sending v1/reverse at 32.46904,-86.44439
           | layer   |
           | <layer> |
@@ -84,5 +85,5 @@ Feature: Layer parameter in reverse geocoding
           | manmade         | leisure  | park        |
           | address         | highway  | residential |
           | poi             | leisure  | pitch       |
-          | natural         | waterway | stream      |
+          | natural         | waterway | river       |
           | natural,manmade | leisure  | park        |

@@ -86,7 +86,10 @@ class NominatimEnvironment:
             be picked up by dotenv and creates a project directory with the
             appropriate website scripts.
         """
-        dsn = 'pgsql:dbname={}'.format(dbname)
+        if dbname.startswith('sqlite:'):
+            dsn = 'sqlite:dbname={}'.format(dbname[7:])
+        else:
+            dsn = 'pgsql:dbname={}'.format(dbname)
         if self.db_host:
             dsn += ';host=' + self.db_host
         if self.db_port:
@@ -196,6 +199,9 @@ class NominatimEnvironment:
         """ Setup a test against the API test database.
         """
         self.write_nominatim_config(self.api_test_db)
+
+        if self.api_test_db.startswith('sqlite:'):
+            return
 
         if not self.api_db_done:
             self.api_db_done = True

@@ -1,3 +1,4 @@
+@SQLITE
 @APIDB
 Feature: Json output for Reverse API
     Testing correctness of json and jsonv2 output (API version v1).
@@ -93,7 +94,7 @@ Feature: Json output for Reverse API
           | polygon_text | 1     |
        Then results contain
           | geotext |
-          | LINESTRING(9.5039353 47.0657546,9.5040437 47.0657781,9.5040808 47.065787,9.5054298 47.0661407) |
+          | ^LINESTRING\(9.5039353 47.0657546, ?9.5040437 47.0657781, ?9.5040808 47.065787, ?9.5054298 47.0661407\) |
 
        Examples:
           | format |

@@ -436,7 +436,7 @@ class ReverseGeocoder:
                   .where(t.c.indexed_status == 0)\
                   .where(t.c.linked_place_id == None)\
                   .where(self._filter_by_layer(t))\
-                  .where(t.c.geometry.intersects(sa.func.ST_Expand(WKT_PARAM, 0.001)))\
+                  .where(t.c.geometry.intersects(sa.func.ST_Expand(WKT_PARAM, 0.007)))\
                   .order_by(sa.desc(t.c.rank_search))\
                   .order_by('distance')\
                   .limit(50)\

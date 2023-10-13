@@ -166,7 +166,7 @@ async def get_detailed_place(conn: SearchConnection, place: ntyp.PlaceRef,
             return sql.add_columns(sa.func.ST_AsGeoJSON(
                                     sa.case((sa.func.ST_NPoints(column) > 5000,
                                              sa.func.ST_SimplifyPreserveTopology(column, 0.0001)),
-                                            else_=column)).label('geometry_geojson'))
+                                            else_=column), 7).label('geometry_geojson'))
     else:
         def _add_geometry(sql: SaSelect, column: SaColumn) -> SaSelect:
             return sql.add_columns(sa.func.ST_GeometryType(column).label('geometry_type'))
@@ -210,13 +210,13 @@ async def get_simple_place(conn: SearchConnection, place: ntyp.PlaceRef,
             col = sa.func.ST_SimplifyPreserveTopology(col, details.geometry_simplification)
 
         if details.geometry_output & ntyp.GeometryFormat.GEOJSON:
-            out.append(sa.func.ST_AsGeoJSON(col).label('geometry_geojson'))
+            out.append(sa.func.ST_AsGeoJSON(col, 7).label('geometry_geojson'))
         if details.geometry_output & ntyp.GeometryFormat.TEXT:
             out.append(sa.func.ST_AsText(col).label('geometry_text'))
         if details.geometry_output & ntyp.GeometryFormat.KML:
-            out.append(sa.func.ST_AsKML(col).label('geometry_kml'))
+            out.append(sa.func.ST_AsKML(col, 7).label('geometry_kml'))
         if details.geometry_output & ntyp.GeometryFormat.SVG:
-            out.append(sa.func.ST_AsSVG(col).label('geometry_svg'))
+            out.append(sa.func.ST_AsSVG(col, 0, 7).label('geometry_svg'))
 
         return sql.add_columns(*out)
 

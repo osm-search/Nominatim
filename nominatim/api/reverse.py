@@ -146,13 +146,13 @@ class ReverseGeocoder:
             col = sa.func.ST_SimplifyPreserveTopology(col, self.params.geometry_simplification)
 
         if self.params.geometry_output & GeometryFormat.GEOJSON:
-            out.append(sa.func.ST_AsGeoJSON(col).label('geometry_geojson'))
+            out.append(sa.func.ST_AsGeoJSON(col, 7).label('geometry_geojson'))
         if self.params.geometry_output & GeometryFormat.TEXT:
             out.append(sa.func.ST_AsText(col).label('geometry_text'))
         if self.params.geometry_output & GeometryFormat.KML:
-            out.append(sa.func.ST_AsKML(col).label('geometry_kml'))
+            out.append(sa.func.ST_AsKML(col, 7).label('geometry_kml'))
         if self.params.geometry_output & GeometryFormat.SVG:
-            out.append(sa.func.ST_AsSVG(col).label('geometry_svg'))
+            out.append(sa.func.ST_AsSVG(col, 0, 7).label('geometry_svg'))
 
         return sql.add_columns(*out)
 

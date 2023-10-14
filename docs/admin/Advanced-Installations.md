@@ -197,7 +197,10 @@ target machine.
     of a full database.
 
 Next install Nominatim on the target machine by following the standard installation
-instructions. Again, make sure to use the same version as the source machine.
+instructions. Again, make sure to use the same version as the source machine and ensure 
+the target machine has equal system requirements than the local source system. As 
+`pg_restore` is running actual SQL commands, you need identical hardware settings at 
+this step in order to build all indexes correctly.
 
 Create a project directory on your destination machine and set up the `.env`
 file to match the configuration on the source machine. Finally run

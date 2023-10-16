@@ -4,8 +4,7 @@ ad:
     languages: ca
     names: !include country-names/ad.yaml
     postcode:
-      pattern: "(ddd)"
-      output: AD\1
+      pattern: "ADddd"
 
 
 # United Arab Emirates (الإمارات العربية المتحدة)
@@ -39,8 +38,7 @@ ai:
     languages: en
     names: !include country-names/ai.yaml
     postcode:
-      pattern: "2640"
-      output: AI-2640
+      pattern: "AI-2640"
 
 
 # Albania (Shqipëria)
@@ -965,8 +963,7 @@ ky:
     languages: en
     names: !include country-names/ky.yaml
     postcode:
-      pattern: "(d)-(dddd)"
-      output: KY\1-\2
+      pattern: "KYd-dddd"
 
 
 # Kazakhstan (Қазақстан)
@@ -1002,7 +999,7 @@ lc:
     languages: en
     names: !include country-names/lc.yaml
     postcode:
-      pattern: "(dd) ?(ddd)"
+      pattern: "LC(dd) ?(ddd)"
       output: LC\1 \2
 
 
@@ -1066,8 +1063,7 @@ lv:
     languages: lv
     names: !include country-names/lv.yaml
     postcode:
-      pattern: "(dddd)"
-      output: LV-\1
+      pattern: "LV-dddd"
 
 
 # Libya (ليبيا)
@@ -1102,8 +1098,7 @@ md:
     languages: ro, ru, uk
     names: !include country-names/md.yaml
     postcode:
-      pattern: "(dddd)"
-      output: MD-\1
+      pattern: "MD-dddd"
 
 
 # Montenegro (Crna Gora / Црна Гора)
@@ -1845,8 +1840,7 @@ vc:
     languages: en
     names: !include country-names/vc.yaml
     postcode:
-      pattern: "(dddd)"
-      output: VC\1
+      pattern: "VCdddd"
 
 
 # Venezuela (Venezuela)
@@ -1864,8 +1858,7 @@ vg:
     languages: en
     names: !include country-names/vg.yaml
     postcode:
-      pattern: "(dddd)"
-      output: VG\1
+      pattern: "VGdddd"
 
 
 # Vietnam (Việt Nam)

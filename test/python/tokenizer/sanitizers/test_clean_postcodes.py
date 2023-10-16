@@ -89,6 +89,143 @@ def test_postcode_sweden_fail(sanitize, postcode):
     assert sanitize(country='se', postcode=postcode) == []
 
 
+@pytest.mark.parametrize("postcode", ('AD123', 'AD AD123'))
+def test_postcode_andorra_pass(sanitize, postcode):
+    assert sanitize(country='ad', postcode=postcode) == [('postcode', 'AD123')]
+
+
+@pytest.mark.parametrize("postcode", ('123', 'AD 123', 'AD-123', 'AD1234'))
+@pytest.mark.sanitizer_params(convert_to_address=False)
+def test_postcode_andorra_fail(sanitize, postcode):
+    assert sanitize(country='ad', postcode=postcode) == []
+
+
+@pytest.mark.parametrize("postcode", ('AI-2640', 'AI AI-2640'))
+def test_postcode_anguilla_pass(sanitize, postcode):
+    assert sanitize(country='ai', postcode=postcode) == [('postcode', 'AI-2640')]
+
+
+@pytest.mark.parametrize("postcode", ('2640', 'AI 2640', 'AI-2000', 'AI US-2640'))
+@pytest.mark.sanitizer_params(convert_to_address=False)
+def test_postcode_anguilla_fail(sanitize, postcode):
+    assert sanitize(country='ai', postcode=postcode) == []
+
+
+@pytest.mark.parametrize("postcode", ('BN1111', 'BN 1111', 'BN BN1111', 'BN BN 1111'))
+def test_postcode_brunei_pass(sanitize, postcode):
+    assert sanitize(country='bn', postcode=postcode) == [('postcode', 'BN1111')]
+
+
+@pytest.mark.parametrize("postcode", ('BN-1111', 'BNN1111'))
+@pytest.mark.sanitizer_params(convert_to_address=False)
+def test_postcode_brunei_fail(sanitize, postcode):
+    assert sanitize(country='bn', postcode=postcode) == []
+
+
+@pytest.mark.parametrize("postcode", ('IM1 1AA', 'IM11AA', 'IM IM11AA'))
+def test_postcode_isle_of_man_pass(sanitize, postcode):
+    assert sanitize(country='im', postcode=postcode) == [('postcode', 'IM1 1AA')]
+
+
+@pytest.mark.parametrize("postcode", ('IZ1 1AA', 'IM1 AA'))
+@pytest.mark.sanitizer_params(convert_to_address=False)
+def test_postcode_isle_of_man_fail(sanitize, postcode):
+    assert sanitize(country='im', postcode=postcode) == []
+
+
+@pytest.mark.parametrize("postcode", ('JE5 0LA', 'JE50LA', 'JE JE50LA', 'je JE5 0LA'))
+def test_postcode_jersey_pass(sanitize, postcode):
+    assert sanitize(country='je', postcode=postcode) == [('postcode', 'JE5 0LA')]
+
+
+@pytest.mark.parametrize("postcode", ('gb JE5 0LA', 'IM50LA', 'IM5 012'))
+@pytest.mark.sanitizer_params(convert_to_address=False)
+def test_postcode_jersey_fail(sanitize, postcode):
+    assert sanitize(country='je', postcode=postcode) == []
+
+
+@pytest.mark.parametrize("postcode", ('KY1-1234', 'KY KY1-1234'))
+def test_postcode_cayman_islands_pass(sanitize, postcode):
+    assert sanitize(country='ky', postcode=postcode) == [('postcode', 'KY1-1234')]
+
+
+@pytest.mark.parametrize("postcode", ('1-1234', 'KY-1234', 'KZ1-1234', 'KY1 1234', 'KY 1-1234', 'KY1-123'))
+@pytest.mark.sanitizer_params(convert_to_address=False)
+def test_postcode_cayman_islands_fail(sanitize, postcode):
+    assert sanitize(country='ky', postcode=postcode) == []
+
+
+@pytest.mark.parametrize("postcode", ('LC11 222', 'LC LC11 222', 'LC LC11 222'))
+def test_postcode_saint_lucia_pass(sanitize, postcode):
+    assert sanitize(country='lc', postcode=postcode) == [('postcode', 'LC11 222')]
+
+
+@pytest.mark.parametrize("postcode", ('11 222', '11222', 'LC 11 222'))
+@pytest.mark.sanitizer_params(convert_to_address=False)
+def test_postcode_saint_lucia_fail(sanitize, postcode):
+    assert sanitize(country='lc', postcode=postcode) == []
+
+
+@pytest.mark.parametrize("postcode", ('LV-1111', 'LV LV-1111'))
+def test_postcode_latvia_pass(sanitize, postcode):
+    assert sanitize(country='lv', postcode=postcode) == [('postcode', 'LV-1111')]
+
+
+@pytest.mark.parametrize("postcode", ('1111', 'LV 1111', 'LV1111', 'LV LV 1111'))
+@pytest.mark.sanitizer_params(convert_to_address=False)
+def test_postcode_latvia_fail(sanitize, postcode):
+    assert sanitize(country='lv', postcode=postcode) == []
+
+
+@pytest.mark.parametrize("postcode", ('MD-1111', 'MD MD-1111'))
+def test_postcode_moldova_pass(sanitize, postcode):
+    assert sanitize(country='md', postcode=postcode) == [('postcode', 'MD-1111')]
+
+
+@pytest.mark.parametrize("postcode", ('1111', 'MD 1111', 'MD1111'))
+@pytest.mark.sanitizer_params(convert_to_address=False)
+def test_postcode_moldova_fail(sanitize, postcode):
+    assert sanitize(country='md', postcode=postcode) == []
+
+
+@pytest.mark.parametrize("postcode", ('VLT 1117', 'GDJ 1234', 'BZN 2222'))
+def test_postcode_malta_pass(sanitize, postcode):
+    assert sanitize(country='mt', postcode=postcode) == [('postcode', postcode)]
+
+
+@pytest.mark.parametrize("postcode", ('MTF 1111', 'MT MTF 1111', 'MTF1111', 'MT MTF1111'))
+def test_postcode_malta_mtarfa_pass(sanitize, postcode):
+    assert sanitize(country='mt', postcode=postcode) == [('postcode', 'MTF 1111')]
+
+
+@pytest.mark.parametrize("postcode", ('1111', 'MTMT 1111'))
+@pytest.mark.sanitizer_params(convert_to_address=False)
+def test_postcode_malta_fail(sanitize, postcode):
+    assert sanitize(country='mt', postcode=postcode) == []
+
+
+@pytest.mark.parametrize("postcode", ('VC1111', 'VC VC1111'))
+def test_postcode_saint_vincent_pass(sanitize, postcode):
+    assert sanitize(country='vc', postcode=postcode) == [('postcode', 'VC1111')]
+
+
+@pytest.mark.parametrize("postcode", ('1111', 'VC-1111', 'VC 1111', 'VC11'))
+@pytest.mark.sanitizer_params(convert_to_address=False)
+def test_postcode_saint_vincent_fail(sanitize, postcode):
+    assert sanitize(country='vc', postcode=postcode) == []
+
+
+@pytest.mark.parametrize("postcode", ('VG1111', 'VG VG1111'))
+def test_postcode_virgin_islands_pass(sanitize, postcode):
+    assert sanitize(country='vg', postcode=postcode) == [('postcode', 'VG1111')]
+
+
+@pytest.mark.parametrize("postcode", ('1111', 'VG 1111', 'VG-1111'))
+@pytest.mark.sanitizer_params(convert_to_address=False)
+def test_postcode_virgin_islands_fail(sanitize, postcode):
+    assert sanitize(country='vg', postcode=postcode) == []
+
+
 @pytest.mark.parametrize("postcode", ('AB1', '123-456-7890', '1 as 44'))
 @pytest.mark.sanitizer_params(default_pattern='[A-Z0-9- ]{3,12}')
 def test_postcode_default_pattern_pass(sanitize, postcode):
@@ -99,4 +236,3 @@ def test_postcode_default_pattern_pass(sanitize, postcode):
 @pytest.mark.sanitizer_params(convert_to_address=False, default_pattern='[A-Z0-9- ]{3,12}')
 def test_postcode_default_pattern_fail(sanitize, postcode):
     assert sanitize(country='an', postcode=postcode) == []
-

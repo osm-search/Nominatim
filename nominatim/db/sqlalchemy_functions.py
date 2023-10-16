@@ -132,6 +132,36 @@ def select_index_placex_geometry_reverse_lookupplacenode(table: str) -> 'sa.Text
                    f" AND {table}.osm_type = 'N'")
 
 
+class IsAddressPoint(sa.sql.functions.GenericFunction[bool]):
+    type = sa.Boolean()
+    name = 'IsAddressPoint'
+    inherit_cache = True
+
+    def __init__(self, table: sa.Table) -> None:
+        super().__init__(table.c.rank_address, # type: ignore[no-untyped-call]
+                         table.c.housenumber, table.c.name)
+
+
+@compiles(IsAddressPoint) # type: ignore[no-untyped-call, misc]
+def default_is_address_point(element: SaColumn,
+                             compiler: 'sa.Compiled', **kw: Any) -> str:
+    rank, hnr, name = list(element.clauses)
+    return "(%s = 30 AND (%s IS NOT NULL OR %s ? 'addr:housename'))" % (
+                compiler.process(rank, **kw),
+                compiler.process(hnr, **kw),
+                compiler.process(name, **kw))
+
+
+@compiles(IsAddressPoint, 'sqlite') # type: ignore[no-untyped-call, misc]
+def sqlite_is_address_point(element: SaColumn,
+                            compiler: 'sa.Compiled', **kw: Any) -> str:
+    rank, hnr, name = list(element.clauses)
+    return "(%s = 30 AND coalesce(%s, json_extract(%s, '$.addr:housename')) IS NOT NULL)" % (
+                compiler.process(rank, **kw),
+                compiler.process(hnr, **kw),
+                compiler.process(name, **kw))
+
+
 class CrosscheckNames(sa.sql.functions.GenericFunction[bool]):
     """ Check if in the given list of names in parameters 1 any of the names
         from the JSON array in parameter 2 are contained.
@@ -173,22 +203,6 @@ def default_json_array_each(element: SaColumn, compiler: 'sa.Compiled', **kw: An
 @compiles(JsonArrayEach, 'sqlite') # type: ignore[no-untyped-call, misc]
 def sqlite_json_array_each(element: SaColumn, compiler: 'sa.Compiled', **kw: Any) -> str:
     return "json_each(%s)" % compiler.process(element.clauses, **kw)
-
-
-class JsonHasKey(sa.sql.functions.GenericFunction[bool]):
-    """ Return elements of a json array as a set.
-    """
-    type = sa.Boolean()
-    name = 'JsonHasKey'
-    inherit_cache = True
-
-
-@compiles(JsonHasKey) # type: ignore[no-untyped-call, misc]
-def compile_json_has_key(element: SaColumn,
-                         compiler: 'sa.Compiled', **kw: Any) -> str:
-    arg1, arg2 = list(element.clauses)
-    return "%s->%s is not null" % (compiler.process(arg1, **kw),
-                                   compiler.process(arg2, **kw))
 
 
 class Greatest(sa.sql.functions.GenericFunction[Any]):

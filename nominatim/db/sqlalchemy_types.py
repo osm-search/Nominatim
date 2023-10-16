@@ -38,7 +38,7 @@ def _default_distance_spheroid(element: SaColumn,
 @compiles(Geometry_DistanceSpheroid, 'sqlite') # type: ignore[no-untyped-call, misc]
 def _spatialite_distance_spheroid(element: SaColumn,
                                   compiler: 'sa.Compiled', **kw: Any) -> str:
-    return "Distance(%s, true)" % compiler.process(element.clauses, **kw)
+    return "COALESCE(Distance(%s, true), 0.0)" % compiler.process(element.clauses, **kw)
 
 
 class Geometry_IsLineLike(sa.sql.expression.FunctionElement[bool]):

@@ -84,12 +84,6 @@ def _locate_interpolation(table: SaFromClause) -> SaLabel:
                    else_=0).label('position')
 
 
-def _is_address_point(table: SaFromClause) -> SaColumn:
-    return sa.and_(table.c.rank_address == 30,
-                   sa.or_(table.c.housenumber != None,
-                          sa.func.JsonHasKey(table.c.name, 'addr:housename')))
-
-
 def _get_closest(*rows: Optional[SaRow]) -> Optional[SaRow]:
     return min(rows, key=lambda row: 1000 if row is None else row.distance)
 
@@ -203,7 +197,7 @@ class ReverseGeocoder:
             max_rank = min(29, self.max_rank)
             restrict.append(lambda: no_index(t.c.rank_address).between(26, max_rank))
             if self.max_rank == 30:
-                restrict.append(lambda: _is_address_point(t))
+                restrict.append(lambda: sa.func.IsAddressPoint(t))
         if self.layer_enabled(DataLayer.POI) and self.max_rank == 30:
             restrict.append(lambda: sa.and_(no_index(t.c.rank_search) == 30,
                                             t.c.class_.not_in(('place', 'building')),
@@ -227,7 +221,7 @@ class ReverseGeocoder:
         sql: SaLambdaSelect = sa.lambda_stmt(lambda: _select_from_placex(t)
                 .where(t.c.geometry.ST_DWithin(WKT_PARAM, 0.001))
                 .where(t.c.parent_place_id == parent_place_id)
-                .where(_is_address_point(t))
+                .where(sa.func.IsAddressPoint(t))
                 .where(t.c.indexed_status == 0)
                 .where(t.c.linked_place_id == None)
                 .order_by('distance')

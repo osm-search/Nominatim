@@ -113,6 +113,7 @@ class SqliteWriter:
         await self.create_spatial_index('osmline', 'linegeo')
         await self.create_spatial_index('tiger', 'linegeo')
         await self.create_index('placex', 'place_id')
+        await self.create_index('placex', 'parent_place_id')
         await self.create_index('placex', 'rank_address')
         await self.create_index('addressline', 'place_id')
 

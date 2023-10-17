@@ -17,14 +17,13 @@ from nominatim.typing import SaColumn
 
 # pylint: disable=all
 
-class PlacexGeometryReverseLookuppolygon(sa.sql.functions.GenericFunction[bool]):
+class PlacexGeometryReverseLookuppolygon(sa.sql.functions.GenericFunction[Any]):
     """ Check for conditions that allow partial index use on
         'idx_placex_geometry_reverse_lookupPolygon'.
 
         Needs to be constant, so that the query planner picks them up correctly
         in prepared statements.
     """
-    type = sa.Boolean()
     name = 'PlacexGeometryReverseLookuppolygon'
     inherit_cache = True
 
@@ -51,8 +50,7 @@ def _sqlite_intersects(element: SaColumn,
             " AND placex.linked_place_id is null)")
 
 
-class IntersectsReverseDistance(sa.sql.functions.GenericFunction[bool]):
-    type = sa.Boolean()
+class IntersectsReverseDistance(sa.sql.functions.GenericFunction[Any]):
     name = 'IntersectsReverseDistance'
     inherit_cache = True
 
@@ -66,12 +64,12 @@ class IntersectsReverseDistance(sa.sql.functions.GenericFunction[bool]):
 def default_reverse_place_diameter(element: SaColumn,
                                    compiler: 'sa.Compiled', **kw: Any) -> str:
     table = element.tablename
-    return f"{table}.rank_address between 4 and 25"\
+    return f"({table}.rank_address between 4 and 25"\
            f" AND {table}.type != 'postcode'"\
            f" AND {table}.name is not null"\
            f" AND {table}.linked_place_id is null"\
            f" AND {table}.osm_type = 'N'" + \
-           " AND ST_Buffer(%s, reverse_place_diameter(%s)) && %s" % \
+           " AND ST_Buffer(%s, reverse_place_diameter(%s)) && %s)" % \
                tuple(map(lambda c: compiler.process(c, **kw), element.clauses))
 
 
@@ -81,7 +79,7 @@ def sqlite_reverse_place_diameter(element: SaColumn,
     geom1, rank, geom2 = list(element.clauses)
     table = element.tablename
 
-    return (f"{table}.rank_address between 4 and 25"\
+    return (f"({table}.rank_address between 4 and 25"\
             f" AND {table}.type != 'postcode'"\
             f" AND {table}.name is not null"\
             f" AND {table}.linked_place_id is null"\
@@ -91,15 +89,14 @@ def sqlite_reverse_place_diameter(element: SaColumn,
              " (SELECT place_id FROM placex_place_node_areas"\
              "  WHERE ROWID IN (SELECT ROWID FROM SpatialIndex"\
              "  WHERE f_table_name = 'placex_place_node_areas'"\
-             "  AND search_frame = %s))") % (
+             "  AND search_frame = %s)))") % (
                 compiler.process(geom1, **kw),
                 compiler.process(geom2, **kw),
                 compiler.process(rank, **kw),
                 compiler.process(geom2, **kw))
 
 
-class IsBelowReverseDistance(sa.sql.functions.GenericFunction[bool]):
-    type = sa.Boolean()
+class IsBelowReverseDistance(sa.sql.functions.GenericFunction[Any]):
     name = 'IsBelowReverseDistance'
     inherit_cache = True
 
@@ -132,8 +129,7 @@ def select_index_placex_geometry_reverse_lookupplacenode(table: str) -> 'sa.Text
                    f" AND {table}.osm_type = 'N'")
 
 
-class IsAddressPoint(sa.sql.functions.GenericFunction[bool]):
-    type = sa.Boolean()
+class IsAddressPoint(sa.sql.functions.GenericFunction[Any]):
     name = 'IsAddressPoint'
     inherit_cache = True
 
@@ -162,11 +158,10 @@ def sqlite_is_address_point(element: SaColumn,
                 compiler.process(name, **kw))
 
 
-class CrosscheckNames(sa.sql.functions.GenericFunction[bool]):
+class CrosscheckNames(sa.sql.functions.GenericFunction[Any]):
     """ Check if in the given list of names in parameters 1 any of the names
         from the JSON array in parameter 2 are contained.
     """
-    type = sa.Boolean()
     name = 'CrosscheckNames'
     inherit_cache = True
 

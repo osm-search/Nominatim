@@ -41,10 +41,9 @@ def _spatialite_distance_spheroid(element: SaColumn,
     return "COALESCE(Distance(%s, true), 0.0)" % compiler.process(element.clauses, **kw)
 
 
-class Geometry_IsLineLike(sa.sql.expression.FunctionElement[bool]):
+class Geometry_IsLineLike(sa.sql.expression.FunctionElement[Any]):
     """ Check if the geometry is a line or multiline.
     """
-    type = sa.Boolean()
     name = 'Geometry_IsLineLike'
     inherit_cache = True
 
@@ -63,10 +62,9 @@ def _sqlite_is_line_like(element: SaColumn,
                compiler.process(element.clauses, **kw)
 
 
-class Geometry_IsAreaLike(sa.sql.expression.FunctionElement[bool]):
+class Geometry_IsAreaLike(sa.sql.expression.FunctionElement[Any]):
     """ Check if the geometry is a polygon or multipolygon.
     """
-    type = sa.Boolean()
     name = 'Geometry_IsLineLike'
     inherit_cache = True
 
@@ -85,10 +83,9 @@ def _sqlite_is_area_like(element: SaColumn,
                compiler.process(element.clauses, **kw)
 
 
-class Geometry_IntersectsBbox(sa.sql.expression.FunctionElement[bool]):
+class Geometry_IntersectsBbox(sa.sql.expression.FunctionElement[Any]):
     """ Check if the bounding boxes of the given geometries intersect.
     """
-    type = sa.Boolean()
     name = 'Geometry_IntersectsBbox'
     inherit_cache = True
 
@@ -103,16 +100,15 @@ def _default_intersects(element: SaColumn,
 @compiles(Geometry_IntersectsBbox, 'sqlite') # type: ignore[no-untyped-call, misc]
 def _sqlite_intersects(element: SaColumn,
                        compiler: 'sa.Compiled', **kw: Any) -> str:
-    return "MbrIntersects(%s)" % compiler.process(element.clauses, **kw)
+    return "MbrIntersects(%s) = 1" % compiler.process(element.clauses, **kw)
 
 
-class Geometry_ColumnIntersectsBbox(sa.sql.expression.FunctionElement[bool]):
+class Geometry_ColumnIntersectsBbox(sa.sql.expression.FunctionElement[Any]):
     """ Check if the bounding box of the geometry intersects with the
         given table column, using the spatial index for the column.
 
         The index must exist or the query may return nothing.
     """
-    type = sa.Boolean()
     name = 'Geometry_ColumnIntersectsBbox'
     inherit_cache = True
 
@@ -128,7 +124,7 @@ def default_intersects_column(element: SaColumn,
 def spatialite_intersects_column(element: SaColumn,
                                  compiler: 'sa.Compiled', **kw: Any) -> str:
     arg1, arg2 = list(element.clauses)
-    return "MbrIntersects(%s, %s) and "\
+    return "MbrIntersects(%s, %s) = 1 and "\
            "%s.ROWID IN (SELECT ROWID FROM SpatialIndex "\
                         "WHERE f_table_name = '%s' AND f_geometry_column = '%s' "\
                         "AND search_frame = %s)" %(
@@ -138,13 +134,12 @@ def spatialite_intersects_column(element: SaColumn,
               compiler.process(arg2, **kw))
 
 
-class Geometry_ColumnDWithin(sa.sql.expression.FunctionElement[bool]):
+class Geometry_ColumnDWithin(sa.sql.expression.FunctionElement[Any]):
     """ Check if the geometry is within the distance of the
         given table column, using the spatial index for the column.
 
         The index must exist or the query may return nothing.
     """
-    type = sa.Boolean()
     name = 'Geometry_ColumnDWithin'
     inherit_cache = True
 
@@ -320,8 +315,7 @@ for alias in SQLITE_FUNCTION_ALIAS:
     _add_function_alias(*alias)
 
 
-class ST_DWithin(sa.sql.functions.GenericFunction[bool]):
-    type = sa.Boolean()
+class ST_DWithin(sa.sql.functions.GenericFunction[Any]):
     name = 'ST_DWithin'
     inherit_cache = True
 

@@ -12,6 +12,7 @@ import pytest
 from nominatim.errors import UsageError
 from nominatim.tools import admin
 from nominatim.tokenizer import factory
+from nominatim.db.sql_preprocessor import SQLPreprocessor
 
 @pytest.fixture(autouse=True)
 def create_placex_table(project_env, tokenizer_mock, temp_db_cursor, placex_table):
@@ -75,8 +76,8 @@ def test_analyse_indexing_with_osm_id(project_env, temp_db_cursor):
 class TestAdminCleanDeleted:
 
     @pytest.fixture(autouse=True)
-    def setup_polygon_delete(self, project_env, table_factory, temp_db_cursor):
-        """ Set up import_polygon_delete table and simplified place_force_delete function
+    def setup_polygon_delete(self, project_env, table_factory, place_table, osmline_table, temp_db_cursor, temp_db_conn, def_config, src_dir):
+        """ Set up place_force_delete function and related tables
         """
         self.project_env = project_env
         self.temp_db_cursor = temp_db_cursor
@@ -88,51 +89,33 @@ class TestAdminCleanDeleted:
                       ((100, 'N', 'boundary', 'administrative'),
                       (145, 'N', 'boundary', 'administrative'),
                       (175, 'R', 'landcover', 'grass')))
+        temp_db_cursor.execute("""INSERT INTO placex (place_id, osm_id, osm_type, class, type, indexed_date, indexed_status)
+                              VALUES(1, 100, 'N', 'boundary', 'administrative', current_date - INTERVAL '1 month', 1),
+                               (2, 145, 'N', 'boundary', 'administrative', current_date - INTERVAL '1 month', 1),
+                               (3, 175, 'R', 'landcover', 'grass', current_date - INTERVAL '1 month', 1)""")
+        # set up tables and triggers for utils function
         table_factory('place_to_be_deleted',
                       """osm_id BIGINT,
                       osm_type CHAR(1),
                       class TEXT NOT NULL,
                       type TEXT NOT NULL,
                       deferred BOOLEAN""")
-        temp_db_cursor.execute("""INSERT INTO placex (place_id, osm_id, osm_type, class, type, indexed_date, indexed_status)
-                              VALUES(1, 100, 'N', 'boundary', 'administrative', current_date - INTERVAL '1 month', 1),
-                               (2, 145, 'N', 'boundary', 'administrative', current_date - INTERVAL '1 month', 1),
-                               (3, 175, 'R', 'landcover', 'grass', current_date - INTERVAL '1 month', 1)""")
-        temp_db_cursor.execute("""CREATE OR REPLACE FUNCTION flush_deleted_places()
-                               RETURNS INTEGER
-                               AS $$
-                               BEGIN
-                                UPDATE placex p SET indexed_status = 100 FROM place_to_be_deleted d
-                                WHERE p.osm_type = d.osm_type
-                                AND p.osm_id = d.osm_id
-                                AND p.class = d.class
-                                AND p.type = d.type
-                                AND NOT deferred;
-                               TRUNCATE TABLE place_to_be_deleted;
-                                RETURN NULL;
-                               END;
-                               $$
-                               LANGUAGE plpgsql;
-                               """)
-        temp_db_cursor.execute("""CREATE OR REPLACE FUNCTION place_force_delete(placeid BIGINT)
-                               RETURNS BOOLEAN
-                               AS $$
-                               DECLARE 
-                                osmid BIGINT;
-                                osmtype character(1);
-                                pclass text;
-                                ptype text;
-                               BEGIN
-                                SELECT osm_type, osm_id, class, type FROM placex WHERE place_id = placeid INTO osmtype, osmid, pclass, ptype;
-                                DELETE FROM import_polygon_delete WHERE osm_type = osmtype AND osm_id = osmid AND class = pclass AND type = ptype;
-                                INSERT INTO place_to_be_deleted (osm_type, osm_id, class, type, deferred)
-                                        VALUES(osmtype, osmid, pclass, ptype, false);
-                                PERFORM flush_deleted_places();
-                                RETURN TRUE;
-                               END;
-                               $$
-                               LANGUAGE plpgsql;
-                               """)
+        table_factory('country_name', 'partition INT')
+        table_factory('import_polygon_error', """osm_id BIGINT,
+                      osm_type CHAR(1),
+                      class TEXT NOT NULL,
+                      type TEXT NOT NULL""")
+        temp_db_cursor.execute("""CREATE OR REPLACE FUNCTION place_delete()
+                               RETURNS TRIGGER AS $$
+                               BEGIN RETURN NULL; END;
+                               $$ LANGUAGE plpgsql;""")
+        temp_db_cursor.execute("""CREATE TRIGGER place_before_delete BEFORE DELETE ON place
+                               FOR EACH ROW EXECUTE PROCEDURE place_delete();""")
+        orig_sql = def_config.lib_dir.sql
+        def_config.lib_dir.sql = src_dir / 'lib-sql'
+        sqlproc = SQLPreprocessor(temp_db_conn, def_config)
+        sqlproc.run_sql_file(temp_db_conn, 'functions/utils.sql')
+        def_config.lib_dir.sql = orig_sql
         
 
     def test_admin_clean_deleted_no_records(self):

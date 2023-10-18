@@ -60,16 +60,14 @@ to finish the recomputation.
 
 ## Removing large deleted objects
 
+Command: `nominatim admin --clean-deleted --age <PostgreSQL Time Interval>`
+
 Nominatim refuses to delete very large areas because often these deletions are
 accidental and are reverted within hours. Instead the deletions are logged in
 the `import_polygon_delete` table and left to the administrator to clean up.
 
-There is currently no command to do that. You can use the following SQL
-query to force a deletion on all objects that have been deleted more than
-a certain timespan ago (here: 1 month):
+To run this command you will need to pass a PostgreSQL time interval to the age 
+parameter. For example to delete any objects that have been deleted more than a 
+month ago you would run:
+`nominatim admin --clean-deleted --age '1 month'`
 
-```sql
-SELECT place_force_delete(p.place_id) FROM import_polygon_delete d, placex p
-WHERE p.osm_type = d.osm_type and p.osm_id = d.osm_id
-      and age(p.indexed_date) > '1 month'::interval
-```

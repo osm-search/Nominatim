@@ -91,8 +91,8 @@ class TestAdminCleanDeleted:
                       (175, 'R', 'landcover', 'grass')))
         temp_db_cursor.execute("""INSERT INTO placex (place_id, osm_id, osm_type, class, type, indexed_date, indexed_status)
                               VALUES(1, 100, 'N', 'boundary', 'administrative', current_date - INTERVAL '1 month', 1),
-                               (2, 145, 'N', 'boundary', 'administrative', current_date - INTERVAL '1 month', 1),
-                               (3, 175, 'R', 'landcover', 'grass', current_date - INTERVAL '1 month', 1)""")
+                               (2, 145, 'N', 'boundary', 'administrative', current_date - INTERVAL '3 month', 1),
+                               (3, 175, 'R', 'landcover', 'grass', current_date - INTERVAL '3 months', 1)""")
         # set up tables and triggers for utils function
         table_factory('place_to_be_deleted',
                       """osm_id BIGINT,
@@ -126,16 +126,18 @@ class TestAdminCleanDeleted:
         assert self.temp_db_cursor.table_rows('import_polygon_delete') == 3
 
 
-    def test_admin_clean_deleted_no_age(self):
-        with pytest.raises(UsageError):
-            admin.clean_deleted_relations(self.project_env)
-
-
     @pytest.mark.parametrize('test_age', ['T week', '1 welk', 'P1E'])
     def test_admin_clean_deleted_bad_age(self, test_age):
         with pytest.raises(UsageError):
             admin.clean_deleted_relations(self.project_env, age = test_age)
 
+
+    def test_admin_clean_deleted_partial(self):
+        admin.clean_deleted_relations(self.project_env, age = '2 months')
+        assert self.temp_db_cursor.row_set('SELECT osm_id, osm_type, class, type, indexed_status FROM placex') == {(100, 'N', 'boundary', 'administrative', 1),
+                                                                                                                   (145, 'N', 'boundary', 'administrative', 100),
+                                                                                                                   (175, 'R', 'landcover', 'grass', 100)}
+        assert self.temp_db_cursor.table_rows('import_polygon_delete') == 1
 
     @pytest.mark.parametrize('test_age', ['1 week', 'P3D', '5 hours'])
     def test_admin_clean_deleted(self, test_age):

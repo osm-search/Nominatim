@@ -29,6 +29,7 @@ class AdminFuncs:
     """
 
     def add_args(self, parser: argparse.ArgumentParser) -> None:
+        self.parser = parser
         group = parser.add_argument_group('Admin tasks')
         objs = group.add_mutually_exclusive_group(required=True)
         objs.add_argument('--warm', action='store_true',
@@ -89,6 +90,8 @@ class AdminFuncs:
             return 0
 
         if args.clean_deleted:
+            if not args.age:
+                self.parser.error('Age is required for --clean-deleted command')
             LOG.warning('Cleaning up deleted relations')
             from ..tools import admin
             admin.clean_deleted_relations(args.config, age=args.age)

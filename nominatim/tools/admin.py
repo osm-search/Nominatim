@@ -90,12 +90,9 @@ def analyse_indexing(config: Configuration, osm_id: Optional[str] = None,
             print(msg)
 
 
-def clean_deleted_relations(config: Configuration, age: Optional[str] = None) -> None:
+def clean_deleted_relations(config: Configuration, age: str) -> None:
     """ Clean deleted relations older than a given age
     """
-    if not age:
-        LOG.fatal('No age given to delete relations')
-        raise UsageError('Age parameter not found')
     with connect(config.get_libpq_dsn()) as conn:
         with conn.cursor() as cur:
             try:

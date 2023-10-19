@@ -138,6 +138,18 @@ class SqliteWriter:
         """
         columns = self.src.t.meta.tables[table].c
 
+        if table == 'placex':
+            # SQLite struggles with Geometries that are larger than 5MB,
+            # so simplify those.
+            return sa.select(*(c for c in columns if not isinstance(c.type, Geometry)),
+                             sa.func.ST_AsText(columns.centroid).label('centroid'),
+                             sa.func.ST_AsText(
+                               sa.case((sa.func.ST_MemSize(columns.geometry) < 5000000,
+                                        columns.geometry),
+                                       else_=sa.func.ST_SimplifyPreserveTopology(
+                                                columns.geometry, 0.0001)
+                                )).label('geometry'))
+
         sql = sa.select(*(sa.func.ST_AsText(c).label(c.name)
                              if isinstance(c.type, Geometry) else c for c in columns))
 

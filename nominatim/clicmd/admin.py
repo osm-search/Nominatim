@@ -42,7 +42,7 @@ class AdminFuncs:
                           help='Print performance analysis of the indexing process')
         objs.add_argument('--collect-os-info', action="store_true",
                           help="Generate a report about the host system information")
-        objs.add_argument('--clean-deleted', action='store_true',
+        objs.add_argument('--clean-deleted', action='store', metavar='AGE',
                           help='Clean up deleted relations')
         group = parser.add_argument_group('Arguments for cache warming')
         group.add_argument('--search-only', action='store_const', dest='target',
@@ -58,8 +58,6 @@ class AdminFuncs:
         mgroup.add_argument('--place-id', type=int,
                             help='Analyse indexing of the given Nominatim object')
         group = parser.add_argument_group('Arguments for cleaning deleted')
-        group.add_argument('--age', type=str,
-                           help='Delete relations older than the given PostgreSQL time interval')
 
 
     def run(self, args: NominatimArgs) -> int:
@@ -90,11 +88,9 @@ class AdminFuncs:
             return 0
 
         if args.clean_deleted:
-            if not args.age:
-                self.parser.error('Age is required for --clean-deleted command')
             LOG.warning('Cleaning up deleted relations')
             from ..tools import admin
-            admin.clean_deleted_relations(args.config, age=args.age)
+            admin.clean_deleted_relations(args.config, age=args.clean_deleted)
             return 0
 
         return 1

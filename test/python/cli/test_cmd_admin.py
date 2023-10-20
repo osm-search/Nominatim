@@ -36,14 +36,13 @@ def test_admin_migrate(cli_call, mock_func_factory):
 def test_admin_clean_deleted_relations(cli_call, mock_func_factory):
     mock = mock_func_factory(nominatim.tools.admin, 'clean_deleted_relations')
 
-    assert cli_call('admin', '--clean-deleted', '--age', '1 month') == 0
+    assert cli_call('admin', '--clean-deleted', '1 month') == 0
     assert mock.called == 1
 
 def test_admin_clean_deleted_relations_no_age(cli_call, mock_func_factory):
     mock = mock_func_factory(nominatim.tools.admin, 'clean_deleted_relations')
 
-    with pytest.raises(SystemExit):
-        cli_call('admin', '--clean-deleted')
+    assert cli_call('admin', '--clean-deleted') == 1
 
 class TestCliAdminWithDb:
 

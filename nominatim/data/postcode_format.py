@@ -25,7 +25,7 @@ class CountryPostcodeMatcher:
 
         pc_pattern = config['pattern'].replace('d', '[0-9]').replace('l', '[A-Z]')
 
-        self.norm_pattern = re.compile(f'\\s*(?:{country_code.upper()}[ -]?)?(.*)\\s*')
+        self.norm_pattern = re.compile(f'\\s*(?:{country_code.upper()}[ -]?)?({pc_pattern})\\s*')
         self.pattern = re.compile(pc_pattern)
 
         self.output = config.get('output', r'\g<0>')

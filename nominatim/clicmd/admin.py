@@ -29,6 +29,7 @@ class AdminFuncs:
     """
 
     def add_args(self, parser: argparse.ArgumentParser) -> None:
+        self.parser = parser
         group = parser.add_argument_group('Admin tasks')
         objs = group.add_mutually_exclusive_group(required=True)
         objs.add_argument('--warm', action='store_true',
@@ -41,6 +42,8 @@ class AdminFuncs:
                           help='Print performance analysis of the indexing process')
         objs.add_argument('--collect-os-info', action="store_true",
                           help="Generate a report about the host system information")
+        objs.add_argument('--clean-deleted', action='store', metavar='AGE',
+                          help='Clean up deleted relations')
         group = parser.add_argument_group('Arguments for cache warming')
         group.add_argument('--search-only', action='store_const', dest='target',
                            const='search',
@@ -54,8 +57,11 @@ class AdminFuncs:
                             help='Analyse indexing of the given OSM object')
         mgroup.add_argument('--place-id', type=int,
                             help='Analyse indexing of the given Nominatim object')
+        group = parser.add_argument_group('Arguments for cleaning deleted')
+
 
     def run(self, args: NominatimArgs) -> int:
+        # pylint: disable=too-many-return-statements
         if args.warm:
             return self._warm(args)
 
@@ -79,6 +85,12 @@ class AdminFuncs:
             LOG.warning("Reporting System Information")
             from ..tools import collect_os_info
             collect_os_info.report_system_information(args.config)
+            return 0
+
+        if args.clean_deleted:
+            LOG.warning('Cleaning up deleted relations')
+            from ..tools import admin
+            admin.clean_deleted_relations(args.config, age=args.clean_deleted)
             return 0
 
         return 1

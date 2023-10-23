@@ -11,6 +11,7 @@ from typing import Optional, Tuple, Any, cast
 import logging
 
 from psycopg2.extras import Json, register_hstore
+from psycopg2 import DataError
 
 from nominatim.config import Configuration
 from nominatim.db.connection import connect, Cursor
@@ -87,3 +88,20 @@ def analyse_indexing(config: Configuration, osm_id: Optional[str] = None,
 
         for msg in conn.notices:
             print(msg)
+
+
+def clean_deleted_relations(config: Configuration, age: str) -> None:
+    """ Clean deleted relations older than a given age
+    """
+    with connect(config.get_libpq_dsn()) as conn:
+        with conn.cursor() as cur:
+            try:
+                cur.execute("""SELECT place_force_delete(p.place_id)
+                            FROM import_polygon_delete d, placex p
+                            WHERE p.osm_type = d.osm_type AND p.osm_id = d.osm_id
+                            AND age(p.indexed_date) > %s::interval""",
+                            (age, ))
+            except DataError as exc:
+                raise UsageError('Invalid PostgreSQL time interval format') from exc
+        conn.commit()
+            

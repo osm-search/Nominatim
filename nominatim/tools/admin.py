@@ -104,4 +104,3 @@ def clean_deleted_relations(config: Configuration, age: str) -> None:
             except DataError as exc:
                 raise UsageError('Invalid PostgreSQL time interval format') from exc
         conn.commit()
-            

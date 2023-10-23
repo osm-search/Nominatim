@@ -29,7 +29,6 @@ class AdminFuncs:
     """
 
     def add_args(self, parser: argparse.ArgumentParser) -> None:
-        self.parser = parser
         group = parser.add_argument_group('Admin tasks')
         objs = group.add_mutually_exclusive_group(required=True)
         objs.add_argument('--warm', action='store_true',
@@ -57,7 +56,6 @@ class AdminFuncs:
                             help='Analyse indexing of the given OSM object')
         mgroup.add_argument('--place-id', type=int,
                             help='Analyse indexing of the given Nominatim object')
-        group = parser.add_argument_group('Arguments for cleaning deleted')
 
 
     def run(self, args: NominatimArgs) -> int:

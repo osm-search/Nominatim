@@ -81,21 +81,34 @@ class NominatimAPIAsync: #pylint: disable=too-many-instance-attributes
             if self._engine:
                 return
 
-            dsn = self.config.get_database_params()
-            pool_size = self.config.get_int('API_POOL_SIZE')
+            extra_args: Dict[str, Any] = {'future': True,
+                                          'echo': self.config.get_bool('DEBUG_SQL')}
 
-            query = {k: v for k, v in dsn.items()
-                      if k not in ('user', 'password', 'dbname', 'host', 'port')}
+            is_sqlite = self.config.DATABASE_DSN.startswith('sqlite:')
 
-            dburl = sa.engine.URL.create(
-                       f'postgresql+{PGCORE_LIB}',
-                       database=dsn.get('dbname'),
-                       username=dsn.get('user'), password=dsn.get('password'),
-                       host=dsn.get('host'), port=int(dsn['port']) if 'port' in dsn else None,
-                       query=query)
-            engine = sa_asyncio.create_async_engine(dburl, future=True,
-                                                    max_overflow=0, pool_size=pool_size,
-                                                    echo=self.config.get_bool('DEBUG_SQL'))
+            if is_sqlite:
+                params = dict((p.split('=', 1)
+                              for p in self.config.DATABASE_DSN[7:].split(';')))
+                dburl = sa.engine.URL.create('sqlite+aiosqlite',
+                                             database=params.get('dbname'))
+
+            else:
+                dsn = self.config.get_database_params()
+                query = {k: v for k, v in dsn.items()
+                         if k not in ('user', 'password', 'dbname', 'host', 'port')}
+
+                dburl = sa.engine.URL.create(
+                           f'postgresql+{PGCORE_LIB}',
+                           database=dsn.get('dbname'),
+                           username=dsn.get('user'),
+                           password=dsn.get('password'),
+                           host=dsn.get('host'),
+                           port=int(dsn['port']) if 'port' in dsn else None,
+                           query=query)
+                extra_args['max_overflow'] = 0
+                extra_args['pool_size'] = self.config.get_int('API_POOL_SIZE')
+
+            engine = sa_asyncio.create_async_engine(dburl, **extra_args)
 
             try:
                 async with engine.begin() as conn:
@@ -104,7 +117,7 @@ class NominatimAPIAsync: #pylint: disable=too-many-instance-attributes
             except (PGCORE_ERROR, sa.exc.OperationalError):
                 server_version = 0
 
-            if server_version >= 110000:
+            if server_version >= 110000 and not is_sqlite:
                 @sa.event.listens_for(engine.sync_engine, "connect")
                 def _on_connect(dbapi_con: Any, _: Any) -> None:
                     cursor = dbapi_con.cursor()
@@ -112,6 +125,15 @@ class NominatimAPIAsync: #pylint: disable=too-many-instance-attributes
                     cursor.execute("SET max_parallel_workers_per_gather TO '0'")
                 # Make sure that all connections get the new settings
                 await self.close()
+
+            if is_sqlite:
+                @sa.event.listens_for(engine.sync_engine, "connect")
+                def _on_sqlite_connect(dbapi_con: Any, _: Any) -> None:
+                    dbapi_con.run_async(lambda conn: conn.enable_load_extension(True))
+                    cursor = dbapi_con.cursor()
+                    cursor.execute("SELECT load_extension('mod_spatialite')")
+                    cursor.execute('SELECT SetDecimalPrecision(7)')
+                    dbapi_con.run_async(lambda conn: conn.enable_load_extension(False))
 
             self._property_cache['DB:server_version'] = server_version
 

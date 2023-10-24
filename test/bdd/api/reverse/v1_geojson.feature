@@ -1,3 +1,4 @@
+@SQLITE
 @APIDB
 Feature: Geojson for Reverse API
     Testing correctness of geojson output (API version v1).

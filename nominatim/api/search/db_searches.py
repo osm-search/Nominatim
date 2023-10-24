@@ -73,13 +73,13 @@ def _add_geometry_columns(sql: SaLambdaSelect, col: SaColumn, details: SearchDet
         col = sa.func.ST_SimplifyPreserveTopology(col, details.geometry_simplification)
 
     if details.geometry_output & GeometryFormat.GEOJSON:
-        out.append(sa.func.ST_AsGeoJSON(col).label('geometry_geojson'))
+        out.append(sa.func.ST_AsGeoJSON(col, 7).label('geometry_geojson'))
     if details.geometry_output & GeometryFormat.TEXT:
         out.append(sa.func.ST_AsText(col).label('geometry_text'))
     if details.geometry_output & GeometryFormat.KML:
-        out.append(sa.func.ST_AsKML(col).label('geometry_kml'))
+        out.append(sa.func.ST_AsKML(col, 7).label('geometry_kml'))
     if details.geometry_output & GeometryFormat.SVG:
-        out.append(sa.func.ST_AsSVG(col).label('geometry_svg'))
+        out.append(sa.func.ST_AsSVG(col, 0, 7).label('geometry_svg'))
 
     return sql.add_columns(*out)
 

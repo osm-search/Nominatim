@@ -16,6 +16,7 @@ import sqlalchemy as sa
 
 import nominatim.api as napi
 from nominatim.db.sql_preprocessor import SQLPreprocessor
+from nominatim.tools import convert_sqlite
 import nominatim.api.logging as loglib
 
 class APITester:
@@ -178,7 +179,6 @@ def apiobj(temp_db_with_extensions, temp_db_conn, monkeypatch):
     testapi.async_to_sync(testapi.create_tables())
 
     proc = SQLPreprocessor(temp_db_conn, testapi.api.config)
-    proc.run_sql_file(temp_db_conn, 'functions/address_lookup.sql')
     proc.run_sql_file(temp_db_conn, 'functions/ranking.sql')
 
     loglib.set_log_output('text')
@@ -186,3 +186,21 @@ def apiobj(temp_db_with_extensions, temp_db_conn, monkeypatch):
     print(loglib.get_and_disable())
 
     testapi.api.close()
+
+
+@pytest.fixture(params=['postgres_db', 'sqlite_db'])
+def frontend(request, event_loop, tmp_path):
+    if request.param == 'sqlite_db':
+        db = str(tmp_path / 'test_nominatim_python_unittest.sqlite')
+
+        def mkapi(apiobj, options={'reverse'}):
+            event_loop.run_until_complete(convert_sqlite.convert(Path('/invalid'),
+                                                                 db, options))
+            return napi.NominatimAPI(Path('/invalid'),
+                                     {'NOMINATIM_DATABASE_DSN': f"sqlite:dbname={db}",
+                                      'NOMINATIM_USE_US_TIGER_DATA': 'yes'})
+    elif request.param == 'postgres_db':
+        def mkapi(apiobj, options=None):
+            return apiobj.api
+
+    return mkapi

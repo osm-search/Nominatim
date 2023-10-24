@@ -1,3 +1,4 @@
+@SQLITE
 @APIDB
 Feature: v1/reverse Parameter Tests
     Tests for parameter inputs for the v1 reverse endpoint.

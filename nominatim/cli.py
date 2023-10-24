@@ -206,6 +206,7 @@ def get_set_parser() -> CommandlineParser:
     parser.add_subcommand('admin', clicmd.AdminFuncs())
 
     parser.add_subcommand('export', clicmd.QueryExport())
+    parser.add_subcommand('convert', clicmd.ConvertDB())
     parser.add_subcommand('serve', AdminServe())
 
     parser.add_subcommand('search', clicmd.APISearch())

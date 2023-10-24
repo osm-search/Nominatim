@@ -1,3 +1,4 @@
+@SQLITE
 @APIDB
 Feature: Places by osm_type and osm_id Tests
     Simple tests for errors in various response formats.

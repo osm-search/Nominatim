@@ -1,3 +1,4 @@
+@SQLITE
 @APIDB
 Feature: Object details
     Check details page for correctness

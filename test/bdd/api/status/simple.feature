@@ -1,3 +1,4 @@
+@SQLITE
 @APIDB
 Feature: Status queries
     Testing status query

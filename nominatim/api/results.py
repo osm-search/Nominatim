@@ -19,7 +19,7 @@ import datetime as dt
 import sqlalchemy as sa
 
 from nominatim.typing import SaSelect, SaRow
-from nominatim.db.sqlalchemy_functions import CrosscheckNames
+from nominatim.db.sqlalchemy_types import Geometry
 from nominatim.api.types import Point, Bbox, LookupDetails
 from nominatim.api.connection import SearchConnection
 from nominatim.api.logging import log
@@ -589,7 +589,7 @@ async def complete_address_details(conn: SearchConnection, results: List[BaseRes
     if not lookup_ids:
         return
 
-    ltab = sa.func.json_array_elements(sa.type_coerce(lookup_ids, sa.JSON))\
+    ltab = sa.func.JsonArrayEach(sa.type_coerce(lookup_ids, sa.JSON))\
              .table_valued(sa.column('value', type_=sa.JSON)) # type: ignore[no-untyped-call]
 
     t = conn.t.placex
@@ -608,7 +608,7 @@ async def complete_address_details(conn: SearchConnection, results: List[BaseRes
             .order_by('src_place_id')\
             .order_by(sa.column('rank_address').desc())\
             .order_by((taddr.c.place_id == ltab.c.value['pid'].as_integer()).desc())\
-            .order_by(sa.case((CrosscheckNames(t.c.name, ltab.c.value['names']), 2),
+            .order_by(sa.case((sa.func.CrosscheckNames(t.c.name, ltab.c.value['names']), 2),
                               (taddr.c.isaddress, 0),
                               (sa.and_(taddr.c.fromarea,
                                        t.c.geometry.ST_Contains(
@@ -652,7 +652,7 @@ async def complete_address_details(conn: SearchConnection, results: List[BaseRes
 
     parent_lookup_ids = list(filter(lambda e: e['pid'] != e['lid'], lookup_ids))
     if parent_lookup_ids:
-        ltab = sa.func.json_array_elements(sa.type_coerce(parent_lookup_ids, sa.JSON))\
+        ltab = sa.func.JsonArrayEach(sa.type_coerce(parent_lookup_ids, sa.JSON))\
                  .table_valued(sa.column('value', type_=sa.JSON)) # type: ignore[no-untyped-call]
         sql = sa.select(ltab.c.value['pid'].as_integer().label('src_place_id'),
                         t.c.place_id, t.c.osm_type, t.c.osm_id, t.c.name,
@@ -687,14 +687,10 @@ def _placex_select_address_row(conn: SearchConnection,
     return sa.select(t.c.place_id, t.c.osm_type, t.c.osm_id, t.c.name,
                      t.c.class_.label('class'), t.c.type,
                      t.c.admin_level, t.c.housenumber,
-                     sa.literal_column("""ST_GeometryType(geometry) in
-                                        ('ST_Polygon','ST_MultiPolygon')""").label('fromarea'),
+                     t.c.geometry.is_area().label('fromarea'),
                      t.c.rank_address,
-                     sa.literal_column(
-                         f"""ST_DistanceSpheroid(geometry,
-                                                 'SRID=4326;{centroid.to_wkt()}'::geometry,
-                              'SPHEROID["WGS 84",6378137,298.257223563, AUTHORITY["EPSG","7030"]]')
-                         """).label('distance'))
+                     t.c.geometry.distance_spheroid(
+                       sa.bindparam('centroid', value=centroid, type_=Geometry)).label('distance'))
 
 
 async def complete_linked_places(conn: SearchConnection, result: BaseResult) -> None:
@@ -728,10 +724,10 @@ async def complete_keywords(conn: SearchConnection, result: BaseResult) -> None:
     sel = sa.select(t.c.word_id, t.c.word_token, t.c.word)
 
     for name_tokens, address_tokens in await conn.execute(sql):
-        for row in await conn.execute(sel.where(t.c.word_id == sa.any_(name_tokens))):
+        for row in await conn.execute(sel.where(t.c.word_id.in_(name_tokens))):
             result.name_keywords.append(WordInfo(*row))
 
-        for row in await conn.execute(sel.where(t.c.word_id == sa.any_(address_tokens))):
+        for row in await conn.execute(sel.where(t.c.word_id.in_(address_tokens))):
             result.address_keywords.append(WordInfo(*row))
 
 

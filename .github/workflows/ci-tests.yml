@@ -113,18 +113,21 @@ jobs:
               if: matrix.flavour == 'oldstuff'
 
             - name: Install Python webservers
-              run: pip3 install falcon starlette
+              run: pip3 install falcon starlette asgi_lifespan
 
             - name: Install latest pylint
-              run: pip3 install -U pylint asgi_lifespan
+              run: pip3 install -U pylint
+              if: matrix.flavour != 'oldstuff'
 
             - name: PHP linting
               run: phpcs --report-width=120 .
               working-directory: Nominatim
+              if: matrix.flavour != 'oldstuff'
 
             - name: Python linting
               run: python3 -m pylint nominatim
               working-directory: Nominatim
+              if: matrix.flavour != 'oldstuff'
 
             - name: PHP unit tests
               run: phpunit ./

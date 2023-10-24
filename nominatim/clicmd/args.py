@@ -101,6 +101,9 @@ class NominatimArgs:
     language: Optional[str]
     restrict_to_country: Optional[str]
 
+    # Arguments to 'convert'
+    output: Path
+
     # Arguments to 'refresh'
     postcodes: bool
     word_tokens: bool

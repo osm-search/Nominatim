@@ -43,6 +43,22 @@ virtualenv /srv/nominatim-venv
 Next you need to set up the service that runs the Nominatim frontend. This is
 easiest done with a systemd job.
 
+First you need to tell systemd to create a socket file to be used by
+hunicorn. Crate the following file `/etc/systemd/system/nominatim.socket`:
+
+``` systemd
+[Unit]
+Description=Gunicorn socket for Nominatim
+
+[Socket]
+ListenStream=/run/nominatim.sock
+SocketUser=www-data
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Now you can add the systemd service for Nominatim itself.
 Create the following file `/etc/systemd/system/nominatim.service`:
 
 ``` systemd
@@ -74,12 +90,14 @@ its own Python process using
 [`NOMINATIM_API_POOL_SIZE`](../customize/Settings.md#nominatim_api_pool_size)
 connections to the database to serve requests in parallel.
 
-Make the new service known to systemd and start it:
+Make the new services known to systemd and start it:
 
 ``` sh
 sudo systemctl daemon-reload
-sudo systemctl enable nominatim
-sudo systemctl start nominatim
+sudo systemctl enable nominatim.socket
+sudo systemctl start nominatim.socket
+sudo systemctl enable nominatim.service
+sudo systemctl start nominatim.service
 ```
 
 This sets the service up, so that Nominatim is automatically started

@@ -500,7 +500,7 @@ def _get_address_lookup_id(result: BaseResultT) -> int:
 
 
 async def _finalize_entry(conn: SearchConnection, result: BaseResultT) -> None:
-    assert result.address_rows
+    assert result.address_rows is not None
     postcode = result.postcode
     if not postcode and result.address:
         postcode = result.address.get('postcode')

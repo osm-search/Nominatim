@@ -10,6 +10,7 @@ Tests for database integrity checks.
 import pytest
 
 from nominatim.tools import check_database as chkdb
+import nominatim.version
 
 def test_check_database_unknown_db(def_config, monkeypatch):
     monkeypatch.setenv('NOMINATIM_DATABASE_DSN', 'pgsql:dbname=fjgkhughwgh2423gsags')
@@ -20,13 +21,23 @@ def test_check_database_fatal_test(def_config, temp_db):
     assert chkdb.check_database(def_config) == 1
 
 
-def test_check_conection_good(temp_db_conn, def_config):
+def test_check_connection_good(temp_db_conn, def_config):
     assert chkdb.check_connection(temp_db_conn, def_config) == chkdb.CheckState.OK
 
 
-def test_check_conection_bad(def_config):
+def test_check_connection_bad(def_config):
     badconn = chkdb._BadConnection('Error')
     assert chkdb.check_connection(badconn, def_config) == chkdb.CheckState.FATAL
+
+
+def test_check_database_version_good(property_table, temp_db_conn, def_config):
+    property_table.set('database_version',
+                       '{0[0]}.{0[1]}.{0[2]}-{0[3]}'.format(nominatim.version.NOMINATIM_VERSION))
+    assert chkdb.check_database_version(temp_db_conn, def_config) == chkdb.CheckState.OK
+
+def test_check_database_version_bad(property_table, temp_db_conn, def_config):
+    property_table.set('database_version', '3.9.9-9')
+    assert chkdb.check_database_version(temp_db_conn, def_config) == chkdb.CheckState.FATAL
 
 
 def test_check_placex_table_good(table_factory, temp_db_conn, def_config):

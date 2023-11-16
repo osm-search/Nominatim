@@ -12,14 +12,13 @@ import os
 import subprocess
 import sys
 from pathlib import Path
-from typing import List, Optional, Tuple, Union, cast
+from typing import List, Optional, Tuple, Union
 
 import psutil
 from psycopg2.extensions import make_dsn, parse_dsn
 
 from nominatim.config import Configuration
 from nominatim.db.connection import connect
-from nominatim.typing import DictCursorResults
 from nominatim.version import version_str
 
 
@@ -107,15 +106,15 @@ def report_system_information(config: Configuration) -> None:
         postgresql_ver: str = convert_version(conn.server_version_tuple())
 
         with conn.cursor() as cur:
-            cur.execute(f"""
-            SELECT datname FROM pg_catalog.pg_database 
-            WHERE datname='{parse_dsn(config.get_libpq_dsn())['dbname']}'""")
-            nominatim_db_exists = cast(Optional[DictCursorResults], cur.fetchall())
-            if nominatim_db_exists:
-                with connect(config.get_libpq_dsn()) as conn:
-                    postgis_ver: str = convert_version(conn.postgis_version_tuple())
-            else:
-                postgis_ver = "Unable to connect to database"
+            num = cur.scalar("SELECT count(*) FROM pg_catalog.pg_database WHERE datname=%s",
+                             (parse_dsn(config.get_libpq_dsn())['dbname'], ))
+            nominatim_db_exists = num == 1 if isinstance(num, int) else False
+
+    if nominatim_db_exists:
+        with connect(config.get_libpq_dsn()) as conn:
+            postgis_ver: str = convert_version(conn.postgis_version_tuple())
+    else:
+        postgis_ver = "Unable to connect to database"
 
     postgresql_config: str = get_postgresql_config(int(float(postgresql_ver)))
 

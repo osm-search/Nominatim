@@ -39,11 +39,6 @@ jobs:
             matrix:
                 ubuntu: [20, 22]
                 include:
-                    - ubuntu: 18
-                      postgresql: 9.6
-                      postgis: 2.5
-                      pytest: pytest
-                      php: 7.2
                     - ubuntu: 20
                       postgresql: 13
                       postgis: 3

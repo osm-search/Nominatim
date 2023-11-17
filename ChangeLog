@@ -1,3 +1,7 @@
+4.2.4
+ * fix a potential SQL injection in 'nominatim admin --collect-os-info'
+ * fix compatibility issue with PostGIS 3.4
+
 4.2.3
 
  * fix deletion handling for 'nominatim add-data'

@@ -1,3 +1,9 @@
+4.3.2
+ * fix potential SQL injection issue for 'nominatim admin --collect-os-info'
+ * PHP frontend: fix on-the-fly lookup of postcode areas near boundaries
+ * Python frontend: improve handling of viewbox
+ * Python frontend: correct deployment instructions
+
 4.3.1
  * reintroduce result rematching
  * improve search of multi-part names

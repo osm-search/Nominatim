@@ -37,7 +37,7 @@ jobs:
         needs: create-archive
         strategy:
             matrix:
-                ubuntu: [18, 20, 22]
+                ubuntu: [20, 22]
                 include:
                     - ubuntu: 18
                       postgresql: 9.6

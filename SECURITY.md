@@ -12,7 +12,6 @@ versions.
 | 4.3.x   | 2025-09-07                          |
 | 4.2.x   | 2024-11-24                          |
 | 4.1.x   | 2024-08-05                          |
-| 4.0.x   | 2023-11-02                          |
 
 ## Reporting a Vulnerability
 
@@ -36,5 +35,6 @@ incident. Announcements will also be published at the
 
 ## List of Previous Incidents
 
-* 2020-05-04 - [SQL injection issue on /details endpoint](https://lists.openstreetmap.org/pipermail/geocoding/2020-May/002012.html)
+* 2023-11-20 - [SQL injection vulnerability](https://nominatim.org/2023/11/20/release-432.html)
 * 2023-02-21 - [cross-site scripting vulnerability](https://nominatim.org/2023/02/21/release-421.html)
+* 2020-05-04 - [SQL injection issue on /details endpoint](https://lists.openstreetmap.org/pipermail/geocoding/2020-May/002012.html)

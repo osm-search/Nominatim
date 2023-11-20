@@ -14,7 +14,7 @@ in the database.
 
     The library also misses a proper installation routine, so some manipulation
     of the PYTHONPATH is required. At the moment, use is only recommended for
-    developers wit some experience in Python.
+    developers with some experience in Python.
 
 ## Installation
 

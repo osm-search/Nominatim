@@ -235,6 +235,10 @@ class TextLogger(BaseLogger):
         self.buffer = io.StringIO()
 
 
+    def _timestamp(self) -> None:
+        self._write(f'[{dt.datetime.now()}]\n')
+
+
     def get_buffer(self) -> str:
         return self.buffer.getvalue()
 
@@ -247,6 +251,7 @@ class TextLogger(BaseLogger):
 
 
     def section(self, heading: str) -> None:
+        self._timestamp()
         self._write(f"\n# {heading}\n\n")
 
 
@@ -283,6 +288,7 @@ class TextLogger(BaseLogger):
 
 
     def result_dump(self, heading: str, results: Iterator[Tuple[Any, Any]]) -> None:
+        self._timestamp()
         self._write(f'{heading}:\n')
         total = 0
         for rank, res in results:
@@ -298,6 +304,7 @@ class TextLogger(BaseLogger):
 
     def sql(self, conn: AsyncConnection, statement: 'sa.Executable',
             params: Union[Mapping[str, Any], Sequence[Mapping[str, Any]], None]) -> None:
+        self._timestamp()
         sqlstr = '\n| '.join(textwrap.wrap(self.format_sql(conn, statement, params), width=78))
         self._write(f"| {sqlstr}\n\n")
 

@@ -387,7 +387,6 @@ jobs:
                 useradd -m nominatim
                 useradd -m osm-import
                 echo 'nominatim   ALL=(ALL:ALL) NOPASSWD: ALL' > /etc/sudoers.d/nominatim
-                echo 'osm-import   ALL=(ALL:ALL) NOPASSWD: ALL' > /etc/sudoers.d/osm-import
                 echo "/home/nominatim/Nominatim/vagrant/Install-on-${OS}.sh no $INSTALL_MODE" > /home/nominatim/vagrant.sh
             shell: bash
             env:
@@ -434,6 +433,10 @@ jobs:
             run: |
                 sudo -u postgres psql -c "GRANT INSERT, UPDATE ON ALL TABLES IN SCHEMA public TO \"osm-import\";"
             working-directory: /home/nominatim/nominatim-project
+
+          - name: Change nominatim directory ownership
+            run: |
+                sudo chown -R osm-import /home/nominatim/nominatim-project
 
           - name: Run import
             run: |

@@ -386,7 +386,8 @@ jobs:
             run: |
                 useradd -m nominatim
                 useradd -m osm-import
-                echo 'nominatim   ALL=(ALL:ALL) NOPASSWD: ALL' > /etc/sudoers.d/nominiatim
+                echo 'nominatim   ALL=(ALL:ALL) NOPASSWD: ALL' > /etc/sudoers.d/nominatim
+                echo 'osm-import   ALL=(ALL:ALL) NOPASSWD: ALL' > /etc/sudoers.d/osm-import
                 echo "/home/nominatim/Nominatim/vagrant/Install-on-${OS}.sh no $INSTALL_MODE" > /home/nominatim/vagrant.sh
             shell: bash
             env:

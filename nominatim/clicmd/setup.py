@@ -101,7 +101,7 @@ class SetupAll:
 
         if args.continue_at in (None, 'import-from-file'):
             files = args.get_osm_file_list()
-            if not files and not args.prepare_database:
+            if not files:
                 raise UsageError("No input files (use --osm-file).")
 
             if args.continue_at in ('import-from-file', None):

@@ -101,10 +101,16 @@ class ICUToken(qmod.Token):
         penalty = 0.0
         if row.type == 'w':
             penalty = 0.3
+        elif row.type == 'W':
+            if len(row.word_token) == 1 and row.word_token == row.word:
+                penalty = 0.2 if row.word.isdigit() else 0.3
         elif row.type == 'H':
             penalty = sum(0.1 for c in row.word_token if c != ' ' and not c.isdigit())
             if all(not c.isdigit() for c in row.word_token):
                 penalty += 0.2 * (len(row.word_token) - 1)
+        elif row.type == 'C':
+            if len(row.word_token) == 1:
+                penalty = 0.3
 
         if row.info is None:
             lookup_word = row.word

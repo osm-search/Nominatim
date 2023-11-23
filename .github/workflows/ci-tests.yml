@@ -382,9 +382,10 @@ jobs:
                 ln -snf /usr/share/zoneinfo/$CONTAINER_TIMEZONE /etc/localtime && echo $CONTAINER_TIMEZONE > /etc/timezone
             shell: bash
 
-          - name: Setup import user
+          - name: Setup database users
             run: |
                 useradd -m nominatim
+                useradd -m osm-import
                 echo 'nominatim   ALL=(ALL:ALL) NOPASSWD: ALL' > /etc/sudoers.d/nominiatim
                 echo "/home/nominatim/Nominatim/vagrant/Install-on-${OS}.sh no $INSTALL_MODE" > /home/nominatim/vagrant.sh
             shell: bash
@@ -437,7 +438,9 @@ jobs:
             run: |
                 NOMINATIM_DATABASE_DSN="pgsql:dbname=nominatim;user=osm-import;password=osm-import" nominatim import --continue import-from-file --osm-file ../test.pbf
             working-directory: /home/nominatim/nominatim-project
+            shell: sudo -Hu osm-import bash --noprofile --norc -eo pipefail {0}
 
           - name: Check full import
             run: nominatim admin --check-database
             working-directory: /home/nominatim/nominatim-project
+            shell: sudo -Hu osm-import bash --noprofile --norc -eo pipefail {0}

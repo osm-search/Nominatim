@@ -92,18 +92,17 @@ class SetupAll:
             )
 
 
+        if args.prepare_database or args.continue_at is None:
+            LOG.warning('Creating database')
+            database_import.setup_database_skeleton(args.config.get_libpq_dsn(),
+                                                        rouser=args.config.DATABASE_WEBUSER)
+            if args.prepare_database:
+                return 0
 
         if args.continue_at in (None, 'import-from-file'):
             files = args.get_osm_file_list()
             if not files and not args.prepare_database:
                 raise UsageError("No input files (use --osm-file).")
-
-            if args.prepare_database or args.continue_at is None:
-                LOG.warning('Creating database')
-                database_import.setup_database_skeleton(args.config.get_libpq_dsn(),
-                                                        rouser=args.config.DATABASE_WEBUSER)
-                if args.prepare_database:
-                    return 0
 
             if args.continue_at in ('import-from-file', None):
                 # Check if the correct plugins are installed

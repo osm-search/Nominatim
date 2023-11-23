@@ -36,6 +36,9 @@ async def get_status(conn: SearchConnection) -> StatusResult:
     sql = sa.select(conn.t.import_status.c.lastimportdate).limit(1)
     status.data_updated = await conn.scalar(sql)
 
+    if status.data_updated is not None:
+        status.data_updated = status.data_updated.replace(tzinfo=dt.timezone.utc)
+
     # Database version
     try:
         verstr = await conn.get_property('database_version')

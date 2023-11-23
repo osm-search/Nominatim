@@ -15,7 +15,7 @@ import nominatim.api as napi
 
 @pytest.mark.parametrize('idobj', (napi.PlaceID(332), napi.OsmID('W', 4),
                                    napi.OsmID('W', 4, 'highway')))
-def test_lookup_in_placex(apiobj, idobj):
+def test_lookup_in_placex(apiobj, frontend, idobj):
     import_date = dt.datetime(2022, 12, 7, 14, 14, 46, 0)
     apiobj.add_placex(place_id=332, osm_type='W', osm_id=4,
                      class_='highway', type='residential',
@@ -31,7 +31,8 @@ def test_lookup_in_placex(apiobj, idobj):
                      indexed_date=import_date,
                      geometry='LINESTRING(23 34, 23.1 34, 23.1 34.1, 23 34)')
 
-    result = apiobj.api.details(idobj)
+    api = frontend(apiobj, options={'details'})
+    result = api.details(idobj)
 
     assert result is not None
 
@@ -69,7 +70,7 @@ def test_lookup_in_placex(apiobj, idobj):
     assert result.geometry == {'type': 'ST_LineString'}
 
 
-def test_lookup_in_placex_minimal_info(apiobj):
+def test_lookup_in_placex_minimal_info(apiobj, frontend):
     import_date = dt.datetime(2022, 12, 7, 14, 14, 46, 0)
     apiobj.add_placex(place_id=332, osm_type='W', osm_id=4,
                      class_='highway', type='residential',
@@ -79,7 +80,8 @@ def test_lookup_in_placex_minimal_info(apiobj):
                      indexed_date=import_date,
                      geometry='LINESTRING(23 34, 23.1 34, 23.1 34.1, 23 34)')
 
-    result = apiobj.api.details(napi.PlaceID(332))
+    api = frontend(apiobj, options={'details'})
+    result = api.details(napi.PlaceID(332))
 
     assert result is not None
 
@@ -117,16 +119,17 @@ def test_lookup_in_placex_minimal_info(apiobj):
     assert result.geometry == {'type': 'ST_LineString'}
 
 
-def test_lookup_in_placex_with_geometry(apiobj):
+def test_lookup_in_placex_with_geometry(apiobj, frontend):
     apiobj.add_placex(place_id=332,
                       geometry='LINESTRING(23 34, 23.1 34)')
 
-    result = apiobj.api.details(napi.PlaceID(332), geometry_output=napi.GeometryFormat.GEOJSON)
+    api = frontend(apiobj, options={'details'})
+    result = api.details(napi.PlaceID(332), geometry_output=napi.GeometryFormat.GEOJSON)
 
     assert result.geometry == {'geojson': '{"type":"LineString","coordinates":[[23,34],[23.1,34]]}'}
 
 
-def test_lookup_placex_with_address_details(apiobj):
+def test_lookup_placex_with_address_details(apiobj, frontend):
     apiobj.add_placex(place_id=332, osm_type='W', osm_id=4,
                      class_='highway', type='residential',  name='Street',
                      country_code='pl',
@@ -143,7 +146,8 @@ def test_lookup_placex_with_address_details(apiobj):
                               country_code='pl',
                               rank_search=17, rank_address=16)
 
-    result = apiobj.api.details(napi.PlaceID(332), address_details=True)
+    api = frontend(apiobj, options={'details'})
+    result = api.details(napi.PlaceID(332), address_details=True)
 
     assert result.address_rows == [
                napi.AddressLine(place_id=332, osm_object=('W', 4),
@@ -172,18 +176,19 @@ def test_lookup_placex_with_address_details(apiobj):
            ]
 
 
-def test_lookup_place_with_linked_places_none_existing(apiobj):
+def test_lookup_place_with_linked_places_none_existing(apiobj, frontend):
     apiobj.add_placex(place_id=332, osm_type='W', osm_id=4,
                      class_='highway', type='residential',  name='Street',
                      country_code='pl', linked_place_id=45,
                      rank_search=27, rank_address=26)
 
-    result = apiobj.api.details(napi.PlaceID(332), linked_places=True)
+    api = frontend(apiobj, options={'details'})
+    result = api.details(napi.PlaceID(332), linked_places=True)
 
     assert result.linked_rows == []
 
 
-def test_lookup_place_with_linked_places_existing(apiobj):
+def test_lookup_place_with_linked_places_existing(apiobj, frontend):
     apiobj.add_placex(place_id=332, osm_type='W', osm_id=4,
                      class_='highway', type='residential',  name='Street',
                      country_code='pl', linked_place_id=45,
@@ -197,7 +202,8 @@ def test_lookup_place_with_linked_places_existing(apiobj):
                      country_code='pl', linked_place_id=332,
                      rank_search=27, rank_address=26)
 
-    result = apiobj.api.details(napi.PlaceID(332), linked_places=True)
+    api = frontend(apiobj, options={'details'})
+    result = api.details(napi.PlaceID(332), linked_places=True)
 
     assert result.linked_rows == [
                napi.AddressLine(place_id=1001, osm_object=('W', 5),
@@ -213,18 +219,19 @@ def test_lookup_place_with_linked_places_existing(apiobj):
     ]
 
 
-def test_lookup_place_with_parented_places_not_existing(apiobj):
+def test_lookup_place_with_parented_places_not_existing(apiobj, frontend):
     apiobj.add_placex(place_id=332, osm_type='W', osm_id=4,
                      class_='highway', type='residential',  name='Street',
                      country_code='pl', parent_place_id=45,
                      rank_search=27, rank_address=26)
 
-    result = apiobj.api.details(napi.PlaceID(332), parented_places=True)
+    api = frontend(apiobj, options={'details'})
+    result = api.details(napi.PlaceID(332), parented_places=True)
 
     assert result.parented_rows == []
 
 
-def test_lookup_place_with_parented_places_existing(apiobj):
+def test_lookup_place_with_parented_places_existing(apiobj, frontend):
     apiobj.add_placex(place_id=332, osm_type='W', osm_id=4,
                      class_='highway', type='residential',  name='Street',
                      country_code='pl', parent_place_id=45,
@@ -238,7 +245,8 @@ def test_lookup_place_with_parented_places_existing(apiobj):
                      country_code='pl', parent_place_id=332,
                      rank_search=27, rank_address=26)
 
-    result = apiobj.api.details(napi.PlaceID(332), parented_places=True)
+    api = frontend(apiobj, options={'details'})
+    result = api.details(napi.PlaceID(332), parented_places=True)
 
     assert result.parented_rows == [
                napi.AddressLine(place_id=1001, osm_object=('N', 5),
@@ -250,7 +258,7 @@ def test_lookup_place_with_parented_places_existing(apiobj):
 
 
 @pytest.mark.parametrize('idobj', (napi.PlaceID(4924), napi.OsmID('W', 9928)))
-def test_lookup_in_osmline(apiobj, idobj):
+def test_lookup_in_osmline(apiobj, frontend, idobj):
     import_date = dt.datetime(2022, 12, 7, 14, 14, 46, 0)
     apiobj.add_osmline(place_id=4924, osm_id=9928,
                        parent_place_id=12,
@@ -260,7 +268,8 @@ def test_lookup_in_osmline(apiobj, idobj):
                        indexed_date=import_date,
                        geometry='LINESTRING(23 34, 23 35)')
 
-    result = apiobj.api.details(idobj)
+    api = frontend(apiobj, options={'details'})
+    result = api.details(idobj)
 
     assert result is not None
 
@@ -298,7 +307,7 @@ def test_lookup_in_osmline(apiobj, idobj):
     assert result.geometry == {'type': 'ST_LineString'}
 
 
-def test_lookup_in_osmline_split_interpolation(apiobj):
+def test_lookup_in_osmline_split_interpolation(apiobj, frontend):
     apiobj.add_osmline(place_id=1000, osm_id=9,
                        startnumber=2, endnumber=4, step=1)
     apiobj.add_osmline(place_id=1001, osm_id=9,
@@ -306,18 +315,19 @@ def test_lookup_in_osmline_split_interpolation(apiobj):
     apiobj.add_osmline(place_id=1002, osm_id=9,
                        startnumber=11, endnumber=20, step=1)
 
+    api = frontend(apiobj, options={'details'})
     for i in range(1, 6):
-        result = apiobj.api.details(napi.OsmID('W', 9, str(i)))
+        result = api.details(napi.OsmID('W', 9, str(i)))
         assert result.place_id == 1000
     for i in range(7, 11):
-        result = apiobj.api.details(napi.OsmID('W', 9, str(i)))
+        result = api.details(napi.OsmID('W', 9, str(i)))
         assert result.place_id == 1001
     for i in range(12, 22):
-        result = apiobj.api.details(napi.OsmID('W', 9, str(i)))
+        result = api.details(napi.OsmID('W', 9, str(i)))
         assert result.place_id == 1002
 
 
-def test_lookup_osmline_with_address_details(apiobj):
+def test_lookup_osmline_with_address_details(apiobj, frontend):
     apiobj.add_osmline(place_id=9000, osm_id=9,
                        startnumber=2, endnumber=4, step=1,
                        parent_place_id=332)
@@ -337,15 +347,10 @@ def test_lookup_osmline_with_address_details(apiobj):
                               country_code='pl',
                               rank_search=17, rank_address=16)
 
-    result = apiobj.api.details(napi.PlaceID(9000), address_details=True)
+    api = frontend(apiobj, options={'details'})
+    result = api.details(napi.PlaceID(9000), address_details=True)
 
     assert result.address_rows == [
-               napi.AddressLine(place_id=None, osm_object=None,
-                                category=('place', 'house_number'),
-                                names={'ref': '2'}, extratags={},
-                                admin_level=None, fromarea=True, isaddress=True,
-                                rank_address=28, distance=0.0,
-                                local_name='2'),
                napi.AddressLine(place_id=332, osm_object=('W', 4),
                                 category=('highway', 'residential'),
                                 names={'name': 'Street'}, extratags={},
@@ -372,7 +377,7 @@ def test_lookup_osmline_with_address_details(apiobj):
            ]
 
 
-def test_lookup_in_tiger(apiobj):
+def test_lookup_in_tiger(apiobj, frontend):
     apiobj.add_tiger(place_id=4924,
                      parent_place_id=12,
                      startnumber=1, endnumber=4, step=1,
@@ -383,7 +388,8 @@ def test_lookup_in_tiger(apiobj):
                       osm_type='W', osm_id=6601223,
                       geometry='LINESTRING(23 34, 23 35)')
 
-    result = apiobj.api.details(napi.PlaceID(4924))
+    api = frontend(apiobj, options={'details'})
+    result = api.details(napi.PlaceID(4924))
 
     assert result is not None
 
@@ -421,7 +427,7 @@ def test_lookup_in_tiger(apiobj):
     assert result.geometry == {'type': 'ST_LineString'}
 
 
-def test_lookup_tiger_with_address_details(apiobj):
+def test_lookup_tiger_with_address_details(apiobj, frontend):
     apiobj.add_tiger(place_id=9000,
                      startnumber=2, endnumber=4, step=1,
                      parent_place_id=332)
@@ -441,15 +447,10 @@ def test_lookup_tiger_with_address_details(apiobj):
                               country_code='us',
                               rank_search=17, rank_address=16)
 
-    result = apiobj.api.details(napi.PlaceID(9000), address_details=True)
+    api = frontend(apiobj, options={'details'})
+    result = api.details(napi.PlaceID(9000), address_details=True)
 
     assert result.address_rows == [
-               napi.AddressLine(place_id=None, osm_object=None,
-                                category=('place', 'house_number'),
-                                names={'ref': '2'}, extratags={},
-                                admin_level=None, fromarea=True, isaddress=True,
-                                rank_address=28, distance=0.0,
-                                local_name='2'),
                napi.AddressLine(place_id=332, osm_object=('W', 4),
                                 category=('highway', 'residential'),
                                 names={'name': 'Street'}, extratags={},
@@ -476,7 +477,7 @@ def test_lookup_tiger_with_address_details(apiobj):
            ]
 
 
-def test_lookup_in_postcode(apiobj):
+def test_lookup_in_postcode(apiobj, frontend):
     import_date = dt.datetime(2022, 12, 7, 14, 14, 46, 0)
     apiobj.add_postcode(place_id=554,
                         parent_place_id=152,
@@ -486,7 +487,8 @@ def test_lookup_in_postcode(apiobj):
                         indexed_date=import_date,
                         geometry='POINT(-9.45 5.6)')
 
-    result = apiobj.api.details(napi.PlaceID(554))
+    api = frontend(apiobj, options={'details'})
+    result = api.details(napi.PlaceID(554))
 
     assert result is not None
 
@@ -524,7 +526,7 @@ def test_lookup_in_postcode(apiobj):
     assert result.geometry == {'type': 'ST_Point'}
 
 
-def test_lookup_postcode_with_address_details(apiobj):
+def test_lookup_postcode_with_address_details(apiobj, frontend):
     apiobj.add_postcode(place_id=9000,
                         parent_place_id=332,
                         postcode='34 425',
@@ -540,9 +542,16 @@ def test_lookup_postcode_with_address_details(apiobj):
                               country_code='gb',
                               rank_search=17, rank_address=16)
 
-    result = apiobj.api.details(napi.PlaceID(9000), address_details=True)
+    api = frontend(apiobj, options={'details'})
+    result = api.details(napi.PlaceID(9000), address_details=True)
 
     assert result.address_rows == [
+               napi.AddressLine(place_id=9000, osm_object=None,
+                                category=('place', 'postcode'),
+                                names={'ref': '34 425'}, extratags={},
+                                admin_level=15, fromarea=True, isaddress=True,
+                                rank_address=25, distance=0.0,
+                                local_name='34 425'),
                napi.AddressLine(place_id=332, osm_object=('N', 3333),
                                 category=('place', 'suburb'),
                                 names={'name': 'Smallplace'}, extratags={},
@@ -556,12 +565,6 @@ def test_lookup_postcode_with_address_details(apiobj):
                                 rank_address=16, distance=0.0,
                                 local_name='Bigplace'),
                napi.AddressLine(place_id=None, osm_object=None,
-                                category=('place', 'postcode'),
-                                names={'ref': '34 425'}, extratags={},
-                                admin_level=None, fromarea=False, isaddress=True,
-                                rank_address=5, distance=0.0,
-                                local_name='34 425'),
-               napi.AddressLine(place_id=None, osm_object=None,
                                 category=('place', 'country_code'),
                                 names={'ref': 'gb'}, extratags={},
                                 admin_level=None, fromarea=True, isaddress=False,
@@ -571,18 +574,20 @@ def test_lookup_postcode_with_address_details(apiobj):
 @pytest.mark.parametrize('objid', [napi.PlaceID(1736),
                                    napi.OsmID('W', 55),
                                    napi.OsmID('N', 55, 'amenity')])
-def test_lookup_missing_object(apiobj, objid):
+def test_lookup_missing_object(apiobj, frontend, objid):
     apiobj.add_placex(place_id=1, osm_type='N', osm_id=55,
                       class_='place', type='suburb')
 
-    assert apiobj.api.details(objid) is None
+    api = frontend(apiobj, options={'details'})
+    assert api.details(objid) is None
 
 
 @pytest.mark.parametrize('gtype', (napi.GeometryFormat.KML,
                                     napi.GeometryFormat.SVG,
                                     napi.GeometryFormat.TEXT))
-def test_lookup_unsupported_geometry(apiobj, gtype):
+def test_lookup_unsupported_geometry(apiobj, frontend, gtype):
     apiobj.add_placex(place_id=332)
 
+    api = frontend(apiobj, options={'details'})
     with pytest.raises(ValueError):
-        apiobj.api.details(napi.PlaceID(332), geometry_output=gtype)
+        api.details(napi.PlaceID(332), geometry_output=gtype)

@@ -7,6 +7,8 @@
 """
 Tests for running the generic place searcher.
 """
+import json
+
 import pytest
 
 import nominatim.api as napi
@@ -130,23 +132,48 @@ class TestNameOnlySearches:
         assert geom.name.lower() in results[0].geometry
 
 
-    @pytest.mark.parametrize('viewbox', ['5.0,4.0,6.0,5.0', '5.7,4.0,6.0,5.0'])
-    def test_prefer_viewbox(self, apiobj, viewbox):
-        lookup = FieldLookup('name_vector', [1, 2], 'lookup_all')
+    @pytest.mark.parametrize('factor,npoints', [(0.0, 3), (1.0, 2)])
+    def test_return_simplified_geometry(self, apiobj, factor, npoints):
+        apiobj.add_placex(place_id=333, country_code='us',
+                          centroid=(9.0, 9.0),
+                          geometry='LINESTRING(8.9 9.0, 9.0 9.0, 9.1 9.0)')
+        apiobj.add_search_name(333, names=[55], country_code='us',
+                               centroid=(5.6, 4.3))
+
+        lookup = FieldLookup('name_vector', [55], 'lookup_all')
         ranking = FieldRanking('name_vector', 0.9, [RankedTokens(0.0, [21])])
+
+        results = run_search(apiobj, 0.1, [lookup], [ranking],
+                             details=SearchDetails(geometry_output=napi.GeometryFormat.GEOJSON,
+                                                   geometry_simplification=factor))
+
+        assert len(results) == 1
+        result = results[0]
+        geom = json.loads(result.geometry['geojson'])
+
+        assert result.place_id == 333
+        assert len(geom['coordinates']) == npoints
+
+
+    @pytest.mark.parametrize('viewbox', ['5.0,4.0,6.0,5.0', '5.7,4.0,6.0,5.0'])
+    @pytest.mark.parametrize('wcount,rids', [(2, [100, 101]), (20000, [100])])
+    def test_prefer_viewbox(self, apiobj, viewbox, wcount, rids):
+        lookup = FieldLookup('name_vector', [1, 2], 'lookup_all')
+        ranking = FieldRanking('name_vector', 0.2, [RankedTokens(0.0, [21])])
 
         results = run_search(apiobj, 0.1, [lookup], [ranking])
         assert [r.place_id for r in results] == [101, 100]
 
-        results = run_search(apiobj, 0.1, [lookup], [ranking],
+        results = run_search(apiobj, 0.1, [lookup], [ranking], count=wcount,
                              details=SearchDetails.from_kwargs({'viewbox': viewbox}))
-        assert [r.place_id for r in results] == [100, 101]
+        assert [r.place_id for r in results] == rids
 
 
-    def test_force_viewbox(self, apiobj):
+    @pytest.mark.parametrize('viewbox', ['5.0,4.0,6.0,5.0', '5.55,4.27,5.62,4.31'])
+    def test_force_viewbox(self, apiobj, viewbox):
         lookup = FieldLookup('name_vector', [1, 2], 'lookup_all')
 
-        details=SearchDetails.from_kwargs({'viewbox': '5.0,4.0,6.0,5.0',
+        details=SearchDetails.from_kwargs({'viewbox': viewbox,
                                            'bounded_viewbox': True})
 
         results = run_search(apiobj, 0.1, [lookup], [], details=details)
@@ -166,11 +193,12 @@ class TestNameOnlySearches:
         assert [r.place_id for r in results] == [100, 101]
 
 
-    def test_force_near(self, apiobj):
+    @pytest.mark.parametrize('radius', [0.09, 0.11])
+    def test_force_near(self, apiobj, radius):
         lookup = FieldLookup('name_vector', [1, 2], 'lookup_all')
 
         details=SearchDetails.from_kwargs({'near': '5.6,4.3',
-                                           'near_radius': 0.11})
+                                           'near_radius': radius})
 
         results = run_search(apiobj, 0.1, [lookup], [], details=details)
 
@@ -287,6 +315,34 @@ def test_very_large_housenumber(apiobj):
     assert [r.place_id for r in results] == [93, 2000]
 
 
+@pytest.mark.parametrize('wcount,rids', [(2, [990, 991]), (30000, [990])])
+def test_name_and_postcode(apiobj, wcount, rids):
+    apiobj.add_placex(place_id=990, class_='highway', type='service',
+                      rank_search=27, rank_address=27,
+                      postcode='11225',
+                      centroid=(10.0, 10.0),
+                      geometry='LINESTRING(9.995 10, 10.005 10)')
+    apiobj.add_search_name(990, names=[111], centroid=(10.0, 10.0),
+                           search_rank=27, address_rank=27)
+    apiobj.add_placex(place_id=991, class_='highway', type='service',
+                      rank_search=27, rank_address=27,
+                      postcode='11221',
+                      centroid=(10.1, 10.1),
+                      geometry='LINESTRING(9.995 10.1, 10.005 10.1)')
+    apiobj.add_search_name(991, names=[111], centroid=(10.1, 10.1),
+                           search_rank=27, address_rank=27)
+    apiobj.add_postcode(place_id=100, country_code='ch', postcode='11225',
+                        geometry='POINT(10 10)')
+
+    lookup = FieldLookup('name_vector', [111], 'lookup_all')
+
+    results = run_search(apiobj, 0.1, [lookup], [], pcs=['11225'], count=wcount,
+                         details=SearchDetails())
+
+    assert results
+    assert [r.place_id for r in results] == rids
+
+
 class TestInterpolations:
 
     @pytest.fixture(autouse=True)
@@ -316,6 +372,21 @@ class TestInterpolations:
         results = run_search(apiobj, 0.1, [lookup], [], hnrs=[hnr])
 
         assert [r.place_id for r in results] == res + [990]
+
+
+    @pytest.mark.parametrize('geom', [napi.GeometryFormat.GEOJSON,
+                                      napi.GeometryFormat.KML,
+                                      napi.GeometryFormat.SVG,
+                                      napi.GeometryFormat.TEXT])
+    def test_osmline_with_geometries(self, apiobj, geom):
+        lookup = FieldLookup('name_vector', [111], 'lookup_all')
+
+        results = run_search(apiobj, 0.1, [lookup], [], hnrs=['21'],
+                             details=SearchDetails(geometry_output=geom))
+
+        assert results[0].place_id == 992
+        assert geom.name.lower() in results[0].geometry
+
 
 
 class TestTiger:
@@ -349,6 +420,20 @@ class TestTiger:
         results = run_search(apiobj, 0.1, [lookup], [], hnrs=[hnr])
 
         assert [r.place_id for r in results] == res + [990]
+
+
+    @pytest.mark.parametrize('geom', [napi.GeometryFormat.GEOJSON,
+                                      napi.GeometryFormat.KML,
+                                      napi.GeometryFormat.SVG,
+                                      napi.GeometryFormat.TEXT])
+    def test_tiger_with_geometries(self, apiobj, geom):
+        lookup = FieldLookup('name_vector', [111], 'lookup_all')
+
+        results = run_search(apiobj, 0.1, [lookup], [], hnrs=['21'],
+                             details=SearchDetails(geometry_output=geom))
+
+        assert results[0].place_id == 992
+        assert geom.name.lower() in results[0].geometry
 
 
 class TestLayersRank30:

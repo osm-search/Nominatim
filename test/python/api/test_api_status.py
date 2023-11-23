@@ -14,8 +14,9 @@ import pytest
 from nominatim.version import NOMINATIM_VERSION, NominatimVersion
 import nominatim.api as napi
 
-def test_status_no_extra_info(apiobj):
-    result = apiobj.api.status()
+def test_status_no_extra_info(apiobj, frontend):
+    api = frontend(apiobj)
+    result = api.status()
 
     assert result.status == 0
     assert result.message == 'OK'
@@ -24,14 +25,15 @@ def test_status_no_extra_info(apiobj):
     assert result.data_updated is None
 
 
-def test_status_full(apiobj):
+def test_status_full(apiobj, frontend):
     import_date = dt.datetime(2022, 12, 7, 14, 14, 46, 0, tzinfo=dt.timezone.utc)
     apiobj.add_data('import_status',
                     [{'lastimportdate': import_date}])
     apiobj.add_data('properties',
                     [{'property': 'database_version', 'value': '99.5.4-2'}])
 
-    result = apiobj.api.status()
+    api = frontend(apiobj)
+    result = api.status()
 
     assert result.status == 0
     assert result.message == 'OK'

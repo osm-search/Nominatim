@@ -7,22 +7,26 @@
 """
 Tests for lookup API call.
 """
+import json
+
 import pytest
 
 import nominatim.api as napi
 
-def test_lookup_empty_list(apiobj):
-    assert apiobj.api.lookup([]) == []
+def test_lookup_empty_list(apiobj, frontend):
+    api = frontend(apiobj, options={'details'})
+    assert api.lookup([]) == []
 
 
-def test_lookup_non_existing(apiobj):
-    assert apiobj.api.lookup((napi.PlaceID(332), napi.OsmID('W', 4),
-                              napi.OsmID('W', 4, 'highway'))) == []
+def test_lookup_non_existing(apiobj, frontend):
+    api = frontend(apiobj, options={'details'})
+    assert api.lookup((napi.PlaceID(332), napi.OsmID('W', 4),
+                       napi.OsmID('W', 4, 'highway'))) == []
 
 
 @pytest.mark.parametrize('idobj', (napi.PlaceID(332), napi.OsmID('W', 4),
                                    napi.OsmID('W', 4, 'highway')))
-def test_lookup_single_placex(apiobj, idobj):
+def test_lookup_single_placex(apiobj, frontend, idobj):
     apiobj.add_placex(place_id=332, osm_type='W', osm_id=4,
                      class_='highway', type='residential',
                      name={'name': 'Road'}, address={'city': 'Barrow'},
@@ -36,7 +40,8 @@ def test_lookup_single_placex(apiobj, idobj):
                      centroid=(23, 34),
                      geometry='LINESTRING(23 34, 23.1 34, 23.1 34.1, 23 34)')
 
-    result = apiobj.api.lookup([idobj])
+    api = frontend(apiobj, options={'details'})
+    result = api.lookup([idobj])
 
     assert len(result) == 1
 
@@ -72,7 +77,7 @@ def test_lookup_single_placex(apiobj, idobj):
     assert result.geometry == {}
 
 
-def test_lookup_multiple_places(apiobj):
+def test_lookup_multiple_places(apiobj, frontend):
     apiobj.add_placex(place_id=332, osm_type='W', osm_id=4,
                      class_='highway', type='residential',
                      name={'name': 'Road'}, address={'city': 'Barrow'},
@@ -93,9 +98,10 @@ def test_lookup_multiple_places(apiobj):
                        geometry='LINESTRING(23 34, 23 35)')
 
 
-    result = apiobj.api.lookup((napi.OsmID('W', 1),
-                                napi.OsmID('W', 4),
-                                napi.OsmID('W', 9928)))
+    api = frontend(apiobj, options={'details'})
+    result = api.lookup((napi.OsmID('W', 1),
+                         napi.OsmID('W', 4),
+                         napi.OsmID('W', 9928)))
 
     assert len(result) == 2
 
@@ -103,7 +109,7 @@ def test_lookup_multiple_places(apiobj):
 
 
 @pytest.mark.parametrize('gtype', list(napi.GeometryFormat))
-def test_simple_place_with_geometry(apiobj, gtype):
+def test_simple_place_with_geometry(apiobj, frontend, gtype):
     apiobj.add_placex(place_id=332, osm_type='W', osm_id=4,
                      class_='highway', type='residential',
                      name={'name': 'Road'}, address={'city': 'Barrow'},
@@ -117,8 +123,8 @@ def test_simple_place_with_geometry(apiobj, gtype):
                      centroid=(23, 34),
                      geometry='POLYGON((23 34, 23.1 34, 23.1 34.1, 23 34))')
 
-    result = apiobj.api.lookup([napi.OsmID('W', 4)],
-                               geometry_output=gtype)
+    api = frontend(apiobj, options={'details'})
+    result = api.lookup([napi.OsmID('W', 4)], geometry_output=gtype)
 
     assert len(result) == 1
     assert result[0].place_id == 332
@@ -129,7 +135,7 @@ def test_simple_place_with_geometry(apiobj, gtype):
         assert list(result[0].geometry.keys()) == [gtype.name.lower()]
 
 
-def test_simple_place_with_geometry_simplified(apiobj):
+def test_simple_place_with_geometry_simplified(apiobj, frontend):
     apiobj.add_placex(place_id=332, osm_type='W', osm_id=4,
                      class_='highway', type='residential',
                      name={'name': 'Road'}, address={'city': 'Barrow'},
@@ -143,11 +149,15 @@ def test_simple_place_with_geometry_simplified(apiobj):
                      centroid=(23, 34),
                      geometry='POLYGON((23 34, 22.999 34, 23.1 34, 23.1 34.1, 23 34))')
 
-    result = apiobj.api.lookup([napi.OsmID('W', 4)],
-                               geometry_output=napi.GeometryFormat.TEXT,
-                               geometry_simplification=0.1)
+    api = frontend(apiobj, options={'details'})
+    result = api.lookup([napi.OsmID('W', 4)],
+                        geometry_output=napi.GeometryFormat.GEOJSON,
+                        geometry_simplification=0.1)
 
     assert len(result) == 1
     assert result[0].place_id == 332
-    assert result[0].geometry == {'text': 'POLYGON((23 34,23.1 34,23.1 34.1,23 34))'}
 
+    geom = json.loads(result[0].geometry['geojson'])
+
+    assert geom['type']  == 'Polygon'
+    assert geom['coordinates'] == [[[23, 34], [23.1, 34], [23.1, 34.1], [23, 34]]]

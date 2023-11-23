@@ -1,3 +1,4 @@
+@SQLITE
 @APIDB
 Feature: Reverse geocoding
     Testing the reverse function

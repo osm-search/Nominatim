@@ -37,7 +37,7 @@ def zoom_to_rank(zoom: int) -> int:
     return REVERSE_MAX_RANKS[max(0, min(18, zoom))]
 
 
-FEATURE_TYPE_TO_RANK: Dict[Optional[str], Any] = {
+FEATURE_TYPE_TO_RANK: Dict[Optional[str], Tuple[int, int]] = {
     'country': (4, 4),
     'state': (8, 8),
     'city': (14, 16),

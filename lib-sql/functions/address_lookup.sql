@@ -187,6 +187,7 @@ BEGIN
 
   -- --- Return the record for the base entry.
 
+  current_rank_address := 1000;
   FOR location IN
     SELECT placex.place_id, osm_type, osm_id, name,
            coalesce(extratags->'linked_place', extratags->'place') as place_type,
@@ -261,7 +262,7 @@ BEGIN
       -- If the place had a postcode assigned, take this one only
       -- into consideration when it is an area and the place does not have
       -- a postcode itself.
-      IF location.fromarea AND location.isaddress
+      IF location.fromarea AND location_isaddress
          AND (place.address is null or not place.address ? 'postcode')
       THEN
         place.postcode := null; -- remove the less exact postcode

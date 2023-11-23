@@ -61,6 +61,7 @@ def _select_placex(t: SaFromClause) -> SaSelect:
                      t.c.housenumber, t.c.postcode, t.c.country_code,
                      t.c.importance, t.c.wikipedia,
                      t.c.parent_place_id, t.c.rank_address, t.c.rank_search,
+                     t.c.linked_place_id, t.c.admin_level,
                      t.c.centroid,
                      t.c.geometry.ST_Expand(0).label('bbox'))
 
@@ -72,13 +73,13 @@ def _add_geometry_columns(sql: SaLambdaSelect, col: SaColumn, details: SearchDet
         col = sa.func.ST_SimplifyPreserveTopology(col, details.geometry_simplification)
 
     if details.geometry_output & GeometryFormat.GEOJSON:
-        out.append(sa.func.ST_AsGeoJSON(col).label('geometry_geojson'))
+        out.append(sa.func.ST_AsGeoJSON(col, 7).label('geometry_geojson'))
     if details.geometry_output & GeometryFormat.TEXT:
         out.append(sa.func.ST_AsText(col).label('geometry_text'))
     if details.geometry_output & GeometryFormat.KML:
-        out.append(sa.func.ST_AsKML(col).label('geometry_kml'))
+        out.append(sa.func.ST_AsKML(col, 7).label('geometry_kml'))
     if details.geometry_output & GeometryFormat.SVG:
-        out.append(sa.func.ST_AsSVG(col).label('geometry_svg'))
+        out.append(sa.func.ST_AsSVG(col, 0, 7).label('geometry_svg'))
 
     return sql.add_columns(*out)
 
@@ -448,7 +449,8 @@ class CountrySearch(AbstractSearch):
 
         sql = sa.select(tgrid.c.country_code,
                         tgrid.c.geometry.ST_Centroid().ST_Collect().ST_Centroid()
-                              .label('centroid'))\
+                              .label('centroid'),
+                        tgrid.c.geometry.ST_Collect().ST_Expand(0).label('bbox'))\
                 .where(tgrid.c.country_code.in_(self.countries.values))\
                 .group_by(tgrid.c.country_code)
 
@@ -464,13 +466,17 @@ class CountrySearch(AbstractSearch):
                          + sa.func.coalesce(t.c.derived_name,
                                             sa.cast('', type_=conn.t.types.Composite))
                         ).label('name'),
-                        sub.c.centroid)\
+                        sub.c.centroid, sub.c.bbox)\
                 .join(sub, t.c.country_code == sub.c.country_code)
+
+        if details.geometry_output:
+            sql = _add_geometry_columns(sql, sub.c.centroid, details)
 
         results = nres.SearchResults()
         for row in await conn.execute(sql, _details_to_bind_params(details)):
             result = nres.create_from_country_row(row, nres.SearchResult)
             assert result
+            result.bbox = Bbox.from_wkb(row.bbox)
             result.accuracy = self.penalty + self.countries.get_penalty(row.country_code, 5.0)
             results.append(result)
 
@@ -512,8 +518,8 @@ class PostcodeSearch(AbstractSearch):
                 sql = sql.where(t.c.geometry.intersects(VIEWBOX_PARAM))
             else:
                 penalty += sa.case((t.c.geometry.intersects(VIEWBOX_PARAM), 0.0),
-                                   (t.c.geometry.intersects(VIEWBOX2_PARAM), 1.0),
-                                   else_=2.0)
+                                   (t.c.geometry.intersects(VIEWBOX2_PARAM), 0.5),
+                                   else_=1.0)
 
         if details.near is not None:
             if details.near_radius is not None:
@@ -580,7 +586,7 @@ class PlaceSearch(AbstractSearch):
         sql: SaLambdaSelect = sa.lambda_stmt(lambda:
                   sa.select(t.c.place_id, t.c.osm_type, t.c.osm_id, t.c.name,
                             t.c.class_, t.c.type,
-                            t.c.address, t.c.extratags,
+                            t.c.address, t.c.extratags, t.c.admin_level,
                             t.c.housenumber, t.c.postcode, t.c.country_code,
                             t.c.wikipedia,
                             t.c.parent_place_id, t.c.rank_address, t.c.rank_search,
@@ -634,8 +640,8 @@ class PlaceSearch(AbstractSearch):
                     sql = sql.where(tsearch.c.centroid.ST_Intersects_no_index(VIEWBOX2_PARAM))
             else:
                 penalty += sa.case((t.c.geometry.intersects(VIEWBOX_PARAM), 0.0),
-                                   (t.c.geometry.intersects(VIEWBOX2_PARAM), 1.0),
-                                   else_=2.0)
+                                   (t.c.geometry.intersects(VIEWBOX2_PARAM), 0.5),
+                                   else_=1.0)
 
         if details.near is not None:
             if details.near_radius is not None:

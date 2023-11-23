@@ -62,9 +62,11 @@ class TestPostcodeSearchWithAddress:
     @pytest.fixture(autouse=True)
     def fill_database(self, apiobj):
         apiobj.add_postcode(place_id=100, country_code='ch',
-                            parent_place_id=1000, postcode='12345')
+                            parent_place_id=1000, postcode='12345',
+                            geometry='POINT(17 5)')
         apiobj.add_postcode(place_id=101, country_code='pl',
-                            parent_place_id=2000, postcode='12345')
+                            parent_place_id=2000, postcode='12345',
+                            geometry='POINT(-45 7)')
         apiobj.add_placex(place_id=1000, class_='place', type='village',
                           rank_search=22, rank_address=22,
                           country_code='ch')
@@ -95,3 +97,64 @@ class TestPostcodeSearchWithAddress:
 
         assert [r.place_id for r in results] == [100]
 
+
+    @pytest.mark.parametrize('coord,place_id', [((16.5, 5), 100),
+                                                ((-45.1, 7.004), 101)])
+    def test_lookup_near(self, apiobj, coord, place_id):
+        lookup = FieldLookup('name_vector', [1,2], 'restrict')
+        ranking = FieldRanking('name_vector', 0.3, [RankedTokens(0.0, [10])])
+
+        results = run_search(apiobj, 0.1, ['12345'],
+                             lookup=[lookup], ranking=[ranking],
+                             details=SearchDetails(near=napi.Point(*coord),
+                                                   near_radius=0.6))
+
+        assert [r.place_id for r in results] == [place_id]
+
+
+    @pytest.mark.parametrize('geom', [napi.GeometryFormat.GEOJSON,
+                                      napi.GeometryFormat.KML,
+                                      napi.GeometryFormat.SVG,
+                                      napi.GeometryFormat.TEXT])
+    def test_return_geometries(self, apiobj, geom):
+        results = run_search(apiobj, 0.1, ['12345'],
+                             details=SearchDetails(geometry_output=geom))
+
+        assert results
+        assert all(geom.name.lower() in r.geometry for r in results)
+
+
+    @pytest.mark.parametrize('viewbox, rids', [('-46,6,-44,8', [101,100]),
+                                               ('16,4,18,6', [100,101])])
+    def test_prefer_viewbox(self, apiobj, viewbox, rids):
+        results = run_search(apiobj, 0.1, ['12345'],
+                             details=SearchDetails.from_kwargs({'viewbox': viewbox}))
+
+        assert [r.place_id for r in results] == rids
+
+
+    @pytest.mark.parametrize('viewbox, rid', [('-46,6,-44,8', 101),
+                                               ('16,4,18,6', 100)])
+    def test_restrict_to_viewbox(self, apiobj, viewbox, rid):
+        results = run_search(apiobj, 0.1, ['12345'],
+                             details=SearchDetails.from_kwargs({'viewbox': viewbox,
+                                                                'bounded_viewbox': True}))
+
+        assert [r.place_id for r in results] == [rid]
+
+
+    @pytest.mark.parametrize('coord,rids', [((17.05, 5), [100, 101]),
+                                            ((-45, 7.1), [101, 100])])
+    def test_prefer_near(self, apiobj, coord, rids):
+        results = run_search(apiobj, 0.1, ['12345'],
+                             details=SearchDetails(near=napi.Point(*coord)))
+
+        assert [r.place_id for r in results] == rids
+
+
+    @pytest.mark.parametrize('pid,rid', [(100, 101), (101, 100)])
+    def test_exclude(self, apiobj, pid, rid):
+        results = run_search(apiobj, 0.1, ['12345'],
+                             details=SearchDetails(excluded=[pid]))
+
+        assert [r.place_id for r in results] == [rid]

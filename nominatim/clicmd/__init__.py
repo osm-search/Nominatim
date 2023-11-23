@@ -25,3 +25,4 @@ from nominatim.clicmd.admin import AdminFuncs as AdminFuncs
 from nominatim.clicmd.freeze import SetupFreeze as SetupFreeze
 from nominatim.clicmd.special_phrases import ImportSpecialPhrases as ImportSpecialPhrases
 from nominatim.clicmd.export import QueryExport as QueryExport
+from nominatim.clicmd.convert import ConvertDB as ConvertDB

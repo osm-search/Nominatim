@@ -102,7 +102,8 @@ async def export(args: NominatimArgs) -> int:
         async with api.begin() as conn, api.begin() as detail_conn:
             t = conn.t.placex
 
-            sql = sa.select(t.c.place_id, t.c.osm_type, t.c.osm_id, t.c.name,
+            sql = sa.select(t.c.place_id, t.c.parent_place_id,
+                        t.c.osm_type, t.c.osm_id, t.c.name,
                         t.c.class_, t.c.type, t.c.admin_level,
                         t.c.address, t.c.extratags,
                         t.c.housenumber, t.c.postcode, t.c.country_code,
@@ -153,17 +154,15 @@ async def dump_results(conn: napi.SearchConnection,
                        results: List[ReverseResult],
                        writer: 'csv.DictWriter[str]',
                        lang: Optional[str]) -> None:
-    await add_result_details(conn, results,
-                             LookupDetails(address_details=True))
-
-
     locale = napi.Locales([lang] if lang else None)
+    await add_result_details(conn, results,
+                             LookupDetails(address_details=True, locales=locale))
+
 
     for result in results:
         data = {'placeid': result.place_id,
                 'postcode': result.postcode}
 
-        result.localize(locale)
         for line in (result.address_rows or []):
             if line.isaddress and line.local_name:
                 if line.category[1] == 'postcode':

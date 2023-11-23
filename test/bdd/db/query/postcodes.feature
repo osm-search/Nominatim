@@ -11,7 +11,7 @@ Feature: Querying fo postcode variants
         When sending search query "399174"
         Then results contain
             | ID | type     | display_name |
-            | 0  | postcode | 399174       |
+            | 0  | postcode | 399174, Singapore |
 
 
     @fail-legacy
@@ -25,11 +25,11 @@ Feature: Querying fo postcode variants
         When sending search query "3993 DX"
         Then results contain
             | ID | type     | display_name |
-            | 0  | postcode | 3993 DX      |
+            | 0  | postcode | 3993 DX, Nederland      |
         When sending search query "3993dx"
         Then results contain
             | ID | type     | display_name |
-            | 0  | postcode | 3993 DX      |
+            | 0  | postcode | 3993 DX, Nederland      |
 
         Examples:
             | postcode |
@@ -49,7 +49,7 @@ Feature: Querying fo postcode variants
         When sending search query "399174"
         Then results contain
             | ID | type     | display_name |
-            | 0  | postcode | 399174       |
+            | 0  | postcode | 399174, Singapore       |
 
 
     @fail-legacy
@@ -63,11 +63,11 @@ Feature: Querying fo postcode variants
         When sending search query "675"
         Then results contain
             | ID | type     | display_name |
-            | 0  | postcode | AD675        |
+            | 0  | postcode | AD675, Andorra |
         When sending search query "AD675"
         Then results contain
             | ID | type     | display_name |
-            | 0  | postcode | AD675        |
+            | 0  | postcode | AD675, Andorra |
 
         Examples:
             | postcode |
@@ -89,9 +89,9 @@ Feature: Querying fo postcode variants
         When sending search query "EH4 7EA"
         Then results contain
            | type     | display_name |
-           | postcode | EH4 7EA      |
+           | postcode | EH4 7EA, United Kingdom |
         When sending search query "E4 7EA"
         Then results contain
            | type     | display_name |
-           | postcode | E4 7EA       |
+           | postcode | E4 7EA, United Kingdom |
 

@@ -24,6 +24,13 @@ from nominatim.db.sqlalchemy_types import Geometry
 #pylint: disable=singleton-comparison,not-callable
 #pylint: disable=too-many-branches,too-many-arguments,too-many-locals,too-many-statements
 
+def no_index(expr: SaColumn) -> SaColumn:
+    """ Wrap the given expression, so that the query planner will
+        refrain from using the expression for index lookup.
+    """
+    return sa.func.coalesce(sa.null(), expr) # pylint: disable=not-callable
+
+
 def _details_to_bind_params(details: SearchDetails) -> Dict[str, Any]:
     """ Create a dictionary from search parameters that can be used
         as bind parameter for SQL execute.
@@ -107,14 +114,14 @@ def _make_interpolation_subquery(table: SaFromClause, inner: SaFromClause,
 def _filter_by_layer(table: SaFromClause, layers: DataLayer) -> SaColumn:
     orexpr: List[SaExpression] = []
     if layers & DataLayer.ADDRESS and layers & DataLayer.POI:
-        orexpr.append(table.c.rank_address.between(1, 30))
+        orexpr.append(no_index(table.c.rank_address).between(1, 30))
     elif layers & DataLayer.ADDRESS:
-        orexpr.append(table.c.rank_address.between(1, 29))
-        orexpr.append(sa.and_(table.c.rank_address == 30,
+        orexpr.append(no_index(table.c.rank_address).between(1, 29))
+        orexpr.append(sa.and_(no_index(table.c.rank_address) == 30,
                               sa.or_(table.c.housenumber != None,
                                      table.c.address.has_key('addr:housename'))))
     elif layers & DataLayer.POI:
-        orexpr.append(sa.and_(table.c.rank_address == 30,
+        orexpr.append(sa.and_(no_index(table.c.rank_address) == 30,
                               table.c.class_.not_in(('place', 'building'))))
 
     if layers & DataLayer.MANMADE:
@@ -124,7 +131,7 @@ def _filter_by_layer(table: SaFromClause, layers: DataLayer) -> SaColumn:
         if not layers & DataLayer.NATURAL:
             exclude.extend(('natural', 'water', 'waterway'))
         orexpr.append(sa.and_(table.c.class_.not_in(tuple(exclude)),
-                              table.c.rank_address == 0))
+                              no_index(table.c.rank_address) == 0))
     else:
         include = []
         if layers & DataLayer.RAILWAY:
@@ -132,7 +139,7 @@ def _filter_by_layer(table: SaFromClause, layers: DataLayer) -> SaColumn:
         if layers & DataLayer.NATURAL:
             include.extend(('natural', 'water', 'waterway'))
         orexpr.append(sa.and_(table.c.class_.in_(tuple(include)),
-                              table.c.rank_address == 0))
+                              no_index(table.c.rank_address) == 0))
 
     if len(orexpr) == 1:
         return orexpr[0]
@@ -295,7 +302,7 @@ class NearSearch(AbstractSearch):
                                        else_ = tgeom.c.centroid.ST_Expand(0.05))))\
                      .order_by(tgeom.c.centroid.ST_Distance(table.c.centroid))
 
-        sql = sql.where(t.c.rank_address.between(MIN_RANK_PARAM, MAX_RANK_PARAM))
+        sql = sql.where(no_index(t.c.rank_address).between(MIN_RANK_PARAM, MAX_RANK_PARAM))
         if details.countries:
             sql = sql.where(t.c.country_code.in_(COUNTRIES_PARAM))
         if details.excluded:

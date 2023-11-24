@@ -538,7 +538,9 @@ class SearchDetails(LookupDetails):
                 or (self.bounded_viewbox
                     and self.viewbox is not None and self.near is not None
                     and self.viewbox.contains(self.near))
-                or self.layers is not None and not self.layers)
+                or (self.layers is not None and not self.layers)
+                or (self.max_rank <= 4 and
+                    self.layers is not None and not self.layers & DataLayer.ADDRESS))
 
 
     def layer_enabled(self, layer: DataLayer) -> bool:

@@ -296,7 +296,7 @@ class NearSearch(AbstractSearch):
             sql = sql.join(table, t.c.place_id == table.c.place_id)\
                      .join(tgeom,
                            table.c.centroid.ST_CoveredBy(
-                               sa.case((sa.and_(tgeom.c.rank_address < 9,
+                               sa.case((sa.and_(tgeom.c.rank_address > 9,
                                                 tgeom.c.geometry.is_area()),
                                         tgeom.c.geometry),
                                        else_ = tgeom.c.centroid.ST_Expand(0.05))))\

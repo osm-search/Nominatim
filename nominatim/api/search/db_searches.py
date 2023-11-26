@@ -256,9 +256,20 @@ class NearSearch(AbstractSearch):
 
         base.sort(key=lambda r: (r.accuracy, r.rank_search))
         max_accuracy = base[0].accuracy + 0.5
+        if base[0].rank_address == 0:
+            min_rank = 0
+            max_rank = 0
+        elif base[0].rank_address < 26:
+            min_rank = 1
+            max_rank = min(25, base[0].rank_address + 4)
+        else:
+            min_rank = 26
+            max_rank = 30
         base = nres.SearchResults(r for r in base if r.source_table == nres.SourceTable.PLACEX
                                                      and r.accuracy <= max_accuracy
-                                                     and r.bbox and r.bbox.area < 20)
+                                                     and r.bbox and r.bbox.area < 20
+                                                     and r.rank_address >= min_rank
+                                                     and r.rank_address <= max_rank)
 
         if base:
             baseids = [b.place_id for b in base[:5] if b.place_id]

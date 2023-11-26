@@ -70,14 +70,16 @@ class PhraseType(enum.Enum):
     COUNTRY = enum.auto()
     """ Contains the country name or code. """
 
-    def compatible_with(self, ttype: TokenType) -> bool:
+    def compatible_with(self, ttype: TokenType,
+                        is_full_phrase: bool) -> bool:
         """ Check if the given token type can be used with the phrase type.
         """
         if self == PhraseType.NONE:
-            return True
+            return not is_full_phrase or ttype != TokenType.QUALIFIER
         if self == PhraseType.AMENITY:
-            return ttype in (TokenType.WORD, TokenType.PARTIAL,
-                             TokenType.QUALIFIER, TokenType.CATEGORY)
+            return ttype in (TokenType.WORD, TokenType.PARTIAL)\
+                   or (is_full_phrase and ttype == TokenType.CATEGORY)\
+                   or (not is_full_phrase and ttype == TokenType.QUALIFIER)
         if self == PhraseType.STREET:
             return ttype in (TokenType.WORD, TokenType.PARTIAL, TokenType.HOUSENUMBER)
         if self == PhraseType.POSTCODE:
@@ -244,7 +246,9 @@ class QueryStruct:
             be added to, then the token is silently dropped.
         """
         snode = self.nodes[trange.start]
-        if snode.ptype.compatible_with(ttype):
+        full_phrase = snode.btype in (BreakType.START, BreakType.PHRASE)\
+                      and self.nodes[trange.end].btype in (BreakType.PHRASE, BreakType.END)
+        if snode.ptype.compatible_with(ttype, full_phrase):
             tlist = snode.get_tokens(trange.end, ttype)
             if tlist is None:
                 snode.starting.append(TokenList(trange.end, ttype, [token]))

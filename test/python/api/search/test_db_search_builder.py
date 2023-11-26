@@ -21,21 +21,18 @@ class MyToken(Token):
 
 
 def make_query(*args):
-    q = None
+    q = QueryStruct([Phrase(PhraseType.NONE, '')])
 
-    for tlist in args:
-        if q is None:
-            q = QueryStruct([Phrase(PhraseType.NONE, '')])
-        else:
-            q.add_node(BreakType.WORD, PhraseType.NONE)
+    for _ in range(max(inner[0] for tlist in args for inner in tlist)):
+        q.add_node(BreakType.WORD, PhraseType.NONE)
+    q.add_node(BreakType.END, PhraseType.NONE)
 
-        start = len(q.nodes) - 1
+    for start, tlist in enumerate(args):
         for end, ttype, tinfo in tlist:
             for tid, word in tinfo:
                 q.add_token(TokenRange(start, end), ttype,
                             MyToken(0.5 if ttype == TokenType.PARTIAL else 0.0, tid, 1, word, True))
 
-    q.add_node(BreakType.END, PhraseType.NONE)
 
     return q
 

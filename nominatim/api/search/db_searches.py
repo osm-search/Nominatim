@@ -279,28 +279,36 @@ class NearSearch(AbstractSearch):
         """
         table = await conn.get_class_table(*category)
 
-        t = conn.t.placex
         tgeom = conn.t.placex.alias('pgeom')
-
-        sql = _select_placex(t).where(tgeom.c.place_id.in_(ids))\
-                               .where(t.c.class_ == category[0])\
-                               .where(t.c.type == category[1])
 
         if table is None:
             # No classtype table available, do a simplified lookup in placex.
-            sql = sql.join(tgeom, t.c.geometry.ST_DWithin(tgeom.c.centroid, 0.01))\
-                     .order_by(tgeom.c.centroid.ST_Distance(t.c.centroid))
+            table = conn.t.placex.alias('inner')
+            sql = sa.select(table.c.place_id,
+                            sa.func.min(tgeom.c.centroid.ST_Distance(table.c.centroid))
+                              .label('dist'))\
+                    .join(tgeom, table.c.geometry.intersects(tgeom.c.centroid.ST_Expand(0.01)))\
+                    .where(table.c.class_ == category[0])\
+                    .where(table.c.type == category[1])
         else:
             # Use classtype table. We can afford to use a larger
             # radius for the lookup.
-            sql = sql.join(table, t.c.place_id == table.c.place_id)\
-                     .join(tgeom,
-                           table.c.centroid.ST_CoveredBy(
-                               sa.case((sa.and_(tgeom.c.rank_address > 9,
+            sql = sa.select(table.c.place_id,
+                            sa.func.min(tgeom.c.centroid.ST_Distance(table.c.centroid))
+                              .label('dist'))\
+                    .join(tgeom,
+                          table.c.centroid.ST_CoveredBy(
+                              sa.case((sa.and_(tgeom.c.rank_address > 9,
                                                 tgeom.c.geometry.is_area()),
-                                        tgeom.c.geometry),
-                                       else_ = tgeom.c.centroid.ST_Expand(0.05))))\
-                     .order_by(tgeom.c.centroid.ST_Distance(table.c.centroid))
+                                       tgeom.c.geometry),
+                                      else_ = tgeom.c.centroid.ST_Expand(0.05))))
+
+        inner = sql.where(tgeom.c.place_id.in_(ids))\
+                   .group_by(table.c.place_id).subquery()
+
+        t = conn.t.placex
+        sql = _select_placex(t).join(inner, inner.c.place_id == t.c.place_id)\
+                               .order_by(inner.c.dist)
 
         sql = sql.where(no_index(t.c.rank_address).between(MIN_RANK_PARAM, MAX_RANK_PARAM))
         if details.countries:

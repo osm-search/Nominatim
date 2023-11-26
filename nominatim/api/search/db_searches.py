@@ -66,7 +66,7 @@ def _select_placex(t: SaFromClause) -> SaSelect:
                      t.c.class_, t.c.type,
                      t.c.address, t.c.extratags,
                      t.c.housenumber, t.c.postcode, t.c.country_code,
-                     t.c.importance, t.c.wikipedia,
+                     t.c.wikipedia,
                      t.c.parent_place_id, t.c.rank_address, t.c.rank_search,
                      t.c.linked_place_id, t.c.admin_level,
                      t.c.centroid,
@@ -158,7 +158,8 @@ async def _get_placex_housenumbers(conn: SearchConnection,
                                    place_ids: List[int],
                                    details: SearchDetails) -> AsyncIterator[nres.SearchResult]:
     t = conn.t.placex
-    sql = _select_placex(t).where(t.c.place_id.in_(place_ids))
+    sql = _select_placex(t).add_columns(t.c.importance)\
+                           .where(t.c.place_id.in_(place_ids))
 
     if details.geometry_output:
         sql = _add_geometry_columns(sql, t.c.geometry, details)
@@ -307,7 +308,8 @@ class NearSearch(AbstractSearch):
                    .group_by(table.c.place_id).subquery()
 
         t = conn.t.placex
-        sql = _select_placex(t).join(inner, inner.c.place_id == t.c.place_id)\
+        sql = _select_placex(t).add_columns((-inner.c.dist).label('importance'))\
+                               .join(inner, inner.c.place_id == t.c.place_id)\
                                .order_by(inner.c.dist)
 
         sql = sql.where(no_index(t.c.rank_address).between(MIN_RANK_PARAM, MAX_RANK_PARAM))
@@ -350,6 +352,8 @@ class PoiSearch(AbstractSearch):
             # simply search in placex table
             def _base_query() -> SaSelect:
                 return _select_placex(t) \
+                           .add_columns((-t.c.centroid.ST_Distance(NEAR_PARAM))
+                                         .label('importance'))\
                            .where(t.c.linked_place_id == None) \
                            .where(t.c.geometry.ST_DWithin(NEAR_PARAM, NEAR_RADIUS_PARAM)) \
                            .order_by(t.c.centroid.ST_Distance(NEAR_PARAM)) \
@@ -378,6 +382,7 @@ class PoiSearch(AbstractSearch):
                 table = await conn.get_class_table(*category)
                 if table is not None:
                     sql = _select_placex(t)\
+                               .add_columns(t.c.importance)\
                                .join(table, t.c.place_id == table.c.place_id)\
                                .where(t.c.class_ == category[0])\
                                .where(t.c.type == category[1])
@@ -423,6 +428,7 @@ class CountrySearch(AbstractSearch):
 
         ccodes = self.countries.values
         sql = _select_placex(t)\
+                .add_columns(t.c.importance)\
                 .where(t.c.country_code.in_(ccodes))\
                 .where(t.c.rank_address == 4)
 
@@ -599,15 +605,7 @@ class PlaceSearch(AbstractSearch):
         tsearch = conn.t.search_name
 
         sql: SaLambdaSelect = sa.lambda_stmt(lambda:
-                  sa.select(t.c.place_id, t.c.osm_type, t.c.osm_id, t.c.name,
-                            t.c.class_, t.c.type,
-                            t.c.address, t.c.extratags, t.c.admin_level,
-                            t.c.housenumber, t.c.postcode, t.c.country_code,
-                            t.c.wikipedia,
-                            t.c.parent_place_id, t.c.rank_address, t.c.rank_search,
-                            t.c.centroid,
-                            t.c.geometry.ST_Expand(0).label('bbox'))
-                   .where(t.c.place_id == tsearch.c.place_id))
+                  _select_placex(t).where(t.c.place_id == tsearch.c.place_id))
 
 
         if details.geometry_output:

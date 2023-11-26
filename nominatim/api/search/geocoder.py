@@ -134,7 +134,10 @@ class ForwardGeocoder:
             return
 
         for result in results:
-            if not result.display_name:
+            # Negative importance indicates ordering by distance, which is
+            # more important than word matching.
+            if not result.display_name\
+               or (result.importance is not None and result.importance < 0):
                 continue
             distance = 0.0
             norm = self.query_analyzer.normalize_text(result.display_name)

@@ -7,7 +7,7 @@
 """
 Data structures for more complex fields in abstract search descriptions.
 """
-from typing import List, Tuple, Iterator, cast
+from typing import List, Tuple, Iterator, cast, Dict
 import dataclasses
 
 import sqlalchemy as sa
@@ -195,10 +195,17 @@ class SearchData:
         """ Set the qulaifier field from the given tokens.
         """
         if tokens:
-            min_penalty = min(t.penalty for t in tokens)
+            categories: Dict[Tuple[str, str], float] = {}
+            min_penalty = 1000.0
+            for t in tokens:
+                if t.penalty < min_penalty:
+                    min_penalty = t.penalty
+                cat = t.get_category()
+                if t.penalty < categories.get(cat, 1000.0):
+                    categories[cat] = t.penalty
             self.penalty += min_penalty
-            self.qualifiers = WeightedCategories([t.get_category() for t in tokens],
-                                                 [t.penalty - min_penalty for t in tokens])
+            self.qualifiers = WeightedCategories(list(categories.keys()),
+                                                 list(categories.values()))
 
 
     def set_ranking(self, rankings: List[FieldRanking]) -> None:

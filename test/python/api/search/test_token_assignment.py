@@ -18,20 +18,16 @@ class MyToken(Token):
 
 
 def make_query(*args):
-    q = None
+    q = QueryStruct([Phrase(args[0][1], '')])
     dummy = MyToken(3.0, 45, 1, 'foo', True)
 
-    for btype, ptype, tlist in args:
-        if q is None:
-            q = QueryStruct([Phrase(ptype, '')])
-        else:
-            q.add_node(btype, ptype)
-
-        start = len(q.nodes) - 1
-        for end, ttype in tlist:
-            q.add_token(TokenRange(start, end), ttype, dummy)
-
+    for btype, ptype, _ in args[1:]:
+        q.add_node(btype, ptype)
     q.add_node(BreakType.END, PhraseType.NONE)
+
+    for start, t in enumerate(args):
+        for end, ttype in t[2]:
+            q.add_token(TokenRange(start, end), ttype, dummy)
 
     return q
 

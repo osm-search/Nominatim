@@ -7,7 +7,7 @@
 """
 Convertion from token assignment to an abstract DB search.
 """
-from typing import Optional, List, Tuple, Iterator
+from typing import Optional, List, Tuple, Iterator, Dict
 import heapq
 
 from nominatim.api.types import SearchDetails, DataLayer
@@ -339,12 +339,13 @@ class SearchBuilder:
             Returns None if no category search is requested.
         """
         if assignment.category:
-            tokens = [t for t in self.query.get_tokens(assignment.category,
-                                                       TokenType.CATEGORY)
-                      if not self.details.categories
-                         or t.get_category() in self.details.categories]
-            return dbf.WeightedCategories([t.get_category() for t in tokens],
-                                          [t.penalty for t in tokens])
+            tokens: Dict[Tuple[str, str], float] = {}
+            for t in self.query.get_tokens(assignment.category, TokenType.CATEGORY):
+                cat = t.get_category()
+                if (not self.details.categories or cat in self.details.categories)\
+                   and t.penalty < tokens.get(cat, 1000.0):
+                    tokens[cat] = t.penalty
+            return dbf.WeightedCategories(list(tokens.keys()), list(tokens.values()))
 
         if self.details.categories:
             return dbf.WeightedCategories(self.details.categories,

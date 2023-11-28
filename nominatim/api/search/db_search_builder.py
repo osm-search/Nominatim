@@ -113,7 +113,10 @@ class SearchBuilder:
             penalty = min(near_items.penalties)
             near_items.penalties = [p - penalty for p in near_items.penalties]
             for search in builder:
-                yield dbs.NearSearch(penalty + assignment.penalty, near_items, search)
+                search_penalty = search.penalty
+                search.penalty = 0.0
+                yield dbs.NearSearch(penalty + assignment.penalty + search_penalty,
+                                     near_items, search)
         else:
             for search in builder:
                 search.penalty += assignment.penalty

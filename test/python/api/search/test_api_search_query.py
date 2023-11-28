@@ -106,11 +106,11 @@ def test_query_struct_amenity_single_word():
     q.add_node(query.BreakType.END, query.PhraseType.NONE)
 
     q.add_token(query.TokenRange(0, 1), query.TokenType.PARTIAL, mktoken(1))
-    q.add_token(query.TokenRange(0, 1), query.TokenType.CATEGORY, mktoken(2))
+    q.add_token(query.TokenRange(0, 1), query.TokenType.NEAR_ITEM, mktoken(2))
     q.add_token(query.TokenRange(0, 1), query.TokenType.QUALIFIER, mktoken(3))
 
     assert len(q.get_tokens(query.TokenRange(0, 1), query.TokenType.PARTIAL)) == 1
-    assert len(q.get_tokens(query.TokenRange(0, 1), query.TokenType.CATEGORY)) == 1
+    assert len(q.get_tokens(query.TokenRange(0, 1), query.TokenType.NEAR_ITEM)) == 1
     assert len(q.get_tokens(query.TokenRange(0, 1), query.TokenType.QUALIFIER)) == 0
 
 
@@ -121,14 +121,14 @@ def test_query_struct_amenity_two_words():
 
     for trange in [(0, 1), (1, 2)]:
         q.add_token(query.TokenRange(*trange), query.TokenType.PARTIAL, mktoken(1))
-        q.add_token(query.TokenRange(*trange), query.TokenType.CATEGORY, mktoken(2))
+        q.add_token(query.TokenRange(*trange), query.TokenType.NEAR_ITEM, mktoken(2))
         q.add_token(query.TokenRange(*trange), query.TokenType.QUALIFIER, mktoken(3))
 
     assert len(q.get_tokens(query.TokenRange(0, 1), query.TokenType.PARTIAL)) == 1
-    assert len(q.get_tokens(query.TokenRange(0, 1), query.TokenType.CATEGORY)) == 0
+    assert len(q.get_tokens(query.TokenRange(0, 1), query.TokenType.NEAR_ITEM)) == 0
     assert len(q.get_tokens(query.TokenRange(0, 1), query.TokenType.QUALIFIER)) == 1
 
     assert len(q.get_tokens(query.TokenRange(1, 2), query.TokenType.PARTIAL)) == 1
-    assert len(q.get_tokens(query.TokenRange(1, 2), query.TokenType.CATEGORY)) == 0
+    assert len(q.get_tokens(query.TokenRange(1, 2), query.TokenType.NEAR_ITEM)) == 0
     assert len(q.get_tokens(query.TokenRange(1, 2), query.TokenType.QUALIFIER)) == 1
 

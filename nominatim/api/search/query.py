@@ -46,7 +46,7 @@ class TokenType(enum.Enum):
     """ Country name or reference. """
     QUALIFIER = enum.auto()
     """ Special term used together with name (e.g. _Hotel_ Bellevue). """
-    CATEGORY = enum.auto()
+    NEAR_ITEM = enum.auto()
     """ Special term used as searchable object(e.g. supermarket in ...). """
 
 
@@ -78,7 +78,7 @@ class PhraseType(enum.Enum):
             return not is_full_phrase or ttype != TokenType.QUALIFIER
         if self == PhraseType.AMENITY:
             return ttype in (TokenType.WORD, TokenType.PARTIAL)\
-                   or (is_full_phrase and ttype == TokenType.CATEGORY)\
+                   or (is_full_phrase and ttype == TokenType.NEAR_ITEM)\
                    or (not is_full_phrase and ttype == TokenType.QUALIFIER)
         if self == PhraseType.STREET:
             return ttype in (TokenType.WORD, TokenType.PARTIAL, TokenType.HOUSENUMBER)

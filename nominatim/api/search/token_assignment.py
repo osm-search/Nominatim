@@ -46,7 +46,7 @@ class TokenAssignment: # pylint: disable=too-many-instance-attributes
     housenumber: Optional[qmod.TokenRange] = None
     postcode: Optional[qmod.TokenRange] = None
     country: Optional[qmod.TokenRange] = None
-    category: Optional[qmod.TokenRange] = None
+    near_item: Optional[qmod.TokenRange] = None
     qualifier: Optional[qmod.TokenRange] = None
 
 
@@ -64,8 +64,8 @@ class TokenAssignment: # pylint: disable=too-many-instance-attributes
                 out.postcode = token.trange
             elif token.ttype == qmod.TokenType.COUNTRY:
                 out.country = token.trange
-            elif token.ttype == qmod.TokenType.CATEGORY:
-                out.category = token.trange
+            elif token.ttype == qmod.TokenType.NEAR_ITEM:
+                out.near_item = token.trange
             elif token.ttype == qmod.TokenType.QUALIFIER:
                 out.qualifier = token.trange
         return out
@@ -109,7 +109,7 @@ class _TokenSequence:
         """
         # Country and category must be the final term for left-to-right
         return len(self.seq) > 1 and \
-               self.seq[-1].ttype in (qmod.TokenType.COUNTRY, qmod.TokenType.CATEGORY)
+               self.seq[-1].ttype in (qmod.TokenType.COUNTRY, qmod.TokenType.NEAR_ITEM)
 
 
     def appendable(self, ttype: qmod.TokenType) -> Optional[int]:
@@ -165,22 +165,22 @@ class _TokenSequence:
         if ttype == qmod.TokenType.COUNTRY:
             return None if self.direction == -1 else 1
 
-        if ttype == qmod.TokenType.CATEGORY:
+        if ttype == qmod.TokenType.NEAR_ITEM:
             return self.direction
 
         if ttype == qmod.TokenType.QUALIFIER:
             if self.direction == 1:
                 if (len(self.seq) == 1
-                    and self.seq[0].ttype in (qmod.TokenType.PARTIAL, qmod.TokenType.CATEGORY)) \
+                    and self.seq[0].ttype in (qmod.TokenType.PARTIAL, qmod.TokenType.NEAR_ITEM)) \
                    or (len(self.seq) == 2
-                       and self.seq[0].ttype == qmod.TokenType.CATEGORY
+                       and self.seq[0].ttype == qmod.TokenType.NEAR_ITEM
                        and self.seq[1].ttype == qmod.TokenType.PARTIAL):
                     return 1
                 return None
             if self.direction == -1:
                 return -1
 
-            tempseq = self.seq[1:] if self.seq[0].ttype == qmod.TokenType.CATEGORY else self.seq
+            tempseq = self.seq[1:] if self.seq[0].ttype == qmod.TokenType.NEAR_ITEM else self.seq
             if len(tempseq) == 0:
                 return 1
             if len(tempseq) == 1 and self.seq[0].ttype == qmod.TokenType.HOUSENUMBER:
@@ -253,7 +253,7 @@ class _TokenSequence:
                 priors = sum(1 for t in self.seq[hnrpos+1:] if t.ttype == qmod.TokenType.PARTIAL)
                 if not self._adapt_penalty_from_priors(priors, 1):
                     return False
-            if any(t.ttype == qmod.TokenType.CATEGORY for t in self.seq):
+            if any(t.ttype == qmod.TokenType.NEAR_ITEM for t in self.seq):
                 self.penalty += 1.0
 
         return True
@@ -368,7 +368,7 @@ class _TokenSequence:
 
         # Postcode or country-only search
         if not base.address:
-            if not base.housenumber and (base.postcode or base.country or base.category):
+            if not base.housenumber and (base.postcode or base.country or base.near_item):
                 log().comment('postcode/country search')
                 yield dataclasses.replace(base, penalty=self.penalty)
         else:

@@ -89,12 +89,14 @@ class SearchBuilder:
         if sdata is None:
             return
 
-        categories = self.get_search_categories(assignment)
+        near_items = self.get_near_items(assignment)
+        if near_items is not None and not near_items:
+            return # impossible compbination of near items and category parameter
 
         if assignment.name is None:
-            if categories and not sdata.postcodes:
-                sdata.qualifiers = categories
-                categories = None
+            if near_items and not sdata.postcodes:
+                sdata.qualifiers = near_items
+                near_items = None
                 builder = self.build_poi_search(sdata)
             elif assignment.housenumber:
                 hnr_tokens = self.query.get_tokens(assignment.housenumber,
@@ -102,16 +104,16 @@ class SearchBuilder:
                 builder = self.build_housenumber_search(sdata, hnr_tokens, assignment.address)
             else:
                 builder = self.build_special_search(sdata, assignment.address,
-                                                    bool(categories))
+                                                    bool(near_items))
         else:
             builder = self.build_name_search(sdata, assignment.name, assignment.address,
-                                             bool(categories))
+                                             bool(near_items))
 
-        if categories:
-            penalty = min(categories.penalties)
-            categories.penalties = [p - penalty for p in categories.penalties]
+        if near_items:
+            penalty = min(near_items.penalties)
+            near_items.penalties = [p - penalty for p in near_items.penalties]
             for search in builder:
-                yield dbs.NearSearch(penalty + assignment.penalty, categories, search)
+                yield dbs.NearSearch(penalty + assignment.penalty, near_items, search)
         else:
             for search in builder:
                 search.penalty += assignment.penalty
@@ -321,8 +323,15 @@ class SearchBuilder:
                               self.query.get_tokens(assignment.postcode,
                                                     TokenType.POSTCODE))
         if assignment.qualifier:
-            sdata.set_qualifiers(self.query.get_tokens(assignment.qualifier,
-                                                       TokenType.QUALIFIER))
+            tokens = self.query.get_tokens(assignment.qualifier, TokenType.QUALIFIER)
+            if self.details.categories:
+                tokens = [t for t in tokens if t.get_category() in self.details.categories]
+                if not tokens:
+                    return None
+            sdata.set_qualifiers(tokens)
+        elif self.details.categories:
+            sdata.qualifiers = dbf.WeightedCategories(self.details.categories,
+                                                      [0.0] * len(self.details.categories))
 
         if assignment.address:
             sdata.set_ranking([self.get_addr_ranking(r) for r in assignment.address])
@@ -332,24 +341,22 @@ class SearchBuilder:
         return sdata
 
 
-    def get_search_categories(self,
-                              assignment: TokenAssignment) -> Optional[dbf.WeightedCategories]:
-        """ Collect tokens for category search or use the categories
+    def get_near_items(self, assignment: TokenAssignment) -> Optional[dbf.WeightedCategories]:
+        """ Collect tokens for near items search or use the categories
             requested per parameter.
             Returns None if no category search is requested.
         """
-        if assignment.category:
+        if assignment.near_item:
             tokens: Dict[Tuple[str, str], float] = {}
-            for t in self.query.get_tokens(assignment.category, TokenType.CATEGORY):
+            for t in self.query.get_tokens(assignment.near_item, TokenType.NEAR_ITEM):
                 cat = t.get_category()
+                # The category of a near search will be that of near_item.
+                # Thus, if search is restricted to a category parameter,
+                # the two sets must intersect.
                 if (not self.details.categories or cat in self.details.categories)\
                    and t.penalty < tokens.get(cat, 1000.0):
                     tokens[cat] = t.penalty
             return dbf.WeightedCategories(list(tokens.keys()), list(tokens.values()))
-
-        if self.details.categories:
-            return dbf.WeightedCategories(self.details.categories,
-                                          [0.0] * len(self.details.categories))
 
         return None
 

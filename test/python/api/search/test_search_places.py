@@ -281,6 +281,37 @@ class TestStreetWithHousenumber:
         assert [r.place_id for r in results] == [2, 92, 2000]
 
 
+    def test_lookup_only_house_qualifier(self, apiobj):
+        lookup = FieldLookup('name_vector', [1,2], 'lookup_all')
+        ranking = FieldRanking('name_vector', 0.3, [RankedTokens(0.0, [10])])
+
+        results = run_search(apiobj, 0.1, [lookup], [ranking], hnrs=['22'],
+                             quals=[('place', 'house')])
+
+        assert [r.place_id for r in results] == [2, 92]
+
+
+    def test_lookup_only_street_qualifier(self, apiobj):
+        lookup = FieldLookup('name_vector', [1,2], 'lookup_all')
+        ranking = FieldRanking('name_vector', 0.3, [RankedTokens(0.0, [10])])
+
+        results = run_search(apiobj, 0.1, [lookup], [ranking], hnrs=['22'],
+                             quals=[('highway', 'residential')])
+
+        assert [r.place_id for r in results] == [1000, 2000]
+
+
+    @pytest.mark.parametrize('rank,found', [(26, True), (27, False), (30, False)])
+    def test_lookup_min_rank(self, apiobj, rank, found):
+        lookup = FieldLookup('name_vector', [1,2], 'lookup_all')
+        ranking = FieldRanking('name_vector', 0.3, [RankedTokens(0.0, [10])])
+
+        results = run_search(apiobj, 0.1, [lookup], [ranking], hnrs=['22'],
+                             details=SearchDetails(min_rank=rank))
+
+        assert [r.place_id for r in results] == ([2, 92, 1000, 2000] if found else [2, 92])
+
+
     @pytest.mark.parametrize('geom', [napi.GeometryFormat.GEOJSON,
                                       napi.GeometryFormat.KML,
                                       napi.GeometryFormat.SVG,

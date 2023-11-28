@@ -90,6 +90,8 @@ class SearchBuilder:
             return
 
         near_items = self.get_near_items(assignment)
+        if near_items is not None and not near_items:
+            return # impossible compbination of near items and category parameter
 
         if assignment.name is None:
             if near_items and not sdata.postcodes:
@@ -348,6 +350,9 @@ class SearchBuilder:
             tokens: Dict[Tuple[str, str], float] = {}
             for t in self.query.get_tokens(assignment.near_item, TokenType.NEAR_ITEM):
                 cat = t.get_category()
+                # The category of a near search will be that of near_item.
+                # Thus, if search is restricted to a category parameter,
+                # the two sets must intersect.
                 if (not self.details.categories or cat in self.details.categories)\
                    and t.penalty < tokens.get(cat, 1000.0):
                     tokens[cat] = t.penalty

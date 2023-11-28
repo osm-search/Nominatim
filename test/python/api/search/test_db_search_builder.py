@@ -313,6 +313,64 @@ def test_name_only_search_with_category():
     assert search.qualifiers.values == [('foo', 'bar')]
 
 
+def test_name_with_near_item_search_with_category_mismatch():
+    q = make_query([(1, TokenType.NEAR_ITEM, [(88, 'g')])],
+                   [(2, TokenType.PARTIAL, [(1, 'a')]),
+                    (2, TokenType.WORD, [(100, 'a')])])
+    builder = SearchBuilder(q, SearchDetails.from_kwargs({'categories': [('foo', 'bar')]}))
+
+    searches = list(builder.build(TokenAssignment(name=TokenRange(1, 2),
+                                                  near_item=TokenRange(0, 1))))
+
+    assert len(searches) == 0
+
+
+def test_name_with_near_item_search_with_category_match():
+    q = make_query([(1, TokenType.NEAR_ITEM, [(88, 'g')])],
+                   [(2, TokenType.PARTIAL, [(1, 'a')]),
+                    (2, TokenType.WORD, [(100, 'a')])])
+    builder = SearchBuilder(q, SearchDetails.from_kwargs({'categories': [('foo', 'bar'),
+                                                                         ('this', 'that')]}))
+
+    searches = list(builder.build(TokenAssignment(name=TokenRange(1, 2),
+                                                  near_item=TokenRange(0, 1))))
+
+    assert len(searches) == 1
+    search = searches[0]
+
+    assert isinstance(search, dbs.NearSearch)
+    assert isinstance(search.search, dbs.PlaceSearch)
+
+
+def test_name_with_qualifier_search_with_category_mismatch():
+    q = make_query([(1, TokenType.QUALIFIER, [(88, 'g')])],
+                   [(2, TokenType.PARTIAL, [(1, 'a')]),
+                    (2, TokenType.WORD, [(100, 'a')])])
+    builder = SearchBuilder(q, SearchDetails.from_kwargs({'categories': [('foo', 'bar')]}))
+
+    searches = list(builder.build(TokenAssignment(name=TokenRange(1, 2),
+                                                  qualifier=TokenRange(0, 1))))
+
+    assert len(searches) == 0
+
+
+def test_name_with_qualifier_search_with_category_match():
+    q = make_query([(1, TokenType.QUALIFIER, [(88, 'g')])],
+                   [(2, TokenType.PARTIAL, [(1, 'a')]),
+                    (2, TokenType.WORD, [(100, 'a')])])
+    builder = SearchBuilder(q, SearchDetails.from_kwargs({'categories': [('foo', 'bar'),
+                                                                         ('this', 'that')]}))
+
+    searches = list(builder.build(TokenAssignment(name=TokenRange(1, 2),
+                                                  qualifier=TokenRange(0, 1))))
+
+    assert len(searches) == 1
+    search = searches[0]
+
+    assert isinstance(search, dbs.PlaceSearch)
+    assert search.qualifiers.values == [('this', 'that')]
+
+
 def test_name_only_search_with_countries():
     q = make_query([(1, TokenType.PARTIAL, [(1, 'a')]),
                     (1, TokenType.WORD, [(100, 'a')])])

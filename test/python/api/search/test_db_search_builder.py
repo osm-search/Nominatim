@@ -309,8 +309,8 @@ def test_name_only_search_with_category():
     assert len(searches) == 1
     search = searches[0]
 
-    assert isinstance(search, dbs.NearSearch)
-    assert isinstance(search.search, dbs.PlaceSearch)
+    assert isinstance(search, dbs.PlaceSearch)
+    assert search.qualifiers.values == [('foo', 'bar')]
 
 
 def test_name_only_search_with_countries():

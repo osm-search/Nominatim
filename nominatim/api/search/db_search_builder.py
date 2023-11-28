@@ -321,8 +321,15 @@ class SearchBuilder:
                               self.query.get_tokens(assignment.postcode,
                                                     TokenType.POSTCODE))
         if assignment.qualifier:
-            sdata.set_qualifiers(self.query.get_tokens(assignment.qualifier,
-                                                       TokenType.QUALIFIER))
+            tokens = self.query.get_tokens(assignment.qualifier, TokenType.QUALIFIER)
+            if self.details.categories:
+                tokens = [t for t in tokens if t.get_category() in self.details.categories]
+                if not tokens:
+                    return None
+            sdata.set_qualifiers(tokens)
+        elif self.details.categories:
+            sdata.qualifiers = dbf.WeightedCategories(self.details.categories,
+                                                      [0.0] * len(self.details.categories))
 
         if assignment.address:
             sdata.set_ranking([self.get_addr_ranking(r) for r in assignment.address])
@@ -346,10 +353,6 @@ class SearchBuilder:
                    and t.penalty < tokens.get(cat, 1000.0):
                     tokens[cat] = t.penalty
             return dbf.WeightedCategories(list(tokens.keys()), list(tokens.values()))
-
-        if self.details.categories:
-            return dbf.WeightedCategories(self.details.categories,
-                                          [0.0] * len(self.details.categories))
 
         return None
 

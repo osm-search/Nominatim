@@ -766,9 +766,6 @@ class PlaceSearch(AbstractSearch):
             assert result
             result.bbox = Bbox.from_wkb(row.bbox)
             result.accuracy = row.accuracy
-            if not details.excluded or not result.place_id in details.excluded:
-                results.append(result)
-
             if self.housenumbers and row.rank_address < 30:
                 if row.placex_hnr:
                     subs = _get_placex_housenumbers(conn, row.placex_hnr, details)
@@ -788,6 +785,14 @@ class PlaceSearch(AbstractSearch):
                             sub.accuracy += 0.6
                         results.append(sub)
 
-                result.accuracy += 1.0 # penalty for missing housenumber
+                # Only add the street as a result, if it meets all other
+                # filter conditions.
+                if (not details.excluded or result.place_id not in details.excluded)\
+                   and (not self.qualifiers or result.category in self.qualifiers.values)\
+                   and result.rank_address >= details.min_rank:
+                    result.accuracy += 1.0 # penalty for missing housenumber
+                    results.append(result)
+            else:
+                results.append(result)
 
         return results

@@ -147,11 +147,11 @@ def test_postcode_with_address_with_full_word():
 
 @pytest.mark.parametrize('kwargs', [{'viewbox': '0,0,1,1', 'bounded_viewbox': True},
                                     {'near': '10,10'}])
-def test_category_only(kwargs):
-    q = make_query([(1, TokenType.CATEGORY, [(2, 'foo')])])
+def test_near_item_only(kwargs):
+    q = make_query([(1, TokenType.NEAR_ITEM, [(2, 'foo')])])
     builder = SearchBuilder(q, SearchDetails.from_kwargs(kwargs))
 
-    searches = list(builder.build(TokenAssignment(category=TokenRange(0, 1))))
+    searches = list(builder.build(TokenAssignment(near_item=TokenRange(0, 1))))
 
     assert len(searches) == 1
 
@@ -163,11 +163,11 @@ def test_category_only(kwargs):
 
 @pytest.mark.parametrize('kwargs', [{'viewbox': '0,0,1,1'},
                                     {}])
-def test_category_skipped(kwargs):
-    q = make_query([(1, TokenType.CATEGORY, [(2, 'foo')])])
+def test_near_item_skipped(kwargs):
+    q = make_query([(1, TokenType.NEAR_ITEM, [(2, 'foo')])])
     builder = SearchBuilder(q, SearchDetails.from_kwargs(kwargs))
 
-    searches = list(builder.build(TokenAssignment(category=TokenRange(0, 1))))
+    searches = list(builder.build(TokenAssignment(near_item=TokenRange(0, 1))))
 
     assert len(searches) == 0
 
@@ -284,13 +284,13 @@ def test_name_and_complex_address():
 
 
 def test_name_only_near_search():
-    q = make_query([(1, TokenType.CATEGORY, [(88, 'g')])],
+    q = make_query([(1, TokenType.NEAR_ITEM, [(88, 'g')])],
                    [(2, TokenType.PARTIAL, [(1, 'a')]),
                     (2, TokenType.WORD, [(100, 'a')])])
     builder = SearchBuilder(q, SearchDetails())
 
     searches = list(builder.build(TokenAssignment(name=TokenRange(1, 2),
-                                                  category=TokenRange(0, 1))))
+                                                  near_item=TokenRange(0, 1))))
 
     assert len(searches) == 1
     search = searches[0]

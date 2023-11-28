@@ -212,7 +212,7 @@ async def test_category_words_only_at_beginning(conn):
 
     assert query.num_token_slots() == 3
     assert len(query.nodes[0].starting) == 1
-    assert query.nodes[0].starting[0].ttype == TokenType.CATEGORY
+    assert query.nodes[0].starting[0].ttype == TokenType.NEAR_ITEM
     assert not query.nodes[2].starting
 
 
@@ -226,9 +226,9 @@ async def test_qualifier_words(conn):
     query = await ana.analyze_query(make_phrase('foo BAR foo BAR foo'))
 
     assert query.num_token_slots() == 5
-    assert set(t.ttype for t in query.nodes[0].starting) == {TokenType.CATEGORY, TokenType.QUALIFIER}
+    assert set(t.ttype for t in query.nodes[0].starting) == {TokenType.NEAR_ITEM, TokenType.QUALIFIER}
     assert set(t.ttype for t in query.nodes[2].starting) == {TokenType.QUALIFIER}
-    assert set(t.ttype for t in query.nodes[4].starting) == {TokenType.CATEGORY, TokenType.QUALIFIER}
+    assert set(t.ttype for t in query.nodes[4].starting) == {TokenType.NEAR_ITEM, TokenType.QUALIFIER}
 
 
 @pytest.mark.asyncio

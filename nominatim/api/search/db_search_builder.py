@@ -113,7 +113,10 @@ class SearchBuilder:
             penalty = min(near_items.penalties)
             near_items.penalties = [p - penalty for p in near_items.penalties]
             for search in builder:
-                yield dbs.NearSearch(penalty + assignment.penalty, near_items, search)
+                search_penalty = search.penalty
+                search.penalty = 0.0
+                yield dbs.NearSearch(penalty + assignment.penalty + search_penalty,
+                                     near_items, search)
         else:
             for search in builder:
                 search.penalty += assignment.penalty
@@ -160,11 +163,15 @@ class SearchBuilder:
             housenumber is the main name token.
         """
         sdata.lookups = [dbf.FieldLookup('name_vector', [t.token for t in hnrs], 'lookup_any')]
+        expected_count = sum(t.count for t in hnrs)
 
         partials = [t for trange in address
                        for t in self.query.get_partials_list(trange)]
 
-        if len(partials) != 1 or partials[0].count < 10000:
+        if expected_count < 8000:
+            sdata.lookups.append(dbf.FieldLookup('nameaddress_vector',
+                                                 [t.token for t in partials], 'restrict'))
+        elif len(partials) != 1 or partials[0].count < 10000:
             sdata.lookups.append(dbf.FieldLookup('nameaddress_vector',
                                                  [t.token for t in partials], 'lookup_all'))
         else:
@@ -175,7 +182,7 @@ class SearchBuilder:
                                 'lookup_any'))
 
         sdata.housenumbers = dbf.WeightedStrings([], [])
-        yield dbs.PlaceSearch(0.05, sdata, sum(t.count for t in hnrs))
+        yield dbs.PlaceSearch(0.05, sdata, expected_count)
 
 
     def build_name_search(self, sdata: dbf.SearchData,

@@ -79,7 +79,7 @@ class ForwardGeocoder:
 
         end_time = dt.datetime.now() + self.timeout
 
-        min_ranking = 1000.0
+        min_ranking = searches[0].penalty + 2.0
         prev_penalty = 0.0
         for i, search in enumerate(searches):
             if search.penalty > prev_penalty and (search.penalty > min_ranking or i > 20):
@@ -94,7 +94,7 @@ class ForwardGeocoder:
                     prevresult.accuracy = min(prevresult.accuracy, result.accuracy)
                 else:
                     results[rhash] = result
-                min_ranking = min(min_ranking, result.ranking + 0.5, search.penalty + 0.3)
+                min_ranking = min(min_ranking, result.accuracy * 1.2)
             log().result_dump('Results', ((r.accuracy, r) for r in lookup_results))
             prev_penalty = search.penalty
             if dt.datetime.now() >= end_time:

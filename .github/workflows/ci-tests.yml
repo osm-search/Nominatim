@@ -105,7 +105,7 @@ jobs:
               if: matrix.flavour != 'oldstuff'
 
             - name: Install newer pytest-asyncio
-              run: pip3 install -U pytest-asyncio
+              run: pip3 install -U pytest-asyncio==0.21.1
               if: matrix.flavour == 'ubuntu-20'
 
             - name: Install test prerequsites (from pip for Ubuntu 18)

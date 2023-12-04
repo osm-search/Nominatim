@@ -28,12 +28,12 @@ def mktoken(tid: int):
                                          ('COUNTRY', 'COUNTRY'),
                                          ('POSTCODE', 'POSTCODE')])
 def test_phrase_compatible(ptype, ttype):
-    assert query.PhraseType[ptype].compatible_with(query.TokenType[ttype])
+    assert query.PhraseType[ptype].compatible_with(query.TokenType[ttype], False)
 
 
 @pytest.mark.parametrize('ptype', ['COUNTRY', 'POSTCODE'])
 def test_phrase_incompatible(ptype):
-    assert not query.PhraseType[ptype].compatible_with(query.TokenType.PARTIAL)
+    assert not query.PhraseType[ptype].compatible_with(query.TokenType.PARTIAL, True)
 
 
 def test_query_node_empty():
@@ -99,3 +99,36 @@ def test_query_struct_incompatible_token():
 
     assert q.get_tokens(query.TokenRange(0, 1), query.TokenType.PARTIAL) == []
     assert len(q.get_tokens(query.TokenRange(1, 2), query.TokenType.COUNTRY)) == 1
+
+
+def test_query_struct_amenity_single_word():
+    q = query.QueryStruct([query.Phrase(query.PhraseType.AMENITY, 'bar')])
+    q.add_node(query.BreakType.END, query.PhraseType.NONE)
+
+    q.add_token(query.TokenRange(0, 1), query.TokenType.PARTIAL, mktoken(1))
+    q.add_token(query.TokenRange(0, 1), query.TokenType.NEAR_ITEM, mktoken(2))
+    q.add_token(query.TokenRange(0, 1), query.TokenType.QUALIFIER, mktoken(3))
+
+    assert len(q.get_tokens(query.TokenRange(0, 1), query.TokenType.PARTIAL)) == 1
+    assert len(q.get_tokens(query.TokenRange(0, 1), query.TokenType.NEAR_ITEM)) == 1
+    assert len(q.get_tokens(query.TokenRange(0, 1), query.TokenType.QUALIFIER)) == 0
+
+
+def test_query_struct_amenity_two_words():
+    q = query.QueryStruct([query.Phrase(query.PhraseType.AMENITY, 'foo bar')])
+    q.add_node(query.BreakType.WORD, query.PhraseType.AMENITY)
+    q.add_node(query.BreakType.END, query.PhraseType.NONE)
+
+    for trange in [(0, 1), (1, 2)]:
+        q.add_token(query.TokenRange(*trange), query.TokenType.PARTIAL, mktoken(1))
+        q.add_token(query.TokenRange(*trange), query.TokenType.NEAR_ITEM, mktoken(2))
+        q.add_token(query.TokenRange(*trange), query.TokenType.QUALIFIER, mktoken(3))
+
+    assert len(q.get_tokens(query.TokenRange(0, 1), query.TokenType.PARTIAL)) == 1
+    assert len(q.get_tokens(query.TokenRange(0, 1), query.TokenType.NEAR_ITEM)) == 0
+    assert len(q.get_tokens(query.TokenRange(0, 1), query.TokenType.QUALIFIER)) == 1
+
+    assert len(q.get_tokens(query.TokenRange(1, 2), query.TokenType.PARTIAL)) == 1
+    assert len(q.get_tokens(query.TokenRange(1, 2), query.TokenType.NEAR_ITEM)) == 0
+    assert len(q.get_tokens(query.TokenRange(1, 2), query.TokenType.QUALIFIER)) == 1
+

@@ -18,20 +18,16 @@ class MyToken(Token):
 
 
 def make_query(*args):
-    q = None
+    q = QueryStruct([Phrase(args[0][1], '')])
     dummy = MyToken(3.0, 45, 1, 'foo', True)
 
-    for btype, ptype, tlist in args:
-        if q is None:
-            q = QueryStruct([Phrase(ptype, '')])
-        else:
-            q.add_node(btype, ptype)
-
-        start = len(q.nodes) - 1
-        for end, ttype in tlist:
-            q.add_token(TokenRange(start, end), ttype, dummy)
-
+    for btype, ptype, _ in args[1:]:
+        q.add_node(btype, ptype)
     q.add_node(BreakType.END, PhraseType.NONE)
+
+    for start, t in enumerate(args):
+        for end, ttype in t[2]:
+            q.add_token(TokenRange(start, end), ttype, dummy)
 
     return q
 
@@ -80,11 +76,11 @@ def test_single_country_name():
 
 def test_single_word_poi_search():
     q = make_query((BreakType.START, PhraseType.NONE,
-                    [(1, TokenType.CATEGORY),
+                    [(1, TokenType.NEAR_ITEM),
                      (1, TokenType.QUALIFIER)]))
 
     res = list(yield_token_assignments(q))
-    assert res == [TokenAssignment(category=TokenRange(0, 1))]
+    assert res == [TokenAssignment(near_item=TokenRange(0, 1))]
 
 
 @pytest.mark.parametrize('btype', [BreakType.WORD, BreakType.PART, BreakType.TOKEN])
@@ -186,7 +182,7 @@ def test_country_housenumber_postcode():
 
 
 @pytest.mark.parametrize('ttype', [TokenType.POSTCODE, TokenType.COUNTRY,
-                                   TokenType.CATEGORY, TokenType.QUALIFIER])
+                                   TokenType.NEAR_ITEM, TokenType.QUALIFIER])
 def test_housenumber_with_only_special_terms(ttype):
     q = make_query((BreakType.START, PhraseType.NONE, [(1, TokenType.HOUSENUMBER)]),
                    (BreakType.WORD, PhraseType.NONE, [(2, ttype)]))
@@ -270,27 +266,27 @@ def test_postcode_with_designation_backwards():
                                       address=[TokenRange(0, 1)]))
 
 
-def test_category_at_beginning():
-    q = make_query((BreakType.START, PhraseType.NONE, [(1, TokenType.CATEGORY)]),
+def test_near_item_at_beginning():
+    q = make_query((BreakType.START, PhraseType.NONE, [(1, TokenType.NEAR_ITEM)]),
                    (BreakType.WORD, PhraseType.NONE, [(2, TokenType.PARTIAL)]))
 
     check_assignments(yield_token_assignments(q),
                       TokenAssignment(penalty=0.1, name=TokenRange(1, 2),
-                                      category=TokenRange(0, 1)))
+                                      near_item=TokenRange(0, 1)))
 
 
-def test_category_at_end():
+def test_near_item_at_end():
     q = make_query((BreakType.START, PhraseType.NONE, [(1, TokenType.PARTIAL)]),
-                   (BreakType.WORD, PhraseType.NONE, [(2, TokenType.CATEGORY)]))
+                   (BreakType.WORD, PhraseType.NONE, [(2, TokenType.NEAR_ITEM)]))
 
     check_assignments(yield_token_assignments(q),
                       TokenAssignment(penalty=0.1, name=TokenRange(0, 1),
-                                      category=TokenRange(1, 2)))
+                                      near_item=TokenRange(1, 2)))
 
 
-def test_category_in_middle():
+def test_near_item_in_middle():
     q = make_query((BreakType.START, PhraseType.NONE, [(1, TokenType.PARTIAL)]),
-                   (BreakType.WORD, PhraseType.NONE, [(2, TokenType.CATEGORY)]),
+                   (BreakType.WORD, PhraseType.NONE, [(2, TokenType.NEAR_ITEM)]),
                    (BreakType.WORD, PhraseType.NONE, [(3, TokenType.PARTIAL)]))
 
     check_assignments(yield_token_assignments(q))

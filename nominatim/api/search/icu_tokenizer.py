@@ -184,13 +184,13 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
                 if row.type == 'S':
                     if row.info['op'] in ('in', 'near'):
                         if trange.start == 0:
-                            query.add_token(trange, qmod.TokenType.CATEGORY, token)
+                            query.add_token(trange, qmod.TokenType.NEAR_ITEM, token)
                     else:
                         query.add_token(trange, qmod.TokenType.QUALIFIER, token)
                         if trange.start == 0 or trange.end == query.num_token_slots():
                             token = copy(token)
                             token.penalty += 0.1 * (query.num_token_slots())
-                            query.add_token(trange, qmod.TokenType.CATEGORY, token)
+                            query.add_token(trange, qmod.TokenType.NEAR_ITEM, token)
                 else:
                     query.add_token(trange, DB_TO_TOKEN_TYPE[row.type], token)
 

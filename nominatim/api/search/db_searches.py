@@ -66,7 +66,7 @@ def _select_placex(t: SaFromClause) -> SaSelect:
                      t.c.class_, t.c.type,
                      t.c.address, t.c.extratags,
                      t.c.housenumber, t.c.postcode, t.c.country_code,
-                     t.c.importance, t.c.wikipedia,
+                     t.c.wikipedia,
                      t.c.parent_place_id, t.c.rank_address, t.c.rank_search,
                      t.c.linked_place_id, t.c.admin_level,
                      t.c.centroid,
@@ -158,7 +158,8 @@ async def _get_placex_housenumbers(conn: SearchConnection,
                                    place_ids: List[int],
                                    details: SearchDetails) -> AsyncIterator[nres.SearchResult]:
     t = conn.t.placex
-    sql = _select_placex(t).where(t.c.place_id.in_(place_ids))
+    sql = _select_placex(t).add_columns(t.c.importance)\
+                           .where(t.c.place_id.in_(place_ids))
 
     if details.geometry_output:
         sql = _add_geometry_columns(sql, t.c.geometry, details)
@@ -255,9 +256,20 @@ class NearSearch(AbstractSearch):
 
         base.sort(key=lambda r: (r.accuracy, r.rank_search))
         max_accuracy = base[0].accuracy + 0.5
+        if base[0].rank_address == 0:
+            min_rank = 0
+            max_rank = 0
+        elif base[0].rank_address < 26:
+            min_rank = 1
+            max_rank = min(25, base[0].rank_address + 4)
+        else:
+            min_rank = 26
+            max_rank = 30
         base = nres.SearchResults(r for r in base if r.source_table == nres.SourceTable.PLACEX
                                                      and r.accuracy <= max_accuracy
-                                                     and r.bbox and r.bbox.area < 20)
+                                                     and r.bbox and r.bbox.area < 20
+                                                     and r.rank_address >= min_rank
+                                                     and r.rank_address <= max_rank)
 
         if base:
             baseids = [b.place_id for b in base[:5] if b.place_id]
@@ -279,28 +291,37 @@ class NearSearch(AbstractSearch):
         """
         table = await conn.get_class_table(*category)
 
-        t = conn.t.placex
         tgeom = conn.t.placex.alias('pgeom')
-
-        sql = _select_placex(t).where(tgeom.c.place_id.in_(ids))\
-                               .where(t.c.class_ == category[0])\
-                               .where(t.c.type == category[1])
 
         if table is None:
             # No classtype table available, do a simplified lookup in placex.
-            sql = sql.join(tgeom, t.c.geometry.ST_DWithin(tgeom.c.centroid, 0.01))\
-                     .order_by(tgeom.c.centroid.ST_Distance(t.c.centroid))
+            table = conn.t.placex.alias('inner')
+            sql = sa.select(table.c.place_id,
+                            sa.func.min(tgeom.c.centroid.ST_Distance(table.c.centroid))
+                              .label('dist'))\
+                    .join(tgeom, table.c.geometry.intersects(tgeom.c.centroid.ST_Expand(0.01)))\
+                    .where(table.c.class_ == category[0])\
+                    .where(table.c.type == category[1])
         else:
             # Use classtype table. We can afford to use a larger
             # radius for the lookup.
-            sql = sql.join(table, t.c.place_id == table.c.place_id)\
-                     .join(tgeom,
-                           table.c.centroid.ST_CoveredBy(
-                               sa.case((sa.and_(tgeom.c.rank_address < 9,
+            sql = sa.select(table.c.place_id,
+                            sa.func.min(tgeom.c.centroid.ST_Distance(table.c.centroid))
+                              .label('dist'))\
+                    .join(tgeom,
+                          table.c.centroid.ST_CoveredBy(
+                              sa.case((sa.and_(tgeom.c.rank_address > 9,
                                                 tgeom.c.geometry.is_area()),
-                                        tgeom.c.geometry),
-                                       else_ = tgeom.c.centroid.ST_Expand(0.05))))\
-                     .order_by(tgeom.c.centroid.ST_Distance(table.c.centroid))
+                                       tgeom.c.geometry),
+                                      else_ = tgeom.c.centroid.ST_Expand(0.05))))
+
+        inner = sql.where(tgeom.c.place_id.in_(ids))\
+                   .group_by(table.c.place_id).subquery()
+
+        t = conn.t.placex
+        sql = _select_placex(t).add_columns((-inner.c.dist).label('importance'))\
+                               .join(inner, inner.c.place_id == t.c.place_id)\
+                               .order_by(inner.c.dist)
 
         sql = sql.where(no_index(t.c.rank_address).between(MIN_RANK_PARAM, MAX_RANK_PARAM))
         if details.countries:
@@ -342,6 +363,8 @@ class PoiSearch(AbstractSearch):
             # simply search in placex table
             def _base_query() -> SaSelect:
                 return _select_placex(t) \
+                           .add_columns((-t.c.centroid.ST_Distance(NEAR_PARAM))
+                                         .label('importance'))\
                            .where(t.c.linked_place_id == None) \
                            .where(t.c.geometry.ST_DWithin(NEAR_PARAM, NEAR_RADIUS_PARAM)) \
                            .order_by(t.c.centroid.ST_Distance(NEAR_PARAM)) \
@@ -370,6 +393,7 @@ class PoiSearch(AbstractSearch):
                 table = await conn.get_class_table(*category)
                 if table is not None:
                     sql = _select_placex(t)\
+                               .add_columns(t.c.importance)\
                                .join(table, t.c.place_id == table.c.place_id)\
                                .where(t.c.class_ == category[0])\
                                .where(t.c.type == category[1])
@@ -415,6 +439,7 @@ class CountrySearch(AbstractSearch):
 
         ccodes = self.countries.values
         sql = _select_placex(t)\
+                .add_columns(t.c.importance)\
                 .where(t.c.country_code.in_(ccodes))\
                 .where(t.c.rank_address == 4)
 
@@ -591,15 +616,7 @@ class PlaceSearch(AbstractSearch):
         tsearch = conn.t.search_name
 
         sql: SaLambdaSelect = sa.lambda_stmt(lambda:
-                  sa.select(t.c.place_id, t.c.osm_type, t.c.osm_id, t.c.name,
-                            t.c.class_, t.c.type,
-                            t.c.address, t.c.extratags, t.c.admin_level,
-                            t.c.housenumber, t.c.postcode, t.c.country_code,
-                            t.c.wikipedia,
-                            t.c.parent_place_id, t.c.rank_address, t.c.rank_search,
-                            t.c.centroid,
-                            t.c.geometry.ST_Expand(0).label('bbox'))
-                   .where(t.c.place_id == tsearch.c.place_id))
+                  _select_placex(t).where(t.c.place_id == tsearch.c.place_id))
 
 
         if details.geometry_output:
@@ -749,9 +766,6 @@ class PlaceSearch(AbstractSearch):
             assert result
             result.bbox = Bbox.from_wkb(row.bbox)
             result.accuracy = row.accuracy
-            if not details.excluded or not result.place_id in details.excluded:
-                results.append(result)
-
             if self.housenumbers and row.rank_address < 30:
                 if row.placex_hnr:
                     subs = _get_placex_housenumbers(conn, row.placex_hnr, details)
@@ -771,6 +785,14 @@ class PlaceSearch(AbstractSearch):
                             sub.accuracy += 0.6
                         results.append(sub)
 
-                result.accuracy += 1.0 # penalty for missing housenumber
+                # Only add the street as a result, if it meets all other
+                # filter conditions.
+                if (not details.excluded or result.place_id not in details.excluded)\
+                   and (not self.qualifiers or result.category in self.qualifiers.values)\
+                   and result.rank_address >= details.min_rank:
+                    result.accuracy += 1.0 # penalty for missing housenumber
+                    results.append(result)
+            else:
+                results.append(result)
 
         return results

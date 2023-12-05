@@ -56,7 +56,7 @@ NEAR_RADIUS_PARAM: SaBind = sa.bindparam('near_radius')
 COUNTRIES_PARAM: SaBind = sa.bindparam('countries')
 
 def _within_near(t: SaFromClause) -> Callable[[], SaExpression]:
-    return lambda: t.c.geometry.ST_DWithin(NEAR_PARAM, NEAR_RADIUS_PARAM)
+    return lambda: t.c.geometry.within_distance(NEAR_PARAM, NEAR_RADIUS_PARAM)
 
 def _exclude_places(t: SaFromClause) -> Callable[[], SaExpression]:
     return lambda: t.c.place_id.not_in(sa.bindparam('excluded'))
@@ -366,7 +366,7 @@ class PoiSearch(AbstractSearch):
                            .add_columns((-t.c.centroid.ST_Distance(NEAR_PARAM))
                                          .label('importance'))\
                            .where(t.c.linked_place_id == None) \
-                           .where(t.c.geometry.ST_DWithin(NEAR_PARAM, NEAR_RADIUS_PARAM)) \
+                           .where(t.c.geometry.within_distance(NEAR_PARAM, NEAR_RADIUS_PARAM)) \
                            .order_by(t.c.centroid.ST_Distance(NEAR_PARAM)) \
                            .limit(LIMIT_PARAM)
 
@@ -403,8 +403,8 @@ class PoiSearch(AbstractSearch):
 
                     if details.near and details.near_radius is not None:
                         sql = sql.order_by(table.c.centroid.ST_Distance(NEAR_PARAM))\
-                                 .where(table.c.centroid.ST_DWithin(NEAR_PARAM,
-                                                                    NEAR_RADIUS_PARAM))
+                                 .where(table.c.centroid.within_distance(NEAR_PARAM,
+                                                                         NEAR_RADIUS_PARAM))
 
                     if self.countries:
                         sql = sql.where(t.c.country_code.in_(self.countries.values))
@@ -632,11 +632,11 @@ class PlaceSearch(AbstractSearch):
             sql = sql.where(tsearch.c.address_rank > 9)
             tpc = conn.t.postcode
             pcs = self.postcodes.values
-            if self.expected_count > 1000:
+            if self.expected_count > 5000:
                 # Many results expected. Restrict by postcode.
                 sql = sql.where(sa.select(tpc.c.postcode)
                                   .where(tpc.c.postcode.in_(pcs))
-                                  .where(tsearch.c.centroid.ST_DWithin(tpc.c.geometry, 0.12))
+                                  .where(tsearch.c.centroid.within_distance(tpc.c.geometry, 0.12))
                                   .exists())
 
             # Less results, only have a preference for close postcodes
@@ -648,27 +648,26 @@ class PlaceSearch(AbstractSearch):
 
         if details.viewbox is not None:
             if details.bounded_viewbox:
-                if details.viewbox.area < 0.2:
-                    sql = sql.where(tsearch.c.centroid.intersects(VIEWBOX_PARAM))
-                else:
-                    sql = sql.where(tsearch.c.centroid.ST_Intersects_no_index(VIEWBOX_PARAM))
+                sql = sql.where(tsearch.c.centroid
+                                         .intersects(VIEWBOX_PARAM,
+                                                     use_index=details.viewbox.area < 0.2))
             elif self.expected_count >= 10000:
-                if details.viewbox.area < 0.5:
-                    sql = sql.where(tsearch.c.centroid.intersects(VIEWBOX2_PARAM))
-                else:
-                    sql = sql.where(tsearch.c.centroid.ST_Intersects_no_index(VIEWBOX2_PARAM))
+                sql = sql.where(tsearch.c.centroid
+                                         .intersects(VIEWBOX2_PARAM,
+                                                     use_index=details.viewbox.area < 0.5))
             else:
-                penalty += sa.case((t.c.geometry.intersects(VIEWBOX_PARAM), 0.0),
-                                   (t.c.geometry.intersects(VIEWBOX2_PARAM), 0.5),
+                penalty += sa.case((t.c.geometry.intersects(VIEWBOX_PARAM, use_index=False), 0.0),
+                                   (t.c.geometry.intersects(VIEWBOX2_PARAM, use_index=False), 0.5),
                                    else_=1.0)
 
         if details.near is not None:
             if details.near_radius is not None:
                 if details.near_radius < 0.1:
-                    sql = sql.where(tsearch.c.centroid.ST_DWithin(NEAR_PARAM, NEAR_RADIUS_PARAM))
+                    sql = sql.where(tsearch.c.centroid.within_distance(NEAR_PARAM,
+                                                                       NEAR_RADIUS_PARAM))
                 else:
-                    sql = sql.where(tsearch.c.centroid.ST_DWithin_no_index(NEAR_PARAM,
-                                                                           NEAR_RADIUS_PARAM))
+                    sql = sql.where(tsearch.c.centroid
+                                             .ST_Distance(NEAR_PARAM) <  NEAR_RADIUS_PARAM)
             sql = sql.add_columns((-tsearch.c.centroid.ST_Distance(NEAR_PARAM))
                                       .label('importance'))
             sql = sql.order_by(sa.desc(sa.text('importance')))

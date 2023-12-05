@@ -165,7 +165,6 @@ def spatialite_dwithin_column(element: SaColumn,
               compiler.process(dist, **kw))
 
 
-
 class Geometry(types.UserDefinedType): # type: ignore[type-arg]
     """ Simplified type decorator for PostGIS geometry. This type
         only supports geometries in 4326 projection.
@@ -206,7 +205,10 @@ class Geometry(types.UserDefinedType): # type: ignore[type-arg]
 
     class comparator_factory(types.UserDefinedType.Comparator): # type: ignore[type-arg]
 
-        def intersects(self, other: SaColumn) -> 'sa.Operators':
+        def intersects(self, other: SaColumn, use_index: bool = True) -> 'sa.Operators':
+            if not use_index:
+                return Geometry_IntersectsBbox(sa.func.coalesce(sa.null(), self.expr), other)
+
             if isinstance(self.expr, sa.Column):
                 return Geometry_ColumnIntersectsBbox(self.expr, other)
 
@@ -221,20 +223,11 @@ class Geometry(types.UserDefinedType): # type: ignore[type-arg]
             return Geometry_IsAreaLike(self)
 
 
-        def ST_DWithin(self, other: SaColumn, distance: SaColumn) -> SaColumn:
+        def within_distance(self, other: SaColumn, distance: SaColumn) -> SaColumn:
             if isinstance(self.expr, sa.Column):
                 return Geometry_ColumnDWithin(self.expr, other, distance)
 
-            return sa.func.ST_DWithin(self.expr, other, distance)
-
-
-        def ST_DWithin_no_index(self, other: SaColumn, distance: SaColumn) -> SaColumn:
-            return sa.func.ST_DWithin(sa.func.coalesce(sa.null(), self),
-                                      other, distance)
-
-
-        def ST_Intersects_no_index(self, other: SaColumn) -> 'sa.Operators':
-            return Geometry_IntersectsBbox(sa.func.coalesce(sa.null(), self), other)
+            return self.ST_Distance(other) < distance
 
 
         def ST_Distance(self, other: SaColumn) -> SaColumn:
@@ -313,18 +306,3 @@ def _add_function_alias(func: str, ftype: type, alias: str) -> None:
 
 for alias in SQLITE_FUNCTION_ALIAS:
     _add_function_alias(*alias)
-
-
-class ST_DWithin(sa.sql.functions.GenericFunction[Any]):
-    name = 'ST_DWithin'
-    inherit_cache = True
-
-
-@compiles(ST_DWithin, 'sqlite') # type: ignore[no-untyped-call, misc]
-def default_json_array_each(element: SaColumn, compiler: 'sa.Compiled', **kw: Any) -> str:
-    geom1, geom2, dist = list(element.clauses)
-    return "(MbrIntersects(%s, ST_Expand(%s, %s)) = 1 AND ST_Distance(%s, %s) <= %s)" % (
-        compiler.process(geom1, **kw), compiler.process(geom2, **kw),
-        compiler.process(dist, **kw),
-        compiler.process(geom1, **kw), compiler.process(geom2, **kw),
-        compiler.process(dist, **kw))

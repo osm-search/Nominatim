@@ -287,21 +287,19 @@ LANGUAGE plpgsql IMMUTABLE;
 
 
 CREATE OR REPLACE FUNCTION weigh_search(search_vector INT[],
-                                        term_vectors TEXT[],
-                                        weight_vectors FLOAT[],
+                                        rankings TEXT,
                                         def_weight FLOAT)
   RETURNS FLOAT
   AS $$
 DECLARE
-  pos INT := 1;
-  terms TEXT;
+  rank JSON;
 BEGIN
-  FOREACH terms IN ARRAY term_vectors
+  FOR rank IN
+    SELECT * FROM json_array_elements(rankings::JSON)
   LOOP
-    IF search_vector @> terms::INTEGER[] THEN
-      RETURN weight_vectors[pos];
+    IF true = ALL(SELECT x::int = ANY(search_vector) FROM json_array_elements_text(rank->1) as x) THEN
+      RETURN (rank->>0)::float;
     END IF;
-    pos := pos + 1;
   END LOOP;
   RETURN def_weight;
 END;

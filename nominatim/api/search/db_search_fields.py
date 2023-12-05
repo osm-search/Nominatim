@@ -14,6 +14,7 @@ import sqlalchemy as sa
 
 from nominatim.typing import SaFromClause, SaColumn, SaExpression
 from nominatim.api.search.query import Token
+from nominatim.utils.json_writer import JsonWriter
 
 @dataclasses.dataclass
 class WeightedStrings:
@@ -128,11 +129,17 @@ class FieldRanking:
         """
         assert self.rankings
 
-        return sa.func.weigh_search(table.c[self.column],
-                                    [f"{{{','.join((str(s) for s in r.tokens))}}}"
-                                     for r in self.rankings],
-                                    [r.penalty for r in self.rankings],
-                                    self.default)
+        rout = JsonWriter().start_array()
+        for rank in self.rankings:
+            rout.start_array().value(rank.penalty).next()
+            rout.start_array()
+            for token in rank.tokens:
+                rout.value(token).next()
+            rout.end_array()
+            rout.end_array().next()
+        rout.end_array()
+
+        return sa.func.weigh_search(table.c[self.column], rout(), self.default)
 
 
 @dataclasses.dataclass

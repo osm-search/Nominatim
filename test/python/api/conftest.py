@@ -198,7 +198,8 @@ def frontend(request, event_loop, tmp_path):
                                                                  db, options))
             return napi.NominatimAPI(Path('/invalid'),
                                      {'NOMINATIM_DATABASE_DSN': f"sqlite:dbname={db}",
-                                      'NOMINATIM_USE_US_TIGER_DATA': 'yes'})
+                                      'NOMINATIM_USE_US_TIGER_DATA': 'yes',
+                                      'NOMINATIM_API_POOL_SIZE': '0'})
     elif request.param == 'postgres_db':
         def mkapi(apiobj, options=None):
             return apiobj.api

@@ -84,6 +84,14 @@ class NominatimAPIAsync: #pylint: disable=too-many-instance-attributes
             extra_args: Dict[str, Any] = {'future': True,
                                           'echo': self.config.get_bool('DEBUG_SQL')}
 
+            if self.config.get_int('API_POOL_SIZE') == 0:
+                extra_args['poolclass'] = sa.pool.NullPool
+            else:
+                extra_args['poolclass'] = sa.pool.QueuePool
+                extra_args['max_overflow'] = 0
+                extra_args['pool_size'] = self.config.get_int('API_POOL_SIZE')
+
+
             is_sqlite = self.config.DATABASE_DSN.startswith('sqlite:')
 
             if is_sqlite:
@@ -105,28 +113,12 @@ class NominatimAPIAsync: #pylint: disable=too-many-instance-attributes
                            host=dsn.get('host'),
                            port=int(dsn['port']) if 'port' in dsn else None,
                            query=query)
-                extra_args['max_overflow'] = 0
-                extra_args['pool_size'] = self.config.get_int('API_POOL_SIZE')
 
             engine = sa_asyncio.create_async_engine(dburl, **extra_args)
 
-            try:
-                async with engine.begin() as conn:
-                    result = await conn.scalar(sa.text('SHOW server_version_num'))
-                    server_version = int(result)
-            except (PGCORE_ERROR, sa.exc.OperationalError):
+            if is_sqlite:
                 server_version = 0
 
-            if server_version >= 110000 and not is_sqlite:
-                @sa.event.listens_for(engine.sync_engine, "connect")
-                def _on_connect(dbapi_con: Any, _: Any) -> None:
-                    cursor = dbapi_con.cursor()
-                    cursor.execute("SET jit_above_cost TO '-1'")
-                    cursor.execute("SET max_parallel_workers_per_gather TO '0'")
-                # Make sure that all connections get the new settings
-                await self.close()
-
-            if is_sqlite:
                 @sa.event.listens_for(engine.sync_engine, "connect")
                 def _on_sqlite_connect(dbapi_con: Any, _: Any) -> None:
                     dbapi_con.run_async(lambda conn: conn.enable_load_extension(True))
@@ -134,6 +126,22 @@ class NominatimAPIAsync: #pylint: disable=too-many-instance-attributes
                     cursor.execute("SELECT load_extension('mod_spatialite')")
                     cursor.execute('SELECT SetDecimalPrecision(7)')
                     dbapi_con.run_async(lambda conn: conn.enable_load_extension(False))
+            else:
+                try:
+                    async with engine.begin() as conn:
+                        result = await conn.scalar(sa.text('SHOW server_version_num'))
+                        server_version = int(result)
+                except (PGCORE_ERROR, sa.exc.OperationalError):
+                    server_version = 0
+
+                if server_version >= 110000:
+                    @sa.event.listens_for(engine.sync_engine, "connect")
+                    def _on_connect(dbapi_con: Any, _: Any) -> None:
+                        cursor = dbapi_con.cursor()
+                        cursor.execute("SET jit_above_cost TO '-1'")
+                        cursor.execute("SET max_parallel_workers_per_gather TO '0'")
+                    # Make sure that all connections get the new settings
+                    await engine.dispose()
 
             self._property_cache['DB:server_version'] = server_version
 

@@ -11,7 +11,7 @@ from typing import List, Tuple, AsyncIterator, Dict, Any, Callable
 import abc
 
 import sqlalchemy as sa
-from sqlalchemy.dialects.postgresql import ARRAY, array_agg
+from sqlalchemy.dialects.postgresql import array_agg
 
 from nominatim.typing import SaFromClause, SaScalarSelect, SaColumn, \
                              SaExpression, SaSelect, SaLambdaSelect, SaRow, SaBind
@@ -494,10 +494,7 @@ class CountrySearch(AbstractSearch):
         sub = sql.subquery('grid')
 
         sql = sa.select(t.c.country_code,
-                        (t.c.name
-                         + sa.func.coalesce(t.c.derived_name,
-                                            sa.cast('', type_=conn.t.types.Composite))
-                        ).label('name'),
+                        t.c.name.merge(t.c.derived_name).label('name'),
                         sub.c.centroid, sub.c.bbox)\
                 .join(sub, t.c.country_code == sub.c.country_code)
 
@@ -569,10 +566,8 @@ class PostcodeSearch(AbstractSearch):
             assert self.lookups[0].lookup_type == 'restrict'
             tsearch = conn.t.search_name
             sql = sql.where(tsearch.c.place_id == t.c.parent_place_id)\
-                     .where(sa.func.array_cat(tsearch.c.name_vector,
-                                              tsearch.c.nameaddress_vector,
-                                              type_=ARRAY(sa.Integer))
-                                    .contains(self.lookups[0].tokens))
+                     .where((tsearch.c.name_vector + tsearch.c.nameaddress_vector)
+                                     .contains(self.lookups[0].tokens))
 
         for ranking in self.rankings:
             penalty += ranking.sql_penalty(conn.t.search_name)

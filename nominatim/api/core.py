@@ -137,7 +137,7 @@ class NominatimAPIAsync: #pylint: disable=too-many-instance-attributes
 
             self._property_cache['DB:server_version'] = server_version
 
-            self._tables = SearchTables(sa.MetaData(), engine.name) # pylint: disable=no-member
+            self._tables = SearchTables(sa.MetaData()) # pylint: disable=no-member
             self._engine = engine
 
 

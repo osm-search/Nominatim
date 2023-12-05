@@ -11,7 +11,6 @@ from typing import List, Tuple, Iterator, cast, Dict
 import dataclasses
 
 import sqlalchemy as sa
-from sqlalchemy.dialects.postgresql import ARRAY
 
 from nominatim.typing import SaFromClause, SaColumn, SaExpression
 from nominatim.api.search.query import Token
@@ -155,10 +154,9 @@ class FieldLookup:
         if self.lookup_type == 'lookup_all':
             return col.contains(self.tokens)
         if self.lookup_type == 'lookup_any':
-            return cast(SaColumn, col.overlap(self.tokens))
+            return cast(SaColumn, col.overlaps(self.tokens))
 
-        return sa.func.array_cat(col, sa.text('ARRAY[]::integer[]'),
-                                 type_=ARRAY(sa.Integer())).contains(self.tokens)
+        return sa.func.coalesce(sa.null(), col).contains(self.tokens) # pylint: disable=not-callable
 
 
 class SearchData:

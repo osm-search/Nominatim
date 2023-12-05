@@ -190,18 +190,24 @@ def apiobj(temp_db_with_extensions, temp_db_conn, monkeypatch):
 
 @pytest.fixture(params=['postgres_db', 'sqlite_db'])
 def frontend(request, event_loop, tmp_path):
+    testapis = []
     if request.param == 'sqlite_db':
         db = str(tmp_path / 'test_nominatim_python_unittest.sqlite')
 
         def mkapi(apiobj, options={'reverse'}):
             event_loop.run_until_complete(convert_sqlite.convert(Path('/invalid'),
                                                                  db, options))
-            return napi.NominatimAPI(Path('/invalid'),
-                                     {'NOMINATIM_DATABASE_DSN': f"sqlite:dbname={db}",
-                                      'NOMINATIM_USE_US_TIGER_DATA': 'yes',
-                                      'NOMINATIM_API_POOL_SIZE': '0'})
+            outapi = napi.NominatimAPI(Path('/invalid'),
+                                       {'NOMINATIM_DATABASE_DSN': f"sqlite:dbname={db}",
+                                        'NOMINATIM_USE_US_TIGER_DATA': 'yes'})
+            testapis.append(outapi)
+
+            return outapi
     elif request.param == 'postgres_db':
         def mkapi(apiobj, options=None):
             return apiobj.api
 
-    return mkapi
+    yield mkapi
+
+    for api in testapis:
+        api.close()

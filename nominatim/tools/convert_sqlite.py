@@ -29,9 +29,12 @@ async def convert(project_dir: Path, outfile: Path, options: Set[str]) -> None:
         outapi = napi.NominatimAPIAsync(project_dir,
                                         {'NOMINATIM_DATABASE_DSN': f"sqlite:dbname={outfile}"})
 
-        async with api.begin() as src, outapi.begin() as dest:
-            writer = SqliteWriter(src, dest, options)
-            await writer.write()
+        try:
+            async with api.begin() as src, outapi.begin() as dest:
+                writer = SqliteWriter(src, dest, options)
+                await writer.write()
+        finally:
+            await outapi.close()
     finally:
         await api.close()
 

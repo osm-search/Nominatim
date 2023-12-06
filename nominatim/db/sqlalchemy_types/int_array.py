@@ -10,6 +10,7 @@ Custom type for an array of integers.
 from typing import Any, List, cast, Optional
 
 import sqlalchemy as sa
+from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.dialects.postgresql import ARRAY
 
 from nominatim.typing import SaDialect, SaColumn
@@ -71,3 +72,16 @@ class IntArray(sa.types.TypeDecorator[Any]):
                 in the array.
             """
             return self.op('&&', is_comparison=True)(other)
+
+
+class ArrayAgg(sa.sql.functions.GenericFunction[Any]):
+    """ Aggregate function to collect elements in an array.
+    """
+    type = IntArray()
+    identifier = 'ArrayAgg'
+    name = 'array_agg'
+    inherit_cache = True
+
+@compiles(ArrayAgg, 'sqlite') # type: ignore[no-untyped-call, misc]
+def sqlite_array_agg(element: ArrayAgg, compiler: 'sa.Compiled', **kw: Any) -> str:
+    return "group_concat(%s, ',')" % compiler.process(element.clauses, **kw)

@@ -128,7 +128,7 @@ class UpdateRefresh:
             LOG.warning('Import secondary importance raster data from %s', args.project_dir)
             if refresh.import_secondary_importance(args.config.get_libpq_dsn(),
                                                 args.project_dir) > 0:
-                LOG.fatal('FATAL: Cannot update sendary importance raster data')
+                LOG.fatal('FATAL: Cannot update secondary importance raster data')
                 return 1
 
         if args.functions:
@@ -141,10 +141,10 @@ class UpdateRefresh:
         if args.wiki_data:
             data_path = Path(args.config.WIKIPEDIA_DATA_PATH
                              or args.project_dir)
-            LOG.warning('Import wikipdia article importance from %s', data_path)
+            LOG.warning('Import wikipedia article importance from %s', data_path)
             if refresh.import_wikipedia_articles(args.config.get_libpq_dsn(),
                                                  data_path) > 0:
-                LOG.fatal('FATAL: Wikipedia importance dump file not found')
+                LOG.fatal('FATAL: Wikipedia importance file not found in %s', data_path)
                 return 1
 
         # Attention: importance MUST come after wiki data import.

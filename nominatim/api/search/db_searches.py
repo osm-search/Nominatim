@@ -312,7 +312,7 @@ class NearSearch(AbstractSearch):
 
         if table is None:
             # No classtype table available, do a simplified lookup in placex.
-            table = conn.t.placex.alias('inner')
+            table = conn.t.placex
             sql = sa.select(table.c.place_id,
                             sa.func.min(tgeom.c.centroid.ST_Distance(table.c.centroid))
                               .label('dist'))\

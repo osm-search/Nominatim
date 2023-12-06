@@ -1,3 +1,4 @@
+@SQLITE
 @APIDB
 Feature: Searches with postcodes
     Various searches involving postcodes

@@ -1,3 +1,4 @@
+@SQLITE
 @APIDB
 Feature: Search queries
     Testing different queries and parameters

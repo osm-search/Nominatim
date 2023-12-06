@@ -1,3 +1,4 @@
+@SQLITE
 @APIDB
 Feature: Structured search queries
     Testing correctness of results with

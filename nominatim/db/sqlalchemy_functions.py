@@ -188,6 +188,7 @@ def sqlite_json_array_each(element: JsonArrayEach, compiler: 'sa.Compiled', **kw
     return "json_each(%s)" % compiler.process(element.clauses, **kw)
 
 
+
 class Greatest(sa.sql.functions.GenericFunction[Any]):
     """ Function to compute maximum of all its input parameters.
     """
@@ -198,3 +199,23 @@ class Greatest(sa.sql.functions.GenericFunction[Any]):
 @compiles(Greatest, 'sqlite') # type: ignore[no-untyped-call, misc]
 def sqlite_greatest(element: Greatest, compiler: 'sa.Compiled', **kw: Any) -> str:
     return "max(%s)" % compiler.process(element.clauses, **kw)
+
+
+
+class RegexpWord(sa.sql.functions.GenericFunction[Any]):
+    """ Check if a full word is in a given string.
+    """
+    name = 'RegexpWord'
+    inherit_cache = True
+
+
+@compiles(RegexpWord, 'postgresql') # type: ignore[no-untyped-call, misc]
+def postgres_regexp_nocase(element: RegexpWord, compiler: 'sa.Compiled', **kw: Any) -> str:
+    arg1, arg2 = list(element.clauses)
+    return "%s ~* ('\\m(' || %s  || ')\\M')::text" % (compiler.process(arg2, **kw), compiler.process(arg1, **kw))
+
+
+@compiles(RegexpWord, 'sqlite') # type: ignore[no-untyped-call, misc]
+def sqlite_regexp_nocase(element: RegexpWord, compiler: 'sa.Compiled', **kw: Any) -> str:
+    arg1, arg2 = list(element.clauses)
+    return "regexp('\\b(' || %s  || ')\\b', %s)" % (compiler.process(arg1, **kw), compiler.process(arg2, **kw))

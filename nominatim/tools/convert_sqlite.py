@@ -205,15 +205,15 @@ class SqliteWriter:
     async def create_search_index(self) -> None:
         """ Create the tables and indexes needed for word lookup.
         """
+        LOG.warning("Creating reverse search table")
+        rsn = sa.Table('reverse_search_name', self.dest.t.meta,
+                       sa.Column('word', sa.Integer()),
+                       sa.Column('column', sa.Text()),
+                       sa.Column('places', IntArray))
+        await self.dest.connection.run_sync(rsn.create)
+
         tsrc = self.src.t.search_name
         for column in ('name_vector', 'nameaddress_vector'):
-            table_name = f'reverse_search_{column}'
-            LOG.warning("Creating reverse search %s", table_name)
-            rsn = sa.Table(table_name, self.dest.t.meta,
-                           sa.Column('word', sa.Integer()),
-                           sa.Column('places', IntArray))
-            await self.dest.connection.run_sync(rsn.create)
-
             sql = sa.select(sa.func.unnest(getattr(tsrc.c, column)).label('word'),
                             sa.func.ArrayAgg(tsrc.c.place_id).label('places'))\
                     .group_by('word')
@@ -224,11 +224,12 @@ class SqliteWriter:
                 for row in partition:
                     row.places.sort()
                     data.append({'word': row.word,
+                                 'column': column,
                                  'places': row.places})
                 await self.dest.execute(rsn.insert(), data)
 
-            await self.dest.connection.run_sync(
-                sa.Index(f'idx_reverse_search_{column}_word', rsn.c.word).create)
+        await self.dest.connection.run_sync(
+            sa.Index('idx_reverse_search_name_word', rsn.c.word).create)
 
 
     def select_from(self, table: str) -> SaSelect:

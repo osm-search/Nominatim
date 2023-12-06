@@ -57,21 +57,15 @@ class IntArray(sa.types.TypeDecorator[Any]):
             """ Concate the array with the given array. If one of the
                 operants is null, the value of the other will be returned.
             """
-            return sa.func.array_cat(self, other, type_=IntArray)
+            return ArrayCat(self.expr, other)
 
 
         def contains(self, other: SaColumn, **kwargs: Any) -> 'sa.ColumnOperators':
             """ Return true if the array contains all the value of the argument
                 array.
             """
-            return cast('sa.ColumnOperators', self.op('@>', is_comparison=True)(other))
+            return ArrayContains(self.expr, other)
 
-
-        def overlaps(self, other: SaColumn) -> 'sa.Operators':
-            """ Return true if at least one value of the argument is contained
-                in the array.
-            """
-            return self.op('&&', is_comparison=True)(other)
 
 
 class ArrayAgg(sa.sql.functions.GenericFunction[Any]):
@@ -82,6 +76,48 @@ class ArrayAgg(sa.sql.functions.GenericFunction[Any]):
     name = 'array_agg'
     inherit_cache = True
 
+
 @compiles(ArrayAgg, 'sqlite') # type: ignore[no-untyped-call, misc]
 def sqlite_array_agg(element: ArrayAgg, compiler: 'sa.Compiled', **kw: Any) -> str:
     return "group_concat(%s, ',')" % compiler.process(element.clauses, **kw)
+
+
+
+class ArrayContains(sa.sql.expression.FunctionElement[Any]):
+    """ Function to check if an array is fully contained in another.
+    """
+    name = 'ArrayContains'
+    inherit_cache = True
+
+
+@compiles(ArrayContains) # type: ignore[no-untyped-call, misc]
+def generic_array_contains(element: ArrayContains, compiler: 'sa.Compiled', **kw: Any) -> str:
+    arg1, arg2 = list(element.clauses)
+    return "(%s @> %s)" % (compiler.process(arg1, **kw),
+                           compiler.process(arg2, **kw))
+
+
+@compiles(ArrayContains, 'sqlite') # type: ignore[no-untyped-call, misc]
+def sqlite_array_contains(element: ArrayContains, compiler: 'sa.Compiled', **kw: Any) -> str:
+    return "array_contains(%s)" % compiler.process(element.clauses, **kw)
+
+
+
+class ArrayCat(sa.sql.expression.FunctionElement[Any]):
+    """ Function to check if an array is fully contained in another.
+    """
+    type = IntArray()
+    identifier = 'ArrayCat'
+    inherit_cache = True
+
+
+@compiles(ArrayCat) # type: ignore[no-untyped-call, misc]
+def generic_array_cat(element: ArrayCat, compiler: 'sa.Compiled', **kw: Any) -> str:
+    return "array_cat(%s)" % compiler.process(element.clauses, **kw)
+
+
+@compiles(ArrayCat, 'sqlite') # type: ignore[no-untyped-call, misc]
+def sqlite_array_cat(element: ArrayCat, compiler: 'sa.Compiled', **kw: Any) -> str:
+    arg1, arg2 = list(element.clauses)
+    return "(%s || ',' || %s)" % (compiler.process(arg1, **kw), compiler.process(arg2, **kw))
+

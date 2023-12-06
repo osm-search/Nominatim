@@ -19,6 +19,7 @@ import sqlalchemy.ext.asyncio as sa_asyncio
 from nominatim.errors import UsageError
 from nominatim.db.sqlalchemy_schema import SearchTables
 from nominatim.db.async_core_library import PGCORE_LIB, PGCORE_ERROR
+import nominatim.db.sqlite_functions
 from nominatim.config import Configuration
 from nominatim.api.connection import SearchConnection
 from nominatim.api.status import get_status, StatusResult
@@ -122,6 +123,7 @@ class NominatimAPIAsync: #pylint: disable=too-many-instance-attributes
                 @sa.event.listens_for(engine.sync_engine, "connect")
                 def _on_sqlite_connect(dbapi_con: Any, _: Any) -> None:
                     dbapi_con.run_async(lambda conn: conn.enable_load_extension(True))
+                    nominatim.db.sqlite_functions.install_custom_functions(dbapi_con)
                     cursor = dbapi_con.cursor()
                     cursor.execute("SELECT load_extension('mod_spatialite')")
                     cursor.execute('SELECT SetDecimalPrecision(7)')

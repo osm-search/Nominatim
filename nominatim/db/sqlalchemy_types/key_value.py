@@ -10,6 +10,7 @@ A custom type that implements a simple key-value store of strings.
 from typing import Any
 
 import sqlalchemy as sa
+from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.dialects.postgresql import HSTORE
 from sqlalchemy.dialects.sqlite import JSON as sqlite_json
 
@@ -37,11 +38,25 @@ class KeyValueStore(sa.types.TypeDecorator[Any]):
                 one, overwriting values where necessary. When the argument
                 is null, nothing happens.
             """
-            return self.op('||')(sa.func.coalesce(other,
-                                                  sa.type_coerce('', KeyValueStore)))
+            return KeyValueConcat(self.expr, other)
 
 
-        def has_key(self, key: SaColumn) -> 'sa.Operators':
-            """ Return true if the key is cotained in the store.
-            """
-            return self.op('?', is_comparison=True)(key)
+class KeyValueConcat(sa.sql.expression.FunctionElement[Any]):
+    """ Return the merged key-value store from the input parameters.
+    """
+    type = KeyValueStore()
+    name = 'JsonConcat'
+    inherit_cache = True
+
+@compiles(KeyValueConcat) # type: ignore[no-untyped-call, misc]
+def default_json_concat(element: KeyValueConcat, compiler: 'sa.Compiled', **kw: Any) -> str:
+    arg1, arg2 = list(element.clauses)
+    return "(%s || coalesce(%s, ''::hstore))" % (compiler.process(arg1, **kw), compiler.process(arg2, **kw))
+
+@compiles(KeyValueConcat, 'sqlite') # type: ignore[no-untyped-call, misc]
+def sqlite_json_concat(element: KeyValueConcat, compiler: 'sa.Compiled', **kw: Any) -> str:
+    arg1, arg2 = list(element.clauses)
+    return "json_patch(%s, coalesce(%s, '{}'))" % (compiler.process(arg1, **kw), compiler.process(arg2, **kw))
+
+
+

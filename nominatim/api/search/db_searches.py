@@ -11,7 +11,6 @@ from typing import List, Tuple, AsyncIterator, Dict, Any, Callable
 import abc
 
 import sqlalchemy as sa
-from sqlalchemy.dialects.postgresql import array_agg
 
 from nominatim.typing import SaFromClause, SaScalarSelect, SaColumn, \
                              SaExpression, SaSelect, SaLambdaSelect, SaRow, SaBind
@@ -19,7 +18,7 @@ from nominatim.api.connection import SearchConnection
 from nominatim.api.types import SearchDetails, DataLayer, GeometryFormat, Bbox
 import nominatim.api.results as nres
 from nominatim.api.search.db_search_fields import SearchData, WeightedCategories
-from nominatim.db.sqlalchemy_types import Geometry
+from nominatim.db.sqlalchemy_types import Geometry, IntArray
 
 #pylint: disable=singleton-comparison,not-callable
 #pylint: disable=too-many-branches,too-many-arguments,too-many-locals,too-many-statements
@@ -110,7 +109,7 @@ def _add_geometry_columns(sql: SaLambdaSelect, col: SaColumn, details: SearchDet
 
 def _make_interpolation_subquery(table: SaFromClause, inner: SaFromClause,
                                  numerals: List[int], details: SearchDetails) -> SaScalarSelect:
-    all_ids = array_agg(table.c.place_id) # type: ignore[no-untyped-call]
+    all_ids = sa.func.ArrayAgg(table.c.place_id)
     sql = sa.select(all_ids).where(table.c.parent_place_id == inner.c.place_id)
 
     if len(numerals) == 1:
@@ -134,9 +133,7 @@ def _filter_by_layer(table: SaFromClause, layers: DataLayer) -> SaColumn:
         orexpr.append(no_index(table.c.rank_address).between(1, 30))
     elif layers & DataLayer.ADDRESS:
         orexpr.append(no_index(table.c.rank_address).between(1, 29))
-        orexpr.append(sa.and_(no_index(table.c.rank_address) == 30,
-                              sa.or_(table.c.housenumber != None,
-                                     table.c.address.has_key('addr:housename'))))
+        orexpr.append(sa.func.IsAddressPoint(table))
     elif layers & DataLayer.POI:
         orexpr.append(sa.and_(no_index(table.c.rank_address) == 30,
                               table.c.class_.not_in(('place', 'building'))))
@@ -188,12 +185,21 @@ async def _get_placex_housenumbers(conn: SearchConnection,
         yield result
 
 
+def _int_list_to_subquery(inp: List[int]) -> 'sa.Subquery':
+    """ Create a subselect that returns the given list of integers
+        as rows in the column 'nr'.
+    """
+    vtab = sa.func.JsonArrayEach(sa.type_coerce(inp, sa.JSON))\
+               .table_valued(sa.column('value', type_=sa.JSON)) # type: ignore[no-untyped-call]
+    return sa.select(sa.cast(sa.cast(vtab.c.value, sa.Text), sa.Integer).label('nr')).subquery()
+
+
 async def _get_osmline(conn: SearchConnection, place_ids: List[int],
                        numerals: List[int],
                        details: SearchDetails) -> AsyncIterator[nres.SearchResult]:
     t = conn.t.osmline
-    values = sa.values(sa.Column('nr', sa.Integer()), name='housenumber')\
-               .data([(n,) for n in numerals])
+
+    values = _int_list_to_subquery(numerals)
     sql = sa.select(t.c.place_id, t.c.osm_id,
                     t.c.parent_place_id, t.c.address,
                     values.c.nr.label('housenumber'),
@@ -216,8 +222,7 @@ async def _get_tiger(conn: SearchConnection, place_ids: List[int],
                      numerals: List[int], osm_id: int,
                      details: SearchDetails) -> AsyncIterator[nres.SearchResult]:
     t = conn.t.tiger
-    values = sa.values(sa.Column('nr', sa.Integer()), name='housenumber')\
-               .data([(n,) for n in numerals])
+    values = _int_list_to_subquery(numerals)
     sql = sa.select(t.c.place_id, t.c.parent_place_id,
                     sa.literal('W').label('osm_type'),
                     sa.literal(osm_id).label('osm_id'),
@@ -573,7 +578,8 @@ class PostcodeSearch(AbstractSearch):
             tsearch = conn.t.search_name
             sql = sql.where(tsearch.c.place_id == t.c.parent_place_id)\
                      .where((tsearch.c.name_vector + tsearch.c.nameaddress_vector)
-                                     .contains(self.lookups[0].tokens))
+                                     .contains(sa.type_coerce(self.lookups[0].tokens,
+                                                              IntArray)))
 
         for ranking in self.rankings:
             penalty += ranking.sql_penalty(conn.t.search_name)
@@ -692,10 +698,10 @@ class PlaceSearch(AbstractSearch):
             sql = sql.order_by(sa.text('accuracy'))
 
         if self.housenumbers:
-            hnr_regexp = f"\\m({'|'.join(self.housenumbers.values)})\\M"
+            hnr_list = '|'.join(self.housenumbers.values)
             sql = sql.where(tsearch.c.address_rank.between(16, 30))\
                      .where(sa.or_(tsearch.c.address_rank < 30,
-                                   t.c.housenumber.op('~*')(hnr_regexp)))
+                                   sa.func.RegexpWord(hnr_list, t.c.housenumber)))
 
             # Cross check for housenumbers, need to do that on a rather large
             # set. Worst case there are 40.000 main streets in OSM.
@@ -703,10 +709,10 @@ class PlaceSearch(AbstractSearch):
 
             # Housenumbers from placex
             thnr = conn.t.placex.alias('hnr')
-            pid_list = array_agg(thnr.c.place_id) # type: ignore[no-untyped-call]
+            pid_list = sa.func.ArrayAgg(thnr.c.place_id)
             place_sql = sa.select(pid_list)\
                           .where(thnr.c.parent_place_id == inner.c.place_id)\
-                          .where(thnr.c.housenumber.op('~*')(hnr_regexp))\
+                          .where(sa.func.RegexpWord(hnr_list, thnr.c.housenumber))\
                           .where(thnr.c.linked_place_id == None)\
                           .where(thnr.c.indexed_status == 0)
 

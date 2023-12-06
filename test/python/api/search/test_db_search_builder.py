@@ -420,8 +420,8 @@ def test_infrequent_partials_in_name():
     assert len(search.lookups) == 2
     assert len(search.rankings) == 2
 
-    assert set((l.column, l.lookup_type) for l in search.lookups) == \
-            {('name_vector', 'lookup_all'), ('nameaddress_vector', 'restrict')}
+    assert set((l.column, l.lookup_type.__name__) for l in search.lookups) == \
+            {('name_vector', 'LookupAll'), ('nameaddress_vector', 'Restrict')}
 
 
 def test_frequent_partials_in_name_and_address():
@@ -432,10 +432,10 @@ def test_frequent_partials_in_name_and_address():
     assert all(isinstance(s, dbs.PlaceSearch) for s in searches)
     searches.sort(key=lambda s: s.penalty)
 
-    assert set((l.column, l.lookup_type) for l in searches[0].lookups) == \
-            {('name_vector', 'lookup_any'), ('nameaddress_vector', 'restrict')}
-    assert set((l.column, l.lookup_type) for l in searches[1].lookups) == \
-            {('nameaddress_vector', 'lookup_all'), ('name_vector', 'lookup_all')}
+    assert set((l.column, l.lookup_type.__name__) for l in searches[0].lookups) == \
+            {('name_vector', 'LookupAny'), ('nameaddress_vector', 'Restrict')}
+    assert set((l.column, l.lookup_type.__name__) for l in searches[1].lookups) == \
+            {('nameaddress_vector', 'LookupAll'), ('name_vector', 'LookupAll')}
 
 
 def test_too_frequent_partials_in_name_and_address():
@@ -446,5 +446,5 @@ def test_too_frequent_partials_in_name_and_address():
     assert all(isinstance(s, dbs.PlaceSearch) for s in searches)
     searches.sort(key=lambda s: s.penalty)
 
-    assert set((l.column, l.lookup_type) for l in searches[0].lookups) == \
-            {('name_vector', 'lookup_any'), ('nameaddress_vector', 'restrict')}
+    assert set((l.column, l.lookup_type.__name__) for l in searches[0].lookups) == \
+            {('name_vector', 'LookupAny'), ('nameaddress_vector', 'Restrict')}

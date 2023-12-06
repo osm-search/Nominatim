@@ -14,6 +14,7 @@ from nominatim.api.types import SearchDetails
 from nominatim.api.search.db_searches import NearSearch, PlaceSearch
 from nominatim.api.search.db_search_fields import WeightedStrings, WeightedCategories,\
                                                   FieldLookup, FieldRanking, RankedTokens
+from nominatim.api.search.db_search_lookups import LookupAll
 
 
 def run_search(apiobj, global_penalty, cat, cat_penalty=None, ccodes=[],
@@ -25,7 +26,7 @@ def run_search(apiobj, global_penalty, cat, cat_penalty=None, ccodes=[],
         countries = WeightedStrings(ccodes, [0.0] * len(ccodes))
         housenumbers = WeightedStrings([], [])
         qualifiers = WeightedStrings([], [])
-        lookups = [FieldLookup('name_vector', [56], 'lookup_all')]
+        lookups = [FieldLookup('name_vector', [56], LookupAll)]
         rankings = []
 
     if ccodes is not None:

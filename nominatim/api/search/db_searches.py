@@ -563,7 +563,6 @@ class PostcodeSearch(AbstractSearch):
 
         if self.lookups:
             assert len(self.lookups) == 1
-            assert self.lookups[0].lookup_type == 'restrict'
             tsearch = conn.t.search_name
             sql = sql.where(tsearch.c.place_id == t.c.parent_place_id)\
                      .where((tsearch.c.name_vector + tsearch.c.nameaddress_vector)

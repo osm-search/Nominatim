@@ -7,14 +7,16 @@
 """
 Data structures for more complex fields in abstract search descriptions.
 """
-from typing import List, Tuple, Iterator, cast, Dict
+from typing import List, Tuple, Iterator, Dict, Type
 import dataclasses
 
 import sqlalchemy as sa
 
 from nominatim.typing import SaFromClause, SaColumn, SaExpression
 from nominatim.api.search.query import Token
+import nominatim.api.search.db_search_lookups as lookups
 from nominatim.utils.json_writer import JsonWriter
+
 
 @dataclasses.dataclass
 class WeightedStrings:
@@ -152,18 +154,12 @@ class FieldLookup:
     """
     column: str
     tokens: List[int]
-    lookup_type: str
+    lookup_type: Type[lookups.LookupType]
 
     def sql_condition(self, table: SaFromClause) -> SaColumn:
         """ Create an SQL expression for the given match condition.
         """
-        col = table.c[self.column]
-        if self.lookup_type == 'lookup_all':
-            return col.contains(self.tokens)
-        if self.lookup_type == 'lookup_any':
-            return cast(SaColumn, col.overlaps(self.tokens))
-
-        return sa.func.coalesce(sa.null(), col).contains(self.tokens) # pylint: disable=not-callable
+        return self.lookup_type(table, self.column, self.tokens)
 
 
 class SearchData:
@@ -229,22 +225,23 @@ def lookup_by_names(name_tokens: List[int], addr_tokens: List[int]) -> List[Fiel
     """ Create a lookup list where name tokens are looked up via index
         and potential address tokens are used to restrict the search further.
     """
-    lookup = [FieldLookup('name_vector', name_tokens, 'lookup_all')]
+    lookup = [FieldLookup('name_vector', name_tokens, lookups.LookupAll)]
     if addr_tokens:
-        lookup.append(FieldLookup('nameaddress_vector', addr_tokens, 'restrict'))
+        lookup.append(FieldLookup('nameaddress_vector', addr_tokens, lookups.Restrict))
 
     return lookup
 
 
 def lookup_by_any_name(name_tokens: List[int], addr_tokens: List[int],
-                       lookup_type: str) -> List[FieldLookup]:
+                       use_index_for_addr: bool) -> List[FieldLookup]:
     """ Create a lookup list where name tokens are looked up via index
         and only one of the name tokens must be present.
         Potential address tokens are used to restrict the search further.
     """
-    lookup = [FieldLookup('name_vector', name_tokens, 'lookup_any')]
+    lookup = [FieldLookup('name_vector', name_tokens, lookups.LookupAny)]
     if addr_tokens:
-        lookup.append(FieldLookup('nameaddress_vector', addr_tokens, lookup_type))
+        lookup.append(FieldLookup('nameaddress_vector', addr_tokens,
+                                  lookups.LookupAll if use_index_for_addr else lookups.Restrict))
 
     return lookup
 
@@ -253,5 +250,5 @@ def lookup_by_addr(name_tokens: List[int], addr_tokens: List[int]) -> List[Field
     """ Create a lookup list where address tokens are looked up via index
         and the name tokens are only used to restrict the search further.
     """
-    return [FieldLookup('name_vector', name_tokens, 'restrict'),
-            FieldLookup('nameaddress_vector', addr_tokens, 'lookup_all')]
+    return [FieldLookup('name_vector', name_tokens, lookups.Restrict),
+            FieldLookup('nameaddress_vector', addr_tokens, lookups.LookupAll)]

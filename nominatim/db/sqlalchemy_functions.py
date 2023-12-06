@@ -117,18 +117,6 @@ def sqlite_is_below_reverse_distance(element: IsBelowReverseDistance,
                                                   compiler.process(rank, **kw))
 
 
-def select_index_placex_geometry_reverse_lookupplacenode(table: str) -> 'sa.TextClause':
-    """ Create an expression with the necessary conditions over a placex
-        table that the index 'idx_placex_geometry_reverse_lookupPlaceNode'
-        can be used.
-    """
-    return sa.text(f"{table}.rank_address between 4 and 25"
-                   f" AND {table}.type != 'postcode'"
-                   f" AND {table}.name is not null"
-                   f" AND {table}.linked_place_id is null"
-                   f" AND {table}.osm_type = 'N'")
-
-
 class IsAddressPoint(sa.sql.functions.GenericFunction[Any]):
     name = 'IsAddressPoint'
     inherit_cache = True

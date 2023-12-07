@@ -62,10 +62,6 @@ BEGIN
   WHILE langs[i] IS NOT NULL LOOP
     wiki_article := extratags->(case when langs[i] in ('english','country') THEN 'wikipedia' ELSE 'wikipedia:'||langs[i] END);
     IF wiki_article is not null THEN
-      wiki_article := regexp_replace(wiki_article,E'^(.*?)([a-z]{2,3}).wikipedia.org/wiki/',E'\\2:');
-      wiki_article := regexp_replace(wiki_article,E'^(.*?)([a-z]{2,3}).wikipedia.org/w/index.php\\?title=',E'\\2:');
-      wiki_article := regexp_replace(wiki_article,E'^(.*?)/([a-z]{2,3})/wiki/',E'\\2:');
-      --wiki_article := regexp_replace(wiki_article,E'^(.*?)([a-z]{2,3})[=:]',E'\\2:');
       wiki_article := replace(wiki_article,' ','_');
       IF strpos(wiki_article, ':') IN (3,4) THEN
         wiki_article_language := lower(trim(split_part(wiki_article, ':', 1)));

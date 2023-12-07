@@ -101,6 +101,10 @@ class NominatimAPIAsync: #pylint: disable=too-many-instance-attributes
                 dburl = sa.engine.URL.create('sqlite+aiosqlite',
                                              database=params.get('dbname'))
 
+                if not ('NOMINATIM_DATABASE_RW' in self.config.environ
+                        and self.config.get_bool('DATABASE_RW')) \
+                   and not Path(params.get('dbname', '')).is_file():
+                    raise UsageError(f"SQlite database '{params.get('dbname')}' does not exist.")
             else:
                 dsn = self.config.get_database_params()
                 query = {k: v for k, v in dsn.items()

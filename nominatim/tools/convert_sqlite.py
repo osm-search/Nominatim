@@ -28,7 +28,8 @@ async def convert(project_dir: Path, outfile: Path, options: Set[str]) -> None:
 
     try:
         outapi = napi.NominatimAPIAsync(project_dir,
-                                        {'NOMINATIM_DATABASE_DSN': f"sqlite:dbname={outfile}"})
+                                        {'NOMINATIM_DATABASE_DSN': f"sqlite:dbname={outfile}",
+                                         'NOMINATIM_DATABASE_RW': '1'})
 
         try:
             async with api.begin() as src, outapi.begin() as dest:

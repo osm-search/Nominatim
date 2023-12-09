@@ -40,6 +40,7 @@ nav:
         - 'Special Phrases': 'customize/Special-Phrases.md'
         - 'External data: US housenumbers from TIGER': 'customize/Tiger.md'
         - 'External data: Postcodes': 'customize/Postcodes.md'
+        - 'Conversion to SQLite': 'customize/SQLite.md'
     - 'Library Guide':
         - 'Getting Started': 'library/Getting-Started.md'
         - 'Nominatim API class': 'library/NominatimAPI.md'

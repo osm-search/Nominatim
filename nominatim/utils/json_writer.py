@@ -76,8 +76,8 @@ class JsonWriter:
     def end_array(self) -> 'JsonWriter':
         """ Write the closing bracket of a JSON array.
         """
-        assert self.pending in (',', '[', '')
-        if self.pending == '[':
+        assert self.pending in (',', '[', ']', ')', '')
+        if self.pending not in (',', ''):
             self.data.write(self.pending)
         self.pending = ']'
         return self

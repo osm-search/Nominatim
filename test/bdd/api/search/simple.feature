@@ -1,3 +1,4 @@
+@SQLITE
 @APIDB
 Feature: Simple Tests
     Simple tests for internal server errors and response format.

@@ -1,3 +1,4 @@
+@SQLITE
 @APIDB
 Feature: Search queries
     Generic search result correctness

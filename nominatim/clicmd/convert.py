@@ -76,7 +76,7 @@ class ConvertDB:
         group.add_argument('--reverse', action=WithAction, dest_set=self.options, default=True,
                            help='Enable/disable support for reverse and lookup API'
                                 ' (default: enabled)')
-        group.add_argument('--search', action=WithAction, dest_set=self.options, default=False,
+        group.add_argument('--search', action=WithAction, dest_set=self.options, default=True,
                            help='Enable/disable support for search API (default: disabled)')
         group.add_argument('--details', action=WithAction, dest_set=self.options, default=True,
                            help='Enable/disable support for details API (default: enabled)')

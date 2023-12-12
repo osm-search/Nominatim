@@ -180,7 +180,7 @@ class ReverseGeocoder:
         diststr = sa.text(f"{distance}")
 
         sql: SaLambdaSelect = sa.lambda_stmt(lambda: _select_from_placex(t)
-                .where(t.c.geometry.ST_DWithin(WKT_PARAM, diststr))
+                .where(t.c.geometry.within_distance(WKT_PARAM, diststr))
                 .where(t.c.indexed_status == 0)
                 .where(t.c.linked_place_id == None)
                 .where(sa.or_(sa.not_(t.c.geometry.is_area()),
@@ -219,7 +219,7 @@ class ReverseGeocoder:
         t = self.conn.t.placex
 
         sql: SaLambdaSelect = sa.lambda_stmt(lambda: _select_from_placex(t)
-                .where(t.c.geometry.ST_DWithin(WKT_PARAM, 0.001))
+                .where(t.c.geometry.within_distance(WKT_PARAM, 0.001))
                 .where(t.c.parent_place_id == parent_place_id)
                 .where(sa.func.IsAddressPoint(t))
                 .where(t.c.indexed_status == 0)
@@ -241,7 +241,7 @@ class ReverseGeocoder:
                    sa.select(t,
                              t.c.linegeo.ST_Distance(WKT_PARAM).label('distance'),
                              _locate_interpolation(t))
-                     .where(t.c.linegeo.ST_DWithin(WKT_PARAM, distance))
+                     .where(t.c.linegeo.within_distance(WKT_PARAM, distance))
                      .where(t.c.startnumber != None)
                      .order_by('distance')
                      .limit(1))
@@ -275,7 +275,7 @@ class ReverseGeocoder:
             inner = sa.select(t,
                               t.c.linegeo.ST_Distance(WKT_PARAM).label('distance'),
                               _locate_interpolation(t))\
-                      .where(t.c.linegeo.ST_DWithin(WKT_PARAM, 0.001))\
+                      .where(t.c.linegeo.within_distance(WKT_PARAM, 0.001))\
                       .where(t.c.parent_place_id == parent_place_id)\
                       .order_by('distance')\
                       .limit(1)\

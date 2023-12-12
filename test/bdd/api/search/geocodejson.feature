@@ -1,3 +1,4 @@
+@SQLITE
 @APIDB
 Feature: Parameters for Search API
     Testing correctness of geocodejson output.

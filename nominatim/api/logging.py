@@ -90,26 +90,42 @@ class BaseLogger:
         params = dict(compiled.params)
         if isinstance(extra_params, Mapping):
             for k, v in extra_params.items():
-                params[k] = str(v)
+                if hasattr(v, 'to_wkt'):
+                    params[k] = v.to_wkt()
+                elif isinstance(v, (int, float)):
+                    params[k] = v
+                else:
+                    params[k] = str(v)
         elif isinstance(extra_params, Sequence) and extra_params:
             for k in extra_params[0]:
                 params[k] = f':{k}'
 
         sqlstr = str(compiled)
 
-        if sa.__version__.startswith('1'):
-            try:
-                sqlstr = re.sub(r'__\[POSTCOMPILE_[^]]*\]', '%s', sqlstr)
-                return sqlstr % tuple((repr(params.get(name, None))
-                                      for name in compiled.positiontup)) # type: ignore
-            except TypeError:
-                return sqlstr
+        if conn.dialect.name == 'postgresql':
+            if sa.__version__.startswith('1'):
+                try:
+                    sqlstr = re.sub(r'__\[POSTCOMPILE_[^]]*\]', '%s', sqlstr)
+                    return sqlstr % tuple((repr(params.get(name, None))
+                                          for name in compiled.positiontup)) # type: ignore
+                except TypeError:
+                    return sqlstr
 
-        # Fixes an odd issue with Python 3.7 where percentages are not
-        # quoted correctly.
-        sqlstr = re.sub(r'%(?!\()', '%%', sqlstr)
-        sqlstr = re.sub(r'__\[POSTCOMPILE_([^]]*)\]', r'%(\1)s', sqlstr)
-        return sqlstr % params
+            # Fixes an odd issue with Python 3.7 where percentages are not
+            # quoted correctly.
+            sqlstr = re.sub(r'%(?!\()', '%%', sqlstr)
+            sqlstr = re.sub(r'__\[POSTCOMPILE_([^]]*)\]', r'%(\1)s', sqlstr)
+            return sqlstr % params
+
+        assert conn.dialect.name == 'sqlite'
+
+        # params in positional order
+        pparams = (repr(params.get(name, None)) for name in compiled.positiontup) # type: ignore
+
+        sqlstr = re.sub(r'__\[POSTCOMPILE_([^]]*)\]', '?', sqlstr)
+        sqlstr = re.sub(r"\?", lambda m: next(pparams), sqlstr)
+
+        return sqlstr
 
 class HTMLLogger(BaseLogger):
     """ Logger that formats messages in HTML.

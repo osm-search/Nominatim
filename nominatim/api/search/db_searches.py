@@ -11,7 +11,6 @@ from typing import List, Tuple, AsyncIterator, Dict, Any, Callable
 import abc
 
 import sqlalchemy as sa
-from sqlalchemy.dialects.postgresql import ARRAY, array_agg
 
 from nominatim.typing import SaFromClause, SaScalarSelect, SaColumn, \
                              SaExpression, SaSelect, SaLambdaSelect, SaRow, SaBind
@@ -19,7 +18,7 @@ from nominatim.api.connection import SearchConnection
 from nominatim.api.types import SearchDetails, DataLayer, GeometryFormat, Bbox
 import nominatim.api.results as nres
 from nominatim.api.search.db_search_fields import SearchData, WeightedCategories
-from nominatim.db.sqlalchemy_types import Geometry
+from nominatim.db.sqlalchemy_types import Geometry, IntArray
 
 #pylint: disable=singleton-comparison,not-callable
 #pylint: disable=too-many-branches,too-many-arguments,too-many-locals,too-many-statements
@@ -55,11 +54,28 @@ NEAR_PARAM: SaBind = sa.bindparam('near', type_=Geometry)
 NEAR_RADIUS_PARAM: SaBind = sa.bindparam('near_radius')
 COUNTRIES_PARAM: SaBind = sa.bindparam('countries')
 
-def _within_near(t: SaFromClause) -> Callable[[], SaExpression]:
-    return lambda: t.c.geometry.ST_DWithin(NEAR_PARAM, NEAR_RADIUS_PARAM)
+
+def filter_by_area(sql: SaSelect, t: SaFromClause,
+                   details: SearchDetails, avoid_index: bool = False) -> SaSelect:
+    """ Apply SQL statements for filtering by viewbox and near point,
+        if applicable.
+    """
+    if details.near is not None and details.near_radius is not None:
+        if details.near_radius < 0.1 and not avoid_index:
+            sql = sql.where(t.c.geometry.within_distance(NEAR_PARAM, NEAR_RADIUS_PARAM))
+        else:
+            sql = sql.where(t.c.geometry.ST_Distance(NEAR_PARAM) <= NEAR_RADIUS_PARAM)
+    if details.viewbox is not None and details.bounded_viewbox:
+        sql = sql.where(t.c.geometry.intersects(VIEWBOX_PARAM,
+                                                use_index=not avoid_index and
+                                                          details.viewbox.area < 0.2))
+
+    return sql
+
 
 def _exclude_places(t: SaFromClause) -> Callable[[], SaExpression]:
     return lambda: t.c.place_id.not_in(sa.bindparam('excluded'))
+
 
 def _select_placex(t: SaFromClause) -> SaSelect:
     return sa.select(t.c.place_id, t.c.osm_type, t.c.osm_id, t.c.name,
@@ -93,7 +109,7 @@ def _add_geometry_columns(sql: SaLambdaSelect, col: SaColumn, details: SearchDet
 
 def _make_interpolation_subquery(table: SaFromClause, inner: SaFromClause,
                                  numerals: List[int], details: SearchDetails) -> SaScalarSelect:
-    all_ids = array_agg(table.c.place_id) # type: ignore[no-untyped-call]
+    all_ids = sa.func.ArrayAgg(table.c.place_id)
     sql = sa.select(all_ids).where(table.c.parent_place_id == inner.c.place_id)
 
     if len(numerals) == 1:
@@ -117,9 +133,7 @@ def _filter_by_layer(table: SaFromClause, layers: DataLayer) -> SaColumn:
         orexpr.append(no_index(table.c.rank_address).between(1, 30))
     elif layers & DataLayer.ADDRESS:
         orexpr.append(no_index(table.c.rank_address).between(1, 29))
-        orexpr.append(sa.and_(no_index(table.c.rank_address) == 30,
-                              sa.or_(table.c.housenumber != None,
-                                     table.c.address.has_key('addr:housename'))))
+        orexpr.append(sa.func.IsAddressPoint(table))
     elif layers & DataLayer.POI:
         orexpr.append(sa.and_(no_index(table.c.rank_address) == 30,
                               table.c.class_.not_in(('place', 'building'))))
@@ -171,12 +185,21 @@ async def _get_placex_housenumbers(conn: SearchConnection,
         yield result
 
 
+def _int_list_to_subquery(inp: List[int]) -> 'sa.Subquery':
+    """ Create a subselect that returns the given list of integers
+        as rows in the column 'nr'.
+    """
+    vtab = sa.func.JsonArrayEach(sa.type_coerce(inp, sa.JSON))\
+               .table_valued(sa.column('value', type_=sa.JSON)) # type: ignore[no-untyped-call]
+    return sa.select(sa.cast(sa.cast(vtab.c.value, sa.Text), sa.Integer).label('nr')).subquery()
+
+
 async def _get_osmline(conn: SearchConnection, place_ids: List[int],
                        numerals: List[int],
                        details: SearchDetails) -> AsyncIterator[nres.SearchResult]:
     t = conn.t.osmline
-    values = sa.values(sa.Column('nr', sa.Integer()), name='housenumber')\
-               .data([(n,) for n in numerals])
+
+    values = _int_list_to_subquery(numerals)
     sql = sa.select(t.c.place_id, t.c.osm_id,
                     t.c.parent_place_id, t.c.address,
                     values.c.nr.label('housenumber'),
@@ -199,8 +222,7 @@ async def _get_tiger(conn: SearchConnection, place_ids: List[int],
                      numerals: List[int], osm_id: int,
                      details: SearchDetails) -> AsyncIterator[nres.SearchResult]:
     t = conn.t.tiger
-    values = sa.values(sa.Column('nr', sa.Integer()), name='housenumber')\
-               .data([(n,) for n in numerals])
+    values = _int_list_to_subquery(numerals)
     sql = sa.select(t.c.place_id, t.c.parent_place_id,
                     sa.literal('W').label('osm_type'),
                     sa.literal(osm_id).label('osm_id'),
@@ -295,7 +317,7 @@ class NearSearch(AbstractSearch):
 
         if table is None:
             # No classtype table available, do a simplified lookup in placex.
-            table = conn.t.placex.alias('inner')
+            table = conn.t.placex
             sql = sa.select(table.c.place_id,
                             sa.func.min(tgeom.c.centroid.ST_Distance(table.c.centroid))
                               .label('dist'))\
@@ -366,7 +388,7 @@ class PoiSearch(AbstractSearch):
                            .add_columns((-t.c.centroid.ST_Distance(NEAR_PARAM))
                                          .label('importance'))\
                            .where(t.c.linked_place_id == None) \
-                           .where(t.c.geometry.ST_DWithin(NEAR_PARAM, NEAR_RADIUS_PARAM)) \
+                           .where(t.c.geometry.within_distance(NEAR_PARAM, NEAR_RADIUS_PARAM)) \
                            .order_by(t.c.centroid.ST_Distance(NEAR_PARAM)) \
                            .limit(LIMIT_PARAM)
 
@@ -403,8 +425,8 @@ class PoiSearch(AbstractSearch):
 
                     if details.near and details.near_radius is not None:
                         sql = sql.order_by(table.c.centroid.ST_Distance(NEAR_PARAM))\
-                                 .where(table.c.centroid.ST_DWithin(NEAR_PARAM,
-                                                                    NEAR_RADIUS_PARAM))
+                                 .where(table.c.centroid.within_distance(NEAR_PARAM,
+                                                                         NEAR_RADIUS_PARAM))
 
                     if self.countries:
                         sql = sql.where(t.c.country_code.in_(self.countries.values))
@@ -449,11 +471,7 @@ class CountrySearch(AbstractSearch):
         if details.excluded:
             sql = sql.where(_exclude_places(t))
 
-        if details.viewbox is not None and details.bounded_viewbox:
-            sql = sql.where(lambda: t.c.geometry.intersects(VIEWBOX_PARAM))
-
-        if details.near is not None and details.near_radius is not None:
-            sql = sql.where(_within_near(t))
+        sql = filter_by_area(sql, t, details)
 
         results = nres.SearchResults()
         for row in await conn.execute(sql, _details_to_bind_params(details)):
@@ -486,18 +504,12 @@ class CountrySearch(AbstractSearch):
                 .where(tgrid.c.country_code.in_(self.countries.values))\
                 .group_by(tgrid.c.country_code)
 
-        if details.viewbox is not None and details.bounded_viewbox:
-            sql = sql.where(tgrid.c.geometry.intersects(VIEWBOX_PARAM))
-        if details.near is not None and details.near_radius is not None:
-            sql = sql.where(_within_near(tgrid))
+        sql = filter_by_area(sql, tgrid, details, avoid_index=True)
 
         sub = sql.subquery('grid')
 
         sql = sa.select(t.c.country_code,
-                        (t.c.name
-                         + sa.func.coalesce(t.c.derived_name,
-                                            sa.cast('', type_=conn.t.types.Composite))
-                        ).label('name'),
+                        t.c.name.merge(t.c.derived_name).label('name'),
                         sub.c.centroid, sub.c.bbox)\
                 .join(sub, t.c.country_code == sub.c.country_code)
 
@@ -545,18 +557,15 @@ class PostcodeSearch(AbstractSearch):
 
         penalty: SaExpression = sa.literal(self.penalty)
 
-        if details.viewbox is not None:
-            if details.bounded_viewbox:
-                sql = sql.where(t.c.geometry.intersects(VIEWBOX_PARAM))
-            else:
-                penalty += sa.case((t.c.geometry.intersects(VIEWBOX_PARAM), 0.0),
-                                   (t.c.geometry.intersects(VIEWBOX2_PARAM), 0.5),
-                                   else_=1.0)
+        if details.viewbox is not None and not details.bounded_viewbox:
+            penalty += sa.case((t.c.geometry.intersects(VIEWBOX_PARAM), 0.0),
+                               (t.c.geometry.intersects(VIEWBOX2_PARAM), 0.5),
+                               else_=1.0)
 
         if details.near is not None:
-            if details.near_radius is not None:
-                sql = sql.where(_within_near(t))
             sql = sql.order_by(t.c.geometry.ST_Distance(NEAR_PARAM))
+
+        sql = filter_by_area(sql, t, details)
 
         if self.countries:
             sql = sql.where(t.c.country_code.in_(self.countries.values))
@@ -566,13 +575,11 @@ class PostcodeSearch(AbstractSearch):
 
         if self.lookups:
             assert len(self.lookups) == 1
-            assert self.lookups[0].lookup_type == 'restrict'
             tsearch = conn.t.search_name
             sql = sql.where(tsearch.c.place_id == t.c.parent_place_id)\
-                     .where(sa.func.array_cat(tsearch.c.name_vector,
-                                              tsearch.c.nameaddress_vector,
-                                              type_=ARRAY(sa.Integer))
-                                    .contains(self.lookups[0].tokens))
+                     .where((tsearch.c.name_vector + tsearch.c.nameaddress_vector)
+                                     .contains(sa.type_coerce(self.lookups[0].tokens,
+                                                              IntArray)))
 
         for ranking in self.rankings:
             penalty += ranking.sql_penalty(conn.t.search_name)
@@ -637,11 +644,11 @@ class PlaceSearch(AbstractSearch):
             sql = sql.where(tsearch.c.address_rank > 9)
             tpc = conn.t.postcode
             pcs = self.postcodes.values
-            if self.expected_count > 1000:
+            if self.expected_count > 5000:
                 # Many results expected. Restrict by postcode.
                 sql = sql.where(sa.select(tpc.c.postcode)
                                   .where(tpc.c.postcode.in_(pcs))
-                                  .where(tsearch.c.centroid.ST_DWithin(tpc.c.geometry, 0.12))
+                                  .where(tsearch.c.centroid.within_distance(tpc.c.geometry, 0.12))
                                   .exists())
 
             # Less results, only have a preference for close postcodes
@@ -653,27 +660,26 @@ class PlaceSearch(AbstractSearch):
 
         if details.viewbox is not None:
             if details.bounded_viewbox:
-                if details.viewbox.area < 0.2:
-                    sql = sql.where(tsearch.c.centroid.intersects(VIEWBOX_PARAM))
-                else:
-                    sql = sql.where(tsearch.c.centroid.ST_Intersects_no_index(VIEWBOX_PARAM))
+                sql = sql.where(tsearch.c.centroid
+                                         .intersects(VIEWBOX_PARAM,
+                                                     use_index=details.viewbox.area < 0.2))
             elif self.expected_count >= 10000:
-                if details.viewbox.area < 0.5:
-                    sql = sql.where(tsearch.c.centroid.intersects(VIEWBOX2_PARAM))
-                else:
-                    sql = sql.where(tsearch.c.centroid.ST_Intersects_no_index(VIEWBOX2_PARAM))
+                sql = sql.where(tsearch.c.centroid
+                                         .intersects(VIEWBOX2_PARAM,
+                                                     use_index=details.viewbox.area < 0.5))
             else:
-                penalty += sa.case((t.c.geometry.intersects(VIEWBOX_PARAM), 0.0),
-                                   (t.c.geometry.intersects(VIEWBOX2_PARAM), 0.5),
+                penalty += sa.case((t.c.geometry.intersects(VIEWBOX_PARAM, use_index=False), 0.0),
+                                   (t.c.geometry.intersects(VIEWBOX2_PARAM, use_index=False), 0.5),
                                    else_=1.0)
 
         if details.near is not None:
             if details.near_radius is not None:
                 if details.near_radius < 0.1:
-                    sql = sql.where(tsearch.c.centroid.ST_DWithin(NEAR_PARAM, NEAR_RADIUS_PARAM))
+                    sql = sql.where(tsearch.c.centroid.within_distance(NEAR_PARAM,
+                                                                       NEAR_RADIUS_PARAM))
                 else:
-                    sql = sql.where(tsearch.c.centroid.ST_DWithin_no_index(NEAR_PARAM,
-                                                                           NEAR_RADIUS_PARAM))
+                    sql = sql.where(tsearch.c.centroid
+                                             .ST_Distance(NEAR_PARAM) <  NEAR_RADIUS_PARAM)
             sql = sql.add_columns((-tsearch.c.centroid.ST_Distance(NEAR_PARAM))
                                       .label('importance'))
             sql = sql.order_by(sa.desc(sa.text('importance')))
@@ -692,10 +698,10 @@ class PlaceSearch(AbstractSearch):
             sql = sql.order_by(sa.text('accuracy'))
 
         if self.housenumbers:
-            hnr_regexp = f"\\m({'|'.join(self.housenumbers.values)})\\M"
+            hnr_list = '|'.join(self.housenumbers.values)
             sql = sql.where(tsearch.c.address_rank.between(16, 30))\
                      .where(sa.or_(tsearch.c.address_rank < 30,
-                                   t.c.housenumber.op('~*')(hnr_regexp)))
+                                   sa.func.RegexpWord(hnr_list, t.c.housenumber)))
 
             # Cross check for housenumbers, need to do that on a rather large
             # set. Worst case there are 40.000 main streets in OSM.
@@ -703,10 +709,10 @@ class PlaceSearch(AbstractSearch):
 
             # Housenumbers from placex
             thnr = conn.t.placex.alias('hnr')
-            pid_list = array_agg(thnr.c.place_id) # type: ignore[no-untyped-call]
+            pid_list = sa.func.ArrayAgg(thnr.c.place_id)
             place_sql = sa.select(pid_list)\
                           .where(thnr.c.parent_place_id == inner.c.place_id)\
-                          .where(thnr.c.housenumber.op('~*')(hnr_regexp))\
+                          .where(sa.func.RegexpWord(hnr_list, thnr.c.housenumber))\
                           .where(thnr.c.linked_place_id == None)\
                           .where(thnr.c.indexed_status == 0)
 

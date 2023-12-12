@@ -15,6 +15,7 @@ from nominatim.api.search.query import QueryStruct, Token, TokenType, TokenRange
 from nominatim.api.search.token_assignment import TokenAssignment
 import nominatim.api.search.db_search_fields as dbf
 import nominatim.api.search.db_searches as dbs
+import nominatim.api.search.db_search_lookups as lookups
 
 
 def wrap_near_search(categories: List[Tuple[str, str]],
@@ -152,7 +153,7 @@ class SearchBuilder:
                 sdata.lookups = [dbf.FieldLookup('nameaddress_vector',
                                                  [t.token for r in address
                                                   for t in self.query.get_partials_list(r)],
-                                                 'restrict')]
+                                                 lookups.Restrict)]
                 penalty += 0.2
             yield dbs.PostcodeSearch(penalty, sdata)
 
@@ -162,7 +163,7 @@ class SearchBuilder:
         """ Build a simple address search for special entries where the
             housenumber is the main name token.
         """
-        sdata.lookups = [dbf.FieldLookup('name_vector', [t.token for t in hnrs], 'lookup_any')]
+        sdata.lookups = [dbf.FieldLookup('name_vector', [t.token for t in hnrs], lookups.LookupAny)]
         expected_count = sum(t.count for t in hnrs)
 
         partials = [t for trange in address
@@ -170,16 +171,16 @@ class SearchBuilder:
 
         if expected_count < 8000:
             sdata.lookups.append(dbf.FieldLookup('nameaddress_vector',
-                                                 [t.token for t in partials], 'restrict'))
+                                                 [t.token for t in partials], lookups.Restrict))
         elif len(partials) != 1 or partials[0].count < 10000:
             sdata.lookups.append(dbf.FieldLookup('nameaddress_vector',
-                                                 [t.token for t in partials], 'lookup_all'))
+                                                 [t.token for t in partials], lookups.LookupAll))
         else:
             sdata.lookups.append(
                 dbf.FieldLookup('nameaddress_vector',
                                 [t.token for t
                                  in self.query.get_tokens(address[0], TokenType.WORD)],
-                                'lookup_any'))
+                                lookups.LookupAny))
 
         sdata.housenumbers = dbf.WeightedStrings([], [])
         yield dbs.PlaceSearch(0.05, sdata, expected_count)
@@ -232,16 +233,16 @@ class SearchBuilder:
                 penalty += 1.2 * sum(t.penalty for t in addr_partials if not t.is_indexed)
             # Any of the full names applies with all of the partials from the address
             yield penalty, fulls_count / (2**len(addr_partials)),\
-                  dbf.lookup_by_any_name([t.token for t in name_fulls], addr_tokens,
-                                         'restrict' if fulls_count < 10000 else 'lookup_all')
+                  dbf.lookup_by_any_name([t.token for t in name_fulls],
+                                         addr_tokens, fulls_count > 10000)
 
         # To catch remaining results, lookup by name and address
         # We only do this if there is a reasonable number of results expected.
         exp_count = exp_count / (2**len(addr_partials)) if addr_partials else exp_count
         if exp_count < 10000 and all(t.is_indexed for t in name_partials):
-            lookup = [dbf.FieldLookup('name_vector', name_tokens, 'lookup_all')]
+            lookup = [dbf.FieldLookup('name_vector', name_tokens, lookups.LookupAll)]
             if addr_tokens:
-                lookup.append(dbf.FieldLookup('nameaddress_vector', addr_tokens, 'lookup_all'))
+                lookup.append(dbf.FieldLookup('nameaddress_vector', addr_tokens, lookups.LookupAll))
             penalty += 0.35 * max(0, 5 - len(name_partials) - len(addr_tokens))
             yield penalty, exp_count, lookup
 

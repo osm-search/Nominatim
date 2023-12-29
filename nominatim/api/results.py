@@ -590,7 +590,7 @@ async def complete_address_details(conn: SearchConnection, results: List[BaseRes
         return
 
     ltab = sa.func.JsonArrayEach(sa.type_coerce(lookup_ids, sa.JSON))\
-             .table_valued(sa.column('value', type_=sa.JSON)) # type: ignore[no-untyped-call]
+             .table_valued(sa.column('value', type_=sa.JSON))
 
     t = conn.t.placex
     taddr = conn.t.addressline
@@ -653,7 +653,7 @@ async def complete_address_details(conn: SearchConnection, results: List[BaseRes
     parent_lookup_ids = list(filter(lambda e: e['pid'] != e['lid'], lookup_ids))
     if parent_lookup_ids:
         ltab = sa.func.JsonArrayEach(sa.type_coerce(parent_lookup_ids, sa.JSON))\
-                 .table_valued(sa.column('value', type_=sa.JSON)) # type: ignore[no-untyped-call]
+                 .table_valued(sa.column('value', type_=sa.JSON))
         sql = sa.select(ltab.c.value['pid'].as_integer().label('src_place_id'),
                         t.c.place_id, t.c.osm_type, t.c.osm_id, t.c.name,
                         t.c.class_, t.c.type, t.c.extratags,

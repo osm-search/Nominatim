@@ -7,7 +7,7 @@
 """
 Implementation of the acutal database accesses for forward search.
 """
-from typing import List, Tuple, AsyncIterator, Dict, Any, Callable
+from typing import List, Tuple, AsyncIterator, Dict, Any, Callable, cast
 import abc
 
 import sqlalchemy as sa
@@ -190,7 +190,7 @@ def _int_list_to_subquery(inp: List[int]) -> 'sa.Subquery':
         as rows in the column 'nr'.
     """
     vtab = sa.func.JsonArrayEach(sa.type_coerce(inp, sa.JSON))\
-               .table_valued(sa.column('value', type_=sa.JSON)) # type: ignore[no-untyped-call]
+               .table_valued(sa.column('value', type_=sa.JSON))
     return sa.select(sa.cast(sa.cast(vtab.c.value, sa.Text), sa.Integer).label('nr')).subquery()
 
 
@@ -656,7 +656,7 @@ class PlaceSearch(AbstractSearch):
                       .where(tpc.c.postcode.in_(pcs))\
                       .scalar_subquery()
             penalty += sa.case((t.c.postcode.in_(pcs), 0.0),
-                               else_=sa.func.coalesce(pc_near, 2.0))
+                               else_=sa.func.coalesce(pc_near, cast(SaColumn, 2.0)))
 
         if details.viewbox is not None:
             if details.bounded_viewbox:

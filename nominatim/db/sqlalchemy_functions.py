@@ -55,7 +55,7 @@ class IntersectsReverseDistance(sa.sql.functions.GenericFunction[Any]):
     inherit_cache = True
 
     def __init__(self, table: sa.Table, geom: SaColumn) -> None:
-        super().__init__(table.c.geometry, # type: ignore[no-untyped-call]
+        super().__init__(table.c.geometry,
                          table.c.rank_search, geom)
         self.tablename = table.name
 
@@ -122,7 +122,7 @@ class IsAddressPoint(sa.sql.functions.GenericFunction[Any]):
     inherit_cache = True
 
     def __init__(self, table: sa.Table) -> None:
-        super().__init__(table.c.rank_address, # type: ignore[no-untyped-call]
+        super().__init__(table.c.rank_address,
                          table.c.housenumber, table.c.name)
 
 

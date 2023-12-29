@@ -290,7 +290,7 @@ gettokenstring( PG_FUNCTION_ARGS )
 	len--;// Drop the terminating zero
 	result = (text *)palloc(len + VARHDRSZ);
 	SET_VARSIZE(result, len + VARHDRSZ);
-	memcpy(VARDATA(result), buffer, len);
+	memcpy((void *) VARDATA(result), buffer, len);
 
 	pfree(buffer);
 

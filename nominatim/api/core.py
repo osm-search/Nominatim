@@ -88,7 +88,7 @@ class NominatimAPIAsync: #pylint: disable=too-many-instance-attributes
             if self.config.get_int('API_POOL_SIZE') == 0:
                 extra_args['poolclass'] = sa.pool.NullPool
             else:
-                extra_args['poolclass'] = sa.pool.QueuePool
+                extra_args['poolclass'] = sa.pool.AsyncAdaptedQueuePool
                 extra_args['max_overflow'] = 0
                 extra_args['pool_size'] = self.config.get_int('API_POOL_SIZE')
 

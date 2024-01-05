@@ -111,7 +111,8 @@ def test_reverse_poi_layer_with_no_pois(apiobj, frontend):
                               layers=napi.DataLayer.POI) is None
 
 
-def test_reverse_housenumber_on_street(apiobj, frontend):
+@pytest.mark.parametrize('with_geom', [True, False])
+def test_reverse_housenumber_on_street(apiobj, frontend, with_geom):
     apiobj.add_placex(place_id=990, class_='highway', type='service',
                       rank_search=27, rank_address=27,
                       name = {'name': 'My Street'},
@@ -122,14 +123,28 @@ def test_reverse_housenumber_on_street(apiobj, frontend):
                       rank_search=30, rank_address=30,
                       housenumber='23',
                       centroid=(10.0, 10.00001))
+    apiobj.add_placex(place_id=1990, class_='highway', type='service',
+                      rank_search=27, rank_address=27,
+                      name = {'name': 'Other Street'},
+                      centroid=(10.0, 1.0),
+                      geometry='LINESTRING(9.995 1, 10.005 1)')
+    apiobj.add_placex(place_id=1991, class_='place', type='house',
+                      parent_place_id=1990,
+                      rank_search=30, rank_address=30,
+                      housenumber='23',
+                      centroid=(10.0, 1.00001))
+
+    params = {'geometry_output': napi.GeometryFormat.TEXT} if with_geom else {}
 
     api = frontend(apiobj, options=API_OPTIONS)
-    assert api.reverse((10.0, 10.0), max_rank=30).place_id == 991
+    assert api.reverse((10.0, 10.0), max_rank=30, **params).place_id == 991
     assert api.reverse((10.0, 10.0), max_rank=27).place_id == 990
     assert api.reverse((10.0, 10.00001), max_rank=30).place_id == 991
+    assert api.reverse((10.0, 1.0), **params).place_id == 1991
 
 
-def test_reverse_housenumber_interpolation(apiobj, frontend):
+@pytest.mark.parametrize('with_geom', [True, False])
+def test_reverse_housenumber_interpolation(apiobj, frontend, with_geom):
     apiobj.add_placex(place_id=990, class_='highway', type='service',
                       rank_search=27, rank_address=27,
                       name = {'name': 'My Street'},
@@ -145,9 +160,22 @@ def test_reverse_housenumber_interpolation(apiobj, frontend):
                        startnumber=1, endnumber=3, step=1,
                        centroid=(10.0, 10.00001),
                        geometry='LINESTRING(9.995 10.00001, 10.005 10.00001)')
+    apiobj.add_placex(place_id=1990, class_='highway', type='service',
+                      rank_search=27, rank_address=27,
+                      name = {'name': 'Other Street'},
+                      centroid=(10.0, 20.0),
+                      geometry='LINESTRING(9.995 20, 10.005 20)')
+    apiobj.add_osmline(place_id=1992,
+                       parent_place_id=1990,
+                       startnumber=1, endnumber=3, step=1,
+                       centroid=(10.0, 20.00001),
+                       geometry='LINESTRING(9.995 20.00001, 10.005 20.00001)')
+
+    params = {'geometry_output': napi.GeometryFormat.TEXT} if with_geom else {}
 
     api = frontend(apiobj, options=API_OPTIONS)
-    assert api.reverse((10.0, 10.0)).place_id == 992
+    assert api.reverse((10.0, 10.0), **params).place_id == 992
+    assert api.reverse((10.0, 20.0), **params).place_id == 1992
 
 
 def test_reverse_housenumber_point_interpolation(apiobj, frontend):
@@ -277,8 +305,10 @@ def test_reverse_country_lookup_no_objects(apiobj, frontend):
 
 
 @pytest.mark.parametrize('rank', [4, 30])
-def test_reverse_country_lookup_country_only(apiobj, frontend, rank):
+@pytest.mark.parametrize('with_geom', [True, False])
+def test_reverse_country_lookup_country_only(apiobj, frontend, rank, with_geom):
     apiobj.add_country('xx', 'POLYGON((0 0, 0 1, 1 1, 1 0, 0 0))')
+    apiobj.add_country('yy', 'POLYGON((10 0, 10 1, 11 1, 11 0, 10 0))')
     apiobj.add_placex(place_id=225, class_='place', type='country',
                       name={'name': 'My Country'},
                       rank_address=4,
@@ -286,12 +316,19 @@ def test_reverse_country_lookup_country_only(apiobj, frontend, rank):
                       country_code='xx',
                       centroid=(0.7, 0.7))
 
+    params = {'max_rank': rank}
+    if with_geom:
+        params['geometry_output'] = napi.GeometryFormat.TEXT
+
     api = frontend(apiobj, options=API_OPTIONS)
-    assert api.reverse((0.5, 0.5), max_rank=rank).place_id == 225
+    assert api.reverse((0.5, 0.5), **params).place_id == 225
+    assert api.reverse((10.5, 0.5), **params) is None
 
 
-def test_reverse_country_lookup_place_node_inside(apiobj, frontend):
+@pytest.mark.parametrize('with_geom', [True, False])
+def test_reverse_country_lookup_place_node_inside(apiobj, frontend, with_geom):
     apiobj.add_country('xx', 'POLYGON((0 0, 0 1, 1 1, 1 0, 0 0))')
+    apiobj.add_country('yy', 'POLYGON((10 0, 10 1, 11 1, 11 0, 10 0))')
     apiobj.add_placex(place_id=225, class_='place', type='state',
                       osm_type='N',
                       name={'name': 'My State'},
@@ -299,9 +336,19 @@ def test_reverse_country_lookup_place_node_inside(apiobj, frontend):
                       rank_search=6,
                       country_code='xx',
                       centroid=(0.5, 0.505))
+    apiobj.add_placex(place_id=425, class_='place', type='state',
+                      osm_type='N',
+                      name={'name': 'Other State'},
+                      rank_address=6,
+                      rank_search=6,
+                      country_code='yy',
+                      centroid=(10.5, 0.505))
+
+    params = {'geometry_output': napi.GeometryFormat.KML} if with_geom else {}
 
     api = frontend(apiobj, options=API_OPTIONS)
-    assert api.reverse((0.5, 0.5)).place_id == 225
+    assert api.reverse((0.5, 0.5), **params).place_id == 225
+    assert api.reverse((10.5, 0.5), **params).place_id == 425
 
 
 @pytest.mark.parametrize('gtype', list(napi.GeometryFormat))
@@ -362,10 +409,25 @@ def test_reverse_tiger_geometry(apiobj, frontend):
                      startnumber=1, endnumber=3, step=1,
                      centroid=(10.0, 10.00001),
                      geometry='LINESTRING(9.995 10.00001, 10.005 10.00001)')
+    apiobj.add_placex(place_id=1000, class_='highway', type='service',
+                      rank_search=27, rank_address=27,
+                      name = {'name': 'My Street'},
+                      centroid=(11.0, 11.0),
+                      country_code='us',
+                      geometry='LINESTRING(10.995 11, 11.005 11)')
+    apiobj.add_tiger(place_id=1001,
+                     parent_place_id=1000,
+                     startnumber=1, endnumber=3, step=1,
+                     centroid=(11.0, 11.00001),
+                     geometry='LINESTRING(10.995 11.00001, 11.005 11.00001)')
 
     api = frontend(apiobj, options=API_OPTIONS)
-    output = api.reverse((10.0, 10.0),
-                                geometry_output=napi.GeometryFormat.GEOJSON).geometry['geojson']
 
-    assert json.loads(output) == {'coordinates': [10, 10.00001], 'type': 'Point'}
+    params = {'geometry_output': napi.GeometryFormat.GEOJSON}
+
+    output = api.reverse((10.0, 10.0), **params)
+    assert json.loads(output.geometry['geojson']) == {'coordinates': [10, 10.00001], 'type': 'Point'}
+
+    output = api.reverse((11.0, 11.0), **params)
+    assert json.loads(output.geometry['geojson']) == {'coordinates': [11, 11.00001], 'type': 'Point'}
 

@@ -218,17 +218,21 @@ class ReverseGeocoder:
     async def _find_housenumber_for_street(self, parent_place_id: int) -> Optional[SaRow]:
         t = self.conn.t.placex
 
-        sql: SaLambdaSelect = sa.lambda_stmt(lambda: _select_from_placex(t)
-                .where(t.c.geometry.within_distance(WKT_PARAM, 0.001))
-                .where(t.c.parent_place_id == parent_place_id)
-                .where(sa.func.IsAddressPoint(t))
-                .where(t.c.indexed_status == 0)
-                .where(t.c.linked_place_id == None)
-                .order_by('distance')
-                .limit(1))
+        def _base_query() -> SaSelect:
+            return _select_from_placex(t)\
+                .where(t.c.geometry.within_distance(WKT_PARAM, 0.001))\
+                .where(t.c.parent_place_id == parent_place_id)\
+                .where(sa.func.IsAddressPoint(t))\
+                .where(t.c.indexed_status == 0)\
+                .where(t.c.linked_place_id == None)\
+                .order_by('distance')\
+                .limit(1)
 
+        sql: SaLambdaSelect
         if self.has_geometries():
-            sql = self._add_geometry_columns(sql, t.c.geometry)
+            sql = self._add_geometry_columns(_base_query(), t.c.geometry)
+        else:
+            sql = sa.lambda_stmt(_base_query)
 
         return (await self.conn.execute(sql, self.bind_params)).one_or_none()
 
@@ -237,29 +241,25 @@ class ReverseGeocoder:
                                              distance: float) -> Optional[SaRow]:
         t = self.conn.t.osmline
 
-        sql: Any = sa.lambda_stmt(lambda:
-                   sa.select(t,
-                             t.c.linegeo.ST_Distance(WKT_PARAM).label('distance'),
-                             _locate_interpolation(t))
-                     .where(t.c.linegeo.within_distance(WKT_PARAM, distance))
-                     .where(t.c.startnumber != None)
-                     .order_by('distance')
-                     .limit(1))
+        sql = sa.select(t,
+                        t.c.linegeo.ST_Distance(WKT_PARAM).label('distance'),
+                        _locate_interpolation(t))\
+                .where(t.c.linegeo.within_distance(WKT_PARAM, distance))\
+                .where(t.c.startnumber != None)\
+                .order_by('distance')\
+                .limit(1)
 
         if parent_place_id is not None:
-            sql += lambda s: s.where(t.c.parent_place_id == parent_place_id)
+            sql = sql.where(t.c.parent_place_id == parent_place_id)
 
-        def _wrap_query(base_sql: SaLambdaSelect) -> SaSelect:
-            inner = base_sql.subquery('ipol')
+        inner = sql.subquery('ipol')
 
-            return sa.select(inner.c.place_id, inner.c.osm_id,
+        sql = sa.select(inner.c.place_id, inner.c.osm_id,
                              inner.c.parent_place_id, inner.c.address,
                              _interpolated_housenumber(inner),
                              _interpolated_position(inner),
                              inner.c.postcode, inner.c.country_code,
                              inner.c.distance)
-
-        sql += _wrap_query
 
         if self.has_geometries():
             sub = sql.subquery('geom')
@@ -288,11 +288,12 @@ class ReverseGeocoder:
                              inner.c.postcode,
                              inner.c.distance)
 
-        sql: SaLambdaSelect = sa.lambda_stmt(_base_query)
-
+        sql: SaLambdaSelect
         if self.has_geometries():
-            sub = sql.subquery('geom')
+            sub = _base_query().subquery('geom')
             sql = self._add_geometry_columns(sa.select(sub), sub.c.centroid)
+        else:
+            sql = sa.lambda_stmt(_base_query)
 
         return (await self.conn.execute(sql, self.bind_params)).one_or_none()
 
@@ -407,9 +408,11 @@ class ReverseGeocoder:
                     .order_by(sa.desc(inner.c.rank_search), inner.c.distance)\
                     .limit(1)
 
-            sql = sa.lambda_stmt(_place_inside_area_query)
             if self.has_geometries():
-                sql = self._add_geometry_columns(sql, sa.literal_column('places.geometry'))
+                sql = self._add_geometry_columns(_place_inside_area_query(),
+                                                 sa.literal_column('places.geometry'))
+            else:
+                sql = sa.lambda_stmt(_place_inside_area_query)
 
             place_address_row = (await self.conn.execute(sql, self.bind_params)).one_or_none()
             log().var_dump('Result (place node)', place_address_row)
@@ -513,9 +516,12 @@ class ReverseGeocoder:
                     .order_by(sa.desc(inner.c.rank_search), inner.c.distance)\
                     .limit(1)
 
-            sql: SaLambdaSelect = sa.lambda_stmt(_base_query)
+            sql: SaLambdaSelect
             if self.has_geometries():
-                sql = self._add_geometry_columns(sql, sa.literal_column('area.geometry'))
+                sql = self._add_geometry_columns(_base_query(),
+                                                 sa.literal_column('area.geometry'))
+            else:
+                sql = sa.lambda_stmt(_base_query)
 
             address_row = (await self.conn.execute(sql, self.bind_params)).one_or_none()
             log().var_dump('Result (addressable place node)', address_row)
@@ -524,16 +530,19 @@ class ReverseGeocoder:
 
         if address_row is None:
             # Still nothing, then return a country with the appropriate country code.
-            sql = sa.lambda_stmt(lambda: _select_from_placex(t)\
-                      .where(t.c.country_code.in_(ccodes))\
-                      .where(t.c.rank_address == 4)\
-                      .where(t.c.rank_search == 4)\
-                      .where(t.c.linked_place_id == None)\
-                      .order_by('distance')\
-                      .limit(1))
+            def _country_base_query() -> SaSelect:
+                return _select_from_placex(t)\
+                         .where(t.c.country_code.in_(ccodes))\
+                         .where(t.c.rank_address == 4)\
+                         .where(t.c.rank_search == 4)\
+                         .where(t.c.linked_place_id == None)\
+                         .order_by('distance')\
+                         .limit(1)
 
             if self.has_geometries():
-                sql = self._add_geometry_columns(sql, t.c.geometry)
+                sql = self._add_geometry_columns(_country_base_query(), t.c.geometry)
+            else:
+                sql = sa.lambda_stmt(_country_base_query)
 
             address_row = (await self.conn.execute(sql, self.bind_params)).one_or_none()
 

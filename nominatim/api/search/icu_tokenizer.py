@@ -8,7 +8,6 @@
 Implementation of query analysis for the ICU tokenizer.
 """
 from typing import Tuple, Dict, List, Optional, NamedTuple, Iterator, Any, cast
-from copy import copy
 from collections import defaultdict
 import dataclasses
 import difflib
@@ -188,10 +187,6 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
                             query.add_token(trange, qmod.TokenType.NEAR_ITEM, token)
                     else:
                         query.add_token(trange, qmod.TokenType.QUALIFIER, token)
-                        if trange.start == 0 or trange.end == query.num_token_slots():
-                            token = copy(token)
-                            token.penalty += 0.1 * (query.num_token_slots())
-                            query.add_token(trange, qmod.TokenType.NEAR_ITEM, token)
                 else:
                     query.add_token(trange, DB_TO_TOKEN_TYPE[row.type], token)
 

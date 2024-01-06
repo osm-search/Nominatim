@@ -663,7 +663,7 @@ class PlaceSearch(AbstractSearch):
                 sql = sql.where(tsearch.c.centroid
                                          .intersects(VIEWBOX_PARAM,
                                                      use_index=details.viewbox.area < 0.2))
-            elif self.expected_count >= 10000:
+            elif not self.postcodes and not self.housenumbers and self.expected_count >= 10000:
                 sql = sql.where(tsearch.c.centroid
                                          .intersects(VIEWBOX2_PARAM,
                                                      use_index=details.viewbox.area < 0.5))

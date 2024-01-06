@@ -37,7 +37,10 @@ async def get_status(conn: SearchConnection) -> StatusResult:
     status.data_updated = await conn.scalar(sql)
 
     if status.data_updated is not None:
-        status.data_updated = status.data_updated.replace(tzinfo=dt.timezone.utc)
+        if status.data_updated.tzinfo is None:
+            status.data_updated = status.data_updated.replace(tzinfo=dt.timezone.utc)
+        else:
+            status.data_updated = status.data_updated.astimezone(dt.timezone.utc)
 
     # Database version
     try:

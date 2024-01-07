@@ -64,7 +64,7 @@ class ForwardGeocoder:
                     log().table_dump('Searches for assignment',
                                      _dump_searches(searches, query, num_searches))
                 num_searches = len(searches)
-            searches.sort(key=lambda s: s.penalty)
+            searches.sort(key=lambda s: (s.penalty, s.SEARCH_PRIO))
 
         return query, searches
 
@@ -85,6 +85,7 @@ class ForwardGeocoder:
             if search.penalty > prev_penalty and (search.penalty > min_ranking or i > 20):
                 break
             log().table_dump(f"{i + 1}. Search", _dump_searches([search], query))
+            log().var_dump('Params', self.params)
             lookup_results = await search.lookup(self.conn, self.params)
             for result in lookup_results:
                 rhash = (result.source_table, result.place_id,

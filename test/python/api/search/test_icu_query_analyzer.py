@@ -148,9 +148,9 @@ async def test_qualifier_words(conn):
     query = await ana.analyze_query(make_phrase('foo BAR foo BAR foo'))
 
     assert query.num_token_slots() == 5
-    assert set(t.ttype for t in query.nodes[0].starting) == {TokenType.NEAR_ITEM, TokenType.QUALIFIER}
+    assert set(t.ttype for t in query.nodes[0].starting) == {TokenType.QUALIFIER}
     assert set(t.ttype for t in query.nodes[2].starting) == {TokenType.QUALIFIER}
-    assert set(t.ttype for t in query.nodes[4].starting) == {TokenType.NEAR_ITEM, TokenType.QUALIFIER}
+    assert set(t.ttype for t in query.nodes[4].starting) == {TokenType.QUALIFIER}
 
 
 @pytest.mark.asyncio

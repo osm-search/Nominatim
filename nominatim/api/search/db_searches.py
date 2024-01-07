@@ -245,6 +245,7 @@ async def _get_tiger(conn: SearchConnection, place_ids: List[int],
 class AbstractSearch(abc.ABC):
     """ Encapuslation of a single lookup in the database.
     """
+    SEARCH_PRIO: int = 2
 
     def __init__(self, penalty: float) -> None:
         self.penalty = penalty
@@ -448,6 +449,8 @@ class PoiSearch(AbstractSearch):
 class CountrySearch(AbstractSearch):
     """ Search for a country name or country code.
     """
+    SEARCH_PRIO = 0
+
     def __init__(self, sdata: SearchData) -> None:
         super().__init__(sdata.penalty)
         self.countries = sdata.countries
@@ -604,6 +607,8 @@ class PostcodeSearch(AbstractSearch):
 class PlaceSearch(AbstractSearch):
     """ Generic search for an address or named place.
     """
+    SEARCH_PRIO = 1
+
     def __init__(self, extra_penalty: float, sdata: SearchData, expected_count: int) -> None:
         super().__init__(sdata.penalty + extra_penalty)
         self.countries = sdata.countries

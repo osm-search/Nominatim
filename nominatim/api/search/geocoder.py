@@ -64,7 +64,7 @@ class ForwardGeocoder:
                     log().table_dump('Searches for assignment',
                                      _dump_searches(searches, query, num_searches))
                 num_searches = len(searches)
-            searches.sort(key=lambda s: s.penalty)
+            searches.sort(key=lambda s: (s.penalty, s.SEARCH_PRIO))
 
         return query, searches
 

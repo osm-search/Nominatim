@@ -484,7 +484,14 @@ class CountrySearch(AbstractSearch):
             result.bbox = Bbox.from_wkb(row.bbox)
             results.append(result)
 
-        return results or await self.lookup_in_country_table(conn, details)
+        if not results:
+            results = await self.lookup_in_country_table(conn, details)
+
+        if results:
+            details.min_rank = min(5, details.max_rank)
+            details.max_rank = min(25, details.max_rank)
+
+        return results
 
 
     async def lookup_in_country_table(self, conn: SearchConnection,

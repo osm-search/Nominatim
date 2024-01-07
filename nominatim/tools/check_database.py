@@ -13,9 +13,11 @@ from textwrap import dedent
 
 from nominatim.config import Configuration
 from nominatim.db.connection import connect, Connection
+from nominatim.db import properties
 from nominatim.errors import UsageError
 from nominatim.tokenizer import factory as tokenizer_factory
 from nominatim.tools import freeze
+from nominatim.version import NOMINATIM_VERSION, parse_version
 
 CHECKLIST = []
 
@@ -147,10 +149,51 @@ def check_connection(conn: Any, config: Configuration) -> CheckResult:
     return CheckState.OK
 
 @_check(hint="""\
+             Database version ({db_version}) doesn't match Nominatim version ({nom_version})
+
+             Hints:
+             * Are you connecting to the correct database?
+             
+             {instruction}
+
+             Check the Migration chapter of the Administration Guide.
+
+             Project directory: {config.project_dir}
+             Current setting of NOMINATIM_DATABASE_DSN: {config.DATABASE_DSN}
+             """)
+def check_database_version(conn: Connection, config: Configuration) -> CheckResult:
+    """ Checking database_version matches Nominatim software version
+    """
+
+    if conn.table_exists('nominatim_properties'):
+        db_version_str = properties.get_property(conn, 'database_version')
+    else:
+        db_version_str = None
+
+    if db_version_str is not None:
+        db_version = parse_version(db_version_str)
+
+        if db_version == NOMINATIM_VERSION:
+            return CheckState.OK
+
+        instruction = (
+            'Run migrations: nominatim admin --migrate'
+            if db_version < NOMINATIM_VERSION
+            else 'You need to upgrade the Nominatim software.'
+        )
+    else:
+        instruction = ''
+
+    return CheckState.FATAL, dict(db_version=db_version_str,
+                                  nom_version=NOMINATIM_VERSION,
+                                  instruction=instruction,
+                                  config=config)
+
+@_check(hint="""\
              placex table not found
 
              Hints:
-             * Are you connecting to the right database?
+             * Are you connecting to the correct database?
              * Did the import process finish without errors?
 
              Project directory: {config.project_dir}

@@ -141,7 +141,8 @@ class ForwardGeocoder:
                or (result.importance is not None and result.importance < 0):
                 continue
             distance = 0.0
-            norm = self.query_analyzer.normalize_text(result.display_name)
+            norm = self.query_analyzer.normalize_text(' '.join((result.display_name,
+                                                                result.country_code or '')))
             words = set((w for w in norm.split(' ') if w))
             if not words:
                 continue

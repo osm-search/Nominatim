@@ -136,6 +136,15 @@ Feature: Search queries
           | class    | type |
           | leisure | firepit |
 
+
+    Scenario: POI search in a bounded viewbox
+        When sending json search query "restaurants"
+          | viewbox                           | bounded |
+          | 9.50830,47.15253,9.52043,47.14866 | 1 |
+        Then results contain
+          | class   | type       |
+          | amenity | restaurant |
+
     Scenario Outline: Key/value search near given coordinate can be restricted to country
         When sending json search query "[natural=peak] 47.06512,9.53965" with address
           | countrycodes |

@@ -186,7 +186,10 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
                         if trange.start == 0:
                             query.add_token(trange, qmod.TokenType.NEAR_ITEM, token)
                     else:
-                        query.add_token(trange, qmod.TokenType.QUALIFIER, token)
+                        if trange.start == 0 and trange.end == query.num_token_slots():
+                            query.add_token(trange, qmod.TokenType.NEAR_ITEM, token)
+                        else:
+                            query.add_token(trange, qmod.TokenType.QUALIFIER, token)
                 else:
                     query.add_token(trange, DB_TO_TOKEN_TYPE[row.type], token)
 

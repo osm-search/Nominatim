@@ -139,6 +139,19 @@ async def test_category_words_only_at_beginning(conn):
 
 
 @pytest.mark.asyncio
+async def test_freestanding_qualifier_words_become_category(conn):
+    ana = await tok.create_query_analyzer(conn)
+
+    await add_word(conn, 1, 'foo', 'S', 'FOO', {'op': '-'})
+
+    query = await ana.analyze_query(make_phrase('foo'))
+
+    assert query.num_token_slots() == 1
+    assert len(query.nodes[0].starting) == 1
+    assert query.nodes[0].starting[0].ttype == TokenType.NEAR_ITEM
+
+
+@pytest.mark.asyncio
 async def test_qualifier_words(conn):
     ana = await tok.create_query_analyzer(conn)
 

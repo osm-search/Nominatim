@@ -115,6 +115,23 @@ Feature: Import of postcodes
             | object | postcode |
             | W93    | 45023    |
 
+    Scenario: Road areas get postcodes from nearby named buildings without other info
+        Given the grid with origin US
+            | 10 |   |   |   | 11 |
+            | 13 |   |   |   | 12 |
+            |    | 1 | 2 |   |    |
+            |    | 4 | 3 |   |    |
+        And the named places
+            | osm | class    | type           | geometry         |
+            | W93 | highway  | pedestriant    | (10,11,12,13,10) |
+        And the named places
+            | osm | class    | type        | addr+postcode | geometry    |
+            | W22 | building | yes         | 45023         | (1,2,3,4,1) |
+        When importing
+        Then placex contains
+            | object | postcode |
+            | W93    | 45023    |
+
     Scenario: Roads get postcodes from nearby unnamed buildings without other info
         Given the grid with origin US
             | 10 |   |   |   | 11 |

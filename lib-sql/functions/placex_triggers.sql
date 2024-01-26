@@ -1241,7 +1241,9 @@ BEGIN
           OR ST_GeometryType(NEW.geometry) not in ('ST_LineString','ST_MultiLineString')
           OR ST_Length(NEW.geometry) < 0.02)
   THEN
-    NEW.postcode := get_nearest_postcode(NEW.country_code, NEW.geometry);
+    NEW.postcode := get_nearest_postcode(NEW.country_code,
+                                         CASE WHEN NEW.rank_address > 25
+                                              THEN NEW.centroid ELSE NEW.geometry END);
   END IF;
 
   {% if debug %}RAISE WARNING 'place update % % finished.', NEW.osm_type, NEW.osm_id;{% endif %}

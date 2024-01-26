@@ -39,7 +39,7 @@ Feature: Reverse geocoding
           | way      | highway  |
         And result addresses contain
           | road                | postcode | country_code |
-          | Upper Kingston Road | 30607    | us |
+          | Upper Kingston Road | 36067    | us |
 
     Scenario: Interpolated house number
         When sending v1/reverse at 47.118533,9.57056562

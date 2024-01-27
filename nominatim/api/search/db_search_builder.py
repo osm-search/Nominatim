@@ -233,7 +233,8 @@ class SearchBuilder:
             # Any of the full names applies with all of the partials from the address
             yield penalty, fulls_count / (2**len(addr_tokens)),\
                   dbf.lookup_by_any_name([t.token for t in name_fulls],
-                                         addr_tokens, fulls_count > 10000)
+                                         addr_tokens,
+                                         fulls_count > 30000 / max(1, len(addr_tokens)))
 
         # To catch remaining results, lookup by name and address
         # We only do this if there is a reasonable number of results expected.

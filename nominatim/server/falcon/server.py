@@ -10,6 +10,7 @@ Server implementation using the falcon webserver framework.
 from typing import Optional, Mapping, cast, Any, List
 from pathlib import Path
 import datetime as dt
+import asyncio
 
 from falcon.asgi import App, Request, Response
 
@@ -164,6 +165,8 @@ def get_application(project_dir: Path,
               middleware=middleware)
     app.add_error_handler(HTTPNominatimError, nominatim_error_handler)
     app.add_error_handler(TimeoutError, timeout_error_handler)
+    # different from TimeoutError in Python <= 3.10
+    app.add_error_handler(asyncio.TimeoutError, timeout_error_handler)
 
     legacy_urls = api.config.get_bool('SERVE_LEGACY_URLS')
     for name, func in api_impl.ROUTES:

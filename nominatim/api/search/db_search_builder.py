@@ -166,15 +166,15 @@ class SearchBuilder:
         sdata.lookups = [dbf.FieldLookup('name_vector', [t.token for t in hnrs], lookups.LookupAny)]
         expected_count = sum(t.count for t in hnrs)
 
-        partials = [t for trange in address
-                       for t in self.query.get_partials_list(trange)]
+        partials = {t.token: t.count for trange in address
+                       for t in self.query.get_partials_list(trange)}
 
         if expected_count < 8000:
             sdata.lookups.append(dbf.FieldLookup('nameaddress_vector',
-                                                 [t.token for t in partials], lookups.Restrict))
-        elif len(partials) != 1 or partials[0].count < 10000:
+                                                 list(partials), lookups.Restrict))
+        elif len(partials) != 1 or list(partials.values())[0] < 10000:
             sdata.lookups.append(dbf.FieldLookup('nameaddress_vector',
-                                                 [t.token for t in partials], lookups.LookupAll))
+                                                 list(partials), lookups.LookupAll))
         else:
             sdata.lookups.append(
                 dbf.FieldLookup('nameaddress_vector',
@@ -208,18 +208,17 @@ class SearchBuilder:
             are and tries to find a lookup that optimizes index use.
         """
         penalty = 0.0 # extra penalty
-        name_partials = self.query.get_partials_list(name)
-        name_tokens = [t.token for t in name_partials]
+        name_partials = {t.token: t for t in self.query.get_partials_list(name)}
 
         addr_partials = [t for r in address for t in self.query.get_partials_list(r)]
-        addr_tokens = [t.token for t in addr_partials]
+        addr_tokens = list({t.token for t in addr_partials})
 
-        partials_indexed = all(t.is_indexed for t in name_partials) \
+        partials_indexed = all(t.is_indexed for t in name_partials.values()) \
                            and all(t.is_indexed for t in addr_partials)
-        exp_count = min(t.count for t in name_partials) / (2**(len(name_partials) - 1))
+        exp_count = min(t.count for t in name_partials.values()) / (2**(len(name_partials) - 1))
 
         if (len(name_partials) > 3 or exp_count < 8000) and partials_indexed:
-            yield penalty, exp_count, dbf.lookup_by_names(name_tokens, addr_tokens)
+            yield penalty, exp_count, dbf.lookup_by_names(list(name_partials.keys()), addr_tokens)
             return
 
         # Partial term to frequent. Try looking up by rare full names first.
@@ -232,15 +231,15 @@ class SearchBuilder:
                 addr_tokens = [t.token for t in addr_partials if t.is_indexed]
                 penalty += 1.2 * sum(t.penalty for t in addr_partials if not t.is_indexed)
             # Any of the full names applies with all of the partials from the address
-            yield penalty, fulls_count / (2**len(addr_partials)),\
+            yield penalty, fulls_count / (2**len(addr_tokens)),\
                   dbf.lookup_by_any_name([t.token for t in name_fulls],
                                          addr_tokens, fulls_count > 10000)
 
         # To catch remaining results, lookup by name and address
         # We only do this if there is a reasonable number of results expected.
-        exp_count = exp_count / (2**len(addr_partials)) if addr_partials else exp_count
-        if exp_count < 10000 and all(t.is_indexed for t in name_partials):
-            lookup = [dbf.FieldLookup('name_vector', name_tokens, lookups.LookupAll)]
+        exp_count = exp_count / (2**len(addr_tokens)) if addr_tokens else exp_count
+        if exp_count < 10000 and all(t.is_indexed for t in name_partials.values()):
+            lookup = [dbf.FieldLookup('name_vector', list(name_partials.keys()), lookups.LookupAll)]
             if addr_tokens:
                 lookup.append(dbf.FieldLookup('nameaddress_vector', addr_tokens, lookups.LookupAll))
             penalty += 0.35 * max(0, 5 - len(name_partials) - len(addr_tokens))

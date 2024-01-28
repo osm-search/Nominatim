@@ -337,3 +337,14 @@ def test_qualifier_after_housenumber():
                    (BreakType.WORD, PhraseType.NONE, [(3, TokenType.PARTIAL)]))
 
     check_assignments(yield_token_assignments(q))
+
+
+def test_qualifier_in_middle_of_phrase():
+    q = make_query((BreakType.START, PhraseType.NONE, [(1, TokenType.PARTIAL)]),
+                   (BreakType.PHRASE, PhraseType.NONE, [(2, TokenType.PARTIAL)]),
+                   (BreakType.WORD, PhraseType.NONE, [(3, TokenType.QUALIFIER)]),
+                   (BreakType.WORD, PhraseType.NONE, [(4, TokenType.PARTIAL)]),
+                   (BreakType.PHRASE, PhraseType.NONE, [(5, TokenType.PARTIAL)]))
+
+    check_assignments(yield_token_assignments(q))
+

@@ -390,7 +390,7 @@ class _TokenSequence:
                 yield from self._get_assignments_address_backward(base, query)
 
             # variant for special housenumber searches
-            if base.housenumber:
+            if base.housenumber and not base.qualifier:
                 yield dataclasses.replace(base, penalty=self.penalty)
 
 

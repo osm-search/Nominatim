@@ -16,6 +16,7 @@ from falcon.asgi import App, Request, Response
 
 from nominatim.api import NominatimAPIAsync
 import nominatim.api.v1 as api_impl
+import nominatim.api.logging as loglib
 from nominatim.config import Configuration
 
 class HTTPNominatimError(Exception):
@@ -45,8 +46,15 @@ async def timeout_error_handler(req: Request, resp: Response, #pylint: disable=u
         per exception info.
     """
     resp.status = 503
-    resp.text = "Query took too long to process."
-    resp.content_type = 'text/plain; charset=utf-8'
+
+    loglib.log().comment('Aborted: Query took too long to process.')
+    logdata = loglib.get_and_disable()
+    if logdata:
+        resp.text = logdata
+        resp.content_type = 'text/html; charset=utf-8'
+    else:
+        resp.text = "Query took too long to process."
+        resp.content_type = 'text/plain; charset=utf-8'
 
 
 class ParamWrapper(api_impl.ASGIAdaptor):

@@ -15,7 +15,7 @@ import asyncio
 from starlette.applications import Starlette
 from starlette.routing import Route
 from starlette.exceptions import HTTPException
-from starlette.responses import Response, PlainTextResponse
+from starlette.responses import Response, PlainTextResponse, HTMLResponse
 from starlette.requests import Request
 from starlette.middleware import Middleware
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
@@ -23,6 +23,7 @@ from starlette.middleware.cors import CORSMiddleware
 
 from nominatim.api import NominatimAPIAsync
 import nominatim.api.v1 as api_impl
+import nominatim.api.logging as loglib
 from nominatim.config import Configuration
 
 class ParamWrapper(api_impl.ASGIAdaptor):
@@ -115,6 +116,12 @@ async def timeout_error(request: Request, #pylint: disable=unused-argument
                         _: Exception) -> Response:
     """ Error handler for query timeouts.
     """
+    loglib.log().comment('Aborted: Query took too long to process.')
+    logdata = loglib.get_and_disable()
+
+    if logdata:
+        return HTMLResponse(logdata)
+
     return PlainTextResponse("Query took too long to process.", status_code=503)
 
 

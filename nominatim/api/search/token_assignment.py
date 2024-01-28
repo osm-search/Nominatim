@@ -132,6 +132,11 @@ class _TokenSequence:
 
         # Name tokens are always acceptable and don't change direction
         if ttype == qmod.TokenType.PARTIAL:
+            # qualifiers cannot appear in the middle of the qeury. They need
+            # to be near the next phrase.
+            if self.direction == -1 \
+               and any(t.ttype == qmod.TokenType.QUALIFIER for t in self.seq[:-1]):
+                return None
             return self.direction
 
         # Other tokens may only appear once

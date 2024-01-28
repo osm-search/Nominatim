@@ -243,7 +243,8 @@ class SearchBuilder:
             lookup = [dbf.FieldLookup('name_vector', list(name_partials.keys()), lookups.LookupAll)]
             if addr_tokens:
                 lookup.append(dbf.FieldLookup('nameaddress_vector', addr_tokens, lookups.LookupAll))
-            penalty += 0.35 * max(0, 5 - len(name_partials) - len(addr_tokens))
+            penalty += 0.35 * max(1 if name_fulls else 0.1,
+                                  5 - len(name_partials) - len(addr_tokens))
             yield penalty, exp_count, lookup
 
 

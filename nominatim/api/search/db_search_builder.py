@@ -248,7 +248,8 @@ class SearchBuilder:
             yield penalty, exp_count, lookup
 
 
-    def get_name_ranking(self, trange: TokenRange) -> dbf.FieldRanking:
+    def get_name_ranking(self, trange: TokenRange,
+                         db_field: str = 'name_vector') -> dbf.FieldRanking:
         """ Create a ranking expression for a name term in the given range.
         """
         name_fulls = self.query.get_tokens(trange, TokenType.WORD)
@@ -257,7 +258,7 @@ class SearchBuilder:
         # Fallback, sum of penalty for partials
         name_partials = self.query.get_partials_list(trange)
         default = sum(t.penalty for t in name_partials) + 0.2
-        return dbf.FieldRanking('name_vector', default, ranks)
+        return dbf.FieldRanking(db_field, default, ranks)
 
 
     def get_addr_ranking(self, trange: TokenRange) -> dbf.FieldRanking:
@@ -315,11 +316,9 @@ class SearchBuilder:
         sdata = dbf.SearchData()
         sdata.penalty = assignment.penalty
         if assignment.country:
-            tokens = self.query.get_tokens(assignment.country, TokenType.COUNTRY)
-            if self.details.countries:
-                tokens = [t for t in tokens if t.lookup_word in self.details.countries]
-                if not tokens:
-                    return None
+            tokens = self.get_country_tokens(assignment.country)
+            if not tokens:
+                return None
             sdata.set_strings('countries', tokens)
         elif self.details.countries:
             sdata.countries = dbf.WeightedStrings(self.details.countries,
@@ -333,22 +332,52 @@ class SearchBuilder:
                               self.query.get_tokens(assignment.postcode,
                                                     TokenType.POSTCODE))
         if assignment.qualifier:
-            tokens = self.query.get_tokens(assignment.qualifier, TokenType.QUALIFIER)
-            if self.details.categories:
-                tokens = [t for t in tokens if t.get_category() in self.details.categories]
-                if not tokens:
-                    return None
+            tokens = self.get_qualifier_tokens(assignment.qualifier)
+            if not tokens:
+                return None
             sdata.set_qualifiers(tokens)
         elif self.details.categories:
             sdata.qualifiers = dbf.WeightedCategories(self.details.categories,
                                                       [0.0] * len(self.details.categories))
 
         if assignment.address:
-            sdata.set_ranking([self.get_addr_ranking(r) for r in assignment.address])
+            if not assignment.name and assignment.housenumber:
+                # housenumber search: the first item needs to be handled like
+                # a name in ranking or penalties are not comparable with
+                # normal searches.
+                sdata.set_ranking([self.get_name_ranking(assignment.address[0],
+                                                         db_field='nameaddress_vector')]
+                                  + [self.get_addr_ranking(r) for r in assignment.address[1:]])
+            else:
+                sdata.set_ranking([self.get_addr_ranking(r) for r in assignment.address])
         else:
             sdata.rankings = []
 
         return sdata
+
+
+    def get_country_tokens(self, trange: TokenRange) -> List[Token]:
+        """ Return the list of country tokens for the given range,
+            optionally filtered by the country list from the details
+            parameters.
+        """
+        tokens = self.query.get_tokens(trange, TokenType.COUNTRY)
+        if self.details.countries:
+            tokens = [t for t in tokens if t.lookup_word in self.details.countries]
+
+        return tokens
+
+
+    def get_qualifier_tokens(self, trange: TokenRange) -> List[Token]:
+        """ Return the list of qualifier tokens for the given range,
+            optionally filtered by the qualifier list from the details
+            parameters.
+        """
+        tokens = self.query.get_tokens(trange, TokenType.QUALIFIER)
+        if self.details.categories:
+            tokens = [t for t in tokens if t.get_category() in self.details.categories]
+
+        return tokens
 
 
     def get_near_items(self, assignment: TokenAssignment) -> Optional[dbf.WeightedCategories]:

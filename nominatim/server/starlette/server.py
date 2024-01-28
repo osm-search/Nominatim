@@ -10,6 +10,7 @@ Server implementation using the starlette webserver framework.
 from typing import Any, Optional, Mapping, Callable, cast, Coroutine, Dict, Awaitable
 from pathlib import Path
 import datetime as dt
+import asyncio
 
 from starlette.applications import Starlette
 from starlette.routing import Route
@@ -144,7 +145,8 @@ def get_application(project_dir: Path,
         middleware.append(Middleware(FileLoggingMiddleware, file_name=log_file))
 
     exceptions: Dict[Any, Callable[[Request, Exception], Awaitable[Response]]] = {
-        TimeoutError: timeout_error
+        TimeoutError: timeout_error,
+        asyncio.TimeoutError: timeout_error
     }
 
     async def _shutdown() -> None:

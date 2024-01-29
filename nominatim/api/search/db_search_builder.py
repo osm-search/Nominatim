@@ -176,11 +176,12 @@ class SearchBuilder:
             sdata.lookups.append(dbf.FieldLookup('nameaddress_vector',
                                                  list(partials), lookups.LookupAll))
         else:
+            addr_fulls = [t.token for t
+                          in self.query.get_tokens(address[0], TokenType.WORD)]
+            if len(addr_fulls) > 5:
+                return
             sdata.lookups.append(
-                dbf.FieldLookup('nameaddress_vector',
-                                [t.token for t
-                                 in self.query.get_tokens(address[0], TokenType.WORD)],
-                                lookups.LookupAny))
+                dbf.FieldLookup('nameaddress_vector', addr_fulls, lookups.LookupAny))
 
         sdata.housenumbers = dbf.WeightedStrings([], [])
         yield dbs.PlaceSearch(0.05, sdata, expected_count)

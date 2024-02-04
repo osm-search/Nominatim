@@ -90,6 +90,18 @@ class SQLPreprocessor:
         self.env.globals['postgres'] = _setup_postgresql_features(conn)
 
 
+    def run_string(self, conn: Connection, template: str, **kwargs: Any) -> None:
+        """ Execute the given SQL template string on the connection.
+            The keyword arguments may supply additional parameters
+            for preprocessing.
+        """
+        sql = self.env.from_string(template).render(**kwargs)
+
+        with conn.cursor() as cur:
+            cur.execute(sql)
+        conn.commit()
+
+
     def run_sql_file(self, conn: Connection, name: str, **kwargs: Any) -> None:
         """ Execute the given SQL file on the connection. The keyword arguments
             may supply additional parameters for preprocessing.

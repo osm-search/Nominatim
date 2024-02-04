@@ -238,19 +238,19 @@ def test_check_database_bad_setup(test_config, tokenizer_factory, monkeypatch,
     assert tok.check_database(False) is not None
 
 
-def test_update_statistics_reverse_only(word_table, tokenizer_factory):
+def test_update_statistics_reverse_only(word_table, tokenizer_factory, test_config):
     tok = tokenizer_factory()
-    tok.update_statistics()
+    tok.update_statistics(test_config)
 
 
-def test_update_statistics(word_table, table_factory, temp_db_cursor, tokenizer_factory):
+def test_update_statistics(word_table, table_factory, temp_db_cursor, tokenizer_factory, test_config):
     word_table.add_full_word(1000, 'hello')
     table_factory('search_name',
                   'place_id BIGINT, name_vector INT[]',
                   [(12, [1000])])
     tok = tokenizer_factory()
 
-    tok.update_statistics()
+    tok.update_statistics(test_config)
 
     assert temp_db_cursor.scalar("""SELECT count(*) FROM word
                                     WHERE word_token like ' %' and

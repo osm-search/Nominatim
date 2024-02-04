@@ -31,6 +31,11 @@ DBCFG_TERM_NORMALIZATION = "tokenizer_term_normalization"
 
 LOG = logging.getLogger()
 
+WORD_TYPES =(('country_names', 'C'),
+             ('postcodes', 'P'),
+             ('full_word', 'W'),
+             ('housenumbers', 'H'))
+
 def create(dsn: str, data_dir: Path) -> 'ICUTokenizer':
     """ Create a new instance of the tokenizer provided by this module.
     """
@@ -62,7 +67,8 @@ class ICUTokenizer(AbstractTokenizer):
 
         if init_db:
             self.update_sql_functions(config)
-            self._init_db_tables(config)
+            self._setup_db_tables(config, 'word')
+            self._create_base_indices(config, 'word')
 
 
     def init_from_project(self, config: Configuration) -> None:
@@ -80,9 +86,7 @@ class ICUTokenizer(AbstractTokenizer):
         """ Do any required postprocessing to make the tokenizer data ready
             for use.
         """
-        with connect(self.dsn) as conn:
-            sqlp = SQLPreprocessor(conn, config)
-            sqlp.run_sql_file(conn, 'tokenizer/legacy_tokenizer_indices.sql')
+        self._create_lookup_indices(config, 'word')
 
 
     def update_sql_functions(self, config: Configuration) -> None:
@@ -100,24 +104,35 @@ class ICUTokenizer(AbstractTokenizer):
         self.init_from_project(config)
 
 
-    def update_statistics(self) -> None:
+    def update_statistics(self, config: Configuration) -> None:
         """ Recompute frequencies for all name words.
         """
         with connect(self.dsn) as conn:
-            if conn.table_exists('search_name'):
-                with conn.cursor() as cur:
-                    cur.drop_table("word_frequencies")
-                    LOG.info("Computing word frequencies")
-                    cur.execute("""CREATE TEMP TABLE word_frequencies AS
-                                     SELECT unnest(name_vector) as id, count(*)
-                                     FROM search_name GROUP BY id""")
-                    cur.execute("CREATE INDEX ON word_frequencies(id)")
-                    LOG.info("Update word table with recomputed frequencies")
-                    cur.execute("""UPDATE word
-                                   SET info = info || jsonb_build_object('count', count)
-                                   FROM word_frequencies WHERE word_id = id""")
-                    cur.drop_table("word_frequencies")
+            if not conn.table_exists('search_name'):
+                return
+
+            with conn.cursor() as cur:
+                LOG.info('Computing word frequencies')
+                cur.drop_table('word_frequencies')
+                cur.execute("""CREATE TEMP TABLE word_frequencies AS
+                                 SELECT unnest(name_vector) as id, count(*)
+                                 FROM search_name GROUP BY id""")
+                cur.execute('CREATE INDEX ON word_frequencies(id)')
+                LOG.info('Update word table with recomputed frequencies')
+                cur.drop_table('tmp_word')
+                cur.execute("""CREATE TABLE tmp_word AS
+                                SELECT word_id, word_token, type, word,
+                                       (CASE WHEN wf.count is null THEN info
+                                          ELSE info || jsonb_build_object('count', wf.count)
+                                        END) as info
+                                FROM word LEFT JOIN word_frequencies wf
+                                  ON word.word_id = wf.id""")
+                cur.drop_table('word_frequencies')
             conn.commit()
+        self._create_base_indices(config, 'tmp_word')
+        self._create_lookup_indices(config, 'tmp_word')
+        self._move_temporary_word_table('tmp_word')
+
 
 
     def _cleanup_housenumbers(self) -> None:
@@ -219,14 +234,79 @@ class ICUTokenizer(AbstractTokenizer):
             self.loader.save_config_to_db(conn)
 
 
-    def _init_db_tables(self, config: Configuration) -> None:
+    def _setup_db_tables(self, config: Configuration, table_name: str) -> None:
+        """ Set up the word table and fill it with pre-computed word
+            frequencies.
+        """
+        with connect(self.dsn) as conn:
+            with conn.cursor() as cur:
+                cur.drop_table(table_name)
+            sqlp = SQLPreprocessor(conn, config)
+            sqlp.run_string(conn, """
+                CREATE TABLE {{table_name}} (
+                      word_id INTEGER,
+                      word_token text NOT NULL,
+                      type text NOT NULL,
+                      word text,
+                      info jsonb
+                    ) {{db.tablespace.search_data}};
+                GRANT SELECT ON {{table_name}} TO "{{config.DATABASE_WEBUSER}}";
+
+                DROP SEQUENCE IF EXISTS seq_{{table_name}};
+                CREATE SEQUENCE seq_{{table_name}} start 1;
+                GRANT SELECT ON seq_{{table_name}} to "{{config.DATABASE_WEBUSER}}";
+            """, table_name=table_name)
+
+
+    def _create_base_indices(self, config: Configuration, table_name: str) -> None:
         """ Set up the word table and fill it with pre-computed word
             frequencies.
         """
         with connect(self.dsn) as conn:
             sqlp = SQLPreprocessor(conn, config)
-            sqlp.run_sql_file(conn, 'tokenizer/icu_tokenizer_tables.sql')
+            sqlp.run_string(conn,
+                            """CREATE INDEX idx_{{table_name}}_word_token ON {{table_name}}
+                               USING BTREE (word_token) {{db.tablespace.search_index}}""",
+                            table_name=table_name)
+            for name, ctype in WORD_TYPES:
+                sqlp.run_string(conn,
+                                """CREATE INDEX idx_{{table_name}}_{{idx_name}} ON {{table_name}}
+                                   USING BTREE (word) {{db.tablespace.address_index}}
+                                   WHERE type = '{{column_type}}'
+                                """,
+                                table_name=table_name, idx_name=name,
+                                column_type=ctype)
+
+
+    def _create_lookup_indices(self, config: Configuration, table_name: str) -> None:
+        """ Create addtional indexes used when running the API.
+        """
+        with connect(self.dsn) as conn:
+            sqlp = SQLPreprocessor(conn, config)
+            # Index required for details lookup.
+            sqlp.run_string(conn, """
+                CREATE INDEX IF NOT EXISTS idx_{{table_name}}_word_id
+                  ON {{table_name}} USING BTREE (word_id) {{db.tablespace.search_index}}
+            """,
+            table_name=table_name)
+
+
+    def _move_temporary_word_table(self, old: str) -> None:
+        """ Rename all tables and indexes used by the tokenizer.
+        """
+        with connect(self.dsn) as conn:
+            with conn.cursor() as cur:
+                cur.drop_table('word')
+                cur.execute(f"ALTER TABLE {old} RENAME TO word")
+                for idx in ('word_token', 'word_id'):
+                    cur.execute(f"""ALTER INDEX idx_{old}_{idx}
+                                      RENAME TO idx_word_{idx}""")
+                for name, _ in WORD_TYPES:
+                    cur.execute(f"""ALTER INDEX idx_{old}_{name}
+                                    RENAME TO idx_word_{name}""")
             conn.commit()
+
+
 
 
 class ICUNameAnalyzer(AbstractAnalyzer):

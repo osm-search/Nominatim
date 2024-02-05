@@ -38,10 +38,10 @@ class DummyTokenizer:
     def finalize_import(self, *args):
         self.finalize_import_called = True
 
-    def update_statistics(self):
+    def update_statistics(self, *args):
         self.update_statistics_called = True
 
-    def update_word_tokens(self):
+    def update_word_tokens(self, *args):
         self.update_word_tokens_called = True
 
 

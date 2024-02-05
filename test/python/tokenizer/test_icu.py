@@ -7,7 +7,6 @@
 """
 Tests for ICU tokenizer.
 """
-import shutil
 import yaml
 import itertools
 
@@ -32,8 +31,6 @@ def test_config(project_env, tmp_path):
     sqldir.mkdir()
     (sqldir / 'tokenizer').mkdir()
     (sqldir / 'tokenizer' / 'icu_tokenizer.sql').write_text("SELECT 'a'")
-    shutil.copy(str(project_env.lib_dir.sql / 'tokenizer' / 'icu_tokenizer_tables.sql'),
-                str(sqldir / 'tokenizer' / 'icu_tokenizer_tables.sql'))
 
     project_env.lib_dir.sql = sqldir
 
@@ -204,16 +201,14 @@ def test_update_sql_functions(db_prop, temp_db_cursor,
 
 def test_finalize_import(tokenizer_factory, temp_db_conn,
                          temp_db_cursor, test_config, sql_preprocessor_cfg):
-    func_file = test_config.lib_dir.sql / 'tokenizer' / 'legacy_tokenizer_indices.sql'
-    func_file.write_text("""CREATE FUNCTION test() RETURNS TEXT
-                            AS $$ SELECT 'b'::text $$ LANGUAGE SQL""")
-
     tok = tokenizer_factory()
     tok.init_new_db(test_config)
 
+    assert not temp_db_conn.index_exists('idx_word_word_id')
+
     tok.finalize_import(test_config)
 
-    temp_db_cursor.scalar('SELECT test()') == 'b'
+    assert temp_db_conn.index_exists('idx_word_word_id')
 
 
 def test_check_database(test_config, tokenizer_factory,
@@ -224,19 +219,20 @@ def test_check_database(test_config, tokenizer_factory,
     assert tok.check_database(test_config) is None
 
 
-def test_update_statistics_reverse_only(word_table, tokenizer_factory):
+def test_update_statistics_reverse_only(word_table, tokenizer_factory, test_config):
     tok = tokenizer_factory()
-    tok.update_statistics()
+    tok.update_statistics(test_config)
 
 
-def test_update_statistics(word_table, table_factory, temp_db_cursor, tokenizer_factory):
+def test_update_statistics(word_table, table_factory, temp_db_cursor,
+                           tokenizer_factory, test_config):
     word_table.add_full_word(1000, 'hello')
     table_factory('search_name',
                   'place_id BIGINT, name_vector INT[]',
                   [(12, [1000])])
     tok = tokenizer_factory()
 
-    tok.update_statistics()
+    tok.update_statistics(test_config)
 
     assert temp_db_cursor.scalar("""SELECT count(*) FROM word
                                     WHERE type = 'W' and

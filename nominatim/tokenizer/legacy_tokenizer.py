@@ -210,7 +210,7 @@ class LegacyTokenizer(AbstractTokenizer):
             self._save_config(conn, config)
 
 
-    def update_statistics(self) -> None:
+    def update_statistics(self, _: Configuration) -> None:
         """ Recompute the frequency of full words.
         """
         with connect(self.dsn) as conn:

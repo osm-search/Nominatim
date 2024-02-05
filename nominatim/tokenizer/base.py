@@ -201,7 +201,7 @@ class AbstractTokenizer(ABC):
 
 
     @abstractmethod
-    def update_statistics(self) -> None:
+    def update_statistics(self, config: Configuration) -> None:
         """ Recompute any tokenizer statistics necessary for efficient lookup.
             This function is meant to be called from time to time by the user
             to improve performance. However, the tokenizer must not depend on

@@ -149,6 +149,8 @@ In terms of address details the zoom levels are as follows:
 |-----------| ----- | ------- |
 | layer     | comma-separated list of: `address`, `poi`, `railway`, `natural`, `manmade` | _unset_ (no restriction) |
 
+**`[Python-only]`**
+
 The layer filter allows to select places by themes.
 
 The `address` layer contains all places that make up an address:

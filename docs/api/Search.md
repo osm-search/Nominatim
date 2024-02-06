@@ -187,6 +187,8 @@ also excluded when the filter is set.
 |-----------| ----- | ------- |
 | layer     | comma-separated list of: `address`, `poi`, `railway`, `natural`, `manmade` | _unset_ (no restriction) |
 
+**`[Python-only]`**
+
 The layer filter allows to select places by themes.
 
 The `address` layer contains all places that make up an address:

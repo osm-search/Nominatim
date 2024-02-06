@@ -67,7 +67,7 @@ class ICUTokenizer(AbstractTokenizer):
 
         if init_db:
             self.update_sql_functions(config)
-            self._setup_db_tables(config, 'word')
+            self._setup_db_tables(config)
             self._create_base_indices(config, 'word')
 
 
@@ -128,6 +128,10 @@ class ICUTokenizer(AbstractTokenizer):
                                 FROM word LEFT JOIN word_frequencies wf
                                   ON word.word_id = wf.id""")
                 cur.drop_table('word_frequencies')
+
+            sqlp = SQLPreprocessor(conn, config)
+            sqlp.run_string(conn,
+                            'GRANT SELECT ON tmp_word TO "{{config.DATABASE_WEBUSER}}"')
             conn.commit()
         self._create_base_indices(config, 'tmp_word')
         self._create_lookup_indices(config, 'tmp_word')
@@ -234,28 +238,29 @@ class ICUTokenizer(AbstractTokenizer):
             self.loader.save_config_to_db(conn)
 
 
-    def _setup_db_tables(self, config: Configuration, table_name: str) -> None:
+    def _setup_db_tables(self, config: Configuration) -> None:
         """ Set up the word table and fill it with pre-computed word
             frequencies.
         """
         with connect(self.dsn) as conn:
             with conn.cursor() as cur:
-                cur.drop_table(table_name)
+                cur.drop_table('word')
             sqlp = SQLPreprocessor(conn, config)
             sqlp.run_string(conn, """
-                CREATE TABLE {{table_name}} (
+                CREATE TABLE word (
                       word_id INTEGER,
                       word_token text NOT NULL,
                       type text NOT NULL,
                       word text,
                       info jsonb
                     ) {{db.tablespace.search_data}};
-                GRANT SELECT ON {{table_name}} TO "{{config.DATABASE_WEBUSER}}";
+                GRANT SELECT ON word TO "{{config.DATABASE_WEBUSER}}";
 
-                DROP SEQUENCE IF EXISTS seq_{{table_name}};
-                CREATE SEQUENCE seq_{{table_name}} start 1;
-                GRANT SELECT ON seq_{{table_name}} to "{{config.DATABASE_WEBUSER}}";
-            """, table_name=table_name)
+                DROP SEQUENCE IF EXISTS seq_word;
+                CREATE SEQUENCE seq_word start 1;
+                GRANT SELECT ON seq_word to "{{config.DATABASE_WEBUSER}}";
+            """)
+            conn.commit()
 
 
     def _create_base_indices(self, config: Configuration, table_name: str) -> None:
@@ -276,6 +281,7 @@ class ICUTokenizer(AbstractTokenizer):
                                 """,
                                 table_name=table_name, idx_name=name,
                                 column_type=ctype)
+            conn.commit()
 
 
     def _create_lookup_indices(self, config: Configuration, table_name: str) -> None:
@@ -289,6 +295,7 @@ class ICUTokenizer(AbstractTokenizer):
                   ON {{table_name}} USING BTREE (word_id) {{db.tablespace.search_index}}
             """,
             table_name=table_name)
+            conn.commit()
 
 
     def _move_temporary_word_table(self, old: str) -> None:

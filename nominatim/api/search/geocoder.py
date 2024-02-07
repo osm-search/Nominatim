@@ -104,19 +104,27 @@ class ForwardGeocoder:
         return SearchResults(results.values())
 
 
+    def pre_filter_results(self, results: SearchResults) -> SearchResults:
+        """ Remove results that are significantly worse than the
+            best match.
+        """
+        if results:
+            max_ranking = min(r.ranking for r in results) + 0.5
+            results = SearchResults(r for r in results if r.ranking < max_ranking)
+
+        return results
+
+
     def sort_and_cut_results(self, results: SearchResults) -> SearchResults:
         """ Remove badly matching results, sort by ranking and
             limit to the configured number of results.
         """
         if results:
-            min_ranking = min(r.ranking for r in results)
-            results = SearchResults(r for r in results if r.ranking < min_ranking + 0.5)
             results.sort(key=lambda r: r.ranking)
-
-        if results:
             min_rank = results[0].rank_search
+            min_ranking = results[0].ranking
             results = SearchResults(r for r in results
-                                    if r.ranking + 0.05 * (r.rank_search - min_rank)
+                                    if r.ranking + 0.03 * (r.rank_search - min_rank)
                                        < min_ranking + 0.5)
 
             results = SearchResults(results[:self.limit])
@@ -174,6 +182,7 @@ class ForwardGeocoder:
             if query:
                 searches = [wrap_near_search(categories, s) for s in searches[:50]]
                 results = await self.execute_searches(query, searches)
+                results = self.pre_filter_results(results)
                 await add_result_details(self.conn, results, self.params)
                 log().result_dump('Preliminary Results', ((r.accuracy, r) for r in results))
                 results = self.sort_and_cut_results(results)
@@ -203,6 +212,7 @@ class ForwardGeocoder:
         if searches:
             # Execute SQL until an appropriate result is found.
             results = await self.execute_searches(query, searches[:50])
+            results = self.pre_filter_results(results)
             await add_result_details(self.conn, results, self.params)
             log().result_dump('Preliminary Results', ((r.accuracy, r) for r in results))
             self.rerank_by_query(query, results)

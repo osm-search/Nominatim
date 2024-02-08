@@ -258,7 +258,7 @@ Feature: Updates of linked places
         When marking for delete N1
         Then placex contains
             | object | extratags |
-            | R1     |  |
+            | R1     | - |
 
     Scenario: Update linked_place info when linkee type changes
         Given the 0.1 grid

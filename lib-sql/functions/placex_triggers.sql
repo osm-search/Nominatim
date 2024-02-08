@@ -2,7 +2,7 @@
 --
 -- This file is part of Nominatim. (https://nominatim.org)
 --
--- Copyright (C) 2022 by the Nominatim developer community.
+-- Copyright (C) 2024 by the Nominatim developer community.
 -- For a full list of authors see the git log.
 
 -- Trigger functions for the placex table.
@@ -794,6 +794,9 @@ BEGIN
   result := deleteLocationArea(NEW.partition, NEW.place_id, NEW.rank_search);
 
   NEW.extratags := NEW.extratags - 'linked_place'::TEXT;
+  IF NEW.extratags = ''::hstore THEN
+    NEW.extratags := NULL;
+  END IF;
 
   -- NEW.linked_place_id contains the precomputed linkee. Save this and restore
   -- the previous link status.

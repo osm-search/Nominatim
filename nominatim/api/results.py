@@ -233,7 +233,7 @@ class BaseResult:
             of the value or an artificial value computed from the place's
             search rank.
         """
-        return self.importance or (0.7500001 - (self.rank_search/40.0))
+        return self.importance or (0.40001 - (self.rank_search/75.0))
 
 
     def localize(self, locales: Locales) -> None:

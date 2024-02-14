@@ -77,7 +77,7 @@ flex.set_prefilters{delete_keys = {'note', 'note:*', 'source', '*source', 'attri
                                    tunnel = {'no'},
                                    waterway = {'riverbank'},
                                    building = {'no'},
-                                   boundary = {'place'}},
+                                   boundary = {'place', 'land_area'}},
                     extra_keys = {'wikidata', 'wikipedia', 'wikipedia:*'}
                    }
 

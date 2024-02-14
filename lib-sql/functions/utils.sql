@@ -416,6 +416,20 @@ END;
 $$
 LANGUAGE plpgsql IMMUTABLE;
 
+CREATE OR REPLACE FUNCTION simplify_large_polygons(geometry GEOMETRY)
+  RETURNS GEOMETRY
+  AS $$
+BEGIN
+  IF ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon')
+     and ST_MemSize(geometry) > 3000000
+  THEN
+    geometry := ST_SimplifyPreserveTopology(geometry, 0.0001);
+  END IF;
+  RETURN geometry;
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE;
+
 
 CREATE OR REPLACE FUNCTION place_force_delete(placeid BIGINT)
   RETURNS BOOLEAN

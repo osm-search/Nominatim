@@ -7,7 +7,7 @@
 """
 Preprocessing of SQL files.
 """
-from typing import Set, Dict, Any
+from typing import Set, Dict, Any, cast
 import jinja2
 
 from nominatim.db.connection import Connection
@@ -28,12 +28,23 @@ def _get_partitions(conn: Connection) -> Set[int]:
 
 def _get_tables(conn: Connection) -> Set[str]:
     """ Return the set of tables currently in use.
-        Only includes non-partitioned
     """
     with conn.cursor() as cur:
         cur.execute("SELECT tablename FROM pg_tables WHERE schemaname = 'public'")
 
         return set((row[0] for row in list(cur)))
+
+def _get_middle_db_format(conn: Connection, tables: Set[str]) -> str:
+    """ Returns the version of the slim middle tables.
+    """
+    if 'osm2pgsql_properties' not in tables:
+        return '1'
+
+    with conn.cursor() as cur:
+        cur.execute("SELECT value FROM osm2pgsql_properties WHERE property = 'db_format'")
+        row = cur.fetchone()
+
+        return cast(str, row[0]) if row is not None else '1'
 
 
 def _setup_tablespace_sql(config: Configuration) -> Dict[str, str]:
@@ -84,6 +95,7 @@ class SQLPreprocessor:
         db_info['tables'] = _get_tables(conn)
         db_info['reverse_only'] = 'search_name' not in db_info['tables']
         db_info['tablespace'] = _setup_tablespace_sql(config)
+        db_info['middle_db_format'] = _get_middle_db_format(conn, db_info['tables'])
 
         self.env.globals['config'] = config
         self.env.globals['db'] = db_info

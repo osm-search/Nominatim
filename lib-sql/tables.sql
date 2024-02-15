@@ -298,7 +298,15 @@ CREATE TABLE IF NOT EXISTS wikipedia_redirect (
 
 -- osm2pgsql does not create indexes on the middle tables for Nominatim
 -- Add one for lookup of associated street relations.
-CREATE INDEX planet_osm_rels_parts_associated_idx ON planet_osm_rels USING gin(parts) WHERE tags @> ARRAY['associatedStreet'];
+{% if db.middle_db_format == '1' %}
+CREATE INDEX planet_osm_rels_parts_associated_idx ON planet_osm_rels USING gin(parts)
+  {{db.tablespace.address_index}}
+  WHERE tags @> ARRAY['associatedStreet'];
+{% else %}
+CREATE INDEX planet_osm_rels_relation_members_idx ON planet_osm_rels USING gin(planet_osm_member_ids(members, 'R'::character(1)))
+  WITH (fastupdate=off)
+  {{db.tablespace.address_index}};
+{% endif %}
 
 -- Needed for lookups if a node is part of an interpolation.
 CREATE INDEX IF NOT EXISTS idx_place_interpolations

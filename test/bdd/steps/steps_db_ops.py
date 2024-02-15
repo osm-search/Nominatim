@@ -52,33 +52,52 @@ def add_data_to_planet_relations(context):
         for tests on data that looks up members.
     """
     with context.db.cursor() as cur:
-        for r in context.table:
-            last_node = 0
-            last_way = 0
-            parts = []
-            if r['members']:
-                members = []
-                for m in r['members'].split(','):
-                    mid = NominatimID(m)
-                    if mid.typ == 'N':
-                        parts.insert(last_node, int(mid.oid))
-                        last_node += 1
-                        last_way += 1
-                    elif mid.typ == 'W':
-                        parts.insert(last_way, int(mid.oid))
-                        last_way += 1
-                    else:
-                        parts.append(int(mid.oid))
+        cur.execute("SELECT value FROM osm2pgsql_properties WHERE property = 'db_format'")
+        row = cur.fetchone()
+        if row is None or row[0] == '1':
+            for r in context.table:
+                last_node = 0
+                last_way = 0
+                parts = []
+                if r['members']:
+                    members = []
+                    for m in r['members'].split(','):
+                        mid = NominatimID(m)
+                        if mid.typ == 'N':
+                            parts.insert(last_node, int(mid.oid))
+                            last_node += 1
+                            last_way += 1
+                        elif mid.typ == 'W':
+                            parts.insert(last_way, int(mid.oid))
+                            last_way += 1
+                        else:
+                            parts.append(int(mid.oid))
 
-                    members.extend((mid.typ.lower() + mid.oid, mid.cls or ''))
-            else:
-                members = None
+                        members.extend((mid.typ.lower() + mid.oid, mid.cls or ''))
+                else:
+                    members = None
 
-            tags = chain.from_iterable([(h[5:], r[h]) for h in r.headings if h.startswith("tags+")])
+                tags = chain.from_iterable([(h[5:], r[h]) for h in r.headings if h.startswith("tags+")])
 
-            cur.execute("""INSERT INTO planet_osm_rels (id, way_off, rel_off, parts, members, tags)
-                           VALUES (%s, %s, %s, %s, %s, %s)""",
-                        (r['id'], last_node, last_way, parts, members, list(tags)))
+                cur.execute("""INSERT INTO planet_osm_rels (id, way_off, rel_off, parts, members, tags)
+                               VALUES (%s, %s, %s, %s, %s, %s)""",
+                            (r['id'], last_node, last_way, parts, members, list(tags)))
+        else:
+            for r in context.table:
+                if r['members']:
+                    members = []
+                    for m in r['members'].split(','):
+                        mid = NominatimID(m)
+                        members.append({'ref': mid.oid, 'role': mid.cls or '', 'type': mid.typ})
+                else:
+                    members = []
+
+                tags = {h[5:]: r[h] for h in r.headings if h.startswith("tags+")}
+
+                cur.execute("""INSERT INTO planet_osm_rels (id, tags, members)
+                               VALUES (%s, %s, %s)""",
+                            (r['id'], psycopg2.extras.Json(tags),
+                             psycopg2.extras.Json(members)))
 
 @given("the ways")
 def add_data_to_planet_ways(context):
@@ -86,12 +105,19 @@ def add_data_to_planet_ways(context):
         tests on that that looks up node ids in this table.
     """
     with context.db.cursor() as cur:
+        cur.execute("SELECT value FROM osm2pgsql_properties WHERE property = 'db_format'")
+        row = cur.fetchone()
+        json_tags = row is not None and row[0] != '1'
         for r in context.table:
-            tags = chain.from_iterable([(h[5:], r[h]) for h in r.headings if h.startswith("tags+")])
+            if json_tags:
+                tags = psycopg2.extras.Json({h[5:]: r[h] for h in r.headings if h.startswith("tags+")})
+            else:
+                tags = list(chain.from_iterable([(h[5:], r[h])
+                                                 for h in r.headings if h.startswith("tags+")]))
             nodes = [ int(x.strip()) for x in r['nodes'].split(',') ]
 
             cur.execute("INSERT INTO planet_osm_ways (id, nodes, tags) VALUES (%s, %s, %s)",
-                        (r['id'], nodes, list(tags)))
+                        (r['id'], nodes, tags))
 
 ################################ WHEN ##################################
 

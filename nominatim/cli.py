@@ -159,13 +159,15 @@ class AdminServe:
         group = parser.add_argument_group('Server arguments')
         group.add_argument('--server', default='127.0.0.1:8088',
                            help='The address the server will listen to.')
-        group.add_argument('--engine', default='php',
+        group.add_argument('--engine', default='falcon',
                            choices=('php', 'falcon', 'starlette'),
-                           help='Webserver framework to run. (default: php)')
+                           help='Webserver framework to run. (default: falcon)')
 
 
     def run(self, args: NominatimArgs) -> int:
         if args.engine == 'php':
+            if args.config.lib_dir.php is None:
+                raise UsageError("PHP frontend not configured.")
             run_php_server(args.server, args.project_dir / 'website')
         else:
             import uvicorn # pylint: disable=import-outside-toplevel

@@ -213,6 +213,10 @@ def _quote_php_variable(var_type: Type[Any], config: Configuration,
 def setup_website(basedir: Path, config: Configuration, conn: Connection) -> None:
     """ Create the website script stubs.
     """
+    if config.lib_dir.php is None:
+        LOG.info("Python frontend does not require website setup. Skipping.")
+        return
+
     if not basedir.exists():
         LOG.info('Creating website directory.')
         basedir.mkdir()

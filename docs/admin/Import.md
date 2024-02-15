@@ -268,26 +268,9 @@ nominatim reverse --lat 51 --lon 45
 ```
 
 If you want to run Nominatim as a service, you need to make a choice between
-running the traditional PHP frontend or the new experimental Python frontend.
+running the modern Python frontend and the legacy PHP frontend.
 Make sure you have installed the right packages as per
 [Installation](Installation.md#software).
-
-#### Testing the PHP frontend
-
-You can run a small test server with the PHP frontend like this:
-
-```sh
-nominatim serve
-```
-
-Go to `http://localhost:8088/status.php` and you should see the message `OK`.
-You can also run a search query, e.g. `http://localhost:8088/search.php?q=Berlin`
-or, for reverse-only installations a reverse query,
-e.g. `http://localhost:8088/reverse.php?lat=27.1750090510034&lon=78.04209025`.
-
-Do not use this test server in production.
-To run Nominatim via webservers like Apache or nginx, please continue reading
-[Deploy the PHP frontend](Deployment-PHP.md).
 
 #### Testing the Python frontend
 
@@ -296,10 +279,10 @@ web framework to use, either starlette or falcon. Make sure the appropriate
 packages are installed. Then run
 
 ``` sh
-nominatim serve --engine falcon
+nominatim serve
 ```
 
-or
+or, if you prefer to use Starlette instead of Falcon as webserver,
 
 ``` sh
 nominatim serve --engine starlette
@@ -313,6 +296,24 @@ e.g. `http://localhost:8088/reverse.php?lat=27.1750090510034&lon=78.04209025`.
 Do not use this test server in production.
 To run Nominatim via webservers like Apache or nginx, please continue reading
 [Deploy the Python frontend](Deployment-Python.md).
+
+#### Testing the PHP frontend
+
+You can run a small test server with the PHP frontend like this:
+
+```sh
+nominatim serve --engine php
+```
+
+Go to `http://localhost:8088/status.php` and you should see the message `OK`.
+You can also run a search query, e.g. `http://localhost:8088/search.php?q=Berlin`
+or, for reverse-only installations a reverse query,
+e.g. `http://localhost:8088/reverse.php?lat=27.1750090510034&lon=78.04209025`.
+
+Do not use this test server in production.
+To run Nominatim via webservers like Apache or nginx, please continue reading
+[Deploy the PHP frontend](Deployment-PHP.md).
+
 
 
 ## Enabling search by category phrases

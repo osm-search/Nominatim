@@ -11,7 +11,7 @@ jobs:
               with:
                 submodules: true
 
-            - uses: actions/cache@v3
+            - uses: actions/cache@v4
               with:
                   path: |
                      data/country_osm_grid.sql.gz
@@ -27,7 +27,7 @@ jobs:
                   mv nominatim-src.tar.bz2 Nominatim
 
             - name: 'Upload Artifact'
-              uses: actions/upload-artifact@v3
+              uses: actions/upload-artifact@v4
               with:
                   name: full-source
                   path: nominatim-src.tar.bz2
@@ -43,39 +43,27 @@ jobs:
                       ubuntu: 20
                       postgresql: '9.6'
                       postgis: '2.5'
-                      php: '7.3'
                       lua: '5.1'
                     - flavour: ubuntu-20
                       ubuntu: 20
                       postgresql: 13
                       postgis: 3
-                      php: '7.4'
                       lua: '5.3'
                     - flavour: ubuntu-22
                       ubuntu: 22
                       postgresql: 15
                       postgis: 3
-                      php: '8.1'
                       lua: '5.3'
 
         runs-on: ubuntu-${{ matrix.ubuntu }}.04
 
         steps:
-            - uses: actions/download-artifact@v3
+            - uses: actions/download-artifact@v4
               with:
                   name: full-source
 
             - name: Unpack Nominatim
               run: tar xf nominatim-src.tar.bz2
-
-            - name: Setup PHP
-              uses: shivammathur/setup-php@v2
-              with:
-                  php-version: ${{ matrix.php }}
-                  tools: phpunit:9, phpcs, composer
-                  ini-values: opcache.jit=disable
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
             - uses: actions/setup-python@v4
               with:
@@ -119,19 +107,10 @@ jobs:
               run: pip3 install -U pylint
               if: matrix.flavour != 'oldstuff'
 
-            - name: PHP linting
-              run: phpcs --report-width=120 .
-              working-directory: Nominatim
-              if: matrix.flavour != 'oldstuff'
-
             - name: Python linting
               run: python3 -m pylint nominatim
               working-directory: Nominatim
               if: matrix.flavour != 'oldstuff'
-
-            - name: PHP unit tests
-              run: phpunit ./
-              working-directory: Nominatim/test/php
 
             - name: Python unit tests
               run: python3 -m pytest test/python
@@ -156,7 +135,7 @@ jobs:
         runs-on: ubuntu-20.04
 
         steps:
-            - uses: actions/download-artifact@v3
+            - uses: actions/download-artifact@v4
               with:
                   name: full-source
 
@@ -185,16 +164,16 @@ jobs:
 
             - name: BDD tests (legacy tokenizer)
               run: |
-                  python3 -m behave -DREMOVE_TEMPLATE=1 -DBUILDDIR=$GITHUB_WORKSPACE/build -DTOKENIZER=legacy --format=progress3
+                  python3 -m behave -DREMOVE_TEMPLATE=1 -DBUILDDIR=$GITHUB_WORKSPACE/build -DAPI_ENGINE=php -DTOKENIZER=legacy --format=progress3
               working-directory: Nominatim/test/bdd
 
 
-    python-api-test:
+    php-test:
         needs: create-archive
         runs-on: ubuntu-22.04
 
         steps:
-            - uses: actions/download-artifact@v3
+            - uses: actions/download-artifact@v4
               with:
                   name: full-source
 
@@ -206,6 +185,23 @@ jobs:
                   postgresql-version: 15
                   postgis-version: 3
 
+            - name: Setup PHP
+              uses: shivammathur/setup-php@v2
+              with:
+                  php-version: 8.1
+                  tools: phpunit:9, phpcs, composer
+                  ini-values: opcache.jit=disable
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: PHP linting
+              run: phpcs --report-width=120 .
+              working-directory: Nominatim
+
+            - name: PHP unit tests
+              run: phpunit ./
+              working-directory: Nominatim/test/php
+
             - uses: ./Nominatim/.github/actions/build-nominatim
               with:
                   flavour: 'ubuntu-22'
@@ -213,12 +209,9 @@ jobs:
             - name: Install test prerequsites
               run: sudo apt-get install -y -qq python3-behave
 
-            - name: Install Python webservers
-              run: pip3 install starlette asgi_lifespan httpx
-
-            - name: BDD tests (starlette)
+            - name: BDD tests (php)
               run: |
-                  python3 -m behave -DREMOVE_TEMPLATE=1 -DBUILDDIR=$GITHUB_WORKSPACE/build -DAPI_ENGINE=starlette --format=progress3
+                  python3 -m behave -DREMOVE_TEMPLATE=1 -DBUILDDIR=$GITHUB_WORKSPACE/build -DAPI_ENGINE=php --format=progress3
               working-directory: Nominatim/test/bdd
 
 
@@ -268,7 +261,7 @@ jobs:
                 OS: ${{ matrix.name }}
                 INSTALL_MODE: ${{ matrix.install_mode }}
 
-            - uses: actions/download-artifact@v3
+            - uses: actions/download-artifact@v4
               with:
                   name: full-source
                   path: /home/nominatim
@@ -355,7 +348,7 @@ jobs:
       needs: create-archive
 
       steps:
-          - uses: actions/download-artifact@v3
+          - uses: actions/download-artifact@v4
             with:
                 name: full-source
 
@@ -392,5 +385,4 @@ jobs:
                 NOMINATIM_DATABASE_DSN="pgsql:host=127.0.0.1;dbname=nominatim;user=osm-import;password=osm-import" nominatim import --continue import-from-file --osm-file test.pbf
 
           - name: Check full import
-            run: |
-              nominatim admin --check-database
+            run: nominatim admin --check-database

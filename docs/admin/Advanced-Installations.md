@@ -5,6 +5,35 @@ your Nominatim database. It is assumed that you have already successfully
 installed the Nominatim software itself, if not return to the 
 [installation page](Installation.md).
 
+## Importing with a database user without superuser rights
+
+Nominatim usually creates its own PostgreSQL database at the beginning of the
+import process. This makes usage easier for the user but means that the
+database user doing the import needs the appropriate rights.
+
+If you prefer to run the import with a database user with limited rights,
+you can do so by changing the import process as follows:
+
+1. Run the command for database preparation with a database user with
+   superuser rights. For example, to use a db user 'dbadmin' for a
+   database 'nominatim', execute:
+
+   ```
+   NOMINATIM_DATABASE_DSN="pgsql:dbname=nominatim;user=dbadmin" nominatim import --prepare-database
+   ```
+
+2. Grant the import user the right to create tables. For example, foe user 'import-user':
+
+   ```
+   psql -d nominatim -c 'GRANT CREATE ON SCHEMA public TO "import-user"'
+   ```
+
+3. Now run the reminder of the import with the import user:
+
+   ```
+   NOMINATIM_DATABASE_DSN="pgsql:dbname=nominatim;user=import-user" nominatim import --continue import-from-file --osm-file file.pbf
+   ```
+
 ## Importing multiple regions (without updates)
 
 To import multiple regions in your database you can simply give multiple

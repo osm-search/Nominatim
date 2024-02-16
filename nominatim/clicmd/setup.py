@@ -39,8 +39,7 @@ class SetupAll:
     """
 
     def add_args(self, parser: argparse.ArgumentParser) -> None:
-        group_name = parser.add_argument_group('Required arguments')
-        group1 = group_name.add_argument_group()
+        group1 = parser.add_argument_group('Required arguments')
         group1.add_argument('--osm-file', metavar='FILE', action='append',
                            help='OSM file to be imported'
                                 ' (repeat for importing multiple files)',

@@ -63,7 +63,7 @@ def test_cli_add_data_tiger_data(cli_call, cli_tokenizer_mock, mock_func_factory
 def test_cli_serve_php(cli_call, mock_func_factory):
     func = mock_func_factory(nominatim.cli, 'run_php_server')
 
-    cli_call('serve') == 0
+    cli_call('serve', '--engine', 'php') == 0
 
     assert func.called == 1
 

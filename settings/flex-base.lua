@@ -5,6 +5,7 @@ local module = {}
 
 local PRE_DELETE = nil
 local PRE_EXTRAS = nil
+local POST_DELETE = nil
 local MAIN_KEYS = nil
 local NAMES = nil
 local ADDRESS_TAGS = nil
@@ -249,9 +250,9 @@ function Place:write_row(k, v, save_extra_mains)
     }
 
     if save_extra_mains then
-        for k, v in pairs(self.object.tags) do
-            if save_extra_mains(k, v) then
-                self.extratags[k] = nil
+        for tk, tv in pairs(self.object.tags) do
+            if save_extra_mains(tk, tv) then
+                self.extratags[tk] = nil
             end
         end
     end
@@ -539,7 +540,7 @@ function module.set_unused_handling(data)
     end
 end
 
-function set_relation_types(data)
+function module.set_relation_types(data)
     module.RELATION_TYPES = {}
     for k, v in data do
         if v == 'multipolygon' then

@@ -37,40 +37,6 @@ nominatim import --continue indexing
 Otherwise it's best to start the full setup from the beginning.
 
 
-### PHP "open_basedir restriction in effect" warnings
-
-    PHP Warning:  file_get_contents(): open_basedir restriction in effect.
-
-You need to adjust the
-[open_basedir](https://www.php.net/manual/en/ini.core.php#ini.open-basedir)
-setting in your PHP configuration (`php.ini` file). By default this setting may
-look like this:
-
-    open_basedir = /srv/http/:/home/:/tmp/:/usr/share/pear/
-
-Either add reported directories to the list or disable this setting temporarily
-by adding ";" at the beginning of the line. Don't forget to enable this setting
-again once you are done with the PHP command line operations.
-
-
-### PHP timezeone warnings
-
-The Apache log may contain lots of PHP warnings like this:
-    `PHP Warning:  date_default_timezone_set() function.`
-
-You should set the default time zone as instructed in the warning in
-your `php.ini` file. Find the entry about timezone and set it to
-something like this:
-
-    ; Defines the default timezone used by the date functions
-    ; https://php.net/date.timezone
-    date.timezone = 'America/Denver'
-
-Or
-
-```
-echo "date.timezone = 'America/Denver'" > /etc/php.d/timezone.ini
-```
 
 ### nominatim.so version mismatch
 
@@ -170,7 +136,7 @@ recreate `nominatim.so`. Try
    cmake $main_Nominatim_path && make
 ```
 
-### Setup.php fails with "DB Error: extension not found"
+### Setup fails with "DB Error: extension not found"
 
 Make sure you have the PostgreSQL extensions "hstore" and "postgis" installed.
 See the installation instructions for a full list of required packages.

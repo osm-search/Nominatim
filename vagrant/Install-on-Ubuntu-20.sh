@@ -16,16 +16,16 @@ export DEBIAN_FRONTEND=noninteractive #DOCS:
 # Make sure all packages are up-to-date by running:
 #
 
-    sudo apt update -qq
+    sudo apt-get update -qq
 
 # Now you can install all packages needed for Nominatim:
 
-    sudo apt install -y build-essential cmake g++ libboost-dev libboost-system-dev \
+    sudo apt-get install -y build-essential cmake g++ libboost-dev libboost-system-dev \
                         libboost-filesystem-dev libexpat1-dev zlib1g-dev \
                         libbz2-dev libpq-dev liblua5.3-dev lua5.3 lua-dkjson \
                         nlohmann-json3-dev postgresql-12-postgis-3 \
                         postgresql-contrib-12 postgresql-12-postgis-3-scripts \
-                        php-cli php-pgsql php-intl libicu-dev python3-dotenv \
+                        libicu-dev python3-dotenv \
                         python3-psycopg2 python3-psutil python3-jinja2 python3-pip \
                         python3-icu python3-datrie python3-yaml git
 
@@ -133,45 +133,107 @@ fi                                 #DOCS:
 
 # Nominatim is now ready to use. You can continue with
 # [importing a database from OSM data](../admin/Import.md). If you want to set up
-# a webserver first, continue reading.
+# the API frontend first, continue reading.
 #
+# Setting up the Python frontend
+# ==============================
+#
+# Some of the Python packages in Ubuntu are too old. Therefore run the
+# frontend from a Python virtualenv with current packages.
+#
+# To set up the virtualenv, run:
+
+#DOCS:```sh
+sudo apt-get install -y virtualenv
+virtualenv $USERHOME/nominatim-venv
+$USERHOME/nominatim-venv/bin/pip install SQLAlchemy PyICU psycopg[binary] \
+              psycopg2-binary python-dotenv PyYAML falcon uvicorn gunicorn
+#DOCS:```
+
+# Next you need to create a systemd job that runs Nominatim on gunicorn.
+# First create a systemd job that manages the socket file:
+
+#DOCS:```sh
+sudo tee /etc/systemd/system/nominatim.socket << EOFSOCKETSYSTEMD
+[Unit]
+Description=Gunicorn socket for Nominatim
+
+[Socket]
+ListenStream=/run/nominatim.sock
+SocketUser=www-data
+
+[Install]
+WantedBy=multi-user.target
+EOFSOCKETSYSTEMD
+#DOCS:```
+
+# Then create the service for Nominatim itself.
+
+#DOCS:```sh
+sudo tee /etc/systemd/system/nominatim.service << EOFNOMINATIMSYSTEMD
+[Unit]
+Description=Nominatim running as a gunicorn application
+After=network.target
+Requires=nominatim.socket
+
+[Service]
+Type=simple
+Environment="PYTHONPATH=/usr/local/lib/nominatim/lib-python/"
+User=www-data
+Group=www-data
+WorkingDirectory=$USERHOME/nominatim-project
+ExecStart=$USERHOME/nominatim-venv/bin/gunicorn -b unix:/run/nominatim.sock -w 4 -k uvicorn.workers.UvicornWorker nominatim.server.falcon.server:run_wsgi
+ExecReload=/bin/kill -s HUP \$MAINPID
+StandardOutput=append:/var/log/gunicorn-nominatim.log
+StandardError=inherit
+PrivateTmp=true
+TimeoutStopSec=5
+KillMode=mixed
+
+[Install]
+WantedBy=multi-user.target
+EOFNOMINATIMSYSTEMD
+#DOCS:```
+
+# Activate the services:
+
+if [ "x$NOSYSTEMD" != "xyes" ]; then  #DOCS:
+    sudo systemctl daemon-reload
+    sudo systemctl enable nominatim.socket
+    sudo systemctl start nominatim.socket
+    sudo systemctl enable nominatim.service
+fi                                    #DOCS:
+
+
 # Setting up a webserver
 # ======================
 #
-# The webserver should serve the php scripts from the website directory of your
-# [project directory](../admin/Import.md#creating-the-project-directory).
-# This directory needs to exist when being configured.
-# Therefore set up a project directory and create a website directory:
+# The webserver is only needed as a proxy between the public interface
+# and the gunicorn service.
+#
+# The frontend will need configuration information from the project
+# directory, which will be populated later
+# [during the import process](../admin/Import.md#creating-the-project-directory)
+# Already create the project directory itself now:
+
 
     mkdir $USERHOME/nominatim-project
-    mkdir $USERHOME/nominatim-project/website
 
-# The import process will populate the directory later.
 
-#
 # Option 1: Using Apache
 # ----------------------
 #
 if [ "x$2" == "xinstall-apache" ]; then #DOCS:
-#
-# Apache has a PHP module that can be used to serve Nominatim. To install them
-# run:
+# First install apache itself and enable the proxy module:
 
-    sudo apt install -y apache2 libapache2-mod-php
+    sudo apt-get install -y apache2
+    sudo a2enmod proxy_http
 
-# You need to create an alias to the website directory in your apache
-# configuration. Add a separate nominatim configuration to your webserver:
+# To set up proxying for Apache add the following configuration:
 
 #DOCS:```sh
 sudo tee /etc/apache2/conf-available/nominatim.conf << EOFAPACHECONF
-<Directory "$USERHOME/nominatim-project/website">
-  Options FollowSymLinks MultiViews
-  AddType text/html   .php
-  DirectoryIndex search.php
-  Require all granted
-</Directory>
-
-Alias /nominatim $USERHOME/nominatim-project/website
+ProxyPass /nominatim "unix:/run/nominatim.sock|http://localhost/"
 EOFAPACHECONF
 #DOCS:```
 
@@ -196,33 +258,9 @@ fi   #DOCS:
 #
 if [ "x$2" == "xinstall-nginx" ]; then #DOCS:
 
-# Nginx has no native support for php scripts. You need to set up php-fpm for
-# this purpose. First install nginx and php-fpm:
+# First install nginx itself:
 
-    sudo apt install -y nginx php-fpm
-
-# You need to configure php-fpm to listen on a Unix socket.
-
-#DOCS:```sh
-sudo tee /etc/php/7.4/fpm/pool.d/www.conf << EOF_PHP_FPM_CONF
-[www]
-; Replace the tcp listener and add the unix socket
-listen = /var/run/php-fpm-nominatim.sock
-
-; Ensure that the daemon runs as the correct user
-listen.owner = www-data
-listen.group = www-data
-listen.mode = 0666
-
-; Unix user of FPM processes
-user = www-data
-group = www-data
-
-; Choose process manager type (static, dynamic, ondemand)
-pm = ondemand
-pm.max_children = 5
-EOF_PHP_FPM_CONF
-#DOCS:```
+    sudo apt-get install -y nginx
 
 # Then create a Nginx configuration to forward http requests to that socket.
 
@@ -233,45 +271,26 @@ server {
     listen [::]:80 default_server;
 
     root $USERHOME/nominatim-project/website;
-    index search.php index.html;
-    location / {
-        try_files \$uri \$uri/ @php;
-    }
+    index /search;
 
-    location @php {
-        fastcgi_param SCRIPT_FILENAME "\$document_root\$uri.php";
-        fastcgi_param PATH_TRANSLATED "\$document_root\$uri.php";
-        fastcgi_param QUERY_STRING    \$args;
-        fastcgi_pass unix:/var/run/php-fpm-nominatim.sock;
-        fastcgi_index index.php;
-        include fastcgi_params;
-    }
-
-    location ~ [^/]\.php(/|$) {
-        fastcgi_split_path_info ^(.+?\.php)(/.*)$;
-        if (!-f \$document_root\$fastcgi_script_name) {
-            return 404;
-        }
-        fastcgi_pass unix:/var/run/php-fpm-nominatim.sock;
-        fastcgi_index search.php;
-        include fastcgi.conf;
+    location /nominatim/ {
+            proxy_set_header Host \$http_host;
+            proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto \$scheme;
+            proxy_redirect off;
+            proxy_pass http://unix:/run/nominatim.sock:/;
     }
 }
 EOF_NGINX_CONF
 #DOCS:```
 
-# If you have some errors, make sure that php-fpm-nominatim.sock is well under
-# /var/run/ and not under /var/run/php. Otherwise change the Nginx configuration
-# to /var/run/php/php-fpm-nominatim.sock.
-#
 # Enable the configuration and restart Nginx
 #
 
 if [ "x$NOSYSTEMD" == "xyes" ]; then  #DOCS:
-    sudo /usr/sbin/php-fpm7.4 --nodaemonize --fpm-config /etc/php/7.4/fpm/php-fpm.conf & #DOCS:
     sudo /usr/sbin/nginx &            #DOCS:
 else                                  #DOCS:
-    sudo systemctl restart php7.4-fpm nginx
+    sudo systemctl restart nginx
 fi                                    #DOCS:
 
 # The Nominatim API is now available at `http://localhost/`.

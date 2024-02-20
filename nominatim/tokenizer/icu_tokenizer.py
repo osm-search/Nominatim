@@ -214,19 +214,20 @@ class ICUTokenizer(AbstractTokenizer):
             return list(s[0].split('@')[0] for s in cur)
 
 
-    def _install_php(self, phpdir: Path, overwrite: bool = True) -> None:
+    def _install_php(self, phpdir: Optional[Path], overwrite: bool = True) -> None:
         """ Install the php script for the tokenizer.
         """
-        assert self.loader is not None
-        php_file = self.data_dir / "tokenizer.php"
+        if phpdir is not None:
+            assert self.loader is not None
+            php_file = self.data_dir / "tokenizer.php"
 
-        if not php_file.exists() or overwrite:
-            php_file.write_text(dedent(f"""\
-                <?php
-                @define('CONST_Max_Word_Frequency', 10000000);
-                @define('CONST_Term_Normalization_Rules', "{self.loader.normalization_rules}");
-                @define('CONST_Transliteration', "{self.loader.get_search_rules()}");
-                require_once('{phpdir}/tokenizer/icu_tokenizer.php');"""), encoding='utf-8')
+            if not php_file.exists() or overwrite:
+                php_file.write_text(dedent(f"""\
+                    <?php
+                    @define('CONST_Max_Word_Frequency', 10000000);
+                    @define('CONST_Term_Normalization_Rules', "{self.loader.normalization_rules}");
+                    @define('CONST_Transliteration', "{self.loader.get_search_rules()}");
+                    require_once('{phpdir}/tokenizer/icu_tokenizer.php');"""), encoding='utf-8')
 
 
     def _save_config(self) -> None:

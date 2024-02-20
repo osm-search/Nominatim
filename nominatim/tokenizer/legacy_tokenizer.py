@@ -269,15 +269,16 @@ class LegacyTokenizer(AbstractTokenizer):
     def _install_php(self, config: Configuration, overwrite: bool = True) -> None:
         """ Install the php script for the tokenizer.
         """
-        php_file = self.data_dir / "tokenizer.php"
+        if config.lib_dir.php is not None:
+            php_file = self.data_dir / "tokenizer.php"
 
-        if not php_file.exists() or overwrite:
-            php_file.write_text(dedent(f"""\
-                <?php
-                @define('CONST_Max_Word_Frequency', {config.MAX_WORD_FREQUENCY});
-                @define('CONST_Term_Normalization_Rules', "{config.TERM_NORMALIZATION}");
-                require_once('{config.lib_dir.php}/tokenizer/legacy_tokenizer.php');
-                """), encoding='utf-8')
+            if not php_file.exists() or overwrite:
+                php_file.write_text(dedent(f"""\
+                    <?php
+                    @define('CONST_Max_Word_Frequency', {config.MAX_WORD_FREQUENCY});
+                    @define('CONST_Term_Normalization_Rules', "{config.TERM_NORMALIZATION}");
+                    require_once('{config.lib_dir.php}/tokenizer/legacy_tokenizer.php');
+                    """), encoding='utf-8')
 
 
     def _init_db_tables(self, config: Configuration) -> None:

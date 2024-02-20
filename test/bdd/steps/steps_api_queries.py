@@ -243,7 +243,7 @@ def step_impl(context, fmt):
         try:
             tree = ET.fromstring(context.response.page)
         except Exception as ex:
-            assert False, f"Could not parse page:\n{context.response.page}"
+            assert False, f"Could not parse page: {ex}\n{context.response.page}"
 
         assert tree.tag == 'html'
         body = tree.find('./body')

@@ -13,6 +13,7 @@ import datetime as dt
 import textwrap
 import io
 import re
+import html
 
 import sqlalchemy as sa
 from sqlalchemy.ext.asyncio import AsyncConnection
@@ -227,7 +228,7 @@ class HTMLLogger(BaseLogger):
                                HtmlFormatter(nowrap=True, lineseparator='<br />'))
             self._write(f'<div class="highlight"><code class="lang-sql">{sqlstr}</code></div>')
         else:
-            self._write(f'<code class="lang-sql">{sqlstr}</code>')
+            self._write(f'<code class="lang-sql">{html.escape(sqlstr)}</code>')
 
 
     def _python_var(self, var: Any) -> str:
@@ -235,7 +236,7 @@ class HTMLLogger(BaseLogger):
             fmt = highlight(str(var), PythonLexer(), HtmlFormatter(nowrap=True))
             return f'<div class="highlight"><code class="lang-python">{fmt}</code></div>'
 
-        return f'<code class="lang-python">{str(var)}</code>'
+        return f'<code class="lang-python">{html.escape(str(var))}</code>'
 
 
     def _write(self, text: str) -> None:

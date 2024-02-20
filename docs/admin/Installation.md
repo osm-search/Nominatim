@@ -55,22 +55,23 @@ For running Nominatim:
   * [PyYaml](https://pyyaml.org/) (5.1+)
   * [datrie](https://github.com/pytries/datrie)
 
-When running the PHP frontend:
-
-  * [PHP](https://php.net) (7.3+)
-  * PHP-pgsql
-  * PHP-intl (bundled with PHP)
-
 For running continuous updates:
 
   * [pyosmium](https://osmcode.org/pyosmium/)
 
-For running the experimental Python frontend:
+For running the Python frontend:
 
   * one of the following web frameworks:
     * [falcon](https://falconframework.org/) (3.0+)
     * [starlette](https://www.starlette.io/)
   * [uvicorn](https://www.uvicorn.org/)
+
+For running the legacy PHP frontend:
+
+  * [PHP](https://php.net) (7.3+)
+  * PHP-pgsql
+  * PHP-intl (bundled with PHP)
+
 
 For dependencies for running tests and building documentation, see
 the [Development section](../develop/Development-Environment.md).

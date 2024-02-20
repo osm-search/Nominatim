@@ -82,13 +82,14 @@ endif()
 
 # Setting PHP binary variable as to command line (prevailing) or auto detect
 
-if (BUILD_API OR BUILD_IMPORTER)
+if (BUILD_API)
     if (NOT PHP_BIN)
          find_program (PHP_BIN php)
     endif()
     # sanity check if PHP binary exists
     if (NOT EXISTS ${PHP_BIN})
-        message(FATAL_ERROR "PHP binary not found. Install php or provide location with -DPHP_BIN=/path/php ")
+        message(WARNING "PHP binary not found. Only Python frontend can be used.")
+        set(PHP_BIN "")
     else()
         message (STATUS "Using PHP binary " ${PHP_BIN})
     endif()
@@ -226,7 +227,11 @@ if (BUILD_IMPORTER)
             PATTERN "paths.py" EXCLUDE
             PATTERN __pycache__ EXCLUDE)
 
-    configure_file(${PROJECT_SOURCE_DIR}/cmake/paths-py.tmpl paths-py.installed)
+    if (EXISTS ${PHP_BIN})
+        configure_file(${PROJECT_SOURCE_DIR}/cmake/paths-py.tmpl paths-py.installed)
+    else()
+        configure_file(${PROJECT_SOURCE_DIR}/cmake/paths-py-no-php.tmpl paths-py.installed)
+    endif()
     install(FILES ${PROJECT_BINARY_DIR}/paths-py.installed
             DESTINATION ${NOMINATIM_LIBDIR}/lib-python/nominatim
             RENAME paths.py)
@@ -254,7 +259,7 @@ if (BUILD_MODULE)
             DESTINATION ${NOMINATIM_LIBDIR}/module)
 endif()
 
-if (BUILD_API)
+if (BUILD_API AND EXISTS ${PHP_BIN})
     install(DIRECTORY lib-php DESTINATION ${NOMINATIM_LIBDIR})
 endif()
 

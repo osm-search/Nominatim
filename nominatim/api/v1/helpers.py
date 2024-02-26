@@ -155,7 +155,7 @@ COORD_REGEX = [re.compile(r'(?:(?P<pre>.*?)\s+)??' + r + r'(?:\s+(?P<post>.*))?'
 )]
 
 def extract_coords_from_query(query: str) -> Tuple[str, Optional[float], Optional[float]]:
-    """ Look for something that is formated like a coordinate at the
+    """ Look for something that is formatted like a coordinate at the
         beginning or end of the query. If found, extract the coordinate and
         return the remaining query (or the empty string if the query
         consisted of nothing but a coordinate).

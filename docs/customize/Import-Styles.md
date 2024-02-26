@@ -280,7 +280,7 @@ kinds of geometries can be used:
 * __relation_as_multipolygon__ creates a (Multi)Polygon from the ways in
   the relation. If the ways do not form a valid area, then the object is
   silently discarded.
-* __relation_as_multiline__ creates a (Mutli)LineString from the ways in
+* __relation_as_multiline__ creates a (Multi)LineString from the ways in
   the relations. Ways are combined as much as possible without any regards
   to their order in the relation.
 

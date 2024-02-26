@@ -5,7 +5,7 @@
 # Copyright (C) 2023 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
-Hard-coded information about tag catagories.
+Hard-coded information about tag categories.
 
 These tables have been copied verbatim from the old PHP code. For future
 version a more flexible formatting is required.
@@ -44,7 +44,7 @@ def get_label_tag(category: Tuple[str, str], extratags: Optional[Mapping[str, st
 def bbox_from_result(result: Union[napi.ReverseResult, napi.SearchResult]) -> napi.Bbox:
     """ Compute a bounding box for the result. For ways and relations
         a given boundingbox is used. For all other object, a box is computed
-        around the centroid according to dimensions dereived from the
+        around the centroid according to dimensions derived from the
         search rank.
     """
     if (result.osm_object and result.osm_object[0] == 'N') or result.bbox is None:

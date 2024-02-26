@@ -165,7 +165,7 @@ The `railway` layer includes railway infrastructure like tracks.
 Note that in Nominatim's standard configuration, only very few railway
 features are imported into the database.
 
-The `natural` layer collects feautures like rivers, lakes and mountains while
+The `natural` layer collects features like rivers, lakes and mountains while
 the `manmade` layer functions as a catch-all for features not covered by the
 other layers.
 

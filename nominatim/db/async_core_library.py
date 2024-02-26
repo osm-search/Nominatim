@@ -5,7 +5,7 @@
 # Copyright (C) 2023 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
-Import the base libary to use with asynchronous SQLAlchemy.
+Import the base library to use with asynchronous SQLAlchemy.
 """
 # pylint: disable=invalid-name
 

@@ -26,7 +26,7 @@ def weigh_search(search_vector: Optional[str], rankings: str, default: float) ->
 
 class ArrayIntersectFuzzy:
     """ Compute the array of common elements of all input integer arrays.
-        Very large input paramenters may be ignored to speed up
+        Very large input parameters may be ignored to speed up
         computation. Therefore, the result is a superset of common elements.
 
         Input and output arrays are given as comma-separated lists.

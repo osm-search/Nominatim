@@ -316,7 +316,7 @@ class DataLayer(enum.Flag):
         for reverse and forward search.
     """
     ADDRESS = enum.auto()
-    """ The address layer contains all places relavant for addresses:
+    """ The address layer contains all places relevant for addresses:
         fully qualified addresses with a house number (or a house name equivalent,
         for some addresses) and places that can be part of an address like
         roads, cities, states.
@@ -415,7 +415,7 @@ class LookupDetails:
         more the geometry gets simplified.
     """
     locales: Locales = Locales()
-    """ Prefered languages for localization of results.
+    """ Preferred languages for localization of results.
     """
 
     @classmethod
@@ -544,7 +544,7 @@ class SearchDetails(LookupDetails):
 
 
     def layer_enabled(self, layer: DataLayer) -> bool:
-        """ Check if the given layer has been choosen. Also returns
+        """ Check if the given layer has been chosen. Also returns
             true when layer restriction has been disabled completely.
         """
         return self.layers is None or bool(self.layers & layer)

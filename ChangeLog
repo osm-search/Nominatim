@@ -23,7 +23,7 @@
  * new documentation section for library
  * various smaller fixes to existing documentation
    (thanks @woodpeck, @bloom256, @biswajit-k)
- * updates to vagrant install scripts, drop support for Ubunut 18
+ * updates to vagrant install scripts, drop support for Ubuntu 18
    (thanks @n-timofeev)
  * removed obsolete configuration variables from env.defaults
  * add script for generating a taginfo description (thanks @biswajit-k)
@@ -240,7 +240,7 @@
  * increase splitting for large geometries to improve indexing speed
  * remove deprecated get_magic_quotes_gpc() function
  * make sure that all postcodes have an entry in word and are thus searchable
- * remove use of ST_Covers in conjunction woth ST_Intersects,
+ * remove use of ST_Covers in conjunction with ST_Intersects,
    causes bad query planning and slow updates in Postgis3
  * update osm2pgsql
 
@@ -297,7 +297,7 @@
  * exclude postcode ranges separated by colon from centre point calculation
  * update osm2pgsql, better handling of imports without flatnode file
  * switch to more efficient algorithm for word set computation
- * use only boundries for country and state parts of addresses
+ * use only boundaries for country and state parts of addresses
  * improve updates of addresses with housenumbers and interpolations
  * remove country from place_addressline table and use country_code instead
  * optimise indexes on search_name partition tables
@@ -336,7 +336,7 @@
 
  * complete rewrite of reverse search algorithm
  * add new geojson and geocodejson output formats
- * add simple export script to exprot addresses to CSV
+ * add simple export script to export addresses to CSV
  * remove is_in terms from address computation
  * remove unused search_name_country tables
  * various smaller fixes to query parsing
@@ -401,7 +401,7 @@
  * move installation documentation into this repo
  * add self-documenting vagrant scripts
  * remove --create-website, recommend to use website directory in build
- * add accessor functions for URL parameters and improve erro checking
+ * add accessor functions for URL parameters and improve error checking
  * remove IP blocking and rate-limiting code
  * enable CI via travis
  * reformatting for more consistent coding style
@@ -412,7 +412,7 @@
  * update to refactored osm2pgsql which use libosmium based types
  * switch from osmosis to pyosmium for updates
  * be more strict when matching against special search terms
- * handle postcode entries with mutliple values correctly
+ * handle postcode entries with multiple values correctly
 
 2.5
 

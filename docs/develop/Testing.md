@@ -10,7 +10,7 @@ There are two kind of tests in this test suite. There are functional tests
 which test the API interface using a BDD test framework and there are unit
 tests for specific PHP functions.
 
-This test directory is sturctured as follows:
+This test directory is structured as follows:
 
 ```
  -+-   bdd         Functional API tests

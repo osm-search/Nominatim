@@ -75,7 +75,7 @@ def define_node_grid(context, grid_step, origin):
             # TODO coordinate
             coords = origin.split(',')
             if len(coords) != 2:
-                raise RuntimeError('Grid origin expects orgin with x,y coordinates.')
+                raise RuntimeError('Grid origin expects origin with x,y coordinates.')
             origin = (float(coords[0]), float(coords[1]))
         elif origin in ALIASES:
             origin = ALIASES[origin]

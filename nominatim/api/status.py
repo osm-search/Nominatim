@@ -5,7 +5,7 @@
 # Copyright (C) 2023 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
-Classes and function releated to status call.
+Classes and function related to status call.
 """
 from typing import Optional
 import datetime as dt

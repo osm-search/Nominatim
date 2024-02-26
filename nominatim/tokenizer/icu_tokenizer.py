@@ -286,7 +286,7 @@ class ICUTokenizer(AbstractTokenizer):
 
 
     def _create_lookup_indices(self, config: Configuration, table_name: str) -> None:
-        """ Create addtional indexes used when running the API.
+        """ Create additional indexes used when running the API.
         """
         with connect(self.dsn) as conn:
             sqlp = SQLPreprocessor(conn, config)

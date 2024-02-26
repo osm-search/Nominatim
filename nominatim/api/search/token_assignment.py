@@ -72,7 +72,7 @@ class TokenAssignment: # pylint: disable=too-many-instance-attributes
 
 
 class _TokenSequence:
-    """ Working state used to put together the token assignements.
+    """ Working state used to put together the token assignments.
 
         Represents an intermediate state while traversing the tokenized
         query.
@@ -132,7 +132,7 @@ class _TokenSequence:
 
         # Name tokens are always acceptable and don't change direction
         if ttype == qmod.TokenType.PARTIAL:
-            # qualifiers cannot appear in the middle of the qeury. They need
+            # qualifiers cannot appear in the middle of the query. They need
             # to be near the next phrase.
             if self.direction == -1 \
                and any(t.ttype == qmod.TokenType.QUALIFIER for t in self.seq[:-1]):
@@ -238,10 +238,10 @@ class _TokenSequence:
 
     def recheck_sequence(self) -> bool:
         """ Check that the sequence is a fully valid token assignment
-            and addapt direction and penalties further if necessary.
+            and adapt direction and penalties further if necessary.
 
             This function catches some impossible assignments that need
-            forward context and can therefore not be exluded when building
+            forward context and can therefore not be excluded when building
             the assignment.
         """
         # housenumbers may not be further than 2 words from the beginning.
@@ -277,10 +277,10 @@ class _TokenSequence:
             # <address>,<postcode> should give preference to address search
             if base.postcode.start == 0:
                 penalty = self.penalty
-                self.direction = -1 # name searches are only possbile backwards
+                self.direction = -1 # name searches are only possible backwards
             else:
                 penalty = self.penalty + 0.1
-                self.direction = 1 # name searches are only possbile forwards
+                self.direction = 1 # name searches are only possible forwards
             yield dataclasses.replace(base, penalty=penalty)
 
 

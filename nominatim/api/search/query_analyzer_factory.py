@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from nominatim.api.search.query import Phrase, QueryStruct
 
 class AbstractQueryAnalyzer(ABC):
-    """ Class for analysing incomming queries.
+    """ Class for analysing incoming queries.
 
         Query analyzers are tied to the tokenizer used on import.
     """

@@ -270,8 +270,8 @@ class NominatimEnvironment:
             self.db_drop_database(self.test_db)
 
     def _reuse_or_drop_db(self, name):
-        """ Check for the existance of the given DB. If reuse is enabled,
-            then the function checks for existance and returns True if the
+        """ Check for the existence of the given DB. If reuse is enabled,
+            then the function checks for existnce and returns True if the
             database is already there. Otherwise an existing database is
             dropped and always false returned.
         """

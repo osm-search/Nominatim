@@ -56,7 +56,7 @@ Feature: Address computation
             | N1     | R1      | True |
             | N1     | R2      | True |
 
-    Scenario: with boundaries of same rank the one with the closer centroid is prefered
+    Scenario: with boundaries of same rank the one with the closer centroid is preferred
         Given the grid
             | 1 |   |   | 3 |  | 5 |
             |   | 9 |   |   |  |   |

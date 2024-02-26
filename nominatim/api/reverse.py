@@ -175,7 +175,7 @@ class ReverseGeocoder:
         t = self.conn.t.placex
 
         # PostgreSQL must not get the distance as a parameter because
-        # there is a danger it won't be able to proberly estimate index use
+        # there is a danger it won't be able to properly estimate index use
         # when used with prepared statements
         diststr = sa.text(f"{distance}")
 

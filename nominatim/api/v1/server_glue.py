@@ -240,7 +240,7 @@ class ASGIAdaptor(abc.ABC):
 
 
     def parse_geometry_details(self, fmt: str) -> Dict[str, Any]:
-        """ Create details strucutre from the supplied geometry parameters.
+        """ Create details structure from the supplied geometry parameters.
         """
         numgeoms = 0
         output = napi.GeometryFormat.NONE
@@ -531,7 +531,7 @@ async def deletable_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -
 async def polygons_endpoint(api: napi.NominatimAPIAsync, params: ASGIAdaptor) -> Any:
     """ Server glue for /polygons endpoint.
         This is a special endpoint that shows polygons that have changed
-        thier size but are kept in the Nominatim database with their
+        their size but are kept in the Nominatim database with their
         old area to minimize disruption.
     """
     fmt = params.parse_format(RawDataList, 'json')

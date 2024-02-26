@@ -120,7 +120,7 @@ Feature: Simple Tests
           | querystring | pub |
           | viewbox     | 12,33,77,45.13 |
 
-    Scenario: Empty XML search with exluded place ids
+    Scenario: Empty XML search with excluded place ids
         When sending xml search query "jghrleoxsbwjer"
           | exclude_place_ids |
           | 123,76,342565 |
@@ -128,7 +128,7 @@ Feature: Simple Tests
           | attr              | value |
           | exclude_place_ids | 123,76,342565 |
 
-    Scenario: Empty XML search with bad exluded place ids
+    Scenario: Empty XML search with bad excluded place ids
         When sending xml search query "jghrleoxsbwjer"
           | exclude_place_ids |
           | , |

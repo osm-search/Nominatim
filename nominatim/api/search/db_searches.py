@@ -5,7 +5,7 @@
 # Copyright (C) 2023 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
-Implementation of the acutal database accesses for forward search.
+Implementation of the actual database accesses for forward search.
 """
 from typing import List, Tuple, AsyncIterator, Dict, Any, Callable, cast
 import abc

@@ -60,5 +60,5 @@ class SanitizerHandler(Protocol):
 
         Return:
             The result must be a callable that takes a place description
-            and transforms name and address as reuqired.
+            and transforms name and address as required.
         """

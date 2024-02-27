@@ -199,8 +199,7 @@ class SearchData:
             categories: Dict[Tuple[str, str], float] = {}
             min_penalty = 1000.0
             for t in tokens:
-                if t.penalty < min_penalty:
-                    min_penalty = t.penalty
+                min_penalty = min(min_penalty, t.penalty)
                 cat = t.get_category()
                 if t.penalty < categories.get(cat, 1000.0):
                     categories[cat] = t.penalty

@@ -11,7 +11,7 @@ Data classes are part of the public API while the functions are for
 internal use only. That's why they are implemented as free-standing functions
 instead of member functions.
 """
-from typing import Optional, Tuple, Dict, Sequence, TypeVar, Type, List, cast
+from typing import Optional, Tuple, Dict, Sequence, TypeVar, Type, List, cast, Callable
 import enum
 import dataclasses
 import datetime as dt
@@ -501,15 +501,17 @@ def _get_address_lookup_id(result: BaseResultT) -> int:
 
 async def _finalize_entry(conn: SearchConnection, result: BaseResultT) -> None:
     assert result.address_rows is not None
-    postcode = result.postcode
-    if not postcode and result.address:
-        postcode = result.address.get('postcode')
-    if postcode and ',' not in postcode and ';' not in postcode:
-        result.address_rows.append(AddressLine(
-            category=('place', 'postcode'),
-            names={'ref': postcode},
-            fromarea=False, isaddress=True, rank_address=5,
-            distance=0.0))
+    if result.category[0] not in ('boundary', 'place')\
+       or result.category[1] not in ('postal_code', 'postcode'):
+        postcode = result.postcode
+        if not postcode and result.address:
+            postcode = result.address.get('postcode')
+        if postcode and ',' not in postcode and ';' not in postcode:
+            result.address_rows.append(AddressLine(
+                category=('place', 'postcode'),
+                names={'ref': postcode},
+                fromarea=False, isaddress=True, rank_address=5,
+                distance=0.0))
     if result.country_code:
         async def _get_country_names() -> Optional[Dict[str, str]]:
             t = conn.t.country_name
@@ -551,7 +553,7 @@ def _setup_address_details(result: BaseResultT) -> None:
             extratags=result.extratags or {},
             admin_level=result.admin_level,
             fromarea=True, isaddress=True,
-            rank_address=result.rank_address or 100, distance=0.0))
+            rank_address=result.rank_address, distance=0.0))
     if result.source_table == SourceTable.PLACEX and result.address:
         housenumber = result.address.get('housenumber')\
                       or result.address.get('streetnumber')\
@@ -676,9 +678,12 @@ async def complete_address_details(conn: SearchConnection, results: List[BaseRes
                     rank_address=row.rank_address, distance=0.0))
 
     ### Now sort everything
+    def mk_sort_key(place_id: Optional[int]) -> Callable[[AddressLine], Tuple[bool, int, bool]]:
+        return lambda a: (a.place_id != place_id, -a.rank_address, a.isaddress)
+
     for result in results:
         assert result.address_rows is not None
-        result.address_rows.sort(key=lambda a: (-a.rank_address, a.isaddress))
+        result.address_rows.sort(key=mk_sort_key(result.place_id))
 
 
 def _placex_select_address_row(conn: SearchConnection,

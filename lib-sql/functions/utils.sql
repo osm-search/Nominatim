@@ -73,6 +73,26 @@ END;
 $$
 LANGUAGE plpgsql IMMUTABLE;
 
+
+CREATE OR REPLACE FUNCTION get_rel_node_members(members JSONB, memberLabels TEXT[])
+  RETURNS SETOF BIGINT
+  AS $$
+DECLARE
+  member JSONB;
+BEGIN
+  FOR member IN SELECT * FROM jsonb_array_elements(members)
+  LOOP
+    IF member->>'type' = 'N' and member->>'role' = ANY(memberLabels) THEN
+        RETURN NEXT (member->>'ref')::bigint;
+    END IF;
+  END LOOP;
+
+  RETURN;
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE;
+
+
 -- Copy 'name' to or from the default language.
 --
 -- \param country_code     Country code of the object being named.

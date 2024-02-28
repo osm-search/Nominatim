@@ -31,7 +31,7 @@ def run_osm2pgsql(options: Mapping[str, Any]) -> None:
     """
     env = get_pg_env(options['dsn'])
     cmd = [str(options['osm2pgsql']),
-           '--hstore', '--latlon', '--slim',
+           '--slim',
            '--log-progress', 'true',
            '--number-processes', '1' if options['append'] else str(options['threads']),
            '--cache', str(options['osm2pgsql_cache']),
@@ -43,7 +43,7 @@ def run_osm2pgsql(options: Mapping[str, Any]) -> None:
                                     os.environ.get('LUAPATH', ';')))
         cmd.extend(('--output', 'flex'))
     else:
-        cmd.extend(('--output', 'gazetteer'))
+        cmd.extend(('--output', 'gazetteer', '--hstore', '--latlon'))
 
     cmd.append('--append' if options['append'] else '--create')
 

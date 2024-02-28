@@ -119,12 +119,14 @@ CREATE OR REPLACE FUNCTION find_associated_street(poi_osm_type CHAR(1),
   AS $$
 DECLARE
   location RECORD;
+  member JSONB;
   parent RECORD;
   result BIGINT;
   distance FLOAT;
   new_distance FLOAT;
   waygeom GEOMETRY;
 BEGIN
+{% if db.middle_db_format == '1' %}
   FOR location IN
     SELECT members FROM planet_osm_rels
     WHERE parts @> ARRAY[poi_osm_id]
@@ -160,6 +162,40 @@ BEGIN
       END IF;
     END LOOP;
   END LOOP;
+
+{% else %}
+  FOR member IN
+    SELECT value FROM planet_osm_rels r, LATERAL jsonb_array_elements(members)
+    WHERE planet_osm_member_ids(members, poi_osm_type::char(1)) && ARRAY[poi_osm_id]
+          and tags->>'type' = 'associatedStreet'
+          and value->>'role' = 'street'
+  LOOP
+    FOR parent IN
+      SELECT place_id, geometry
+       FROM placex
+       WHERE osm_type = (member->>'type')::char(1)
+             and osm_id = (member->>'ref')::bigint
+             and name is not null
+             and rank_search between 26 and 27
+    LOOP
+      -- Find the closest 'street' member.
+      -- Avoid distance computation for the frequent case where there is
+      -- only one street member.
+      IF waygeom is null THEN
+        result := parent.place_id;
+        waygeom := parent.geometry;
+      ELSE
+        distance := coalesce(distance, ST_Distance(waygeom, bbox));
+        new_distance := ST_Distance(parent.geometry, bbox);
+        IF new_distance < distance THEN
+          distance := new_distance;
+          result := parent.place_id;
+          waygeom := parent.geometry;
+        END IF;
+      END IF;
+    END LOOP;
+  END LOOP;
+{% endif %}
 
   RETURN result;
 END;
@@ -257,7 +293,11 @@ CREATE OR REPLACE FUNCTION find_linked_place(bnd placex)
   RETURNS placex
   AS $$
 DECLARE
+{% if db.middle_db_format == '1' %}
   relation_members TEXT[];
+{% else %}
+  relation_members JSONB;
+{% endif %}
   rel_member RECORD;
   linked_placex placex%ROWTYPE;
   bnd_name TEXT;
@@ -749,7 +789,11 @@ CREATE OR REPLACE FUNCTION placex_update()
 DECLARE
   i INTEGER;
   location RECORD;
+{% if db.middle_db_format == '1' %}
   relation_members TEXT[];
+{% else %}
+  relation_member JSONB;
+{% endif %}
 
   geom GEOMETRY;
   parent_address_level SMALLINT;
@@ -971,6 +1015,7 @@ BEGIN
 
   -- waterway ways are linked when they are part of a relation and have the same class/type
   IF NEW.osm_type = 'R' and NEW.class = 'waterway' THEN
+{% if db.middle_db_format == '1' %}
       FOR relation_members IN select members from planet_osm_rels r where r.id = NEW.osm_id and r.parts != array[]::bigint[]
       LOOP
           FOR i IN 1..array_upper(relation_members, 1) BY 2 LOOP
@@ -989,6 +1034,29 @@ BEGIN
               END IF;
           END LOOP;
       END LOOP;
+{% else %}
+    FOR relation_member IN
+      SELECT value FROM planet_osm_rels r, LATERAL jsonb_array_elements(r.members)
+      WHERE r.id = NEW.osm_id
+    LOOP
+      IF relation_member->>'role' IN ('', 'main_stream', 'side_stream')
+         and relation_member->>'type' = 'W'
+      THEN
+        {% if debug %}RAISE WARNING 'waterway parent %, child %', NEW.osm_id, relation_member;{% endif %}
+        FOR linked_node_id IN
+          SELECT place_id FROM placex
+          WHERE osm_type = 'W' and osm_id = (relation_member->>'ref')::bigint
+                and class = NEW.class and type in ('river', 'stream', 'canal', 'drain', 'ditch')
+                and (relation_member->>'role' != 'side_stream' or NEW.name->'name' = name->'name')
+        LOOP
+          UPDATE placex SET linked_place_id = NEW.place_id WHERE place_id = linked_node_id;
+          {% if 'search_name' in db.tables %}
+            DELETE FROM search_name WHERE place_id = linked_node_id;
+          {% endif %}
+        END LOOP;
+      END IF;
+    END LOOP;
+{% endif %}
       {% if debug %}RAISE WARNING 'Waterway processed';{% endif %}
   END IF;
 

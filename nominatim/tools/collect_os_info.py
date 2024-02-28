@@ -78,7 +78,7 @@ def from_file_find_line_portion(
     filename: str, start: str, sep: str, fieldnum: int = 1
 ) -> Optional[str]:
     """open filename, finds the line starting with the 'start' string.
-    Splits the line using seperator and returns a "fieldnum" from the split."""
+    Splits the line using separator and returns a "fieldnum" from the split."""
     with open(filename, encoding='utf8') as file:
         result = ""
         for line in file:

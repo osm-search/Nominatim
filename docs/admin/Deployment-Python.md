@@ -44,7 +44,7 @@ Next you need to set up the service that runs the Nominatim frontend. This is
 easiest done with a systemd job.
 
 First you need to tell systemd to create a socket file to be used by
-hunicorn. Crate the following file `/etc/systemd/system/nominatim.socket`:
+hunicorn. Create the following file `/etc/systemd/system/nominatim.socket`:
 
 ``` systemd
 [Unit]

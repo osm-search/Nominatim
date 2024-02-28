@@ -8,7 +8,7 @@
 Test for the command line interface wrapper admin subcommand.
 
 These tests just check that the various command line parameters route to the
-correct functionionality. They use a lot of monkeypatching to avoid executing
+correct functionality. They use a lot of monkeypatching to avoid executing
 the actual functions.
 """
 import pytest

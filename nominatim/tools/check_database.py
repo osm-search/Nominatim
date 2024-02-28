@@ -127,7 +127,7 @@ def _get_indexes(conn: Connection) -> List[str]:
 
 # CHECK FUNCTIONS
 #
-# Functions are exectured in the order they appear here.
+# Functions are executed in the order they appear here.
 
 @_check(hint="""\
              {error}

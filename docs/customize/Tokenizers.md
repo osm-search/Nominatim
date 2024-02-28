@@ -394,7 +394,7 @@ The analyzer cannot be customized.
 ##### Postcode token analyzer
 
 The analyzer `postcodes` is pupose-made to analyze postcodes. It supports
-a 'lookup' varaint of the token, which produces variants with optional
+a 'lookup' variant of the token, which produces variants with optional
 spaces. Use together with the clean-postcodes sanitizer.
 
 The analyzer cannot be customized.

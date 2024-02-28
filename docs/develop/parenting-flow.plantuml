@@ -18,7 +18,7 @@ elseif (has 'addr:place'?) then (yes)
      **with same name**;
      kill
   else (no)
-    :add addr:place to adress;
+    :add addr:place to address;
     :**Use closest place**\n**rank 16 to 25**;
      kill
   endif

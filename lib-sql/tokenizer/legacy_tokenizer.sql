@@ -347,7 +347,7 @@ BEGIN
       END LOOP;
     END IF;
 
-    -- consider parts before an opening braket a full word as well
+    -- consider parts before an opening bracket a full word as well
     words := regexp_split_to_array(value, E'[(]');
     IF array_upper(words, 1) > 1 THEN
       s := make_standard_name(words[1]);

@@ -179,7 +179,7 @@ also excluded when the filter is set.
     This parameter should not be confused with the 'country' parameter of
     the structured query. The 'country' parameter contains a search term
     and will be handled with some fuzziness. The `countrycodes` parameter
-    is a hard filter and as such should be prefered. Having both parameters
+    is a hard filter and as such should be preferred. Having both parameters
     in the same query will work. If the parameters contradict each other,
     the search will come up empty.
 
@@ -203,7 +203,7 @@ The `railway` layer includes railway infrastructure like tracks.
 Note that in Nominatim's standard configuration, only very few railway
 features are imported into the database.
 
-The `natural` layer collects feautures like rivers, lakes and mountains while
+The `natural` layer collects features like rivers, lakes and mountains while
 the `manmade` layer functions as a catch-all for features not covered by the
 other layers.
 
@@ -217,7 +217,7 @@ the 'state', 'country' or 'city' part of an address. A featureType of
 settlement selects any human inhabited feature from 'state' down to
 'neighbourhood'.
 
-When featureType ist set, then results are automatically restricted
+When featureType is set, then results are automatically restricted
 to the address layer (see above).
 
 !!! tip
@@ -227,7 +227,7 @@ to the address layer (see above).
 
 | Parameter | Value | Default |
 |-----------| ----- | ------- |
-| exclude_place_ids | comma-separeted list of place ids |
+| exclude_place_ids | comma-separated list of place ids |
 
 If you do not want certain OSM objects to appear in the search
 result, give a comma separated list of the `place_id`s you want to skip.
@@ -248,7 +248,7 @@ box. `x` is longitude, `y` is latitude.
 | bounded   | 0 or 1 | 0       |
 
 When set to 1, then it turns the 'viewbox' parameter (see above) into
-a filter paramter, excluding any results outside the viewbox.
+a filter parameter, excluding any results outside the viewbox.
 
 When `bounded=1` is given and the viewbox is small enough, then an amenity-only
 search is allowed. Give the special keyword for the amenity in square

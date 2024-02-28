@@ -129,7 +129,7 @@ sanitizers:
 !!! warning
     This example is just a simplified show case on how to create a sanitizer.
     It is not really read for real-world use: while the sanitizer would
-    correcly transform `West 5th Street` into `5th Street`. it would also
+    correctly transform `West 5th Street` into `5th Street`. it would also
     shorten a simple `North Street` to `Street`.
 
 For more sanitizer examples, have a look at the sanitizers provided by Nominatim.

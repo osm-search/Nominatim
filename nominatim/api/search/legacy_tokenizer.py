@@ -44,7 +44,7 @@ class LegacyToken(qmod.Token):
 
     @property
     def info(self) -> Dict[str, Any]:
-        """ Dictionary of additional propoerties of the token.
+        """ Dictionary of additional properties of the token.
             Should only be used for debugging purposes.
         """
         return {'category': self.category,

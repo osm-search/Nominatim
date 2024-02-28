@@ -23,7 +23,7 @@ API_OPTIONS = {'search'}
 
 @pytest.fixture(autouse=True)
 def setup_icu_tokenizer(apiobj):
-    """ Setup the propoerties needed for using the ICU tokenizer.
+    """ Setup the properties needed for using the ICU tokenizer.
     """
     apiobj.add_data('properties',
                     [{'property': 'tokenizer', 'value': 'icu'},

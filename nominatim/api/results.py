@@ -466,7 +466,7 @@ async def add_result_details(conn: SearchConnection, results: List[BaseResultT],
 
 
 def _result_row_to_address_row(row: SaRow, isaddress: Optional[bool] = None) -> AddressLine:
-    """ Create a new AddressLine from the results of a datbase query.
+    """ Create a new AddressLine from the results of a database query.
     """
     extratags: Dict[str, str] = getattr(row, 'extratags', {}) or {}
     if 'linked_place' in extratags:

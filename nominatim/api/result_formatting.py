@@ -5,7 +5,7 @@
 # Copyright (C) 2023 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
-Helper classes and functions for formating results into API responses.
+Helper classes and functions for formatting results into API responses.
 """
 from typing import Type, TypeVar, Dict, List, Callable, Any, Mapping
 from collections import defaultdict

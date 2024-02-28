@@ -127,7 +127,7 @@ class SQLPreprocessor:
 
     def run_parallel_sql_file(self, dsn: str, name: str, num_threads: int = 1,
                               **kwargs: Any) -> None:
-        """ Execure the given SQL files using parallel asynchronous connections.
+        """ Execute the given SQL files using parallel asynchronous connections.
             The keyword arguments may supply additional parameters for
             preprocessing.
 

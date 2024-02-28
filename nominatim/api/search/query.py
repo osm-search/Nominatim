@@ -169,7 +169,7 @@ class TokenList:
 
 @dataclasses.dataclass
 class QueryNode:
-    """ A node of the querry representing a break between terms.
+    """ A node of the query representing a break between terms.
     """
     btype: BreakType
     ptype: PhraseType

@@ -21,7 +21,7 @@ class GeometryFactory:
             The function understands the following formats:
 
               country:<country code>
-                 Point geoemtry guaranteed to be in the given country
+                 Point geometry guaranteed to be in the given country
               <P>
                  Point geometry
               <P>,...,<P>
@@ -50,7 +50,7 @@ class GeometryFactory:
 
     def mk_wkt_point(self, point):
         """ Parse a point description.
-            The point may either consist of 'x y' cooordinates or a number
+            The point may either consist of 'x y' coordinates or a number
             that refers to a grid setup.
         """
         geom = point.strip()

@@ -84,7 +84,7 @@ class BaseLogger:
     def format_sql(self, conn: AsyncConnection, statement: 'sa.Executable',
                    extra_params: Union[Mapping[str, Any],
                                  Sequence[Mapping[str, Any]], None]) -> str:
-        """ Return the comiled version of the statement.
+        """ Return the compiled version of the statement.
         """
         compiled = cast('sa.ClauseElement', statement).compile(conn.sync_engine)
 

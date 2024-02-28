@@ -190,7 +190,7 @@ def delete_places(context, oids):
 def check_place_contents(context, table, exact):
     """ Check contents of place/placex tables. Each row represents a table row
         and all data must match. Data not present in the expected table, may
-        be arbitry. The rows are identified via the 'object' column which must
+        be arbitrary. The rows are identified via the 'object' column which must
         have an identifier of the form '<NRW><osm id>[:<class>]'. When multiple
         rows match (for example because 'class' was left out and there are
         multiple entries for the given OSM object) then all must match. All
@@ -237,7 +237,7 @@ def check_place_has_entry(context, table, oid):
 def check_search_name_contents(context, exclude):
     """ Check contents of place/placex tables. Each row represents a table row
         and all data must match. Data not present in the expected table, may
-        be arbitry. The rows are identified via the 'object' column which must
+        be arbitrary. The rows are identified via the 'object' column which must
         have an identifier of the form '<NRW><osm id>[:<class>]'. All
         expected rows are expected to be present with at least one database row.
     """
@@ -286,7 +286,7 @@ def check_search_name_has_entry(context, oid):
 def check_location_postcode(context):
     """ Check full contents for location_postcode table. Each row represents a table row
         and all data must match. Data not present in the expected table, may
-        be arbitry. The rows are identified via 'country' and 'postcode' columns.
+        be arbitrary. The rows are identified via 'country' and 'postcode' columns.
         All rows must be present as excepted and there must not be additional
         rows.
     """
@@ -343,7 +343,7 @@ def check_word_table_for_postcodes(context, exclude, postcodes):
 def check_place_addressline(context):
     """ Check the contents of the place_addressline table. Each row represents
         a table row and all data must match. Data not present in the expected
-        table, may be arbitry. The rows are identified via the 'object' column,
+        table, may be arbitrary. The rows are identified via the 'object' column,
         representing the addressee and the 'address' column, representing the
         address item.
     """
@@ -410,7 +410,7 @@ def check_location_property_osmline(context, oid, neg):
 def check_place_contents(context, exact):
     """ Check contents of the interpolation table. Each row represents a table row
         and all data must match. Data not present in the expected table, may
-        be arbitry. The rows are identified via the 'object' column which must
+        be arbitrary. The rows are identified via the 'object' column which must
         have an identifier of the form '<osm id>[:<startnumber>]'. When multiple
         rows match (for example because 'startnumber' was left out and there are
         multiple entries for the given OSM object) then all must match. All

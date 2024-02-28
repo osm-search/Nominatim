@@ -94,7 +94,7 @@ class RankedTokens:
 
     def with_token(self, t: Token, transition_penalty: float) -> 'RankedTokens':
         """ Create a new RankedTokens list with the given token appended.
-            The tokens penalty as well as the given transision penalty
+            The tokens penalty as well as the given transition penalty
             are added to the overall penalty.
         """
         return RankedTokens(self.penalty + t.penalty + transition_penalty,

@@ -374,7 +374,7 @@ class NominatimAPI:
         """ Close all active connections to the database.
 
             This function also closes the asynchronous worker loop making
-            the NominatimAPI object unusuable.
+            the NominatimAPI object unusable.
         """
         self._loop.run_until_complete(self._async_api.close())
         self._loop.close()
@@ -447,7 +447,7 @@ class NominatimAPI:
                   place. Only meaning full for POI-like objects (places with a
                   rank_address of 30).
               linked_place_id (Optional[int]): Internal ID of the place this object
-                  linkes to. When this ID is set then there is no guarantee that
+                  links to. When this ID is set then there is no guarantee that
                   the rest of the result information is complete.
               admin_level (int): Value of the `admin_level` OSM tag. Only meaningful
                   for administrative boundary objects.

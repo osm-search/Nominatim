@@ -128,7 +128,7 @@ class FileLoggingMiddleware:
                                resource: Optional[EndpointWrapper],
                                req_succeeded: bool) -> None:
         """ Callback after requests writes to the logfile. It only
-            writes logs for sucessful requests for search, reverse and lookup.
+            writes logs for successful requests for search, reverse and lookup.
         """
         if not req_succeeded or resource is None or resp.status != 200\
             or resource.name not in ('reverse', 'search', 'lookup', 'details'):

@@ -700,7 +700,7 @@ class PlaceSearch(AbstractSearch):
                or (details.viewbox is not None and details.viewbox.area < 0.5):
                 sql = sql.order_by(
                         penalty - sa.case((tsearch.c.importance > 0, tsearch.c.importance),
-                                    else_=0.75001-(sa.cast(tsearch.c.search_rank, sa.Float())/40)))
+                                    else_=0.40001-(sa.cast(tsearch.c.search_rank, sa.Float())/75)))
             sql = sql.add_columns(t.c.importance)
 
 

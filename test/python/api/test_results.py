@@ -37,7 +37,7 @@ def test_minimal_detailed_result():
 
     assert res.lon == 23.1
     assert res.lat == 0.5
-    assert res.calculated_importance() == pytest.approx(0.0000001)
+    assert res.calculated_importance() == pytest.approx(0.00001)
 
 def test_detailed_result_custom_importance():
     res = DetailedResult(SourceTable.PLACEX,

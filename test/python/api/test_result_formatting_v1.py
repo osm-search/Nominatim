@@ -77,7 +77,7 @@ def test_search_details_minimal():
             'admin_level': 15,
             'names': {},
             'localname': '',
-            'calculated_importance': pytest.approx(0.0000001),
+            'calculated_importance': pytest.approx(0.00001),
             'rank_address': 30,
             'rank_search': 30,
             'isarea': False,

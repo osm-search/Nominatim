@@ -130,7 +130,7 @@ BEGIN
 
   -- Still nothing? Fall back to a default.
   IF result.importance is null THEN
-    result.importance := 0.75001 - (rank_search::float / 40);
+    result.importance := 0.40001 - (rank_search::float / 75);
   END IF;
 
 {% if 'secondary_importance' in db.tables %}

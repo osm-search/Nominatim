@@ -23,6 +23,10 @@ CREATE INDEX IF NOT EXISTS idx_placex_parent_place_id
 ---
 CREATE INDEX IF NOT EXISTS idx_placex_geometry ON placex
   USING GIST (geometry) {{db.tablespace.search_index}};
+-- Index is needed during import but can be dropped as soon as a full
+-- geometry index is in place. The partial index is almost as big as the full
+-- index.
+DROP INDEX IF EXISTS idx_placex_geometry_lower_rank_ways;
 ---
 CREATE INDEX IF NOT EXISTS idx_placex_geometry_reverse_lookupPolygon
   ON placex USING gist (geometry) {{db.tablespace.search_index}}

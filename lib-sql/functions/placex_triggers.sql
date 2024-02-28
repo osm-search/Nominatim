@@ -718,6 +718,12 @@ BEGIN
       NEW.country_code := NULL;
     END IF;
 
+    -- Simplify polygons with a very large memory footprint when they
+    -- do not take part in address computation.
+    IF NEW.rank_address = 0 THEN
+      NEW.geometry := simplify_large_polygons(NEW.geometry);
+    END IF;
+
   END IF;
 
   {% if debug %}RAISE WARNING 'placex_insert:END: % % % %',NEW.osm_type,NEW.osm_id,NEW.class,NEW.type;{% endif %}

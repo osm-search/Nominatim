@@ -296,7 +296,9 @@ BEGIN
           extratags = NEW.extratags,
           admin_level = NEW.admin_level,
           indexed_status = 2,
-          geometry = NEW.geometry
+          geometry = CASE WHEN existingplacex.rank_address = 0
+                          THEN simplify_large_polygons(NEW.geometry)
+                          ELSE NEW.geometry END
       WHERE place_id = existingplacex.place_id;
 
     -- Invalidate linked places: they potentially get a new name and addresses.

@@ -1265,6 +1265,8 @@ BEGIN
     END IF;
   ELSEIF NEW.rank_address > 25 THEN
     max_rank := 25;
+  ELSEIF NEW.class in ('place','boundary') and NEW.type in ('postcode','postal_code') THEN
+    max_rank := NEW.rank_search;
   ELSE
     max_rank := NEW.rank_address;
   END IF;

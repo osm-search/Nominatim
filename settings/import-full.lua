@@ -33,7 +33,8 @@ flex.set_main_tags{
     craft = 'always',
     junction = 'fallback',
     landuse = 'fallback',
-    leisure = 'always',
+    leisure = {'always',
+               nature_reserve = 'fallback'},
     office = 'always',
     mountain_pass = 'always',
     shop = 'always',
@@ -60,11 +61,12 @@ flex.set_prefilters{delete_keys = {'note', 'note:*', 'source', '*source', 'attri
                                    natural = {'yes', 'no', 'coastline'},
                                    highway = {'no', 'turning_circle', 'mini_roundabout',
                                               'noexit', 'crossing', 'give_way', 'stop'},
-                                   railway = {'level_crossing', 'no', 'rail'},
+                                   railway = {'level_crossing', 'no', 'rail', 'switch',
+                                              'abandoned', 'signal', 'buffer_stop', 'razed'},
                                    man_made = {'survey_point', 'cutline'},
                                    aerialway = {'pylon', 'no'},
                                    aeroway = {'no'},
-                                   amenity = {'no'},
+                                   amenity = {'no', 'parking_space', 'parking_entrance'},
                                    club = {'no'},
                                    craft = {'no'},
                                    leisure = {'no'},
@@ -76,7 +78,7 @@ flex.set_prefilters{delete_keys = {'note', 'note:*', 'source', '*source', 'attri
                                    tunnel = {'no'},
                                    waterway = {'riverbank'},
                                    building = {'no'},
-                                   boundary = {'place'}},
+                                   boundary = {'place', 'land_area'}},
                     extra_keys = {'wikidata', 'wikipedia', 'wikipedia:*'}
                    }
 

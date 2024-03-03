@@ -386,3 +386,10 @@ jobs:
 
           - name: Check full import
             run: nominatim admin --check-database
+
+    codespell:
+      runs-on: ubuntu-latest
+      steps:
+          - uses: codespell-project/actions-codespell@v2
+            with:
+                only_warn: 1

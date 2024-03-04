@@ -5,7 +5,7 @@
 # Copyright (C) 2023 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
-Convertion from token assignment to an abstract DB search.
+Conversion from token assignment to an abstract DB search.
 """
 from typing import Optional, List, Tuple, Iterator, Dict
 import heapq

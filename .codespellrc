@@ -1,0 +1,7 @@
+# https://github.com/codespell-project/codespell
+
+[codespell]
+skip = ./man/nominatim.1,data,./docs/styles.css,lib-php,module,munin,osm2pgsql,./test,./settings/*.lua,./settings/*.yaml,./settings/**/*.yaml,./settings/icu-rules,./nominatim/tokenizer/token_analysis/config_variants.py
+# Need to be lowercase in the list
+# Unter = Unter den Linden (an example address)
+ignore-words-list = inout,unter

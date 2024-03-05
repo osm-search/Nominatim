@@ -219,12 +219,11 @@ class SetupAll:
         """ Determine the database date and set the status accordingly.
         """
         with connect(dsn) as conn:
-            if not offline:
-                try:
-                    dbdate = status.compute_database_date(conn)
-                    status.set_status(conn, dbdate)
-                    LOG.info('Database is at %s.', dbdate)
-                except Exception as exc: # pylint: disable=broad-except
-                    LOG.error('Cannot determine date of database: %s', exc)
-
             properties.set_property(conn, 'database_version', str(NOMINATIM_VERSION))
+
+            try:
+                dbdate = status.compute_database_date(conn, offline)
+                status.set_status(conn, dbdate)
+                LOG.info('Database is at %s.', dbdate)
+            except Exception as exc: # pylint: disable=broad-except
+                LOG.error('Cannot determine date of database: %s', exc)

@@ -31,6 +31,22 @@ def setup_status_table(status_table):
     pass
 
 
+@pytest.mark.parametrize('offline', [True, False])
+def test_compute_database_date_from_osm2pgsql(table_factory, temp_db_conn, offline):
+    table_factory('osm2pgsql_properties', 'property TEXT, value TEXT',
+                  content=(('current_timestamp', '2024-01-03T23:45:54Z'), ))
+
+    date = nominatim.db.status.compute_database_date(temp_db_conn, offline=offline)
+    assert date == iso_date('2024-01-03T23:45:54')
+
+
+def test_compute_database_date_from_osm2pgsql_nodata(table_factory, temp_db_conn):
+    table_factory('osm2pgsql_properties', 'property TEXT, value TEXT')
+
+    with pytest.raises(UsageError, match='Cannot determine database date from data in offline mode'):
+        nominatim.db.status.compute_database_date(temp_db_conn, offline=True)
+
+
 def test_compute_database_date_place_empty(place_table, temp_db_conn):
     with pytest.raises(UsageError):
         nominatim.db.status.compute_database_date(temp_db_conn)

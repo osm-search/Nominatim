@@ -29,11 +29,24 @@ class StatusRow(TypedDict):
     indexed: Optional[bool]
 
 
-def compute_database_date(conn: Connection) -> dt.datetime:
+def compute_database_date(conn: Connection, offline: bool = False) -> dt.datetime:
     """ Determine the date of the database from the newest object in the
         data base.
     """
-    # First, find the node with the highest ID in the database
+    # If there is a date from osm2pgsql available, use that.
+    if conn.table_exists('osm2pgsql_properties'):
+        with conn.cursor() as cur:
+            cur.execute(""" SELECT value FROM osm2pgsql_properties
+                            WHERE property = 'current_timestamp' """)
+            row = cur.fetchone()
+            if row is not None:
+                return dt.datetime.strptime(row[0], "%Y-%m-%dT%H:%M:%SZ")\
+                                  .replace(tzinfo=dt.timezone.utc)
+
+    if offline:
+        raise UsageError("Cannot determine database date from data in offline mode.")
+
+    # Else, find the node with the highest ID in the database
     with conn.cursor() as cur:
         if conn.table_exists('place'):
             osmid = cur.scalar("SELECT max(osm_id) FROM place WHERE osm_type='N'")

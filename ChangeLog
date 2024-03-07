@@ -1,3 +1,47 @@
+4.4.0
+ * add export to SQLite database and SQLite support for the frontend
+ * switch to Python frontend as the default frontend
+ * update to osm2pgsql 1.11.0
+ * add support for new osm2pgsql middle table format
+ * simplify geometry for large polygon objects not used in addresses
+ * various performance tweaks for search in Python frontend
+ * fix regression in search with categories where it was confused with near
+   search
+ * partially roll back use of SQLAlchemy lambda statements due to bugs
+   in SQLAchemy
+ * fix handling of timezones for timestamps from the database
+ * fix handling of full address searches in connection with a viewbox
+ * fix postcode computation of highway areas
+ * fix handling of timeout errors for Python <= 3.10
+ * fix address computation for postcode areas
+ * fix variable shadowing in osm2pgsql flex script, causing bugs with LuaJIT
+ * make sure extratags are always null when empty
+ * reduce importance of places without wikipedia reference
+ * improve performance of word count computations
+ * drop support for wikipedia tags with full URLs
+ * replace get_addressdata() SQL implementation with a Python function
+ * improve display name for non-address features
+ * fix postcode validation for postcodes with country code
+   (thanks @pawel-wroniszewski)
+ * add possibility to run imports without superuser database rights
+   (thanks @robbe-haesendonck)
+ * new CLI command for cleaning deleted relations (thanks @lujoh)
+ * add check for database version in the CLI check command
+ * updates to import styles ignoring more unused objects
+ * various typo fixes (thanks @kumarUjjawal)
+
+4.3.2
+ * fix potential SQL injection issue for 'nominatim admin --collect-os-info'
+ * PHP frontend: fix on-the-fly lookup of postcode areas near boundaries
+ * Python frontend: improve handling of viewbox
+ * Python frontend: correct deployment instructions
+
+4.3.1
+ * reintroduce result rematching
+ * improve search of multi-part names
+ * fix accidentally switched meaning of --reverse-only and --search-only in
+   warm command
+
 4.3.0
  * fix failing importance recalculation command
  * fix merging of linked names into unnamed boundaries

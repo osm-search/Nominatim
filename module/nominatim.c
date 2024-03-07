@@ -11,9 +11,11 @@
 #include "mb/pg_wchar.h"
 #include <utfasciitable.h>
 
-#ifdef PG_MODULE_MAGIC
-PG_MODULE_MAGIC;
+#if PG_MAJORVERSION_NUM > 15
+#include "varatt.h"
 #endif
+
+PG_MODULE_MAGIC;
 
 Datum transliteration( PG_FUNCTION_ARGS );
 Datum gettokenstring( PG_FUNCTION_ARGS );

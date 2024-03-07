@@ -134,6 +134,10 @@ jobs:
         needs: create-archive
         runs-on: ubuntu-20.04
 
+        strategy:
+            matrix:
+                postgresql: ["13", "16"]
+
         steps:
             - uses: actions/download-artifact@v4
               with:
@@ -149,11 +153,13 @@ jobs:
 
             - uses: ./Nominatim/.github/actions/setup-postgresql
               with:
-                  postgresql-version: 13
+                  postgresql-version: ${{ matrix.postgresql }}
                   postgis-version: 3
 
             - name: Install Postgresql server dev
-              run: sudo apt-get install postgresql-server-dev-13
+              run: sudo apt-get install postgresql-server-dev-$PGVER
+              env:
+                PGVER: ${{ matrix.postgresql }}
 
             - uses: ./Nominatim/.github/actions/build-nominatim
               with:

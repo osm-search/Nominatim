@@ -28,7 +28,7 @@ export DEBIAN_FRONTEND=noninteractive #DOCS:
                         libicu-dev python3-dotenv \
                         python3-psycopg2 python3-psutil python3-jinja2 \
                         python3-sqlalchemy python3-asyncpg \
-                        python3-icu python3-datrie python3-yaml git
+                        python3-icu python3-datrie python3-yaml
 
 
 #
@@ -105,8 +105,8 @@ fi                                    #DOCS:
 #
 if [ "x$1" == "xyes" ]; then  #DOCS:    :::sh
     cd $USERHOME
-    git clone --recursive https://github.com/openstreetmap/Nominatim.git
-    cd Nominatim
+    wget https://nominatim.org/release/Nominatim-4.4.0.tar.bz2
+    tar xf Nominatim-4.4.0.tar.bz2
 else                               #DOCS:
     cd $USERHOME/Nominatim         #DOCS:
 fi                                 #DOCS:
@@ -123,7 +123,7 @@ fi                                 #DOCS:
 
     mkdir $USERHOME/build
     cd $USERHOME/build
-    cmake $USERHOME/Nominatim
+    cmake $USERHOME/Nominatim-4.4.0
     make
     sudo make install
 

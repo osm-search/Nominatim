@@ -1,4 +1,4 @@
-site_name: Nominatim Manual
+site_name: Nominatim 4.4.0 Manual
 theme:
   name: material
   features:

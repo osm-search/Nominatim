@@ -96,6 +96,8 @@ Feature: Querying fo postcode variants
            | postcode | E4 7EA, United Kingdom |
 
 
+    @fail-legacy
+    @v1-api-python-only
     Scenario: Postcode areas are preferred over postcode points
         Given the grid with origin DE
             | 1 | 2 |

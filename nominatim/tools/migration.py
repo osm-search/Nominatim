@@ -382,3 +382,13 @@ def add_improved_geometry_reverse_placenode_index(conn: Connection, **_: Any) ->
                        WHERE rank_address between 4 and 25 AND type != 'postcode'
                          AND name is not null AND linked_place_id is null AND osm_type = 'N'
                     """)
+
+@_migration(4, 4, 99, 0)
+def create_postcode_ara_lookup_index(conn: Connection, **_: Any) -> None:
+    """ Create index needed for looking up postcode areas from postocde points.
+    """
+    with conn.cursor() as cur:
+        cur.execute("""CREATE INDEX IF NOT EXISTS idx_placex_postcode_areas
+                       ON placex USING BTREE (country_code, postcode)
+                       WHERE osm_type = 'R' AND class = 'boundary' AND type = 'postal_code'
+                    """)

@@ -95,3 +95,19 @@ Feature: Querying fo postcode variants
            | type     | display_name |
            | postcode | E4 7EA, United Kingdom |
 
+
+    Scenario: Postcode areas are preferred over postcode points
+        Given the grid with origin DE
+            | 1 | 2 |
+            | 4 | 3 |
+        Given the places
+            | osm | class    | type        | postcode | geometry    |
+            | R23 | boundary | postal_code | 12345    | (1,2,3,4,1) |
+        When importing
+        Then location_postcode contains exactly
+          | country | postcode |
+          | de      | 12345    |
+        When sending search query "12345, de"
+        Then results contain
+          | osm |
+          | R23 |

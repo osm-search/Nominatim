@@ -21,6 +21,11 @@ CREATE INDEX IF NOT EXISTS idx_placex_parent_place_id
   ON placex USING BTREE (parent_place_id) {{db.tablespace.search_index}}
   WHERE parent_place_id IS NOT NULL;
 ---
+-- Used to find postcode areas after a search in location_postcode.
+CREATE INDEX IF NOT EXISTS idx_placex_postcode_areas
+  ON placex USING BTREE (country_code, postcode) {{db.tablespace.search_index}}
+  WHERE osm_type = 'R' AND class = 'boundary' AND type = 'postal_code';
+---
 CREATE INDEX IF NOT EXISTS idx_placex_geometry ON placex
   USING GIST (geometry) {{db.tablespace.search_index}};
 -- Index is needed during import but can be dropped as soon as a full

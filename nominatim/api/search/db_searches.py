@@ -609,7 +609,6 @@ class PostcodeSearch(AbstractSearch):
                                                AND osm_type = 'R'"""))\
                              .where(p.c.country_code == row.country_code)\
                              .where(p.c.postcode == row.postcode)\
-                             .where(_exclude_places(p))\
                              .limit(1)
             for prow in await conn.execute(placex_sql, _details_to_bind_params(details)):
                 result = nres.create_from_placex_row(prow, nres.SearchResult)
@@ -618,8 +617,9 @@ class PostcodeSearch(AbstractSearch):
                 result = nres.create_from_postcode_row(row, nres.SearchResult)
 
             assert result
-            result.accuracy = row.accuracy
-            results.append(result)
+            if result.place_id not in details.excluded:
+                result.accuracy = row.accuracy
+                results.append(result)
 
         return results
 

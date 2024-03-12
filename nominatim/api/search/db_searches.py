@@ -610,6 +610,10 @@ class PostcodeSearch(AbstractSearch):
                              .where(p.c.country_code == row.country_code)\
                              .where(p.c.postcode == row.postcode)\
                              .limit(1)
+
+            if details.geometry_output:
+                placex_sql = _add_geometry_columns(placex_sql, p.c.geometry, details)
+
             for prow in await conn.execute(placex_sql, _details_to_bind_params(details)):
                 result = nres.create_from_placex_row(prow, nres.SearchResult)
                 break

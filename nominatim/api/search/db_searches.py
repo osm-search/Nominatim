@@ -602,10 +602,24 @@ class PostcodeSearch(AbstractSearch):
 
         results = nres.SearchResults()
         for row in await conn.execute(sql, _details_to_bind_params(details)):
-            result = nres.create_from_postcode_row(row, nres.SearchResult)
+            p = conn.t.placex
+            placex_sql = _select_placex(p).add_columns(p.c.importance)\
+                             .where(sa.text("""class = 'boundary'
+                                               AND type = 'postal_code'
+                                               AND osm_type = 'R'"""))\
+                             .where(p.c.country_code == row.country_code)\
+                             .where(p.c.postcode == row.postcode)\
+                             .limit(1)
+            for prow in await conn.execute(placex_sql, _details_to_bind_params(details)):
+                result = nres.create_from_placex_row(prow, nres.SearchResult)
+                break
+            else:
+                result = nres.create_from_postcode_row(row, nres.SearchResult)
+
             assert result
-            result.accuracy = row.accuracy
-            results.append(result)
+            if result.place_id not in details.excluded:
+                result.accuracy = row.accuracy
+                results.append(result)
 
         return results
 

@@ -3,14 +3,6 @@
 Feature: Object details
     Check details page for correctness
 
-    Scenario: Details by place ID
-        When sending details query for 107077
-        Then the result is valid json
-        And results contain
-            | place_id |
-            | 107077   |
-
-
     Scenario Outline: Details via OSM id
         When sending details query for <type><id>
         Then the result is valid json

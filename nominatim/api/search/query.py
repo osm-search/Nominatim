@@ -102,6 +102,7 @@ class Token(ABC):
     lookup_word: str
     is_indexed: bool
 
+    addr_count: int = 1
 
     @abstractmethod
     def get_category(self) -> Tuple[str, str]:

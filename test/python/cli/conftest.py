@@ -32,16 +32,16 @@ class DummyTokenizer:
         self.update_statistics_called = False
         self.update_word_tokens_called = False
 
-    def update_sql_functions(self, *args):
+    def update_sql_functions(self, *args, **kwargs):
         self.update_sql_functions_called = True
 
-    def finalize_import(self, *args):
+    def finalize_import(self, *args, **kwargs):
         self.finalize_import_called = True
 
-    def update_statistics(self, *args):
+    def update_statistics(self, *args, **kwargs):
         self.update_statistics_called = True
 
-    def update_word_tokens(self, *args):
+    def update_word_tokens(self, *args, **kwargs):
         self.update_word_tokens_called = True
 
 

@@ -19,7 +19,8 @@ class MyToken(Token):
 
 def make_query(*args):
     q = QueryStruct([Phrase(args[0][1], '')])
-    dummy = MyToken(3.0, 45, 1, 'foo', True)
+    dummy = MyToken(penalty=3.0, token=45, count=1, addr_count=1,
+                    lookup_word='foo', is_indexed=True)
 
     for btype, ptype, _ in args[1:]:
         q.add_node(btype, ptype)

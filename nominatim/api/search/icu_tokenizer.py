@@ -97,6 +97,7 @@ class ICUToken(qmod.Token):
         """ Create a ICUToken from the row of the word table.
         """
         count = 1 if row.info is None else row.info.get('count', 1)
+        addr_count = 1 if row.info is None else row.info.get('addr_count', 1)
 
         penalty = 0.0
         if row.type == 'w':
@@ -123,7 +124,8 @@ class ICUToken(qmod.Token):
 
         return ICUToken(penalty=penalty, token=row.word_id, count=count,
                         lookup_word=lookup_word, is_indexed=True,
-                        word_token=row.word_token, info=row.info)
+                        word_token=row.word_token, info=row.info,
+                        addr_count=addr_count)
 
 
 
@@ -257,7 +259,7 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
             if len(part.token) <= 4 and part[0].isdigit()\
                and not node.has_tokens(i+1, qmod.TokenType.HOUSENUMBER):
                 query.add_token(qmod.TokenRange(i, i+1), qmod.TokenType.HOUSENUMBER,
-                                ICUToken(0.5, 0, 1, part.token, True, part.token, None))
+                                ICUToken(0.5, 0, 1, 1, part.token, True, part.token, None))
 
 
     def rerank_tokens(self, query: qmod.QueryStruct, parts: QueryParts) -> None:

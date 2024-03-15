@@ -18,7 +18,8 @@ class MyToken(query.Token):
 
 
 def mktoken(tid: int):
-    return MyToken(3.0, tid, 1, 'foo', True)
+    return MyToken(penalty=3.0, token=tid, count=1, addr_count=1,
+                   lookup_word='foo', is_indexed=True)
 
 
 @pytest.mark.parametrize('ptype,ttype', [('NONE', 'WORD'),

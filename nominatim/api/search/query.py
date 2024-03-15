@@ -99,10 +99,10 @@ class Token(ABC):
     penalty: float
     token: int
     count: int
+    addr_count: int
     lookup_word: str
     is_indexed: bool
 
-    addr_count: int = 1
 
     @abstractmethod
     def get_category(self) -> Tuple[str, str]:

@@ -226,6 +226,8 @@ class SearchBuilder:
         name_fulls = self.query.get_tokens(name, TokenType.WORD)
         if name_fulls:
             fulls_count = sum(t.count for t in name_fulls)
+            if len(name_partials) == 1:
+                penalty += min(1, max(0, (exp_count - 50 * fulls_count) / (1000 * fulls_count)))
             # At this point drop unindexed partials from the address.
             # This might yield wrong results, nothing we can do about that.
             if not partials_indexed:

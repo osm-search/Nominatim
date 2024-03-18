@@ -227,16 +227,20 @@ def test_update_statistics_reverse_only(word_table, tokenizer_factory, test_conf
 def test_update_statistics(word_table, table_factory, temp_db_cursor,
                            tokenizer_factory, test_config):
     word_table.add_full_word(1000, 'hello')
+    word_table.add_full_word(1001, 'bye')
     table_factory('search_name',
-                  'place_id BIGINT, name_vector INT[]',
-                  [(12, [1000])])
+                  'place_id BIGINT, name_vector INT[], nameaddress_vector INT[]',
+                  [(12, [1000], [1001])])
     tok = tokenizer_factory()
 
     tok.update_statistics(test_config)
 
     assert temp_db_cursor.scalar("""SELECT count(*) FROM word
-                                    WHERE type = 'W' and
-                                          (info->>'count')::int > 0""") > 0
+                                    WHERE type = 'W' and word_id = 1000 and
+                                          (info->>'count')::int > 0""") == 1
+    assert temp_db_cursor.scalar("""SELECT count(*) FROM word
+                                    WHERE type = 'W' and word_id = 1001 and
+                                          (info->>'addr_count')::int > 0""") == 1
 
 
 def test_normalize_postcode(analyzer):

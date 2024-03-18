@@ -231,16 +231,17 @@ def lookup_by_names(name_tokens: List[int], addr_tokens: List[int]) -> List[Fiel
     return lookup
 
 
-def lookup_by_any_name(name_tokens: List[int], addr_tokens: List[int],
-                       use_index_for_addr: bool) -> List[FieldLookup]:
+def lookup_by_any_name(name_tokens: List[int], addr_restrict_tokens: List[int],
+                       addr_lookup_tokens: List[int]) -> List[FieldLookup]:
     """ Create a lookup list where name tokens are looked up via index
         and only one of the name tokens must be present.
         Potential address tokens are used to restrict the search further.
     """
     lookup = [FieldLookup('name_vector', name_tokens, lookups.LookupAny)]
-    if addr_tokens:
-        lookup.append(FieldLookup('nameaddress_vector', addr_tokens,
-                                  lookups.LookupAll if use_index_for_addr else lookups.Restrict))
+    if addr_restrict_tokens:
+        lookup.append(FieldLookup('nameaddress_vector', addr_restrict_tokens, lookups.Restrict))
+    if addr_lookup_tokens:
+        lookup.append(FieldLookup('nameaddress_vector', addr_lookup_tokens, lookups.LookupAll))
 
     return lookup
 

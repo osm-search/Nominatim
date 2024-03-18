@@ -210,6 +210,7 @@ class LegacyQueryAnalyzer(AbstractQueryAnalyzer):
 
         return LegacyToken(penalty=penalty, token=row.word_id,
                            count=row.search_name_count or 1,
+                           addr_count=1, # not supported
                            lookup_word=lookup_word,
                            word_token=row.word_token.strip(),
                            category=(rowclass, row.type) if rowclass is not None else None,
@@ -226,7 +227,7 @@ class LegacyQueryAnalyzer(AbstractQueryAnalyzer):
             if len(part) <= 4 and part.isdigit()\
                and not node.has_tokens(i+1, qmod.TokenType.HOUSENUMBER):
                 query.add_token(qmod.TokenRange(i, i+1), qmod.TokenType.HOUSENUMBER,
-                                LegacyToken(penalty=0.5, token=0, count=1,
+                                LegacyToken(penalty=0.5, token=0, count=1, addr_count=1,
                                             lookup_word=part, word_token=part,
                                             category=None, country=None,
                                             operator=None, is_indexed=True))

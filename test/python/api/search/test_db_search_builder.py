@@ -31,7 +31,9 @@ def make_query(*args):
         for end, ttype, tinfo in tlist:
             for tid, word in tinfo:
                 q.add_token(TokenRange(start, end), ttype,
-                            MyToken(0.5 if ttype == TokenType.PARTIAL else 0.0, tid, 1, word, True))
+                            MyToken(penalty=0.5 if ttype == TokenType.PARTIAL else 0.0,
+                                    token=tid, count=1, addr_count=1,
+                                    lookup_word=word, is_indexed=True))
 
 
     return q
@@ -395,14 +397,14 @@ def make_counted_searches(name_part, name_full, address_part, address_full,
     q.add_node(BreakType.END, PhraseType.NONE)
 
     q.add_token(TokenRange(0, 1), TokenType.PARTIAL,
-                MyToken(0.5, 1, name_part, 'name_part', True))
+                MyToken(0.5, 1, name_part, 1, 'name_part', True))
     q.add_token(TokenRange(0, 1), TokenType.WORD,
-                MyToken(0, 101, name_full, 'name_full', True))
+                MyToken(0, 101, name_full, 1, 'name_full', True))
     for i in range(num_address_parts):
         q.add_token(TokenRange(i + 1, i + 2), TokenType.PARTIAL,
-                    MyToken(0.5, 2, address_part, 'address_part', True))
+                    MyToken(0.5, 2, address_part, 1, 'address_part', True))
         q.add_token(TokenRange(i + 1, i + 2), TokenType.WORD,
-                    MyToken(0, 102, address_full, 'address_full', True))
+                    MyToken(0, 102, address_full, 1, 'address_full', True))
 
     builder = SearchBuilder(q, SearchDetails())
 

@@ -168,7 +168,7 @@ class SetupAll:
         tokenizer.finalize_import(args.config)
 
         LOG.warning('Recompute word counts')
-        tokenizer.update_statistics(args.config)
+        tokenizer.update_statistics(args.config, threads=num_threads)
 
         webdir = args.project_dir / 'website'
         LOG.warning('Setup website at %s', webdir)

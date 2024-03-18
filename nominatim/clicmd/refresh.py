@@ -110,7 +110,8 @@ class UpdateRefresh:
 
         if args.word_counts:
             LOG.warning('Recompute word statistics')
-            self._get_tokenizer(args.config).update_statistics(args.config)
+            self._get_tokenizer(args.config).update_statistics(args.config,
+                                                               threads=args.threads or 1)
 
         if args.address_levels:
             LOG.warning('Updating address levels')

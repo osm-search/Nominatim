@@ -95,7 +95,7 @@ class ForwardGeocoder:
                     prevresult.accuracy = min(prevresult.accuracy, result.accuracy)
                 else:
                     results[rhash] = result
-                min_ranking = min(min_ranking, result.accuracy * 1.2)
+                min_ranking = min(min_ranking, result.accuracy * 1.2, 2.0)
             log().result_dump('Results', ((r.accuracy, r) for r in lookup_results))
             prev_penalty = search.penalty
             if dt.datetime.now() >= end_time:

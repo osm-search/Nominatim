@@ -166,7 +166,7 @@ class SearchBuilder:
         sdata.lookups = [dbf.FieldLookup('name_vector', [t.token for t in hnrs], lookups.LookupAny)]
         expected_count = sum(t.count for t in hnrs)
 
-        partials = {t.token: t.count for trange in address
+        partials = {t.token: t.addr_count for trange in address
                        for t in self.query.get_partials_list(trange)}
 
         if expected_count < 8000:
@@ -222,6 +222,7 @@ class SearchBuilder:
             yield penalty, exp_count, dbf.lookup_by_names(list(name_partials.keys()), addr_tokens)
             return
 
+        addr_count = min(t.addr_count for t in addr_partials) if addr_partials else 30000
         # Partial term to frequent. Try looking up by rare full names first.
         name_fulls = self.query.get_tokens(name, TokenType.WORD)
         if name_fulls:
@@ -231,14 +232,16 @@ class SearchBuilder:
             if partials_indexed:
                 penalty += 1.2 * sum(t.penalty for t in addr_partials if not t.is_indexed)
 
-            yield penalty,fulls_count / (2**len(addr_tokens)), \
-                  self.get_full_name_ranking(name_fulls, addr_partials,
-                                             fulls_count > 30000 / max(1, len(addr_tokens)))
+            if fulls_count < 50000 or addr_count < 30000:
+                yield penalty,fulls_count / (2**len(addr_tokens)), \
+                    self.get_full_name_ranking(name_fulls, addr_partials,
+                                               fulls_count > 30000 / max(1, len(addr_tokens)))
 
         # To catch remaining results, lookup by name and address
         # We only do this if there is a reasonable number of results expected.
         exp_count = exp_count / (2**len(addr_tokens)) if addr_tokens else exp_count
-        if exp_count < 10000 and all(t.is_indexed for t in name_partials.values()):
+        if exp_count < 10000 and addr_count < 20000\
+           and all(t.is_indexed for t in name_partials.values()):
             penalty += 0.35 * max(1 if name_fulls else 0.1,
                                   5 - len(name_partials) - len(addr_tokens))
             yield penalty, exp_count,\

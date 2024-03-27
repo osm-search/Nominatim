@@ -35,7 +35,7 @@ function print_taginfo()
     for _, k in ipairs(flex.TAGINFO_MAIN.keys) do
         local desc = get_key_description(k, 'POI/feature in the search database')
         if flex.TAGINFO_MAIN.delete_tags[k] ~= nil then
-            desc.description = string.format('%s(except for values: %s).', desc.description,
+            desc.description = string.format('%s (except for values: %s).', desc.description,
                                 table.concat(flex.TAGINFO_MAIN.delete_tags[k], ', '))
         end
         table.insert(tags, desc)

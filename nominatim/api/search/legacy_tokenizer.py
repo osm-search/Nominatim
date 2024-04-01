@@ -209,7 +209,7 @@ class LegacyQueryAnalyzer(AbstractQueryAnalyzer):
                 is_indexed = False
 
         return LegacyToken(penalty=penalty, token=row.word_id,
-                           count=row.search_name_count or 1,
+                           count=max(1, row.search_name_count or 1),
                            addr_count=1, # not supported
                            lookup_word=lookup_word,
                            word_token=row.word_token.strip(),

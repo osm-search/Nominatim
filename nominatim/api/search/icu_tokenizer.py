@@ -122,10 +122,10 @@ class ICUToken(qmod.Token):
         else:
             lookup_word = row.word_token
 
-        return ICUToken(penalty=penalty, token=row.word_id, count=count,
+        return ICUToken(penalty=penalty, token=row.word_id, count=max(1, count),
                         lookup_word=lookup_word, is_indexed=True,
                         word_token=row.word_token, info=row.info,
-                        addr_count=addr_count)
+                        addr_count=max(1, addr_count))
 
 
 

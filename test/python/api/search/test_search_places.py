@@ -368,9 +368,9 @@ def test_name_and_postcode(apiobj, frontend, wcount, rids):
     apiobj.add_placex(place_id=991, class_='highway', type='service',
                       rank_search=27, rank_address=27,
                       postcode='11221',
-                      centroid=(10.1, 10.1),
-                      geometry='LINESTRING(9.995 10.1, 10.005 10.1)')
-    apiobj.add_search_name(991, names=[111], centroid=(10.1, 10.1),
+                      centroid=(10.3, 10.3),
+                      geometry='LINESTRING(9.995 10.3, 10.005 10.3)')
+    apiobj.add_search_name(991, names=[111], centroid=(10.3, 10.3),
                            search_rank=27, address_rank=27)
     apiobj.add_postcode(place_id=100, country_code='ch', postcode='11225',
                         geometry='POINT(10 10)')

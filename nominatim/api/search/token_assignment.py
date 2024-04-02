@@ -225,13 +225,14 @@ class _TokenSequence:
 
 
     def _adapt_penalty_from_priors(self, priors: int, new_dir: int) -> bool:
-        if priors == 2:
-            self.penalty += 1.0
-        elif priors > 2:
+        if priors >= 2:
             if self.direction == 0:
                 self.direction = new_dir
             else:
-                return False
+                if priors == 2:
+                    self.penalty += 0.8
+                else:
+                    return False
 
         return True
 

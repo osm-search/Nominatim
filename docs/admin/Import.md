@@ -153,7 +153,7 @@ if you plan to use the installation only for exports to a
 [photon](https://photon.komoot.io/) database, then you can set up a database
 without search indexes. Add `--reverse-only` to your setup command above.
 
-This saves about 5% of disk space.
+This saves about 5% of disk space, import time won't be significant faster.
 
 ### Filtering Imported Data
 

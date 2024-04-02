@@ -247,7 +247,8 @@ def format_base_geocodejson(results: Union[napi.ReverseResults, napi.SearchResul
             out.key('admin').start_object()
             if result.address_rows:
                 for line in result.address_rows:
-                    if line.isaddress and (line.admin_level or 15) < 15 and line.local_name:
+                    if line.isaddress and (line.admin_level or 15) < 15 and line.local_name \
+                       and line.category[0] == 'boundary' and line.category[1] == 'administrative':
                         out.keyval(f"level{line.admin_level}", line.local_name)
             out.end_object().next()
 

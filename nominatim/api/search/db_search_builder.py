@@ -227,8 +227,6 @@ class SearchBuilder:
         name_fulls = self.query.get_tokens(name, TokenType.WORD)
         if name_fulls:
             fulls_count = sum(t.count for t in name_fulls)
-            if len(name_partials) == 1:
-                penalty += min(0.5, max(0, (exp_count - 50 * fulls_count) / (2000 * fulls_count)))
             if partials_indexed:
                 penalty += 1.2 * sum(t.penalty for t in addr_partials if not t.is_indexed)
 

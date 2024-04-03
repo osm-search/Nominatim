@@ -68,7 +68,7 @@ class TestNameOnlySearches:
                                           ([20], [101, 100])])
     def test_lookup_all_match(self, apiobj, frontend, lookup_type, rank, res):
         lookup = FieldLookup('name_vector', [1,2], lookup_type)
-        ranking = FieldRanking('name_vector', 0.9, [RankedTokens(0.0, rank)])
+        ranking = FieldRanking('name_vector', 0.4, [RankedTokens(0.0, rank)])
 
         results = run_search(apiobj, frontend, 0.1, [lookup], [ranking])
 
@@ -78,7 +78,7 @@ class TestNameOnlySearches:
     @pytest.mark.parametrize('lookup_type', [LookupAll, Restrict])
     def test_lookup_all_partial_match(self, apiobj, frontend, lookup_type):
         lookup = FieldLookup('name_vector', [1,20], lookup_type)
-        ranking = FieldRanking('name_vector', 0.9, [RankedTokens(0.0, [21])])
+        ranking = FieldRanking('name_vector', 0.4, [RankedTokens(0.0, [21])])
 
         results = run_search(apiobj, frontend, 0.1, [lookup], [ranking])
 
@@ -89,7 +89,7 @@ class TestNameOnlySearches:
                                           ([20], [101, 100])])
     def test_lookup_any_match(self, apiobj, frontend, rank, res):
         lookup = FieldLookup('name_vector', [11,21], LookupAny)
-        ranking = FieldRanking('name_vector', 0.9, [RankedTokens(0.0, rank)])
+        ranking = FieldRanking('name_vector', 0.4, [RankedTokens(0.0, rank)])
 
         results = run_search(apiobj, frontend, 0.1, [lookup], [ranking])
 
@@ -98,7 +98,7 @@ class TestNameOnlySearches:
 
     def test_lookup_any_partial_match(self, apiobj, frontend):
         lookup = FieldLookup('name_vector', [20], LookupAll)
-        ranking = FieldRanking('name_vector', 0.9, [RankedTokens(0.0, [21])])
+        ranking = FieldRanking('name_vector', 0.4, [RankedTokens(0.0, [21])])
 
         results = run_search(apiobj, frontend, 0.1, [lookup], [ranking])
 
@@ -109,7 +109,7 @@ class TestNameOnlySearches:
     @pytest.mark.parametrize('cc,res', [('us', 100), ('mx', 101)])
     def test_lookup_restrict_country(self, apiobj, frontend, cc, res):
         lookup = FieldLookup('name_vector', [1,2], LookupAll)
-        ranking = FieldRanking('name_vector', 0.9, [RankedTokens(0.0, [10])])
+        ranking = FieldRanking('name_vector', 0.4, [RankedTokens(0.0, [10])])
 
         results = run_search(apiobj, frontend, 0.1, [lookup], [ranking], ccodes=[cc])
 
@@ -118,7 +118,7 @@ class TestNameOnlySearches:
 
     def test_lookup_restrict_placeid(self, apiobj, frontend):
         lookup = FieldLookup('name_vector', [1,2], LookupAll)
-        ranking = FieldRanking('name_vector', 0.9, [RankedTokens(0.0, [10])])
+        ranking = FieldRanking('name_vector', 0.4, [RankedTokens(0.0, [10])])
 
         results = run_search(apiobj, frontend, 0.1, [lookup], [ranking],
                              details=SearchDetails(excluded=[101]))
@@ -132,7 +132,7 @@ class TestNameOnlySearches:
                                       napi.GeometryFormat.TEXT])
     def test_return_geometries(self, apiobj, frontend, geom):
         lookup = FieldLookup('name_vector', [20], LookupAll)
-        ranking = FieldRanking('name_vector', 0.9, [RankedTokens(0.0, [21])])
+        ranking = FieldRanking('name_vector', 0.4, [RankedTokens(0.0, [21])])
 
         results = run_search(apiobj, frontend, 0.1, [lookup], [ranking],
                              details=SearchDetails(geometry_output=geom))
@@ -149,7 +149,7 @@ class TestNameOnlySearches:
                                centroid=(5.6, 4.3))
 
         lookup = FieldLookup('name_vector', [55], LookupAll)
-        ranking = FieldRanking('name_vector', 0.9, [RankedTokens(0.0, [21])])
+        ranking = FieldRanking('name_vector', 0.4, [RankedTokens(0.0, [21])])
 
         results = run_search(apiobj, frontend, 0.1, [lookup], [ranking],
                              details=SearchDetails(geometry_output=napi.GeometryFormat.GEOJSON,
@@ -191,7 +191,7 @@ class TestNameOnlySearches:
 
     def test_prefer_near(self, apiobj, frontend):
         lookup = FieldLookup('name_vector', [1, 2], LookupAll)
-        ranking = FieldRanking('name_vector', 0.9, [RankedTokens(0.0, [21])])
+        ranking = FieldRanking('name_vector', 0.4, [RankedTokens(0.0, [21])])
 
         api = frontend(apiobj, options=APIOPTIONS)
         results = run_search(api, None, 0.1, [lookup], [ranking])
@@ -368,9 +368,9 @@ def test_name_and_postcode(apiobj, frontend, wcount, rids):
     apiobj.add_placex(place_id=991, class_='highway', type='service',
                       rank_search=27, rank_address=27,
                       postcode='11221',
-                      centroid=(10.1, 10.1),
-                      geometry='LINESTRING(9.995 10.1, 10.005 10.1)')
-    apiobj.add_search_name(991, names=[111], centroid=(10.1, 10.1),
+                      centroid=(10.3, 10.3),
+                      geometry='LINESTRING(9.995 10.3, 10.005 10.3)')
+    apiobj.add_search_name(991, names=[111], centroid=(10.3, 10.3),
                            search_rank=27, address_rank=27)
     apiobj.add_postcode(place_id=100, country_code='ch', postcode='11225',
                         geometry='POINT(10 10)')

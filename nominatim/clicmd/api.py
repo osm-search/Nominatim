@@ -17,6 +17,7 @@ from nominatim.clicmd.args import NominatimArgs
 import nominatim.api as napi
 import nominatim.api.v1 as api_output
 from nominatim.api.v1.helpers import zoom_to_rank, deduplicate_results
+from nominatim.api.v1.format import dispatch as formatting
 import nominatim.api.logging as loglib
 
 # Do not repeat documentation of subcommand classes.
@@ -44,7 +45,7 @@ EXTRADATA_PARAMS = (
 def _add_api_output_arguments(parser: argparse.ArgumentParser) -> None:
     group = parser.add_argument_group('Output arguments')
     group.add_argument('--format', default='jsonv2',
-                       choices=['xml', 'json', 'jsonv2', 'geojson', 'geocodejson', 'debug'],
+                       choices=formatting.list_formats(napi.SearchResults) + ['debug'],
                        help='Format of result')
     for name, desc in EXTRADATA_PARAMS:
         group.add_argument('--' + name, action='store_true', help=desc)

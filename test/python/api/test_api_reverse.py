@@ -68,24 +68,24 @@ def test_reverse_ignore_unindexed(apiobj, frontend):
                                               (0.70003, napi.DataLayer.MANMADE | napi.DataLayer.NATURAL, 225),
                                               (5, napi.DataLayer.ADDRESS, 229)])
 def test_reverse_rank_30_layers(apiobj, frontend, y, layer, place_id):
-    apiobj.add_placex(place_id=223, class_='place', type='house',
+    apiobj.add_placex(place_id=223, osm_type='N', class_='place', type='house',
                       housenumber='1',
                       rank_address=30,
                       rank_search=30,
                       centroid=(1.3, 0.70001))
-    apiobj.add_placex(place_id=224, class_='amenity', type='toilet',
+    apiobj.add_placex(place_id=224, osm_type='N', class_='amenity', type='toilet',
                       rank_address=30,
                       rank_search=30,
                       centroid=(1.3, 0.7))
-    apiobj.add_placex(place_id=225, class_='man_made', type='tower',
+    apiobj.add_placex(place_id=225, osm_type='N', class_='man_made', type='tower',
                       rank_address=0,
                       rank_search=30,
                       centroid=(1.3, 0.70003))
-    apiobj.add_placex(place_id=226, class_='railway', type='station',
+    apiobj.add_placex(place_id=226, osm_type='N', class_='railway', type='station',
                       rank_address=0,
                       rank_search=30,
                       centroid=(1.3, 0.70004))
-    apiobj.add_placex(place_id=227, class_='natural', type='cave',
+    apiobj.add_placex(place_id=227, osm_type='N', class_='natural', type='cave',
                       rank_address=0,
                       rank_search=30,
                       centroid=(1.3, 0.70005))

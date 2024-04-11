@@ -186,7 +186,7 @@ class ReverseGeocoder:
                 .where(sa.or_(sa.not_(t.c.geometry.is_area()),
                               t.c.centroid.ST_Distance(WKT_PARAM) < diststr))
                 .order_by('distance')
-                .limit(1))
+                .limit(2))
 
         if self.has_geometries():
             sql = self._add_geometry_columns(sql, t.c.geometry)
@@ -212,7 +212,20 @@ class ReverseGeocoder:
 
         sql = sql.where(sa.or_(*restrict))
 
-        return (await self.conn.execute(sql, self.bind_params)).one_or_none()
+        # If the closest object is inside an area, then check if there is a
+        # POI node nearby and return that.
+        prev_row = None
+        for row in await self.conn.execute(sql, self.bind_params):
+            if prev_row is None:
+                if row.rank_search <= 27 or row.osm_type == 'N' or row.distance > 0:
+                    return row
+                prev_row = row
+            else:
+                if row.rank_search > 27 and row.osm_type == 'N'\
+                   and row.distance < 0.0001:
+                    return row
+
+        return prev_row
 
 
     async def _find_housenumber_for_street(self, parent_place_id: int) -> Optional[SaRow]:

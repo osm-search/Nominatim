@@ -554,7 +554,7 @@ class TestPlaceAddress:
     def test_process_place_place(self):
         info = self.process_address(place='Honu Lulu')
 
-        assert eval(info['place']) == self.name_token_set('HONU', 'LULU')
+        assert eval(info['place']) == self.name_token_set('HONU', 'LULU', '#HONU LULU')
 
 
     def test_process_place_place_extra(self):
@@ -574,8 +574,8 @@ class TestPlaceAddress:
                                     suburb='Zwickau', street='Hauptstr',
                                     full='right behind the church')
 
-        city = self.name_token_set('ZWICKAU')
-        state = self.name_token_set('SACHSEN')
+        city = self.name_token_set('ZWICKAU', '#ZWICKAU')
+        state = self.name_token_set('SACHSEN', '#SACHSEN')
 
         result = {k: eval(v) for k,v in info['addr'].items()}
 
@@ -587,7 +587,7 @@ class TestPlaceAddress:
 
         result = {k: eval(v) for k,v in info['addr'].items()}
 
-        assert result == {'city': self.name_token_set('Bruxelles')}
+        assert result == {'city': self.name_token_set('Bruxelles', '#Bruxelles')}
 
 
     def test_process_place_address_terms_empty(self):

@@ -14,15 +14,15 @@ to a single Nominatim setup: configuration, extra data, etc. Create a project
 directory apart from the Nominatim software and change into the directory:
 
 ```
-mkdir ~/nominatim-planet
-cd ~/nominatim-planet
+mkdir ~/nominatim-project
+cd ~/nominatim-project
 ```
 
 In the following, we refer to the project directory as `$PROJECT_DIR`. To be
 able to copy&paste instructions, you can export the appropriate variable:
 
 ```
-export PROJECT_DIR=~/nominatim-planet
+export PROJECT_DIR=~/nominatim-project
 ```
 
 The Nominatim tool assumes per default that the current working directory is

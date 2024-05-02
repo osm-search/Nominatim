@@ -481,24 +481,20 @@ BEGIN
     name_vector := array_merge(name_vector, hnr_vector);
   END IF;
 
-  IF is_place_addr THEN
-    addr_place_ids := token_addr_place_search_tokens(token_info);
-    IF not addr_place_ids <@ parent_name_vector THEN
-      -- make sure addr:place terms are always searchable
-      nameaddress_vector := array_merge(nameaddress_vector, addr_place_ids);
-      -- If there is a housenumber, also add the place name as a name,
-      -- so we can search it by the usual housenumber+place algorithms.
-      IF hnr_vector is not null THEN
-        name_vector := array_merge(name_vector, addr_place_ids);
-      END IF;
-    END IF;
-  END IF;
-
   -- Cheating here by not recomputing all terms but simply using the ones
   -- from the parent object.
   nameaddress_vector := array_merge(nameaddress_vector, parent_name_vector);
   nameaddress_vector := array_merge(nameaddress_vector, parent_address_vector);
 
+  -- make sure addr:place terms are always searchable
+  IF is_place_addr THEN
+    addr_place_ids := token_addr_place_search_tokens(token_info);
+    IF hnr_vector is not null AND not addr_place_ids <@ parent_name_vector
+    THEN
+      name_vector := array_merge(name_vector, hnr_vector);
+    END IF;
+    nameaddress_vector := array_merge(nameaddress_vector, addr_place_ids);
+  END IF;
 END;
 $$
 LANGUAGE plpgsql;

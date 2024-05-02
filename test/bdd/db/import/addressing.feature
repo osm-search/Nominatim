@@ -542,3 +542,24 @@ Feature: Address computation
             | object | address |
             | W1     | R2      |
 
+    Scenario: Full name is prefered for unlisted addr:place tags
+        Given the grid
+            |   | 1 | 2 |   |
+            | 8 |   |   | 9 |
+        And the places
+            | osm | class | type | name    | geometry |
+            | W10 | place | city | Away    | (8,1,2,9,8) |
+        And the places
+            | osm | class   | type        | name          | addr+city | geometry |
+            | W1  | highway | residential | Royal Terrace | Gardens   | 8,9      |
+        And the places
+            | osm | class | type  | housenr | addr+place            | geometry | extra+foo |
+            | N1  | place | house | 1       | Royal Terrace Gardens | 1        | bar |
+        And the places
+            | osm | class | type  | housenr | addr+street   | geometry |
+            | N2  | place | house | 2       | Royal Terrace | 2        |
+        When importing
+        When sending search query "1, Royal Terrace Gardens"
+        Then results contain
+            | ID | osm |
+            | 0  | N1  |

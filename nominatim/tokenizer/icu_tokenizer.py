@@ -712,10 +712,11 @@ class ICUNameAnalyzer(AbstractAnalyzer):
                 token_info.add_street(self._retrieve_full_tokens(item.name))
             elif item.kind == 'place':
                 if not item.suffix:
-                    token_info.add_place(self._compute_partial_tokens(item.name))
+                    token_info.add_place(itertools.chain(*self._compute_name_tokens([item])))
             elif not item.kind.startswith('_') and not item.suffix and \
                  item.kind not in ('country', 'full', 'inclusion'):
-                token_info.add_address_term(item.kind, self._compute_partial_tokens(item.name))
+                token_info.add_address_term(item.kind,
+                                            itertools.chain(*self._compute_name_tokens([item])))
 
 
     def _compute_housenumber_token(self, hnr: PlaceName) -> Tuple[Optional[int], Optional[str]]:
@@ -754,36 +755,6 @@ class ICUNameAnalyzer(AbstractAnalyzer):
                             self._cache.housenumbers[word_id] = result
 
         return result
-
-
-    def _compute_partial_tokens(self, name: str) -> List[int]:
-        """ Normalize the given term, split it into partial words and return
-            then token list for them.
-        """
-        assert self.conn is not None
-        norm_name = self._search_normalized(name)
-
-        tokens = []
-        need_lookup = []
-        for partial in norm_name.split():
-            token = self._cache.partials.get(partial)
-            if token:
-                tokens.append(token)
-            else:
-                need_lookup.append(partial)
-
-        if need_lookup:
-            with self.conn.cursor() as cur:
-                cur.execute("""SELECT word, getorcreate_partial_word(word)
-                               FROM unnest(%s) word""",
-                            (need_lookup, ))
-
-                for partial, token in cur:
-                    assert token is not None
-                    tokens.append(token)
-                    self._cache.partials[partial] = token
-
-        return tokens
 
 
     def _retrieve_full_tokens(self, name: str) -> List[int]:
@@ -957,8 +928,9 @@ class _TokenInfo:
     def add_address_term(self, key: str, partials: Iterable[int]) -> None:
         """ Add additional address terms.
         """
-        if partials:
-            self.address_tokens[key] = self._mk_array(partials)
+        array = self._mk_array(partials)
+        if len(array) > 2:
+            self.address_tokens[key] = array
 
     def set_postcode(self, postcode: Optional[str]) -> None:
         """ Set the postcode to the given one.

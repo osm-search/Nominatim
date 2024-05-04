@@ -102,3 +102,25 @@ Feature: Update of postcode
            | country | postcode | geometry |
            | de      | 01982    | country:de |
         And there are word tokens for postcodes 01982
+
+    Scenario: When a parent is deleted, the postcode gets a new parent
+        Given the grid with origin DE
+           | 1 |   | 3 | 4 |
+           |   | 9 |   |   |
+           | 2 |   | 5 | 6 |
+        Given the places
+           | osm | class    | type           | name  | admin | geometry    |
+           | R1  | boundary | administrative | Big   | 6     | (1,4,6,2,1) |
+           | R2  | boundary | administrative | Small | 6     | (1,3,5,2,1) |
+        Given the named places
+           | osm | class | type     | addr+postcode | geometry |
+           | N9  | place | postcode | 12345         | 9        |
+        When importing
+        And updating postcodes
+        Then location_postcode contains exactly
+           | country | postcode | geometry | parent_place_id |
+           | de      | 12345    | 9        | R2              |
+        When marking for delete R2
+        Then location_postcode contains exactly
+           | country | postcode | geometry | parent_place_id |
+           | de      | 12345    | 9        | R1              |

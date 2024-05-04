@@ -12,7 +12,7 @@ customize them.
 The main value for importance is derived from page ranking values for Wikipedia
 pages for a place. For places that do not have their own
 Wikipedia page, a formula is used that derives a static importance from the
-places [search rank](../customize/Ranking.md#search-rank).
+place's [search rank](../customize/Ranking.md#search-rank).
 
 In a second step, a secondary importance value is added which is meant to
 represent how well-known the general area is where the place is located. It
@@ -21,7 +21,13 @@ importance values.
 
 nominatim.org has preprocessed importance tables for the
 [primary Wikipedia rankings](https://nominatim.org/data/wikimedia-importance.sql.gz)
-and for a secondary importance based on the number of tile views on openstreetmap.org.
+and for [secondary importance](https://nominatim.org/data/wikimedia-secondary-importance.sql.gz)
+based on Wikipedia importance of the administrative areas.
+
+The source code for creating these files is avaible in the Github projects
+[osm-search/wikipedia-wikidata](https://github.com/osm-search/wikipedia-wikidata)
+and
+[osm-search/secondary-importance](https://github.com/osm-search/secondary-importance).
 
 ### Customizing secondary importance
 
@@ -41,8 +47,8 @@ table will be ignored. You must furthermore create an index as follows:
 CREATE INDEX ON secondary_importance USING gist(ST_ConvexHull(gist))
 ```
 
-The following raster2pgsql command will create a table that conforms to
-the requirements:
+The following raster2pgsql command will create a table from a tiff file
+that conforms to the requirements:
 
 ```
 raster2pgsql -I -C -Y -d -t 128x128 input.tiff public.secondary_importance

@@ -75,14 +75,17 @@ This data is available as a binary download. Put it into your project directory:
 
     cd $PROJECT_DIR
     wget https://nominatim.org/data/wikimedia-importance.sql.gz
+    wget -O secondary_importance.sql.gz https://nominatim.org/data/wikimedia-secondary-importance.sql.gz
 
-The file is about 400MB and adds around 4GB to the Nominatim database.
+The files are about 400MB and add around 4GB to the Nominatim database. For
+more information about importance,
+see [Importance Customization](../customize/Importance.md).
 
 !!! tip
     If you forgot to download the wikipedia rankings, then you can
     also add importances after the import. Download the SQL files, then
-    run `nominatim refresh --wiki-data --importance`. Updating
-    importances for a planet will take a couple of hours.
+    run `nominatim refresh --wiki-data --secondary-importance --importance`.
+    Updating importances for a planet will take a couple of hours.
 
 ### External postcodes
 

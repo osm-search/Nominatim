@@ -384,7 +384,7 @@ def add_improved_geometry_reverse_placenode_index(conn: Connection, **_: Any) ->
                     """)
 
 @_migration(4, 4, 99, 0)
-def create_postcode_ara_lookup_index(conn: Connection, **_: Any) -> None:
+def create_postcode_area_lookup_index(conn: Connection, **_: Any) -> None:
     """ Create index needed for looking up postcode areas from postocde points.
     """
     with conn.cursor() as cur:
@@ -392,3 +392,14 @@ def create_postcode_ara_lookup_index(conn: Connection, **_: Any) -> None:
                        ON placex USING BTREE (country_code, postcode)
                        WHERE osm_type = 'R' AND class = 'boundary' AND type = 'postal_code'
                     """)
+
+
+@_migration(4, 4, 99, 1)
+def create_postcode_parent_index(conn: Connection, **_: Any) -> None:
+    """ Create index needed for updating postcodes when a parent changes.
+    """
+    if conn.table_exists('planet_osm_ways'):
+        with conn.cursor() as cur:
+            cur.execute("""CREATE INDEX IF NOT EXISTS
+                             idx_location_postcode_parent_place_id
+                             ON location_postcode USING BTREE (parent_place_id)""")

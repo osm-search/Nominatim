@@ -81,6 +81,9 @@ CREATE INDEX IF NOT EXISTS idx_postcode_postcode
     type TEXT,
     deferred BOOLEAN
    );
+---
+  CREATE INDEX IF NOT EXISTS idx_location_postcode_parent_place_id
+    ON location_postcode USING BTREE (parent_place_id) {{db.tablespace.address_index}};
 {% endif %}
 
 -- Indices only needed for search.

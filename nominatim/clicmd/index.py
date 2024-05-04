@@ -56,6 +56,7 @@ class UpdateIndex:
             indexer.index_boundaries(args.minrank, args.maxrank)
         if not args.boundaries_only:
             indexer.index_by_rank(args.minrank, args.maxrank)
+            indexer.index_postcodes()
 
         if not args.no_boundaries and not args.boundaries_only \
            and args.minrank == 0 and args.maxrank == 30:

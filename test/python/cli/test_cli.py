@@ -129,11 +129,13 @@ class TestCliWithDb:
         table_factory('import_status', 'indexed bool')
         bnd_mock = mock_func_factory(nominatim.indexer.indexer.Indexer, 'index_boundaries')
         rank_mock = mock_func_factory(nominatim.indexer.indexer.Indexer, 'index_by_rank')
+        postcode_mock = mock_func_factory(nominatim.indexer.indexer.Indexer, 'index_postcodes')
 
         assert self.call_nominatim('index', *params) == 0
 
         assert bnd_mock.called == do_bnds
         assert rank_mock.called == do_ranks
+        assert postcode_mock.called == do_ranks
 
 
     def test_special_phrases_wiki_command(self, mock_func_factory):

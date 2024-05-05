@@ -1,9 +1,16 @@
 local flex = require('flex-base')
 
 flex.set_main_tags{
-    highway = {'always',
-               street_lamp = 'named',
-               traffic_signals = 'named',
+    highway = {motorway = 'always',
+               trunk = 'always',
+               primary = 'always',
+               secondary = 'always',
+               tertiary = 'always',
+               unclassified = 'always',
+               residential = 'always',
+               road = 'always',
+               living_street = 'always',
+               pedestrian = 'always',
                service = 'named',
                cycleway = 'named',
                path = 'named',
@@ -28,9 +35,7 @@ flex.set_prefilters{delete_keys = {'building', 'source',
                                    '*:prefix', '*:suffix', 'name:prefix:*', 'name:suffix:*',
                                    'name:etymology', 'name:signed', 'name:botanical',
                                    'addr:street:name', 'addr:street:type'},
-                    delete_tags = {highway = {'no', 'turning_circle', 'mini_roundabout',
-                                              'noexit', 'crossing', 'give_way', 'stop'},
-                                   landuse = {'cemetry', 'no'},
+                    delete_tags = {landuse = {'cemetry', 'no'},
                                    boundary = {'place'}},
                     extra_keys = {'wikipedia', 'wikipedia:*', 'wikidata', 'capital', 'area'}
                    }

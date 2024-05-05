@@ -103,7 +103,7 @@ You should have set up this directory as part of the Nominatim import.
 Any configuration found in the `.env` file in this directory will automatically
 used.
 
-Yo may also configure Nominatim be setting environment variables.
+You may also configure Nominatim by setting environment variables.
 Normally, Nominatim will check the operating system environment. This can be
 overwritten by giving the constructor a dictionary of configuration parameters.
 

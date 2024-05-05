@@ -8,6 +8,8 @@
 Functions for bringing auxiliary data in the database up-to-date.
 """
 from typing import MutableSequence, Tuple, Any, Type, Mapping, Sequence, List, cast
+import csv
+import gzip
 import logging
 from textwrap import dedent
 from pathlib import Path
@@ -16,7 +18,7 @@ from psycopg2 import sql as pysql
 
 from nominatim.config import Configuration
 from nominatim.db.connection import Connection, connect
-from nominatim.db.utils import execute_file
+from nominatim.db.utils import execute_file, CopyBuffer
 from nominatim.db.sql_preprocessor import SQLPreprocessor
 from nominatim.version import NOMINATIM_VERSION
 
@@ -132,20 +134,88 @@ def import_wikipedia_articles(dsn: str, data_path: Path, ignore_errors: bool = F
         Returns 0 if all was well and 1 if the importance file could not
         be found. Throws an exception if there was an error reading the file.
     """
-    datafile = data_path / 'wikimedia-importance.sql.gz'
+    if import_importance_csv(dsn, data_path / 'wikimedia-importance.csv.gz') == 0 \
+       or import_importance_sql(dsn, data_path / 'wikimedia-importance.sql.gz',
+                                ignore_errors) == 0:
+        return 0
 
-    if not datafile.exists():
+    return 1
+
+
+def import_importance_csv(dsn: str, data_file: Path) -> int:
+    """ Replace wikipedia importance table with data from a
+        single CSV file.
+
+        The file must be a gzipped CSV and have the following columns:
+        language, title, importance, wikidata_id
+
+        Other columns may be present but will be ignored.
+    """
+    if not data_file.exists():
+        return 1
+
+    # Only import the first occurance of a wikidata ID.
+    # This keeps indexes and table small.
+    wd_done = set()
+
+    with connect(dsn) as conn:
+        with conn.cursor() as cur:
+            cur.drop_table('wikipedia_article')
+            cur.drop_table('wikipedia_redirect')
+            cur.drop_table('wikimedia_importance')
+            cur.execute("""CREATE TABLE wikimedia_importance (
+                             language TEXT NOT NULL,
+                             title TEXT NOT NULL,
+                             importance double precision NOT NULL,
+                             wikidata TEXT
+                           ) """)
+
+        with gzip.open(str(data_file), 'rt') as fd, CopyBuffer() as buf:
+            for row in csv.DictReader(fd, delimiter='\t', quotechar='|'):
+                wd_id = int(row['wikidata_id'][1:])
+                buf.add(row['language'], row['title'], row['importance'],
+                        None if wd_id in wd_done else row['wikidata_id'])
+                wd_done.add(wd_id)
+
+                if buf.size() > 10000000:
+                    with conn.cursor() as cur:
+                        buf.copy_out(cur, 'wikimedia_importance',
+                                     columns=['language', 'title', 'importance',
+                                              'wikidata'])
+
+            with conn.cursor() as cur:
+                buf.copy_out(cur, 'wikimedia_importance',
+                             columns=['language', 'title', 'importance', 'wikidata'])
+
+        with conn.cursor() as cur:
+            cur.execute("""CREATE INDEX IF NOT EXISTS idx_wikimedia_importance_title
+                           ON wikimedia_importance (title)""")
+            cur.execute("""CREATE INDEX IF NOT EXISTS idx_wikimedia_importance_wikidata
+                           ON wikimedia_importance (wikidata)
+                           WHERE wikidata is not null""")
+
+        conn.commit()
+
+    return 0
+
+
+def import_importance_sql(dsn: str, data_file: Path, ignore_errors: bool) -> int:
+    """ Replace wikipedia importance table with data from an SQL file.
+    """
+    if not data_file.exists():
         return 1
 
     pre_code = """BEGIN;
                   DROP TABLE IF EXISTS "wikipedia_article";
-                  DROP TABLE IF EXISTS "wikipedia_redirect"
+                  DROP TABLE IF EXISTS "wikipedia_redirect";
+                  DROP TABLE IF EXISTS "wikipedia_importance";
                """
     post_code = "COMMIT"
-    execute_file(dsn, datafile, ignore_errors=ignore_errors,
+    execute_file(dsn, data_file, ignore_errors=ignore_errors,
                  pre_code=pre_code, post_code=post_code)
 
     return 0
+
 
 def import_secondary_importance(dsn: str, data_path: Path, ignore_errors: bool = False) -> int:
     """ Replaces the secondary importance raster data table with new data.

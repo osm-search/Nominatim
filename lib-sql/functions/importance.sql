@@ -20,6 +20,54 @@ CREATE TYPE place_importance as (
   wikipedia TEXT
 );
 
+{% if 'wikimedia_importance' in db.tables %}
+
+CREATE OR REPLACE FUNCTION get_wikipedia_match(extratags HSTORE, country_code varchar(2))
+  RETURNS wikipedia_article_match
+  AS $$
+DECLARE
+  i INT;
+  wiki_article_title TEXT;
+  wiki_article_language TEXT;
+  result wikipedia_article_match;
+  entry RECORD;
+BEGIN
+  IF extratags ? 'wikipedia' and strpos(extratags->'wikipedia', ':') IN (3,4) THEN
+    wiki_article_language := lower(trim(split_part(extratags->'wikipedia', ':', 1)));
+    wiki_article_title := trim(substr(extratags->'wikipedia',
+                                      strpos(extratags->'wikipedia', ':') + 1));
+
+    FOR result IN
+      SELECT language, title, importance FROM wikimedia_importance
+        WHERE language = wiki_article_language
+              and title = replace(wiki_article_title, ' ', '_')
+    LOOP
+      RETURN result;
+    END LOOP;
+  END IF;
+
+  FOREACH wiki_article_language IN ARRAY ARRAY['ar','bg','ca','cs','da','de','en','es','eo','eu','fa','fr','ko','hi','hr','id','it','he','lt','hu','ms','nl','ja','no','pl','pt','kk','ro','ru','sk','sl','sr','fi','sv','tr','uk','vi','vo','war','zh']
+  LOOP
+    IF extratags ? ('wikipedia:' || wiki_article_language) THEN
+        wiki_article_title := extratags->('wikipedia:' || wiki_article_language);
+
+        FOR result IN
+          SELECT language, title, importance FROM wikimedia_importance
+            WHERE language = wiki_article_language
+                  and title = replace(wiki_article_title, ' ', '_')
+        LOOP
+          RETURN result;
+        END LOOP;
+    END IF;
+
+  END LOOP;
+
+  RETURN NULL;
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE STRICT;
+
+{% else %}
 
 -- See: http://stackoverflow.com/questions/6410088/how-can-i-mimic-the-php-urldecode-function-in-postgresql
 CREATE OR REPLACE FUNCTION decode_url_part(p varchar)
@@ -93,6 +141,7 @@ END;
 $$
 LANGUAGE plpgsql STABLE;
 
+{% endif %}
 
 CREATE OR REPLACE FUNCTION compute_importance(extratags HSTORE,
                                               country_code varchar(2),
@@ -118,9 +167,16 @@ BEGIN
 
   -- Nothing? Then try with the wikidata tag.
   IF result.importance is null AND extratags ? 'wikidata' THEN
-    FOR match IN SELECT * FROM wikipedia_article
-                  WHERE wd_page_title = extratags->'wikidata'
-                  ORDER BY language = 'en' DESC, langcount DESC LIMIT 1
+    FOR match IN
+{% if 'wikimedia_importance' in db.tables %}
+      SELECT * FROM wikimedia_importance
+        WHERE wikidata = extratags->'wikidata'
+        LIMIT 1
+{% else %}
+      SELECT * FROM wikipedia_article
+        WHERE wd_page_title = extratags->'wikidata'
+        ORDER BY language = 'en' DESC, langcount DESC LIMIT 1
+{% endif %}
     LOOP
       result.importance := match.importance;
       result.wikipedia := match.language || ':' || match.title;

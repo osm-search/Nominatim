@@ -89,6 +89,7 @@ class UpdateRefresh:
         from ..tools import refresh, postcodes
         from ..indexer.indexer import Indexer
 
+        need_function_refresh = args.functions
 
         if args.postcodes:
             if postcodes.can_compute(args.config.get_libpq_dsn()):
@@ -131,13 +132,7 @@ class UpdateRefresh:
                                                 args.project_dir) > 0:
                 LOG.fatal('FATAL: Cannot update secondary importance raster data')
                 return 1
-
-        if args.functions:
-            LOG.warning('Create functions')
-            with connect(args.config.get_libpq_dsn()) as conn:
-                refresh.create_functions(conn, args.config,
-                                         args.diffs, args.enable_debug_statements)
-                self._get_tokenizer(args.config).update_sql_functions(args.config)
+            need_function_refresh = True
 
         if args.wiki_data:
             data_path = Path(args.config.WIKIPEDIA_DATA_PATH
@@ -147,8 +142,16 @@ class UpdateRefresh:
                                                  data_path) > 0:
                 LOG.fatal('FATAL: Wikipedia importance file not found in %s', data_path)
                 return 1
+            need_function_refresh = True
 
-        # Attention: importance MUST come after wiki data import.
+        if need_function_refresh:
+            LOG.warning('Create functions')
+            with connect(args.config.get_libpq_dsn()) as conn:
+                refresh.create_functions(conn, args.config,
+                                         args.diffs, args.enable_debug_statements)
+                self._get_tokenizer(args.config).update_sql_functions(args.config)
+
+        # Attention: importance MUST come after wiki data import and after functions.
         if args.importance:
             LOG.warning('Update importance values for database')
             with connect(args.config.get_libpq_dsn()) as conn:

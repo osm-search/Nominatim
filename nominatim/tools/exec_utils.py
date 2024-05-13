@@ -11,6 +11,7 @@ from typing import Any, Mapping, IO
 import logging
 import os
 import subprocess
+import shutil
 import urllib.request as urlrequest
 
 from nominatim.typing import StrPath
@@ -30,7 +31,14 @@ def run_osm2pgsql(options: Mapping[str, Any]) -> None:
     """ Run osm2pgsql with the given options.
     """
     env = get_pg_env(options['dsn'])
-    cmd = [str(options['osm2pgsql']),
+
+    osm2pgsql_cmd = options['osm2pgsql']
+    if osm2pgsql_cmd is None:
+        osm2pgsql_cmd = shutil.which('osm2pgsql')
+        if osm2pgsql_cmd is None:
+            raise RuntimeError('osm2pgsql executable not found. Please install osm2pgsql first.')
+
+    cmd = [str(osm2pgsql_cmd),
            '--slim',
            '--log-progress', 'true',
            '--number-processes', '1' if options['append'] else str(options['threads']),

@@ -33,6 +33,12 @@ class NominatimVersion(NamedTuple):
     def __str__(self) -> str:
         return f"{self.major}.{self.minor}.{self.patch_level}-{self.db_patch_level}"
 
+    def release_version(self) -> str:
+        """ Return the release version in semantic versioning format.
+
+            The release version does not include the database patch version.
+        """
+        return f"{self.major}.{self.minor}.{self.patch_level}"
 
 NOMINATIM_VERSION = NominatimVersion(4, 4, 99, 1)
 

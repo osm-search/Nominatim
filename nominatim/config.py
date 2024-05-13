@@ -83,7 +83,7 @@ class Configuration:
         """ Set paths to library functions and data.
         """
         for key, value in kwargs.items():
-            setattr(self.lib_dir, key, Path(value))
+            setattr(self.lib_dir, key, None if value is None else Path(value))
 
 
     def __getattr__(self, name: str) -> str:

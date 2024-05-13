@@ -1,0 +1,61 @@
+[project]
+name = "nominatim"
+description = "A tool for building a database of OpenStreetMap for geocoding and for searching the database."
+readme = "README.md"
+requires-python = ">=3.7"
+license = 'GPL-3.0-or-later'
+maintainers = [
+  { name = "Sarah Hoffmann", email = "lonvia@denofr.de" }
+]
+keywords = [ "geocoding", "OpenStreetMap", "search" ]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: GNU General Public License (GPL)",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "psycopg2",
+    "python-dotenv",
+    "psutil",
+    "jinja2",
+    "SQLAlchemy>=1.4.31",
+    "asyncpg>=0.8",
+    "PyICU",
+    "pyYAML>=5.1",
+    "datrie"
+]
+dynamic = ["version"]
+
+[project.urls]
+Homepage = "https://nominatim.org"
+Issues = "https://github.com/osm-search/Nominatim/issues"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+source = "code"
+path = "nominatim/version.py"
+expression = "NOMINATIM_VERSION.release_version()"
+
+[tool.hatch.build.targets.sdist]
+only-include = ["nominatim", "lib-sql", "settings",
+                "docs", "man", "data", "munin",
+                "test/python", "test/bdd", "test/testdata", "test/testdb"]
+artifacts = ["data/country_osm_grid.sql.gz"]
+
+[tool.hatch.build.targets.wheel]
+only-include = ["nominatim", "lib-sql", "settings",
+                "data/words.sql", "data/country_osm_grid.sql.gz",
+                "wheel_build/nominatim"]
+exclude = ["nominatim/paths.py"]
+
+[tool.hatch.build.targets.wheel.shared-scripts]
+"wheel_build/shared/scripts" = "/"
+
+[tool.hatch.build.targets.wheel.sources]
+"wheel_build/nominatim" = "nominatim"
+"lib-sql" = "nominatim/resources/lib-sql"
+"settings" = "nominatim/resources/settings"
+"data" = "nominatim/resources"

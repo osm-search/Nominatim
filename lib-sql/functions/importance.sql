@@ -65,7 +65,7 @@ BEGIN
   RETURN NULL;
 END;
 $$
-LANGUAGE plpgsql IMMUTABLE STRICT;
+LANGUAGE plpgsql IMMUTABLE;
 
 {% else %}
 

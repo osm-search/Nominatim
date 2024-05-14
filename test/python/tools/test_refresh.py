@@ -35,8 +35,7 @@ def test_refresh_import_secondary_importance_testdb(dsn, src_dir, temp_db_conn, 
 @pytest.mark.parametrize("replace", (True, False))
 def test_refresh_import_wikipedia(dsn, src_dir, table_factory, temp_db_cursor, replace):
     if replace:
-        table_factory('wikipedia_article')
-        table_factory('wikipedia_redirect')
+        table_factory('wikimedia_importance')
 
     # use the small wikipedia file for the API testdb
     assert refresh.import_wikipedia_articles(dsn, src_dir / 'test' / 'testdb') == 0

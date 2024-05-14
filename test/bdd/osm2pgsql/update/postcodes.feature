@@ -136,12 +136,14 @@ Feature: Update of postcode only objects
             """
             n1 Taddr:housenumber=3
             n2 Taddr:housenumber=17
+            w33 Thighway=residential Nn1,n2
             w34 Tpostcode=4456 Nn1,n2
             """
         Then place contains exactly
             | object    | type     |
             | N1:place  | house    |
             | N2:place  | house    |
+            | W33:highway | residential |
             | W34:place | postcode |
 
         When updating osm data
@@ -152,6 +154,7 @@ Feature: Update of postcode only objects
             | object    | type   |
             | N1:place  | house  |
             | N2:place  | house  |
+            | W33:highway | residential |
             | W34:place | houses |
         When indexing
         Then location_property_osmline contains exactly
@@ -161,3 +164,4 @@ Feature: Update of postcode only objects
             | object    | type   |
             | N1:place  | house  |
             | N2:place  | house  |
+            | W33:highway | residential |

@@ -67,10 +67,6 @@ BEGIN
     END LOOP;
   END IF;
 
-  IF parent_place_id is null THEN
-    RETURN 0;
-  END IF;
-
   RETURN parent_place_id;
 END;
 $$
@@ -182,6 +178,13 @@ BEGIN
   NEW.parent_place_id := get_interpolation_parent(NEW.token_info, NEW.partition,
                                                  ST_PointOnSurface(NEW.linegeo),
                                                  NEW.linegeo);
+
+  -- Cannot find a parent street. We will not be able to display a reliable
+  -- address, so drop entire interpolation.
+  IF NEW.parent_place_id is NULL THEN
+    DELETE FROM location_property_osmline where place_id = OLD.place_id;
+    RETURN NULL;
+  END IF;
 
   NEW.token_info := token_strip_info(NEW.token_info);
   IF NEW.address ? '_inherited' THEN

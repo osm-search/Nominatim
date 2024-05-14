@@ -12,7 +12,7 @@ a single place (for reverse) of the following format:
 
 ```
   {
-    "place_id": "100149",
+    "place_id": 100149,
     "licence": "Data © OpenStreetMap contributors, ODbL 1.0. https://osm.org/copyright",
     "osm_type": "node",
     "osm_id": "107775",

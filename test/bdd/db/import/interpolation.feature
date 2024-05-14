@@ -2,7 +2,7 @@
 Feature: Import of address interpolations
     Tests that interpolated addresses are added correctly
 
-    Scenario: Simple even interpolation line with two points
+    Scenario: Simple even interpolation line with two points and no street nearby
         Given the grid with origin 1,1
           | 1 |  | 9 |  | 2 |
         Given the places
@@ -16,6 +16,26 @@ Feature: Import of address interpolations
           | id | nodes |
           | 1  | 1,2 |
         When importing
+        Then W1 expands to no interpolation
+
+    Scenario: Simple even interpolation line with two points
+        Given the grid with origin 1,1
+          | 1 |  | 9 |  | 2 |
+          | 4 |  |   |  | 5 |
+        Given the places
+          | osm | class | type   | housenr |
+          | N1  | place | house  | 2       |
+          | N2  | place | house  | 6       |
+        And the places
+          | osm | class | type   | addr+interpolation | geometry |
+          | W1  | place | houses | even               | 1,2      |
+        And the named places
+          | osm | class   | type        | geometry |
+          | W10 | highway | residential | 4,5      |
+        And the ways
+          | id | nodes |
+          | 1  | 1,2 |
+        When importing
         Then W1 expands to interpolation
           | start | end | geometry |
           | 4     | 4   | 9 |
@@ -23,6 +43,7 @@ Feature: Import of address interpolations
     Scenario: Backwards even two point interpolation line
         Given the grid with origin 1,1
           | 1 | 8 | 9 | 2 |
+          | 4 |   |   | 5 |
         Given the places
           | osm | class | type   | housenr |
           | N1  | place | house  | 2       |
@@ -30,6 +51,9 @@ Feature: Import of address interpolations
         And the places
           | osm | class | type   | addr+interpolation | geometry |
           | W1  | place | houses | even               | 2,1      |
+        And the named places
+          | osm | class   | type        | geometry |
+          | W10 | highway | residential | 4,5      |
         And the ways
           | id | nodes |
           | 1  | 2,1 |
@@ -41,6 +65,7 @@ Feature: Import of address interpolations
     Scenario: Simple odd two point interpolation
         Given the grid with origin 1,1
           | 1 | 8 |  |  | 9 | 2 |
+          | 4 |   |  |  | 5 |   |
         Given the places
           | osm | class | type   | housenr |
           | N1  | place | house  | 1       |
@@ -48,6 +73,9 @@ Feature: Import of address interpolations
         And the places
           | osm | class | type   | addr+interpolation | geometry |
           | W1  | place | houses | odd                | 1,2      |
+        And the named places
+          | osm | class   | type        | geometry |
+          | W10 | highway | residential | 4,5      |
         And the ways
           | id | nodes |
           | 1  | 1,2 |
@@ -59,6 +87,7 @@ Feature: Import of address interpolations
     Scenario: Simple all two point interpolation
         Given the grid with origin 1,1
           | 1 | 8 | 9 | 2 |
+          | 4 |   |   | 5 |
         Given the places
           | osm | class | type   | housenr |
           | N1  | place | house  | 1       |
@@ -66,6 +95,9 @@ Feature: Import of address interpolations
         And the places
           | osm | class | type   | addr+interpolation | geometry |
           | W1  | place | houses | all                | 1,2      |
+        And the named places
+          | osm | class   | type        | geometry |
+          | W10 | highway | residential | 4,5      |
         And the ways
           | id | nodes |
           | 1  | 1,2 |
@@ -77,6 +109,7 @@ Feature: Import of address interpolations
     Scenario: Even two point interpolation line with intermediate empty node
         Given the grid
           | 1 | 8 |  | 3 | 9 | 2 |
+          | 4 |   |  |   | 5 |   |
         Given the places
           | osm | class | type   | housenr |
           | N1  | place | house  | 2       |
@@ -84,6 +117,9 @@ Feature: Import of address interpolations
         And the places
           | osm | class | type   | addr+interpolation | geometry |
           | W1  | place | houses | even               | 1,3,2    |
+        And the named places
+          | osm | class   | type        | geometry |
+          | W10 | highway | residential | 4,5      |
         And the ways
           | id | nodes |
           | 1  | 1,3,2 |
@@ -94,6 +130,7 @@ Feature: Import of address interpolations
 
     Scenario: Even two point interpolation line with intermediate duplicated empty node
         Given the grid
+          | 4 |   |   |   | 5 |
           | 1 | 8 | 3 | 9 | 2 |
         Given the places
           | osm | class | type   | housenr |
@@ -102,6 +139,9 @@ Feature: Import of address interpolations
         And the places
           | osm | class | type   | addr+interpolation | geometry |
           | W1  | place | houses | even               | 1,3,2 |
+        And the named places
+          | osm | class   | type        | geometry |
+          | W10 | highway | residential | 4,5      |
         And the ways
           | id | nodes |
           | 1  | 1,3,3,2 |
@@ -112,6 +152,7 @@ Feature: Import of address interpolations
 
     Scenario: Simple even three point interpolation line
         Given the grid
+          | 4 |   |  |   |   |   | 5 |
           | 1 | 8 |  | 9 | 3 | 7 | 2 |
         Given the places
           | osm | class | type   | housenr |
@@ -121,6 +162,9 @@ Feature: Import of address interpolations
         And the places
           | osm | class | type   | addr+interpolation | geometry |
           | W1  | place | houses | even               | 1,3,2    |
+        And the named places
+          | osm | class   | type        | geometry |
+          | W10 | highway | residential | 4,5      |
         And the ways
           | id | nodes |
           | 1  | 1,3,2 |
@@ -144,6 +188,9 @@ Feature: Import of address interpolations
         And the places
           | osm | class | type   | addr+interpolation | geometry |
           | W1  | place | houses | even               | 1,3,2,4  |
+        And the named places
+          | osm | class   | type        | geometry |
+          | W10 | highway | residential | 1,3,2,4  |
         And the ways
           | id | nodes |
           | 1  | 1,3,2,4 |
@@ -157,6 +204,7 @@ Feature: Import of address interpolations
     Scenario: Reverse simple even three point interpolation line
         Given the grid
           | 1 | 8  |  | 9 | 3 | 7 | 2 |
+          | 4 |    |  |   |   |   | 5 |
         Given the places
           | osm | class | type  | housenr |
           | N1  | place | house | 2       |
@@ -165,6 +213,9 @@ Feature: Import of address interpolations
         And the places
           | osm | class | type   | addr+interpolation | geometry |
           | W1  | place | houses | even               | 2,3,1    |
+        And the named places
+          | osm | class   | type        | geometry |
+          | W10 | highway | residential | 4,5      |
         And the ways
           | id | nodes |
           | 1  | 2,3,1 |
@@ -177,6 +228,7 @@ Feature: Import of address interpolations
     Scenario: Even three point interpolation line with odd center point
         Given the grid
           | 1 |  | 10 |  |  | 11 | 3 | 2 |
+          | 4 |  |    |  |  |    |   | 5 |
         Given the places
           | osm | class | type  | housenr |
           | N1  | place | house | 2       |
@@ -185,6 +237,9 @@ Feature: Import of address interpolations
         And the places
           | osm | class | type   | addr+interpolation | geometry |
           | W1  | place | houses | even               | 1,3,2    |
+        And the named places
+          | osm | class   | type        | geometry |
+          | W10 | highway | residential | 4,5      |
         And the ways
           | id | nodes |
           | 1  | 1,3,2 |
@@ -206,6 +261,9 @@ Feature: Import of address interpolations
         And the places
           | osm | class | type   | addr+interpolation | geometry |
           | W1  | place | houses | even               | 1,2,3,2  |
+        And the named places
+          | osm | class   | type        | geometry |
+          | W10 | highway | residential | 1,2,3    |
         And the ways
           | id | nodes |
           | 1  | 1,2,3,2 |
@@ -227,6 +285,9 @@ Feature: Import of address interpolations
         And the places
           | osm | class | type   | addr+interpolation | geometry |
           | W1  | place | houses | even               | 1,2,3,2  |
+        And the named places
+          | osm | class   | type        | geometry |
+          | W10 | highway | residential | 1,2,3    |
         And the ways
           | id | nodes |
           | 1  | 1,2,3,2 |
@@ -334,6 +395,9 @@ Feature: Import of address interpolations
         And the places
           | osm | class | type   | addr+interpolation | geometry |
           | W1  | place | houses | even    | 144.9632341 -37.76163,144.9630541 -37.7628172,144.9629794 -37.7630755 |
+        And the named places
+          | osm | class   | type        | geometry |
+          | W10 | highway | residential | 144.9632341 -37.76163,144.9629794 -37.7630755    |
         And the ways
           | id | nodes |
           | 1  | 1,2,3 |
@@ -346,6 +410,7 @@ Feature: Import of address interpolations
     Scenario: Place with missing address information
         Given the grid
           | 1 |  | 2 |  |  | 3 |
+          | 4 |  |   |  |  | 5 |
         And the places
           | osm | class   | type   | housenr |
           | N1  | place   | house  | 23      |
@@ -354,6 +419,9 @@ Feature: Import of address interpolations
         And the places
           | osm | class | type   | addr+interpolation | geometry |
           | W1  | place | houses | odd                | 1,2,3 |
+        And the named places
+          | osm | class   | type        | geometry |
+          | W10 | highway | residential | 4,5      |
         And the ways
           | id | nodes |
           | 1  | 1,2,3 |
@@ -366,12 +434,16 @@ Feature: Import of address interpolations
         Given the places
           | osm | class | type   | housenr | geometry |
           | W1  | place | houses | even    | 1 1, 1 1.001 |
+        And the named places
+          | osm | class   | type        | geometry |
+          | W10 | highway | residential | 1 1, 1 1.001 |
         When importing
         Then W1 expands to no interpolation
 
     Scenario: Ways with nodes without housenumbers are ignored
         Given the grid
-          | 1  |  |  2 |
+          | 1 |  | 2 |
+          | 4 |  | 5 |
         Given the places
           | osm | class | type   |
           | N1  | place | house  |
@@ -379,12 +451,16 @@ Feature: Import of address interpolations
         Given the places
           | osm | class | type   | housenr | geometry |
           | W1  | place | houses | even    | 1,2 |
+        And the named places
+          | osm | class   | type        | geometry |
+          | W10 | highway | residential | 4,5      |
         When importing
         Then W1 expands to no interpolation
 
     Scenario: Two point interpolation starting at 0
         Given the grid with origin 1,1
           | 1 | 10 |  |  | 11 | 2 |
+          | 4 |    |  |  |    | 5 |
         Given the places
           | osm | class | type   | housenr |
           | N1  | place | house  | 0       |
@@ -392,6 +468,9 @@ Feature: Import of address interpolations
         And the places
           | osm | class | type   | addr+interpolation | geometry |
           | W1  | place | houses | even               | 1,2      |
+        And the places
+          | osm | class   | type        | name        | geometry |
+          | W10 | highway | residential | London Road |4,5      |
         And the ways
           | id | nodes |
           | 1  | 1,2 |
@@ -402,7 +481,7 @@ Feature: Import of address interpolations
         When sending v1/reverse at 1,1
         Then results contain
           | ID | osm | type  | display_name |
-          | 0  | N1  | house | 0 |
+          | 0  | N1  | house | 0, London Road |
 
     Scenario: Parenting of interpolation with additional tags
         Given the grid
@@ -438,6 +517,7 @@ Feature: Import of address interpolations
     Scenario Outline: Bad interpolation values are ignored
         Given the grid with origin 1,1
           | 1 |  | 9 |  | 2 |
+          | 4 |  |   |  | 5 |
         Given the places
           | osm | class | type   | housenr |
           | N1  | place | house  | 2       |
@@ -445,6 +525,9 @@ Feature: Import of address interpolations
         And the places
           | osm | class | type   | addr+interpolation | geometry |
           | W1  | place | houses | <value>            | 1,2      |
+        And the named places
+          | osm | class   | type        | geometry |
+          | W10 | highway | residential | 4,5      |
         And the ways
           | id | nodes |
           | 1  | 1,2 |
@@ -470,6 +553,9 @@ Feature: Import of address interpolations
         And the places
           | osm | class | type   | addr+interpolation | geometry |
           | W1  | place | houses | even               | 1,2,3,4  |
+        And the named places
+          | osm | class   | type        | geometry |
+          | W10 | highway | residential | 1,4      |
         And the ways
           | id | nodes   |
           | 1  | 1,2,3,4 |
@@ -484,6 +570,7 @@ Feature: Import of address interpolations
     Scenario: Interpolation line with duplicated points
         Given the grid
           | 7 | 10 | 8 | 11 | 9 |
+          | 4 |    |   |    | 5 |
         Given the places
           | osm | class | type   | housenr | geometry |
           | N1  | place | house  | 2       | 7 |
@@ -493,6 +580,9 @@ Feature: Import of address interpolations
         And the places
           | osm | class | type   | addr+interpolation | geometry |
           | W1  | place | houses | even               | 7,8,8,9  |
+        And the named places
+          | osm | class   | type        | geometry |
+          | W10 | highway | residential | 4,5      |
         And the ways
           | id | nodes   |
           | 1  | 1,2,3,4 |
@@ -515,6 +605,9 @@ Feature: Import of address interpolations
         And the places
           | osm | class | type   | addr+interpolation | geometry |
           | W1  | place | houses | even               | 8,9      |
+        And the named places
+          | osm | class   | type        | geometry |
+          | W10 | highway | residential | 1,4      |
         And the ways
           | id | nodes       |
           | 1  | 1,8,9,2,3,4 |

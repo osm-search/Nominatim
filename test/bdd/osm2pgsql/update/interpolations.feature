@@ -13,6 +13,7 @@ Feature: Updates of address interpolation objects
             """
             n1 Taddr:housenumber=3
             n2 Taddr:housenumber=17
+            w33 Thighway=residential,name=Tao Nn1,n2
             """
         Then place contains
             | object    | type   |
@@ -33,6 +34,7 @@ Feature: Updates of address interpolation objects
             | object    | type   |
             | N1:place  | house  |
             | N2:place  | house  |
+            | W33:highway | residential |
         Then location_property_osmline contains exactly
             | object |
             | 99:5   |
@@ -73,6 +75,7 @@ Feature: Updates of address interpolation objects
             """
             n1 Taddr:housenumber=3
             n2 Taddr:housenumber=17
+            w33 Thighway=residential Nn1,n2
             w99 Thighway=residential Nn1,n2
             """
         Then place contains
@@ -95,6 +98,7 @@ Feature: Updates of address interpolation objects
             | object    | type   |
             | N1:place  | house  |
             | N2:place  | house  |
+            | W33:highway | residential |
         And location_property_osmline contains exactly
             | object |
             | 99:5   |

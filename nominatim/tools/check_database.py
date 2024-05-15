@@ -248,7 +248,10 @@ def check_existance_wikipedia(conn: Connection, _: Configuration) -> CheckResult
         return CheckState.NOT_APPLICABLE
 
     with conn.cursor() as cur:
-        cnt = cur.scalar('SELECT count(*) FROM wikipedia_article')
+        if conn.table_exists('wikimedia_importance'):
+            cnt = cur.scalar('SELECT count(*) FROM wikimedia_importance')
+        else:
+            cnt = cur.scalar('SELECT count(*) FROM wikipedia_article')
 
         return CheckState.WARN if cnt == 0 else CheckState.OK
 

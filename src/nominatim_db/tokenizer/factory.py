@@ -41,7 +41,7 @@ def _import_tokenizer(name: str) -> TokenizerModule:
                   "Check the setting of NOMINATIM_TOKENIZER.", name)
         raise UsageError('Tokenizer not found')
 
-    return importlib.import_module('nominatim.tokenizer.' + name + '_tokenizer')
+    return importlib.import_module('nominatim_db.tokenizer.' + name + '_tokenizer')
 
 
 def create_tokenizer(config: Configuration, init_db: bool = True,

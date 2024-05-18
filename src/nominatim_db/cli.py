@@ -180,7 +180,7 @@ class AdminServe:
             else:
                 port = 8088
 
-            server_module = importlib.import_module(f'nominatim.server.{args.engine}.server')
+            server_module = importlib.import_module(f'nominatim_db.server.{args.engine}.server')
 
             app = server_module.get_application(args.project_dir)
             uvicorn.run(app, host=host, port=port)

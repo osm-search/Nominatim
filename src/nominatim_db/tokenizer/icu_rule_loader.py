@@ -184,7 +184,7 @@ class TokenAnalyzerRule:
             raise UsageError("'analyzer' parameter needs to be simple string")
 
         self._analysis_mod: AnalysisModule = \
-            config.load_plugin_module(analyzer_name, 'nominatim.tokenizer.token_analysis')
+            config.load_plugin_module(analyzer_name, 'nominatim_db.tokenizer.token_analysis')
 
         self.config = self._analysis_mod.configure(rules, normalizer,
                                                    transliterator)

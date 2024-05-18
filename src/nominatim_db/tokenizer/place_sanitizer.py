@@ -35,7 +35,7 @@ class PlaceSanitizer:
                     raise UsageError("'step' attribute must be a simple string.")
 
                 module: SanitizerHandler = \
-                    config.load_plugin_module(func['step'], 'nominatim.tokenizer.sanitizers')
+                    config.load_plugin_module(func['step'], 'nominatim_db.tokenizer.sanitizers')
 
                 self.handlers.append(module.create(SanitizerConfig(func)))
 

@@ -28,6 +28,7 @@ class TestRefresh:
                              ('website', 'setup_website'),
                              ])
     def test_refresh_command(self, mock_func_factory, command, func):
+        mock_func_factory(nominatim.tools.refresh, 'create_functions')
         func_mock = mock_func_factory(nominatim.tools.refresh, func)
 
         assert self.call_nominatim('refresh', '--' + command) == 0
@@ -71,6 +72,7 @@ class TestRefresh:
 
         assert self.call_nominatim('refresh', '--wiki-data') == 1
 
+
     def test_refresh_secondary_importance_file_not_found(self):
         assert self.call_nominatim('refresh', '--secondary-importance') == 1
 
@@ -84,16 +86,18 @@ class TestRefresh:
         assert mocks[1].called == 1
 
 
-    def test_refresh_importance_computed_after_wiki_import(self, monkeypatch):
+    def test_refresh_importance_computed_after_wiki_import(self, monkeypatch, mock_func_factory):
         calls = []
         monkeypatch.setattr(nominatim.tools.refresh, 'import_wikipedia_articles',
                             lambda *args, **kwargs: calls.append('import') or 0)
         monkeypatch.setattr(nominatim.tools.refresh, 'recompute_importance',
                             lambda *args, **kwargs: calls.append('update'))
+        func_mock = mock_func_factory(nominatim.tools.refresh, 'create_functions')
 
         assert self.call_nominatim('refresh', '--importance', '--wiki-data') == 0
 
         assert calls == ['import', 'update']
+        assert func_mock.called == 1
 
     @pytest.mark.parametrize('params', [('--data-object', 'w234'),
                                         ('--data-object', 'N23', '--data-object', 'N24'),

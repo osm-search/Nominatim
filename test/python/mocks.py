@@ -54,16 +54,17 @@ class MockPlacexTable:
 
     def add(self, osm_type='N', osm_id=None, cls='amenity', typ='cafe', names=None,
             admin_level=None, address=None, extratags=None, geom='POINT(10 4)',
-            country=None, housenumber=None):
+            country=None, housenumber=None, rank_search=30):
         with self.conn.cursor() as cur:
             psycopg2.extras.register_hstore(cur)
             cur.execute("""INSERT INTO placex (place_id, osm_type, osm_id, class,
                                                type, name, admin_level, address,
-                                               housenumber,
+                                               housenumber, rank_search,
                                                extratags, geometry, country_code)
-                            VALUES(nextval('seq_place'), %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+                            VALUES(nextval('seq_place'), %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
                         (osm_type, osm_id or next(self.idseq), cls, typ, names,
-                         admin_level, address, housenumber, extratags, 'SRID=4326;' + geom,
+                         admin_level, address, housenumber, rank_search,
+                         extratags, 'SRID=4326;' + geom,
                          country))
         self.conn.commit()
 

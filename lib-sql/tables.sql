@@ -273,28 +273,15 @@ GRANT SELECT ON import_polygon_delete TO "{{config.DATABASE_WEBUSER}}";
 DROP SEQUENCE IF EXISTS file;
 CREATE SEQUENCE file start 1;
 
--- null table so it won't error
--- deliberately no drop - importing the table is expensive and static, if it is already there better to avoid removing it
-CREATE TABLE IF NOT EXISTS wikipedia_article (
-    language text NOT NULL,
-    title text NOT NULL,
-    langcount integer,
-    othercount integer,
-    totalcount integer,
-    lat double precision,
-    lon double precision,
-    importance double precision,
-    osm_type character(1),
-    osm_id bigint,
-    wd_page_title text,
-    instance_of text
-);
-
-CREATE TABLE IF NOT EXISTS wikipedia_redirect (
-    language text,
-    from_title text,
-    to_title text
-);
+{% if 'wikimedia_importance' not in db.tables and 'wikipedia_article' not in db.tables %}
+-- create dummy tables here, if nothing was imported
+CREATE TABLE wikimedia_importance (
+  language TEXT NOT NULL,
+  title TEXT NOT NULL,
+  importance double precision NOT NULL,
+  wikidata TEXT
+)  {{db.tablespace.address_data}};
+{% endif %}
 
 -- osm2pgsql does not create indexes on the middle tables for Nominatim
 -- Add one for lookup of associated street relations.

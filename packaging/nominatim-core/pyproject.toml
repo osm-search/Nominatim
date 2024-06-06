@@ -1,0 +1,49 @@
+[project]
+name = "nominatim-core"
+description = "A tool for building a database of OpenStreetMap for geocoding and for searching the database. Base package for common resources for the project."
+readme = "README.md"
+requires-python = ">=3.7"
+license = 'GPL-3.0-or-later'
+maintainers = [
+  { name = "Sarah Hoffmann", email = "lonvia@denofr.de" }
+]
+keywords = [ "geocoding", "OpenStreetMap", "search" ]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: GNU General Public License (GPL)",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "python-dotenv",
+    "jinja2",
+    "pyYAML>=5.1",
+    "datrie"
+]
+dynamic = ["version"]
+
+[project.urls]
+Homepage = "https://nominatim.org"
+Issues = "https://github.com/osm-search/Nominatim/issues"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+source = "code"
+path = "../../src/nominatim_core/version.py"
+expression = "NOMINATIM_CORE_VERSION"
+
+[tool.hatch.build.targets.sdist.force-include]
+"../../src/nominatim_core" = "nominatim_core"
+"../../lib-sql" = "nominatim_core/resources/lib-sql"
+"../../settings" = "nominatim_core/resources/settings"
+"../../data/country_osm_grid.sql.gz" = "nominatim_core/resources/country_osm_grid.sql.gz"
+"../../data/words.sql" = "nominatim_core/resources/words.sql"
+"src/nominatim_core/paths.py" = "nominatim_core/paths.py"
+
+[tool.hatch.build.targets.sdist.sources]
+"src/nominatim_core" = "nominatim_core"
+
+[tool.hatch.build.targets.wheel]
+packages = ["nominatim_core"]

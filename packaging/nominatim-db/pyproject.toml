@@ -1,0 +1,49 @@
+[project]
+name = "nominatim-db"
+description = "A tool for building a database of OpenStreetMap for geocoding and for searching the database. Database backend."
+readme = "README.md"
+requires-python = ">=3.7"
+license = 'GPL-3.0-or-later'
+maintainers = [
+  { name = "Sarah Hoffmann", email = "lonvia@denofr.de" }
+]
+keywords = [ "geocoding", "OpenStreetMap", "search" ]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: GNU General Public License (GPL)",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "nominatim-core",
+    "psycopg2",
+    "psutil",
+    "PyICU"
+]
+dynamic = ["version"]
+
+[project.urls]
+Homepage = "https://nominatim.org"
+Issues = "https://github.com/osm-search/Nominatim/issues"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+source = "code"
+path = "../../src/nominatim_db/version.py"
+expression = "NOMINATIM_VERSION.release_version()"
+
+[tool.hatch.build.targets.sdist.force-include]
+"../../src/nominatim_db" = "nominatim_db"
+
+[tool.hatch.build.targets.sdist.sources]
+"src/nominatim_core" = "nominatim_db"
+"scripts" = "scripts"
+
+[tool.hatch.build.targets.wheel]
+packages = ["nominatim_db"]
+
+[tool.hatch.build.targets.wheel.shared-scripts]
+"scripts" = "/"
+

@@ -61,6 +61,48 @@ def _add_api_output_arguments(parser: argparse.ArgumentParser) -> None:
                              "Parameter is difference tolerance in degrees."))
 
 
+def _get_geometry_output(args) -> napi.GeometryFormat:
+    """ Get the requested geometry output format in a API-compatible
+        format.
+    """
+    if not args.polygon_output:
+        return napi.GeometryFormat.NONE
+    if args.polygon_output == 'geojson':
+        return napi.GeometryFormat.GEOJSON
+    if args.polygon_output == 'kml':
+        return napi.GeometryFormat.KML
+    if args.polygon_output == 'svg':
+        return napi.GeometryFormat.SVG
+    if args.polygon_output == 'text':
+        return napi.GeometryFormat.TEXT
+
+    try:
+        return napi.GeometryFormat[args.polygon_output.upper()]
+    except KeyError as exp:
+        raise UsageError(f"Unknown polygon output format '{args.polygon_output}'.") from exp
+
+
+def _get_locales(args, default: Optional[str]) -> napi.Locales:
+    """ Get the locales from the language parameter.
+    """
+    if args.lang:
+        return napi.Locales.from_accept_languages(args.lang)
+    if default:
+        return napi.Locales.from_accept_languages(default)
+
+    return napi.Locales()
+
+
+def _get_layers(args, default: napi.DataLayer) -> Optional[napi.DataLayer]:
+    """ Get the list of selected layers as a DataLayer enum.
+    """
+    if not args.layers:
+        return default
+
+    return reduce(napi.DataLayer.__or__,
+                  (napi.DataLayer[s.upper()] for s in args.layers))
+
+
 class APISearch:
     """\
     Execute a search query.
@@ -105,13 +147,13 @@ class APISearch:
 
         params: Dict[str, Any] = {'max_results': args.limit + min(args.limit, 10),
                                   'address_details': True, # needed for display name
-                                  'geometry_output': args.get_geometry_output(),
+                                  'geometry_output': _get_geometry_output(args),
                                   'geometry_simplification': args.polygon_threshold,
                                   'countries': args.countrycodes,
                                   'excluded': args.exclude_place_ids,
                                   'viewbox': args.viewbox,
                                   'bounded_viewbox': args.bounded,
-                                  'locales': args.get_locales(api.config.DEFAULT_LANGUAGE)
+                                  'locales': _get_locales(args, api.config.DEFAULT_LANGUAGE)
                                  }
 
         if args.query:
@@ -183,11 +225,11 @@ class APIReverse:
 
         result = api.reverse(napi.Point(args.lon, args.lat),
                              max_rank=zoom_to_rank(args.zoom or 18),
-                             layers=args.get_layers(napi.DataLayer.ADDRESS | napi.DataLayer.POI),
+                             layers=_get_layers(args, napi.DataLayer.ADDRESS | napi.DataLayer.POI),
                              address_details=True, # needed for display name
-                             geometry_output=args.get_geometry_output(),
+                             geometry_output=_get_geometry_output(args),
                              geometry_simplification=args.polygon_threshold,
-                             locales=args.get_locales(api.config.DEFAULT_LANGUAGE))
+                             locales=_get_locales(args, api.config.DEFAULT_LANGUAGE))
 
         if args.format == 'debug':
             print(loglib.get_and_disable())
@@ -247,9 +289,9 @@ class APILookup:
 
         results = api.lookup(places,
                              address_details=True, # needed for display name
-                             geometry_output=args.get_geometry_output(),
+                             geometry_output=_get_geometry_output(args),
                              geometry_simplification=args.polygon_threshold or 0.0,
-                             locales=args.get_locales(api.config.DEFAULT_LANGUAGE))
+                             locales=_get_locales(args, api.config.DEFAULT_LANGUAGE))
 
         output = api_output.format_result(
                     results,
@@ -323,7 +365,7 @@ class APIDetails:
 
         api = napi.NominatimAPI(args.project_dir)
 
-        locales = args.get_locales(api.config.DEFAULT_LANGUAGE)
+        locales = _get_locales(args, api.config.DEFAULT_LANGUAGE)
         result = api.details(place,
                              address_details=args.addressdetails,
                              linked_places=args.linkedplaces,

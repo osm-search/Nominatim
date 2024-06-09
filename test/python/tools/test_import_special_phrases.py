@@ -1,8 +1,8 @@
-# SPDX-License-Identifier: GPL-2.0-only
+# SPDX-License-Identifier: GPL-3.0-or-later
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2022 by the Nominatim developer community.
+# Copyright (C) 2024 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
     Tests for import special phrases methods
@@ -10,10 +10,10 @@
 """
 from shutil import copyfile
 import pytest
-from nominatim.tools.special_phrases.sp_importer import SPImporter
-from nominatim.tools.special_phrases.sp_wiki_loader import SPWikiLoader
-from nominatim.tools.special_phrases.special_phrase import SpecialPhrase
-from nominatim.errors import UsageError
+from nominatim_db.tools.special_phrases.sp_importer import SPImporter
+from nominatim_db.tools.special_phrases.sp_wiki_loader import SPWikiLoader
+from nominatim_db.tools.special_phrases.special_phrase import SpecialPhrase
+from nominatim_core.errors import UsageError
 
 from cursor import CursorForTesting
 
@@ -182,7 +182,7 @@ def test_import_phrases(monkeypatch, temp_db_conn, def_config, sp_importer,
     table_factory('place_classtype_amenity_animal_shelter')
     table_factory('place_classtype_wrongclass_wrongtype')
 
-    monkeypatch.setattr('nominatim.tools.special_phrases.sp_wiki_loader._get_wiki_content',
+    monkeypatch.setattr('nominatim_db.tools.special_phrases.sp_wiki_loader._get_wiki_content',
                         lambda lang: xml_wiki_content)
 
     tokenizer = tokenizer_mock()

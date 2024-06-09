@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2023 by the Nominatim developer community.
+# Copyright (C) 2024 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for query analyzer for legacy tokenizer.
@@ -12,10 +12,10 @@ from pathlib import Path
 import pytest
 import pytest_asyncio
 
-from nominatim.api import NominatimAPIAsync
-from nominatim.api.search.query import Phrase, PhraseType, TokenType, BreakType
-import nominatim.api.search.legacy_tokenizer as tok
-from nominatim.api.logging import set_log_output, get_and_disable
+from nominatim_api import NominatimAPIAsync
+from nominatim_api.search.query import Phrase, PhraseType, TokenType, BreakType
+import nominatim_api.search.legacy_tokenizer as tok
+from nominatim_api.logging import set_log_output, get_and_disable
 
 
 async def add_word(conn, word_id, word_token, word, count):

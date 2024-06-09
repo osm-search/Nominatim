@@ -1,8 +1,8 @@
-# SPDX-License-Identifier: GPL-2.0-only
+# SPDX-License-Identifier: GPL-3.0-or-later
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2022 by the Nominatim developer community.
+# Copyright (C) 2024 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for command line interface wrapper.
@@ -14,9 +14,9 @@ the actual functions.
 import importlib
 import pytest
 
-import nominatim.indexer.indexer
-import nominatim.tools.add_osm_data
-import nominatim.tools.freeze
+import nominatim_db.indexer.indexer
+import nominatim_db.tools.add_osm_data
+import nominatim_db.tools.freeze
 
 
 def test_cli_help(cli_call, capsys):
@@ -37,7 +37,7 @@ def test_cli_version(cli_call, capsys):
 
 @pytest.mark.parametrize("name,oid", [('file', 'foo.osm'), ('diff', 'foo.osc')])
 def test_cli_add_data_file_command(cli_call, mock_func_factory, name, oid):
-    mock_run_legacy = mock_func_factory(nominatim.tools.add_osm_data, 'add_data_from_file')
+    mock_run_legacy = mock_func_factory(nominatim_db.tools.add_osm_data, 'add_data_from_file')
     assert cli_call('add-data', '--' + name, str(oid)) == 0
 
     assert mock_run_legacy.called == 1
@@ -45,7 +45,7 @@ def test_cli_add_data_file_command(cli_call, mock_func_factory, name, oid):
 
 @pytest.mark.parametrize("name,oid", [('node', 12), ('way', 8), ('relation', 32)])
 def test_cli_add_data_object_command(cli_call, mock_func_factory, name, oid):
-    mock_run_legacy = mock_func_factory(nominatim.tools.add_osm_data, 'add_osm_object')
+    mock_run_legacy = mock_func_factory(nominatim_db.tools.add_osm_data, 'add_osm_object')
     assert cli_call('add-data', '--' + name, str(oid)) == 0
 
     assert mock_run_legacy.called == 1
@@ -53,7 +53,7 @@ def test_cli_add_data_object_command(cli_call, mock_func_factory, name, oid):
 
 
 def test_cli_add_data_tiger_data(cli_call, cli_tokenizer_mock, mock_func_factory):
-    mock = mock_func_factory(nominatim.tools.tiger_data, 'add_tiger_data')
+    mock = mock_func_factory(nominatim_db.tools.tiger_data, 'add_tiger_data')
 
     assert cli_call('add-data', '--tiger-data', 'somewhere') == 0
 
@@ -61,7 +61,7 @@ def test_cli_add_data_tiger_data(cli_call, cli_tokenizer_mock, mock_func_factory
 
 
 def test_cli_serve_php(cli_call, mock_func_factory):
-    func = mock_func_factory(nominatim.cli, 'run_php_server')
+    func = mock_func_factory(nominatim_db.cli, 'run_php_server')
 
     cli_call('serve', '--engine', 'php') == 0
 
@@ -110,8 +110,8 @@ class TestCliWithDb:
 
 
     def test_freeze_command(self, mock_func_factory):
-        mock_drop = mock_func_factory(nominatim.tools.freeze, 'drop_update_tables')
-        mock_flatnode = mock_func_factory(nominatim.tools.freeze, 'drop_flatnode_file')
+        mock_drop = mock_func_factory(nominatim_db.tools.freeze, 'drop_update_tables')
+        mock_flatnode = mock_func_factory(nominatim_db.tools.freeze, 'drop_flatnode_file')
 
         assert self.call_nominatim('freeze') == 0
 
@@ -127,9 +127,9 @@ class TestCliWithDb:
     def test_index_command(self, mock_func_factory, table_factory,
                            params, do_bnds, do_ranks):
         table_factory('import_status', 'indexed bool')
-        bnd_mock = mock_func_factory(nominatim.indexer.indexer.Indexer, 'index_boundaries')
-        rank_mock = mock_func_factory(nominatim.indexer.indexer.Indexer, 'index_by_rank')
-        postcode_mock = mock_func_factory(nominatim.indexer.indexer.Indexer, 'index_postcodes')
+        bnd_mock = mock_func_factory(nominatim_db.indexer.indexer.Indexer, 'index_boundaries')
+        rank_mock = mock_func_factory(nominatim_db.indexer.indexer.Indexer, 'index_by_rank')
+        postcode_mock = mock_func_factory(nominatim_db.indexer.indexer.Indexer, 'index_postcodes')
 
         assert self.call_nominatim('index', *params) == 0
 
@@ -139,7 +139,7 @@ class TestCliWithDb:
 
 
     def test_special_phrases_wiki_command(self, mock_func_factory):
-        func = mock_func_factory(nominatim.clicmd.special_phrases.SPImporter, 'import_phrases')
+        func = mock_func_factory(nominatim_db.clicmd.special_phrases.SPImporter, 'import_phrases')
 
         self.call_nominatim('special-phrases', '--import-from-wiki', '--no-replace')
 
@@ -147,7 +147,7 @@ class TestCliWithDb:
 
 
     def test_special_phrases_csv_command(self, src_dir, mock_func_factory):
-        func = mock_func_factory(nominatim.clicmd.special_phrases.SPImporter, 'import_phrases')
+        func = mock_func_factory(nominatim_db.clicmd.special_phrases.SPImporter, 'import_phrases')
         testdata = src_dir / 'test' / 'testdb'
         csv_path = str((testdata / 'full_en_phrases_test.csv').resolve())
 

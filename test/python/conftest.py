@@ -1,8 +1,8 @@
-# SPDX-License-Identifier: GPL-2.0-only
+# SPDX-License-Identifier: GPL-3.0-or-later
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2022 by the Nominatim developer community.
+# Copyright (C) 2024 by the Nominatim developer community.
 # For a full list of authors see the git log.
 import itertools
 import sys
@@ -13,12 +13,12 @@ import pytest
 
 # always test against the source
 SRC_DIR = (Path(__file__) / '..' / '..' / '..').resolve()
-sys.path.insert(0, str(SRC_DIR))
+sys.path.insert(0, str(SRC_DIR / 'src'))
 
-from nominatim.config import Configuration
-from nominatim.db import connection
-from nominatim.db.sql_preprocessor import SQLPreprocessor
-import nominatim.tokenizer.factory
+from nominatim_core.config import Configuration
+from nominatim_core.db import connection
+from nominatim_core.db.sql_preprocessor import SQLPreprocessor
+import nominatim_db.tokenizer.factory
 
 import dummy_tokenizer
 import mocks
@@ -229,7 +229,8 @@ def tokenizer_mock(monkeypatch, property_table):
     def _import_dummy(*args, **kwargs):
         return dummy_tokenizer
 
-    monkeypatch.setattr(nominatim.tokenizer.factory, "_import_tokenizer", _import_dummy)
+    monkeypatch.setattr(nominatim_db.tokenizer.factory,
+                        "_import_tokenizer", _import_dummy)
     property_table.set('tokenizer', 'dummy')
 
     def _create_tokenizer():

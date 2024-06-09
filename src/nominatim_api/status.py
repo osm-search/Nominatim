@@ -14,7 +14,7 @@ import dataclasses
 import sqlalchemy as sa
 
 from .connection import SearchConnection
-from .version import NOMINATIM_API_VERSION
+from .version import NOMINATIM_API_VERSION, parse_version
 
 @dataclasses.dataclass
 class StatusResult:
@@ -44,7 +44,7 @@ async def get_status(conn: SearchConnection) -> StatusResult:
 
     # Database version
     try:
-        status.database_version = await conn.get_property('database_version')
+        status.database_version = parse_version(await conn.get_property('database_version'))
     except ValueError:
         pass
 

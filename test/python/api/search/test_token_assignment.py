@@ -2,15 +2,15 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2023 by the Nominatim developer community.
+# Copyright (C) 2024 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Test for creation of token assignments from tokenized queries.
 """
 import pytest
 
-from nominatim.api.search.query import QueryStruct, Phrase, PhraseType, BreakType, TokenType, TokenRange, Token
-from nominatim.api.search.token_assignment import yield_token_assignments, TokenAssignment, PENALTY_TOKENCHANGE
+from nominatim_api.search.query import QueryStruct, Phrase, PhraseType, BreakType, TokenType, TokenRange, Token
+from nominatim_api.search.token_assignment import yield_token_assignments, TokenAssignment, PENALTY_TOKENCHANGE
 
 class MyToken(Token):
     def get_category(self):

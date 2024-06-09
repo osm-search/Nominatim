@@ -9,11 +9,11 @@ Tests for creating abstract searches from token assignments.
 """
 import pytest
 
-from nominatim.api.search.query import Token, TokenRange, BreakType, PhraseType, TokenType, QueryStruct, Phrase
-from nominatim.api.search.db_search_builder import SearchBuilder
-from nominatim.api.search.token_assignment import TokenAssignment
-from nominatim.api.types import SearchDetails
-import nominatim.api.search.db_searches as dbs
+from nominatim_api.search.query import Token, TokenRange, BreakType, PhraseType, TokenType, QueryStruct, Phrase
+from nominatim_api.search.db_search_builder import SearchBuilder
+from nominatim_api.search.token_assignment import TokenAssignment
+from nominatim_api.types import SearchDetails
+import nominatim_api.search.db_searches as dbs
 
 class MyToken(Token):
     def get_category(self):

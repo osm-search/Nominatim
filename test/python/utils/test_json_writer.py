@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2023 by the Nominatim developer community.
+# Copyright (C) 2024 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for the streaming JSON writer.
@@ -11,7 +11,7 @@ import json
 
 import pytest
 
-from nominatim.utils.json_writer import JsonWriter
+from nominatim_core.utils.json_writer import JsonWriter
 
 @pytest.mark.parametrize("inval,outstr", [(None, 'null'),
                                           (True, 'true'), (False, 'false'),

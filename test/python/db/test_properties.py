@@ -1,15 +1,15 @@
-# SPDX-License-Identifier: GPL-2.0-only
+# SPDX-License-Identifier: GPL-3.0-or-later
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2022 by the Nominatim developer community.
+# Copyright (C) 2024 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for property table manpulation.
 """
 import pytest
 
-from nominatim.db import properties
+from nominatim_core.db import properties
 
 @pytest.fixture
 def property_factory(property_table, temp_db_cursor):

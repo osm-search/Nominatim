@@ -8,4 +8,6 @@
 Version information for the Nominatim API.
 """
 
+from nominatim_core.version import NominatimVersion, parse_version
+
 NOMINATIM_API_VERSION = '4.4.99'

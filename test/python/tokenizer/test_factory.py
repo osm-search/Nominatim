@@ -1,17 +1,17 @@
-# SPDX-License-Identifier: GPL-2.0-only
+# SPDX-License-Identifier: GPL-3.0-or-later
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2022 by the Nominatim developer community.
+# Copyright (C) 2024 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for creating new tokenizers.
 """
 import pytest
 
-from nominatim.db import properties
-from nominatim.tokenizer import factory
-from nominatim.errors import UsageError
+from nominatim_core.db import properties
+from nominatim_db.tokenizer import factory
+from nominatim_core.errors import UsageError
 from dummy_tokenizer import DummyTokenizer
 
 

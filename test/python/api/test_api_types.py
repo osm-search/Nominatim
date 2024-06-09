@@ -2,15 +2,15 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2023 by the Nominatim developer community.
+# Copyright (C) 2024 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for loading of parameter dataclasses.
 """
 import pytest
 
-from nominatim.errors import UsageError
-import nominatim.api.types as typ
+from nominatim_core.errors import UsageError
+import nominatim_api.types as typ
 
 def test_no_params_defaults():
     params = typ.LookupDetails.from_kwargs({})

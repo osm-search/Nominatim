@@ -2,14 +2,14 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2023 by the Nominatim developer community.
+# Copyright (C) 2024 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for tokenized query data structures.
 """
 import pytest
 
-from nominatim.api.search import query
+from nominatim_api.search import query
 
 class MyToken(query.Token):
 

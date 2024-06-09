@@ -1,18 +1,18 @@
-# SPDX-License-Identifier: GPL-2.0-only
+# SPDX-License-Identifier: GPL-3.0-or-later
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2022 by the Nominatim developer community.
+# Copyright (C) 2024 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for maintenance and analysis functions.
 """
 import pytest
 
-from nominatim.errors import UsageError
-from nominatim.tools import admin
-from nominatim.tokenizer import factory
-from nominatim.db.sql_preprocessor import SQLPreprocessor
+from nominatim_core.errors import UsageError
+from nominatim_db.tools import admin
+from nominatim_db.tokenizer import factory
+from nominatim_core.db.sql_preprocessor import SQLPreprocessor
 
 @pytest.fixture(autouse=True)
 def create_placex_table(project_env, tokenizer_mock, temp_db_cursor, placex_table):

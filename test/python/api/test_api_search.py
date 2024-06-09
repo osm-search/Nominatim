@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2023 by the Nominatim developer community.
+# Copyright (C) 2024 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for search API calls.
@@ -16,8 +16,8 @@ import pytest
 
 import sqlalchemy as sa
 
-import nominatim.api as napi
-import nominatim.api.logging as loglib
+import nominatim_api as napi
+import nominatim_api.logging as loglib
 
 API_OPTIONS = {'search'}
 

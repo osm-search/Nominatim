@@ -1,8 +1,8 @@
-# SPDX-License-Identifier: GPL-2.0-only
+# SPDX-License-Identifier: GPL-3.0-or-later
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2022 by the Nominatim developer community.
+# Copyright (C) 2024 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for converting a config file to ICU rules.
@@ -12,8 +12,8 @@ from textwrap import dedent
 import pytest
 import yaml
 
-from nominatim.tokenizer.icu_rule_loader import ICURuleLoader
-from nominatim.errors import UsageError
+from nominatim_db.tokenizer.icu_rule_loader import ICURuleLoader
+from nominatim_core.errors import UsageError
 
 from icu import Transliterator
 

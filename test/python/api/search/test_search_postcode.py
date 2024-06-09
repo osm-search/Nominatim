@@ -2,17 +2,17 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2023 by the Nominatim developer community.
+# Copyright (C) 2024 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for running the postcode searcher.
 """
 import pytest
 
-import nominatim.api as napi
-from nominatim.api.types import SearchDetails
-from nominatim.api.search.db_searches import PostcodeSearch
-from nominatim.api.search.db_search_fields import WeightedStrings, FieldLookup, \
+import nominatim_api as napi
+from nominatim_api.types import SearchDetails
+from nominatim_api.search.db_searches import PostcodeSearch
+from nominatim_api.search.db_search_fields import WeightedStrings, FieldLookup, \
                                                   FieldRanking, RankedTokens
 
 def run_search(apiobj, frontend, global_penalty, pcs, pc_penalties=None,

@@ -7,7 +7,7 @@
 """
 Subcommand definitions for API calls from the command line.
 """
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 import argparse
 import logging
 import json

@@ -36,3 +36,5 @@ from .results import (SourceTable as SourceTable,
                       SearchResult as SearchResult,
                       SearchResults as SearchResults)
 from .localization import (Locales as Locales)
+
+from .version import NOMINATIM_API_VERSION as __version__

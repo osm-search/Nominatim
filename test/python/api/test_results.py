@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2023 by the Nominatim developer community.
+# Copyright (C) 2024 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for result datatype helper functions.
@@ -15,8 +15,8 @@ import pytest_asyncio
 import sqlalchemy as sa
 
 
-from nominatim.api import SourceTable, DetailedResult, Point
-import nominatim.api.results as nresults
+from nominatim_api import SourceTable, DetailedResult, Point
+import nominatim_api.results as nresults
 
 def mkpoint(x, y):
     return hexlify(struct.pack("=biidd", 1, 0x20000001, 4326, x, y)).decode('utf-8')

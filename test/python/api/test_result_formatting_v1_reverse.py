@@ -1,8 +1,8 @@
-# SPDX-License-Identifier: GPL-2.0-only
+# SPDX-License-Identifier: GPL-3.0-or-later
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2023 by the Nominatim developer community.
+# Copyright (C) 2024 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for formatting reverse results for the V1 API.
@@ -15,8 +15,8 @@ import xml.etree.ElementTree as ET
 
 import pytest
 
-import nominatim.api.v1 as api_impl
-import nominatim.api as napi
+import nominatim_api.v1 as api_impl
+import nominatim_api as napi
 
 FORMATS = ['json', 'jsonv2', 'geojson', 'geocodejson', 'xml']
 

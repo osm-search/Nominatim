@@ -49,6 +49,6 @@ async def make_query_analyzer(conn: SearchConnection) -> AbstractQueryAnalyzer:
         log().comment(f"No tokenizer named '{name}' available. Database not set up properly.")
         raise RuntimeError('Tokenizer not found')
 
-    module = importlib.import_module(f'nominatim_api.api.search.{name}_tokenizer')
+    module = importlib.import_module(f'nominatim_api.search.{name}_tokenizer')
 
     return cast(AbstractQueryAnalyzer, await module.create_query_analyzer(conn))

@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2023 by the Nominatim developer community.
+# Copyright (C) 2024 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for enhanced connection class for API functions.
@@ -13,7 +13,7 @@ import pytest_asyncio
 
 import sqlalchemy as sa
 
-from nominatim.api import NominatimAPIAsync
+from nominatim_api import NominatimAPIAsync
 
 @pytest_asyncio.fixture
 async def apiobj(temp_db):

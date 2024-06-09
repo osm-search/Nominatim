@@ -1,8 +1,8 @@
-# SPDX-License-Identifier: GPL-2.0-only
+# SPDX-License-Identifier: GPL-3.0-or-later
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2023 by the Nominatim developer community.
+# Copyright (C) 2024 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for the status API call.
@@ -11,8 +11,9 @@ from pathlib import Path
 import datetime as dt
 import pytest
 
-from nominatim.version import NOMINATIM_VERSION, NominatimVersion
-import nominatim.api as napi
+from nominatim_db.version import NominatimVersion
+from nominatim_api.version import NOMINATIM_API_VERSION
+import nominatim_api as napi
 
 def test_status_no_extra_info(apiobj, frontend):
     api = frontend(apiobj)
@@ -20,7 +21,7 @@ def test_status_no_extra_info(apiobj, frontend):
 
     assert result.status == 0
     assert result.message == 'OK'
-    assert result.software_version == NOMINATIM_VERSION
+    assert result.software_version == NOMINATIM_API_VERSION
     assert result.database_version is None
     assert result.data_updated is None
 
@@ -37,7 +38,7 @@ def test_status_full(apiobj, frontend):
 
     assert result.status == 0
     assert result.message == 'OK'
-    assert result.software_version == NOMINATIM_VERSION
+    assert result.software_version == NOMINATIM_API_VERSION
     assert result.database_version == NominatimVersion(99, 5, 4, 2)
     assert result.data_updated == import_date
 
@@ -51,6 +52,6 @@ def test_status_database_not_found(monkeypatch):
 
     assert result.status == 700
     assert result.message == 'Database connection failed'
-    assert result.software_version == NOMINATIM_VERSION
+    assert result.software_version == NOMINATIM_API_VERSION
     assert result.database_version is None
     assert result.data_updated is None

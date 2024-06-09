@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2023 by the Nominatim developer community.
+# Copyright (C) 2024 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for query analyzer creation.
@@ -11,9 +11,9 @@ from pathlib import Path
 
 import pytest
 
-from nominatim.api import NominatimAPIAsync
-from nominatim.api.search.query_analyzer_factory import make_query_analyzer
-from nominatim.api.search.icu_tokenizer import ICUQueryAnalyzer
+from nominatim_api import NominatimAPIAsync
+from nominatim_api.search.query_analyzer_factory import make_query_analyzer
+from nominatim_api.search.icu_tokenizer import ICUQueryAnalyzer
 
 @pytest.mark.asyncio
 async def test_import_icu_tokenizer(table_factory):

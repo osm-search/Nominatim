@@ -1,8 +1,8 @@
-# SPDX-License-Identifier: GPL-2.0-only
+# SPDX-License-Identifier: GPL-3.0-or-later
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2022 by the Nominatim developer community.
+# Copyright (C) 2024 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for DB utility functions in db.utils
@@ -11,8 +11,8 @@ import json
 
 import pytest
 
-import nominatim.db.utils as db_utils
-from nominatim.errors import UsageError
+import nominatim_core.db.utils as db_utils
+from nominatim_core.errors import UsageError
 
 def test_execute_file_success(dsn, temp_db_cursor, tmp_path):
     tmpfile = tmp_path / 'test.sql'

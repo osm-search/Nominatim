@@ -1,8 +1,8 @@
-# SPDX-License-Identifier: GPL-2.0-only
+# SPDX-License-Identifier: GPL-3.0-or-later
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2022 by the Nominatim developer community.
+# Copyright (C) 2024 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Test for loading dotenv configuration.
@@ -10,8 +10,8 @@ Test for loading dotenv configuration.
 from pathlib import Path
 import pytest
 
-from nominatim.config import Configuration, flatten_config_list
-from nominatim.errors import UsageError
+from nominatim_core.config import Configuration, flatten_config_list
+from nominatim_core.errors import UsageError
 
 @pytest.fixture
 def make_config():

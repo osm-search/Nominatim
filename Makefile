@@ -18,13 +18,13 @@ build-api:
 tests: mypy lint pytest
 
 mypy:
-	python3 -m mypy --strict src
+	mypy --strict src
 
 pytest:
-	python3 -m pytest test/python
+	pytest test/python
 
 lint:
-	python3 -m pylint src
+	pylint src
 
 bdd:
 	cd test/bdd; behave -DREMOVE_TEMPLATE=1

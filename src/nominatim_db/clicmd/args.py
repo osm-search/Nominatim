@@ -10,7 +10,6 @@ Provides custom functions over command-line arguments.
 from typing import Optional, List, Dict, Any, Sequence, Tuple
 import argparse
 import logging
-from functools import reduce
 from pathlib import Path
 
 from nominatim_core.errors import UsageError

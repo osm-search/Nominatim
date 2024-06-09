@@ -14,7 +14,7 @@ import dataclasses
 import sqlalchemy as sa
 
 from .connection import SearchConnection
-from .version import NOMINATIM_API_VERSION, parse_version
+from .version import NOMINATIM_API_VERSION, NominatimVersion, parse_version
 
 @dataclasses.dataclass
 class StatusResult:
@@ -24,7 +24,7 @@ class StatusResult:
     message: str
     software_version = NOMINATIM_API_VERSION
     data_updated: Optional[dt.datetime] = None
-    database_version: Optional[str] = None
+    database_version: Optional[NominatimVersion] = None
 
 
 async def get_status(conn: SearchConnection) -> StatusResult:

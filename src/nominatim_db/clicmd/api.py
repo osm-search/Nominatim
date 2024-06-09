@@ -12,7 +12,9 @@ import argparse
 import logging
 import json
 import sys
+from functools import reduce
 
+from nominatim_core.errors import UsageError
 import nominatim_api as napi
 import nominatim_api.v1 as api_output
 from nominatim_api.v1.helpers import zoom_to_rank, deduplicate_results
@@ -61,7 +63,7 @@ def _add_api_output_arguments(parser: argparse.ArgumentParser) -> None:
                              "Parameter is difference tolerance in degrees."))
 
 
-def _get_geometry_output(args) -> napi.GeometryFormat:
+def _get_geometry_output(args: NominatimArgs) -> napi.GeometryFormat:
     """ Get the requested geometry output format in a API-compatible
         format.
     """
@@ -82,7 +84,7 @@ def _get_geometry_output(args) -> napi.GeometryFormat:
         raise UsageError(f"Unknown polygon output format '{args.polygon_output}'.") from exp
 
 
-def _get_locales(args, default: Optional[str]) -> napi.Locales:
+def _get_locales(args: NominatimArgs, default: Optional[str]) -> napi.Locales:
     """ Get the locales from the language parameter.
     """
     if args.lang:
@@ -93,7 +95,7 @@ def _get_locales(args, default: Optional[str]) -> napi.Locales:
     return napi.Locales()
 
 
-def _get_layers(args, default: napi.DataLayer) -> Optional[napi.DataLayer]:
+def _get_layers(args: NominatimArgs, default: napi.DataLayer) -> Optional[napi.DataLayer]:
     """ Get the list of selected layers as a DataLayer enum.
     """
     if not args.layers:

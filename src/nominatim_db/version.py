@@ -9,7 +9,11 @@ Version information for Nominatim.
 """
 from typing import Optional
 
-from nominatim_core.version import NominatimVersion, parse_version
+# See also https://github.com/PyCQA/pylint/issues/6006
+# pylint: disable=useless-import-alias,unused-import
+
+from nominatim_core.version import (NominatimVersion as NominatimVersion,
+                                    parse_version as parse_version)
 
 NOMINATIM_VERSION = NominatimVersion(4, 4, 99, 1)
 

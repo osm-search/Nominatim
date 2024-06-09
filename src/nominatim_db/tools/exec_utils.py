@@ -30,13 +30,7 @@ def run_osm2pgsql(options: Mapping[str, Any]) -> None:
     """
     env = get_pg_env(options['dsn'])
 
-    osm2pgsql_cmd = options['osm2pgsql']
-    if osm2pgsql_cmd is None:
-        osm2pgsql_cmd = shutil.which('osm2pgsql')
-        if osm2pgsql_cmd is None:
-            raise RuntimeError('osm2pgsql executable not found. Please install osm2pgsql first.')
-
-    cmd = [str(osm2pgsql_cmd),
+    cmd = [_find_osm2pgsql_cmd(options['osm2pgsql']),
            '--slim',
            '--log-progress', 'true',
            '--number-processes', '1' if options['append'] else str(options['threads']),
@@ -82,3 +76,14 @@ def run_osm2pgsql(options: Mapping[str, Any]) -> None:
     subprocess.run(cmd, cwd=options.get('cwd', '.'),
                    input=options.get('import_data'),
                    env=env, check=True)
+
+
+def _find_osm2pgsql_cmd(cmdline: str) -> str:
+    if cmdline is not None:
+        return cmdline
+
+    in_path = shutil.which('osm2pgsql')
+    if in_path is None:
+        raise RuntimeError('osm2pgsql executable not found. Please install osm2pgsql first.')
+
+    return str(in_path)

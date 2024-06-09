@@ -92,7 +92,7 @@ class TestRefresh:
                             lambda *args, **kwargs: calls.append('import') or 0)
         monkeypatch.setattr(nominatim_db.tools.refresh, 'recompute_importance',
                             lambda *args, **kwargs: calls.append('update'))
-        func_mock = mock_func_factory(nominatim.tools.refresh, 'create_functions')
+        func_mock = mock_func_factory(nominatim_db.tools.refresh, 'create_functions')
 
         assert self.call_nominatim('refresh', '--importance', '--wiki-data') == 0
 

@@ -1,8 +1,8 @@
-# SPDX-License-Identifier: GPL-2.0-only
+# SPDX-License-Identifier: GPL-3.0-or-later
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2022 by the Nominatim developer community.
+# Copyright (C) 2024 by the Nominatim developer community.
 # For a full list of authors see the git log.
 import logging
 from itertools import chain
@@ -12,8 +12,8 @@ import psycopg2.extras
 from place_inserter import PlaceColumn
 from table_compare import NominatimID, DBRow
 
-from nominatim.indexer import indexer
-from nominatim.tokenizer import factory as tokenizer_factory
+from nominatim_db.indexer import indexer
+from nominatim_db.tokenizer import factory as tokenizer_factory
 
 def check_database_integrity(context):
     """ Check some generic constraints on the tables.

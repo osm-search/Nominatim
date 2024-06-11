@@ -72,7 +72,7 @@ endif()
 #  python (imports/updates only)
 #-----------------------------------------------------------------------------
 
-if (BUILD_IMPORTER)
+if (BUILD_IMPORTER OR BUILD_API)
     find_package(PythonInterp 3.7 REQUIRED)
 endif()
 
@@ -221,11 +221,13 @@ if (BUILD_IMPORTER)
             DESTINATION ${CMAKE_INSTALL_BINDIR}
             RENAME nominatim)
 
-    install(DIRECTORY nominatim
-            DESTINATION ${NOMINATIM_LIBDIR}/lib-python
-            FILES_MATCHING PATTERN "*.py"
-            PATTERN "paths.py" EXCLUDE
-            PATTERN __pycache__ EXCLUDE)
+    foreach (submodule nominatim_core nominatim_db nominatim_api)
+        install(DIRECTORY src/${submodule}
+                DESTINATION ${NOMINATIM_LIBDIR}/lib-python
+                FILES_MATCHING PATTERN "*.py"
+                PATTERN "paths.py" EXCLUDE
+                PATTERN __pycache__ EXCLUDE)
+    endforeach()
 
     if (EXISTS ${PHP_BIN})
         configure_file(${PROJECT_SOURCE_DIR}/cmake/paths-py.tmpl paths-py.installed)
@@ -233,7 +235,7 @@ if (BUILD_IMPORTER)
         configure_file(${PROJECT_SOURCE_DIR}/cmake/paths-py-no-php.tmpl paths-py.installed)
     endif()
     install(FILES ${PROJECT_BINARY_DIR}/paths-py.installed
-            DESTINATION ${NOMINATIM_LIBDIR}/lib-python/nominatim
+            DESTINATION ${NOMINATIM_LIBDIR}/lib-python/nominatim_core
             RENAME paths.py)
 
     install(DIRECTORY lib-sql DESTINATION ${NOMINATIM_LIBDIR})

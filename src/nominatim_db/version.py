@@ -15,7 +15,7 @@ from typing import Optional
 from nominatim_core.version import (NominatimVersion as NominatimVersion,
                                     parse_version as parse_version)
 
-NOMINATIM_VERSION = NominatimVersion(4, 4, 99, 1)
+NOMINATIM_VERSION = parse_version('4.4.99-1')
 
 POSTGRESQL_REQUIRED_VERSION = (9, 6)
 POSTGIS_REQUIRED_VERSION = (2, 2)

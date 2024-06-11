@@ -207,15 +207,29 @@ def get_set_parser() -> CommandlineParser:
 
     parser.add_subcommand('admin', clicmd.AdminFuncs())
 
-    parser.add_subcommand('export', clicmd.QueryExport())
-    parser.add_subcommand('convert', clicmd.ConvertDB())
-    parser.add_subcommand('serve', AdminServe())
+    try:
+        exportcmd = importlib.import_module('nominatim_db.clicmd.export')
+        apicmd = importlib.import_module('nominatim_db.clicmd.api')
+        convertcmd = importlib.import_module('nominatim_db.clicmd.convert')
 
-    parser.add_subcommand('search', clicmd.APISearch())
-    parser.add_subcommand('reverse', clicmd.APIReverse())
-    parser.add_subcommand('lookup', clicmd.APILookup())
-    parser.add_subcommand('details', clicmd.APIDetails())
-    parser.add_subcommand('status', clicmd.APIStatus())
+        parser.add_subcommand('export', exportcmd.QueryExport())
+        parser.add_subcommand('convert', convertcmd.ConvertDB())
+        parser.add_subcommand('serve', AdminServe())
+
+        parser.add_subcommand('search', apicmd.APISearch())
+        parser.add_subcommand('reverse', apicmd.APIReverse())
+        parser.add_subcommand('lookup', apicmd.APILookup())
+        parser.add_subcommand('details', apicmd.APIDetails())
+        parser.add_subcommand('status', apicmd.APIStatus())
+    except ModuleNotFoundError as ex:
+        if not ex.name or 'nominatim_api' not in ex.name: # pylint: disable=E1135
+            raise ex
+
+        parser.parser.epilog = \
+            '\n\nNominatim API package not found. The following commands are not available:'\
+            '\n    export, convert, serve, search, reverse, lookup, details, status'\
+            "\n\nRun 'pip install nominatim-api' to install the package."
+
 
     return parser
 

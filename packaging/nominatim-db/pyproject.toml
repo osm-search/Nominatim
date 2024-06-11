@@ -30,9 +30,8 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.version]
-source = "code"
 path = "../../src/nominatim_db/version.py"
-expression = "NOMINATIM_VERSION.release_version()"
+pattern = "NOMINATIM_VERSION = parse_version.'(?P<version>[^-]+)"
 
 [tool.hatch.build.targets.sdist.force-include]
 "../../src/nominatim_db" = "nominatim_db"

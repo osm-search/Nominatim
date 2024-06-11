@@ -11,7 +11,7 @@ import logging
 import argparse
 import random
 
-import nominatim_api as napi
+from nominatim_core.errors import UsageError
 from nominatim_core.db.connection import connect
 from .args import NominatimArgs
 
@@ -95,6 +95,11 @@ class AdminFuncs:
 
 
     def _warm(self, args: NominatimArgs) -> int:
+        try:
+            import nominatim_api as napi
+        except ModuleNotFoundError as exp:
+            raise UsageError("Warming requires nominatim API. "
+                             "Install with 'pip install nominatim-api'.") from exp
         LOG.warning('Warming database caches')
 
         api = napi.NominatimAPI(args.project_dir)

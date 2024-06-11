@@ -13,16 +13,9 @@ Subcommand definitions for the command-line tool.
 
 from .setup import SetupAll as SetupAll
 from .replication import UpdateReplication as UpdateReplication
-from .api import (APISearch as APISearch,
-                  APIReverse as APIReverse,
-                  APILookup as APILookup,
-                  APIDetails as APIDetails,
-                  APIStatus as APIStatus)
 from .index import UpdateIndex as UpdateIndex
 from .refresh import UpdateRefresh as UpdateRefresh
 from .add_data import UpdateAddData as UpdateAddData
 from .admin import AdminFuncs as AdminFuncs
 from .freeze import SetupFreeze as SetupFreeze
 from .special_phrases import ImportSpecialPhrases as ImportSpecialPhrases
-from .export import QueryExport as QueryExport
-from .convert import ConvertDB as ConvertDB

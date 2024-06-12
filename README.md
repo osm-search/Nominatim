@@ -1,5 +1,4 @@
 [![Build Status](https://github.com/osm-search/Nominatim/workflows/CI%20Tests/badge.svg)](https://github.com/osm-search/Nominatim/actions?query=workflow%3A%22CI+Tests%22)
-[![codecov](https://codecov.io/gh/osm-search/Nominatim/branch/master/graph/badge.svg?token=8P1LXrhCMy)](https://codecov.io/gh/osm-search/Nominatim)
 
 Nominatim
 =========
@@ -48,20 +47,31 @@ A quick summary of the necessary steps:
 License
 =======
 
-The source code is available under a GPLv2 license.
+The Python source code is available under a GPL license version 3 or later.
+The Lua configuration files for osm2pgsql are released under the
+Apache License, Version 2.0. All other files are under a GPLv2 license.
 
 
 Contributing
 ============
 
-Contributions, bugreport and pull requests are welcome.
-For details see [contribution guide](CONTRIBUTING.md).
+Contributions, bug reports and pull requests are welcome. When reporting a
+bug, please use one of the
+[issue templates](https://github.com/osm-search/Nominatim/issues/new/choose)
+and make sure to provide all the information requested. If you are not
+sure if you have really found a bug, please ask for help in the forums
+first (see 'Questions' below).
+
+For details on contributing, have a look at the
+[contribution guide](CONTRIBUTING.md).
 
 
 Questions and help
 ==================
 
-For questions, community help and discussions you can use the
-[Github discussions forum](https://github.com/osm-search/Nominatim/discussions)
-or join the
-[geocoding mailing list](https://lists.openstreetmap.org/listinfo/geocoding).
+If you have questions about search results and the OpenStreetMap data
+used in the search, use the [OSM Forum](https://community.openstreetmap.org/).
+
+For questions, community help and discussions around the software and
+your own installation of Nominatim, use the
+[Github discussions forum](https://github.com/osm-search/Nominatim/discussions).

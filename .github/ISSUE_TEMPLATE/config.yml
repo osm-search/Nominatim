@@ -2,3 +2,6 @@ contact_links:
   - name: Nominatim Discussions
     url: https://github.com/osm-search/Nominatim/discussions
     about: Ask questions, get support, share ideas and discuss with community members.
+  - name: Discussions about OpenStreetMap data
+    url: https://community.openstreetmap.org/
+    about: Ask questions about the data used by Nominatim and discuss with the OSM community.

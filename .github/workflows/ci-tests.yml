@@ -108,7 +108,7 @@ jobs:
               if: matrix.flavour != 'oldstuff'
 
             - name: Python linting
-              run: python3 -m pylint nominatim
+              run: python3 -m pylint src
               working-directory: Nominatim
               if: matrix.flavour != 'oldstuff'
 
@@ -126,7 +126,7 @@ jobs:
               if: matrix.flavour != 'oldstuff'
 
             - name: Python static typechecking
-              run: python3 -m mypy --strict nominatim
+              run: python3 -m mypy --strict src
               working-directory: Nominatim
               if: matrix.flavour != 'oldstuff'
 

@@ -14,6 +14,9 @@ import from this file, not from the source files directly.
 # See also https://github.com/PyCQA/pylint/issues/6006
 # pylint: disable=useless-import-alias
 
+from nominatim_core.errors import (UsageError as UsageError)
+from nominatim_core.config import (Configuration as Configuration)
+
 from .core import (NominatimAPI as NominatimAPI,
                    NominatimAPIAsync as NominatimAPIAsync)
 from .connection import (SearchConnection as SearchConnection)

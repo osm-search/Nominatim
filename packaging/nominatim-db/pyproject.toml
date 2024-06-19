@@ -30,19 +30,14 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.version]
-path = "../../src/nominatim_db/version.py"
+path = "src/nominatim_db/version.py"
 pattern = "NOMINATIM_VERSION = parse_version.'(?P<version>[^-]+)"
 
-[tool.hatch.build.targets.sdist.force-include]
-"../../src/nominatim_db" = "nominatim_db"
-
-[tool.hatch.build.targets.sdist.sources]
-"src/nominatim_core" = "nominatim_db"
-"scripts" = "scripts"
+[tool.hatch.build.targets.sdist]
+include = ["src/nominatim_db", "scripts"]
 
 [tool.hatch.build.targets.wheel]
-packages = ["nominatim_db"]
+packages = ["src/nominatim_db"]
 
 [tool.hatch.build.targets.wheel.shared-scripts]
 "scripts" = "/"
-

@@ -1,5 +1,6 @@
 *.log
 *.pyc
+*.swp
 
 docs/develop/*.png
 

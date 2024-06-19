@@ -9,7 +9,8 @@ Version information for the Nominatim core package.
 """
 from typing import NamedTuple, Optional
 
-NOMINATIM_CORE_VERSION = '4.4.99'
+__version__ = '4.4.99'
+NOMINATIM_CORE_VERSION = __version__
 
 class NominatimVersion(NamedTuple):
     """ Version information for Nominatim. We follow semantic versioning.

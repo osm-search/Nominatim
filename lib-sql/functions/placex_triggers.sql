@@ -727,10 +727,12 @@ BEGIN
 {% if not disable_diff_updates %}
   -- The following is not needed until doing diff updates, and slows the main index process down
 
-  IF NEW.rank_address > 0 THEN
+  IF NEW.rank_address between 2 and 27 THEN
     IF (ST_GeometryType(NEW.geometry) in ('ST_Polygon','ST_MultiPolygon') AND ST_IsValid(NEW.geometry)) THEN
       -- Performance: We just can't handle re-indexing for country level changes
-      IF st_area(NEW.geometry) < 1 THEN
+      IF (NEW.rank_address < 26 and st_area(NEW.geometry) < 1)
+         OR (NEW.rank_address >= 26 and st_area(NEW.geometry) < 0.01)
+      THEN
         -- mark items within the geometry for re-indexing
   --    RAISE WARNING 'placex poly insert: % % % %',NEW.osm_type,NEW.osm_id,NEW.class,NEW.type;
 
@@ -745,9 +747,11 @@ BEGIN
                     or name is not null
                     or (NEW.rank_address >= 16 and address ? 'place'));
       END IF;
-    ELSE
+    ELSEIF ST_GeometryType(NEW.geometry) not in ('ST_LineString', 'ST_MultiLineString')
+           OR ST_Length(NEW.geometry) < 0.5
+    THEN
       -- mark nearby items for re-indexing, where 'nearby' depends on the features rank_search and is a complete guess :(
-      diameter := update_place_diameter(NEW.rank_search);
+      diameter := update_place_diameter(NEW.rank_address);
       IF diameter > 0 THEN
   --      RAISE WARNING 'placex point insert: % % % % %',NEW.osm_type,NEW.osm_id,NEW.class,NEW.type,diameter;
         IF NEW.rank_search >= 26 THEN

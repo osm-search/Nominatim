@@ -7,37 +7,36 @@
 """
 Helper functions for localizing names of results.
 """
-from typing import Mapping, List, Optional
-
 import re
+from typing import Mapping, List, Optional
 
 class Locales:
     """ Helper class for localization of names.
 
         It takes a list of language prefixes in their order of preferred
-        usage.
+        usage and a list of tag names to determine the name tags.
     """
 
-    def __init__(self, langs: Optional[List[str]] = None):
+    def __init__(self, langs: Optional[List[str]] = None, config: Optional[str] = None):
         self.languages = langs or []
         self.name_tags: List[str] = []
 
-        # Build the list of supported tags. It is currently hard-coded.
-        self._add_lang_tags('name')
-        self._add_tags('name', 'brand')
-        self._add_lang_tags('official_name', 'short_name')
-        self._add_tags('official_name', 'short_name', 'ref')
-
+        if config:
+            self._parse_config(config)
+        else:
+            # Default hard-coded tags if config is not provided
+            self._add_lang_tags('name')
+            self._add_tags('name', 'brand')
+            self._add_lang_tags('official_name', 'short_name')
+            self._add_tags('official_name', 'short_name', 'ref')
 
     def __bool__(self) -> bool:
         return len(self.languages) > 0
-
 
     def _add_tags(self, *tags: str) -> None:
         for tag in tags:
             self.name_tags.append(tag)
             self.name_tags.append(f"_place_{tag}")
-
 
     def _add_lang_tags(self, *tags: str) -> None:
         for tag in tags:
@@ -45,6 +44,14 @@ class Locales:
                 self.name_tags.append(f"{tag}:{lang}")
                 self.name_tags.append(f"_place_{tag}:{lang}")
 
+    def _parse_config(self, config: str) -> None:
+        """Parse the configuration string to set up name tags."""
+        for item in config.split(','):
+            if 'XX' in item:
+                base_tag = item.replace(':XX', '')
+                self._add_lang_tags(base_tag)
+            else:
+                self._add_tags(item)
 
     def display_name(self, names: Optional[Mapping[str, str]]) -> str:
         """ Return the best matching name from a dictionary of names
@@ -63,7 +70,6 @@ class Locales:
 
         # Nothing? Return any of the other names as a default.
         return next(iter(names.values()))
-
 
     @staticmethod
     def from_accept_languages(langstr: str) -> 'Locales':

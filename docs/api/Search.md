@@ -165,7 +165,7 @@ results and thus give a preference to some results over others.
 |-----------| ----- | ------- |
 | countrycodes | comma-separated list of country codes | _unset_ |
 
-Filer that limits the search results to one or more countries.
+Filter that limits the search results to one or more countries.
 The country code must be the
 [ISO 3166-1alpha2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2) code
 of the country, e.g. `gb` for the United Kingdom, `de` for Germany.

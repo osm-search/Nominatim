@@ -5,13 +5,13 @@ all:
 build: build-core build-db build-api
 
 build-core:
-	cd packaging/nominatim-core; python3 -m build . --outdir ../dist/
+	python3 -m build packaging/nominatim-core --outdir dist/
 
 build-db:
-	cd packaging/nominatim-db; python3 -m build . --outdir ../dist/
+	python3 -m build packaging/nominatim-db --outdir dist/
 
 build-api:
-	cd packaging/nominatim-api; python3 -m build . --outdir ../dist/
+	python3 -m build packaging/nominatim-api --outdir dist/
 
 # Tests
 

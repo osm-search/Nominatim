@@ -178,7 +178,7 @@ Environment="PYTHONPATH=/usr/local/lib/nominatim/lib-python/"
 User=www-data
 Group=www-data
 WorkingDirectory=$USERHOME/nominatim-project
-ExecStart=$USERHOME/nominatim-venv/bin/gunicorn -b unix:/run/nominatim.sock -w 4 -k uvicorn.workers.UvicornWorker nominatim.server.falcon.server:run_wsgi
+ExecStart=$USERHOME/nominatim-venv/bin/gunicorn -b unix:/run/nominatim.sock -w 4 -k uvicorn.workers.UvicornWorker nominatim_api.server.falcon.server:run_wsgi
 ExecReload=/bin/kill -s HUP \$MAINPID
 StandardOutput=append:/var/log/gunicorn-nominatim.log
 StandardError=inherit

@@ -15,7 +15,7 @@ classifiers = [
 ]
 dependencies = [
     "nominatim-core",
-    "psycopg2",
+    "psycopg2-binary",
     "psutil",
     "PyICU"
 ]

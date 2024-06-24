@@ -58,8 +58,8 @@ nav:
         - 'Testing' : 'develop/Testing.md'
         - 'External Data Sources': 'develop/data-sources.md'
     - 'Appendix':
-        - 'Installation on Ubuntu 20' : 'appendix/Install-on-Ubuntu-20.md'
         - 'Installation on Ubuntu 22' : 'appendix/Install-on-Ubuntu-22.md'
+        - 'Installation on Ubuntu 24' : 'appendix/Install-on-Ubuntu-24.md'
 markdown_extensions:
     - codehilite
     - admonition

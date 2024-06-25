@@ -17,7 +17,7 @@ columns:
 
  * **phrase**: the keyword to look for
  * **class**: key of the main tag of the place to find
-   (see [principal tags in import style](../Import-Styles.md#set_main_tags-principal-tags)
+   (see [principal tags in import style](Import-Styles.md#set_main_tags-principal-tags)
  * **type**: value of the main tag
  * **operator**: type of special phrase, may be one of:
      * *in*: place is within the place defined by the search term (e.g. "_Hotels in_ Berlin")

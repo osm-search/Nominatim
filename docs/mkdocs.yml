@@ -75,7 +75,7 @@ plugins:
     - mkdocstrings:
         handlers:
           python:
-            paths: ["${PROJECT_SOURCE_DIR}"]
+            paths: ["${PROJECT_SOURCE_DIR}/src"]
             options:
               show_source: False
               show_bases: False

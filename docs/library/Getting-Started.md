@@ -12,22 +12,18 @@ in the database.
     The library interface is currently in an experimental stage. There might
     be some smaller adjustments to the public interface until the next version.
 
-    The library also misses a proper installation routine, so some manipulation
-    of the PYTHONPATH is required. At the moment, use is only recommended for
-    developers with some experience in Python.
-
 ## Installation
 
 To use the Nominatim library, you need access to a local Nominatim database.
 Follow the [installation](../admin/Installation.md) and
 [import](../admin/Import.md) instructions to set up your database.
 
-It is not yet possible to install it in the usual way via pip or inside a
-virtualenv. To get access to the library you need to set an appropriate
-`PYTHONPATH`. With the default installation, the python library can be found
-under `/usr/local/share/nominatim/lib-python`. If you have installed
-Nominatim under a different prefix, adapt the `/usr/local/` part accordingly.
-You can also point the `PYTHONPATH` to the Nominatim source code.
+The Nominatim frontend library is contained in the 'nominatim-api' package.
+To install the package from the source tree directly, run:
+
+    pip install packaging/nominatim-api
+
+Usually, you would want to run this in a virtual environment.
 
 ### A simple search example
 
@@ -43,7 +39,7 @@ This code snippet implements a simple search for the town of 'Brugge':
         from pathlib import Path
         import asyncio
 
-        import nominatim.api as napi
+        import nominatim_api as napi
 
         async def search(query):
             api = napi.NominatimAPIAsync(Path('.'))
@@ -61,7 +57,7 @@ This code snippet implements a simple search for the town of 'Brugge':
         ``` python
         from pathlib import Path
 
-        import nominatim.api as napi
+        import nominatim_api as napi
 
         api = napi.NominatimAPI(Path('.'))
 
@@ -116,7 +112,7 @@ standard 'nominatim' database:
         from pathlib import Path
         import asyncio
 
-        import nominatim.api as napi
+        import nominatim_api as napi
 
         config_params = {
             'NOMINATIM_DATABASE_DSN': 'pgsql:dbname=belgium'
@@ -134,7 +130,7 @@ standard 'nominatim' database:
         ``` python
         from pathlib import Path
 
-        import nominatim.api as napi
+        import nominatim_api as napi
 
         config_params = {
             'NOMINATIM_DATABASE_DSN': 'pgsql:dbname=belgium'
@@ -161,7 +157,7 @@ Again searching for 'Brugge', this time with a nicely formatted result:
         from pathlib import Path
         import asyncio
 
-        import nominatim.api as napi
+        import nominatim_api as napi
 
         async def search(query):
             api = napi.NominatimAPIAsync(Path('.'))
@@ -180,7 +176,7 @@ Again searching for 'Brugge', this time with a nicely formatted result:
         ``` python
         from pathlib import Path
 
-        import nominatim.api as napi
+        import nominatim_api as napi
 
         api = napi.NominatimAPI(Path('.'))
 

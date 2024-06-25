@@ -130,16 +130,16 @@ class as defined below.
 
 ### Python Tokenizer Class
 
-All tokenizers must inherit from `nominatim.tokenizer.base.AbstractTokenizer`
+All tokenizers must inherit from `nominatim_db.tokenizer.base.AbstractTokenizer`
 and implement the abstract functions defined there.
 
-::: nominatim.tokenizer.base.AbstractTokenizer
+::: nominatim_db.tokenizer.base.AbstractTokenizer
     options:
         heading_level: 6
 
 ### Python Analyzer Class
 
-::: nominatim.tokenizer.base.AbstractAnalyzer
+::: nominatim_db.tokenizer.base.AbstractAnalyzer
     options:
         heading_level: 6
 

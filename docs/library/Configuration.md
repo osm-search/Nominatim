@@ -20,7 +20,7 @@ configuration parameters, see the [Configuration page](../customize/Settings.md)
 
 ## `Configuration` class
 
-::: nominatim.config.Configuration
+::: nominatim_core.config.Configuration
     options:
         members:
             - get_bool

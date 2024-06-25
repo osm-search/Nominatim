@@ -12,7 +12,7 @@ functions that allow further processing of the results.
 Nominatim takes the result data from multiple sources. The `source_table` field
 in the result describes, from which source the result was retrieved.
 
-::: nominatim.api.SourceTable
+::: nominatim_api.SourceTable
     options:
         heading_level: 6
         members_order: source
@@ -31,7 +31,7 @@ contains the result place itself and some artificial entries, for example,
 for the house number or the country code. This makes processing and creating
 a full address easier.
 
-::: nominatim.api.AddressLine
+::: nominatim_api.AddressLine
     options:
         heading_level: 6
         members_order: source
@@ -43,7 +43,7 @@ may be used to find a place, when the `keywords` parameter is set. Search
 terms are split into terms for the name of the place and search terms for
 its address.
 
-::: nominatim.api.WordInfo
+::: nominatim_api.WordInfo
     options:
         heading_level: 6
 
@@ -53,6 +53,6 @@ Results are always returned with the full list of available names.
 
 ### Locale
 
-::: nominatim.api.Locales
+::: nominatim_api.Locales
     options:
         heading_level: 6

@@ -175,7 +175,7 @@ The following is a list of sanitizers that are shipped with Nominatim.
 
 ##### split-name-list
 
-::: nominatim.tokenizer.sanitizers.split_name_list
+::: nominatim_db.tokenizer.sanitizers.split_name_list
     options:
         members: False
         heading_level: 6
@@ -183,7 +183,7 @@ The following is a list of sanitizers that are shipped with Nominatim.
 
 ##### strip-brace-terms
 
-::: nominatim.tokenizer.sanitizers.strip_brace_terms
+::: nominatim_db.tokenizer.sanitizers.strip_brace_terms
     options:
         members: False
         heading_level: 6
@@ -191,7 +191,7 @@ The following is a list of sanitizers that are shipped with Nominatim.
 
 ##### tag-analyzer-by-language
 
-::: nominatim.tokenizer.sanitizers.tag_analyzer_by_language
+::: nominatim_db.tokenizer.sanitizers.tag_analyzer_by_language
     options:
         members: False
         heading_level: 6
@@ -199,7 +199,7 @@ The following is a list of sanitizers that are shipped with Nominatim.
 
 ##### clean-housenumbers
 
-::: nominatim.tokenizer.sanitizers.clean_housenumbers
+::: nominatim_db.tokenizer.sanitizers.clean_housenumbers
     options:
         members: False
         heading_level: 6
@@ -207,7 +207,7 @@ The following is a list of sanitizers that are shipped with Nominatim.
 
 ##### clean-postcodes
 
-::: nominatim.tokenizer.sanitizers.clean_postcodes
+::: nominatim_db.tokenizer.sanitizers.clean_postcodes
     options:
         members: False
         heading_level: 6
@@ -215,7 +215,7 @@ The following is a list of sanitizers that are shipped with Nominatim.
 
 ##### clean-tiger-tags
 
-::: nominatim.tokenizer.sanitizers.clean_tiger_tags
+::: nominatim_db.tokenizer.sanitizers.clean_tiger_tags
     options:
         members: False
         heading_level: 6
@@ -223,7 +223,7 @@ The following is a list of sanitizers that are shipped with Nominatim.
 
 #### delete-tags
 
-::: nominatim.tokenizer.sanitizers.delete_tags
+::: nominatim_db.tokenizer.sanitizers.delete_tags
     options:
         members: False
         heading_level: 6
@@ -231,7 +231,7 @@ The following is a list of sanitizers that are shipped with Nominatim.
 
 #### tag-japanese
 
-::: nominatim.tokenizer.sanitizers.tag_japanese
+::: nominatim_db.tokenizer.sanitizers.tag_japanese
     options:
         members: False
         heading_level: 6

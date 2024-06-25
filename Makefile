@@ -15,7 +15,7 @@ build-api:
 
 # Tests
 
-tests: mypy lint pytest
+tests: mypy lint pytest bdd
 
 mypy:
 	mypy --strict src

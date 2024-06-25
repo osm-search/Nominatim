@@ -155,9 +155,14 @@ wget -O Nominatim/data/country_osm_grid.sql.gz https://nominatim.org/data/countr
 
 #### Building the latest development version with pip
 
-To install Nominatim directly from the source tree, run:
+Nominatim is easiest to run from its own virtual environment. To create one, run:
 
-    pip install packaging/nominatim-{core,db,api}
+    sudo apt-get install virtualenv
+    virtualenv /srv/nominatim-venv
+
+To install Nominatim directly from the source tree into the virtual environment, run:
+
+    /srv/nominatim-venv/bin/pip install packaging/nominatim-{core,db,api}
 
 #### Building in legacy CMake mode
 

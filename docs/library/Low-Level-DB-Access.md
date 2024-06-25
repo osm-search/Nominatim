@@ -26,7 +26,7 @@ the placex table:
 import asyncio
 from pathlib import Path
 import sqlalchemy as sa
-from nominatim.api import NominatimAPIAsync
+from nominatim_api import NominatimAPIAsync
 
 async def print_table_size():
     api = NominatimAPIAsync(Path('.'))
@@ -45,7 +45,7 @@ asyncio.run(print_table_size())
 
 ## SearchConnection class
 
-::: nominatim.api.SearchConnection
+::: nominatim_api.SearchConnection
     options:
         members:
             - scalar

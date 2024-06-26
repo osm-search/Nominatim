@@ -275,7 +275,7 @@ class SearchBuilder:
                               use_lookup: bool) -> List[dbf.FieldLookup]:
         """ Create a ranking expression with full name terms and
             additional address lookup. When 'use_lookup' is true, then
-            address lookups will use the index, when the occurences are not
+            address lookups will use the index, when the occurrences are not
             too many.
         """
         # At this point drop unindexed partials from the address.

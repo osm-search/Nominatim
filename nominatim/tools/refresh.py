@@ -154,7 +154,7 @@ def import_importance_csv(dsn: str, data_file: Path) -> int:
     if not data_file.exists():
         return 1
 
-    # Only import the first occurance of a wikidata ID.
+    # Only import the first occurence of a wikidata ID.
     # This keeps indexes and table small.
     wd_done = set()
 

@@ -24,7 +24,7 @@ nominatim.org has preprocessed importance tables for the
 and for [secondary importance](https://nominatim.org/data/wikimedia-secondary-importance.sql.gz)
 based on Wikipedia importance of the administrative areas.
 
-The source code for creating these files is avaible in the Github projects
+The source code for creating these files is available in the Github projects
 [osm-search/wikipedia-wikidata](https://github.com/osm-search/wikipedia-wikidata)
 and
 [osm-search/secondary-importance](https://github.com/osm-search/secondary-importance).

@@ -80,15 +80,15 @@ jobs:
                   flavour: ${{ matrix.flavour }}
                   lua: ${{ matrix.lua }}
 
-            - name: Install test prerequsites (behave from apt)
+            - name: Install test prerequisites (behave from apt)
               run: sudo apt-get install -y -qq python3-behave
               if: matrix.flavour == 'ubuntu-20'
 
-            - name: Install test prerequsites (behave from pip)
+            - name: Install test prerequisites (behave from pip)
               run: pip3 install behave==1.2.6
               if: (matrix.flavour == 'oldstuff') || (matrix.flavour == 'ubuntu-22')
 
-            - name: Install test prerequsites (from apt for Ununtu 2x)
+            - name: Install test prerequisites (from apt for Ununtu 2x)
               run: sudo apt-get install -y -qq python3-pytest python3-pytest-asyncio uvicorn
               if: matrix.flavour != 'oldstuff'
 
@@ -96,7 +96,7 @@ jobs:
               run: pip3 install -U pytest-asyncio
               if: matrix.flavour == 'ubuntu-20'
 
-            - name: Install test prerequsites (from pip for Ubuntu 18)
+            - name: Install test prerequisites (from pip for Ubuntu 18)
               run: pip3 install pytest pytest-asyncio uvicorn
               if: matrix.flavour == 'oldstuff'
 
@@ -165,7 +165,7 @@ jobs:
               with:
                   cmake-args: -DBUILD_MODULE=on
 
-            - name: Install test prerequsites
+            - name: Install test prerequisites
               run: sudo apt-get install -y -qq python3-behave
 
             - name: BDD tests (legacy tokenizer)
@@ -212,7 +212,7 @@ jobs:
               with:
                   flavour: 'ubuntu-22'
 
-            - name: Install test prerequsites
+            - name: Install test prerequisites
               run: sudo apt-get install -y -qq python3-behave
 
             - name: BDD tests (php)

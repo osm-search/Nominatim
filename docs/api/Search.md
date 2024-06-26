@@ -152,7 +152,7 @@ as the ["Accept-Language" HTTP header](https://developer.mozilla.org/en-US/docs/
     results when using Nominatim in the browser versus in a command-line tool
     like wget or curl. The command-line tools
     usually don't send any Accept-Language header, prompting Nominatim
-    to show results in the local language. Browsers on the contratry always
+    to show results in the local language. Browsers on the contrary always
     send the currently chosen browser language.
 
 ### Result restriction

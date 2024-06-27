@@ -11,10 +11,10 @@ from typing import Callable, Optional, Any, Union, Tuple, Mapping, List
 from enum import Enum
 from textwrap import dedent
 
-from nominatim_core.config import Configuration
-from nominatim_core.db.connection import connect, Connection
-from nominatim_core.db import properties
-from nominatim_core.errors import UsageError
+from ..config import Configuration
+from ..db.connection import connect, Connection
+from ..db import properties
+from ..errors import UsageError
 from ..tokenizer import factory as tokenizer_factory
 from . import freeze
 from ..version import NOMINATIM_VERSION, parse_version

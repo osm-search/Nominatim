@@ -17,8 +17,8 @@ from urllib.parse import urlencode
 
 import sqlalchemy as sa
 
-from nominatim_core.errors import UsageError
-from nominatim_core.config import Configuration
+from ..errors import UsageError
+from ..config import Configuration
 from .. import logging as loglib
 from ..core import NominatimAPIAsync
 from .format import dispatch as formatting

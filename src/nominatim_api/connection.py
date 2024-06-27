@@ -14,9 +14,9 @@ import asyncio
 import sqlalchemy as sa
 from sqlalchemy.ext.asyncio import AsyncConnection
 
-from nominatim_core.typing import SaFromClause
-from nominatim_core.db.sqlalchemy_schema import SearchTables
-from nominatim_core.db.sqlalchemy_types import Geometry
+from .typing import SaFromClause
+from .sql.sqlalchemy_schema import SearchTables
+from .sql.sqlalchemy_types import Geometry
 from .logging import log
 
 T = TypeVar('T')

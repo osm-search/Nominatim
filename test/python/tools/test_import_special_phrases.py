@@ -13,7 +13,7 @@ import pytest
 from nominatim_db.tools.special_phrases.sp_importer import SPImporter
 from nominatim_db.tools.special_phrases.sp_wiki_loader import SPWikiLoader
 from nominatim_db.tools.special_phrases.special_phrase import SpecialPhrase
-from nominatim_core.errors import UsageError
+from nominatim_db.errors import UsageError
 
 from cursor import CursorForTesting
 

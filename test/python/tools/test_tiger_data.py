@@ -13,7 +13,7 @@ from textwrap import dedent
 import pytest
 
 from nominatim_db.tools import tiger_data, freeze
-from nominatim_core.errors import UsageError
+from nominatim_db.errors import UsageError
 
 class MockTigerTable:
 

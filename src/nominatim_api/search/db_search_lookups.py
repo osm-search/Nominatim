@@ -12,8 +12,8 @@ from typing import List, Any
 import sqlalchemy as sa
 from sqlalchemy.ext.compiler import compiles
 
-from nominatim_core.typing import SaFromClause
-from nominatim_core.db.sqlalchemy_types import IntArray
+from ..typing import SaFromClause
+from ..sql.sqlalchemy_types import IntArray
 
 # pylint: disable=consider-using-f-string
 

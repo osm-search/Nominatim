@@ -10,8 +10,8 @@ is handed to the token analysis.
 """
 from typing import Optional, List, Mapping, Sequence, Callable, Any, Tuple
 
-from nominatim_core.errors import UsageError
-from nominatim_core.config import Configuration
+from ..errors import UsageError
+from ..config import Configuration
 from .sanitizers.config import SanitizerConfig
 from .sanitizers.base import SanitizerHandler, ProcessInfo
 from ..data.place_name import PlaceName

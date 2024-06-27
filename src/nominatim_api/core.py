@@ -16,10 +16,10 @@ from pathlib import Path
 import sqlalchemy as sa
 import sqlalchemy.ext.asyncio as sa_asyncio
 
-from nominatim_core.errors import UsageError
-from nominatim_core.db.sqlalchemy_schema import SearchTables
-from nominatim_core.db.async_core_library import PGCORE_LIB, PGCORE_ERROR
-from nominatim_core.config import Configuration
+from .errors import UsageError
+from .sql.sqlalchemy_schema import SearchTables
+from .sql.async_core_library import PGCORE_LIB, PGCORE_ERROR
+from .config import Configuration
 from .sql import sqlite_functions, sqlalchemy_functions #pylint: disable=unused-import
 from .connection import SearchConnection
 from .status import get_status, StatusResult

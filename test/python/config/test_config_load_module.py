@@ -12,7 +12,7 @@ import sys
 
 import pytest
 
-from nominatim_core.config import Configuration
+from nominatim_db.config import Configuration
 
 @pytest.fixture
 def test_config(src_dir, tmp_path):

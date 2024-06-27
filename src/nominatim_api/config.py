@@ -4,8 +4,9 @@
 #
 # Copyright (C) 2024 by the Nominatim developer community.
 # For a full list of authors see the git log.
-"""
-Version information for the Nominatim API.
-"""
 
-NOMINATIM_API_VERSION = '4.4.99'
+# This file is just a placeholder to make the config module available
+# during development. It will be replaced by nominatim_db/config.py on
+# installation.
+# pylint: skip-file
+from nominatim_db.config import *

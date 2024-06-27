@@ -15,9 +15,9 @@ import pytest
 SRC_DIR = (Path(__file__) / '..' / '..' / '..').resolve()
 sys.path.insert(0, str(SRC_DIR / 'src'))
 
-from nominatim_core.config import Configuration
-from nominatim_core.db import connection
-from nominatim_core.db.sql_preprocessor import SQLPreprocessor
+from nominatim_db.config import Configuration
+from nominatim_db.db import connection
+from nominatim_db.db.sql_preprocessor import SQLPreprocessor
 import nominatim_db.tokenizer.factory
 
 import dummy_tokenizer

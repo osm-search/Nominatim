@@ -9,10 +9,10 @@ Tests for maintenance and analysis functions.
 """
 import pytest
 
-from nominatim_core.errors import UsageError
+from nominatim_db.errors import UsageError
 from nominatim_db.tools import admin
 from nominatim_db.tokenizer import factory
-from nominatim_core.db.sql_preprocessor import SQLPreprocessor
+from nominatim_db.db.sql_preprocessor import SQLPreprocessor
 
 @pytest.fixture(autouse=True)
 def create_placex_table(project_env, tokenizer_mock, temp_db_cursor, placex_table):

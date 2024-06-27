@@ -12,8 +12,8 @@ import argparse
 import logging
 from pathlib import Path
 
-from nominatim_core.config import Configuration
-from nominatim_core.db.connection import connect
+from ..config import Configuration
+from ..db.connection import connect
 from ..tokenizer.base import AbstractTokenizer
 from .args import NominatimArgs
 

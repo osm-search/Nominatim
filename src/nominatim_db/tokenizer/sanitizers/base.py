@@ -9,7 +9,7 @@ Common data types and protocols for sanitizers.
 """
 from typing import Optional, List, Mapping, Callable
 
-from nominatim_core.typing import Protocol, Final
+from ...typing import Protocol, Final
 from ...data.place_info import PlaceInfo
 from ...data.place_name import PlaceName
 from .config import SanitizerConfig

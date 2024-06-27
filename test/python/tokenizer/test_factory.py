@@ -9,9 +9,9 @@ Tests for creating new tokenizers.
 """
 import pytest
 
-from nominatim_core.db import properties
+from nominatim_db.db import properties
 from nominatim_db.tokenizer import factory
-from nominatim_core.errors import UsageError
+from nominatim_db.errors import UsageError
 from dummy_tokenizer import DummyTokenizer
 
 

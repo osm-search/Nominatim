@@ -11,8 +11,8 @@ import argparse
 import logging
 from pathlib import Path
 
-from nominatim_core.errors import UsageError
-from nominatim_core.db.connection import connect
+from ..errors import UsageError
+from ..db.connection import connect
 from ..tools.special_phrases.sp_importer import SPImporter, SpecialPhraseLoader
 from ..tools.special_phrases.sp_wiki_loader import SPWikiLoader
 from ..tools.special_phrases.sp_csv_loader import SPCsvLoader

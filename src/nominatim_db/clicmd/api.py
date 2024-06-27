@@ -14,12 +14,12 @@ import json
 import sys
 from functools import reduce
 
-from nominatim_core.errors import UsageError
 import nominatim_api as napi
 import nominatim_api.v1 as api_output
 from nominatim_api.v1.helpers import zoom_to_rank, deduplicate_results
 from nominatim_api.v1.format import dispatch as formatting
 import nominatim_api.logging as loglib
+from ..errors import UsageError
 from .args import NominatimArgs
 
 # Do not repeat documentation of subcommand classes.

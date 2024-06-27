@@ -14,7 +14,7 @@ import nominatim_db.data.country_info
 import nominatim_db.tools.refresh
 import nominatim_db.tools.postcodes
 import nominatim_db.indexer.indexer
-import nominatim_core.db.properties
+import nominatim_db.db.properties
 
 
 class TestCliImportWithDb:
@@ -81,7 +81,7 @@ class TestCliImportWithDb:
             mock_func_factory(nominatim_db.tools.postcodes, 'update_postcodes'),
             mock_func_factory(nominatim_db.indexer.indexer.Indexer, 'index_full'),
             mock_func_factory(nominatim_db.tools.refresh, 'setup_website'),
-            mock_func_factory(nominatim_core.db.properties, 'set_property')
+            mock_func_factory(nominatim_db.db.properties, 'set_property')
         ]
 
         assert self.call_nominatim('import', '--continue', 'load-data') == 0
@@ -98,7 +98,7 @@ class TestCliImportWithDb:
             mock_func_factory(nominatim_db.data.country_info, 'create_country_names'),
             mock_func_factory(nominatim_db.indexer.indexer.Indexer, 'index_full'),
             mock_func_factory(nominatim_db.tools.refresh, 'setup_website'),
-            mock_func_factory(nominatim_core.db.properties, 'set_property')
+            mock_func_factory(nominatim_db.db.properties, 'set_property')
         ]
 
         assert self.call_nominatim('import', '--continue', 'indexing') == 0
@@ -115,7 +115,7 @@ class TestCliImportWithDb:
             mock_func_factory(nominatim_db.tools.database_import, 'create_search_indices'),
             mock_func_factory(nominatim_db.data.country_info, 'create_country_names'),
             mock_func_factory(nominatim_db.tools.refresh, 'setup_website'),
-            mock_func_factory(nominatim_core.db.properties, 'set_property')
+            mock_func_factory(nominatim_db.db.properties, 'set_property')
         ]
 
         assert self.call_nominatim('import', '--continue', 'db-postprocess') == 0

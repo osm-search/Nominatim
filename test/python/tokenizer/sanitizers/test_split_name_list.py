@@ -12,7 +12,7 @@ import pytest
 from nominatim_db.tokenizer.place_sanitizer import PlaceSanitizer
 from nominatim_db.data.place_info import PlaceInfo
 
-from nominatim_core.errors import UsageError
+from nominatim_db.errors import UsageError
 
 class TestSplitName:
 

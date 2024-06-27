@@ -14,12 +14,13 @@ import asyncio
 import csv
 import sys
 
-import sqlalchemy as sa
-
 import nominatim_api as napi
 from nominatim_api.results import create_from_placex_row, ReverseResult, add_result_details
 from nominatim_api.types import LookupDetails
-from nominatim_core.errors import UsageError
+
+import sqlalchemy as sa # pylint: disable=C0411
+
+from ..errors import UsageError
 from .args import NominatimArgs
 
 # Do not repeat documentation of subcommand classes.

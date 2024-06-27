@@ -12,8 +12,8 @@ from collections import defaultdict
 import itertools
 import re
 
-from nominatim_core.config import flatten_config_list
-from nominatim_core.errors import UsageError
+from ...config import flatten_config_list
+from ...errors import UsageError
 
 class ICUVariant(NamedTuple):
     """ A single replacement rule for variant creation.

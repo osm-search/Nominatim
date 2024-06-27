@@ -14,7 +14,8 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "nominatim-core",
+    "python-dotenv",
+    "pyYAML>=5.1",
     "SQLAlchemy>=1.4.31",
     "psycopg",
     "PyICU"
@@ -34,8 +35,21 @@ path = "src/nominatim_api/version.py"
 pattern = "NOMINATIM_API_VERSION = '(?P<version>[^']+)'"
 
 [tool.hatch.build.targets.sdist]
-include = ["src/nominatim_api"]
+include = [
+    "src/nominatim_api",
+    "src/nominatim_db/config.py",
+    "settings",
+    "extra_src/paths.py"
+]
+
+exclude = [
+  "src/nominatim_api/config.py"
+]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/nominatim_api"]
 
+[tool.hatch.build.targets.wheel.force-include]
+"src/nominatim_db/config.py" = "nominatim_api/config.py"
+"extra_src/paths.py" = "nominatim_api/paths.py"
+"settings" = "nominatim_api/resources/settings"

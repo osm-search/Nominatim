@@ -14,8 +14,8 @@ import pytest
 
 from nominatim_db.data.place_info import PlaceInfo
 from nominatim_db.tokenizer import legacy_tokenizer
-from nominatim_core.db import properties
-from nominatim_core.errors import UsageError
+from nominatim_db.db import properties
+from nominatim_db.errors import UsageError
 
 from mock_legacy_word_table import MockLegacyWordTable
 

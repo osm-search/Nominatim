@@ -12,9 +12,9 @@ import abc
 
 import sqlalchemy as sa
 
-from nominatim_core.typing import SaFromClause, SaScalarSelect, SaColumn, \
-                                  SaExpression, SaSelect, SaLambdaSelect, SaRow, SaBind
-from nominatim_core.db.sqlalchemy_types import Geometry, IntArray
+from ..typing import SaFromClause, SaScalarSelect, SaColumn, \
+                     SaExpression, SaSelect, SaLambdaSelect, SaRow, SaBind
+from ..sql.sqlalchemy_types import Geometry, IntArray
 from ..connection import SearchConnection
 from ..types import SearchDetails, DataLayer, GeometryFormat, Bbox
 from .. import results as nres

@@ -11,7 +11,7 @@ import itertools
 
 import psycopg2.extras
 
-from nominatim_core.db import properties
+from nominatim_db.db import properties
 
 # This must always point to the mock word table for the default tokenizer.
 from mock_icu_word_table import MockIcuWordTable as MockWordTable

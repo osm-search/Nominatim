@@ -12,9 +12,9 @@ import functools
 
 import sqlalchemy as sa
 
-from nominatim_core.typing import SaColumn, SaSelect, SaFromClause, SaLabel, SaRow,\
-                                  SaBind, SaLambdaSelect
-from nominatim_core.db.sqlalchemy_types import Geometry
+from .typing import SaColumn, SaSelect, SaFromClause, SaLabel, SaRow,\
+                    SaBind, SaLambdaSelect
+from .sql.sqlalchemy_types import Geometry
 from .connection import SearchConnection
 from . import results as nres
 from .logging import log

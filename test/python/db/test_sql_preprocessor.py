@@ -9,7 +9,7 @@ Tests for SQL preprocessing.
 """
 import pytest
 
-from nominatim_core.db.sql_preprocessor import SQLPreprocessor
+from nominatim_db.db.sql_preprocessor import SQLPreprocessor
 
 @pytest.fixture
 def sql_factory(tmp_path):

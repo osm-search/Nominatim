@@ -14,7 +14,7 @@ import dataclasses
 
 import sqlalchemy as sa
 
-from nominatim_core.typing import SaRow
+from ..typing import SaRow
 from ..connection import SearchConnection
 from ..logging import log
 from . import query as qmod

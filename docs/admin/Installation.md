@@ -162,7 +162,7 @@ Nominatim is easiest to run from its own virtual environment. To create one, run
 
 To install Nominatim directly from the source tree into the virtual environment, run:
 
-    /srv/nominatim-venv/bin/pip install packaging/nominatim-{core,db,api}
+    /srv/nominatim-venv/bin/pip install packaging/nominatim-{db,api}
 
 #### Building in legacy CMake mode
 

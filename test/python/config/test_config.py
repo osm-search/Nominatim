@@ -10,8 +10,8 @@ Test for loading dotenv configuration.
 from pathlib import Path
 import pytest
 
-from nominatim_core.config import Configuration, flatten_config_list
-from nominatim_core.errors import UsageError
+from nominatim_db.config import Configuration, flatten_config_list
+from nominatim_db.errors import UsageError
 
 @pytest.fixture
 def make_config():

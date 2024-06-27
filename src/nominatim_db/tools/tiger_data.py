@@ -16,11 +16,11 @@ import tarfile
 
 from psycopg2.extras import Json
 
-from nominatim_core.config import Configuration
-from nominatim_core.db.connection import connect
-from nominatim_core.db.async_connection import WorkerPool
-from nominatim_core.db.sql_preprocessor import SQLPreprocessor
-from nominatim_core.errors import UsageError
+from ..config import Configuration
+from ..db.connection import connect
+from ..db.async_connection import WorkerPool
+from ..db.sql_preprocessor import SQLPreprocessor
+from ..errors import UsageError
 from ..data.place_info import PlaceInfo
 from ..tokenizer.base import AbstractAnalyzer, AbstractTokenizer
 from . import freeze

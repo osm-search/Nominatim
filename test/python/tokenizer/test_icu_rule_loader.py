@@ -13,7 +13,7 @@ import pytest
 import yaml
 
 from nominatim_db.tokenizer.icu_rule_loader import ICURuleLoader
-from nominatim_core.errors import UsageError
+from nominatim_db.errors import UsageError
 
 from icu import Transliterator
 

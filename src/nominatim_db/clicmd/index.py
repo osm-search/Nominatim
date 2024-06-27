@@ -11,8 +11,8 @@ import argparse
 
 import psutil
 
-from nominatim_core.db import status
-from nominatim_core.db.connection import connect
+from ..db import status
+from ..db.connection import connect
 from .args import NominatimArgs
 
 # Do not repeat documentation of subcommand classes.

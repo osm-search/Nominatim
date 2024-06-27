@@ -14,10 +14,10 @@ from pathlib import Path
 
 import psutil
 
-from nominatim_core.errors import UsageError
-from nominatim_core.config import Configuration
-from nominatim_core.db.connection import connect
-from nominatim_core.db import status, properties
+from ..errors import UsageError
+from ..config import Configuration
+from ..db.connection import connect
+from ..db import status, properties
 from ..tokenizer.base import AbstractTokenizer
 from ..version import NOMINATIM_VERSION
 from .args import NominatimArgs

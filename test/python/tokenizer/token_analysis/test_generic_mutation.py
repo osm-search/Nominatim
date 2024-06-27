@@ -12,7 +12,7 @@ import pytest
 from icu import Transliterator
 
 import nominatim_db.tokenizer.token_analysis.generic as module
-from nominatim_core.errors import UsageError
+from nominatim_db.errors import UsageError
 
 DEFAULT_NORMALIZATION = """ '🜳' > ' ';
                             [[:Nonspacing Mark:] [:Cf:]] >;

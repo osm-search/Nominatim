@@ -12,7 +12,7 @@ from pathlib import Path
 
 from psycopg2 import sql as pysql
 
-from nominatim_core.db.connection import Connection
+from ..db.connection import Connection
 
 UPDATE_TABLES = [
     'address_levels',

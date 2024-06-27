@@ -11,10 +11,10 @@ from typing import Dict, Any, Iterable, Tuple, Optional, Container, overload
 from pathlib import Path
 import psycopg2.extras
 
-from nominatim_core.db import utils as db_utils
-from nominatim_core.db.connection import connect, Connection
-from nominatim_core.errors import UsageError
-from nominatim_core.config import Configuration
+from ..db import utils as db_utils
+from ..db.connection import connect, Connection
+from ..errors import UsageError
+from ..config import Configuration
 from ..tokenizer.base import AbstractTokenizer
 
 def _flatten_name_list(names: Any) -> Dict[str, str]:

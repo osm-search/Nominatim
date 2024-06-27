@@ -11,8 +11,8 @@ import json
 
 import pytest
 
-import nominatim_core.db.utils as db_utils
-from nominatim_core.errors import UsageError
+import nominatim_db.db.utils as db_utils
+from nominatim_db.errors import UsageError
 
 def test_execute_file_success(dsn, temp_db_cursor, tmp_path):
     tmpfile = tmp_path / 'test.sql'

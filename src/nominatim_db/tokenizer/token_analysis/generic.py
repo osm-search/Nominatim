@@ -12,7 +12,7 @@ import itertools
 
 import datrie
 
-from nominatim_core.errors import UsageError
+from ...errors import UsageError
 from ...data.place_name import PlaceName
 from .config_variants import get_variant_config
 from .generic_mutation import MutationVariantGenerator

@@ -18,8 +18,8 @@ from math import isfinite
 
 from psycopg2 import sql as pysql
 
-from nominatim_core.db.connection import connect, Connection
-from nominatim_core.utils.centroid import PointsCentroid
+from ..db.connection import connect, Connection
+from ..utils.centroid import PointsCentroid
 from ..data.postcode_format import PostcodeFormatter, CountryPostcodeMatcher
 from ..tokenizer.base import AbstractAnalyzer, AbstractTokenizer
 

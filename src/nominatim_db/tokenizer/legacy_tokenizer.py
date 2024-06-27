@@ -20,12 +20,12 @@ from icu import Transliterator
 import psycopg2
 import psycopg2.extras
 
-from nominatim_core.errors import UsageError
-from nominatim_core.db.connection import connect, Connection
-from nominatim_core.config import Configuration
-from nominatim_core.db import properties
-from nominatim_core.db import utils as db_utils
-from nominatim_core.db.sql_preprocessor import SQLPreprocessor
+from ..errors import UsageError
+from ..db.connection import connect, Connection
+from ..config import Configuration
+from ..db import properties
+from ..db import utils as db_utils
+from ..db.sql_preprocessor import SQLPreprocessor
 from ..data.place_info import PlaceInfo
 from .base import AbstractAnalyzer, AbstractTokenizer
 

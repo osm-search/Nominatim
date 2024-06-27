@@ -17,7 +17,11 @@ import json
 import yaml
 
 from dotenv import dotenv_values
-from psycopg2.extensions import parse_dsn
+
+try:
+    from psycopg2.extensions import parse_dsn
+except ModuleNotFoundError:
+    from psycopg.conninfo import conninfo_to_dict as parse_dsn # type: ignore[assignment]
 
 from .typing import StrPath
 from .errors import UsageError

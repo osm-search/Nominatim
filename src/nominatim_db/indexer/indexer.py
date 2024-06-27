@@ -13,9 +13,9 @@ import time
 
 import psycopg2.extras
 
-from nominatim_core.typing import DictCursorResults
-from nominatim_core.db.async_connection import DBConnection, WorkerPool
-from nominatim_core.db.connection import connect, Connection, Cursor
+from ..typing import DictCursorResults
+from ..db.async_connection import DBConnection, WorkerPool
+from ..db.connection import connect, Connection, Cursor
 from ..tokenizer.base import AbstractTokenizer
 from .progress import ProgressLogger
 from . import runners

@@ -13,10 +13,10 @@ import logging
 from psycopg2.extras import Json, register_hstore
 from psycopg2 import DataError
 
-from nominatim_core.typing import DictCursorResult
-from nominatim_core.config import Configuration
-from nominatim_core.db.connection import connect, Cursor
-from nominatim_core.errors import UsageError
+from ..typing import DictCursorResult
+from ..config import Configuration
+from ..db.connection import connect, Cursor
+from ..errors import UsageError
 from ..tokenizer import factory as tokenizer_factory
 from ..data.place_info import PlaceInfo
 

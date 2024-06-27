@@ -12,7 +12,7 @@ import itertools
 import logging
 import re
 
-from nominatim_core.errors import UsageError
+from ...errors import UsageError
 
 LOG = logging.getLogger()
 

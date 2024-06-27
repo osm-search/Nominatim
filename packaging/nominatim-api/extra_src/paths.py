@@ -5,7 +5,11 @@
 # Copyright (C) 2024 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
-Version information for the Nominatim API.
+Path settings for extra data used by Nominatim.
 """
+from pathlib import Path
 
-NOMINATIM_API_VERSION = '4.4.99'
+PHPLIB_DIR = None
+DATA_DIR = None
+SQLLIB_DIR = None
+CONFIG_DIR = (Path(__file__) / '..' / 'resources' / 'settings').resolve()

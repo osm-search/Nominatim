@@ -16,8 +16,8 @@ import sys
 import argparse
 from pathlib import Path
 
-from nominatim_core.config import Configuration
-from nominatim_core.errors import UsageError
+from .config import Configuration
+from .errors import UsageError
 from .tools.exec_utils import run_php_server
 from . import clicmd
 from . import version

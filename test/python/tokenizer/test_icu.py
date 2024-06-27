@@ -14,8 +14,8 @@ import pytest
 
 from nominatim_db.tokenizer import icu_tokenizer
 import nominatim_db.tokenizer.icu_rule_loader
-from nominatim_core.db import properties
-from nominatim_core.db.sql_preprocessor import SQLPreprocessor
+from nominatim_db.db import properties
+from nominatim_db.db.sql_preprocessor import SQLPreprocessor
 from nominatim_db.data.place_info import PlaceInfo
 
 from mock_icu_word_table import MockIcuWordTable

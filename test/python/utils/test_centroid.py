@@ -9,7 +9,7 @@ Tests for centroid computation.
 """
 import pytest
 
-from nominatim_core.utils.centroid import PointsCentroid
+from nominatim_db.utils.centroid import PointsCentroid
 
 def test_empty_set():
     c = PointsCentroid()

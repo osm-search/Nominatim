@@ -16,7 +16,7 @@ import math
 from struct import unpack
 from binascii import unhexlify
 
-from nominatim_core.errors import UsageError
+from .errors import UsageError
 from .localization import Locales
 
 # pylint: disable=no-member,too-many-boolean-expressions,too-many-instance-attributes

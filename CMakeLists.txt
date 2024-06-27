@@ -221,22 +221,22 @@ if (BUILD_IMPORTER)
             DESTINATION ${CMAKE_INSTALL_BINDIR}
             RENAME nominatim)
 
-    foreach (submodule nominatim_core nominatim_db nominatim_api)
-        install(DIRECTORY src/${submodule}
-                DESTINATION ${NOMINATIM_LIBDIR}/lib-python
-                FILES_MATCHING PATTERN "*.py"
-                PATTERN "paths.py" EXCLUDE
-                PATTERN __pycache__ EXCLUDE)
-    endforeach()
-
     if (EXISTS ${PHP_BIN})
         configure_file(${PROJECT_SOURCE_DIR}/cmake/paths-py.tmpl paths-py.installed)
     else()
         configure_file(${PROJECT_SOURCE_DIR}/cmake/paths-py-no-php.tmpl paths-py.installed)
     endif()
-    install(FILES ${PROJECT_BINARY_DIR}/paths-py.installed
-            DESTINATION ${NOMINATIM_LIBDIR}/lib-python/nominatim_core
-            RENAME paths.py)
+
+    foreach (submodule nominatim_db nominatim_api)
+        install(DIRECTORY src/${submodule}
+                DESTINATION ${NOMINATIM_LIBDIR}/lib-python
+                FILES_MATCHING PATTERN "*.py"
+                PATTERN "paths.py" EXCLUDE
+                PATTERN __pycache__ EXCLUDE)
+        install(FILES ${PROJECT_BINARY_DIR}/paths-py.installed
+                DESTINATION ${NOMINATIM_LIBDIR}/lib-python/${submodule}
+                RENAME paths.py)
+    endforeach()
 
     install(DIRECTORY lib-sql DESTINATION ${NOMINATIM_LIBDIR})
 

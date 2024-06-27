@@ -13,7 +13,7 @@ import concurrent.futures
 import pytest
 import psycopg2
 
-from nominatim_core.db.async_connection import DBConnection, DeadlockHandler
+from nominatim_db.db.async_connection import DBConnection, DeadlockHandler
 
 
 @pytest.fixture

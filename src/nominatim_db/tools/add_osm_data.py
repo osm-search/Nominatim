@@ -12,8 +12,8 @@ from pathlib import Path
 import logging
 import urllib
 
-from nominatim_core.db.connection import connect
-from nominatim_core.utils.url_utils import get_url
+from ..db.connection import connect
+from ..utils.url_utils import get_url
 from .exec_utils import run_osm2pgsql
 
 LOG = logging.getLogger()

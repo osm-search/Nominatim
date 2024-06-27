@@ -12,10 +12,10 @@ import logging
 
 from psycopg2 import sql as pysql
 
-from nominatim_core.errors import UsageError
-from nominatim_core.config import Configuration
-from nominatim_core.db import properties
-from nominatim_core.db.connection import connect, Connection
+from ..errors import UsageError
+from ..config import Configuration
+from ..db import properties
+from ..db.connection import connect, Connection
 from ..version import NominatimVersion, NOMINATIM_VERSION, parse_version
 from ..tokenizer import factory as tokenizer_factory
 from . import refresh

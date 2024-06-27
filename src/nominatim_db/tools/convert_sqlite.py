@@ -16,8 +16,8 @@ import sqlalchemy as sa
 
 import nominatim_api as napi
 from nominatim_api.search.query_analyzer_factory import make_query_analyzer
-from nominatim_core.typing import SaSelect, SaRow
-from nominatim_core.db.sqlalchemy_types import Geometry, IntArray
+from nominatim_api.typing import SaSelect, SaRow
+from nominatim_api.sql.sqlalchemy_types import Geometry, IntArray
 
 LOG = logging.getLogger()
 

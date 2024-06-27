@@ -15,7 +15,7 @@ import datetime as dt
 import sqlalchemy as sa
 
 import nominatim_api as napi
-from nominatim_core.db.sql_preprocessor import SQLPreprocessor
+from nominatim_db.db.sql_preprocessor import SQLPreprocessor
 from nominatim_api.search.query_analyzer_factory import make_query_analyzer
 from nominatim_db.tools import convert_sqlite
 import nominatim_api.logging as loglib

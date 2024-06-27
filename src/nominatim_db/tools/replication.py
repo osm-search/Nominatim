@@ -18,9 +18,9 @@ import urllib.request as urlrequest
 
 import requests
 
-from nominatim_core.errors import UsageError
-from nominatim_core.db import status
-from nominatim_core.db.connection import Connection, connect
+from ..errors import UsageError
+from ..db import status
+from ..db.connection import Connection, connect
 from .exec_utils import run_osm2pgsql
 
 try:

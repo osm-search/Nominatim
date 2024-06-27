@@ -17,8 +17,8 @@ from typing import List, Optional, Tuple, Union
 import psutil
 from psycopg2.extensions import make_dsn, parse_dsn
 
-from nominatim_core.config import Configuration
-from nominatim_core.db.connection import connect
+from ..config import Configuration
+from ..db.connection import connect
 from ..version import NOMINATIM_VERSION
 
 

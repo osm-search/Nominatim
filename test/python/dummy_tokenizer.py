@@ -8,7 +8,7 @@
 Tokenizer for testing.
 """
 from nominatim_db.data.place_info import PlaceInfo
-from nominatim_core.config import Configuration
+from nominatim_db.config import Configuration
 
 def create(dsn, data_dir):
     """ Create a new instance of the tokenizer provided by this module.

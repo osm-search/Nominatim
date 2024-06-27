@@ -14,8 +14,11 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "nominatim-core",
     "psycopg2-binary",
+    "python-dotenv",
+    "jinja2",
+    "pyYAML>=5.1",
+    "datrie",
     "psutil",
     "PyICU"
 ]
@@ -24,6 +27,7 @@ dynamic = ["version"]
 [project.urls]
 Homepage = "https://nominatim.org"
 Issues = "https://github.com/osm-search/Nominatim/issues"
+Documentation = "https://nominatim.org/release-docs/latest/"
 
 [build-system]
 requires = ["hatchling"]
@@ -34,10 +38,32 @@ path = "src/nominatim_db/version.py"
 pattern = "NOMINATIM_VERSION = parse_version.'(?P<version>[^-]+)"
 
 [tool.hatch.build.targets.sdist]
-include = ["src/nominatim_db", "scripts"]
+include = [
+    "src/nominatim_db",
+    "scripts",
+    "lib-sql/**/*.sql",
+    "settings",
+    "data/words.sql",
+    "extra_src/nominatim_db/paths.py"
+]
+
+artifacts = [
+  "data/country_osm_grid.sql.gz"
+]
+
+exclude = [
+  "src/nominatim_db/paths.py"
+]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/nominatim_db"]
 
 [tool.hatch.build.targets.wheel.shared-scripts]
 "scripts" = "/"
+
+[tool.hatch.build.targets.wheel.force-include]
+"lib-sql" = "nominatim_db/resources/lib-sql"
+"settings" = "nominatim_db/resources/settings"
+"data/country_osm_grid.sql.gz" = "nominatim_db/resources/country_osm_grid.sql.gz"
+"data/words.sql" = "nominatim_db/resources/words.sql"
+"extra_src/nominatim_db/paths.py" = "nominatim_db/paths.py"

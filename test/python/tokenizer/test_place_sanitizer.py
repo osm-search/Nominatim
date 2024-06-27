@@ -9,7 +9,7 @@ Tests for execution of the sanitztion step.
 """
 import pytest
 
-from nominatim_core.errors import UsageError
+from nominatim_db.errors import UsageError
 import nominatim_db.tokenizer.place_sanitizer as sanitizer
 from nominatim_db.data.place_info import PlaceInfo
 

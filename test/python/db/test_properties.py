@@ -9,7 +9,7 @@ Tests for property table manpulation.
 """
 import pytest
 
-from nominatim_core.db import properties
+from nominatim_db.db import properties
 
 @pytest.fixture
 def property_factory(property_table, temp_db_cursor):

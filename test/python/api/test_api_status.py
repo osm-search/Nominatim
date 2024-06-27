@@ -39,7 +39,7 @@ def test_status_full(apiobj, frontend):
     assert result.status == 0
     assert result.message == 'OK'
     assert result.software_version == NOMINATIM_API_VERSION
-    assert result.database_version == NominatimVersion(99, 5, 4, 2)
+    assert result.database_version == '99.5.4-2'
     assert result.data_updated == import_date
 
 

@@ -11,7 +11,7 @@ from typing import List, Dict, Mapping, Any
 import collections
 import datetime as dt
 
-from nominatim_core.utils.json_writer import JsonWriter
+from ..utils.json_writer import JsonWriter
 from ..status import StatusResult
 from ..results import DetailedResult, ReverseResults, SearchResults, \
                       AddressLines, AddressLine

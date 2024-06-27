@@ -13,7 +13,7 @@ from typing import Any
 import sqlalchemy as sa
 from sqlalchemy.ext.compiler import compiles
 
-from nominatim_core.typing import SaColumn
+from ..typing import SaColumn
 
 # pylint: disable=all
 

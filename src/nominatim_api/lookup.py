@@ -12,7 +12,7 @@ import datetime as dt
 
 import sqlalchemy as sa
 
-from nominatim_core.typing import SaColumn, SaRow, SaSelect
+from .typing import SaColumn, SaRow, SaSelect
 from .connection import SearchConnection
 from .logging import log
 from . import types as ntyp

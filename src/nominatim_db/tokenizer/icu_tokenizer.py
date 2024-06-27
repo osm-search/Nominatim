@@ -16,10 +16,10 @@ import logging
 from pathlib import Path
 from textwrap import dedent
 
-from nominatim_core.db.connection import connect, Connection, Cursor
-from nominatim_core.config import Configuration
-from nominatim_core.db.utils import CopyBuffer
-from nominatim_core.db.sql_preprocessor import SQLPreprocessor
+from ..db.connection import connect, Connection, Cursor
+from ..config import Configuration
+from ..db.utils import CopyBuffer
+from ..db.sql_preprocessor import SQLPreprocessor
 from ..data.place_info import PlaceInfo
 from ..data.place_name import PlaceName
 from .icu_rule_loader import ICURuleLoader

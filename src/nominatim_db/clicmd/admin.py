@@ -11,8 +11,8 @@ import logging
 import argparse
 import random
 
-from nominatim_core.errors import UsageError
-from nominatim_core.db.connection import connect
+from ..errors import UsageError
+from ..db.connection import connect
 from .args import NominatimArgs
 
 # Do not repeat documentation of subcommand classes.

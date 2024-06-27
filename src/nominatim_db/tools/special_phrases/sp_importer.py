@@ -19,9 +19,9 @@ import re
 
 from psycopg2.sql import Identifier, SQL
 
-from nominatim_core.typing import Protocol
-from nominatim_core.config import Configuration
-from nominatim_core.db.connection import Connection
+from ...typing import Protocol
+from ...config import Configuration
+from ...db.connection import Connection
 from .importer_statistics import SpecialPhrasesImporterStatistics
 from .special_phrase import SpecialPhrase
 from ...tokenizer.base import AbstractTokenizer

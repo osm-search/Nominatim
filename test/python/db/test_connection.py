@@ -10,7 +10,7 @@ Tests for specialised connection and cursor classes.
 import pytest
 import psycopg2
 
-from nominatim_core.db.connection import connect, get_pg_env
+from nominatim_db.db.connection import connect, get_pg_env
 
 @pytest.fixture
 def db(dsn):

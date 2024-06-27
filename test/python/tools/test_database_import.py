@@ -14,7 +14,7 @@ import pytest
 import psycopg2
 
 from nominatim_db.tools import database_import
-from nominatim_core.errors import UsageError
+from nominatim_db.errors import UsageError
 
 class TestDatabaseSetup:
     DBNAME = 'test_nominatim_python_unittest'

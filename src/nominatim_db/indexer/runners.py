@@ -14,8 +14,8 @@ import functools
 from psycopg2 import sql as pysql
 import psycopg2.extras
 
-from nominatim_core.typing import Query, DictCursorResult, DictCursorResults, Protocol
-from nominatim_core.db.async_connection import DBConnection
+from ..typing import Query, DictCursorResult, DictCursorResults, Protocol
+from ..db.async_connection import DBConnection
 from ..data.place_info import PlaceInfo
 from ..tokenizer.base import AbstractAnalyzer
 

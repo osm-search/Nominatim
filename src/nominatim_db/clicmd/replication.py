@@ -14,9 +14,9 @@ import logging
 import socket
 import time
 
-from nominatim_core.db import status
-from nominatim_core.db.connection import connect
-from nominatim_core.errors import UsageError
+from ..db import status
+from ..db.connection import connect
+from ..errors import UsageError
 from .args import NominatimArgs
 
 LOG = logging.getLogger()

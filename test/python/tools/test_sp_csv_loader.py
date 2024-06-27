@@ -9,7 +9,7 @@
 """
 import pytest
 
-from nominatim_core.errors import UsageError
+from nominatim_db.errors import UsageError
 from nominatim_db.tools.special_phrases.sp_csv_loader import SPCsvLoader
 from nominatim_db.tools.special_phrases.special_phrase import SpecialPhrase
 

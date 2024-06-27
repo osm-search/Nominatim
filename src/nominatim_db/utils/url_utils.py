@@ -11,7 +11,7 @@ from typing import IO
 import logging
 import urllib.request as urlrequest
 
-from ..version import NOMINATIM_CORE_VERSION
+from ..version import NOMINATIM_VERSION
 
 LOG = logging.getLogger()
 
@@ -20,7 +20,7 @@ def get_url(url: str) -> str:
 
         This version makes sure that an appropriate user agent is sent.
     """
-    headers = {"User-Agent": f"Nominatim/{NOMINATIM_CORE_VERSION!s}"}
+    headers = {"User-Agent": f"Nominatim/{NOMINATIM_VERSION!s}"}
 
     try:
         request = urlrequest.Request(url, headers=headers)

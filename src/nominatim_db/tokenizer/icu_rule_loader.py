@@ -14,10 +14,10 @@ import logging
 
 from icu import Transliterator
 
-from nominatim_core.config import flatten_config_list, Configuration
-from nominatim_core.db.properties import set_property, get_property
-from nominatim_core.db.connection import Connection
-from nominatim_core.errors import UsageError
+from ..config import flatten_config_list, Configuration
+from ..db.properties import set_property, get_property
+from ..db.connection import Connection
+from ..errors import UsageError
 from .place_sanitizer import PlaceSanitizer
 from .icu_token_analysis import ICUTokenAnalysis
 from .token_analysis.base import AnalysisModule, Analyzer

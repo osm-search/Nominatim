@@ -14,7 +14,7 @@ import asyncio
 
 from falcon.asgi import App, Request, Response
 
-from nominatim_core.config import Configuration
+from ...config import Configuration
 from ...core import NominatimAPIAsync
 from ... import v1 as api_impl
 from ... import logging as loglib

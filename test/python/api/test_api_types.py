@@ -9,7 +9,7 @@ Tests for loading of parameter dataclasses.
 """
 import pytest
 
-from nominatim_core.errors import UsageError
+from nominatim_api.errors import UsageError
 import nominatim_api.types as typ
 
 def test_no_params_defaults():

@@ -18,8 +18,8 @@ import datetime as dt
 
 import sqlalchemy as sa
 
-from nominatim_core.typing import SaSelect, SaRow
-from nominatim_core.db.sqlalchemy_types import Geometry
+from .typing import SaSelect, SaRow
+from .sql.sqlalchemy_types import Geometry
 from .types import Point, Bbox, LookupDetails
 from .connection import SearchConnection
 from .logging import log

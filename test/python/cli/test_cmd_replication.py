@@ -16,7 +16,7 @@ import nominatim_db.cli
 import nominatim_db.indexer.indexer
 import nominatim_db.tools.replication
 import nominatim_db.tools.refresh
-from nominatim_core.db import status
+from nominatim_db.db import status
 
 @pytest.fixture
 def tokenizer_mock(monkeypatch):

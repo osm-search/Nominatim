@@ -11,8 +11,8 @@ from typing import Iterable
 import re
 import logging
 
-from nominatim_core.config import Configuration
-from nominatim_core.utils.url_utils import get_url
+from ...config import Configuration
+from ...utils.url_utils import get_url
 from .special_phrase import SpecialPhrase
 
 LOG = logging.getLogger()

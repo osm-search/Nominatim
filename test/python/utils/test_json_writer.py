@@ -11,7 +11,7 @@ import json
 
 import pytest
 
-from nominatim_core.utils.json_writer import JsonWriter
+from nominatim_api.utils.json_writer import JsonWriter
 
 @pytest.mark.parametrize("inval,outstr", [(None, 'null'),
                                           (True, 'true'), (False, 'false'),

@@ -16,8 +16,8 @@ from icu import Transliterator
 
 import sqlalchemy as sa
 
-from nominatim_core.typing import SaRow
-from nominatim_core.db.sqlalchemy_types import Json
+from ..typing import SaRow
+from ..sql.sqlalchemy_types import Json
 from ..connection import SearchConnection
 from ..logging import log
 from ..search import query as qmod

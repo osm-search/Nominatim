@@ -21,7 +21,7 @@ from starlette.middleware import Middleware
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.middleware.cors import CORSMiddleware
 
-from nominatim_core.config import Configuration
+from ...config import Configuration
 from ...core import NominatimAPIAsync
 from ... import v1 as api_impl
 from ... import logging as loglib

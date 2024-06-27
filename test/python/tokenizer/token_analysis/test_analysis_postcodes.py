@@ -13,7 +13,7 @@ from icu import Transliterator
 
 import nominatim_db.tokenizer.token_analysis.postcodes as module
 from nominatim_db.data.place_name import PlaceName
-from nominatim_core.errors import UsageError
+from nominatim_db.errors import UsageError
 
 DEFAULT_NORMALIZATION = """ :: NFD ();
                             '🜳' > ' ';

@@ -13,7 +13,7 @@ from typing import Iterable
 import csv
 import os
 
-from nominatim_core.errors import UsageError
+from ...errors import UsageError
 from .special_phrase import SpecialPhrase
 
 class SPCsvLoader:

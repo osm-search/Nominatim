@@ -119,7 +119,7 @@ fi                                 #DOCS:
 # Now install Nominatim using pip:
 
     cd $USERHOME/Nominatim
-    $USERHOME/nominatim-venv/bin/pip install packaging/nominatim-{core,db}
+    $USERHOME/nominatim-venv/bin/pip install packaging/nominatim-db
 
 # Nominatim is now ready to use. The nominatim binary is available at
 # `$USERHOME/venv/bin/nominatim`. If you want to have 'nominatim' in your

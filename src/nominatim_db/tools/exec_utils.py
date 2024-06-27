@@ -13,8 +13,8 @@ import os
 import subprocess
 import shutil
 
-from nominatim_core.typing import StrPath
-from nominatim_core.db.connection import get_pg_env
+from ..typing import StrPath
+from ..db.connection import get_pg_env
 
 LOG = logging.getLogger()
 

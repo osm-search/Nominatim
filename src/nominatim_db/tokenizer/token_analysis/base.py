@@ -9,7 +9,7 @@ Common data types and protocols for analysers.
 """
 from typing import Mapping, List, Any
 
-from nominatim_core.typing import Protocol
+from ...typing import Protocol
 from ...data.place_name import PlaceName
 
 class Analyzer(Protocol):

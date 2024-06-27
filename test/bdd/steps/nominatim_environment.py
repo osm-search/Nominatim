@@ -15,8 +15,8 @@ import psycopg2.extras
 sys.path.insert(1, str((Path(__file__) / '..' / '..' / '..' / '..'/ 'src').resolve()))
 
 from nominatim_db import cli
-from nominatim_core.config import Configuration
-from nominatim_core.db.connection import Connection
+from nominatim_db.config import Configuration
+from nominatim_db.db.connection import Connection
 from nominatim_db.tools import refresh
 from nominatim_db.tokenizer import factory as tokenizer_factory
 from steps.utils import run_script

@@ -12,7 +12,7 @@ import subprocess
 
 import pytest
 
-from nominatim_core.config import Configuration
+from nominatim_db.config import Configuration
 import nominatim_db.tools.exec_utils as exec_utils
 
 def test_run_osm2pgsql(osm2pgsql_options):

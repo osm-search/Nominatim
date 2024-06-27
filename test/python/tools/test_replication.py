@@ -14,8 +14,8 @@ import pytest
 from osmium.replication.server import OsmosisState
 
 import nominatim_db.tools.replication
-import nominatim_core.db.status as status
-from nominatim_core.errors import UsageError
+import nominatim_db.db.status as status
+from nominatim_db.errors import UsageError
 
 OSM_NODE_DATA = """\
 <osm version="0.6" generator="OpenStreetMap server" copyright="OpenStreetMap and contributors" attribution="http://www.openstreetmap.org/copyright" license="http://opendatacommons.org/licenses/odbl/1-0/">

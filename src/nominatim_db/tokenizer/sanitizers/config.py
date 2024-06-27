@@ -11,7 +11,7 @@ from typing import Sequence, Union, Optional, Pattern, Callable, Any, TYPE_CHECK
 from collections import UserDict
 import re
 
-from nominatim_core.errors import UsageError
+from ...errors import UsageError
 
 # working around missing generics in Python < 3.8
 # See https://github.com/python/typing/issues/60#issuecomment-869757075

@@ -16,10 +16,10 @@ from pathlib import Path
 
 from psycopg2 import sql as pysql
 
-from nominatim_core.config import Configuration
-from nominatim_core.db.connection import Connection, connect
-from nominatim_core.db.utils import execute_file, CopyBuffer
-from nominatim_core.db.sql_preprocessor import SQLPreprocessor
+from ..config import Configuration
+from ..db.connection import Connection, connect
+from ..db.utils import execute_file, CopyBuffer
+from ..db.sql_preprocessor import SQLPreprocessor
 from ..version import NOMINATIM_VERSION
 
 LOG = logging.getLogger()

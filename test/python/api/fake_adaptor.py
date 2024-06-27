@@ -10,7 +10,7 @@ Provides dummy implementations of ASGIAdaptor for testing.
 from collections import namedtuple
 
 import nominatim_api.v1.server_glue as glue
-from nominatim_core.config import Configuration
+from nominatim_api.config import Configuration
 
 class FakeError(BaseException):
 

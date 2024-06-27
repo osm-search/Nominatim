@@ -11,7 +11,7 @@ format.
 from typing import Any, Mapping, Optional, Set, Match
 import re
 
-from nominatim_core.errors import UsageError
+from ..errors import UsageError
 from . import country_info
 
 class CountryPostcodeMatcher:

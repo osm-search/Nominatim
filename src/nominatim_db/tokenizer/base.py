@@ -12,9 +12,9 @@ from abc import ABC, abstractmethod
 from typing import List, Tuple, Dict, Any, Optional, Iterable
 from pathlib import Path
 
-from nominatim_core.typing import Protocol
-from nominatim_core.config import Configuration
-from nominatim_core.db.connection import Connection
+from ..typing import Protocol
+from ..config import Configuration
+from ..db.connection import Connection
 from ..data.place_info import PlaceInfo
 
 class AbstractAnalyzer(ABC):

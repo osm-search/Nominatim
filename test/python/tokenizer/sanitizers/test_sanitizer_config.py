@@ -9,7 +9,7 @@ Tests for sanitizer configuration helper functions.
 """
 import pytest
 
-from nominatim_core.errors import UsageError
+from nominatim_db.errors import UsageError
 from nominatim_db.tokenizer.sanitizers.config import SanitizerConfig
 
 def test_string_list_default_empty():

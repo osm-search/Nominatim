@@ -12,7 +12,7 @@ import argparse
 import asyncio
 from pathlib import Path
 
-from nominatim_core.errors import UsageError
+from ..errors import UsageError
 from .args import NominatimArgs
 
 # Do not repeat documentation of subcommand classes.

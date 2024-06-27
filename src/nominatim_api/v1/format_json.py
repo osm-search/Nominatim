@@ -9,7 +9,7 @@ Helper functions for output of results in json formats.
 """
 from typing import Mapping, Any, Optional, Tuple, Union
 
-from nominatim_core.utils.json_writer import JsonWriter
+from ..utils.json_writer import JsonWriter
 from ..results import AddressLines, ReverseResults, SearchResults
 from . import classtypes as cl
 

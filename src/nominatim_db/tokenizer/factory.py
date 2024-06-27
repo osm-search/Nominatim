@@ -24,10 +24,10 @@ import logging
 import importlib
 from pathlib import Path
 
-from nominatim_core.errors import UsageError
-from nominatim_core.db import properties
-from nominatim_core.db.connection import connect
-from nominatim_core.config import Configuration
+from ..errors import UsageError
+from ..db import properties
+from ..db.connection import connect
+from ..config import Configuration
 from ..tokenizer.base import AbstractTokenizer, TokenizerModule
 
 LOG = logging.getLogger()

@@ -11,7 +11,7 @@ import pytest
 import psycopg2.extras
 
 from nominatim_db.tools import migration
-from nominatim_core.errors import UsageError
+from nominatim_db.errors import UsageError
 import nominatim_db.version
 
 from mock_legacy_word_table import MockLegacyWordTable

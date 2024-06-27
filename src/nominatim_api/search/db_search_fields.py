@@ -12,8 +12,8 @@ import dataclasses
 
 import sqlalchemy as sa
 
-from nominatim_core.typing import SaFromClause, SaColumn, SaExpression
-from nominatim_core.utils.json_writer import JsonWriter
+from ..typing import SaFromClause, SaColumn, SaExpression
+from ..utils.json_writer import JsonWriter
 from .query import Token
 from . import db_search_lookups as lookups
 

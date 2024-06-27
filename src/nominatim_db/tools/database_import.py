@@ -17,11 +17,11 @@ from pathlib import Path
 import psutil
 from psycopg2 import sql as pysql
 
-from nominatim_core.errors import UsageError
-from nominatim_core.config import Configuration
-from nominatim_core.db.connection import connect, get_pg_env, Connection
-from nominatim_core.db.async_connection import DBConnection
-from nominatim_core.db.sql_preprocessor import SQLPreprocessor
+from ..errors import UsageError
+from ..config import Configuration
+from ..db.connection import connect, get_pg_env, Connection
+from ..db.async_connection import DBConnection
+from ..db.sql_preprocessor import SQLPreprocessor
 from .exec_utils import run_osm2pgsql
 from ..version import POSTGRESQL_REQUIRED_VERSION, POSTGIS_REQUIRED_VERSION
 

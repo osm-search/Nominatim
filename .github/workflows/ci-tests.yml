@@ -105,12 +105,12 @@ jobs:
 
             - name: Install latest pylint
               run: pip3 install -U pylint
-              if: matrix.flavour != 'oldstuff'
+              if: matrix.flavour == 'ubuntu-22'
 
             - name: Python linting
               run: python3 -m pylint src
               working-directory: Nominatim
-              if: matrix.flavour != 'oldstuff'
+              if: matrix.flavour == 'ubuntu-22'
 
             - name: Python unit tests
               run: python3 -m pytest test/python
@@ -227,15 +227,15 @@ jobs:
 
         strategy:
             matrix:
-                name: [Ubuntu-20, Ubuntu-22]
+                name: [Ubuntu-22, Ubuntu-24]
                 include:
-                    - name: Ubuntu-20
-                      image: "ubuntu:20.04"
-                      ubuntu: 20
-                      install_mode: install-apache
                     - name: Ubuntu-22
                       image: "ubuntu:22.04"
                       ubuntu: 22
+                      install_mode: install-apache
+                    - name: Ubuntu-24
+                      image: "ubuntu:24.04"
+                      ubuntu: 24
                       install_mode: install-apache
 
         container:
@@ -292,6 +292,16 @@ jobs:
                   mkdir data-env-reverse
               working-directory: /home/nominatim
 
+            - name: Add nominatim to path
+              run: |
+                sudo ln -s /home/nominatim/nominatim-venv/bin/nominatim /usr/local/bin/nominatim
+              if: matrix.ubuntu == 24
+
+            - name: Need lua binary
+              run: |
+                sudo apt-get install -y lua5.4 lua-dkjson
+              if: matrix.ubuntu == 24
+
             - name: Print version
               run: nominatim --version
               working-directory: /home/nominatim/nominatim-project
@@ -324,9 +334,18 @@ jobs:
               run: apt-get install -y python3-pip
               shell: bash
 
-            - name: Run update
+            - name: Install osmium (Ubuntu 22)
               run: |
                   pip3 install --user osmium
+              if: matrix.ubuntu == 22
+
+            - name: Install osmium (Ubuntu 24)
+              run: |
+                  /home/nominatim/nominatim-venv/bin/pip install osmium
+              if: matrix.ubuntu == 24
+
+            - name: Run update
+              run: |
                   nominatim replication --init
                   NOMINATIM_REPLICATION_MAX_DIFF=1 nominatim replication --once
               working-directory: /home/nominatim/nominatim-project

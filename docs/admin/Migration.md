@@ -19,7 +19,7 @@ breaking changes. **Please read them before running the migration.**
 
 ### New structure for Python packages
 
-The nominatim Python package has been split into nominatim-db and nominatim-api.
+The nominatim Python package has been split into `nominatim-db` and `nominatim-api`.
 Any imports need to be adapted accordingly.
 
 If you are running the Python frontend, change the server module from

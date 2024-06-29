@@ -67,7 +67,7 @@ fi                                 #DOCS:
 # ---------------------
 #
 # Tune the postgresql configuration, which is located in 
-# `/etc/postgresql/14/main/postgresql.conf`. See section *Tuning the PostgreSQL database*
+# `/etc/postgresql/16/main/postgresql.conf`. See section *Tuning the PostgreSQL database*
 # in [the installation page](../admin/Installation.md#tuning-the-postgresql-database)
 # for the parameters to change.
 #
@@ -124,9 +124,11 @@ fi                                 #DOCS:
 # Nominatim is now ready to use. The nominatim binary is available at
 # `$USERHOME/venv/bin/nominatim`. If you want to have 'nominatim' in your
 # path, simply activate the virtual environment:
-
-    
-
+#
+#DOCS:```sh
+# . $USERHOME/nominatim-venv/bin/activate
+#DOCS:```
+#
 # You can continue with
 # [importing a database from OSM data](../admin/Import.md). If you want to set up
 # the API frontend first, continue reading.
@@ -135,8 +137,8 @@ fi                                 #DOCS:
 # ==============================
 #
 # The Python frontend is contained in the nominatim-api package. To run
-# the API as a webservice, you also need falcon with uvicorn/gunicorn to
-# serve the API.
+# the API as a webservice, you also need falcon with uvicorn to serve the API.
+# It is generally recommended to run falcon/uvicorn on top of gunicorn.
 #
 # To install all packages, run:
 

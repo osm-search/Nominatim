@@ -18,12 +18,12 @@ To use the Nominatim library, you need access to a local Nominatim database.
 Follow the [installation](../admin/Installation.md) and
 [import](../admin/Import.md) instructions to set up your database.
 
-The Nominatim frontend library is contained in the 'nominatim-api' package.
+The Nominatim frontend library is contained in the Python package `nominatim-api`.
 To install the package from the source tree directly, run:
 
     pip install packaging/nominatim-api
 
-Usually, you would want to run this in a virtual environment.
+Usually you would want to run this in a virtual environment.
 
 ### A simple search example
 

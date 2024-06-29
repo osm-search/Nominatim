@@ -4,7 +4,7 @@ This chapter gives an overview how to set up Nominatim for development
 and how to run tests.
 
 !!! Important
-    This guide assumes that you develop under the latest version of Debain/Ubuntu.
+    This guide assumes you develop under the latest version of Debian/Ubuntu.
     You can of course also use your favourite distribution. You just might have
     to adapt the commands below slightly, in particular the commands for
     installing additional software.
@@ -41,8 +41,8 @@ It has the following additional requirements:
 For testing the Python search frontend, you need to install extra dependencies
 depending on your choice of webserver framework:
 
-* [httpx](https://www.python-httpx.org/) (starlette only)
-* [asgi-lifespan](https://github.com/florimondmanca/asgi-lifespan) (starlette only)
+* [httpx](https://www.python-httpx.org/) (Starlette only)
+* [asgi-lifespan](https://github.com/florimondmanca/asgi-lifespan) (Starlette only)
 
 The documentation is built with mkdocs:
 
@@ -106,12 +106,12 @@ be run in-place. The source directory features a special script
 but executes against the code in the source tree. For example:
 
 ```
-me@machine:~$ cd Nomiantim
-me@machine:~Nomiantim$ ./nominatim-cli.py --version
+me@machine:~$ cd Nominatim
+me@machine:~Nominatim$ ./nominatim-cli.py --version
 Nominatim version 4.4.99-1
 ```
 
-Make sure you have activated the virtual environment that holds all
+Make sure you have activated the virtual environment holding all
 necessary dependencies.
 
 ## Executing Tests
@@ -124,7 +124,14 @@ To run all tests, run make from the source root:
 make tests
 ```
 
-There are also goals for executing parts of the test suite: mypy, lint, pytest, bdd.
+There are also make targets for executing only parts of the test suite.
+For example to run linting only use:
+
+```sh
+make lint
+```
+
+The possible testing targets are: mypy, lint, pytest, bdd.
 
 For more information about the structure of the tests and how to change and
 extend the test suite, see the [Testing chapter](Testing.md).

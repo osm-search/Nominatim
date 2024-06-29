@@ -26,8 +26,9 @@ dynamic = ["version"]
 
 [project.urls]
 Homepage = "https://nominatim.org"
-Issues = "https://github.com/osm-search/Nominatim/issues"
 Documentation = "https://nominatim.org/release-docs/latest/"
+Issues = "https://github.com/osm-search/Nominatim/issues"
+Repository = "https://github.com/osm-search/Nominatim"
 
 [build-system]
 requires = ["hatchling"]

@@ -5,7 +5,8 @@ readme = "README.md"
 requires-python = ">=3.7"
 license = 'GPL-3.0-or-later'
 maintainers = [
-  { name = "Sarah Hoffmann", email = "lonvia@denofr.de" }
+  { name = "Sarah Hoffmann", email = "lonvia@denofr.de" },
+  { name = "Marc Tobias", email = "mtmail-cpan@gmx.net" }
 ]
 keywords = [ "geocoding", "OpenStreetMap", "search" ]
 classifiers = [

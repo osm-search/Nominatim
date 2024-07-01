@@ -6,7 +6,7 @@ to instantiate a separate instance for each thread.
 
 ### NominatimAPI
 
-::: nominatim.api.NominatimAPI
+::: nominatim_api.NominatimAPI
     options:
         members:
             - __init__
@@ -25,7 +25,7 @@ to instantiate a separate instance for each thread.
 
 ### NominatimAPIAsync
 
-::: nominatim.api.NominatimAPIAsync
+::: nominatim_api.NominatimAPIAsync
     options:
         members:
             - __init__

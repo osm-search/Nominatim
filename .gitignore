@@ -1,9 +1,12 @@
 *.log
 *.pyc
+*.swp
 
 docs/develop/*.png
 
 build
+dist
+.coverage
 
 .vagrant
 data/country_osm_grid.sql.gz

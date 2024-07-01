@@ -4,8 +4,8 @@ import os
 
 sys.path.insert(1, '@NOMINATIM_LIBDIR@/lib-python')
 
-from nominatim import cli
-from nominatim import version
+from nominatim_db import cli
+from nominatim_db import version
 
 version.GIT_COMMIT_HASH = '@GIT_HASH@'
 

@@ -15,6 +15,22 @@ breaking changes. **Please read them before running the migration.**
     If you are migrating from a version <3.6, then you still have to follow
     the manual migration steps up to 3.6.
 
+## 4.4.0 -> master
+
+### New structure for Python packages
+
+The nominatim Python package has been split into `nominatim-db` and `nominatim-api`.
+Any imports need to be adapted accordingly.
+
+If you are running the Python frontend, change the server module from
+`nominatim.server.falcon.server` to `nominatim_api.server.falcon.server`.
+
+If you are using the Nominatim library, all imports need to be changed
+from `nominatim.api.<module>` to `nominatim_api.<module>`.
+
+If you have written custom tokenizers or sanitizers, the appropriate modules
+are now found in `nominatim_db`.
+
 ## 4.2.0 -> 4.3.0
 
 ### New indexes for reverse lookup

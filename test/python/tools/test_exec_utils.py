@@ -1,8 +1,8 @@
-# SPDX-License-Identifier: GPL-2.0-only
+# SPDX-License-Identifier: GPL-3.0-or-later
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2022 by the Nominatim developer community.
+# Copyright (C) 2024 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for tools.exec_utils module.
@@ -12,12 +12,8 @@ import subprocess
 
 import pytest
 
-from nominatim.config import Configuration
-import nominatim.tools.exec_utils as exec_utils
-import nominatim.paths
-
-
-### run_osm2pgsql
+from nominatim_db.config import Configuration
+import nominatim_db.tools.exec_utils as exec_utils
 
 def test_run_osm2pgsql(osm2pgsql_options):
     osm2pgsql_options['append'] = False

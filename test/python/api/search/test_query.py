@@ -1,16 +1,15 @@
-
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2023 by the Nominatim developer community.
+# Copyright (C) 2024 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Test data types for search queries.
 """
 import pytest
 
-import nominatim.api.search.query as nq
+import nominatim_api.search.query as nq
 
 def test_token_range_equal():
     assert nq.TokenRange(2, 3) == nq.TokenRange(2, 3)

@@ -1,12 +1,12 @@
-# SPDX-License-Identifier: GPL-2.0-only
+# SPDX-License-Identifier: GPL-3.0-or-later
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2022 by the Nominatim developer community.
+# Copyright (C) 2024 by the Nominatim developer community.
 # For a full list of authors see the git log.
 import pytest
 
-import nominatim.cli
+import nominatim_db.cli
 
 class MockParamCapture:
     """ Mock that records the parameters with which a function was called
@@ -51,9 +51,9 @@ def cli_call():
         Returns a function that can be called with the desired CLI arguments.
     """
     def _call_nominatim(*args):
-        return nominatim.cli.nominatim(module_dir='MODULE NOT AVAILABLE',
-                                       osm2pgsql_path='OSM2PGSQL NOT AVAILABLE',
-                                       cli_args=args)
+        return nominatim_db.cli.nominatim(module_dir='MODULE NOT AVAILABLE',
+                                          osm2pgsql_path='OSM2PGSQL NOT AVAILABLE',
+                                          cli_args=args)
 
     return _call_nominatim
 
@@ -72,9 +72,9 @@ def mock_func_factory(monkeypatch):
 @pytest.fixture
 def cli_tokenizer_mock(monkeypatch):
     tok = DummyTokenizer()
-    monkeypatch.setattr(nominatim.tokenizer.factory, 'get_tokenizer_for_db',
+    monkeypatch.setattr(nominatim_db.tokenizer.factory, 'get_tokenizer_for_db',
                         lambda *args: tok)
-    monkeypatch.setattr(nominatim.tokenizer.factory, 'create_tokenizer',
+    monkeypatch.setattr(nominatim_db.tokenizer.factory, 'create_tokenizer',
                         lambda *args: tok)
 
     return tok

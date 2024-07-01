@@ -2,22 +2,22 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2023 by the Nominatim developer community.
+# Copyright (C) 2024 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for export CLI function.
 """
 import pytest
 
-import nominatim.cli
+import nominatim_db.cli
 
 @pytest.fixture
 def run_export(tmp_path, capsys):
     def _exec(args):
-        assert 0 == nominatim.cli.nominatim(module_dir='MODULE NOT AVAILABLE',
-                                            osm2pgsql_path='OSM2PGSQL NOT AVAILABLE',
-                                            cli_args=['export', '--project-dir', str(tmp_path)]
-                                                     + args)
+        assert 0 == nominatim_db.cli.nominatim(module_dir='MODULE NOT AVAILABLE',
+                                               osm2pgsql_path='OSM2PGSQL NOT AVAILABLE',
+                                               cli_args=['export', '--project-dir', str(tmp_path)]
+                                                        + args)
         return capsys.readouterr().out.split('\r\n')
 
     return _exec

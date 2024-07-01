@@ -1,6 +1,6 @@
 # Deploying the Nominatim Python frontend
 
-The Nominatim can be run as a Python-based 
+Nominatim can be run as a Python-based
 [ASGI web application](https://asgi.readthedocs.io/en/latest/). You have the
 choice between [Falcon](https://falcon.readthedocs.io/en/stable/)
 and [Starlette](https://www.starlette.io/) as the ASGI framework.
@@ -12,30 +12,39 @@ to configure it.
 
 !!! Note
     Throughout this page, we assume your Nominatim project directory is
-    located in `/srv/nominatim-project` and you have installed Nominatim
-    using the default installation prefix `/usr/local`. If you have put it
-    somewhere else, you need to adjust the commands and configuration
-    accordingly.
+    located in `/srv/nominatim-project`. If you have put it somewhere else,
+    you need to adjust the commands and configuration accordingly.
 
-    We further assume that your web server runs as user `www-data`. Older
-    versions of CentOS may still use the user name `apache`. You also need
-    to adapt the instructions in this case.
 
 ### Installing the required packages
+
+The Nominatim frontend is best run from its own virtual environment. If
+you have already created one for the database backend during
+[installation](Installation.md#Building-Nominatim), you can use that. Otherwise
+create one now with:
+
+```sh
+sudo apt-get install virtualenv
+virtualenv /srv/nominatim-venv
+```
+
+The Nominatim frontend is contained in the 'nominatim-api' package. To
+install directly from the source tree run:
+
+```sh
+cd Nominatim
+/srv/nominatim-venv/bin/pip install packaging/nominatim-api
+```
 
 The recommended way to deploy a Python ASGI application is to run
 the ASGI runner [uvicorn](https://uvicorn.org/)
 together with [gunicorn](https://gunicorn.org/) HTTP server. We use
 Falcon here as the web framework.
 
-Create a virtual environment for the Python packages and install the necessary
-dependencies:
+Add the necessary packages to your virtual environment:
 
 ``` sh
-sudo apt install virtualenv
-virtualenv /srv/nominatim-venv
-/srv/nominatim-venv/bin/pip install SQLAlchemy PyICU psycopg[binary] \
-   psycopg2-binary python-dotenv PyYAML falcon uvicorn gunicorn
+/srv/nominatim-venv/bin/pip install falcon uvicorn gunicorn
 ```
 
 ### Setting up Nominatim as a systemd job
@@ -69,11 +78,10 @@ Requires=nominatim.socket
 
 [Service]
 Type=simple
-Environment="PYTHONPATH=/usr/local/lib/nominatim/lib-python/"
 User=www-data
 Group=www-data
 WorkingDirectory=/srv/nominatim-project
-ExecStart=/srv/nominatim-venv/bin/gunicorn -b unix:/run/nominatim.sock -w 4 -k uvicorn.workers.UvicornWorker nominatim.server.falcon.server:run_wsgi
+ExecStart=/srv/nominatim-venv/bin/gunicorn -b unix:/run/nominatim.sock -w 4 -k uvicorn.workers.UvicornWorker nominatim_api.server.falcon.server:run_wsgi
 ExecReload=/bin/kill -s HUP $MAINPID
 StandardOutput=append:/var/log/gunicorn-nominatim.log
 StandardError=inherit

@@ -5,26 +5,26 @@ in the query functions of the API object.
 
 ## Place identification
 
-The [details](NominatimAPI.md#nominatim.api.core.NominatimAPI.details) and
-[lookup](NominatimAPI.md#nominatim.api.core.NominatimAPI.lookup) functions
+The [details](NominatimAPI.md#nominatim_api.core.NominatimAPI.details) and
+[lookup](NominatimAPI.md#nominatim_api.core.NominatimAPI.lookup) functions
 require references to places in the database. Below the possible
 types for place identification are listed. All types are dataclasses.
 
 ### PlaceID
 
-::: nominatim.api.PlaceID
+::: nominatim_api.PlaceID
     options:
         heading_level: 6
 
 ### OsmID
 
-::: nominatim.api.OsmID
+::: nominatim_api.OsmID
     options:
         heading_level: 6
 
 ## Geometry types
 
-::: nominatim.api.GeometryFormat
+::: nominatim_api.GeometryFormat
     options:
         heading_level: 6
         members_order: source
@@ -33,14 +33,14 @@ types for place identification are listed. All types are dataclasses.
 
 ### Point
 
-::: nominatim.api.Point
+::: nominatim_api.Point
     options:
         heading_level: 6
         show_signature_annotations: True
 
 ### Bbox
 
-::: nominatim.api.Bbox
+::: nominatim_api.Bbox
     options:
         heading_level: 6
         show_signature_annotations: True
@@ -54,9 +54,7 @@ orthogonal to restriction by address ranks, which groups places by their
 geographic extent.
 
 
-::: nominatim.api.DataLayer
+::: nominatim_api.DataLayer
     options:
         heading_level: 6
         members_order: source
-
-

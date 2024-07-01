@@ -1,15 +1,15 @@
-# SPDX-License-Identifier: GPL-2.0-only
+# SPDX-License-Identifier: GPL-3.0-or-later
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2022 by the Nominatim developer community.
+# Copyright (C) 2024 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for creating PL/pgSQL functions for Nominatim.
 """
 import pytest
 
-from nominatim.tools.refresh import create_functions
+from nominatim_db.tools.refresh import create_functions
 
 class TestCreateFunctions:
     @pytest.fixture(autouse=True)

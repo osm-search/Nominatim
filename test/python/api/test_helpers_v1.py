@@ -2,14 +2,14 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2023 by the Nominatim developer community.
+# Copyright (C) 2024 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for the helper functions for v1 API.
 """
 import pytest
 
-import nominatim.api.v1.helpers as helper
+import nominatim_api.v1.helpers as helper
 
 @pytest.mark.parametrize('inp', ['',
                                  'abc',

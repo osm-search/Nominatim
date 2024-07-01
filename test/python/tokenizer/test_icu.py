@@ -1,8 +1,8 @@
-# SPDX-License-Identifier: GPL-2.0-only
+# SPDX-License-Identifier: GPL-3.0-or-later
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2022 by the Nominatim developer community.
+# Copyright (C) 2024 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for ICU tokenizer.
@@ -12,11 +12,11 @@ import itertools
 
 import pytest
 
-from nominatim.tokenizer import icu_tokenizer
-import nominatim.tokenizer.icu_rule_loader
-from nominatim.db import properties
-from nominatim.db.sql_preprocessor import SQLPreprocessor
-from nominatim.data.place_info import PlaceInfo
+from nominatim_db.tokenizer import icu_tokenizer
+import nominatim_db.tokenizer.icu_rule_loader
+from nominatim_db.db import properties
+from nominatim_db.db.sql_preprocessor import SQLPreprocessor
+from nominatim_db.data.place_info import PlaceInfo
 
 from mock_icu_word_table import MockIcuWordTable
 
@@ -83,7 +83,7 @@ def analyzer(tokenizer_factory, test_config, monkeypatch,
             cfgstr['token-analysis'].append({'id': '@postcode',
                                              'analyzer': 'postcodes'})
         (test_config.project_dir / 'icu_tokenizer.yaml').write_text(yaml.dump(cfgstr))
-        tok.loader = nominatim.tokenizer.icu_rule_loader.ICURuleLoader(test_config)
+        tok.loader = nominatim_db.tokenizer.icu_rule_loader.ICURuleLoader(test_config)
 
         return tok.name_analyzer()
 
@@ -157,7 +157,7 @@ def test_init_new(tokenizer_factory, test_config, db_prop):
     tok = tokenizer_factory()
     tok.init_new_db(test_config)
 
-    assert db_prop(nominatim.tokenizer.icu_rule_loader.DBCFG_IMPORT_NORM_RULES) \
+    assert db_prop(nominatim_db.tokenizer.icu_rule_loader.DBCFG_IMPORT_NORM_RULES) \
             .startswith(':: lower ();')
 
 

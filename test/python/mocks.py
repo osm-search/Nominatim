@@ -1,8 +1,8 @@
-# SPDX-License-Identifier: GPL-2.0-only
+# SPDX-License-Identifier: GPL-3.0-or-later
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2022 by the Nominatim developer community.
+# Copyright (C) 2024 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Custom mocks for testing.
@@ -11,7 +11,7 @@ import itertools
 
 import psycopg2.extras
 
-from nominatim.db import properties
+from nominatim_db.db import properties
 
 # This must always point to the mock word table for the default tokenizer.
 from mock_icu_word_table import MockIcuWordTable as MockWordTable

@@ -1,16 +1,16 @@
-# SPDX-License-Identifier: GPL-2.0-only
+# SPDX-License-Identifier: GPL-3.0-or-later
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2022 by the Nominatim developer community.
+# Copyright (C) 2024 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for sanitizer configuration helper functions.
 """
 import pytest
 
-from nominatim.errors import UsageError
-from nominatim.tokenizer.sanitizers.config import SanitizerConfig
+from nominatim_db.errors import UsageError
+from nominatim_db.tokenizer.sanitizers.config import SanitizerConfig
 
 def test_string_list_default_empty():
     assert SanitizerConfig().get_string_list('op') == []

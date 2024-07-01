@@ -1,14 +1,14 @@
-# SPDX-License-Identifier: GPL-2.0-only
+# SPDX-License-Identifier: GPL-3.0-or-later
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2022 by the Nominatim developer community.
+# Copyright (C) 2024 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
     Tests for methods of the SPWikiLoader class.
 """
 import pytest
-from nominatim.tools.special_phrases.sp_wiki_loader import SPWikiLoader
+from nominatim_db.tools.special_phrases.sp_wiki_loader import SPWikiLoader
 
 
 @pytest.fixture
@@ -23,7 +23,7 @@ def sp_wiki_loader(src_dir, monkeypatch, def_config):
         xml_test_content = src_dir / 'test' / 'testdata' / 'special_phrases_test_content.txt'
         return xml_test_content.read_text()
 
-    monkeypatch.setattr('nominatim.tools.special_phrases.sp_wiki_loader._get_wiki_content',
+    monkeypatch.setattr('nominatim_db.tools.special_phrases.sp_wiki_loader._get_wiki_content',
                         _mock_wiki_content)
     return loader
 

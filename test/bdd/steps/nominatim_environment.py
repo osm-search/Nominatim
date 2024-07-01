@@ -1,8 +1,8 @@
-# SPDX-License-Identifier: GPL-2.0-only
+# SPDX-License-Identifier: GPL-3.0-or-later
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2022 by the Nominatim developer community.
+# Copyright (C) 2024 by the Nominatim developer community.
 # For a full list of authors see the git log.
 from pathlib import Path
 import importlib
@@ -12,13 +12,13 @@ import tempfile
 import psycopg2
 import psycopg2.extras
 
-sys.path.insert(1, str((Path(__file__) / '..' / '..' / '..' / '..').resolve()))
+sys.path.insert(1, str((Path(__file__) / '..' / '..' / '..' / '..'/ 'src').resolve()))
 
-from nominatim import cli
-from nominatim.config import Configuration
-from nominatim.db.connection import Connection
-from nominatim.tools import refresh
-from nominatim.tokenizer import factory as tokenizer_factory
+from nominatim_db import cli
+from nominatim_db.config import Configuration
+from nominatim_db.db.connection import Connection
+from nominatim_db.tools import refresh
+from nominatim_db.tokenizer import factory as tokenizer_factory
 from steps.utils import run_script
 
 class NominatimEnvironment:
@@ -338,12 +338,12 @@ class NominatimEnvironment:
 
 
     def create_api_request_func_starlette(self):
-        import nominatim.server.starlette.server
+        import nominatim_api.server.starlette.server
         from asgi_lifespan import LifespanManager
         import httpx
 
         async def _request(endpoint, params, project_dir, environ, http_headers):
-            app = nominatim.server.starlette.server.get_application(project_dir, environ)
+            app = nominatim_api.server.starlette.server.get_application(project_dir, environ)
 
             async with LifespanManager(app):
                 async with httpx.AsyncClient(app=app, base_url="http://nominatim.test") as client:
@@ -356,11 +356,11 @@ class NominatimEnvironment:
 
 
     def create_api_request_func_falcon(self):
-        import nominatim.server.falcon.server
+        import nominatim_api.server.falcon.server
         import falcon.testing
 
         async def _request(endpoint, params, project_dir, environ, http_headers):
-            app = nominatim.server.falcon.server.get_application(project_dir, environ)
+            app = nominatim_api.server.falcon.server.get_application(project_dir, environ)
 
             async with falcon.testing.ASGIConductor(app) as conductor:
                 response = await conductor.get(f"/{endpoint}", params=params,

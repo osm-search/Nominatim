@@ -2,15 +2,15 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2023 by the Nominatim developer community.
+# Copyright (C) 2024 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Provides dummy implementations of ASGIAdaptor for testing.
 """
 from collections import namedtuple
 
-import nominatim.api.v1.server_glue as glue
-from nominatim.config import Configuration
+import nominatim_api.v1.server_glue as glue
+from nominatim_api.config import Configuration
 
 class FakeError(BaseException):
 

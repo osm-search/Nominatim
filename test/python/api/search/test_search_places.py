@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2023 by the Nominatim developer community.
+# Copyright (C) 2024 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for running the generic place searcher.
@@ -11,12 +11,12 @@ import json
 
 import pytest
 
-import nominatim.api as napi
-from nominatim.api.types import SearchDetails
-from nominatim.api.search.db_searches import PlaceSearch
-from nominatim.api.search.db_search_fields import WeightedStrings, WeightedCategories,\
+import nominatim_api as napi
+from nominatim_api.types import SearchDetails
+from nominatim_api.search.db_searches import PlaceSearch
+from nominatim_api.search.db_search_fields import WeightedStrings, WeightedCategories,\
                                                   FieldLookup, FieldRanking, RankedTokens
-from nominatim.api.search.db_search_lookups import LookupAll, LookupAny, Restrict
+from nominatim_api.search.db_search_lookups import LookupAll, LookupAny, Restrict
 
 APIOPTIONS = ['search']
 

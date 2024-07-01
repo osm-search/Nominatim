@@ -1,17 +1,17 @@
-# SPDX-License-Identifier: GPL-2.0-only
+# SPDX-License-Identifier: GPL-3.0-or-later
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2022 by the Nominatim developer community.
+# Copyright (C) 2024 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for the sanitizer that normalizes postcodes.
 """
 import pytest
 
-from nominatim.tokenizer.place_sanitizer import PlaceSanitizer
-from nominatim.data.place_info import PlaceInfo
-from nominatim.data import country_info
+from nominatim_db.tokenizer.place_sanitizer import PlaceSanitizer
+from nominatim_db.data.place_info import PlaceInfo
+from nominatim_db.data import country_info
 
 @pytest.fixture
 def sanitize(def_config, request):

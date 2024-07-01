@@ -1,17 +1,17 @@
-# SPDX-License-Identifier: GPL-2.0-only
+# SPDX-License-Identifier: GPL-3.0-or-later
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2022 by the Nominatim developer community.
+# Copyright (C) 2024 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for execution of the sanitztion step.
 """
 import pytest
 
-from nominatim.errors import UsageError
-import nominatim.tokenizer.place_sanitizer as sanitizer
-from nominatim.data.place_info import PlaceInfo
+from nominatim_db.errors import UsageError
+import nominatim_db.tokenizer.place_sanitizer as sanitizer
+from nominatim_db.data.place_info import PlaceInfo
 
 
 def test_placeinfo_clone_new_name():

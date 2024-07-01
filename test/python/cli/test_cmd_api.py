@@ -1,8 +1,8 @@
-# SPDX-License-Identifier: GPL-2.0-only
+# SPDX-License-Identifier: GPL-3.0-or-later
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2023 by the Nominatim developer community.
+# Copyright (C) 2024 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for API access commands of command-line interface wrapper.
@@ -10,8 +10,8 @@ Tests for API access commands of command-line interface wrapper.
 import json
 import pytest
 
-import nominatim.clicmd.api
-import nominatim.api as napi
+import nominatim_db.clicmd.api
+import nominatim_api as napi
 
 
 class TestCliStatusCall:

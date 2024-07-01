@@ -2,10 +2,10 @@
 import sys
 import os
 
-sys.path.insert(1, '@CMAKE_SOURCE_DIR@')
+sys.path.insert(1, '@CMAKE_SOURCE_DIR@/src')
 
-from nominatim import cli
-from nominatim import version
+from nominatim_db import cli
+from nominatim_db import version
 
 version.GIT_COMMIT_HASH = '@GIT_HASH@'
 

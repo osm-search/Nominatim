@@ -52,7 +52,7 @@ the function.
 
 ### Sanitizer configuration
 
-::: nominatim.tokenizer.sanitizers.config.SanitizerConfig
+::: nominatim_db.tokenizer.sanitizers.config.SanitizerConfig
     options:
         heading_level: 6
 
@@ -73,14 +73,14 @@ adding extra attributes) or completely replace the list with a different one.
 
 #### PlaceInfo - information about the place
 
-::: nominatim.data.place_info.PlaceInfo
+::: nominatim_db.data.place_info.PlaceInfo
     options:
         heading_level: 6
 
 
 #### PlaceName - extended naming information
 
-::: nominatim.data.place_name.PlaceName
+::: nominatim_db.data.place_name.PlaceName
     options:
         heading_level: 6
 
@@ -139,12 +139,12 @@ They can be found in the directory
 
 ## Custom token analysis module
 
-::: nominatim.tokenizer.token_analysis.base.AnalysisModule
+::: nominatim_db.tokenizer.token_analysis.base.AnalysisModule
     options:
         heading_level: 6
 
 
-::: nominatim.tokenizer.token_analysis.base.Analyzer
+::: nominatim_db.tokenizer.token_analysis.base.Analyzer
     options:
         heading_level: 6
 

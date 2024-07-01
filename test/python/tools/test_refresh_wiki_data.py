@@ -12,7 +12,7 @@ import csv
 
 import pytest
 
-from nominatim.tools.refresh import import_wikipedia_articles, recompute_importance, create_functions
+from nominatim_db.tools.refresh import import_wikipedia_articles, recompute_importance, create_functions
 
 @pytest.fixture
 def wiki_csv(tmp_path, sql_preprocessor):

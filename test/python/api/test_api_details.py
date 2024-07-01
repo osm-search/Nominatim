@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2023 by the Nominatim developer community.
+# Copyright (C) 2024 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for details API call.
@@ -11,7 +11,7 @@ import datetime as dt
 
 import pytest
 
-import nominatim.api as napi
+import nominatim_api as napi
 
 @pytest.mark.parametrize('idobj', (napi.PlaceID(332), napi.OsmID('W', 4),
                                    napi.OsmID('W', 4, 'highway')))

@@ -2,14 +2,14 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2023 by the Nominatim developer community.
+# Copyright (C) 2024 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Test functions for adapting results to the user's locale.
 """
 import pytest
 
-from nominatim.api import Locales
+from nominatim_api import Locales
 
 def test_display_name_empty_names():
     l = Locales(['en', 'de'])

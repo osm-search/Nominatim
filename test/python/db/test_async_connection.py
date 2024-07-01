@@ -1,8 +1,8 @@
-# SPDX-License-Identifier: GPL-2.0-only
+# SPDX-License-Identifier: GPL-3.0-or-later
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2022 by the Nominatim developer community.
+# Copyright (C) 2024 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for function providing a non-blocking query interface towards PostgreSQL.
@@ -13,7 +13,7 @@ import concurrent.futures
 import pytest
 import psycopg2
 
-from nominatim.db.async_connection import DBConnection, DeadlockHandler
+from nominatim_db.db.async_connection import DBConnection, DeadlockHandler
 
 
 @pytest.fixture

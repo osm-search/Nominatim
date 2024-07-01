@@ -1,8 +1,8 @@
-# SPDX-License-Identifier: GPL-2.0-only
+# SPDX-License-Identifier: GPL-3.0-or-later
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2022 by the Nominatim developer community.
+# Copyright (C) 2024 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for functions to maintain the artificial postcode table.
@@ -11,8 +11,8 @@ import subprocess
 
 import pytest
 
-from nominatim.tools import postcodes
-from nominatim.data import country_info
+from nominatim_db.tools import postcodes
+from nominatim_db.data import country_info
 import dummy_tokenizer
 
 class MockPostcodeTable:

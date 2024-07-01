@@ -4,8 +4,8 @@ This page contains generic installation instructions for Nominatim and its
 prerequisites. There are also step-by-step instructions available for
 the following operating systems:
 
+  * [Ubuntu 24.04](../appendix/Install-on-Ubuntu-24.md)
   * [Ubuntu 22.04](../appendix/Install-on-Ubuntu-22.md)
-  * [Ubuntu 20.04](../appendix/Install-on-Ubuntu-20.md)
 
 These OS-specific instructions can also be found in executable form
 in the `vagrant/` directory.
@@ -27,7 +27,30 @@ and can't offer support.
     otherwise import and queries will be slow to the point of being unusable.
     Query performance has marked improvements with PostgreSQL 13+ and PostGIS 3.2+.
 
-For compiling:
+For running Nominatim:
+
+  * [PostgreSQL](https://www.postgresql.org) (9.6+ will work, 11+ strongly recommended)
+  * [PostGIS](https://postgis.net) (2.2+ will work, 3.0+ strongly recommended)
+  * [osm2pgsql](https://osm2pgsql.org) (1.8+, optional when building with CMake)
+  * [Python 3](https://www.python.org/) (3.7+)
+
+Furthermore the following Python libraries are required:
+
+  * [Psycopg2](https://www.psycopg.org) (2.7+)
+  * [Python Dotenv](https://github.com/theskumar/python-dotenv)
+  * [psutil](https://github.com/giampaolo/psutil)
+  * [Jinja2](https://palletsprojects.com/p/jinja/)
+  * [SQLAlchemy](https://www.sqlalchemy.org/) (1.4.31+ with greenlet support)
+  * one of
+    * [psycopg3](https://www.psycopg.org)
+    * [asyncpg](https://magicstack.github.io/asyncpg) (0.8+)
+  * [PyICU](https://pypi.org/project/PyICU/)
+  * [PyYaml](https://pyyaml.org/) (5.1+)
+  * [datrie](https://github.com/pytries/datrie)
+
+These will be installed automatically, when using pip installation.
+
+When using legacy CMake-based installation:
 
   * [cmake](https://cmake.org/)
   * [expat](https://libexpat.github.io/)
@@ -36,24 +59,9 @@ For compiling:
   * [zlib](https://www.zlib.net/)
   * [ICU](http://site.icu-project.org/)
   * [nlohmann/json](https://json.nlohmann.me/)
-  * [Boost libraries](https://www.boost.org/), including system and filesystem
+  * [Boost libraries](https://www.boost.org/), including system and file system
   * PostgreSQL client libraries
   * a recent C++ compiler (gcc 5+ or Clang 3.8+)
-
-For running Nominatim:
-
-  * [PostgreSQL](https://www.postgresql.org) (9.6+ will work, 11+ strongly recommended)
-  * [PostGIS](https://postgis.net) (2.2+ will work, 3.0+ strongly recommended)
-  * [Python 3](https://www.python.org/) (3.7+)
-  * [Psycopg2](https://www.psycopg.org) (2.7+)
-  * [Python Dotenv](https://github.com/theskumar/python-dotenv)
-  * [psutil](https://github.com/giampaolo/psutil)
-  * [Jinja2](https://palletsprojects.com/p/jinja/)
-  * [SQLAlchemy](https://www.sqlalchemy.org/) (1.4.31+ with greenlet support)
-  * [asyncpg](https://magicstack.github.io/asyncpg) (0.8+)
-  * [PyICU](https://pypi.org/project/PyICU/)
-  * [PyYaml](https://pyyaml.org/) (5.1+)
-  * [datrie](https://github.com/pytries/datrie)
 
 For running continuous updates:
 
@@ -87,7 +95,7 @@ Take into account that the OSM database is growing fast.
 Fast disks are essential. Using NVME disks is recommended.
 
 Even on a well configured machine the import of a full planet takes
-around 2 days. When using traditional SSDs, 4-5 days are more realistic.
+around 2.5 days. When using traditional SSDs, 4-5 days are more realistic.
 
 ## Tuning the PostgreSQL database
 
@@ -99,14 +107,16 @@ your `postgresql.conf` file.
     maintenance_work_mem = (10GB)
     autovacuum_work_mem = 2GB
     work_mem = (50MB)
-    effective_cache_size = (24GB)
     synchronous_commit = off
     max_wal_size = 1GB
-    checkpoint_timeout = 10min
+    checkpoint_timeout = 60min
     checkpoint_completion_target = 0.9
+    random_page_cost = 1.0
+    wal_level = minimal
+    max_wal_senders = 0
 
 The numbers in brackets behind some parameters seem to work fine for
-64GB RAM machine. Adjust to your setup. A higher number for `max_wal_size`
+128GB RAM machine. Adjust to your setup. A higher number for `max_wal_size`
 means that PostgreSQL needs to run checkpoints less often but it does require
 the additional space on your disk.
 
@@ -142,6 +152,23 @@ wget -O Nominatim/data/country_osm_grid.sql.gz https://nominatim.org/data/countr
 ```
 
 ### Building Nominatim
+
+#### Building the latest development version with pip
+
+Nominatim is easiest to run from its own virtual environment. To create one, run:
+
+    sudo apt-get install virtualenv
+    virtualenv /srv/nominatim-venv
+
+To install Nominatim directly from the source tree into the virtual environment, run:
+
+    /srv/nominatim-venv/bin/pip install packaging/nominatim-{db,api}
+
+#### Building in legacy CMake mode
+
+!!! warning
+    Installing Nominatim through CMake is now deprecated. The infrastructure
+    will be removed in Nominatim 5.0. Please switch to pip installation.
 
 The code must be built in a separate directory. Create the directory and
 change into it.

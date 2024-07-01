@@ -1,8 +1,8 @@
-# SPDX-License-Identifier: GPL-2.0-only
+# SPDX-License-Identifier: GPL-3.0-or-later
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2022 by the Nominatim developer community.
+# Copyright (C) 2024 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for migration functions
@@ -10,9 +10,9 @@ Tests for migration functions
 import pytest
 import psycopg2.extras
 
-from nominatim.tools import migration
-from nominatim.errors import UsageError
-import nominatim.version
+from nominatim_db.tools import migration
+from nominatim_db.errors import UsageError
+import nominatim_db.version
 
 from mock_legacy_word_table import MockLegacyWordTable
 
@@ -66,17 +66,17 @@ def test_set_up_migration_for_36(temp_db_with_extensions, temp_db_cursor,
 def test_already_at_version(def_config, property_table):
 
     property_table.set('database_version',
-                       '{0[0]}.{0[1]}.{0[2]}-{0[3]}'.format(nominatim.version.NOMINATIM_VERSION))
+                       str(nominatim_db.version.NOMINATIM_VERSION))
 
     assert migration.migrate(def_config, {}) == 0
 
 
 def test_run_single_migration(def_config, temp_db_cursor, property_table,
                               monkeypatch, postprocess_mock):
-    oldversion = [x for x in nominatim.version.NOMINATIM_VERSION]
+    oldversion = [x for x in nominatim_db.version.NOMINATIM_VERSION]
     oldversion[0] -= 1
     property_table.set('database_version',
-                       '{0[0]}.{0[1]}.{0[2]}-{0[3]}'.format(oldversion))
+                       str(nominatim_db.version.NominatimVersion(*oldversion)))
 
     done = {'old': False, 'new': False}
     def _migration(**_):
@@ -90,14 +90,13 @@ def test_run_single_migration(def_config, temp_db_cursor, property_table,
     oldversion[0] = 0
     monkeypatch.setattr(migration, '_MIGRATION_FUNCTIONS',
                         [(tuple(oldversion), _old_migration),
-                         (nominatim.version.NOMINATIM_VERSION, _migration)])
+                         (nominatim_db.version.NOMINATIM_VERSION, _migration)])
 
     assert migration.migrate(def_config, {}) == 0
 
     assert done['new']
     assert not done['old']
-    assert property_table.get('database_version') == \
-           '{0[0]}.{0[1]}.{0[2]}-{0[3]}'.format(nominatim.version.NOMINATIM_VERSION)
+    assert property_table.get('database_version') == str(nominatim_db.version.NOMINATIM_VERSION)
 
 
 ###### Tests for specific migrations

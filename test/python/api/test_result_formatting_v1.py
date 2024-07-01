@@ -1,8 +1,8 @@
-# SPDX-License-Identifier: GPL-2.0-only
+# SPDX-License-Identifier: GPL-3.0-or-later
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2023 by the Nominatim developer community.
+# Copyright (C) 2024 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for formatting results for the V1 API.
@@ -15,9 +15,8 @@ import json
 
 import pytest
 
-import nominatim.api.v1 as api_impl
-import nominatim.api as napi
-from nominatim.version import NOMINATIM_VERSION
+import nominatim_api.v1 as api_impl
+import nominatim_api as napi
 
 STATUS_FORMATS = {'text', 'json'}
 
@@ -49,7 +48,8 @@ def test_status_format_json_minimal():
 
     result = api_impl.format_result(status, 'json', {})
 
-    assert result == '{"status":700,"message":"Bad format.","software_version":"%s"}' % (NOMINATIM_VERSION, )
+    assert result == \
+           f'{{"status":700,"message":"Bad format.","software_version":"{napi.__version__}"}}'
 
 
 def test_status_format_json_full():
@@ -59,7 +59,8 @@ def test_status_format_json_full():
 
     result = api_impl.format_result(status, 'json', {})
 
-    assert result == '{"status":0,"message":"OK","data_updated":"2010-02-07T20:20:03+00:00","software_version":"%s","database_version":"5.6"}' % (NOMINATIM_VERSION, )
+    assert result == \
+           f'{{"status":0,"message":"OK","data_updated":"2010-02-07T20:20:03+00:00","software_version":"{napi.__version__}","database_version":"5.6"}}'
 
 
 # DetailedResult

@@ -69,28 +69,28 @@ Vagrant.configure("2") do |config|
       end
   end
 
-  config.vm.define "ubuntu20" do |sub|
-      sub.vm.box = "generic/ubuntu2004"
+  config.vm.define "ubuntu24" do |sub|
+      sub.vm.box = "bento/ubuntu-24.04"
       sub.vm.provision :shell do |s|
-        s.path = "vagrant/Install-on-Ubuntu-20.sh"
+        s.path = "vagrant/Install-on-Ubuntu-24.sh"
         s.privileged = false
         s.args = [checkout]
       end
   end
 
-  config.vm.define "ubuntu20-apache" do |sub|
-      sub.vm.box = "generic/ubuntu2004"
+  config.vm.define "ubuntu24-apache" do |sub|
+      sub.vm.box = "bento/ubuntu-24.04"
       sub.vm.provision :shell do |s|
-        s.path = "vagrant/Install-on-Ubuntu-20.sh"
+        s.path = "vagrant/Install-on-Ubuntu-24.sh"
         s.privileged = false
         s.args = [checkout, "install-apache"]
       end
   end
 
-  config.vm.define "ubuntu20-nginx" do |sub|
-      sub.vm.box = "generic/ubuntu2004"
+  config.vm.define "ubuntu24-nginx" do |sub|
+      sub.vm.box = "bento/ubuntu-24.04"
       sub.vm.provision :shell do |s|
-        s.path = "vagrant/Install-on-Ubuntu-20.sh"
+        s.path = "vagrant/Install-on-Ubuntu-24.sh"
         s.privileged = false
         s.args = [checkout, "install-nginx"]
       end

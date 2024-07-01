@@ -1,8 +1,8 @@
-# SPDX-License-Identifier: GPL-2.0-only
+# SPDX-License-Identifier: GPL-3.0-or-later
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2022 by the Nominatim developer community.
+# Copyright (C) 2023 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for replication command of command-line interface wrapper.
@@ -12,11 +12,11 @@ import time
 
 import pytest
 
-import nominatim.cli
-import nominatim.indexer.indexer
-import nominatim.tools.replication
-import nominatim.tools.refresh
-from nominatim.db import status
+import nominatim_db.cli
+import nominatim_db.indexer.indexer
+import nominatim_db.tools.replication
+import nominatim_db.tools.refresh
+from nominatim_db.db import status
 
 @pytest.fixture
 def tokenizer_mock(monkeypatch):
@@ -32,9 +32,9 @@ def tokenizer_mock(monkeypatch):
             self.finalize_import_called = True
 
     tok = DummyTokenizer()
-    monkeypatch.setattr(nominatim.tokenizer.factory, 'get_tokenizer_for_db',
+    monkeypatch.setattr(nominatim_db.tokenizer.factory, 'get_tokenizer_for_db',
                         lambda *args: tok)
-    monkeypatch.setattr(nominatim.tokenizer.factory, 'create_tokenizer',
+    monkeypatch.setattr(nominatim_db.tokenizer.factory, 'create_tokenizer',
                         lambda *args: tok)
 
     return tok
@@ -48,12 +48,12 @@ def init_status(temp_db_conn, status_table):
 
 @pytest.fixture
 def index_mock(mock_func_factory, tokenizer_mock, init_status):
-    return mock_func_factory(nominatim.indexer.indexer.Indexer, 'index_full')
+    return mock_func_factory(nominatim_db.indexer.indexer.Indexer, 'index_full')
 
 
 @pytest.fixture
 def update_mock(mock_func_factory, init_status, tokenizer_mock):
-    return mock_func_factory(nominatim.tools.replication, 'update')
+    return mock_func_factory(nominatim_db.tools.replication, 'update')
 
 
 class TestCliReplication:
@@ -66,7 +66,7 @@ class TestCliReplication:
     @pytest.fixture(autouse=True)
     def setup_update_function(self, monkeypatch):
         def _mock_updates(states):
-            monkeypatch.setattr(nominatim.tools.replication, 'update',
+            monkeypatch.setattr(nominatim_db.tools.replication, 'update',
                             lambda *args, **kwargs: states.pop())
 
         self.update_states = _mock_updates
@@ -78,10 +78,10 @@ class TestCliReplication:
                              (('--check-for-updates',), 'check_for_updates')
                              ])
     def test_replication_command(self, mock_func_factory, params, func):
-        func_mock = mock_func_factory(nominatim.tools.replication, func)
+        func_mock = mock_func_factory(nominatim_db.tools.replication, func)
 
         if params == ('--init',):
-            umock = mock_func_factory(nominatim.tools.refresh, 'create_functions')
+            umock = mock_func_factory(nominatim_db.tools.refresh, 'create_functions')
 
         assert self.call_nominatim(*params) == 0
         assert func_mock.called == 1
@@ -121,7 +121,7 @@ class TestCliReplication:
     @pytest.mark.parametrize("update_interval", [60, 3600])
     def test_replication_catchup(self, placex_table, monkeypatch, index_mock, update_interval):
         monkeypatch.setenv('NOMINATIM_REPLICATION_UPDATE_INTERVAL', str(update_interval))
-        self.update_states([nominatim.tools.replication.UpdateState.NO_CHANGES])
+        self.update_states([nominatim_db.tools.replication.UpdateState.NO_CHANGES])
 
         assert self.call_nominatim('--catch-up') == 0
 
@@ -133,8 +133,8 @@ class TestCliReplication:
 
 
     def test_replication_update_continuous(self, index_mock):
-        self.update_states([nominatim.tools.replication.UpdateState.UP_TO_DATE,
-                            nominatim.tools.replication.UpdateState.UP_TO_DATE])
+        self.update_states([nominatim_db.tools.replication.UpdateState.UP_TO_DATE,
+                            nominatim_db.tools.replication.UpdateState.UP_TO_DATE])
 
         with pytest.raises(IndexError):
             self.call_nominatim()
@@ -144,8 +144,8 @@ class TestCliReplication:
 
     def test_replication_update_continuous_no_change(self, mock_func_factory,
                                                      index_mock):
-        self.update_states([nominatim.tools.replication.UpdateState.NO_CHANGES,
-                            nominatim.tools.replication.UpdateState.UP_TO_DATE])
+        self.update_states([nominatim_db.tools.replication.UpdateState.NO_CHANGES,
+                            nominatim_db.tools.replication.UpdateState.UP_TO_DATE])
 
         sleep_mock = mock_func_factory(time, 'sleep')
 

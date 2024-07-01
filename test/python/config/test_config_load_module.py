@@ -1,8 +1,8 @@
-# SPDX-License-Identifier: GPL-2.0-only
+# SPDX-License-Identifier: GPL-3.0-or-later
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2022 by the Nominatim developer community.
+# Copyright (C) 2024 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Test for loading extra Python modules.
@@ -12,7 +12,7 @@ import sys
 
 import pytest
 
-from nominatim.config import Configuration
+from nominatim_db.config import Configuration
 
 @pytest.fixture
 def test_config(src_dir, tmp_path):
@@ -27,12 +27,12 @@ def test_config(src_dir, tmp_path):
 
 
 def test_load_default_module(test_config):
-    module = test_config.load_plugin_module('version', 'nominatim')
+    module = test_config.load_plugin_module('version', 'nominatim_db')
 
     assert isinstance(module.NOMINATIM_VERSION, tuple)
 
 def test_load_default_module_with_hyphen(test_config):
-    module = test_config.load_plugin_module('place-info', 'nominatim.data')
+    module = test_config.load_plugin_module('place-info', 'nominatim_db.data')
 
     assert isinstance(module.PlaceInfo, object)
 

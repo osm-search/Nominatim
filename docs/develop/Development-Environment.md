@@ -4,19 +4,19 @@ This chapter gives an overview how to set up Nominatim for development
 and how to run tests.
 
 !!! Important
-    This guide assumes that you develop under the latest version of Ubuntu. You
-    can of course also use your favourite distribution. You just might have to
-    adapt the commands below slightly, in particular the commands for installing
-    additional software.
+    This guide assumes you develop under the latest version of Debian/Ubuntu.
+    You can of course also use your favourite distribution. You just might have
+    to adapt the commands below slightly, in particular the commands for
+    installing additional software.
 
 ## Installing Nominatim
 
 The first step is to install Nominatim itself. Please follow the installation
 instructions in the [Admin section](../admin/Installation.md). You don't need
-to set up a webserver for development, the webserver that is included with PHP
-is sufficient.
+to set up a webserver for development, the webserver that can be started
+via `nominatim serve` is sufficient.
 
-If you want to run Nominatim in a VM via Vagrant, use the default `ubuntu` setup.
+If you want to run Nominatim in a VM via Vagrant, use the default `ubuntu24` setup.
 Vagrant's libvirt provider runs out-of-the-box under Ubuntu. You also need to
 install an NFS daemon to enable directory sharing between host and guest. The
 following packages should get you started:
@@ -41,38 +41,45 @@ It has the following additional requirements:
 For testing the Python search frontend, you need to install extra dependencies
 depending on your choice of webserver framework:
 
-* [httpx](https://www.python-httpx.org/) (starlette only)
-* [asgi-lifespan](https://github.com/florimondmanca/asgi-lifespan) (starlette only)
+* [httpx](https://www.python-httpx.org/) (Starlette only)
+* [asgi-lifespan](https://github.com/florimondmanca/asgi-lifespan) (Starlette only)
 
 The documentation is built with mkdocs:
 
 * [mkdocs](https://www.mkdocs.org/) >= 1.1.2
-* [mkdocstrings](https://mkdocstrings.github.io/) >= 0.18
-* [mkdocstrings-python](https://mkdocstrings.github.io/python/)
+* [mkdocstrings](https://mkdocstrings.github.io/) >= 0.25
+* [mkdocs-material](https://squidfunk.github.io/mkdocs-material/)
 
 ### Installing prerequisites on Ubuntu/Debian
 
-Some of the Python packages require the newest version which is not yet
-available with the current distributions. Therefore it is recommended to
-install pip to get the newest versions.
+The Python tools should always be run with the most recent version.
+In particular, pylint tends to have a lot of breaking changes between versions.
+The easiest way, to handle these Python dependencies is to run your
+development from within a virtual environment.
 
-To install all necessary packages run:
+To set up the virtual environment with all necessary packages run:
 
 ```sh
-sudo apt install php-cgi phpunit php-codesniffer \
-                 python3-pip python3-setuptools python3-dev
-
-pip3 install --user behave mkdocs mkdocstrings pytest pytest-asyncio pylint \
-                    mypy types-PyYAML types-jinja2 types-psycopg2 types-psutil \
-                    types-ujson types-requests types-Pygments typing-extensions\
-                    httpx asgi-lifespan
+virtualenv ~/nominatim-dev-venv
+~/nominatim-dev-venv/bin/pip install\
+    psycopg2-binary psutil psycopg[binary] PyICU SQLAlchemy \
+    python-dotenv jinja2 pyYAML datree \
+    behave mkdocs mkdocstrings pytest pytest-asyncio pylint \
+    types-jinja2 types-markupsafe types-psutil types-psycopg2 \
+    types-pygments types-pyyaml types-requests types-ujson \
+    types-urllib3 typing-extensions unicorn falcon
 ```
 
-The `mkdocs` executable will be located in `.local/bin`. You may have to add
-this directory to your path, for example by running:
+Now enter the virtual environment whenever you want to develop:
 
+```sh
+. ~/nominatim-dev-venv/bin/activate
 ```
-echo 'export PATH=~/.local/bin:$PATH' > ~/.profile
+
+For installing the PHP development tools, run:
+
+```sh
+sudo apt install php-cgi phpunit php-codesniffer
 ```
 
 If your distribution does not have PHPUnit 7.3+, you can install it (as well
@@ -85,23 +92,46 @@ composer global require "phpunit/phpunit=8.*"
 ```
 
 The binaries are found in `.config/composer/vendor/bin`. You need to add this
-to your PATH as well:
+to your PATH:
 
 ```
 echo 'export PATH=~/.config/composer/vendor/bin:$PATH' > ~/.profile
 ```
 
+### Running Nominatim during development
+
+The source code for Nominatim can be found in the `src` directory and can
+be run in-place. The source directory features a special script
+`nominatim-cli.py` which does the same as the installed 'nominatim' binary
+but executes against the code in the source tree. For example:
+
+```
+me@machine:~$ cd Nominatim
+me@machine:~Nominatim$ ./nominatim-cli.py --version
+Nominatim version 4.4.99-1
+```
+
+Make sure you have activated the virtual environment holding all
+necessary dependencies.
 
 ## Executing Tests
 
 All tests are located in the `/test` directory.
 
-To run all tests just go to the build directory and run make:
+To run all tests, run make from the source root:
 
 ```sh
-cd build
-make test
+make tests
 ```
+
+There are also make targets for executing only parts of the test suite.
+For example to run linting only use:
+
+```sh
+make lint
+```
+
+The possible testing targets are: mypy, lint, pytest, bdd.
 
 For more information about the structure of the tests and how to change and
 extend the test suite, see the [Testing chapter](Testing.md).

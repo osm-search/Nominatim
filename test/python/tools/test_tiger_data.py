@@ -12,6 +12,7 @@ from textwrap import dedent
 
 import pytest
 
+from nominatim_db.db.connection import execute_scalar
 from nominatim_db.tools import tiger_data, freeze
 from nominatim_db.errors import UsageError
 
@@ -31,8 +32,7 @@ class MockTigerTable:
             cur.execute("CREATE TABLE place (number INTEGER)")
 
     def count(self):
-        with self.conn.cursor() as cur:
-            return cur.scalar("SELECT count(*) FROM tiger")
+        return execute_scalar(self.conn, "SELECT count(*) FROM tiger")
 
     def row(self):
         with self.conn.cursor() as cur:

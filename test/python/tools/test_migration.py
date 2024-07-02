@@ -12,6 +12,7 @@ import psycopg2.extras
 
 from nominatim_db.tools import migration
 from nominatim_db.errors import UsageError
+from nominatim_db.db.connection import server_version_tuple
 import nominatim_db.version
 
 from mock_legacy_word_table import MockLegacyWordTable
@@ -63,7 +64,7 @@ def test_set_up_migration_for_36(temp_db_with_extensions, temp_db_cursor,
                                           WHERE property = 'database_version'""")
 
 
-def test_already_at_version(def_config, property_table):
+def test_already_at_version(temp_db_with_extensions, def_config, property_table):
 
     property_table.set('database_version',
                        str(nominatim_db.version.NOMINATIM_VERSION))
@@ -71,8 +72,8 @@ def test_already_at_version(def_config, property_table):
     assert migration.migrate(def_config, {}) == 0
 
 
-def test_run_single_migration(def_config, temp_db_cursor, property_table,
-                              monkeypatch, postprocess_mock):
+def test_run_single_migration(temp_db_with_extensions, def_config, temp_db_cursor,
+                              property_table, monkeypatch, postprocess_mock):
     oldversion = [x for x in nominatim_db.version.NOMINATIM_VERSION]
     oldversion[0] -= 1
     property_table.set('database_version',
@@ -226,7 +227,7 @@ def test_create_tiger_housenumber_index(temp_db_conn, temp_db_cursor, table_fact
     migration.create_tiger_housenumber_index(temp_db_conn)
     temp_db_conn.commit()
 
-    if temp_db_conn.server_version_tuple() >= (11, 0, 0):
+    if server_version_tuple(temp_db_conn) >= (11, 0, 0):
         assert temp_db_cursor.index_exists('location_property_tiger',
                                            'idx_location_property_tiger_housenumber_migrated')
 

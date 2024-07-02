@@ -33,13 +33,13 @@ def simple_conns(temp_db):
     conn2.close()
 
 
-def test_simple_query(conn, temp_db_conn):
+def test_simple_query(conn, temp_db_cursor):
     conn.connect()
 
     conn.perform('CREATE TABLE foo (id INT)')
     conn.wait()
 
-    temp_db_conn.table_exists('foo')
+    assert temp_db_cursor.table_exists('foo')
 
 
 def test_wait_for_query(conn):

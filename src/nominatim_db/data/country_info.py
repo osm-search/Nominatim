@@ -9,10 +9,9 @@ Functions for importing and managing static country information.
 """
 from typing import Dict, Any, Iterable, Tuple, Optional, Container, overload
 from pathlib import Path
-import psycopg2.extras
 
 from ..db import utils as db_utils
-from ..db.connection import connect, Connection
+from ..db.connection import connect, Connection, register_hstore
 from ..errors import UsageError
 from ..config import Configuration
 from ..tokenizer.base import AbstractTokenizer
@@ -129,8 +128,8 @@ def setup_country_tables(dsn: str, sql_dir: Path, ignore_partitions: bool = Fals
 
             params.append((ccode, props['names'], lang, partition))
     with connect(dsn) as conn:
+        register_hstore(conn)
         with conn.cursor() as cur:
-            psycopg2.extras.register_hstore(cur)
             cur.execute(
                 """ CREATE TABLE public.country_name (
                         country_code character varying(2),
@@ -157,8 +156,8 @@ def create_country_names(conn: Connection, tokenizer: AbstractTokenizer,
         return ':' not in key or not languages or \
                key[key.index(':') + 1:] in languages
 
+    register_hstore(conn)
     with conn.cursor() as cur:
-        psycopg2.extras.register_hstore(cur)
         cur.execute("""SELECT country_code, name FROM country_name
                        WHERE country_code is not null""")
 

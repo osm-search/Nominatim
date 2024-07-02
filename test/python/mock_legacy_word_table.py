@@ -8,6 +8,7 @@
 Legacy word table for testing with functions to prefil and test contents
 of the table.
 """
+from nominatim_db.db.connection import execute_scalar
 
 class MockLegacyWordTable:
     """ A word table for testing using legacy word table structure.
@@ -58,13 +59,11 @@ class MockLegacyWordTable:
 
 
     def count(self):
-        with self.conn.cursor() as cur:
-            return cur.scalar("SELECT count(*) FROM word")
+        return execute_scalar(self.conn, "SELECT count(*) FROM word")
 
 
     def count_special(self):
-        with self.conn.cursor() as cur:
-            return cur.scalar("SELECT count(*) FROM word WHERE class != 'place'")
+        return execute_scalar(self.conn, "SELECT count(*) FROM word WHERE class != 'place'")
 
 
     def get_special(self):

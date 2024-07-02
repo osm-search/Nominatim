@@ -12,6 +12,7 @@ from pathlib import Path
 import pytest
 
 from nominatim_db.tools import refresh
+from nominatim_db.db.connection import postgis_version_tuple
 
 def test_refresh_import_wikipedia_not_existing(dsn):
     assert refresh.import_wikipedia_articles(dsn, Path('.')) == 1
@@ -23,13 +24,13 @@ def test_refresh_import_secondary_importance_non_existing(dsn):
 def test_refresh_import_secondary_importance_testdb(dsn, src_dir, temp_db_conn, temp_db_cursor):
     temp_db_cursor.execute('CREATE EXTENSION postgis')
 
-    if temp_db_conn.postgis_version_tuple()[0] < 3:
+    if postgis_version_tuple(temp_db_conn)[0] < 3:
         assert refresh.import_secondary_importance(dsn, src_dir / 'test' / 'testdb') > 0
     else:
         temp_db_cursor.execute('CREATE EXTENSION postgis_raster')
         assert refresh.import_secondary_importance(dsn, src_dir / 'test' / 'testdb') == 0
 
-        assert temp_db_conn.table_exists('secondary_importance')
+        assert temp_db_cursor.table_exists('secondary_importance')
 
 
 @pytest.mark.parametrize("replace", (True, False))

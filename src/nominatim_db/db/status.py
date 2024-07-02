@@ -12,7 +12,7 @@ import datetime as dt
 import logging
 import re
 
-from .connection import Connection
+from .connection import Connection, table_exists, execute_scalar
 from ..utils.url_utils import get_url
 from ..errors import UsageError
 from ..typing import TypedDict
@@ -34,7 +34,7 @@ def compute_database_date(conn: Connection, offline: bool = False) -> dt.datetim
         data base.
     """
     # If there is a date from osm2pgsql available, use that.
-    if conn.table_exists('osm2pgsql_properties'):
+    if table_exists(conn, 'osm2pgsql_properties'):
         with conn.cursor() as cur:
             cur.execute(""" SELECT value FROM osm2pgsql_properties
                             WHERE property = 'current_timestamp' """)
@@ -47,15 +47,14 @@ def compute_database_date(conn: Connection, offline: bool = False) -> dt.datetim
         raise UsageError("Cannot determine database date from data in offline mode.")
 
     # Else, find the node with the highest ID in the database
-    with conn.cursor() as cur:
-        if conn.table_exists('place'):
-            osmid = cur.scalar("SELECT max(osm_id) FROM place WHERE osm_type='N'")
-        else:
-            osmid = cur.scalar("SELECT max(osm_id) FROM placex WHERE osm_type='N'")
+    if table_exists(conn, 'place'):
+        osmid = execute_scalar(conn, "SELECT max(osm_id) FROM place WHERE osm_type='N'")
+    else:
+        osmid = execute_scalar(conn, "SELECT max(osm_id) FROM placex WHERE osm_type='N'")
 
-        if osmid is None:
-            LOG.fatal("No data found in the database.")
-            raise UsageError("No data found in the database.")
+    if osmid is None:
+        LOG.fatal("No data found in the database.")
+        raise UsageError("No data found in the database.")
 
     LOG.info("Using node id %d for timestamp lookup", osmid)
     # Get the node from the API to find the timestamp when it was created.

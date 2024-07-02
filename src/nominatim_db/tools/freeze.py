@@ -12,7 +12,7 @@ from pathlib import Path
 
 from psycopg2 import sql as pysql
 
-from ..db.connection import Connection
+from ..db.connection import Connection, drop_tables, table_exists
 
 UPDATE_TABLES = [
     'address_levels',
@@ -39,9 +39,7 @@ def drop_update_tables(conn: Connection) -> None:
                     + pysql.SQL(' or ').join(parts))
         tables = [r[0] for r in cur]
 
-        for table in tables:
-            cur.drop_table(table, cascade=True)
-
+    drop_tables(conn, *tables, cascade=True)
     conn.commit()
 
 
@@ -55,4 +53,4 @@ def is_frozen(conn: Connection) -> bool:
     """ Returns true if database is in a frozen state
     """
 
-    return conn.table_exists('place') is False
+    return table_exists(conn, 'place') is False

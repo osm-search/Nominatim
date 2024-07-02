@@ -15,7 +15,7 @@ import psycopg2.extras
 
 from ..typing import DictCursorResults
 from ..db.async_connection import DBConnection, WorkerPool
-from ..db.connection import connect, Connection, Cursor
+from ..db.connection import connect, Connection, Cursor, execute_scalar, register_hstore
 from ..tokenizer.base import AbstractTokenizer
 from .progress import ProgressLogger
 from . import runners
@@ -32,14 +32,14 @@ class PlaceFetcher:
         self.conn: Optional[DBConnection] = DBConnection(dsn,
                                                cursor_factory=psycopg2.extras.DictCursor)
 
-        with setup_conn.cursor() as cur:
-            # need to fetch those manually because register_hstore cannot
-            # fetch them on an asynchronous connection below.
-            hstore_oid = cur.scalar("SELECT 'hstore'::regtype::oid")
-            hstore_array_oid = cur.scalar("SELECT 'hstore[]'::regtype::oid")
+        # need to fetch those manually because register_hstore cannot
+        # fetch them on an asynchronous connection below.
+        hstore_oid = execute_scalar(setup_conn, "SELECT 'hstore'::regtype::oid")
+        hstore_array_oid = execute_scalar(setup_conn, "SELECT 'hstore[]'::regtype::oid")
 
         psycopg2.extras.register_hstore(self.conn.conn, oid=hstore_oid,
                                         array_oid=hstore_array_oid)
+
 
     def close(self) -> None:
         """ Close the underlying asynchronous connection.
@@ -205,10 +205,9 @@ class Indexer:
         LOG.warning("Starting %s (using batch size %s)", runner.name(), batch)
 
         with connect(self.dsn) as conn:
-            psycopg2.extras.register_hstore(conn)
-            with conn.cursor() as cur:
-                total_tuples = cur.scalar(runner.sql_count_objects())
-                LOG.debug("Total number of rows: %i", total_tuples)
+            register_hstore(conn)
+            total_tuples = execute_scalar(conn, runner.sql_count_objects())
+            LOG.debug("Total number of rows: %i", total_tuples)
 
             conn.commit()
 

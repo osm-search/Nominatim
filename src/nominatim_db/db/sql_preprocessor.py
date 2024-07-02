@@ -10,7 +10,7 @@ Preprocessing of SQL files.
 from typing import Set, Dict, Any, cast
 import jinja2
 
-from .connection import Connection
+from .connection import Connection, server_version_tuple, postgis_version_tuple
 from .async_connection import WorkerPool
 from ..config import Configuration
 
@@ -66,8 +66,8 @@ def _setup_postgresql_features(conn: Connection) -> Dict[str, Any]:
     """ Set up a dictionary with various optional Postgresql/Postgis features that
         depend on the database version.
     """
-    pg_version = conn.server_version_tuple()
-    postgis_version = conn.postgis_version_tuple()
+    pg_version = server_version_tuple(conn)
+    postgis_version = postgis_version_tuple(conn)
     pg11plus = pg_version >= (11, 0, 0)
     ps3 = postgis_version >= (3, 0)
     return {

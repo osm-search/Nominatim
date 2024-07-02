@@ -16,7 +16,8 @@ import logging
 from pathlib import Path
 from textwrap import dedent
 
-from ..db.connection import connect, Connection, Cursor
+from ..db.connection import connect, Connection, Cursor, server_version_tuple,\
+                            drop_tables, table_exists, execute_scalar
 from ..config import Configuration
 from ..db.utils import CopyBuffer
 from ..db.sql_preprocessor import SQLPreprocessor
@@ -108,7 +109,7 @@ class ICUTokenizer(AbstractTokenizer):
         """ Recompute frequencies for all name words.
         """
         with connect(self.dsn) as conn:
-            if not conn.table_exists('search_name'):
+            if not table_exists(conn, 'search_name'):
                 return
 
             with conn.cursor() as cur:
@@ -117,10 +118,9 @@ class ICUTokenizer(AbstractTokenizer):
                     cur.execute('SET max_parallel_workers_per_gather TO %s',
                                 (min(threads, 6),))
 
-                if conn.server_version_tuple() < (12, 0):
+                if server_version_tuple(conn) < (12, 0):
                     LOG.info('Computing word frequencies')
-                    cur.drop_table('word_frequencies')
-                    cur.drop_table('addressword_frequencies')
+                    drop_tables(conn, 'word_frequencies', 'addressword_frequencies')
                     cur.execute("""CREATE TEMP TABLE word_frequencies AS
                                      SELECT unnest(name_vector) as id, count(*)
                                      FROM search_name GROUP BY id""")
@@ -152,17 +152,16 @@ class ICUTokenizer(AbstractTokenizer):
                                    $$ LANGUAGE plpgsql IMMUTABLE;
                                 """)
                     LOG.info('Update word table with recomputed frequencies')
-                    cur.drop_table('tmp_word')
+                    drop_tables(conn, 'tmp_word')
                     cur.execute("""CREATE TABLE tmp_word AS
                                     SELECT word_id, word_token, type, word,
                                            word_freq_update(word_id, info) as info
                                     FROM word
                                 """)
-                    cur.drop_table('word_frequencies')
-                    cur.drop_table('addressword_frequencies')
+                    drop_tables(conn, 'word_frequencies', 'addressword_frequencies')
                 else:
                     LOG.info('Computing word frequencies')
-                    cur.drop_table('word_frequencies')
+                    drop_tables(conn, 'word_frequencies')
                     cur.execute("""
                       CREATE TEMP TABLE word_frequencies AS
                       WITH word_freq AS MATERIALIZED (
@@ -182,7 +181,7 @@ class ICUTokenizer(AbstractTokenizer):
                     cur.execute('CREATE UNIQUE INDEX ON word_frequencies(id) INCLUDE(info)')
                     cur.execute('ANALYSE word_frequencies')
                     LOG.info('Update word table with recomputed frequencies')
-                    cur.drop_table('tmp_word')
+                    drop_tables(conn, 'tmp_word')
                     cur.execute("""CREATE TABLE tmp_word AS
                                     SELECT word_id, word_token, type, word,
                                            (CASE WHEN wf.info is null THEN word.info
@@ -191,7 +190,7 @@ class ICUTokenizer(AbstractTokenizer):
                                     FROM word LEFT JOIN word_frequencies wf
                                          ON word.word_id = wf.id
                                 """)
-                    cur.drop_table('word_frequencies')
+                    drop_tables(conn, 'word_frequencies')
 
             with conn.cursor() as cur:
                 cur.execute('SET max_parallel_workers_per_gather TO 0')
@@ -210,7 +209,7 @@ class ICUTokenizer(AbstractTokenizer):
         """ Remove unused house numbers.
         """
         with connect(self.dsn) as conn:
-            if not conn.table_exists('search_name'):
+            if not table_exists(conn, 'search_name'):
                 return
             with conn.cursor(name="hnr_counter") as cur:
                 cur.execute("""SELECT DISTINCT word_id, coalesce(info->>'lookup', word_token)
@@ -311,8 +310,7 @@ class ICUTokenizer(AbstractTokenizer):
             frequencies.
         """
         with connect(self.dsn) as conn:
-            with conn.cursor() as cur:
-                cur.drop_table('word')
+            drop_tables(conn, 'word')
             sqlp = SQLPreprocessor(conn, config)
             sqlp.run_string(conn, """
                 CREATE TABLE word (
@@ -370,8 +368,8 @@ class ICUTokenizer(AbstractTokenizer):
         """ Rename all tables and indexes used by the tokenizer.
         """
         with connect(self.dsn) as conn:
+            drop_tables(conn, 'word')
             with conn.cursor() as cur:
-                cur.drop_table('word')
                 cur.execute(f"ALTER TABLE {old} RENAME TO word")
                 for idx in ('word_token', 'word_id'):
                     cur.execute(f"""ALTER INDEX idx_{old}_{idx}
@@ -733,11 +731,10 @@ class ICUNameAnalyzer(AbstractAnalyzer):
             if norm_name:
                 result = self._cache.housenumbers.get(norm_name, result)
                 if result[0] is None:
-                    with self.conn.cursor() as cur:
-                        hid = cur.scalar("SELECT getorcreate_hnr_id(%s)", (norm_name, ))
+                    hid = execute_scalar(self.conn, "SELECT getorcreate_hnr_id(%s)", (norm_name, ))
 
-                        result = hid, norm_name
-                        self._cache.housenumbers[norm_name] = result
+                    result = hid, norm_name
+                    self._cache.housenumbers[norm_name] = result
         else:
             # Otherwise use the analyzer to determine the canonical name.
             # Per convention we use the first variant as the 'lookup name', the
@@ -748,11 +745,10 @@ class ICUNameAnalyzer(AbstractAnalyzer):
                 if result[0] is None:
                     variants = analyzer.compute_variants(word_id)
                     if variants:
-                        with self.conn.cursor() as cur:
-                            hid = cur.scalar("SELECT create_analyzed_hnr_id(%s, %s)",
+                        hid = execute_scalar(self.conn, "SELECT create_analyzed_hnr_id(%s, %s)",
                                              (word_id, list(variants)))
-                            result = hid, variants[0]
-                            self._cache.housenumbers[word_id] = result
+                        result = hid, variants[0]
+                        self._cache.housenumbers[word_id] = result
 
         return result
 

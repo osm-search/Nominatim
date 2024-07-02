@@ -12,7 +12,8 @@ from enum import Enum
 from textwrap import dedent
 
 from ..config import Configuration
-from ..db.connection import connect, Connection
+from ..db.connection import connect, Connection, server_version_tuple,\
+                            index_exists, table_exists, execute_scalar
 from ..db import properties
 from ..errors import UsageError
 from ..tokenizer import factory as tokenizer_factory
@@ -109,14 +110,14 @@ def _get_indexes(conn: Connection) -> List[str]:
                'idx_postcode_id',
                'idx_postcode_postcode'
               ]
-    if conn.table_exists('search_name'):
+    if table_exists(conn, 'search_name'):
         indexes.extend(('idx_search_name_nameaddress_vector',
                         'idx_search_name_name_vector',
                         'idx_search_name_centroid'))
-        if conn.server_version_tuple() >= (11, 0, 0):
+        if server_version_tuple(conn) >= (11, 0, 0):
             indexes.extend(('idx_placex_housenumber',
                             'idx_osmline_parent_osm_id_with_hnr'))
-    if conn.table_exists('place'):
+    if table_exists(conn, 'place'):
         indexes.extend(('idx_location_area_country_place_id',
                         'idx_place_osm_unique',
                         'idx_placex_rank_address_sector',
@@ -153,7 +154,7 @@ def check_connection(conn: Any, config: Configuration) -> CheckResult:
 
              Hints:
              * Are you connecting to the correct database?
-             
+
              {instruction}
 
              Check the Migration chapter of the Administration Guide.
@@ -165,7 +166,7 @@ def check_database_version(conn: Connection, config: Configuration) -> CheckResu
     """ Checking database_version matches Nominatim software version
     """
 
-    if conn.table_exists('nominatim_properties'):
+    if table_exists(conn, 'nominatim_properties'):
         db_version_str = properties.get_property(conn, 'database_version')
     else:
         db_version_str = None
@@ -202,7 +203,7 @@ def check_database_version(conn: Connection, config: Configuration) -> CheckResu
 def check_placex_table(conn: Connection, config: Configuration) -> CheckResult:
     """ Checking for placex table
     """
-    if conn.table_exists('placex'):
+    if table_exists(conn, 'placex'):
         return CheckState.OK
 
     return CheckState.FATAL, dict(config=config)
@@ -212,8 +213,7 @@ def check_placex_table(conn: Connection, config: Configuration) -> CheckResult:
 def check_placex_size(conn: Connection, _: Configuration) -> CheckResult:
     """ Checking for placex content
     """
-    with conn.cursor() as cur:
-        cnt = cur.scalar('SELECT count(*) FROM (SELECT * FROM placex LIMIT 100) x')
+    cnt = execute_scalar(conn, 'SELECT count(*) FROM (SELECT * FROM placex LIMIT 100) x')
 
     return CheckState.OK if cnt > 0 else CheckState.FATAL
 
@@ -244,16 +244,15 @@ def check_tokenizer(_: Connection, config: Configuration) -> CheckResult:
 def check_existance_wikipedia(conn: Connection, _: Configuration) -> CheckResult:
     """ Checking for wikipedia/wikidata data
     """
-    if not conn.table_exists('search_name') or not conn.table_exists('place'):
+    if not table_exists(conn, 'search_name') or not table_exists(conn, 'place'):
         return CheckState.NOT_APPLICABLE
 
-    with conn.cursor() as cur:
-        if conn.table_exists('wikimedia_importance'):
-            cnt = cur.scalar('SELECT count(*) FROM wikimedia_importance')
-        else:
-            cnt = cur.scalar('SELECT count(*) FROM wikipedia_article')
+    if table_exists(conn, 'wikimedia_importance'):
+        cnt = execute_scalar(conn, 'SELECT count(*) FROM wikimedia_importance')
+    else:
+        cnt = execute_scalar(conn, 'SELECT count(*) FROM wikipedia_article')
 
-        return CheckState.WARN if cnt == 0 else CheckState.OK
+    return CheckState.WARN if cnt == 0 else CheckState.OK
 
 
 @_check(hint="""\
@@ -264,8 +263,7 @@ def check_existance_wikipedia(conn: Connection, _: Configuration) -> CheckResult
 def check_indexing(conn: Connection, _: Configuration) -> CheckResult:
     """ Checking indexing status
     """
-    with conn.cursor() as cur:
-        cnt = cur.scalar('SELECT count(*) FROM placex WHERE indexed_status > 0')
+    cnt = execute_scalar(conn, 'SELECT count(*) FROM placex WHERE indexed_status > 0')
 
     if cnt == 0:
         return CheckState.OK
@@ -276,7 +274,7 @@ def check_indexing(conn: Connection, _: Configuration) -> CheckResult:
             Low counts of unindexed places are fine."""
         return CheckState.WARN, dict(count=cnt, index_cmd=index_cmd)
 
-    if conn.index_exists('idx_placex_rank_search'):
+    if index_exists(conn, 'idx_placex_rank_search'):
         # Likely just an interrupted update.
         index_cmd = 'nominatim index'
     else:
@@ -297,7 +295,7 @@ def check_database_indexes(conn: Connection, _: Configuration) -> CheckResult:
     """
     missing = []
     for index in _get_indexes(conn):
-        if not conn.index_exists(index):
+        if not index_exists(conn, index):
             missing.append(index)
 
     if missing:
@@ -340,11 +338,10 @@ def check_tiger_table(conn: Connection, config: Configuration) -> CheckResult:
     if not config.get_bool('USE_US_TIGER_DATA'):
         return CheckState.NOT_APPLICABLE
 
-    if not conn.table_exists('location_property_tiger'):
+    if not table_exists(conn, 'location_property_tiger'):
         return CheckState.FAIL, dict(error='TIGER data table not found.')
 
-    with conn.cursor() as cur:
-        if cur.scalar('SELECT count(*) FROM location_property_tiger') == 0:
-            return CheckState.FAIL, dict(error='TIGER data table is empty.')
+    if execute_scalar(conn, 'SELECT count(*) FROM location_property_tiger') == 0:
+        return CheckState.FAIL, dict(error='TIGER data table is empty.')
 
     return CheckState.OK

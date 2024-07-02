@@ -10,12 +10,12 @@ Functions for database analysis and maintenance.
 from typing import Optional, Tuple, Any, cast
 import logging
 
-from psycopg2.extras import Json, register_hstore
+from psycopg2.extras import Json
 from psycopg2 import DataError
 
 from ..typing import DictCursorResult
 from ..config import Configuration
-from ..db.connection import connect, Cursor
+from ..db.connection import connect, Cursor, register_hstore
 from ..errors import UsageError
 from ..tokenizer import factory as tokenizer_factory
 from ..data.place_info import PlaceInfo

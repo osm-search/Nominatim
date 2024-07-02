@@ -132,7 +132,7 @@ def test_import_osm_data_simple_ignore_no_data(table_factory, osm2pgsql_options)
                                     ignore_errors=True)
 
 
-def test_import_osm_data_drop(table_factory, temp_db_conn, tmp_path, osm2pgsql_options):
+def test_import_osm_data_drop(table_factory, temp_db_cursor, tmp_path, osm2pgsql_options):
     table_factory('place', content=((1, ), ))
     table_factory('planet_osm_nodes')
 
@@ -144,7 +144,7 @@ def test_import_osm_data_drop(table_factory, temp_db_conn, tmp_path, osm2pgsql_o
     database_import.import_osm_data(Path('file.pbf'), osm2pgsql_options, drop=True)
 
     assert not flatfile.exists()
-    assert not temp_db_conn.table_exists('planet_osm_nodes')
+    assert not temp_db_cursor.table_exists('planet_osm_nodes')
 
 
 def test_import_osm_data_default_cache(table_factory, osm2pgsql_options, capfd):

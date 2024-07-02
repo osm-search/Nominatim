@@ -18,7 +18,7 @@ from math import isfinite
 
 from psycopg2 import sql as pysql
 
-from ..db.connection import connect, Connection
+from ..db.connection import connect, Connection, table_exists
 from ..utils.centroid import PointsCentroid
 from ..data.postcode_format import PostcodeFormatter, CountryPostcodeMatcher
 from ..tokenizer.base import AbstractAnalyzer, AbstractTokenizer
@@ -231,4 +231,4 @@ def can_compute(dsn: str) -> bool:
         postcodes can be computed.
     """
     with connect(dsn) as conn:
-        return conn.table_exists('place')
+        return table_exists(conn, 'place')

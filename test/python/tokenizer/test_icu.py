@@ -199,16 +199,16 @@ def test_update_sql_functions(db_prop, temp_db_cursor,
     assert test_content == set((('1133', ), ))
 
 
-def test_finalize_import(tokenizer_factory, temp_db_conn,
-                         temp_db_cursor, test_config, sql_preprocessor_cfg):
+def test_finalize_import(tokenizer_factory, temp_db_cursor,
+                         test_config, sql_preprocessor_cfg):
     tok = tokenizer_factory()
     tok.init_new_db(test_config)
 
-    assert not temp_db_conn.index_exists('idx_word_word_id')
+    assert not temp_db_cursor.index_exists('word', 'idx_word_word_id')
 
     tok.finalize_import(test_config)
 
-    assert temp_db_conn.index_exists('idx_word_word_id')
+    assert temp_db_cursor.index_exists('word', 'idx_word_word_id')
 
 
 def test_check_database(test_config, tokenizer_factory,

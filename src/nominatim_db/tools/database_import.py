@@ -40,9 +40,11 @@ def _require_version(module: str, actual: Tuple[int, int], expected: Tuple[int, 
 
 def _require_loaded(extension_name: str, conn: Connection) -> None:
     """ Check that the given extension is loaded. """
-    if not conn.extension_loaded(extension_name):
-        LOG.fatal('Required module %s is not loaded.', extension_name)
-        raise UsageError(f'{extension_name} is not loaded.')
+    with conn.cursor() as cur:
+        cur.execute('SELECT * FROM pg_extension WHERE extname = %s', (extension_name, ))
+        if cur.rowcount <= 0:
+            LOG.fatal('Required module %s is not loaded.', extension_name)
+            raise UsageError(f'{extension_name} is not loaded.')
 
 
 def check_existing_database_plugins(dsn: str) -> None:

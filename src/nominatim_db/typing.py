@@ -16,18 +16,13 @@ from typing import Any, Union, Mapping, TypeVar, Sequence, TYPE_CHECKING
 # pylint: disable=missing-class-docstring,useless-import-alias
 
 if TYPE_CHECKING:
-    import psycopg2.sql
-    import psycopg2.extensions
-    import psycopg2.extras
     import os
 
 StrPath = Union[str, 'os.PathLike[str]']
 
 SysEnv = Mapping[str, str]
 
-# psycopg2-related types
-
-Query = Union[str, bytes, 'psycopg2.sql.Composable']
+# psycopg-related types
 
 T_ResultKey = TypeVar('T_ResultKey', int, str)
 
@@ -35,8 +30,6 @@ class DictCursorResult(Mapping[str, Any]):
     def __getitem__(self, x: Union[int, str]) -> Any: ...
 
 DictCursorResults = Sequence[DictCursorResult]
-
-T_cursor = TypeVar('T_cursor', bound='psycopg2.extensions.cursor')
 
 # The following typing features require typing_extensions to work
 # on all supported Python versions.

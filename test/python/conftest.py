@@ -8,7 +8,8 @@ import itertools
 import sys
 from pathlib import Path
 
-import psycopg2
+import psycopg
+from psycopg import sql as pysql
 import pytest
 
 # always test against the source
@@ -36,26 +37,23 @@ def temp_db(monkeypatch):
         exported into NOMINATIM_DATABASE_DSN.
     """
     name = 'test_nominatim_python_unittest'
-    conn = psycopg2.connect(database='postgres')
 
-    conn.set_isolation_level(0)
-    with conn.cursor() as cur:
-        cur.execute('DROP DATABASE IF EXISTS {}'.format(name))
-        cur.execute('CREATE DATABASE {}'.format(name))
-
-    conn.close()
+    with psycopg.connect(dbname='postgres', autocommit=True) as conn:
+        with conn.cursor() as cur:
+            cur.execute(pysql.SQL('DROP DATABASE IF EXISTS') + pysql.Identifier(name))
+            cur.execute(pysql.SQL('CREATE DATABASE') + pysql.Identifier(name))
 
     monkeypatch.setenv('NOMINATIM_DATABASE_DSN', 'dbname=' + name)
 
+    with psycopg.connect(dbname=name) as conn:
+        with conn.cursor() as cur:
+            cur.execute('CREATE EXTENSION hstore')
+
     yield name
 
-    conn = psycopg2.connect(database='postgres')
-
-    conn.set_isolation_level(0)
-    with conn.cursor() as cur:
-        cur.execute('DROP DATABASE IF EXISTS {}'.format(name))
-
-    conn.close()
+    with psycopg.connect(dbname='postgres', autocommit=True) as conn:
+        with conn.cursor() as cur:
+            cur.execute('DROP DATABASE IF EXISTS {}'.format(name))
 
 
 @pytest.fixture
@@ -65,11 +63,9 @@ def dsn(temp_db):
 
 @pytest.fixture
 def temp_db_with_extensions(temp_db):
-    conn = psycopg2.connect(database=temp_db)
-    with conn.cursor() as cur:
-        cur.execute('CREATE EXTENSION hstore; CREATE EXTENSION postgis;')
-    conn.commit()
-    conn.close()
+    with psycopg.connect(dbname=temp_db) as conn:
+        with conn.cursor() as cur:
+            cur.execute('CREATE EXTENSION postgis')
 
     return temp_db
 
@@ -77,7 +73,8 @@ def temp_db_with_extensions(temp_db):
 def temp_db_conn(temp_db):
     """ Connection to the test database.
     """
-    with connection.connect('dbname=' + temp_db) as conn:
+    with connection.connect('', autocommit=True, dbname=temp_db) as conn:
+        connection.register_hstore(conn)
         yield conn
 
 
@@ -86,22 +83,25 @@ def temp_db_cursor(temp_db):
     """ Connection and cursor towards the test database. The connection will
         be in auto-commit mode.
     """
-    conn = psycopg2.connect('dbname=' + temp_db)
-    conn.set_isolation_level(0)
-    with conn.cursor(cursor_factory=CursorForTesting) as cur:
-        yield cur
-    conn.close()
+    with psycopg.connect(dbname=temp_db, autocommit=True, cursor_factory=CursorForTesting) as conn:
+        connection.register_hstore(conn)
+        with conn.cursor() as cur:
+            yield cur
 
 
 @pytest.fixture
-def table_factory(temp_db_cursor):
+def table_factory(temp_db_conn):
     """ A fixture that creates new SQL tables, potentially filled with
         content.
     """
     def mk_table(name, definition='id INT', content=None):
-        temp_db_cursor.execute('CREATE TABLE {} ({})'.format(name, definition))
-        if content is not None:
-            temp_db_cursor.execute_values("INSERT INTO {} VALUES %s".format(name), content)
+        with psycopg.ClientCursor(temp_db_conn) as cur:
+            cur.execute('CREATE TABLE {} ({})'.format(name, definition))
+            if content:
+                sql = pysql.SQL("INSERT INTO {} VALUES ({})")\
+                           .format(pysql.Identifier(name),
+                                   pysql.SQL(',').join([pysql.Placeholder() for _ in range(len(content[0]))]))
+                cur.executemany(sql , content)
 
     return mk_table
 
@@ -168,7 +168,6 @@ def place_row(place_table, temp_db_cursor):
     """ A factory for rows in the place table. The table is created as a
         prerequisite to the fixture.
     """
-    psycopg2.extras.register_hstore(temp_db_cursor)
     idseq = itertools.count(1001)
     def _insert(osm_type='N', osm_id=None, cls='amenity', typ='cafe', names=None,
                 admin_level=None, address=None, extratags=None, geom=None):

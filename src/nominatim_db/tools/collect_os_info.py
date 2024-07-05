@@ -15,7 +15,6 @@ from pathlib import Path
 from typing import List, Optional, Union
 
 import psutil
-from psycopg2.extensions import make_dsn
 
 from ..config import Configuration
 from ..db.connection import connect, server_version_tuple, execute_scalar
@@ -97,7 +96,7 @@ def report_system_information(config: Configuration) -> None:
     """Generate a report about the host system including software versions, memory,
     storage, and database configuration."""
 
-    with connect(make_dsn(config.get_libpq_dsn(), dbname='postgres')) as conn:
+    with connect(config.get_libpq_dsn(), dbname='postgres') as conn:
         postgresql_ver: str = '.'.join(map(str, server_version_tuple(conn)))
 
         with conn.cursor() as cur:

@@ -16,7 +16,7 @@ import gzip
 import logging
 from math import isfinite
 
-from psycopg2 import sql as pysql
+from psycopg import sql as pysql
 
 from ..db.connection import connect, Connection, table_exists
 from ..utils.centroid import PointsCentroid
@@ -76,30 +76,30 @@ class _PostcodeCollector:
 
         with conn.cursor() as cur:
             if to_add:
-                cur.execute_values(
+                cur.executemany(pysql.SQL(
                     """INSERT INTO location_postcode
                          (place_id, indexed_status, country_code,
-                          postcode, geometry) VALUES %s""",
-                    to_add,
-                    template=pysql.SQL("""(nextval('seq_place'), 1, {},
-                                          %s, 'SRID=4326;POINT(%s %s)')
-                                       """).format(pysql.Literal(self.country)))
+                          postcode, geometry)
+                       VALUES (nextval('seq_place'), 1, {}, %s,
+                               ST_SetSRID(ST_MakePoint(%s, %s), 4326))
+                    """).format(pysql.Literal(self.country)),
+                    to_add)
             if to_delete:
                 cur.execute("""DELETE FROM location_postcode
                                WHERE country_code = %s and postcode = any(%s)
                             """, (self.country, to_delete))
             if to_update:
-                cur.execute_values(
+                cur.executemany(
                     pysql.SQL("""UPDATE location_postcode
                                  SET indexed_status = 2,
-                                     geometry = ST_SetSRID(ST_Point(v.x, v.y), 4326)
-                                 FROM (VALUES %s) AS v (pc, x, y)
-                                 WHERE country_code = {} and postcode = pc
-                              """).format(pysql.Literal(self.country)), to_update)
+                                     geometry = ST_SetSRID(ST_Point(%s, %s), 4326)
+                                 WHERE country_code = {} and postcode = %s
+                              """).format(pysql.Literal(self.country)),
+                    to_update)
 
 
     def _compute_changes(self, conn: Connection) \
-          -> Tuple[List[Tuple[str, float, float]], List[str], List[Tuple[str, float, float]]]:
+          -> Tuple[List[Tuple[str, float, float]], List[str], List[Tuple[float, float, str]]]:
         """ Compute which postcodes from the collected postcodes have to be
             added or modified and which from the location_postcode table
             have to be deleted.
@@ -116,7 +116,7 @@ class _PostcodeCollector:
                 if pcobj:
                     newx, newy = pcobj.centroid()
                     if (x - newx) > 0.0000001 or (y - newy) > 0.0000001:
-                        to_update.append((postcode, newx, newy))
+                        to_update.append((newx, newy, postcode))
                 else:
                     to_delete.append(postcode)
 

@@ -36,9 +36,9 @@ class MockIcuWordTable:
         with self.conn.cursor() as cur:
             cur.execute("""INSERT INTO word (word_token, type, word, info)
                               VALUES (%s, 'S', %s,
-                                      json_build_object('class', %s,
-                                                        'type', %s,
-                                                        'op', %s))
+                                      json_build_object('class', %s::text,
+                                                        'type', %s::text,
+                                                        'op', %s::text))
                         """, (word_token, word, cls, typ, oper))
         self.conn.commit()
 
@@ -71,7 +71,7 @@ class MockIcuWordTable:
                     word = word_tokens[0]
                 for token in word_tokens:
                     cur.execute("""INSERT INTO word (word_id, word_token, type, word, info)
-                                      VALUES (%s, %s, 'H', %s, jsonb_build_object('lookup', %s))
+                                      VALUES (%s, %s, 'H', %s, jsonb_build_object('lookup', %s::text))
                                 """, (word_id, token, word, word_tokens[0]))
 
         self.conn.commit()

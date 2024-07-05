@@ -8,7 +8,6 @@
 Tests for migration functions
 """
 import pytest
-import psycopg2.extras
 
 from nominatim_db.tools import migration
 from nominatim_db.errors import UsageError
@@ -44,7 +43,6 @@ def test_no_migration_old_versions(temp_db_with_extensions, table_factory, def_c
 def test_set_up_migration_for_36(temp_db_with_extensions, temp_db_cursor,
                                  table_factory, def_config, monkeypatch,
                                  postprocess_mock):
-    psycopg2.extras.register_hstore(temp_db_cursor)
     # don't actually run any migration, except the property table creation
     monkeypatch.setattr(migration, '_MIGRATION_FUNCTIONS',
                         [((3, 5, 0, 99), migration.add_nominatim_property_table)])

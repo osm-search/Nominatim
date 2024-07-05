@@ -47,8 +47,8 @@ def init_status(temp_db_conn, status_table):
 
 
 @pytest.fixture
-def index_mock(mock_func_factory, tokenizer_mock, init_status):
-    return mock_func_factory(nominatim_db.indexer.indexer.Indexer, 'index_full')
+def index_mock(async_mock_func_factory, tokenizer_mock, init_status):
+    return async_mock_func_factory(nominatim_db.indexer.indexer.Indexer, 'index_full')
 
 
 @pytest.fixture

@@ -10,6 +10,9 @@ Functions to facilitate accessing and comparing the content of DB tables.
 import re
 import json
 
+import psycopg
+from psycopg import sql as pysql
+
 from steps.check_functions import Almost
 
 ID_REGEX = re.compile(r"(?P<typ>[NRW])(?P<oid>\d+)(:(?P<cls>\w+))?")
@@ -73,7 +76,7 @@ class NominatimID:
         assert cur.rowcount == 1, \
                "Place ID {!s} not unique. Found {} entries.".format(self, cur.rowcount)
 
-        return cur.fetchone()[0]
+        return cur.fetchone()['place_id']
 
 
 class DBRow:
@@ -152,9 +155,10 @@ class DBRow:
 
     def _has_centroid(self, expected):
         if expected == 'in geometry':
-            with self.context.db.cursor() as cur:
-                cur.execute("""SELECT ST_Within(ST_SetSRID(ST_Point({cx}, {cy}), 4326),
-                                        ST_SetSRID('{geomtxt}'::geometry, 4326))""".format(**self.db_row))
+            with self.context.db.cursor(row_factory=psycopg.rows.tuple_row) as cur:
+                cur.execute("""SELECT ST_Within(ST_SetSRID(ST_Point(%(cx)s, %(cy)s), 4326),
+                                        ST_SetSRID(%(geomtxt)s::geometry, 4326))""",
+                            (self.db_row))
                 return cur.fetchone()[0]
 
         if ' ' in expected:
@@ -166,10 +170,11 @@ class DBRow:
 
     def _has_geometry(self, expected):
         geom = self.context.osm.parse_geometry(expected)
-        with self.context.db.cursor() as cur:
-            cur.execute("""SELECT ST_Equals(ST_SnapToGrid({}, 0.00001, 0.00001),
-                                   ST_SnapToGrid(ST_SetSRID('{}'::geometry, 4326), 0.00001, 0.00001))""".format(
-                            geom, self.db_row['geomtxt']))
+        with self.context.db.cursor(row_factory=psycopg.rows.tuple_row) as cur:
+            cur.execute(pysql.SQL("""SELECT ST_Equals(ST_SnapToGrid({}, 0.00001, 0.00001),
+                                   ST_SnapToGrid(ST_SetSRID({}::geometry, 4326), 0.00001, 0.00001))""")
+                             .format(pysql.SQL(geom),
+                                     pysql.Literal(self.db_row['geomtxt'])))
             return cur.fetchone()[0]
 
     def assert_msg(self, name, value):
@@ -209,7 +214,7 @@ class DBRow:
             if actual == 0:
                 return "place ID 0"
 
-            with self.context.db.cursor() as cur:
+            with self.context.db.cursor(row_factory=psycopg.rows.tuple_row) as cur:
                 cur.execute("""SELECT osm_type, osm_id, class
                                FROM placex WHERE place_id = %s""",
                             (actual, ))

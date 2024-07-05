@@ -17,7 +17,7 @@ from typing import Iterable, Tuple, Mapping, Sequence, Optional, Set
 import logging
 import re
 
-from psycopg2.sql import Identifier, SQL
+from psycopg.sql import Identifier, SQL
 
 from ...typing import Protocol
 from ...config import Configuration

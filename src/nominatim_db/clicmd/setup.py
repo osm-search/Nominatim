@@ -11,6 +11,7 @@ from typing import Optional
 import argparse
 import logging
 from pathlib import Path
+import asyncio
 
 import psutil
 
@@ -71,14 +72,6 @@ class SetupAll:
 
 
     def run(self, args: NominatimArgs) -> int: # pylint: disable=too-many-statements, too-many-branches
-        from ..data import country_info
-        from ..tools import database_import, refresh, postcodes, freeze
-        from ..indexer.indexer import Indexer
-
-        num_threads = args.threads or psutil.cpu_count() or 1
-
-        country_info.setup_country_config(args.config)
-
         if args.osm_file is None and args.continue_at is None and not args.prepare_database:
             raise UsageError("No input files (use --osm-file).")
 
@@ -90,6 +83,16 @@ class SetupAll:
                 "Cannot use --continue and --prepare-database together."
             )
 
+        return asyncio.run(self.async_run(args))
+
+
+    async def async_run(self, args: NominatimArgs) -> int:
+        from ..data import country_info
+        from ..tools import database_import, refresh, postcodes, freeze
+        from ..indexer.indexer import Indexer
+
+        num_threads = args.threads or psutil.cpu_count() or 1
+        country_info.setup_country_config(args.config)
 
         if args.prepare_database or args.continue_at is None:
             LOG.warning('Creating database')
@@ -99,39 +102,7 @@ class SetupAll:
                 return 0
 
         if args.continue_at in (None, 'import-from-file'):
-            files = args.get_osm_file_list()
-            if not files:
-                raise UsageError("No input files (use --osm-file).")
-
-            if args.continue_at in ('import-from-file', None):
-                # Check if the correct plugins are installed
-                database_import.check_existing_database_plugins(args.config.get_libpq_dsn())
-                LOG.warning('Setting up country tables')
-                country_info.setup_country_tables(args.config.get_libpq_dsn(),
-                                                args.config.lib_dir.data,
-                                                args.no_partitions)
-
-                LOG.warning('Importing OSM data file')
-                database_import.import_osm_data(files,
-                                                args.osm2pgsql_options(0, 1),
-                                                drop=args.no_updates,
-                                                ignore_errors=args.ignore_errors)
-
-                LOG.warning('Importing wikipedia importance data')
-                data_path = Path(args.config.WIKIPEDIA_DATA_PATH or args.project_dir)
-                if refresh.import_wikipedia_articles(args.config.get_libpq_dsn(),
-                                                    data_path) > 0:
-                    LOG.error('Wikipedia importance dump file not found. '
-                            'Calculating importance values of locations will not '
-                            'use Wikipedia importance data.')
-
-                LOG.warning('Importing secondary importance raster data')
-                if refresh.import_secondary_importance(args.config.get_libpq_dsn(),
-                                                    args.project_dir) != 0:
-                    LOG.error('Secondary importance file not imported. '
-                            'Falling back to default ranking.')
-
-                self._setup_tables(args.config, args.reverse_only)
+            self._base_import(args)
 
         if args.continue_at in ('import-from-file', 'load-data', None):
             LOG.warning('Initialise tables')
@@ -139,7 +110,7 @@ class SetupAll:
                 database_import.truncate_data_tables(conn)
 
             LOG.warning('Load data into placex table')
-            database_import.load_data(args.config.get_libpq_dsn(), num_threads)
+            await database_import.load_data(args.config.get_libpq_dsn(), num_threads)
 
         LOG.warning("Setting up tokenizer")
         tokenizer = self._get_tokenizer(args.continue_at, args.config)
@@ -153,13 +124,13 @@ class SetupAll:
             ('import-from-file', 'load-data', 'indexing', None):
             LOG.warning('Indexing places')
             indexer = Indexer(args.config.get_libpq_dsn(), tokenizer, num_threads)
-            indexer.index_full(analyse=not args.index_noanalyse)
+            await indexer.index_full(analyse=not args.index_noanalyse)
 
         LOG.warning('Post-process tables')
         with connect(args.config.get_libpq_dsn()) as conn:
-            database_import.create_search_indices(conn, args.config,
-                                                  drop=args.no_updates,
-                                                  threads=num_threads)
+            await database_import.create_search_indices(conn, args.config,
+                                                        drop=args.no_updates,
+                                                        threads=num_threads)
             LOG.warning('Create search index for default country names.')
             country_info.create_country_names(conn, tokenizer,
                                               args.config.get_str_list('LANGUAGES'))
@@ -178,6 +149,45 @@ class SetupAll:
         self._finalize_database(args.config.get_libpq_dsn(), args.offline)
 
         return 0
+
+
+    def _base_import(self, args: NominatimArgs) -> None:
+        from ..tools import database_import, refresh
+        from ..data import country_info
+
+        files = args.get_osm_file_list()
+        if not files:
+            raise UsageError("No input files (use --osm-file).")
+
+        if args.continue_at in ('import-from-file', None):
+            # Check if the correct plugins are installed
+            database_import.check_existing_database_plugins(args.config.get_libpq_dsn())
+            LOG.warning('Setting up country tables')
+            country_info.setup_country_tables(args.config.get_libpq_dsn(),
+                                            args.config.lib_dir.data,
+                                            args.no_partitions)
+
+            LOG.warning('Importing OSM data file')
+            database_import.import_osm_data(files,
+                                            args.osm2pgsql_options(0, 1),
+                                            drop=args.no_updates,
+                                            ignore_errors=args.ignore_errors)
+
+            LOG.warning('Importing wikipedia importance data')
+            data_path = Path(args.config.WIKIPEDIA_DATA_PATH or args.project_dir)
+            if refresh.import_wikipedia_articles(args.config.get_libpq_dsn(),
+                                                data_path) > 0:
+                LOG.error('Wikipedia importance dump file not found. '
+                        'Calculating importance values of locations will not '
+                        'use Wikipedia importance data.')
+
+            LOG.warning('Importing secondary importance raster data')
+            if refresh.import_secondary_importance(args.config.get_libpq_dsn(),
+                                                args.project_dir) != 0:
+                LOG.error('Secondary importance file not imported. '
+                        'Falling back to default ranking.')
+
+            self._setup_tables(args.config, args.reverse_only)
 
 
     def _setup_tables(self, config: Configuration, reverse_only: bool) -> None:

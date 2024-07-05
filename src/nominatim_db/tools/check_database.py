@@ -81,7 +81,7 @@ def check_database(config: Configuration) -> int:
     """ Run a number of checks on the database and return the status.
     """
     try:
-        conn = connect(config.get_libpq_dsn()).connection
+        conn = connect(config.get_libpq_dsn())
     except UsageError as err:
         conn = _BadConnection(str(err)) # type: ignore[assignment]
 

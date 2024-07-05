@@ -17,7 +17,8 @@ import shutil
 from textwrap import dedent
 
 from icu import Transliterator
-import psycopg2
+import psycopg
+from psycopg import sql as pysql
 
 from ..errors import UsageError
 from ..db.connection import connect, Connection, drop_tables, table_exists,\
@@ -78,12 +79,12 @@ def _check_module(module_dir: str, conn: Connection) -> None:
     """
     with conn.cursor() as cur:
         try:
-            cur.execute("""CREATE FUNCTION nominatim_test_import_func(text)
-                           RETURNS text AS %s, 'transliteration'
-                           LANGUAGE c IMMUTABLE STRICT;
-                           DROP FUNCTION nominatim_test_import_func(text)
-                        """, (f'{module_dir}/nominatim.so', ))
-        except psycopg2.DatabaseError as err:
+            cur.execute(pysql.SQL("""CREATE FUNCTION nominatim_test_import_func(text)
+                                     RETURNS text AS {}, 'transliteration'
+                                     LANGUAGE c IMMUTABLE STRICT;
+                                     DROP FUNCTION nominatim_test_import_func(text)
+                                 """).format(pysql.Literal(f'{module_dir}/nominatim.so')))
+        except psycopg.DatabaseError as err:
             LOG.fatal("Error accessing database module: %s", err)
             raise UsageError("Database module cannot be accessed.") from err
 
@@ -181,7 +182,7 @@ class LegacyTokenizer(AbstractTokenizer):
         with connect(self.dsn) as conn:
             try:
                 out = execute_scalar(conn, "SELECT make_standard_name('a')")
-            except psycopg2.Error as err:
+            except psycopg.Error as err:
                 return hint.format(error=str(err))
 
         if out != 'a':
@@ -312,7 +313,7 @@ class LegacyNameAnalyzer(AbstractAnalyzer):
     """
 
     def __init__(self, dsn: str, normalizer: Any):
-        self.conn: Optional[Connection] = connect(dsn).connection
+        self.conn: Optional[Connection] = connect(dsn)
         self.conn.autocommit = True
         self.normalizer = normalizer
         register_hstore(self.conn)
@@ -405,7 +406,7 @@ class LegacyNameAnalyzer(AbstractAnalyzer):
                             """, (to_delete, ))
             if to_add:
                 cur.execute("""SELECT count(create_postcode_id(pc))
-                               FROM unnest(%s) as pc
+                               FROM unnest(%s::text[]) as pc
                             """, (to_add, ))
 
 
@@ -422,7 +423,7 @@ class LegacyNameAnalyzer(AbstractAnalyzer):
         with self.conn.cursor() as cur:
             # Get the old phrases.
             existing_phrases = set()
-            cur.execute("""SELECT word, class, type, operator FROM word
+            cur.execute("""SELECT word, class as cls, type, operator FROM word
                            WHERE class != 'place'
                                  OR (type != 'house' AND type != 'postcode')""")
             for label, cls, typ, oper in cur:
@@ -432,18 +433,19 @@ class LegacyNameAnalyzer(AbstractAnalyzer):
             to_delete = existing_phrases - norm_phrases
 
             if to_add:
-                cur.execute_values(
+                cur.executemany(
                     """ INSERT INTO word (word_id, word_token, word, class, type,
                                           search_name_count, operator)
                         (SELECT nextval('seq_word'), ' ' || make_standard_name(name), name,
                                 class, type, 0,
                                 CASE WHEN op in ('in', 'near') THEN op ELSE null END
-                           FROM (VALUES %s) as v(name, class, type, op))""",
+                           FROM (VALUES (%s, %s, %s, %s)) as v(name, class, type, op))""",
                     to_add)
 
             if to_delete and should_replace:
-                cur.execute_values(
-                    """ DELETE FROM word USING (VALUES %s) as v(name, in_class, in_type, op)
+                cur.executemany(
+                    """ DELETE FROM word
+                          USING (VALUES (%s, %s, %s, %s)) as v(name, in_class, in_type, op)
                         WHERE word = name and class = in_class and type = in_type
                               and ((op = '-' and operator is null) or op = operator)""",
                     to_delete)
@@ -462,7 +464,7 @@ class LegacyNameAnalyzer(AbstractAnalyzer):
                 """INSERT INTO word (word_id, word_token, country_code)
                    (SELECT nextval('seq_word'), lookup_token, %s
                       FROM (SELECT DISTINCT ' ' || make_standard_name(n) as lookup_token
-                            FROM unnest(%s)n) y
+                            FROM unnest(%s::TEXT[])n) y
                       WHERE NOT EXISTS(SELECT * FROM word
                                        WHERE word_token = lookup_token and country_code = %s))
                 """, (country_code, list(names.values()), country_code))

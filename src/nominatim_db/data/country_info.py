@@ -138,9 +138,10 @@ def setup_country_tables(dsn: str, sql_dir: Path, ignore_partitions: bool = Fals
                         country_default_language_code text,
                         partition integer
                     ); """)
-            cur.execute_values(
+            cur.executemany(
                 """ INSERT INTO public.country_name
-                    (country_code, name, country_default_language_code, partition) VALUES %s
+                    (country_code, name, country_default_language_code, partition)
+                    VALUES (%s, %s, %s, %s)
                 """, params)
         conn.commit()
 

@@ -47,7 +47,7 @@ class MockPostcodeTable:
                                                           country_code, postcode,
                                                           geometry)
                            VALUES (nextval('seq_place'), 1, %s, %s,
-                                   'SRID=4326;POINT(%s %s)')""",
+                                   ST_SetSRID(ST_MakePoint(%s, %s), 4326))""",
                         (country, postcode, x, y))
         self.conn.commit()
 

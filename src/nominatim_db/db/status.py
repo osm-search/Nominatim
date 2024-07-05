@@ -7,7 +7,7 @@
 """
 Access and helper functions for the status and status log table.
 """
-from typing import Optional, Tuple, cast
+from typing import Optional, Tuple
 import datetime as dt
 import logging
 import re
@@ -15,18 +15,9 @@ import re
 from .connection import Connection, table_exists, execute_scalar
 from ..utils.url_utils import get_url
 from ..errors import UsageError
-from ..typing import TypedDict
 
 LOG = logging.getLogger()
 ISODATE_FORMAT = '%Y-%m-%dT%H:%M:%S'
-
-
-class StatusRow(TypedDict):
-    """ Dictionary of columns of the import_status table.
-    """
-    lastimportdate: dt.datetime
-    sequence_id: Optional[int]
-    indexed: Optional[bool]
 
 
 def compute_database_date(conn: Connection, offline: bool = False) -> dt.datetime:
@@ -102,8 +93,9 @@ def get_status(conn: Connection) -> Tuple[Optional[dt.datetime], Optional[int], 
         if cur.rowcount < 1:
             return None, None, None
 
-        row = cast(StatusRow, cur.fetchone())
-        return row['lastimportdate'], row['sequence_id'], row['indexed']
+        row = cur.fetchone()
+        assert row
+        return row.lastimportdate, row.sequence_id, row.indexed
 
 
 def set_indexed(conn: Connection, state: bool) -> None:

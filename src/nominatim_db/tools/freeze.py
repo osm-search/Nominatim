@@ -10,7 +10,7 @@ Functions for removing unnecessary data from the database.
 from typing import Optional
 from pathlib import Path
 
-from psycopg2 import sql as pysql
+from psycopg import sql as pysql
 
 from ..db.connection import Connection, drop_tables, table_exists
 

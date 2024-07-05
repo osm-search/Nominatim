@@ -68,7 +68,7 @@ class MockLegacyWordTable:
 
     def get_special(self):
         with self.conn.cursor() as cur:
-            cur.execute("""SELECT word_token, word, class, type, operator
+            cur.execute("""SELECT word_token, word, class as cls, type, operator
                            FROM word WHERE class != 'place'""")
             result = set((tuple(row) for row in cur))
             assert len(result) == cur.rowcount, "Word table has duplicates."

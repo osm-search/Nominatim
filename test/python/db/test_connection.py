@@ -8,7 +8,7 @@
 Tests for specialised connection and cursor classes.
 """
 import pytest
-import psycopg2
+import psycopg
 
 import nominatim_db.db.connection as nc
 
@@ -73,7 +73,7 @@ def test_drop_many_tables(db, table_factory):
 
 
 def test_drop_table_non_existing_force(db):
-    with pytest.raises(psycopg2.ProgrammingError, match='.*does not exist.*'):
+    with pytest.raises(psycopg.ProgrammingError, match='.*does not exist.*'):
         nc.drop_tables(db, 'dfkjgjriogjigjgjrdghehtre', if_exists=False)
 
 def test_connection_server_version_tuple(db):

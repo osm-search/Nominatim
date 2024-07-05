@@ -14,12 +14,12 @@ import logging
 from textwrap import dedent
 from pathlib import Path
 
-from psycopg2 import sql as pysql
+from psycopg import sql as pysql
 
 from ..config import Configuration
 from ..db.connection import Connection, connect, postgis_version_tuple,\
                             drop_tables, table_exists
-from ..db.utils import execute_file, CopyBuffer
+from ..db.utils import execute_file
 from ..db.sql_preprocessor import SQLPreprocessor
 from ..version import NOMINATIM_VERSION
 
@@ -68,8 +68,8 @@ def load_address_levels(conn: Connection, table: str, levels: Sequence[Mapping[s
                                         rank_address SMALLINT)
                               """).format(pysql.Identifier(table)))
 
-        cur.execute_values(pysql.SQL("INSERT INTO {} VALUES %s")
-                           .format(pysql.Identifier(table)), rows)
+        cur.executemany(pysql.SQL("INSERT INTO {} VALUES (%s, %s, %s, %s, %s)")
+                             .format(pysql.Identifier(table)), rows)
 
         cur.execute(pysql.SQL('CREATE UNIQUE INDEX ON {} (country_code, class, type)')
                     .format(pysql.Identifier(table)))
@@ -155,7 +155,7 @@ def import_importance_csv(dsn: str, data_file: Path) -> int:
     if not data_file.exists():
         return 1
 
-    # Only import the first occurence of a wikidata ID.
+    # Only import the first occurrence of a wikidata ID.
     # This keeps indexes and table small.
     wd_done = set()
 
@@ -169,24 +169,17 @@ def import_importance_csv(dsn: str, data_file: Path) -> int:
                              wikidata TEXT
                            ) """)
 
-        with gzip.open(str(data_file), 'rt') as fd, CopyBuffer() as buf:
-            for row in csv.DictReader(fd, delimiter='\t', quotechar='|'):
-                wd_id = int(row['wikidata_id'][1:])
-                buf.add(row['language'], row['title'], row['importance'],
-                        None if wd_id in wd_done else row['wikidata_id'])
-                wd_done.add(wd_id)
+            copy_cmd = """COPY wikimedia_importance(language, title, importance, wikidata)
+                          FROM STDIN"""
+            with gzip.open(str(data_file), 'rt') as fd, cur.copy(copy_cmd) as copy:
+                for row in csv.DictReader(fd, delimiter='\t', quotechar='|'):
+                    wd_id = int(row['wikidata_id'][1:])
+                    copy.write_row((row['language'],
+                                    row['title'],
+                                    row['importance'],
+                                    None if wd_id in wd_done else row['wikidata_id']))
+                    wd_done.add(wd_id)
 
-                if buf.size() > 10000000:
-                    with conn.cursor() as cur:
-                        buf.copy_out(cur, 'wikimedia_importance',
-                                     columns=['language', 'title', 'importance',
-                                              'wikidata'])
-
-            with conn.cursor() as cur:
-                buf.copy_out(cur, 'wikimedia_importance',
-                             columns=['language', 'title', 'importance', 'wikidata'])
-
-        with conn.cursor() as cur:
             cur.execute("""CREATE INDEX IF NOT EXISTS idx_wikimedia_importance_title
                            ON wikimedia_importance (title)""")
             cur.execute("""CREATE INDEX IF NOT EXISTS idx_wikimedia_importance_wikidata

@@ -10,7 +10,7 @@ Functions for database migration to newer software versions.
 from typing import List, Tuple, Callable, Any
 import logging
 
-from psycopg2 import sql as pysql
+from psycopg import sql as pysql
 
 from ..errors import UsageError
 from ..config import Configuration

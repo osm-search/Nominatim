@@ -10,8 +10,8 @@ Functions for database analysis and maintenance.
 from typing import Optional, Tuple, Any, cast
 import logging
 
-from psycopg2.extras import Json
-from psycopg2 import DataError
+import psycopg
+from psycopg.types.json import Json
 
 from ..typing import DictCursorResult
 from ..config import Configuration
@@ -59,7 +59,7 @@ def analyse_indexing(config: Configuration, osm_id: Optional[str] = None,
     """
     with connect(config.get_libpq_dsn()) as conn:
         register_hstore(conn)
-        with conn.cursor() as cur:
+        with conn.cursor(row_factory=psycopg.rows.dict_row) as cur:
             place = _get_place_info(cur, osm_id, place_id)
 
             cur.execute("update placex set indexed_status = 2 where place_id = %s",
@@ -74,6 +74,9 @@ def analyse_indexing(config: Configuration, osm_id: Optional[str] = None,
 
             tokenizer = tokenizer_factory.get_tokenizer_for_db(config)
 
+            # Enable printing of messages.
+            conn.add_notice_handler(lambda diag: print(diag.message_primary))
+
             with tokenizer.name_analyzer() as analyzer:
                 cur.execute("""UPDATE placex
                                SET indexed_status = 0, address = %s, token_info = %s,
@@ -85,9 +88,6 @@ def analyse_indexing(config: Configuration, osm_id: Optional[str] = None,
 
         # we do not want to keep the results
         conn.rollback()
-
-        for msg in conn.notices:
-            print(msg)
 
 
 def clean_deleted_relations(config: Configuration, age: str) -> None:
@@ -101,6 +101,6 @@ def clean_deleted_relations(config: Configuration, age: str) -> None:
                             WHERE p.osm_type = d.osm_type AND p.osm_id = d.osm_id
                             AND age(p.indexed_date) > %s::interval""",
                             (age, ))
-            except DataError as exc:
+            except psycopg.DataError as exc:
                 raise UsageError('Invalid PostgreSQL time interval format') from exc
         conn.commit()

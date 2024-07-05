@@ -31,6 +31,7 @@ CREATE INDEX IF NOT EXISTS idx_placex_geometry ON placex
 -- Index is needed during import but can be dropped as soon as a full
 -- geometry index is in place. The partial index is almost as big as the full
 -- index.
+---
 DROP INDEX IF EXISTS idx_placex_geometry_lower_rank_ways;
 ---
 CREATE INDEX IF NOT EXISTS idx_placex_geometry_reverse_lookupPolygon
@@ -60,7 +61,6 @@ CREATE INDEX IF NOT EXISTS idx_postcode_postcode
 ---
   DROP INDEX IF EXISTS idx_placex_geometry_address_area_candidates;
   DROP INDEX IF EXISTS idx_placex_geometry_buildings;
-  DROP INDEX IF EXISTS idx_placex_geometry_lower_rank_ways;
   DROP INDEX IF EXISTS idx_placex_wikidata;
   DROP INDEX IF EXISTS idx_placex_rank_address_sector;
   DROP INDEX IF EXISTS idx_placex_rank_boundaries_sector;

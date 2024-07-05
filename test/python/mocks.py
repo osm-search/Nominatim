@@ -9,8 +9,6 @@ Custom mocks for testing.
 """
 import itertools
 
-import psycopg2.extras
-
 from nominatim_db.db import properties
 
 # This must always point to the mock word table for the default tokenizer.
@@ -56,7 +54,6 @@ class MockPlacexTable:
             admin_level=None, address=None, extratags=None, geom='POINT(10 4)',
             country=None, housenumber=None, rank_search=30):
         with self.conn.cursor() as cur:
-            psycopg2.extras.register_hstore(cur)
             cur.execute("""INSERT INTO placex (place_id, osm_type, osm_id, class,
                                                type, name, admin_level, address,
                                                housenumber, rank_search,

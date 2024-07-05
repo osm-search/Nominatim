@@ -7,7 +7,7 @@
 """
 Nominatim configuration accessor.
 """
-from typing import Dict, Any, List, Mapping, Optional
+from typing import Union, Dict, Any, List, Mapping, Optional
 import importlib.util
 import logging
 import os
@@ -18,10 +18,7 @@ import yaml
 
 from dotenv import dotenv_values
 
-try:
-    from psycopg2.extensions import parse_dsn
-except ModuleNotFoundError:
-    from psycopg.conninfo import conninfo_to_dict as parse_dsn # type: ignore[assignment]
+from psycopg.conninfo import conninfo_to_dict
 
 from .typing import StrPath
 from .errors import UsageError
@@ -198,7 +195,7 @@ class Configuration:
         return dsn
 
 
-    def get_database_params(self) -> Mapping[str, str]:
+    def get_database_params(self) -> Mapping[str, Union[str, int, None]]:
         """ Get the configured parameters for the database connection
             as a mapping.
         """
@@ -207,7 +204,7 @@ class Configuration:
         if dsn.startswith('pgsql:'):
             return dict((p.split('=', 1) for p in dsn[6:].split(';')))
 
-        return parse_dsn(dsn)
+        return conninfo_to_dict(dsn)
 
 
     def get_import_style_file(self) -> Path:

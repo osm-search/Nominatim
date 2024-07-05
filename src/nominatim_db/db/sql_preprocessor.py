@@ -8,11 +8,12 @@
 Preprocessing of SQL files.
 """
 from typing import Set, Dict, Any, cast
+
 import jinja2
 
 from .connection import Connection, server_version_tuple, postgis_version_tuple
-from .async_connection import WorkerPool
 from ..config import Configuration
+from ..db.query_pool import QueryPool
 
 def _get_partitions(conn: Connection) -> Set[int]:
     """ Get the set of partitions currently in use.
@@ -125,8 +126,8 @@ class SQLPreprocessor:
         conn.commit()
 
 
-    def run_parallel_sql_file(self, dsn: str, name: str, num_threads: int = 1,
-                              **kwargs: Any) -> None:
+    async def run_parallel_sql_file(self, dsn: str, name: str, num_threads: int = 1,
+                                    **kwargs: Any) -> None:
         """ Execute the given SQL files using parallel asynchronous connections.
             The keyword arguments may supply additional parameters for
             preprocessing.
@@ -138,6 +139,6 @@ class SQLPreprocessor:
 
         parts = sql.split('\n---\n')
 
-        with WorkerPool(dsn, num_threads) as pool:
+        async with QueryPool(dsn, num_threads) as pool:
             for part in parts:
-                pool.next_free_worker().perform(part)
+                await pool.put_query(part, None)

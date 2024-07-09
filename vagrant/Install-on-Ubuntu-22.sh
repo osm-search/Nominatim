@@ -271,7 +271,7 @@ server {
     listen 80 default_server;
     listen [::]:80 default_server;
 
-    root $USERHOME/nominatim-project/website;
+    root $USERHOME/nominatim-project/;
     index /search;
 
     location /nominatim/ {

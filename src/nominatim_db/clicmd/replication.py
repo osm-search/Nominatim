@@ -116,7 +116,7 @@ class UpdateReplication:
            and update_interval < 86400:
             LOG.fatal("Update interval too low for download.geofabrik.de.\n"
                       "Please check install documentation "
-                      "(https://nominatim.org/release-docs/latest/admin/Import-and-Update#"
+                      "(https://nominatim.org/release-docs/latest/admin/Update/#"
                       "setting-up-the-update-process).")
             raise UsageError("Invalid replication update interval setting.")
 

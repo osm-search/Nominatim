@@ -30,6 +30,7 @@ flex.set_main_tags{
                 works = 'named',
                 water_tower = 'always',
                 dyke = 'named',
+                adit = 'named',
                 lighthouse = 'always',
                 watermill = 'always',
                 tunnel = 'always'},

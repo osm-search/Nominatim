@@ -55,13 +55,43 @@ def test_from_language_preferences(langstr, langlist):
 
 
 def test_configurable_output_name_tags():
-    os.environ['NOMINATIM_OUTPUT_NAMES'] = 'name:XX,name,brand,official_name:XX,short_name:XX,official_name,short_name,ref'
-    name_tags = {'name', '_place_name', 'brand', '_place_brand', 'official_name', '_place_official_name', 'short_name', '_place_short_name', 'ref', '_place_ref'}
+    """
+    tests the output name tags when environment config is provided
+    """
+    os.environ["NOMINATIM_OUTPUT_NAMES"] = (
+        "name:XX,name,brand,official_name:XX,short_name:XX,official_name,short_name,ref"
+    )
+    name_tags = {
+        "name",
+        "_place_name",
+        "brand",
+        "_place_brand",
+        "official_name",
+        "_place_official_name",
+        "short_name",
+        "_place_short_name",
+        "ref",
+        "_place_ref",
+    }
     l = Locales()
     assert set(l.name_tags).difference(name_tags) == set()
 
 
 def test_default_output_name_tags():
-    name_tags = {'name', '_place_name', 'brand', '_place_brand', 'official_name', '_place_official_name', 'short_name', '_place_short_name', 'ref', '_place_ref'}
+    """
+    tests the default setting (previously hardcoded) in case environment config is not provided
+    """
+    name_tags = {
+        "name",
+        "_place_name",
+        "brand",
+        "_place_brand",
+        "official_name",
+        "_place_official_name",
+        "short_name",
+        "_place_short_name",
+        "ref",
+        "_place_ref",
+    }
     l = Locales()
     assert set(l.name_tags).difference(name_tags) == set()

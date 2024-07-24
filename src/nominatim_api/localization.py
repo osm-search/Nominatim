@@ -25,9 +25,7 @@ class Locales:
         self.name_tags: List[str] = []
 
         # Build the list of supported tags.
-        # It is now configurable with env setting NOMINATIM_OUTPUT_NAMES
-        # e.g. NOMINATIM_OUTPUT_NAMES =
-        # name:XX,name,brand,official_name:XX,short_name:XX,official_name,shirt_name,ref
+        # Uses hard-coded when environment config not provided
         nominatim_output_names = os.getenv("NOMINATIM_OUTPUT_NAMES")
         if nominatim_output_names is None:
             self._build_default_output_name_tags()
@@ -36,6 +34,9 @@ class Locales:
 
 
     def _build_default_output_name_tags(self) -> None:
+        """
+        Build the list of supported tags. Hard-coded implementation.
+        """
         self._add_lang_tags("name")
         self._add_tags("name", "brand")
         self._add_lang_tags("official_name", "short_name")
@@ -43,6 +44,16 @@ class Locales:
 
 
     def _build_output_name_tags(self, nominatim_output_names: str) -> None:
+        """
+        Build the list of supported tags. Dynamic implementation.
+        Configurable through `NOMINATIM_OUTPUT_NAMES` environment config
+        Configuration input format: 
+        `name:XX,name,brand,official_name:XX,short_name:XX,official_name,short_name,ref`
+            - Coma separated
+            - `:XX` identifies lang tags
+            - consecutive `:XX` identifies multiple lang tags to-be added at the same time
+            - subsequent parts after lang tags (till next lang tag) identifies batch of tags
+        """
         nominatim_output_names = nominatim_output_names.split(",")
         lang_tags = []
         tags = []

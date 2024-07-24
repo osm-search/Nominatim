@@ -10,6 +10,8 @@ Helper functions for localizing names of results.
 from typing import Mapping, List, Optional
 
 import re
+import os
+
 
 class Locales:
     """ Helper class for localization of names.
@@ -22,11 +24,43 @@ class Locales:
         self.languages = langs or []
         self.name_tags: List[str] = []
 
-        # Build the list of supported tags. It is currently hard-coded.
-        self._add_lang_tags('name')
-        self._add_tags('name', 'brand')
-        self._add_lang_tags('official_name', 'short_name')
-        self._add_tags('official_name', 'short_name', 'ref')
+        # Build the list of supported tags.
+        # It is now configurable with env setting NOMINATIM_OUTPUT_NAMES
+        # e.g. NOMINATIM_OUTPUT_NAMES =
+        # name:XX,name,brand,official_name:XX,short_name:XX,official_name,shirt_name,ref
+        nominatim_output_names = os.getenv("NOMINATIM_OUTPUT_NAMES")
+        if nominatim_output_names is None:
+            self._build_default_output_name_tags()
+        else:
+            self._build_output_name_tags(nominatim_output_names)
+
+
+    def _build_default_output_name_tags(self) -> None:
+        self._add_lang_tags("name")
+        self._add_tags("name", "brand")
+        self._add_lang_tags("official_name", "short_name")
+        self._add_tags("official_name", "short_name", "ref")
+
+
+    def _build_output_name_tags(self, nominatim_output_names: str) -> None:
+        nominatim_output_names = nominatim_output_names.split(",")
+        lang_tags = []
+        tags = []
+        for name in nominatim_output_names:
+            if name.endswith(":XX"): # Identifies Lang Tag
+                lang_tags.append(name[:-3])
+                if tags:# Determines tags batch is over, lang tag batch begins
+                    self._add_tags(*tags)
+                    tags = []
+            else: # Identifies Tag
+                tags.append(name)
+                if lang_tags: # Determines lang tags batch is over, tag batch begins
+                    self._add_lang_tags(*lang_tags)
+                    lang_tags = []
+        if lang_tags: # Adds lefover lang tags
+            self._add_lang_tags(*lang_tags)
+        if tags: # Adds lefover tags
+            self._add_tags(*tags)
 
 
     def __bool__(self) -> bool:

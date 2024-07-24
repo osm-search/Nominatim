@@ -7,6 +7,7 @@
 """
 Test functions for adapting results to the user's locale.
 """
+import os
 import pytest
 
 from nominatim_api import Locales
@@ -51,3 +52,16 @@ def test_display_name_preference():
                           ('en,fr;garbage,de', ['en', 'de'])])
 def test_from_language_preferences(langstr, langlist):
     assert Locales.from_accept_languages(langstr).languages == langlist
+
+
+def test_configurable_output_name_tags():
+    os.environ['NOMINATIM_OUTPUT_NAMES'] = 'name:XX,name,brand,official_name:XX,short_name:XX,official_name,short_name,ref'
+    name_tags = {'name', '_place_name', 'brand', '_place_brand', 'official_name', '_place_official_name', 'short_name', '_place_short_name', 'ref', '_place_ref'}
+    l = Locales()
+    assert set(l.name_tags).difference(name_tags) == set()
+
+
+def test_default_output_name_tags():
+    name_tags = {'name', '_place_name', 'brand', '_place_brand', 'official_name', '_place_official_name', 'short_name', '_place_short_name', 'ref', '_place_ref'}
+    l = Locales()
+    assert set(l.name_tags).difference(name_tags) == set()

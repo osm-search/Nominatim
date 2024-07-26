@@ -7,30 +7,37 @@
 """
 Helper functions for localizing names of results.
 """
-from typing import Mapping, List, Optional
-
 import re
-import os
+from typing import List, Mapping, Optional
+
+from .config import Configuration
 
 
 class Locales:
     """ Helper class for localization of names.
 
-        It takes a list of language prefixes in their order of preferred
-        usage.
+    It takes a list of language prefixes in their order of preferred
+    usage.
+    It takes config object as input which enables to configure the 
+    list of supported tags. Setting name: `OUTPUT_NAMES`
+    How to use?
+    e.g. `name:XX,name,brand,official_name:XX,short_name:XX,official_name,short_name,ref`
+        - Coma separated
+        - `:XX` identifies lang tags
+        - consecutive `:XX` identifies multiple lang tags to-be added at the same time
+        - subsequent parts after lang tags (till next lang tag) identifies batch of tags
     """
 
-    def __init__(self, langs: Optional[List[str]] = None):
+    def __init__(self, langs: Optional[List[str]] = None, config: Optional[Configuration] = None):
         self.languages = langs or []
         self.name_tags: List[str] = []
 
-        # Build the list of supported tags.
-        # Uses hard-coded when environment config not provided
-        nominatim_output_names = os.getenv("NOMINATIM_OUTPUT_NAMES")
-        if nominatim_output_names is None:
-            self._build_default_output_name_tags()
+        # Build the list of supported tags
+        # Uses hard-coded when config `OUTPUT_NAMES` not provided
+        if config and config.OUTPUT_NAMES != '':
+            self._build_output_name_tags(config.OUTPUT_NAMES)
         else:
-            self._build_output_name_tags(nominatim_output_names)
+            self._build_default_output_name_tags()
 
 
     def _build_default_output_name_tags(self) -> None:
@@ -46,9 +53,8 @@ class Locales:
     def _build_output_name_tags(self, nominatim_output_names: str) -> None:
         """
         Build the list of supported tags. Dynamic implementation.
-        Configurable through `NOMINATIM_OUTPUT_NAMES` environment config
-        Configuration input format: 
-        `name:XX,name,brand,official_name:XX,short_name:XX,official_name,short_name,ref`
+        How to use?
+        e.g. `name:XX,name,brand,official_name:XX,short_name:XX,official_name,short_name,ref`
             - Coma separated
             - `:XX` identifies lang tags
             - consecutive `:XX` identifies multiple lang tags to-be added at the same time

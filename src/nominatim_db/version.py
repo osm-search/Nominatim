@@ -31,7 +31,7 @@ class NominatimVersion(NamedTuple):
     major: int
     minor: int
     patch_level: int
-    db_patch_level: Optional[int]
+    db_patch_level: int
 
     def __str__(self) -> str:
         if self.db_patch_level is None:
@@ -45,6 +45,7 @@ class NominatimVersion(NamedTuple):
             The release version does not include the database patch version.
         """
         return f"{self.major}.{self.minor}.{self.patch_level}"
+
 
 
 def parse_version(version: str) -> NominatimVersion:

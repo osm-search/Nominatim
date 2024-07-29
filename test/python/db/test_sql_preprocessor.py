@@ -8,6 +8,7 @@
 Tests for SQL preprocessing.
 """
 import pytest
+import pytest_asyncio
 
 from nominatim_db.db.sql_preprocessor import SQLPreprocessor
 
@@ -54,3 +55,17 @@ def test_load_file_with_params(sql_preprocessor, sql_factory, temp_db_conn, temp
     sql_preprocessor.run_sql_file(temp_db_conn, sqlfile, bar='XX', foo='ZZ')
 
     assert temp_db_cursor.scalar('SELECT test()') == 'ZZ XX'
+
+
+@pytest.mark.asyncio
+async def test_load_parallel_file(dsn, sql_preprocessor, tmp_path, temp_db_cursor):
+    (tmp_path / 'test.sql').write_text("""
+        CREATE TABLE foo (a TEXT);
+        CREATE TABLE foo2(a TEXT);""" + 
+        "\n---\nCREATE TABLE bar (b INT);")
+
+    await sql_preprocessor.run_parallel_sql_file(dsn, 'test.sql', num_threads=4)
+
+    assert temp_db_cursor.table_exists('foo')
+    assert temp_db_cursor.table_exists('foo2')
+    assert temp_db_cursor.table_exists('bar')

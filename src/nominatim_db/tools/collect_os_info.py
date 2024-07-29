@@ -12,19 +12,13 @@ import os
 import subprocess
 import sys
 from pathlib import Path
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Union
 
 import psutil
-from psycopg2.extensions import make_dsn, parse_dsn
 
 from ..config import Configuration
-from ..db.connection import connect
+from ..db.connection import connect, server_version_tuple, execute_scalar
 from ..version import NOMINATIM_VERSION
-
-
-def convert_version(ver_tup: Tuple[int, int]) -> str:
-    """converts tuple version (ver_tup) to a string representation"""
-    return ".".join(map(str, ver_tup))
 
 
 def friendly_memory_string(mem: float) -> str:
@@ -102,17 +96,17 @@ def report_system_information(config: Configuration) -> None:
     """Generate a report about the host system including software versions, memory,
     storage, and database configuration."""
 
-    with connect(make_dsn(config.get_libpq_dsn(), dbname='postgres')) as conn:
-        postgresql_ver: str = convert_version(conn.server_version_tuple())
+    with connect(config.get_libpq_dsn(), dbname='postgres') as conn:
+        postgresql_ver: str = '.'.join(map(str, server_version_tuple(conn)))
 
         with conn.cursor() as cur:
-            num = cur.scalar("SELECT count(*) FROM pg_catalog.pg_database WHERE datname=%s",
-                             (parse_dsn(config.get_libpq_dsn())['dbname'], ))
-            nominatim_db_exists = num == 1 if isinstance(num, int) else False
+            cur.execute("SELECT datname FROM pg_catalog.pg_database WHERE datname=%s",
+                        (config.get_database_params()['dbname'], ))
+            nominatim_db_exists = cur.rowcount > 0
 
     if nominatim_db_exists:
         with connect(config.get_libpq_dsn()) as conn:
-            postgis_ver: str = convert_version(conn.postgis_version_tuple())
+            postgis_ver: str = execute_scalar(conn, 'SELECT postgis_lib_version()')
     else:
         postgis_ver = "Unable to connect to database"
 

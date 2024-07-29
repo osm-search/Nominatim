@@ -13,6 +13,7 @@ import datetime as dt
 import logging
 import socket
 import time
+import asyncio
 
 from ..db import status
 from ..db.connection import connect
@@ -123,7 +124,7 @@ class UpdateReplication:
         return update_interval
 
 
-    def _update(self, args: NominatimArgs) -> None:
+    async def _update(self, args: NominatimArgs) -> None:
         # pylint: disable=too-many-locals
         from ..tools import replication
         from ..indexer.indexer import Indexer
@@ -161,7 +162,7 @@ class UpdateReplication:
 
             if state is not replication.UpdateState.NO_CHANGES and args.do_index:
                 index_start = dt.datetime.now(dt.timezone.utc)
-                indexer.index_full(analyse=False)
+                await indexer.index_full(analyse=False)
 
                 with connect(dsn) as conn:
                     status.set_indexed(conn, True)
@@ -172,8 +173,7 @@ class UpdateReplication:
 
             if state is replication.UpdateState.NO_CHANGES and \
                args.catch_up or update_interval > 40*60:
-                while indexer.has_pending():
-                    indexer.index_full(analyse=False)
+                await indexer.index_full(analyse=False)
 
             if LOG.isEnabledFor(logging.WARNING):
                 assert batchdate is not None
@@ -196,5 +196,5 @@ class UpdateReplication:
         if args.check_for_updates:
             return self._check_for_updates(args)
 
-        self._update(args)
+        asyncio.run(self._update(args))
         return 0

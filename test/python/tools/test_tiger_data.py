@@ -11,7 +11,9 @@ import tarfile
 from textwrap import dedent
 
 import pytest
+import pytest_asyncio
 
+from nominatim_db.db.connection import execute_scalar
 from nominatim_db.tools import tiger_data, freeze
 from nominatim_db.errors import UsageError
 
@@ -31,8 +33,7 @@ class MockTigerTable:
             cur.execute("CREATE TABLE place (number INTEGER)")
 
     def count(self):
-        with self.conn.cursor() as cur:
-            return cur.scalar("SELECT count(*) FROM tiger")
+        return execute_scalar(self.conn, "SELECT count(*) FROM tiger")
 
     def row(self):
         with self.conn.cursor() as cur:
@@ -76,82 +77,91 @@ def csv_factory(tmp_path):
 
 
 @pytest.mark.parametrize("threads", (1, 5))
-def test_add_tiger_data(def_config, src_dir, tiger_table, tokenizer_mock, threads):
-    tiger_data.add_tiger_data(str(src_dir / 'test' / 'testdb' / 'tiger'),
-                              def_config, threads, tokenizer_mock())
+@pytest.mark.asyncio
+async def test_add_tiger_data(def_config, src_dir, tiger_table, tokenizer_mock, threads):
+    await tiger_data.add_tiger_data(str(src_dir / 'test' / 'testdb' / 'tiger'),
+                                    def_config, threads, tokenizer_mock())
 
     assert tiger_table.count() == 6213
 
 
-def test_add_tiger_data_database_frozen(def_config, temp_db_conn, tiger_table, tokenizer_mock,
+@pytest.mark.asyncio
+async def test_add_tiger_data_database_frozen(def_config, temp_db_conn, tiger_table, tokenizer_mock,
                                  tmp_path):
     freeze.drop_update_tables(temp_db_conn)
 
     with pytest.raises(UsageError) as excinfo:
-        tiger_data.add_tiger_data(str(tmp_path), def_config, 1, tokenizer_mock())
+        await tiger_data.add_tiger_data(str(tmp_path), def_config, 1, tokenizer_mock())
 
         assert "database frozen" in str(excinfo.value)
 
     assert tiger_table.count() == 0
 
-def test_add_tiger_data_no_files(def_config, tiger_table, tokenizer_mock,
+
+@pytest.mark.asyncio
+async def test_add_tiger_data_no_files(def_config, tiger_table, tokenizer_mock,
                                  tmp_path):
-    tiger_data.add_tiger_data(str(tmp_path), def_config, 1, tokenizer_mock())
+    await tiger_data.add_tiger_data(str(tmp_path), def_config, 1, tokenizer_mock())
 
     assert tiger_table.count() == 0
 
 
-def test_add_tiger_data_bad_file(def_config, tiger_table, tokenizer_mock,
+@pytest.mark.asyncio
+async def test_add_tiger_data_bad_file(def_config, tiger_table, tokenizer_mock,
                                  tmp_path):
     sqlfile = tmp_path / '1010.csv'
     sqlfile.write_text("""Random text""")
 
-    tiger_data.add_tiger_data(str(tmp_path), def_config, 1, tokenizer_mock())
+    await tiger_data.add_tiger_data(str(tmp_path), def_config, 1, tokenizer_mock())
 
     assert tiger_table.count() == 0
 
 
-def test_add_tiger_data_hnr_nan(def_config, tiger_table, tokenizer_mock,
+@pytest.mark.asyncio
+async def test_add_tiger_data_hnr_nan(def_config, tiger_table, tokenizer_mock,
                                 csv_factory, tmp_path):
     csv_factory('file1', hnr_from=99)
     csv_factory('file2', hnr_from='L12')
     csv_factory('file3', hnr_to='12.4')
 
-    tiger_data.add_tiger_data(str(tmp_path), def_config, 1, tokenizer_mock())
+    await tiger_data.add_tiger_data(str(tmp_path), def_config, 1, tokenizer_mock())
 
     assert tiger_table.count() == 1
-    assert tiger_table.row()['start'] == 99
+    assert tiger_table.row().start == 99
 
 
 @pytest.mark.parametrize("threads", (1, 5))
-def test_add_tiger_data_tarfile(def_config, tiger_table, tokenizer_mock,
+@pytest.mark.asyncio
+async def test_add_tiger_data_tarfile(def_config, tiger_table, tokenizer_mock,
                                 tmp_path, src_dir, threads):
     tar = tarfile.open(str(tmp_path / 'sample.tar.gz'), "w:gz")
     tar.add(str(src_dir / 'test' / 'testdb' / 'tiger' / '01001.csv'))
     tar.close()
 
-    tiger_data.add_tiger_data(str(tmp_path / 'sample.tar.gz'), def_config, threads,
-                              tokenizer_mock())
+    await tiger_data.add_tiger_data(str(tmp_path / 'sample.tar.gz'), def_config, threads,
+                                    tokenizer_mock())
 
     assert tiger_table.count() == 6213
 
 
-def test_add_tiger_data_bad_tarfile(def_config, tiger_table, tokenizer_mock,
+@pytest.mark.asyncio
+async def test_add_tiger_data_bad_tarfile(def_config, tiger_table, tokenizer_mock,
                                     tmp_path):
     tarfile = tmp_path / 'sample.tar.gz'
     tarfile.write_text("""Random text""")
 
     with pytest.raises(UsageError):
-        tiger_data.add_tiger_data(str(tarfile), def_config, 1, tokenizer_mock())
+        await tiger_data.add_tiger_data(str(tarfile), def_config, 1, tokenizer_mock())
 
 
-def test_add_tiger_data_empty_tarfile(def_config, tiger_table, tokenizer_mock,
+@pytest.mark.asyncio
+async def test_add_tiger_data_empty_tarfile(def_config, tiger_table, tokenizer_mock,
                                       tmp_path):
     tar = tarfile.open(str(tmp_path / 'sample.tar.gz'), "w:gz")
     tar.add(__file__)
     tar.close()
 
-    tiger_data.add_tiger_data(str(tmp_path / 'sample.tar.gz'), def_config, 1,
-                              tokenizer_mock())
+    await tiger_data.add_tiger_data(str(tmp_path / 'sample.tar.gz'), def_config, 1,
+                                    tokenizer_mock())
 
     assert tiger_table.count() == 0

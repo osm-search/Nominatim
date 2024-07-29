@@ -8,11 +8,12 @@
 Preprocessing of SQL files.
 """
 from typing import Set, Dict, Any, cast
+
 import jinja2
 
-from .connection import Connection
-from .async_connection import WorkerPool
+from .connection import Connection, server_version_tuple, postgis_version_tuple
 from ..config import Configuration
+from ..db.query_pool import QueryPool
 
 def _get_partitions(conn: Connection) -> Set[int]:
     """ Get the set of partitions currently in use.
@@ -66,8 +67,8 @@ def _setup_postgresql_features(conn: Connection) -> Dict[str, Any]:
     """ Set up a dictionary with various optional Postgresql/Postgis features that
         depend on the database version.
     """
-    pg_version = conn.server_version_tuple()
-    postgis_version = conn.postgis_version_tuple()
+    pg_version = server_version_tuple(conn)
+    postgis_version = postgis_version_tuple(conn)
     pg11plus = pg_version >= (11, 0, 0)
     ps3 = postgis_version >= (3, 0)
     return {
@@ -125,8 +126,8 @@ class SQLPreprocessor:
         conn.commit()
 
 
-    def run_parallel_sql_file(self, dsn: str, name: str, num_threads: int = 1,
-                              **kwargs: Any) -> None:
+    async def run_parallel_sql_file(self, dsn: str, name: str, num_threads: int = 1,
+                                    **kwargs: Any) -> None:
         """ Execute the given SQL files using parallel asynchronous connections.
             The keyword arguments may supply additional parameters for
             preprocessing.
@@ -138,6 +139,6 @@ class SQLPreprocessor:
 
         parts = sql.split('\n---\n')
 
-        with WorkerPool(dsn, num_threads) as pool:
+        async with QueryPool(dsn, num_threads) as pool:
             for part in parts:
-                pool.next_free_worker().perform(part)
+                await pool.put_query(part, None)

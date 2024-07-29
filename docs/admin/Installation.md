@@ -36,19 +36,15 @@ For running Nominatim:
 
 Furthermore the following Python libraries are required:
 
-  * [Psycopg2](https://www.psycopg.org) (2.7+)
+  * [Psycopg3](https://www.psycopg.org)
   * [Python Dotenv](https://github.com/theskumar/python-dotenv)
   * [psutil](https://github.com/giampaolo/psutil)
   * [Jinja2](https://palletsprojects.com/p/jinja/)
-  * [SQLAlchemy](https://www.sqlalchemy.org/) (1.4.31+ with greenlet support)
-  * one of
-    * [psycopg3](https://www.psycopg.org)
-    * [asyncpg](https://magicstack.github.io/asyncpg) (0.8+)
   * [PyICU](https://pypi.org/project/PyICU/)
   * [PyYaml](https://pyyaml.org/) (5.1+)
   * [datrie](https://github.com/pytries/datrie)
 
-These will be installed automatically, when using pip installation.
+These will be installed automatically when using pip installation.
 
 When using legacy CMake-based installation:
 
@@ -69,6 +65,8 @@ For running continuous updates:
 
 For running the Python frontend:
 
+  * [SQLAlchemy](https://www.sqlalchemy.org/) (1.4.31+ with greenlet support)
+  * [asyncpg](https://magicstack.github.io/asyncpg) (0.8+, only when using SQLAlchemy < 2.0)
   * one of the following web frameworks:
     * [falcon](https://falconframework.org/) (3.0+)
     * [starlette](https://www.starlette.io/)

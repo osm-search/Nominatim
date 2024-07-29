@@ -13,8 +13,6 @@ from pathlib import Path
 import pytest
 import pytest_asyncio
 
-import psycopg2.extras
-
 from fake_adaptor import FakeAdaptor, FakeError, FakeResponse
 
 import nominatim_api.v1.server_glue as glue
@@ -31,7 +29,6 @@ class TestDeletableEndPoint:
 
     @pytest.fixture(autouse=True)
     def setup_deletable_table(self, temp_db_cursor, table_factory, temp_db_with_extensions):
-        psycopg2.extras.register_hstore(temp_db_cursor)
         table_factory('import_polygon_delete',
                       definition='osm_id bigint, osm_type char(1), class text, type text',
                       content=[(345, 'N', 'boundary', 'administrative'),

@@ -14,11 +14,12 @@ import logging
 from textwrap import dedent
 from pathlib import Path
 
-from psycopg2 import sql as pysql
+from psycopg import sql as pysql
 
 from ..config import Configuration
-from ..db.connection import Connection, connect
-from ..db.utils import execute_file, CopyBuffer
+from ..db.connection import Connection, connect, postgis_version_tuple,\
+                            drop_tables, table_exists
+from ..db.utils import execute_file
 from ..db.sql_preprocessor import SQLPreprocessor
 from ..version import NOMINATIM_VERSION
 
@@ -56,9 +57,9 @@ def load_address_levels(conn: Connection, table: str, levels: Sequence[Mapping[s
     for entry in levels:
         _add_address_level_rows_from_entry(rows, entry)
 
-    with conn.cursor() as cur:
-        cur.drop_table(table)
+    drop_tables(conn, table)
 
+    with conn.cursor() as cur:
         cur.execute(pysql.SQL("""CREATE TABLE {} (
                                         country_code varchar(2),
                                         class TEXT,
@@ -67,8 +68,8 @@ def load_address_levels(conn: Connection, table: str, levels: Sequence[Mapping[s
                                         rank_address SMALLINT)
                               """).format(pysql.Identifier(table)))
 
-        cur.execute_values(pysql.SQL("INSERT INTO {} VALUES %s")
-                           .format(pysql.Identifier(table)), rows)
+        cur.executemany(pysql.SQL("INSERT INTO {} VALUES (%s, %s, %s, %s, %s)")
+                             .format(pysql.Identifier(table)), rows)
 
         cur.execute(pysql.SQL('CREATE UNIQUE INDEX ON {} (country_code, class, type)')
                     .format(pysql.Identifier(table)))
@@ -154,15 +155,13 @@ def import_importance_csv(dsn: str, data_file: Path) -> int:
     if not data_file.exists():
         return 1
 
-    # Only import the first occurence of a wikidata ID.
+    # Only import the first occurrence of a wikidata ID.
     # This keeps indexes and table small.
     wd_done = set()
 
     with connect(dsn) as conn:
+        drop_tables(conn, 'wikipedia_article', 'wikipedia_redirect', 'wikimedia_importance')
         with conn.cursor() as cur:
-            cur.drop_table('wikipedia_article')
-            cur.drop_table('wikipedia_redirect')
-            cur.drop_table('wikimedia_importance')
             cur.execute("""CREATE TABLE wikimedia_importance (
                              language TEXT NOT NULL,
                              title TEXT NOT NULL,
@@ -170,24 +169,17 @@ def import_importance_csv(dsn: str, data_file: Path) -> int:
                              wikidata TEXT
                            ) """)
 
-        with gzip.open(str(data_file), 'rt') as fd, CopyBuffer() as buf:
-            for row in csv.DictReader(fd, delimiter='\t', quotechar='|'):
-                wd_id = int(row['wikidata_id'][1:])
-                buf.add(row['language'], row['title'], row['importance'],
-                        None if wd_id in wd_done else row['wikidata_id'])
-                wd_done.add(wd_id)
+            copy_cmd = """COPY wikimedia_importance(language, title, importance, wikidata)
+                          FROM STDIN"""
+            with gzip.open(str(data_file), 'rt') as fd, cur.copy(copy_cmd) as copy:
+                for row in csv.DictReader(fd, delimiter='\t', quotechar='|'):
+                    wd_id = int(row['wikidata_id'][1:])
+                    copy.write_row((row['language'],
+                                    row['title'],
+                                    row['importance'],
+                                    None if wd_id in wd_done else row['wikidata_id']))
+                    wd_done.add(wd_id)
 
-                if buf.size() > 10000000:
-                    with conn.cursor() as cur:
-                        buf.copy_out(cur, 'wikimedia_importance',
-                                     columns=['language', 'title', 'importance',
-                                              'wikidata'])
-
-            with conn.cursor() as cur:
-                buf.copy_out(cur, 'wikimedia_importance',
-                             columns=['language', 'title', 'importance', 'wikidata'])
-
-        with conn.cursor() as cur:
             cur.execute("""CREATE INDEX IF NOT EXISTS idx_wikimedia_importance_title
                            ON wikimedia_importance (title)""")
             cur.execute("""CREATE INDEX IF NOT EXISTS idx_wikimedia_importance_wikidata
@@ -228,7 +220,7 @@ def import_secondary_importance(dsn: str, data_path: Path, ignore_errors: bool =
         return 1
 
     with connect(dsn) as conn:
-        postgis_version = conn.postgis_version_tuple()
+        postgis_version = postgis_version_tuple(conn)
         if postgis_version[0] < 3:
             LOG.error('PostGIS version is too old for using OSM raster data.')
             return 2
@@ -309,7 +301,7 @@ def setup_website(basedir: Path, config: Configuration, conn: Connection) -> Non
 
     template = "\nrequire_once(CONST_LibDir.'/website/{}');\n"
 
-    search_name_table_exists = bool(conn and conn.table_exists('search_name'))
+    search_name_table_exists = bool(conn and table_exists(conn, 'search_name'))
 
     for script in WEBSITE_SCRIPTS:
         if not search_name_table_exists and script == 'search.php':

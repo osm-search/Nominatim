@@ -34,7 +34,8 @@ class TestCliImportWithDb:
 
 
     @pytest.mark.parametrize('with_updates', [True, False])
-    def test_import_full(self, mock_func_factory, with_updates, place_table, property_table):
+    def test_import_full(self, mock_func_factory, async_mock_func_factory,
+                         with_updates, place_table, property_table):
         mocks = [
             mock_func_factory(nominatim_db.tools.database_import, 'setup_database_skeleton'),
             mock_func_factory(nominatim_db.data.country_info, 'setup_country_tables'),
@@ -42,15 +43,15 @@ class TestCliImportWithDb:
             mock_func_factory(nominatim_db.tools.refresh, 'import_wikipedia_articles'),
             mock_func_factory(nominatim_db.tools.refresh, 'import_secondary_importance'),
             mock_func_factory(nominatim_db.tools.database_import, 'truncate_data_tables'),
-            mock_func_factory(nominatim_db.tools.database_import, 'load_data'),
+            async_mock_func_factory(nominatim_db.tools.database_import, 'load_data'),
             mock_func_factory(nominatim_db.tools.database_import, 'create_tables'),
             mock_func_factory(nominatim_db.tools.database_import, 'create_table_triggers'),
             mock_func_factory(nominatim_db.tools.database_import, 'create_partition_tables'),
-            mock_func_factory(nominatim_db.tools.database_import, 'create_search_indices'),
+            async_mock_func_factory(nominatim_db.tools.database_import, 'create_search_indices'),
             mock_func_factory(nominatim_db.data.country_info, 'create_country_names'),
             mock_func_factory(nominatim_db.tools.refresh, 'load_address_levels_from_config'),
             mock_func_factory(nominatim_db.tools.postcodes, 'update_postcodes'),
-            mock_func_factory(nominatim_db.indexer.indexer.Indexer, 'index_full'),
+            async_mock_func_factory(nominatim_db.indexer.indexer.Indexer, 'index_full'),
             mock_func_factory(nominatim_db.tools.refresh, 'setup_website'),
         ]
 
@@ -72,14 +73,14 @@ class TestCliImportWithDb:
             assert mock.called == 1, "Mock '{}' not called".format(mock.func_name)
 
 
-    def test_import_continue_load_data(self, mock_func_factory):
+    def test_import_continue_load_data(self, mock_func_factory, async_mock_func_factory):
         mocks = [
             mock_func_factory(nominatim_db.tools.database_import, 'truncate_data_tables'),
-            mock_func_factory(nominatim_db.tools.database_import, 'load_data'),
-            mock_func_factory(nominatim_db.tools.database_import, 'create_search_indices'),
+            async_mock_func_factory(nominatim_db.tools.database_import, 'load_data'),
+            async_mock_func_factory(nominatim_db.tools.database_import, 'create_search_indices'),
             mock_func_factory(nominatim_db.data.country_info, 'create_country_names'),
             mock_func_factory(nominatim_db.tools.postcodes, 'update_postcodes'),
-            mock_func_factory(nominatim_db.indexer.indexer.Indexer, 'index_full'),
+            async_mock_func_factory(nominatim_db.indexer.indexer.Indexer, 'index_full'),
             mock_func_factory(nominatim_db.tools.refresh, 'setup_website'),
             mock_func_factory(nominatim_db.db.properties, 'set_property')
         ]
@@ -91,12 +92,12 @@ class TestCliImportWithDb:
             assert mock.called == 1, "Mock '{}' not called".format(mock.func_name)
 
 
-    def test_import_continue_indexing(self, mock_func_factory, placex_table,
-                                      temp_db_conn):
+    def test_import_continue_indexing(self, mock_func_factory, async_mock_func_factory,
+                                      placex_table, temp_db_conn):
         mocks = [
-            mock_func_factory(nominatim_db.tools.database_import, 'create_search_indices'),
+            async_mock_func_factory(nominatim_db.tools.database_import, 'create_search_indices'),
             mock_func_factory(nominatim_db.data.country_info, 'create_country_names'),
-            mock_func_factory(nominatim_db.indexer.indexer.Indexer, 'index_full'),
+            async_mock_func_factory(nominatim_db.indexer.indexer.Indexer, 'index_full'),
             mock_func_factory(nominatim_db.tools.refresh, 'setup_website'),
             mock_func_factory(nominatim_db.db.properties, 'set_property')
         ]
@@ -110,9 +111,9 @@ class TestCliImportWithDb:
         assert self.call_nominatim('import', '--continue', 'indexing') == 0
 
 
-    def test_import_continue_postprocess(self, mock_func_factory):
+    def test_import_continue_postprocess(self, mock_func_factory, async_mock_func_factory):
         mocks = [
-            mock_func_factory(nominatim_db.tools.database_import, 'create_search_indices'),
+            async_mock_func_factory(nominatim_db.tools.database_import, 'create_search_indices'),
             mock_func_factory(nominatim_db.data.country_info, 'create_country_names'),
             mock_func_factory(nominatim_db.tools.refresh, 'setup_website'),
             mock_func_factory(nominatim_db.db.properties, 'set_property')

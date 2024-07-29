@@ -17,6 +17,7 @@ import pytest
 import nominatim_db.indexer.indexer
 import nominatim_db.tools.add_osm_data
 import nominatim_db.tools.freeze
+import nominatim_db.tools.tiger_data
 
 
 def test_cli_help(cli_call, capsys):
@@ -52,8 +53,8 @@ def test_cli_add_data_object_command(cli_call, mock_func_factory, name, oid):
 
 
 
-def test_cli_add_data_tiger_data(cli_call, cli_tokenizer_mock, mock_func_factory):
-    mock = mock_func_factory(nominatim_db.tools.tiger_data, 'add_tiger_data')
+def test_cli_add_data_tiger_data(cli_call, cli_tokenizer_mock, async_mock_func_factory):
+    mock = async_mock_func_factory(nominatim_db.tools.tiger_data, 'add_tiger_data')
 
     assert cli_call('add-data', '--tiger-data', 'somewhere') == 0
 
@@ -67,38 +68,6 @@ def test_cli_serve_php(cli_call, mock_func_factory):
 
     assert func.called == 1
 
-
-def test_cli_serve_starlette_custom_server(cli_call, mock_func_factory):
-    pytest.importorskip("starlette")
-    mod = pytest.importorskip("uvicorn")
-    func = mock_func_factory(mod, "run")
-
-    cli_call('serve', '--engine', 'starlette', '--server', 'foobar:4545') == 0
-
-    assert func.called == 1
-    assert func.last_kwargs['host'] == 'foobar'
-    assert func.last_kwargs['port'] == 4545
-
-
-def test_cli_serve_starlette_custom_server_bad_port(cli_call, mock_func_factory):
-    pytest.importorskip("starlette")
-    mod = pytest.importorskip("uvicorn")
-    func = mock_func_factory(mod, "run")
-
-    cli_call('serve', '--engine', 'starlette', '--server', 'foobar:45:45') == 1
-
-
-@pytest.mark.parametrize("engine", ['falcon', 'starlette'])
-def test_cli_serve_uvicorn_based(cli_call, engine, mock_func_factory):
-    pytest.importorskip(engine)
-    mod = pytest.importorskip("uvicorn")
-    func = mock_func_factory(mod, "run")
-
-    cli_call('serve', '--engine', engine) == 0
-
-    assert func.called == 1
-    assert func.last_kwargs['host'] == '127.0.0.1'
-    assert func.last_kwargs['port'] == 8088
 
 
 class TestCliWithDb:
@@ -120,16 +89,19 @@ class TestCliWithDb:
 
 
     @pytest.mark.parametrize("params,do_bnds,do_ranks", [
-                              ([], 1, 1),
-                              (['--boundaries-only'], 1, 0),
-                              (['--no-boundaries'], 0, 1),
+                              ([], 2, 2),
+                              (['--boundaries-only'], 2, 0),
+                              (['--no-boundaries'], 0, 2),
                               (['--boundaries-only', '--no-boundaries'], 0, 0)])
-    def test_index_command(self, mock_func_factory, table_factory,
+    def test_index_command(self, monkeypatch, async_mock_func_factory, table_factory,
                            params, do_bnds, do_ranks):
         table_factory('import_status', 'indexed bool')
-        bnd_mock = mock_func_factory(nominatim_db.indexer.indexer.Indexer, 'index_boundaries')
-        rank_mock = mock_func_factory(nominatim_db.indexer.indexer.Indexer, 'index_by_rank')
-        postcode_mock = mock_func_factory(nominatim_db.indexer.indexer.Indexer, 'index_postcodes')
+        bnd_mock = async_mock_func_factory(nominatim_db.indexer.indexer.Indexer, 'index_boundaries')
+        rank_mock = async_mock_func_factory(nominatim_db.indexer.indexer.Indexer, 'index_by_rank')
+        postcode_mock = async_mock_func_factory(nominatim_db.indexer.indexer.Indexer, 'index_postcodes')
+
+        monkeypatch.setattr(nominatim_db.indexer.indexer.Indexer, 'has_pending', 
+                            [False, True].pop)
 
         assert self.call_nominatim('index', *params) == 0
 

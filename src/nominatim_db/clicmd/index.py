@@ -8,6 +8,7 @@
 Implementation of the 'index' subcommand.
 """
 import argparse
+import asyncio
 
 import psutil
 
@@ -44,19 +45,7 @@ class UpdateIndex:
 
 
     def run(self, args: NominatimArgs) -> int:
-        from ..indexer.indexer import Indexer
-        from ..tokenizer import factory as tokenizer_factory
-
-        tokenizer = tokenizer_factory.get_tokenizer_for_db(args.config)
-
-        indexer = Indexer(args.config.get_libpq_dsn(), tokenizer,
-                          args.threads or psutil.cpu_count() or 1)
-
-        if not args.no_boundaries:
-            indexer.index_boundaries(args.minrank, args.maxrank)
-        if not args.boundaries_only:
-            indexer.index_by_rank(args.minrank, args.maxrank)
-            indexer.index_postcodes()
+        asyncio.run(self._do_index(args))
 
         if not args.no_boundaries and not args.boundaries_only \
            and args.minrank == 0 and args.maxrank == 30:
@@ -64,3 +53,22 @@ class UpdateIndex:
                 status.set_indexed(conn, True)
 
         return 0
+
+
+    async def _do_index(self, args: NominatimArgs) -> None:
+        from ..tokenizer import factory as tokenizer_factory
+
+        tokenizer = tokenizer_factory.get_tokenizer_for_db(args.config)
+        from ..indexer.indexer import Indexer
+
+        indexer = Indexer(args.config.get_libpq_dsn(), tokenizer,
+                          args.threads or psutil.cpu_count() or 1)
+
+        has_pending = True # run at least once
+        while has_pending:
+            if not args.no_boundaries:
+                await indexer.index_boundaries(args.minrank, args.maxrank)
+            if not args.boundaries_only:
+                await indexer.index_by_rank(args.minrank, args.maxrank)
+                await indexer.index_postcodes()
+            has_pending = indexer.has_pending()

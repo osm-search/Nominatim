@@ -26,10 +26,14 @@ export DEBIAN_FRONTEND=noninteractive #DOCS:
                         nlohmann-json3-dev postgresql-14-postgis-3 \
                         postgresql-contrib-14 postgresql-14-postgis-3-scripts \
                         libicu-dev python3-dotenv \
-                        python3-psycopg2 python3-psutil python3-jinja2 \
+                        python3-pip python3-psutil python3-jinja2 \
                         python3-sqlalchemy python3-asyncpg \
                         python3-icu python3-datrie python3-yaml git
 
+# Some of the Python packages that come with Ubuntu 22.04 are too old,
+# so install the latest version from pip:
+
+    pip3 install --user psycopg[binary]
 
 #
 # System Configuration

@@ -9,14 +9,14 @@ import importlib
 import sys
 import tempfile
 
-import psycopg2
-import psycopg2.extras
+import psycopg
+from psycopg import sql as pysql
 
 sys.path.insert(1, str((Path(__file__) / '..' / '..' / '..' / '..'/ 'src').resolve()))
 
 from nominatim_db import cli
 from nominatim_db.config import Configuration
-from nominatim_db.db.connection import Connection
+from nominatim_db.db.connection import Connection, register_hstore, execute_scalar
 from nominatim_db.tools import refresh
 from nominatim_db.tokenizer import factory as tokenizer_factory
 from steps.utils import run_script
@@ -60,7 +60,7 @@ class NominatimEnvironment:
         """ Return a connection to the database with the given name.
             Uses configured host, user and port.
         """
-        dbargs = {'database': dbname}
+        dbargs = {'dbname': dbname, 'row_factory': psycopg.rows.dict_row}
         if self.db_host:
             dbargs['host'] = self.db_host
         if self.db_port:
@@ -69,8 +69,7 @@ class NominatimEnvironment:
             dbargs['user'] = self.db_user
         if self.db_pass:
             dbargs['password'] = self.db_pass
-        conn = psycopg2.connect(connection_factory=Connection, **dbargs)
-        return conn
+        return psycopg.connect(**dbargs)
 
     def next_code_coverage_file(self):
         """ Generate the next name for a coverage file.
@@ -132,6 +131,8 @@ class NominatimEnvironment:
             conn = False
         refresh.setup_website(Path(self.website_dir.name) / 'website',
                               self.get_test_config(), conn)
+        if conn:
+            conn.close()
 
 
     def get_test_config(self):
@@ -160,11 +161,10 @@ class NominatimEnvironment:
     def db_drop_database(self, name):
         """ Drop the database with the given name.
         """
-        conn = self.connect_database('postgres')
-        conn.set_isolation_level(0)
-        cur = conn.cursor()
-        cur.execute('DROP DATABASE IF EXISTS {}'.format(name))
-        conn.close()
+        with self.connect_database('postgres') as conn:
+            conn.autocommit = True
+            conn.execute(pysql.SQL('DROP DATABASE IF EXISTS')
+                         +  pysql.Identifier(name))
 
     def setup_template_db(self):
         """ Setup a template database that already contains common test data.
@@ -249,16 +249,18 @@ class NominatimEnvironment:
         """ Setup a test against a fresh, empty test database.
         """
         self.setup_template_db()
-        conn = self.connect_database(self.template_db)
-        conn.set_isolation_level(0)
-        cur = conn.cursor()
-        cur.execute('DROP DATABASE IF EXISTS {}'.format(self.test_db))
-        cur.execute('CREATE DATABASE {} TEMPLATE = {}'.format(self.test_db, self.template_db))
-        conn.close()
+        with self.connect_database(self.template_db) as conn:
+            conn.autocommit = True
+            conn.execute(pysql.SQL('DROP DATABASE IF EXISTS')
+                                   + pysql.Identifier(self.test_db))
+            conn.execute(pysql.SQL('CREATE DATABASE {} TEMPLATE = {}').format(
+                           pysql.Identifier(self.test_db),
+                           pysql.Identifier(self.template_db)))
+
         self.write_nominatim_config(self.test_db)
         context.db = self.connect_database(self.test_db)
         context.db.autocommit = True
-        psycopg2.extras.register_hstore(context.db, globally=False)
+        register_hstore(context.db)
 
     def teardown_db(self, context, force_drop=False):
         """ Remove the test database, if it exists.
@@ -276,17 +278,17 @@ class NominatimEnvironment:
             dropped and always false returned.
         """
         if self.reuse_template:
-            conn = self.connect_database('postgres')
-            with conn.cursor() as cur:
-                cur.execute('select count(*) from pg_database where datname = %s',
-                            (name,))
-                if cur.fetchone()[0] == 1:
+            with self.connect_database('postgres') as conn:
+                num = execute_scalar(conn,
+                                     'select count(*) from pg_database where datname = %s',
+                                     (name,))
+                if num == 1:
                     return True
-            conn.close()
         else:
             self.db_drop_database(name)
 
         return False
+
 
     def reindex_placex(self, db):
         """ Run the indexing step until all data in the placex has
@@ -294,13 +296,8 @@ class NominatimEnvironment:
             to index under some circumstances. That is why indexing may have
             to be run multiple times.
         """
-        with db.cursor() as cur:
-            while True:
-                self.run_nominatim('index')
+        self.run_nominatim('index')
 
-                cur.execute("SELECT 'a' FROM placex WHERE indexed_status != 0 LIMIT 1")
-                if cur.rowcount == 0:
-                    return
 
     def run_nominatim(self, *cmdline):
         """ Run the nominatim command-line tool via the library.

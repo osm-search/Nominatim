@@ -10,6 +10,7 @@ Implementation of the 'add-data' subcommand.
 from typing import cast
 import argparse
 import logging
+import asyncio
 
 import psutil
 
@@ -64,15 +65,10 @@ class UpdateAddData:
 
 
     def run(self, args: NominatimArgs) -> int:
-        from ..tokenizer import factory as tokenizer_factory
-        from ..tools import tiger_data, add_osm_data
+        from ..tools import add_osm_data
 
         if args.tiger_data:
-            tokenizer = tokenizer_factory.get_tokenizer_for_db(args.config)
-            return tiger_data.add_tiger_data(args.tiger_data,
-                                             args.config,
-                                             args.threads or psutil.cpu_count()  or 1,
-                                             tokenizer)
+            return asyncio.run(self._add_tiger_data(args))
 
         osm2pgsql_params = args.osm2pgsql_options(default_cache=1000, default_threads=1)
         if args.file or args.diff:
@@ -99,3 +95,16 @@ class UpdateAddData:
                                                osm2pgsql_params)
 
         return 0
+
+
+    async def _add_tiger_data(self, args: NominatimArgs) -> int:
+        from ..tokenizer import factory as tokenizer_factory
+        from ..tools import tiger_data
+
+        assert args.tiger_data
+
+        tokenizer = tokenizer_factory.get_tokenizer_for_db(args.config)
+        return await tiger_data.add_tiger_data(args.tiger_data,
+                                               args.config,
+                                               args.threads or psutil.cpu_count()  or 1,
+                                               tokenizer)

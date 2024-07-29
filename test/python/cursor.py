@@ -5,11 +5,11 @@
 # Copyright (C) 2024 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
-Specialised psycopg2 cursor with shortcut functions useful for testing.
+Specialised psycopg cursor with shortcut functions useful for testing.
 """
-import psycopg2.extras
+import psycopg
 
-class CursorForTesting(psycopg2.extras.DictCursor):
+class CursorForTesting(psycopg.Cursor):
     """ Extension to the DictCursor class that provides execution
         short-cuts that simplify writing assertions.
     """
@@ -59,9 +59,3 @@ class CursorForTesting(psycopg2.extras.DictCursor):
             return self.scalar('SELECT count(*) FROM ' + table)
 
         return self.scalar('SELECT count(*) FROM {} WHERE {}'.format(table, where))
-
-
-    def execute_values(self, *args, **kwargs):
-        """ Execute the execute_values() function on the cursor.
-        """
-        psycopg2.extras.execute_values(self, *args, **kwargs)

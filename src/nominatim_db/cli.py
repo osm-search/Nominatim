@@ -14,6 +14,7 @@ import logging
 import os
 import sys
 import argparse
+import asyncio
 from pathlib import Path
 
 from .config import Configuration
@@ -170,22 +171,30 @@ class AdminServe:
                 raise UsageError("PHP frontend not configured.")
             run_php_server(args.server, args.project_dir / 'website')
         else:
-            import uvicorn # pylint: disable=import-outside-toplevel
-            server_info = args.server.split(':', 1)
-            host = server_info[0]
-            if len(server_info) > 1:
-                if not server_info[1].isdigit():
-                    raise UsageError('Invalid format for --server parameter. Use <host>:<port>')
-                port = int(server_info[1])
-            else:
-                port = 8088
-
-            server_module = importlib.import_module(f'nominatim_api.server.{args.engine}.server')
-
-            app = server_module.get_application(args.project_dir)
-            uvicorn.run(app, host=host, port=port)
+            asyncio.run(self.run_uvicorn(args))
 
         return 0
+
+
+    async def run_uvicorn(self, args: NominatimArgs) -> None:
+        import uvicorn # pylint: disable=import-outside-toplevel
+
+        server_info = args.server.split(':', 1)
+        host = server_info[0]
+        if len(server_info) > 1:
+            if not server_info[1].isdigit():
+                raise UsageError('Invalid format for --server parameter. Use <host>:<port>')
+            port = int(server_info[1])
+        else:
+            port = 8088
+
+        server_module = importlib.import_module(f'nominatim_api.server.{args.engine}.server')
+
+        app = server_module.get_application(args.project_dir)
+
+        config = uvicorn.Config(app, host=host, port=port)
+        server = uvicorn.Server(config)
+        await server.serve()
 
 
 def get_set_parser() -> CommandlineParser:

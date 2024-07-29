@@ -17,11 +17,11 @@ from typing import Iterable, Tuple, Mapping, Sequence, Optional, Set
 import logging
 import re
 
-from psycopg2.sql import Identifier, SQL
+from psycopg.sql import Identifier, SQL
 
 from ...typing import Protocol
 from ...config import Configuration
-from ...db.connection import Connection
+from ...db.connection import Connection, drop_tables, index_exists
 from .importer_statistics import SpecialPhrasesImporterStatistics
 from .special_phrase import SpecialPhrase
 from ...tokenizer.base import AbstractTokenizer
@@ -233,7 +233,7 @@ class SPImporter():
         index_prefix = f'idx_place_classtype_{phrase_class}_{phrase_type}_'
         base_table = _classtype_table(phrase_class, phrase_type)
         # Index on centroid
-        if not self.db_connection.index_exists(index_prefix + 'centroid'):
+        if not index_exists(self.db_connection, index_prefix + 'centroid'):
             with self.db_connection.cursor() as db_cursor:
                 db_cursor.execute(SQL("CREATE INDEX {} ON {} USING GIST (centroid) {}")
                                   .format(Identifier(index_prefix + 'centroid'),
@@ -241,7 +241,7 @@ class SPImporter():
                                           SQL(sql_tablespace)))
 
         # Index on place_id
-        if not self.db_connection.index_exists(index_prefix + 'place_id'):
+        if not index_exists(self.db_connection, index_prefix + 'place_id'):
             with self.db_connection.cursor() as db_cursor:
                 db_cursor.execute(SQL("CREATE INDEX {} ON {} USING btree(place_id) {}")
                                   .format(Identifier(index_prefix + 'place_id'),
@@ -259,6 +259,7 @@ class SPImporter():
                               .format(Identifier(table_name),
                                       Identifier(self.config.DATABASE_WEBUSER)))
 
+
     def _remove_non_existent_tables_from_db(self) -> None:
         """
             Remove special phrases which doesn't exist on the wiki anymore.
@@ -268,7 +269,6 @@ class SPImporter():
 
         # Delete place_classtype tables corresponding to class/type which
         # are not on the wiki anymore.
-        with self.db_connection.cursor() as db_cursor:
-            for table in self.table_phrases_to_delete:
-                self.statistics_handler.notify_one_table_deleted()
-                db_cursor.drop_table(table)
+        drop_tables(self.db_connection, *self.table_phrases_to_delete)
+        for _ in self.table_phrases_to_delete:
+            self.statistics_handler.notify_one_table_deleted()

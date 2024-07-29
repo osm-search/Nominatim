@@ -11,9 +11,10 @@ from typing import Tuple, Optional
 import argparse
 import logging
 from pathlib import Path
+import asyncio
 
 from ..config import Configuration
-from ..db.connection import connect
+from ..db.connection import connect, table_exists
 from ..tokenizer.base import AbstractTokenizer
 from .args import NominatimArgs
 
@@ -99,7 +100,7 @@ class UpdateRefresh:
                                            args.project_dir, tokenizer)
                 indexer = Indexer(args.config.get_libpq_dsn(), tokenizer,
                                   args.threads or 1)
-                indexer.index_postcodes()
+                asyncio.run(indexer.index_postcodes())
             else:
                 LOG.error("The place table doesn't exist. "
                           "Postcode updates on a frozen database is not possible.")
@@ -124,7 +125,7 @@ class UpdateRefresh:
             with connect(args.config.get_libpq_dsn()) as conn:
                 # If the table did not exist before, then the importance code
                 # needs to be enabled.
-                if not conn.table_exists('secondary_importance'):
+                if not table_exists(conn, 'secondary_importance'):
                     args.functions = True
 
             LOG.warning('Import secondary importance raster data from %s', args.project_dir)

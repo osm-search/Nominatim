@@ -9,7 +9,7 @@ Query and access functions for the in-database property table.
 """
 from typing import Optional, cast
 
-from .connection import Connection
+from .connection import Connection, table_exists
 
 def set_property(conn: Connection, name: str, value: str) -> None:
     """ Add or replace the property with the given name.
@@ -31,7 +31,7 @@ def get_property(conn: Connection, name: str) -> Optional[str]:
     """ Return the current value of the given property or None if the property
         is not set.
     """
-    if not conn.table_exists('nominatim_properties'):
+    if not table_exists(conn, 'nominatim_properties'):
         return None
 
     with conn.cursor() as cur:

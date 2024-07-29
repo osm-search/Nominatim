@@ -25,6 +25,23 @@ class MockParamCapture:
         return self.return_value
 
 
+class AsyncMockParamCapture:
+    """ Mock that records the parameters with which a function was called
+        as well as the number of calls.
+    """
+    def __init__(self, retval=0):
+        self.called = 0
+        self.return_value = retval
+        self.last_args = None
+        self.last_kwargs = None
+
+    async def __call__(self, *args, **kwargs):
+        self.called += 1
+        self.last_args = args
+        self.last_kwargs = kwargs
+        return self.return_value
+
+
 class DummyTokenizer:
     def __init__(self, *args, **kwargs):
         self.update_sql_functions_called = False
@@ -62,6 +79,17 @@ def cli_call():
 def mock_func_factory(monkeypatch):
     def get_mock(module, func):
         mock = MockParamCapture()
+        mock.func_name = func
+        monkeypatch.setattr(module, func, mock)
+        return mock
+
+    return get_mock
+
+
+@pytest.fixture
+def async_mock_func_factory(monkeypatch):
+    def get_mock(module, func):
+        mock = AsyncMockParamCapture()
         mock.func_name = func
         monkeypatch.setattr(module, func, mock)
         return mock

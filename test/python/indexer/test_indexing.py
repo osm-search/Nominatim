@@ -9,6 +9,7 @@ Tests for running the indexing.
 """
 import itertools
 import pytest
+import pytest_asyncio
 
 from nominatim_db.indexer import indexer
 from nominatim_db.tokenizer import factory
@@ -21,9 +22,8 @@ class IndexerTestDB:
         self.postcode_id = itertools.count(700000)
 
         self.conn = conn
-        self.conn.set_isolation_level(0)
+        self.conn.autocimmit = True
         with self.conn.cursor() as cur:
-            cur.execute('CREATE EXTENSION hstore')
             cur.execute("""CREATE TABLE placex (place_id BIGINT,
                                                 name HSTORE,
                                                 class TEXT,
@@ -156,7 +156,8 @@ def test_tokenizer(tokenizer_mock, project_env):
 
 
 @pytest.mark.parametrize("threads", [1, 15])
-def test_index_all_by_rank(test_db, threads, test_tokenizer):
+@pytest.mark.asyncio
+async def test_index_all_by_rank(test_db, threads, test_tokenizer):
     for rank in range(31):
         test_db.add_place(rank_address=rank, rank_search=rank)
     test_db.add_osmline()
@@ -165,7 +166,7 @@ def test_index_all_by_rank(test_db, threads, test_tokenizer):
     assert test_db.osmline_unindexed() == 1
 
     idx = indexer.Indexer('dbname=test_nominatim_python_unittest', test_tokenizer, threads)
-    idx.index_by_rank(0, 30)
+    await idx.index_by_rank(0, 30)
 
     assert test_db.placex_unindexed() == 0
     assert test_db.osmline_unindexed() == 0
@@ -190,7 +191,8 @@ def test_index_all_by_rank(test_db, threads, test_tokenizer):
 
 
 @pytest.mark.parametrize("threads", [1, 15])
-def test_index_partial_without_30(test_db, threads, test_tokenizer):
+@pytest.mark.asyncio
+async def test_index_partial_without_30(test_db, threads, test_tokenizer):
     for rank in range(31):
         test_db.add_place(rank_address=rank, rank_search=rank)
     test_db.add_osmline()
@@ -200,7 +202,7 @@ def test_index_partial_without_30(test_db, threads, test_tokenizer):
 
     idx = indexer.Indexer('dbname=test_nominatim_python_unittest',
                           test_tokenizer, threads)
-    idx.index_by_rank(4, 15)
+    await idx.index_by_rank(4, 15)
 
     assert test_db.placex_unindexed() == 19
     assert test_db.osmline_unindexed() == 1
@@ -211,7 +213,8 @@ def test_index_partial_without_30(test_db, threads, test_tokenizer):
 
 
 @pytest.mark.parametrize("threads", [1, 15])
-def test_index_partial_with_30(test_db, threads, test_tokenizer):
+@pytest.mark.asyncio
+async def test_index_partial_with_30(test_db, threads, test_tokenizer):
     for rank in range(31):
         test_db.add_place(rank_address=rank, rank_search=rank)
     test_db.add_osmline()
@@ -220,7 +223,7 @@ def test_index_partial_with_30(test_db, threads, test_tokenizer):
     assert test_db.osmline_unindexed() == 1
 
     idx = indexer.Indexer('dbname=test_nominatim_python_unittest', test_tokenizer, threads)
-    idx.index_by_rank(28, 30)
+    await idx.index_by_rank(28, 30)
 
     assert test_db.placex_unindexed() == 27
     assert test_db.osmline_unindexed() == 0
@@ -230,7 +233,8 @@ def test_index_partial_with_30(test_db, threads, test_tokenizer):
                       WHERE indexed_status = 0 AND rank_address between 1 and 27""") == 0
 
 @pytest.mark.parametrize("threads", [1, 15])
-def test_index_boundaries(test_db, threads, test_tokenizer):
+@pytest.mark.asyncio
+async def test_index_boundaries(test_db, threads, test_tokenizer):
     for rank in range(4, 10):
         test_db.add_admin(rank_address=rank, rank_search=rank)
     for rank in range(31):
@@ -241,7 +245,7 @@ def test_index_boundaries(test_db, threads, test_tokenizer):
     assert test_db.osmline_unindexed() == 1
 
     idx = indexer.Indexer('dbname=test_nominatim_python_unittest', test_tokenizer, threads)
-    idx.index_boundaries(0, 30)
+    await idx.index_boundaries(0, 30)
 
     assert test_db.placex_unindexed() == 31
     assert test_db.osmline_unindexed() == 1
@@ -252,21 +256,23 @@ def test_index_boundaries(test_db, threads, test_tokenizer):
 
 
 @pytest.mark.parametrize("threads", [1, 15])
-def test_index_postcodes(test_db, threads, test_tokenizer):
+@pytest.mark.asyncio
+async def test_index_postcodes(test_db, threads, test_tokenizer):
     for postcode in range(1000):
         test_db.add_postcode('de', postcode)
     for postcode in range(32000, 33000):
         test_db.add_postcode('us', postcode)
 
     idx = indexer.Indexer('dbname=test_nominatim_python_unittest', test_tokenizer, threads)
-    idx.index_postcodes()
+    await idx.index_postcodes()
 
     assert test_db.scalar("""SELECT count(*) FROM location_postcode
                                   WHERE indexed_status != 0""") == 0
 
 
 @pytest.mark.parametrize("analyse", [True, False])
-def test_index_full(test_db, analyse, test_tokenizer):
+@pytest.mark.asyncio
+async def test_index_full(test_db, analyse, test_tokenizer):
     for rank in range(4, 10):
         test_db.add_admin(rank_address=rank, rank_search=rank)
     for rank in range(31):
@@ -276,22 +282,9 @@ def test_index_full(test_db, analyse, test_tokenizer):
         test_db.add_postcode('de', postcode)
 
     idx = indexer.Indexer('dbname=test_nominatim_python_unittest', test_tokenizer, 4)
-    idx.index_full(analyse=analyse)
+    await idx.index_full(analyse=analyse)
 
     assert test_db.placex_unindexed() == 0
     assert test_db.osmline_unindexed() == 0
     assert test_db.scalar("""SELECT count(*) FROM location_postcode
                              WHERE indexed_status != 0""") == 0
-
-
-@pytest.mark.parametrize("threads", [1, 15])
-def test_index_reopen_connection(test_db, threads, monkeypatch, test_tokenizer):
-    monkeypatch.setattr(indexer.WorkerPool, "REOPEN_CONNECTIONS_AFTER", 15)
-
-    for _ in range(1000):
-        test_db.add_place(rank_address=30, rank_search=30)
-
-    idx = indexer.Indexer('dbname=test_nominatim_python_unittest', test_tokenizer, threads)
-    idx.index_by_rank(28, 30)
-
-    assert test_db.placex_unindexed() == 0

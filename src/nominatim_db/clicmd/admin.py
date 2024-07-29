@@ -12,7 +12,7 @@ import argparse
 import random
 
 from ..errors import UsageError
-from ..db.connection import connect
+from ..db.connection import connect, table_exists
 from .args import NominatimArgs
 
 # Do not repeat documentation of subcommand classes.
@@ -115,7 +115,7 @@ class AdminFuncs:
 
                 tokenizer = tokenizer_factory.get_tokenizer_for_db(args.config)
                 with connect(args.config.get_libpq_dsn()) as conn:
-                    if conn.table_exists('search_name'):
+                    if table_exists(conn, 'search_name'):
                         words = tokenizer.most_frequent_words(conn, 1000)
                     else:
                         words = []

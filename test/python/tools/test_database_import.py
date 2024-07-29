@@ -8,10 +8,11 @@
 Tests for functions to import a new database.
 """
 from pathlib import Path
-from contextlib import closing
 
 import pytest
-import psycopg2
+import pytest_asyncio
+import psycopg
+from psycopg import sql as pysql
 
 from nominatim_db.tools import database_import
 from nominatim_db.errors import UsageError
@@ -21,10 +22,7 @@ class TestDatabaseSetup:
 
     @pytest.fixture(autouse=True)
     def setup_nonexistant_db(self):
-        conn = psycopg2.connect(database='postgres')
-
-        try:
-            conn.set_isolation_level(0)
+        with psycopg.connect(dbname='postgres', autocommit=True) as conn:
             with conn.cursor() as cur:
                 cur.execute(f'DROP DATABASE IF EXISTS {self.DBNAME}')
 
@@ -32,22 +30,17 @@ class TestDatabaseSetup:
 
             with conn.cursor() as cur:
                 cur.execute(f'DROP DATABASE IF EXISTS {self.DBNAME}')
-        finally:
-            conn.close()
+
 
     @pytest.fixture
     def cursor(self):
-        conn = psycopg2.connect(database=self.DBNAME)
-
-        try:
+        with psycopg.connect(dbname=self.DBNAME) as conn:
             with conn.cursor() as cur:
                 yield cur
-        finally:
-            conn.close()
 
 
     def conn(self):
-        return closing(psycopg2.connect(database=self.DBNAME))
+        return psycopg.connect(dbname=self.DBNAME)
 
 
     def test_setup_skeleton(self):
@@ -132,7 +125,7 @@ def test_import_osm_data_simple_ignore_no_data(table_factory, osm2pgsql_options)
                                     ignore_errors=True)
 
 
-def test_import_osm_data_drop(table_factory, temp_db_conn, tmp_path, osm2pgsql_options):
+def test_import_osm_data_drop(table_factory, temp_db_cursor, tmp_path, osm2pgsql_options):
     table_factory('place', content=((1, ), ))
     table_factory('planet_osm_nodes')
 
@@ -144,7 +137,7 @@ def test_import_osm_data_drop(table_factory, temp_db_conn, tmp_path, osm2pgsql_o
     database_import.import_osm_data(Path('file.pbf'), osm2pgsql_options, drop=True)
 
     assert not flatfile.exists()
-    assert not temp_db_conn.table_exists('planet_osm_nodes')
+    assert not temp_db_cursor.table_exists('planet_osm_nodes')
 
 
 def test_import_osm_data_default_cache(table_factory, osm2pgsql_options, capfd):
@@ -178,18 +171,19 @@ def test_truncate_database_tables(temp_db_conn, temp_db_cursor, table_factory, w
 
 
 @pytest.mark.parametrize("threads", (1, 5))
-def test_load_data(dsn, place_row, placex_table, osmline_table,
+@pytest.mark.asyncio
+async def test_load_data(dsn, place_row, placex_table, osmline_table,
                    temp_db_cursor, threads):
     for func in ('precompute_words', 'getorcreate_housenumber_id', 'make_standard_name'):
-        temp_db_cursor.execute(f"""CREATE FUNCTION {func} (src TEXT)
-                                  RETURNS TEXT AS $$ SELECT 'a'::TEXT $$ LANGUAGE SQL
-                               """)
+        temp_db_cursor.execute(pysql.SQL("""CREATE FUNCTION {} (src TEXT)
+                                            RETURNS TEXT AS $$ SELECT 'a'::TEXT $$ LANGUAGE SQL
+                                         """).format(pysql.Identifier(func)))
     for oid in range(100, 130):
         place_row(osm_id=oid)
     place_row(osm_type='W', osm_id=342, cls='place', typ='houses',
               geom='SRID=4326;LINESTRING(0 0, 10 10)')
 
-    database_import.load_data(dsn, threads)
+    await database_import.load_data(dsn, threads)
 
     assert temp_db_cursor.table_rows('placex') == 30
     assert temp_db_cursor.table_rows('location_property_osmline') == 1
@@ -241,11 +235,12 @@ class TestSetupSQL:
 
 
     @pytest.mark.parametrize("drop", [True, False])
-    def test_create_search_indices(self, temp_db_conn, temp_db_cursor, drop):
+    @pytest.mark.asyncio
+    async def test_create_search_indices(self, temp_db_conn, temp_db_cursor, drop):
         self.write_sql('indices.sql',
                        """CREATE FUNCTION test() RETURNS bool
                           AS $$ SELECT {{drop}} $$ LANGUAGE SQL""")
 
-        database_import.create_search_indices(temp_db_conn, self.config, drop)
+        await database_import.create_search_indices(temp_db_conn, self.config, drop)
 
         temp_db_cursor.scalar('SELECT test()') == drop

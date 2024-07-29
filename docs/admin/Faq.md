@@ -142,6 +142,25 @@ Make sure you have the PostgreSQL extensions "hstore" and "postgis" installed.
 See the installation instructions for a full list of required packages.
 
 
+### UnicodeEncodeError: 'ascii' codec can't encode character
+
+Make sure that the operating system's locale is UTF-8. With some prebuilt
+images (e.g. LXC containers from Proxmox, see
+[discussion](https://github.com/osm-search/Nominatim/discussions/2343)) or
+images that optimize for size it might be missing.
+
+On Ubuntu you can check the locale is installed:
+
+```
+   grep UTF-8 /etc/default/locale
+```
+
+And install it using
+
+```
+   dpkg-reconfigure locales
+```
+
 ### I forgot to delete the flatnodes file before starting an import.
 
 That's fine. For each import the flatnodes file get overwritten.

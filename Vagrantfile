@@ -34,6 +34,14 @@ Vagrant.configure("2") do |config|
     end
   end
 
+  config.vm.provider "parallels" do |prl, override|
+    prl.update_guest_tools = false
+    prl.memory = 2048
+    if ENV['CHECKOUT'] != 'y' then
+      override.vm.synced_folder ".", "/home/vagrant/Nominatim"
+    end
+  end
+
   config.vm.provider "libvirt" do |lv, override|
     lv.memory = 2048
     lv.nested = true
@@ -44,6 +52,10 @@ Vagrant.configure("2") do |config|
 
   config.vm.define "ubuntu22", primary: true do |sub|
       sub.vm.box = "generic/ubuntu2204"
+      if RUBY_PLATFORM.include?('darwin') && RUBY_PLATFORM.include?('arm64')
+        # Apple M processor
+        sub.vm.box = 'luminositylabsllc/ubuntu-22.04-arm64'
+      end
       sub.vm.provision :shell do |s|
         s.path = "vagrant/Install-on-Ubuntu-22.sh"
         s.privileged = false

@@ -37,8 +37,6 @@ class NominatimEnvironment:
         self.server_module_path = config['SERVER_MODULE_PATH']
         self.reuse_template = not config['REMOVE_TEMPLATE']
         self.keep_scenario_db = config['KEEP_TEST_DB']
-        self.code_coverage_path = config['PHPCOV']
-        self.code_coverage_id = 1
 
         self.default_config = Configuration(None).get_os_env()
         self.test_env = None
@@ -70,13 +68,6 @@ class NominatimEnvironment:
             dbargs['password'] = self.db_pass
         return psycopg.connect(**dbargs)
 
-    def next_code_coverage_file(self):
-        """ Generate the next name for a coverage file.
-        """
-        fn = Path(self.code_coverage_path) / "{:06d}.cov".format(self.code_coverage_id)
-        self.code_coverage_id += 1
-
-        return fn.resolve()
 
     def write_nominatim_config(self, dbname):
         """ Set up a custom test configuration that connects to the given

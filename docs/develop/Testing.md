@@ -121,23 +121,6 @@ and compromises the following data:
 API tests should only be testing the functionality of the website PHP code.
 Most tests should be formulated as BDD DB creation tests (see below) instead.
 
-#### Code Coverage (PHP engine only)
-
-The API tests also support code coverage tests. You need to install
-[PHP_CodeCoverage](https://github.com/sebastianbergmann/php-code-coverage).
-On Debian/Ubuntu run:
-
-    apt-get install php-codecoverage php-xdebug
-
-Then run the API tests as follows:
-
-    behave api -DPHPCOV=<coverage output dir>
-
-The output directory must be an absolute path. To generate reports, you can use
-the [phpcov](https://github.com/sebastianbergmann/phpcov) tool:
-
-    phpcov merge --html=<report output dir> <coverage output dir>
-
 ### DB Creation Tests (`test/bdd/db`)
 
 These tests check the import and update of the Nominatim database. They do not

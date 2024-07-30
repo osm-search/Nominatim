@@ -50,6 +50,10 @@ The documentation is built with mkdocs:
 * [mkdocstrings](https://mkdocstrings.github.io/) >= 0.25
 * [mkdocs-material](https://squidfunk.github.io/mkdocs-material/)
 
+Please be aware that tests always run against the globally installed
+osm2pgsql, so you need to have this set up. If you want to test against
+the vendored version of osm2pgsql, you need to set the PATH accordingly.
+
 ### Installing prerequisites on Ubuntu/Debian
 
 The Python tools should always be run with the most recent version.

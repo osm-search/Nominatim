@@ -6,13 +6,10 @@
 # For a full list of authors see the git log.
 from pathlib import Path
 import importlib
-import sys
 import tempfile
 
 import psycopg
 from psycopg import sql as pysql
-
-sys.path.insert(1, str((Path(__file__) / '..' / '..' / '..' / '..'/ 'src').resolve()))
 
 from nominatim_db import cli
 from nominatim_db.config import Configuration
@@ -26,7 +23,6 @@ class NominatimEnvironment:
     """
 
     def __init__(self, config):
-        self.build_dir = Path(config['BUILDDIR']).resolve()
         self.src_dir = (Path(__file__) / '..' / '..' / '..' / '..').resolve()
         self.db_host = config['DB_HOST']
         self.db_port = config['DB_PORT']
@@ -55,6 +51,9 @@ class NominatimEnvironment:
             if not hasattr(self, f"create_api_request_func_{config['API_ENGINE']}"):
                 raise RuntimeError(f"Unknown API engine '{config['API_ENGINE']}'")
             self.api_engine = getattr(self, f"create_api_request_func_{config['API_ENGINE']}")()
+
+        if self.tokenizer == 'legacy' and self.server_module_path is None:
+            raise RuntimeError("You must set -DSERVER_MODULE_PATH when testing the legacy tokenizer.")
 
     def connect_database(self, dbname):
         """ Return a connection to the database with the given name.
@@ -107,8 +106,6 @@ class NominatimEnvironment:
         self.test_env['NOMINATIM_DATADIR'] = str((self.src_dir / 'data').resolve())
         self.test_env['NOMINATIM_SQLDIR'] = str((self.src_dir / 'lib-sql').resolve())
         self.test_env['NOMINATIM_CONFIGDIR'] = str((self.src_dir / 'settings').resolve())
-        self.test_env['NOMINATIM_DATABASE_MODULE_SRC_PATH'] = str((self.build_dir / 'module').resolve())
-        self.test_env['NOMINATIM_OSM2PGSQL_BINARY'] = str((self.build_dir / 'osm2pgsql' / 'osm2pgsql').resolve())
         if self.tokenizer is not None:
             self.test_env['NOMINATIM_TOKENIZER'] = self.tokenizer
         if self.import_style is not None:
@@ -116,9 +113,6 @@ class NominatimEnvironment:
 
         if self.server_module_path:
             self.test_env['NOMINATIM_DATABASE_MODULE_PATH'] = self.server_module_path
-        else:
-            # avoid module being copied into the temporary environment
-            self.test_env['NOMINATIM_DATABASE_MODULE_PATH'] = str((self.build_dir / 'module').resolve())
 
         if self.website_dir is not None:
             self.website_dir.cleanup()
@@ -137,8 +131,7 @@ class NominatimEnvironment:
 
     def get_test_config(self):
         cfg = Configuration(Path(self.website_dir.name), environ=self.test_env)
-        cfg.set_libdirs(module=self.build_dir / 'module',
-                        osm2pgsql=self.build_dir / 'osm2pgsql' / 'osm2pgsql')
+        cfg.set_libdirs(module=self.server_module_path)
         return cfg
 
     def get_libpq_dsn(self):
@@ -305,8 +298,8 @@ class NominatimEnvironment:
         if self.website_dir is not None:
             cmdline = list(cmdline) + ['--project-dir', self.website_dir.name]
 
-        cli.nominatim(module_dir='',
-                      osm2pgsql_path=str(self.build_dir / 'osm2pgsql' / 'osm2pgsql'),
+        cli.nominatim(module_dir=self.server_module_path,
+                      osm2pgsql_path=None,
                       cli_args=cmdline,
                       environ=self.test_env)
 

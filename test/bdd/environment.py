@@ -5,16 +5,18 @@
 # Copyright (C) 2024 by the Nominatim developer community.
 # For a full list of authors see the git log.
 from pathlib import Path
+import sys
 
 from behave import *
+
+sys.path.insert(1, str(Path(__file__, '..', '..', '..', 'src').resolve()))
 
 from steps.geometry_factory import GeometryFactory
 from steps.nominatim_environment import NominatimEnvironment
 
-TEST_BASE_DIR = Path(__file__) / '..' / '..'
+TEST_BASE_DIR = Path(__file__, '..', '..').resolve()
 
 userconfig = {
-    'BUILDDIR' : (TEST_BASE_DIR / '..' / 'build').resolve(),
     'REMOVE_TEMPLATE' : False,
     'KEEP_TEST_DB' : False,
     'DB_HOST' : None,
@@ -24,7 +26,7 @@ userconfig = {
     'TEMPLATE_DB' : 'test_template_nominatim',
     'TEST_DB' : 'test_nominatim',
     'API_TEST_DB' : 'test_api_nominatim',
-    'API_TEST_FILE'  : (TEST_BASE_DIR / 'testdb' / 'apidb-test-data.pbf').resolve(),
+    'API_TEST_FILE'  : TEST_BASE_DIR / 'testdb' / 'apidb-test-data.pbf',
     'SERVER_MODULE_PATH' : None,
     'TOKENIZER' : None, # Test with a custom tokenizer
     'STYLE' : 'extratags',

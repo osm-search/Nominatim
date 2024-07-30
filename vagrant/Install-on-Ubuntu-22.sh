@@ -252,7 +252,8 @@ else                                  #DOCS:
     sudo systemctl restart apache2
 fi                                    #DOCS:
 
-# The Nominatim API is now available at `http://localhost/nominatim/`.
+# The Nominatim API is now available at `http://localhost/nominatim/`. Point your browser
+# to the status output `http://localhost/nominatim/status` to test if everything is ok.
 
 fi   #DOCS:
 
@@ -298,6 +299,7 @@ else                                  #DOCS:
     sudo systemctl restart nginx
 fi                                    #DOCS:
 
-# The Nominatim API is now available at `http://localhost/nominatim/`.
+# The Nominatim API is now available at `http://localhost/nominatim/`. Point your browser
+# to the status output `http://localhost/nominatim/status` to test if everything is ok.
 
 fi   #DOCS:

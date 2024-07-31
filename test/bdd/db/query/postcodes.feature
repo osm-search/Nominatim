@@ -76,6 +76,7 @@ Feature: Querying fo postcode variants
             | AD675    |
 
 
+    @fail-legacy
     Scenario: Different postcodes with the same normalization can both be found
         Given the places
            | osm | class | type  | addr+postcode | addr+housenumber | geometry |

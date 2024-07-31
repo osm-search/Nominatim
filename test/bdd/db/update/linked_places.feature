@@ -157,17 +157,17 @@ Feature: Updates of linked places
          | R1  | boundary | administrative | rel  | 8     | (10,11,12,13,10) |
         And the places
          | osm | class    | type        | name+name:de |
-         | N3  | place    | city        | pnt          |
+         | N3  | place    | city        | greeny       |
         And the relations
          | id | members  |
          | 1  | N3:label |
         When importing
         Then placex contains
          | object | linked_place_id | name+_place_name:de |
-         | R1     | -               | pnt  |
+         | R1     | -               | greeny  |
         And placex contains
          | object | linked_place_id | name+name:de |
-         | N3     | R1              | pnt  |
+         | N3     | R1              | greeny  |
         When updating places
          | osm | class    | type        | name+name:de |
          | N3  | place    | city        | newname      |
@@ -188,18 +188,18 @@ Feature: Updates of linked places
          | R1  | boundary | administrative | rel  | 8     | (10,11,12,13,10) |
         And the places
          | osm | class    | type           | name |
-         | N3  | place    | city           | pnt  |
+         | N3  | place    | city           | greeny  |
         And the relations
          | id | members  |
          | 1  | N3:label |
         When importing
         Then placex contains
          | object | linked_place_id | name+_place_name | name+name |
-         | R1     | -               | pnt              | rel       |
+         | R1     | -               | greeny              | rel       |
         And placex contains
          | object | linked_place_id | name+name |
-         | N3     | R1              | pnt  |
-        When sending search query "pnt"
+         | N3     | R1              | greeny  |
+        When sending search query "greeny"
         Then results contain
           | osm |
           | R1  |
@@ -212,7 +212,7 @@ Feature: Updates of linked places
         And placex contains
          | object | linked_place_id | name+_place_name:de | name+name |
          | R1     | -               | depnt               | rel       |
-        When sending search query "pnt"
+        When sending search query "greeny"
         Then exactly 0 results are returned
 
     Scenario: Updating linkee extratags keeps linker's extratags

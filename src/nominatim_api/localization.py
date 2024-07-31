@@ -7,62 +7,43 @@
 """
 Helper functions for localizing names of results.
 """
-import re
 from typing import List, Mapping, Optional
-
-from .config import Configuration
+import re
 
 
 class Locales:
     """ Helper class for localization of names.
 
-    It takes a list of language prefixes in their order of preferred
-    usage.
-    It takes config object as input which enables to configure the 
-    list of supported tags. Setting name: `OUTPUT_NAMES`
-    How to use?
-    e.g. `name:XX,name,brand,official_name:XX,short_name:XX,official_name,short_name,ref`
-        - Coma separated
-        - `:XX` identifies lang tags
-        - consecutive `:XX` identifies multiple lang tags to-be added at the same time
-        - subsequent parts after lang tags (till next lang tag) identifies batch of tags
+    Keyword arguments:
+    langs: List[str] -- list of language prefixes in 
+        their order of preferred usage.
+    output_name_tags_config: str -- string object 
+        containing output name tags in their order of preferred usage.
+        default -- 
+        `name:XX,name,brand,official_name:XX,short_name:XX,official_name,short_name,ref`
     """
 
-    def __init__(self, langs: Optional[List[str]] = None, config: Optional[Configuration] = None):
+    def __init__(
+        self,
+        langs: Optional[List[str]] = None,
+        output_name_tags_config: str = (
+            "name:XX,name,brand,official_name:XX,short_name:XX,official_name,short_name,ref"
+        )
+    ):
         self.languages = langs or []
         self.name_tags: List[str] = []
 
         # Build the list of supported tags
-        # Uses hard-coded when config `OUTPUT_NAMES` not provided
-        if config and config.OUTPUT_NAMES != '':
-            self._build_output_name_tags(config.OUTPUT_NAMES)
-        else:
-            self._build_default_output_name_tags()
-
-
-    def _build_default_output_name_tags(self) -> None:
-        """
-        Build the list of supported tags. Hard-coded implementation.
-        """
-        self._add_lang_tags("name")
-        self._add_tags("name", "brand")
-        self._add_lang_tags("official_name", "short_name")
-        self._add_tags("official_name", "short_name", "ref")
+        self._build_output_name_tags(output_name_tags_config)
 
 
     def _build_output_name_tags(self, nominatim_output_names: str) -> None:
         """
         Build the list of supported tags. Dynamic implementation.
-        How to use?
-        e.g. `name:XX,name,brand,official_name:XX,short_name:XX,official_name,short_name,ref`
-            - Coma separated
-            - `:XX` identifies lang tags
-            - consecutive `:XX` identifies multiple lang tags to-be added at the same time
-            - subsequent parts after lang tags (till next lang tag) identifies batch of tags
         """
-        nominatim_output_names = nominatim_output_names.split(",")
-        lang_tags = []
-        tags = []
+        nominatim_output_names: List[str] = nominatim_output_names.split(",")
+        lang_tags: List[str] = []
+        tags: List[str] = []
         for name in nominatim_output_names:
             if name.endswith(":XX"): # Identifies Lang Tag
                 lang_tags.append(name[:-3])

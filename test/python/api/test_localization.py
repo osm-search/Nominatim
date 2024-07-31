@@ -7,10 +7,9 @@
 """
 Test functions for adapting results to the user's locale.
 """
-import os
 import pytest
 
-from nominatim_api import Locales, Configuration
+from nominatim_api import Locales
 
 def test_display_name_empty_names():
     l = Locales(['en', 'de'])
@@ -58,34 +57,38 @@ def test_configurable_output_name_tags():
     """
     tests the output name tags when environment config is provided
     """
-    name_tags = {
+    name_tags = [
+        "name:en",
+        "_place_name:en",
         "name",
         "_place_name",
         "brand",
         "_place_brand",
+        "official_name:en",
+        "_place_official_name:en",
+        "shirt_name:en",
+        "_place_shirt_name:en",
         "official_name",
         "_place_official_name",
         "shirt_name",
         "_place_shirt_name",
         "ref",
         "_place_ref",
-    }
-    for name in list(name_tags): name_tags.add(f"{name}:en")
-    cfg = Configuration(
-        project_dir=None,
-        environ={
-            "NOMINATIM_OUTPUT_NAMES":"name:XX,name,brand,official_name:XX,shirt_name:XX,official_name,shirt_name,ref"
-        }
+    ]
+    l = Locales(
+        ['en'],
+        output_name_tags_config=(
+            "name:XX,name,brand,official_name:XX,shirt_name:XX,official_name,shirt_name,ref"
+        )
     )
-    l = Locales(['en'], config=cfg)
-    assert set(l.name_tags).difference(name_tags) == set()
+    assert l.name_tags == name_tags
 
 
 def test_default_output_name_tags():
     """
     tests the default setting (previously hardcoded) in case environment config is not provided
     """
-    name_tags = {
+    name_tags = [
         "name",
         "_place_name",
         "brand",
@@ -96,6 +99,6 @@ def test_default_output_name_tags():
         "_place_short_name",
         "ref",
         "_place_ref",
-    }
+    ]
     l = Locales()
-    assert set(l.name_tags).difference(name_tags) == set()
+    assert l.name_tags == name_tags

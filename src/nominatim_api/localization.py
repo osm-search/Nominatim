@@ -7,7 +7,7 @@
 """
 Helper functions for localizing names of results.
 """
-from typing import List, Mapping, Optional
+from typing import Mapping, List, Optional
 
 import re
 

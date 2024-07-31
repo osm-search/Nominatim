@@ -118,7 +118,8 @@ jobs:
 
             - name: BDD tests
               run: |
-                  python3 -m behave -DREMOVE_TEMPLATE=1 -DBUILDDIR=$GITHUB_WORKSPACE/build --format=progress3
+                  export PATH=$GITHUB_WORKSPACE/build/osm2pgsql:$PATH
+                  python3 -m behave -DREMOVE_TEMPLATE=1 --format=progress3
               working-directory: Nominatim/test/bdd
 
             - name: Install mypy and typechecking info
@@ -170,7 +171,8 @@ jobs:
 
             - name: BDD tests (legacy tokenizer)
               run: |
-                  python3 -m behave -DREMOVE_TEMPLATE=1 -DBUILDDIR=$GITHUB_WORKSPACE/build -DAPI_ENGINE=php -DTOKENIZER=legacy --format=progress3
+                  export PATH=$GITHUB_WORKSPACE/build/osm2pgsql:$PATH
+                  python3 -m behave -DREMOVE_TEMPLATE=1 -DSERVER_MODULE_PATH=$GITHUB_WORKSPACE/build/module -DAPI_ENGINE=php -DTOKENIZER=legacy --format=progress3
               working-directory: Nominatim/test/bdd
 
 
@@ -217,7 +219,8 @@ jobs:
 
             - name: BDD tests (php)
               run: |
-                  python3 -m behave -DREMOVE_TEMPLATE=1 -DBUILDDIR=$GITHUB_WORKSPACE/build -DAPI_ENGINE=php --format=progress3
+                  export PATH=$GITHUB_WORKSPACE/build/osm2pgsql:$PATH
+                  python3 -m behave -DREMOVE_TEMPLATE=1 -DAPI_ENGINE=php --format=progress3
               working-directory: Nominatim/test/bdd
 
 

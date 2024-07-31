@@ -193,7 +193,7 @@ class LegacyQueryAnalyzer(AbstractQueryAnalyzer):
                 lookup_word = row.word_token[1:]
             elif rowclass == 'place' and  row.type == 'postcode':
                 ttype = qmod.TokenType.POSTCODE
-                lookup_word = row.word_token[1:]
+                lookup_word = row.word
             else:
                 ttype = qmod.TokenType.NEAR_ITEM if row.operator in ('in', 'near')\
                         else qmod.TokenType.QUALIFIER
@@ -253,13 +253,14 @@ class LegacyQueryAnalyzer(AbstractQueryAnalyzer):
 
 
 def _dump_word_tokens(query: qmod.QueryStruct) -> Iterator[List[Any]]:
-    yield ['type', 'token', 'word_token', 'lookup_word', 'penalty', 'count', 'info']
+    yield ['type', 'token', 'word_token', 'lookup_word', 'penalty', 'count', 'info', 'indexed']
     for node in query.nodes:
         for tlist in node.starting:
             for token in tlist.tokens:
                 t = cast(LegacyToken, token)
                 yield [tlist.ttype.name, t.token, t.word_token or '',
-                       t.lookup_word or '', t.penalty, t.count, t.info]
+                       t.lookup_word or '', t.penalty, t.count, t.info,
+                       'Y' if t.is_indexed else 'N']
 
 
 async def create_query_analyzer(conn: SearchConnection) -> AbstractQueryAnalyzer:

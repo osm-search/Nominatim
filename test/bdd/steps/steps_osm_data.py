@@ -16,7 +16,7 @@ from geometry_alias import ALIASES
 
 def get_osm2pgsql_options(nominatim_env, fname, append):
     return dict(import_file=fname,
-                osm2pgsql=str(nominatim_env.build_dir / 'osm2pgsql' / 'osm2pgsql'),
+                osm2pgsql='osm2pgsql',
                 osm2pgsql_cache=50,
                 osm2pgsql_style=str(nominatim_env.get_test_config().get_import_style_file()),
                 osm2pgsql_style_path=nominatim_env.get_test_config().config_dir,

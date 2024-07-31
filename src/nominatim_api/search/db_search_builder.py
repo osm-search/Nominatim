@@ -167,7 +167,12 @@ class SearchBuilder:
         expected_count = sum(t.count for t in hnrs)
 
         partials = {t.token: t.addr_count for trange in address
-                       for t in self.query.get_partials_list(trange)}
+                       for t in self.query.get_partials_list(trange)
+                       if t.is_indexed}
+
+        if not partials:
+            # can happen when none of the partials is indexed
+            return
 
         if expected_count < 8000:
             sdata.lookups.append(dbf.FieldLookup('nameaddress_vector',

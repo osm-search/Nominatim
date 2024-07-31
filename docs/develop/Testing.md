@@ -78,7 +78,6 @@ To run the functional tests, do
 
 The tests can be configured with a set of environment variables (`behave -D key=val`):
 
- * `BUILDDIR` - build directory of Nominatim installation to test
  * `TEMPLATE_DB` - name of template database used as a skeleton for
                    the test databases (db tests)
  * `TEST_DB` - name of test database (db tests)
@@ -91,7 +90,7 @@ The tests can be configured with a set of environment variables (`behave -D key=
  * `DB_USER` - (optional) username of database login
  * `DB_PASS` - (optional) password for database login
  * `SERVER_MODULE_PATH` - (optional) path on the Postgres server to Nominatim
-                          module shared library file
+                          module shared library file (only needed for legacy tokenizer)
  * `REMOVE_TEMPLATE` - if true, the template and API database will not be reused
                        during the next run. Reusing the base templates speeds
                        up tests considerably but might lead to outdated errors
@@ -121,23 +120,6 @@ and compromises the following data:
 
 API tests should only be testing the functionality of the website PHP code.
 Most tests should be formulated as BDD DB creation tests (see below) instead.
-
-#### Code Coverage (PHP engine only)
-
-The API tests also support code coverage tests. You need to install
-[PHP_CodeCoverage](https://github.com/sebastianbergmann/php-code-coverage).
-On Debian/Ubuntu run:
-
-    apt-get install php-codecoverage php-xdebug
-
-Then run the API tests as follows:
-
-    behave api -DPHPCOV=<coverage output dir>
-
-The output directory must be an absolute path. To generate reports, you can use
-the [phpcov](https://github.com/sebastianbergmann/phpcov) tool:
-
-    phpcov merge --html=<report output dir> <coverage output dir>
 
 ### DB Creation Tests (`test/bdd/db`)
 

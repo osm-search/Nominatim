@@ -114,18 +114,7 @@ def send_api_query_php(endpoint, params, context):
         for k, v in context.http_headers.items():
             env['HTTP_' + k.upper().replace('-', '_')] = v
 
-    cmd = ['/usr/bin/env', 'php-cgi', '-f']
-    if context.nominatim.code_coverage_path:
-        env['XDEBUG_MODE'] = 'coverage'
-        env['COV_SCRIPT_FILENAME'] = env['SCRIPT_FILENAME']
-        env['COV_PHP_DIR'] = context.nominatim.src_dir
-        env['COV_TEST_NAME'] = f"{context.scenario.filename}:{context.scenario.line}"
-        env['SCRIPT_FILENAME'] = \
-                os.path.join(os.path.split(__file__)[0], 'cgi-with-coverage.php')
-        cmd.append(env['SCRIPT_FILENAME'])
-        env['PHP_CODE_COVERAGE_FILE'] = context.nominatim.next_code_coverage_file()
-    else:
-        cmd.append(env['SCRIPT_FILENAME'])
+    cmd = ['/usr/bin/env', 'php-cgi', '-f', env['SCRIPT_FILENAME']]
 
     for k,v in params.items():
         cmd.append(f"{k}={v}")

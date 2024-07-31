@@ -193,7 +193,7 @@ class LegacyQueryAnalyzer(AbstractQueryAnalyzer):
                 lookup_word = row.word_token[1:]
             elif rowclass == 'place' and  row.type == 'postcode':
                 ttype = qmod.TokenType.POSTCODE
-                lookup_word = row.word_token[1:]
+                lookup_word = row.word
             else:
                 ttype = qmod.TokenType.NEAR_ITEM if row.operator in ('in', 'near')\
                         else qmod.TokenType.QUALIFIER

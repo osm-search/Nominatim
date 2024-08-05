@@ -15,6 +15,8 @@ import asyncio
 import psutil
 
 from .args import NominatimArgs
+from ..db.connection import connect
+from ..tools.freeze import is_frozen
 
 # Do not repeat documentation of subcommand classes.
 # pylint: disable=C0111
@@ -36,7 +38,7 @@ class UpdateAddData:
     The command can also be used to add external non-OSM data to the
     database. At the moment the only supported format is TIGER housenumber
     data. See the online documentation at
-    https://nominatim.org/release-docs/latest/admin/Import/#installing-tiger-housenumber-data-for-the-us
+    https://nominatim.org/release-docs/latest/customize/Tiger/
     for more information.
     """
 
@@ -66,6 +68,11 @@ class UpdateAddData:
 
     def run(self, args: NominatimArgs) -> int:
         from ..tools import add_osm_data
+
+        with connect(args.config.get_libpq_dsn()) as conn:
+            if is_frozen(conn):
+                print('Database is marked frozen. New data can\'t be added.')
+                return 1
 
         if args.tiger_data:
             return asyncio.run(self._add_tiger_data(args))

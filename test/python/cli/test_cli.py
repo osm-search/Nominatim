@@ -36,30 +36,6 @@ def test_cli_version(cli_call, capsys):
     captured = capsys.readouterr()
     assert captured.out.startswith('Nominatim version')
 
-@pytest.mark.parametrize("name,oid", [('file', 'foo.osm'), ('diff', 'foo.osc')])
-def test_cli_add_data_file_command(cli_call, mock_func_factory, name, oid):
-    mock_run_legacy = mock_func_factory(nominatim_db.tools.add_osm_data, 'add_data_from_file')
-    assert cli_call('add-data', '--' + name, str(oid)) == 0
-
-    assert mock_run_legacy.called == 1
-
-
-@pytest.mark.parametrize("name,oid", [('node', 12), ('way', 8), ('relation', 32)])
-def test_cli_add_data_object_command(cli_call, mock_func_factory, name, oid):
-    mock_run_legacy = mock_func_factory(nominatim_db.tools.add_osm_data, 'add_osm_object')
-    assert cli_call('add-data', '--' + name, str(oid)) == 0
-
-    assert mock_run_legacy.called == 1
-
-
-
-def test_cli_add_data_tiger_data(cli_call, cli_tokenizer_mock, async_mock_func_factory):
-    mock = async_mock_func_factory(nominatim_db.tools.tiger_data, 'add_tiger_data')
-
-    assert cli_call('add-data', '--tiger-data', 'somewhere') == 0
-
-    assert mock.called == 1
-
 
 def test_cli_serve_php(cli_call, mock_func_factory):
     func = mock_func_factory(nominatim_db.cli, 'run_php_server')
@@ -73,10 +49,36 @@ def test_cli_serve_php(cli_call, mock_func_factory):
 class TestCliWithDb:
 
     @pytest.fixture(autouse=True)
-    def setup_cli_call(self, cli_call, temp_db, cli_tokenizer_mock):
+    def setup_cli_call(self, cli_call, temp_db, cli_tokenizer_mock, table_factory):
         self.call_nominatim = cli_call
         self.tokenizer_mock = cli_tokenizer_mock
+        # Make sure tools.freeze.is_frozen doesn't report database as frozen. Monkeypatching failed
+        table_factory('place')
 
+
+    @pytest.mark.parametrize("name,oid", [('file', 'foo.osm'), ('diff', 'foo.osc')])
+    def test_cli_add_data_file_command(self, cli_call, mock_func_factory, name, oid):
+        mock_run_legacy = mock_func_factory(nominatim_db.tools.add_osm_data, 'add_data_from_file')
+        assert cli_call('add-data', '--' + name, str(oid)) == 0
+
+        assert mock_run_legacy.called == 1
+
+
+    @pytest.mark.parametrize("name,oid", [('node', 12), ('way', 8), ('relation', 32)])
+    def test_cli_add_data_object_command(self, cli_call, mock_func_factory, name, oid):
+        mock_run_legacy = mock_func_factory(nominatim_db.tools.add_osm_data, 'add_osm_object')
+        assert cli_call('add-data', '--' + name, str(oid)) == 0
+
+        assert mock_run_legacy.called == 1
+
+
+
+    def test_cli_add_data_tiger_data(self, cli_call, cli_tokenizer_mock, async_mock_func_factory):
+        mock = async_mock_func_factory(nominatim_db.tools.tiger_data, 'add_tiger_data')
+
+        assert cli_call('add-data', '--tiger-data', 'somewhere') == 0
+
+        assert mock.called == 1
 
     def test_freeze_command(self, mock_func_factory):
         mock_drop = mock_func_factory(nominatim_db.tools.freeze, 'drop_update_tables')

@@ -16,3 +16,7 @@ ignored-classes=NominatimArgs,closing
 disable=too-few-public-methods,duplicate-code,too-many-ancestors,bad-option-value,no-self-use,not-context-manager,use-dict-literal,chained-comparison,attribute-defined-outside-init,too-many-boolean-expressions,contextmanager-generator-missing-cleanup
 
 good-names=i,j,x,y,m,t,fd,db,cc,x1,x2,y1,y2,pt,k,v,nr
+
+[DESIGN]
+
+max-returns=7

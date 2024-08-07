@@ -239,6 +239,6 @@ If you are using the legacy tokenizer you might also have to switch to the
 PostgreSQL module that was compiled on your target machine. If you get errors
 that PostgreSQL cannot find or access `nominatim.so` then rerun
 
-   nominatim refresh --functions
+    nominatim refresh --functions
 
 on the target machine to update the the location of the module.

@@ -127,7 +127,7 @@ class AddressLine:
 
     local_name: Optional[str] = None
     """ Place holder for localization of this address part. See
-        [Localization](#localization) below.
+        [Localization](Result-Handling.md#localization) below.
     """
 
 

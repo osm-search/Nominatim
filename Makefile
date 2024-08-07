@@ -29,4 +29,16 @@ lint:
 bdd:
 	cd test/bdd; behave -DREMOVE_TEMPLATE=1
 
-.PHONY: tests mypy pytest lint bdd build clean-build build-db build-api
+# Documentation
+
+doc:
+	mkdocs build
+
+serve-doc:
+	mkdocs serve
+
+manpage:
+	argparse-manpage --pyfile man/create-manpage.py --function get_parser --project-name Nominatim --url https://nominatim.org  > man/nominatim.1 --author 'the Nominatim developer community' --author-email info@nominatim.org
+
+
+.PHONY: tests mypy pytest lint bdd build clean-build build-db build-api doc serve-doc manpage

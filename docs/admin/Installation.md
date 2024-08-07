@@ -4,8 +4,8 @@ This page contains generic installation instructions for Nominatim and its
 prerequisites. There are also step-by-step instructions available for
 the following operating systems:
 
-  * [Ubuntu 24.04](../appendix/Install-on-Ubuntu-24.md)
-  * [Ubuntu 22.04](../appendix/Install-on-Ubuntu-22.md)
+  * [Ubuntu 24.04](Install-on-Ubuntu-24.md)
+  * [Ubuntu 22.04](Install-on-Ubuntu-22.md)
 
 These OS-specific instructions can also be found in executable form
 in the `vagrant/` directory.

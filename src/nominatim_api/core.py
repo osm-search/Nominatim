@@ -382,7 +382,7 @@ class NominatimAPI:
 
     @property
     def config(self) -> Configuration:
-        """ Provide read-only access to the [configuration](#Configuration)
+        """ Provide read-only access to the [configuration](Configuration.md)
             used by the API.
         """
         return self._async_api.config

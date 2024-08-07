@@ -19,8 +19,8 @@ to configure it.
 ### Installing the required packages
 
 The Nominatim frontend is best run from its own virtual environment. If
-you have already created one for the database backend during
-[installation](Installation.md#Building-Nominatim), you can use that. Otherwise
+you have already created one for the database backend during the
+[installation](Installation.md#building-nominatim), you can use that. Otherwise
 create one now with:
 
 ```sh

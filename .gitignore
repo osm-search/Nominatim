@@ -3,6 +3,7 @@
 *.swp
 
 docs/develop/*.png
+site-html
 
 build
 dist

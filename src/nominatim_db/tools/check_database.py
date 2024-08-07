@@ -103,6 +103,7 @@ def _get_indexes(conn: Connection) -> List[str]:
                'idx_placex_rank_search',
                'idx_placex_rank_address',
                'idx_placex_parent_place_id',
+               'idx_placex_geometry_reverse_lookupplacenode',
                'idx_placex_geometry_reverse_lookuppolygon',
                'idx_placex_geometry_placenode',
                'idx_osmline_parent_place_id',
@@ -110,6 +111,8 @@ def _get_indexes(conn: Connection) -> List[str]:
                'idx_postcode_id',
                'idx_postcode_postcode'
               ]
+
+    # These won't exist if --reverse-only import was used
     if table_exists(conn, 'search_name'):
         indexes.extend(('idx_search_name_nameaddress_vector',
                         'idx_search_name_name_vector',
@@ -117,6 +120,8 @@ def _get_indexes(conn: Connection) -> List[str]:
         if server_version_tuple(conn) >= (11, 0, 0):
             indexes.extend(('idx_placex_housenumber',
                             'idx_osmline_parent_osm_id_with_hnr'))
+
+    # These won't exist if --no-updates import was used
     if table_exists(conn, 'place'):
         indexes.extend(('idx_location_area_country_place_id',
                         'idx_place_osm_unique',

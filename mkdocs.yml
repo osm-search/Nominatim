@@ -4,7 +4,7 @@ theme:
   features:
     - navigation.tabs
 copyright: Copyright &copy; Nominatim developer community
-docs_dir: ${CMAKE_CURRENT_BINARY_DIR}
+docs_dir: docs
 site_url: https://nominatim.org
 repo_url: https://github.com/openstreetmap/Nominatim
 nav:
@@ -29,6 +29,8 @@ nav:
         - 'Maintenance' : 'admin/Maintenance.md'
         - 'Migration from older Versions' : 'admin/Migration.md'
         - 'Troubleshooting' : 'admin/Faq.md'
+        - 'Installation on Ubuntu 22' : 'admin/Install-on-Ubuntu-22.md'
+        - 'Installation on Ubuntu 24' : 'admin/Install-on-Ubuntu-24.md'
     - 'Customization Guide':
         - 'Overview': 'customize/Overview.md'
         - 'Import Styles': 'customize/Import-Styles.md'
@@ -57,9 +59,6 @@ nav:
         - 'Setup for Development' : 'develop/Development-Environment.md'
         - 'Testing' : 'develop/Testing.md'
         - 'External Data Sources': 'develop/data-sources.md'
-    - 'Appendix':
-        - 'Installation on Ubuntu 22' : 'appendix/Install-on-Ubuntu-22.md'
-        - 'Installation on Ubuntu 24' : 'appendix/Install-on-Ubuntu-24.md'
 markdown_extensions:
     - codehilite
     - admonition
@@ -70,12 +69,17 @@ markdown_extensions:
     - toc:
         permalink: 
 extra_css: [extra.css, styles.css]
+exclude_docs: |
+    mk_install_instructions.py
 plugins:
     - search
     - mkdocstrings:
         handlers:
           python:
-            paths: ["${PROJECT_SOURCE_DIR}/src"]
+            paths: ["src"]
             options:
               show_source: False
               show_bases: False
+    - gen-files:
+        scripts:
+          - docs/mk_install_instructions.py

@@ -49,6 +49,7 @@ The documentation is built with mkdocs:
 * [mkdocs](https://www.mkdocs.org/) >= 1.1.2
 * [mkdocstrings](https://mkdocstrings.github.io/) >= 0.25
 * [mkdocs-material](https://squidfunk.github.io/mkdocs-material/)
+* [mkdocs-gen-files](https://oprypin.github.io/mkdocs-gen-files/)
 
 Please be aware that tests always run against the globally installed
 osm2pgsql, so you need to have this set up. If you want to test against
@@ -66,9 +67,9 @@ To set up the virtual environment with all necessary packages run:
 ```sh
 virtualenv ~/nominatim-dev-venv
 ~/nominatim-dev-venv/bin/pip install\
-    psycopg2-binary psutil psycopg[binary] PyICU SQLAlchemy \
-    python-dotenv jinja2 pyYAML datrie \
-    behave mkdocs mkdocstrings pytest pytest-asyncio pylint \
+    psutil psycopg[binary] PyICU SQLAlchemy \
+    python-dotenv jinja2 pyYAML datrie behave \
+    mkdocs mkdocstrings mkdocs-gen-files pytest pytest-asyncio pylint \
     types-jinja2 types-markupsafe types-psutil types-psycopg2 \
     types-pygments types-pyyaml types-requests types-ujson \
     types-urllib3 typing-extensions unicorn falcon
@@ -147,18 +148,14 @@ built using the [MkDocs](https://www.mkdocs.org/) static site generation
 framework. The master branch is automatically deployed every night on
 [https://nominatim.org/release-docs/develop/](https://nominatim.org/release-docs/develop/)
 
-To build the documentation, go to the build directory and run
+To build the documentation run
 
 ```
 make doc
-INFO - Cleaning site directory
-INFO - Building documentation to directory: /home/vagrant/build/site-html
 ```
 
-This runs `mkdocs build` plus extra transformation of some files and adds
-symlinks (see `CMakeLists.txt` for the exact steps).
 
-Now you can start webserver for local testing
+For local testing, you can start webserver:
 
 ```
 build> make serve-doc
@@ -170,7 +167,7 @@ If you develop inside a Vagrant virtual machine, use a port that is forwarded
 to your host:
 
 ```
-build> PYTHONPATH=$SRCDIR mkdocs serve --dev-addr 0.0.0.0:8088
+build> mkdocs serve --dev-addr 0.0.0.0:8088
 [server:296] Serving on http://0.0.0.0:8088
 [handlers:62] Start watching changes
 ```

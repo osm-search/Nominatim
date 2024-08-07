@@ -29,4 +29,12 @@ lint:
 bdd:
 	cd test/bdd; behave -DREMOVE_TEMPLATE=1
 
-.PHONY: tests mypy pytest lint bdd build clean-build build-db build-api
+# Documentation
+
+doc:
+	mkdocs build
+
+serve-doc:
+	mkdocs serve
+
+.PHONY: tests mypy pytest lint bdd build clean-build build-db build-api doc serve-doc

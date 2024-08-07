@@ -74,7 +74,7 @@ but it will improve the quality of the results if this is installed.
 This data is available as a binary download. Put it into your project directory:
 
     cd $PROJECT_DIR
-    wget https://nominatim.org/data/wikimedia-importance.sql.gz
+    wget https://nominatim.org/data/wikimedia-importance.csv.gz
     wget -O secondary_importance.sql.gz https://nominatim.org/data/wikimedia-secondary-importance.sql.gz
 
 The files are about 400MB and add around 4GB to the Nominatim database. For

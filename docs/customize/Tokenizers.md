@@ -17,6 +17,11 @@ they can be configured.
 
 ## Legacy tokenizer
 
+!!! danger
+    The Legacy tokenizer is deprecated and will be removed in Nominatim 5.0.
+    If you still use a database with the legacy tokenizer, you must reimport
+    it using the ICU tokenizer below.
+
 The legacy tokenizer implements the analysis algorithms of older Nominatim
 versions. It uses a special Postgresql module to normalize names and queries.
 This tokenizer is automatically installed and used when upgrading an older

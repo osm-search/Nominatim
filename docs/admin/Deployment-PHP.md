@@ -1,5 +1,8 @@
 # Deploying Nominatim using the PHP frontend
 
+!!! danger
+    The PHP frontend is deprecated and will be removed in Nominatim 5.0.
+
 The Nominatim API is implemented as a PHP application. The `website/` directory
 in the project directory contains the configured website. You can serve this
 in a production environment with any web server that is capable to run

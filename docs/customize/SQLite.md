@@ -12,10 +12,15 @@ To use a SQLite database, you need to install:
 
 * SQLite (>= 3.30)
 * Spatialite (> 5.0.0)
+* aiosqlite
 
 On Ubuntu/Debian, you can run:
 
     sudo apt install sqlite3 libsqlite3-mod-spatialite libspatialite7
+
+Install the aiosqlite Python package in your virtual environment:
+
+    /srv/nominatim-venv/bin/pip install aiosqlite
 
 ## Creating a new SQLite database
 

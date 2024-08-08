@@ -689,6 +689,25 @@ results gathered so far.
 Note that under high load you may observe that users receive different results
 than usual without seeing an error. This may cause some confusion.
 
+
+#### NOMINATIM_OUTPUT_NAMES
+
+| Summary            |                                                     |
+| --------------     | --------------------------------------------------- |
+| **Description:**   | Determines which name tags is chosen for a place |
+| **Format:**        | string |
+| **Default:**       | name:XX,name,brand,official_name:XX,short_name:XX,official_name,short_name,ref |
+| **Comment:**       | Python frontend only |
+
+
+Accepts Coma separated values, `:XX` at the end identifies language specific tags
+else value is identified as general tag. Tags will be added based on the given order.
+
+Take `name:XX,name,brand` for example:
+first name will added as language tag for given languages,
+then name and brand will added as place name tags
+
+
 ### Logging Settings
 
 #### NOMINATIM_LOG_DB

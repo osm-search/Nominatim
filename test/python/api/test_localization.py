@@ -51,3 +51,54 @@ def test_display_name_preference():
                           ('en,fr;garbage,de', ['en', 'de'])])
 def test_from_language_preferences(langstr, langlist):
     assert Locales.from_accept_languages(langstr).languages == langlist
+
+
+def test_configurable_output_name_tags():
+    """
+    tests the output name tags when environment config is provided
+    """
+    name_tags = [
+        "name:en",
+        "_place_name:en",
+        "name",
+        "_place_name",
+        "brand",
+        "_place_brand",
+        "official_name:en",
+        "_place_official_name:en",
+        "shirt_name:en",
+        "_place_shirt_name:en",
+        "official_name",
+        "_place_official_name",
+        "shirt_name",
+        "_place_shirt_name",
+        "ref",
+        "_place_ref",
+    ]
+    l = Locales(
+        ['en'],
+        output_name_tags_config=(
+            "name:XX,name,brand,official_name:XX,shirt_name:XX,official_name,shirt_name,ref"
+        )
+    )
+    assert l.name_tags == name_tags
+
+
+def test_default_output_name_tags():
+    """
+    tests the default setting (previously hardcoded) in case environment config is not provided
+    """
+    name_tags = [
+        "name",
+        "_place_name",
+        "brand",
+        "_place_brand",
+        "official_name",
+        "_place_official_name",
+        "short_name",
+        "_place_short_name",
+        "ref",
+        "_place_ref",
+    ]
+    l = Locales()
+    assert l.name_tags == name_tags

@@ -7,7 +7,7 @@
 """
 Helper functions for executing external programs.
 """
-from typing import Any, Mapping
+from typing import Any, Mapping, List
 import logging
 import os
 import subprocess
@@ -31,6 +31,7 @@ def run_osm2pgsql(options: Mapping[str, Any]) -> None:
     env = get_pg_env(options['dsn'])
 
     cmd = [_find_osm2pgsql_cmd(options['osm2pgsql']),
+           '--append' if options['append'] else '--create',
            '--slim',
            '--log-progress', 'true',
            '--number-processes', '1' if options['append'] else str(options['threads']),
@@ -42,25 +43,20 @@ def run_osm2pgsql(options: Mapping[str, Any]) -> None:
         env['LUA_PATH'] = ';'.join((str(options['osm2pgsql_style_path'] / '?.lua'),
                                     os.environ.get('LUAPATH', ';')))
         cmd.extend(('--output', 'flex'))
+
+        for flavour in ('data', 'index'):
+            if options['tablespaces'][f"main_{flavour}"]:
+                env[f"NOMINATIM_TABLESPACE_PLACE_{flavour.upper()}"] = \
+                    options['tablespaces'][f"main_{flavour}"]
     else:
         cmd.extend(('--output', 'gazetteer', '--hstore', '--latlon'))
+        cmd.extend(_mk_tablespace_options('main', options))
 
-    cmd.append('--append' if options['append'] else '--create')
 
     if options['flatnode_file']:
         cmd.extend(('--flat-nodes', options['flatnode_file']))
 
-    for key, param in (('slim_data', '--tablespace-slim-data'),
-                       ('slim_index', '--tablespace-slim-index'),
-                       ('main_data', '--tablespace-main-data'),
-                       ('main_index', '--tablespace-main-index')):
-        if options['tablespaces'][key]:
-            cmd.extend((param, options['tablespaces'][key]))
-
-    if options['tablespaces']['main_data']:
-        env['NOMINATIM_TABLESPACE_PLACE_DATA'] = options['tablespaces']['main_data']
-    if options['tablespaces']['main_index']:
-        env['NOMINATIM_TABLESPACE_PLACE_INDEX'] = options['tablespaces']['main_index']
+    cmd.extend(_mk_tablespace_options('slim', options))
 
     if options.get('disable_jit', False):
         env['PGOPTIONS'] = '-c jit=off -c max_parallel_workers_per_gather=0'
@@ -76,6 +72,16 @@ def run_osm2pgsql(options: Mapping[str, Any]) -> None:
     subprocess.run(cmd, cwd=options.get('cwd', '.'),
                    input=options.get('import_data'),
                    env=env, check=True)
+
+
+def _mk_tablespace_options(ttype: str, options: Mapping[str, Any]) -> List[str]:
+    cmds: List[str] = []
+    for flavour in ('data', 'index'):
+        if options['tablespaces'][f"{ttype}_{flavour}"]:
+            cmds.extend((f"--tablespace-{ttype}-{flavour}",
+                         options['tablespaces'][f"{ttype}_{flavour}"]))
+
+    return cmds
 
 
 def _find_osm2pgsql_cmd(cmdline: str) -> str:

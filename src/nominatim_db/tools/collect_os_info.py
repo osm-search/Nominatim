@@ -137,7 +137,8 @@ def report_system_information(config: Configuration) -> None:
     **Hardware Configuration:**
     - RAM: {friendly_memory_string(psutil.virtual_memory().total)}
     - number of CPUs: {psutil.cpu_count(logical=False)}
-    - bare metal/AWS/other cloud service (per systemd-detect-virt(1)): {run_command("systemd-detect-virt")} 
+    - bare metal/AWS/other cloud service (per systemd-detect-virt(1)):
+        {run_command("systemd-detect-virt")}
     - type and size of disks:
     **`df -h` - df - report file system disk space usage: **
     ```

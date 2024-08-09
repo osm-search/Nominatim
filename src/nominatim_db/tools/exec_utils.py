@@ -7,14 +7,17 @@
 """
 Helper functions for executing external programs.
 """
-from typing import Any, Mapping, List
+from typing import Any, Mapping, List, Optional
 import logging
 import os
+import re
 import subprocess
 import shutil
 
 from ..typing import StrPath
 from ..db.connection import get_pg_env
+from ..errors import UsageError
+from ..version import OSM2PGSQL_REQUIRED_VERSION
 
 LOG = logging.getLogger()
 
@@ -28,6 +31,8 @@ def run_php_server(server_address: str, base_dir: StrPath) -> None:
 def run_osm2pgsql(options: Mapping[str, Any]) -> None:
     """ Run osm2pgsql with the given options.
     """
+    _check_osm2pgsql_version(options['osm2pgsql'])
+
     env = get_pg_env(options['dsn'])
 
     cmd = [_find_osm2pgsql_cmd(options['osm2pgsql']),
@@ -84,12 +89,31 @@ def _mk_tablespace_options(ttype: str, options: Mapping[str, Any]) -> List[str]:
     return cmds
 
 
-def _find_osm2pgsql_cmd(cmdline: str) -> str:
+def _find_osm2pgsql_cmd(cmdline: Optional[str]) -> str:
     if cmdline is not None:
         return cmdline
 
     in_path = shutil.which('osm2pgsql')
     if in_path is None:
-        raise RuntimeError('osm2pgsql executable not found. Please install osm2pgsql first.')
+        raise UsageError('osm2pgsql executable not found. Please install osm2pgsql first.')
 
     return str(in_path)
+
+
+def _check_osm2pgsql_version(cmdline: Optional[str]) -> None:
+    cmd = [_find_osm2pgsql_cmd(cmdline), '--version']
+
+    result = subprocess.run(cmd, capture_output=True, check=True)
+
+    if not result.stderr:
+        raise UsageError("osm2pgsql does not print version information.")
+
+    verinfo = result.stderr.decode('UTF-8')
+
+    match = re.search(r'osm2pgsql version (\d+)\.(\d+)', verinfo)
+    if match is None:
+        raise UsageError(f"No version information found in output: {verinfo}")
+
+    if (int(match[1]), int(match[2])) < OSM2PGSQL_REQUIRED_VERSION:
+        raise UsageError(f"osm2pgsql is too old. Found version {match[1]}.{match[2]}. "
+                         f"Need at least version {'.'.join(map(str, OSM2PGSQL_REQUIRED_VERSION))}.")

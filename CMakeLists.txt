@@ -271,3 +271,7 @@ if (INSTALL_MUNIN_PLUGINS)
                   munin/nominatim_requests
             DESTINATION ${NOMINATIM_MUNINDIR})
 endif()
+
+message(WARNING "Building with CMake is deprecated and will be removed in Nominatim 5.0."
+                "Use Nominatim pip packages instead.\n"
+                "See https://nominatim.org/release-docs/develop/admin/Installation/#downloading-and-building-nominatim")

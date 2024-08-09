@@ -62,6 +62,10 @@ In particular, pylint tends to have a lot of breaking changes between versions.
 The easiest way, to handle these Python dependencies is to run your
 development from within a virtual environment.
 
+```sh
+sudo apt install libsqlite3-mod-spatialite php-cli
+```
+
 To set up the virtual environment with all necessary packages run:
 
 ```sh
@@ -72,7 +76,8 @@ virtualenv ~/nominatim-dev-venv
     mkdocs mkdocstrings mkdocs-gen-files pytest pytest-asyncio pylint \
     types-jinja2 types-markupsafe types-psutil types-psycopg2 \
     types-pygments types-pyyaml types-requests types-ujson \
-    types-urllib3 typing-extensions unicorn falcon
+    types-urllib3 typing-extensions unicorn falcon starlette \
+    uvicorn mypy osmium aiosqlite
 ```
 
 Now enter the virtual environment whenever you want to develop:

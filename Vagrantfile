@@ -52,10 +52,6 @@ Vagrant.configure("2") do |config|
 
   config.vm.define "ubuntu22", primary: true do |sub|
       sub.vm.box = "generic/ubuntu2204"
-      if RUBY_PLATFORM.include?('darwin') && RUBY_PLATFORM.include?('arm64')
-        # Apple M processor
-        sub.vm.box = 'luminositylabsllc/ubuntu-22.04-arm64'
-      end
       sub.vm.provision :shell do |s|
         s.path = "vagrant/Install-on-Ubuntu-22.sh"
         s.privileged = false
@@ -83,6 +79,10 @@ Vagrant.configure("2") do |config|
 
   config.vm.define "ubuntu24" do |sub|
       sub.vm.box = "bento/ubuntu-24.04"
+      if RUBY_PLATFORM.include?('darwin') && RUBY_PLATFORM.include?('arm64')
+        # Apple M processor
+        sub.vm.box = 'gutehall/ubuntu24-04'
+      end
       sub.vm.provision :shell do |s|
         s.path = "vagrant/Install-on-Ubuntu-24.sh"
         s.privileged = false

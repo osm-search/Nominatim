@@ -38,10 +38,12 @@ LOG = logging.getLogger()
 def create(dsn: str, data_dir: Path) -> 'LegacyTokenizer':
     """ Create a new instance of the tokenizer provided by this module.
     """
+    LOG.warning('WARNING: the legacy tokenizer is deprecated '
+                'and will be removed in Nominatim 5.0.')
     return LegacyTokenizer(dsn, data_dir)
 
 
-def _install_module(config_module_path: str, src_dir: Path, module_dir: Path) -> str:
+def _install_module(config_module_path: str, src_dir: Optional[Path], module_dir: Path) -> str:
     """ Copies the PostgreSQL normalisation module into the project
         directory if necessary. For historical reasons the module is
         saved in the '/module' subdirectory and not with the other tokenizer
@@ -54,6 +56,10 @@ def _install_module(config_module_path: str, src_dir: Path, module_dir: Path) ->
     if config_module_path:
         LOG.info("Using custom path for database module at '%s'", config_module_path)
         return config_module_path
+
+    # Otherwise a source dir must be given.
+    if src_dir is None:
+        raise UsageError("The legacy tokenizer cannot be used with the Nominatim pip module.")
 
     # Compatibility mode for builddir installations.
     if module_dir.exists() and src_dir.samefile(module_dir):

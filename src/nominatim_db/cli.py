@@ -119,7 +119,13 @@ class CommandlineParser:
         log.warning('Using project directory: %s', str(args.project_dir))
 
         try:
-            return args.command.run(args)
+            ret = args.command.run(args)
+
+            if args.config.TOKENIZER == 'legacy':
+                log.warning('WARNING: the "legacy" tokenizer is deprecated '
+                            'and will be removed in Nominatim 5.0.')
+
+            return ret
         except UsageError as exception:
             if log.isEnabledFor(logging.DEBUG):
                 raise # use Python's exception printing
@@ -169,6 +175,8 @@ class AdminServe:
         if args.engine == 'php':
             if args.config.lib_dir.php is None:
                 raise UsageError("PHP frontend not configured.")
+            LOG.warning('\n\nWARNING: the PHP frontend is deprecated '
+                        'and will be removed in Nominatim 5.0.\n\n')
             run_php_server(args.server, args.project_dir / 'website')
         else:
             asyncio.run(self.run_uvicorn(args))

@@ -302,6 +302,9 @@ To run Nominatim via webservers like Apache or nginx, please continue reading
 
 #### Testing the PHP frontend
 
+!!! danger
+    The PHP fronted is deprecated and will be removed in Nominatim 5.0.
+
 You can run a small test server with the PHP frontend like this:
 
 ```sh

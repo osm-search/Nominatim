@@ -72,7 +72,7 @@ For running the Python frontend:
     * [starlette](https://www.starlette.io/)
   * [uvicorn](https://www.uvicorn.org/)
 
-For running the legacy PHP frontend:
+For running the legacy PHP frontend (deprecated, will be removed in Nominatim 5.0):
 
   * [PHP](https://php.net) (7.3+)
   * PHP-pgsql
@@ -194,6 +194,7 @@ sudo make install
     cmake: `cmake -DBUILD_MODULE=on ../Nominatim`. To compile the module
     you need to have the server development headers for PostgreSQL installed.
     On Ubuntu/Debian run: `sudo apt install postgresql-server-dev-<postgresql version>`
+    The legacy tokenizer is deprecated and will be removed in Nominatim 5.0
 
 
 Nominatim installs itself into `/usr/local` per default. To choose a different

@@ -1,12 +1,17 @@
 # Database Migrations
 
-Since version 3.7.0 Nominatim offers automatic migrations. Please follow
+Nominatim offers automatic migrations since version 3.7. Please follow
 the following steps:
 
-* stop any updates that are potentially running
-* update Nominatim to the newer version
-* go to your project directory and run `nominatim admin --migrate`
-* (optionally) restart updates
+* Stop any updates that are potentially running
+* Update the backend: `pip install -U nominatim-db`
+* Go to your project directory and run `nominatim admin --migrate`
+* Update the frontend: `pip install -U nominatim-api`
+* (optionally) Restart updates
+
+If you are still using CMake for the installation of Nominatim, then you
+need to update the software in one step before migrating the database.
+It is not recommended to do this while the machine is serving requests.
 
 Below you find additional migrations and hints about other structural and
 breaking changes. **Please read them before running the migration.**

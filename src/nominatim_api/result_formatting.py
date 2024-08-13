@@ -7,8 +7,10 @@
 """
 Helper classes and functions for formatting results into API responses.
 """
-from typing import Type, TypeVar, Dict, List, Callable, Any, Mapping
+from typing import Type, TypeVar, Dict, List, Callable, Any, Mapping, Optional, cast
 from collections import defaultdict
+from pathlib import Path
+import importlib
 
 T = TypeVar('T') # pylint: disable=invalid-name
 FormatFunc = Callable[[T, Mapping[str, Any]], str]
@@ -54,3 +56,30 @@ class FormatDispatcher:
             `list_formats()`.
         """
         return self.format_functions[type(result)][fmt](result, options)
+
+
+def load_format_dispatcher(api_name: str, project_dir: Optional[Path]) -> FormatDispatcher:
+    """ Load the dispatcher for the given API.
+
+        The function first tries to find a module api/<api_name>/format.py
+        in the project directory. This file must export a single variable
+        `dispatcher`.
+
+        If the function does not exist, the default formatter is loaded.
+    """
+    if project_dir is not None:
+        priv_module = project_dir / 'api' / api_name / 'format.py'
+        if priv_module.is_file():
+            spec = importlib.util.spec_from_file_location(f'api.{api_name},format',
+                                                          str(priv_module))
+            if spec:
+                module = importlib.util.module_from_spec(spec)
+                # Do not add to global modules because there is no standard
+                # module name that Python can resolve.
+                assert spec.loader is not None
+                spec.loader.exec_module(module)
+
+                return cast(FormatDispatcher, module.dispatch)
+
+    return cast(FormatDispatcher,
+                importlib.import_module(f'nominatim_api.{api_name}.format').dispatch)

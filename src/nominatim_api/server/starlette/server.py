@@ -24,8 +24,7 @@ from starlette.middleware.cors import CORSMiddleware
 from ...config import Configuration
 from ...core import NominatimAPIAsync
 from ... import v1 as api_impl
-from ...result_formatting import FormatDispatcher
-from ...v1.format import dispatch as formatting
+from ...result_formatting import FormatDispatcher, load_format_dispatcher
 from ..asgi_adaptor import ASGIAdaptor, EndpointFunc
 from ... import logging as loglib
 
@@ -73,7 +72,7 @@ class ParamWrapper(ASGIAdaptor):
 
 
     def formatting(self) -> FormatDispatcher:
-        return formatting
+        return cast(FormatDispatcher, self.request.app.state.API.formatter)
 
 
 def _wrap_endpoint(func: EndpointFunc)\
@@ -171,6 +170,7 @@ def get_application(project_dir: Path,
                     on_shutdown=[_shutdown])
 
     app.state.API = NominatimAPIAsync(project_dir, environ)
+    app.state.formatter = load_format_dispatcher('v1', project_dir)
 
     return app
 

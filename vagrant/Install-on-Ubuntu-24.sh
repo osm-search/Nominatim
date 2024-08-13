@@ -176,7 +176,6 @@ Requires=nominatim.socket
 
 [Service]
 Type=simple
-Environment="PYTHONPATH=/usr/local/lib/nominatim/lib-python/"
 User=www-data
 Group=www-data
 WorkingDirectory=$USERHOME/nominatim-project

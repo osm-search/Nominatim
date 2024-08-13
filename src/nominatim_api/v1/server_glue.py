@@ -18,7 +18,6 @@ import sqlalchemy as sa
 from ..errors import UsageError
 from .. import logging as loglib
 from ..core import NominatimAPIAsync
-from .format import dispatch as formatting
 from .format import RawDataList
 from ..types import DataLayer, GeometryFormat, PlaceRef, PlaceID, OsmID, Point
 from ..status import StatusResult
@@ -84,9 +83,9 @@ def parse_format(adaptor: ASGIAdaptor, result_type: Type[Any], default: str) -> 
     fmt = adaptor.get('format', default=default)
     assert fmt is not None
 
-    if not formatting.supports_format(result_type, fmt):
+    if not adaptor.formatting().supports_format(result_type, fmt):
         adaptor.raise_error("Parameter 'format' must be one of: " +
-                          ', '.join(formatting.list_formats(result_type)))
+                          ', '.join(adaptor.formatting().list_formats(result_type)))
 
     adaptor.content_type = CONTENT_TYPE.get(fmt, CONTENT_JSON)
     return fmt
@@ -132,7 +131,7 @@ async def status_endpoint(api: NominatimAPIAsync, params: ASGIAdaptor) -> Any:
     else:
         status_code = 200
 
-    return build_response(params, formatting.format_result(result, fmt, {}),
+    return build_response(params, params.formatting().format_result(result, fmt, {}),
                                  status=status_code)
 
 
@@ -171,7 +170,7 @@ async def details_endpoint(api: NominatimAPIAsync, params: ASGIAdaptor) -> Any:
     if result is None:
         params.raise_error('No place with that OSM ID found.', status=404)
 
-    output = formatting.format_result(result, fmt,
+    output = params.formatting().format_result(result, fmt,
                  {'locales': locales,
                   'group_hierarchy': params.get_bool('group_hierarchy', False),
                   'icon_base_url': params.config().MAPICON_URL})
@@ -210,8 +209,8 @@ async def reverse_endpoint(api: NominatimAPIAsync, params: ASGIAdaptor) -> Any:
                    'namedetails': params.get_bool('namedetails', False),
                    'addressdetails': params.get_bool('addressdetails', True)}
 
-    output = formatting.format_result(ReverseResults([result] if result else []),
-                                      fmt, fmt_options)
+    output = params.formatting().format_result(ReverseResults([result] if result else []),
+                                               fmt, fmt_options)
 
     return build_response(params, output, num_results=1 if result else 0)
 
@@ -245,7 +244,7 @@ async def lookup_endpoint(api: NominatimAPIAsync, params: ASGIAdaptor) -> Any:
                    'namedetails': params.get_bool('namedetails', False),
                    'addressdetails': params.get_bool('addressdetails', True)}
 
-    output = formatting.format_result(results, fmt, fmt_options)
+    output = params.formatting().format_result(results, fmt, fmt_options)
 
     return build_response(params, output, num_results=len(results))
 
@@ -356,7 +355,7 @@ async def search_endpoint(api: NominatimAPIAsync, params: ASGIAdaptor) -> Any:
                    'namedetails': params.get_bool('namedetails', False),
                    'addressdetails': params.get_bool('addressdetails', False)}
 
-    output = formatting.format_result(results, fmt, fmt_options)
+    output = params.formatting().format_result(results, fmt, fmt_options)
 
     return build_response(params, output, num_results=len(results))
 
@@ -378,7 +377,7 @@ async def deletable_endpoint(api: NominatimAPIAsync, params: ASGIAdaptor) -> Any
                       """)
         results = RawDataList(r._asdict() for r in await conn.execute(sql))
 
-    return build_response(params, formatting.format_result(results, fmt, {}))
+    return build_response(params, params.formatting().format_result(results, fmt, {}))
 
 
 async def polygons_endpoint(api: NominatimAPIAsync, params: ASGIAdaptor) -> Any:
@@ -410,7 +409,7 @@ async def polygons_endpoint(api: NominatimAPIAsync, params: ASGIAdaptor) -> Any:
 
         results = RawDataList(r._asdict() for r in await conn.execute(sql, sql_params))
 
-    return build_response(params, formatting.format_result(results, fmt, {}))
+    return build_response(params, params.formatting().format_result(results, fmt, {}))
 
 
 ROUTES = [

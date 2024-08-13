@@ -14,6 +14,7 @@ import math
 from ..config import Configuration
 from .. import logging as loglib
 from ..core import NominatimAPIAsync
+from ..result_formatting import FormatDispatcher
 
 CONTENT_TEXT = 'text/plain; charset=utf-8'
 CONTENT_XML = 'text/xml; charset=utf-8'
@@ -27,6 +28,7 @@ class ASGIAdaptor(abc.ABC):
         Wraps functionality over concrete requests and responses.
     """
     content_type: str = CONTENT_TEXT
+
 
     @abc.abstractmethod
     def get(self, name: str, default: Optional[str] = None) -> Optional[str]:
@@ -60,6 +62,7 @@ class ASGIAdaptor(abc.ABC):
             body of the response to 'output'.
         """
 
+
     @abc.abstractmethod
     def base_uri(self) -> str:
         """ Return the URI of the original request.
@@ -69,6 +72,12 @@ class ASGIAdaptor(abc.ABC):
     @abc.abstractmethod
     def config(self) -> Configuration:
         """ Return the current configuration object.
+        """
+
+
+    @abc.abstractmethod
+    def formatting(self) -> FormatDispatcher:
+        """ Return the formatting object to use.
         """
 
 

@@ -17,6 +17,8 @@ from falcon.asgi import App, Request, Response
 from ...config import Configuration
 from ...core import NominatimAPIAsync
 from ... import v1 as api_impl
+from ...result_formatting import FormatDispatcher
+from ...v1.format import dispatch as formatting
 from ... import logging as loglib
 from ..asgi_adaptor import ASGIAdaptor, EndpointFunc
 
@@ -62,8 +64,7 @@ class ParamWrapper(ASGIAdaptor):
     """ Adaptor class for server glue to Falcon framework.
     """
 
-    def __init__(self, req: Request, resp: Response,
-                 config: Configuration) -> None:
+    def __init__(self, req: Request, resp: Response, config: Configuration) -> None:
         self.request = req
         self.response = resp
         self._config = config
@@ -93,6 +94,9 @@ class ParamWrapper(ASGIAdaptor):
 
     def config(self) -> Configuration:
         return self._config
+
+    def formatting(self) -> FormatDispatcher:
+        return formatting
 
 
 class EndpointWrapper:

@@ -10,6 +10,7 @@ Provides dummy implementations of ASGIAdaptor for testing.
 from collections import namedtuple
 
 import nominatim_api.v1.server_glue as glue
+from nominatim_api.v1.format import dispatch as formatting
 from nominatim_api.config import Configuration
 
 class FakeError(BaseException):
@@ -47,9 +48,13 @@ class FakeAdaptor(glue.ASGIAdaptor):
         return FakeResponse(status, output, self.content_type)
 
 
-    def base_uri(self) -> str:
+    def base_uri(self):
         return 'http://test'
 
     def config(self):
         return self._config
+
+    def formatting(self):
+        return formatting
+
 

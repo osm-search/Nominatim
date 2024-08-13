@@ -10,9 +10,7 @@ Implementation of API version v1 (aka the legacy version).
 
 #pylint: disable=useless-import-alias
 
-from .server_glue import (ASGIAdaptor as ASGIAdaptor,
-                          EndpointFunc as EndpointFunc,
-                          ROUTES as ROUTES)
+from .server_glue import ROUTES as ROUTES
 
 from . import format as _format
 

@@ -18,6 +18,7 @@ from ...config import Configuration
 from ...core import NominatimAPIAsync
 from ... import v1 as api_impl
 from ... import logging as loglib
+from ..asgi_adaptor import ASGIAdaptor, EndpointFunc
 
 class HTTPNominatimError(Exception):
     """ A special exception class for errors raised during processing.
@@ -57,7 +58,7 @@ async def timeout_error_handler(req: Request, resp: Response, #pylint: disable=u
         resp.content_type = 'text/plain; charset=utf-8'
 
 
-class ParamWrapper(api_impl.ASGIAdaptor):
+class ParamWrapper(ASGIAdaptor):
     """ Adaptor class for server glue to Falcon framework.
     """
 
@@ -98,7 +99,7 @@ class EndpointWrapper:
     """ Converter for server glue endpoint functions to Falcon request handlers.
     """
 
-    def __init__(self, name: str, func: api_impl.EndpointFunc, api: NominatimAPIAsync) -> None:
+    def __init__(self, name: str, func: EndpointFunc, api: NominatimAPIAsync) -> None:
         self.name = name
         self.func = func
         self.api = api

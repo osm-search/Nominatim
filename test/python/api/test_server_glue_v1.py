@@ -59,14 +59,14 @@ def test_adaptor_get_bool_falsish():
 def test_adaptor_parse_format_use_default():
     adaptor = FakeAdaptor()
 
-    assert adaptor.parse_format(napi.StatusResult, 'text') == 'text'
+    assert glue.parse_format(adaptor, napi.StatusResult, 'text') == 'text'
     assert adaptor.content_type == 'text/plain; charset=utf-8'
 
 
 def test_adaptor_parse_format_use_configured():
     adaptor = FakeAdaptor(params={'format': 'json'})
 
-    assert adaptor.parse_format(napi.StatusResult, 'text') == 'json'
+    assert glue.parse_format(adaptor, napi.StatusResult, 'text') == 'json'
     assert adaptor.content_type == 'application/json; charset=utf-8'
 
 
@@ -74,37 +74,37 @@ def test_adaptor_parse_format_invalid_value():
     adaptor = FakeAdaptor(params={'format': '@!#'})
 
     with pytest.raises(FakeError, match='^400 -- .*must be one of'):
-        adaptor.parse_format(napi.StatusResult, 'text')
+        glue.parse_format(adaptor, napi.StatusResult, 'text')
 
 
 # ASGIAdaptor.get_accepted_languages()
 
 def test_accepted_languages_from_param():
     a = FakeAdaptor(params={'accept-language': 'de'})
-    assert a.get_accepted_languages() == 'de'
+    assert glue.get_accepted_languages(a) == 'de'
 
 
 def test_accepted_languages_from_header():
     a = FakeAdaptor(headers={'accept-language': 'de'})
-    assert a.get_accepted_languages() == 'de'
+    assert glue.get_accepted_languages(a) == 'de'
 
 
 def test_accepted_languages_from_default(monkeypatch):
     monkeypatch.setenv('NOMINATIM_DEFAULT_LANGUAGE', 'de')
     a = FakeAdaptor()
-    assert a.get_accepted_languages() == 'de'
+    assert glue.get_accepted_languages(a) == 'de'
 
 
 def test_accepted_languages_param_over_header():
     a = FakeAdaptor(params={'accept-language': 'de'},
                     headers={'accept-language': 'en'})
-    assert a.get_accepted_languages() == 'de'
+    assert glue.get_accepted_languages(a) == 'de'
 
 
 def test_accepted_languages_header_over_default(monkeypatch):
     monkeypatch.setenv('NOMINATIM_DEFAULT_LANGUAGE', 'en')
     a = FakeAdaptor(headers={'accept-language': 'de'})
-    assert a.get_accepted_languages() == 'de'
+    assert glue.get_accepted_languages(a) == 'de'
 
 
 # ASGIAdaptor.raise_error()
@@ -114,7 +114,7 @@ class TestAdaptorRaiseError:
     @pytest.fixture(autouse=True)
     def init_adaptor(self):
         self.adaptor = FakeAdaptor()
-        self.adaptor.setup_debugging()
+        glue.setup_debugging(self.adaptor)
 
     def run_raise_error(self, msg, status):
         with pytest.raises(FakeError) as excinfo:
@@ -155,7 +155,7 @@ class TestAdaptorRaiseError:
 
 def test_raise_error_during_debug():
     a = FakeAdaptor(params={'debug': '1'})
-    a.setup_debugging()
+    glue.setup_debugging(a)
     loglib.log().section('Ongoing')
 
     with pytest.raises(FakeError) as excinfo:
@@ -172,7 +172,7 @@ def test_raise_error_during_debug():
 # ASGIAdaptor.build_response
 
 def test_build_response_without_content_type():
-    resp = FakeAdaptor().build_response('attention')
+    resp = glue.build_response(FakeAdaptor(), 'attention')
 
     assert isinstance(resp, FakeResponse)
     assert resp.status == 200
@@ -182,9 +182,9 @@ def test_build_response_without_content_type():
 
 def test_build_response_with_status():
     a = FakeAdaptor(params={'format': 'json'})
-    a.parse_format(napi.StatusResult, 'text')
+    glue.parse_format(a, napi.StatusResult, 'text')
 
-    resp = a.build_response('stuff\nmore stuff', status=404)
+    resp = glue.build_response(a, 'stuff\nmore stuff', status=404)
 
     assert isinstance(resp, FakeResponse)
     assert resp.status == 404
@@ -194,9 +194,9 @@ def test_build_response_with_status():
 
 def test_build_response_jsonp_with_json():
     a = FakeAdaptor(params={'format': 'json', 'json_callback': 'test.func'})
-    a.parse_format(napi.StatusResult, 'text')
+    glue.parse_format(a, napi.StatusResult, 'text')
 
-    resp = a.build_response('{}')
+    resp = glue.build_response(a, '{}')
 
     assert isinstance(resp, FakeResponse)
     assert resp.status == 200
@@ -206,9 +206,9 @@ def test_build_response_jsonp_with_json():
 
 def test_build_response_jsonp_without_json():
     a = FakeAdaptor(params={'format': 'text', 'json_callback': 'test.func'})
-    a.parse_format(napi.StatusResult, 'text')
+    glue.parse_format(a, napi.StatusResult, 'text')
 
-    resp = a.build_response('{}')
+    resp = glue.build_response(a, '{}')
 
     assert isinstance(resp, FakeResponse)
     assert resp.status == 200
@@ -219,10 +219,10 @@ def test_build_response_jsonp_without_json():
 @pytest.mark.parametrize('param', ['alert(); func', '\\n', '', 'a b'])
 def test_build_response_jsonp_bad_format(param):
     a = FakeAdaptor(params={'format': 'json', 'json_callback': param})
-    a.parse_format(napi.StatusResult, 'text')
+    glue.parse_format(a, napi.StatusResult, 'text')
 
     with pytest.raises(FakeError, match='^400 -- .*Invalid'):
-        a.build_response('{}')
+        glue.build_response(a, '{}')
 
 
 # status_endpoint()

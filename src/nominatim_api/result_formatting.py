@@ -20,8 +20,8 @@ ErrorFormatFunc = Callable[[str, str, int], str]
 
 
 class FormatDispatcher:
-    """ Helper class to conveniently create formatting functions in
-        a module using decorators.
+    """ Container for formatting functions for results.
+        Functions can conveniently be added by using decorated functions.
     """
 
     def __init__(self, content_types: Optional[Mapping[str, str]] = None) -> None:

@@ -24,14 +24,15 @@ from ..status import StatusResult
 from ..results import DetailedResult, ReverseResults, SearchResult, SearchResults
 from ..localization import Locales
 from . import helpers
-from ..server.asgi_adaptor import CONTENT_HTML, CONTENT_JSON, CONTENT_TYPE, ASGIAdaptor
+from ..server import content_types as ct
+from ..server.asgi_adaptor import ASGIAdaptor
 
 def build_response(adaptor: ASGIAdaptor, output: str, status: int = 200,
                    num_results: int = 0) -> Any:
     """ Create a response from the given output. Wraps a JSONP function
         around the response, if necessary.
     """
-    if adaptor.content_type == CONTENT_JSON and status == 200:
+    if adaptor.content_type == ct.CONTENT_JSON and status == 200:
         jsonp = adaptor.get('json_callback')
         if jsonp is not None:
             if any(not part.isidentifier() for part in jsonp.split('.')):
@@ -57,7 +58,7 @@ def setup_debugging(adaptor: ASGIAdaptor) -> bool:
     """
     if adaptor.get_bool('debug', False):
         loglib.set_log_output('html')
-        adaptor.content_type = CONTENT_HTML
+        adaptor.content_type = ct.CONTENT_HTML
         return True
 
     return False
@@ -83,11 +84,13 @@ def parse_format(adaptor: ASGIAdaptor, result_type: Type[Any], default: str) -> 
     fmt = adaptor.get('format', default=default)
     assert fmt is not None
 
-    if not adaptor.formatting().supports_format(result_type, fmt):
-        adaptor.raise_error("Parameter 'format' must be one of: " +
-                          ', '.join(adaptor.formatting().list_formats(result_type)))
+    formatting = adaptor.formatting()
 
-    adaptor.content_type = CONTENT_TYPE.get(fmt, CONTENT_JSON)
+    if not formatting.supports_format(result_type, fmt):
+        adaptor.raise_error("Parameter 'format' must be one of: " +
+                          ', '.join(formatting.list_formats(result_type)))
+
+    adaptor.content_type = formatting.get_content_type(fmt)
     return fmt
 
 

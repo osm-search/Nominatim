@@ -127,7 +127,7 @@ class TestAdaptorRaiseError:
         err = self.run_raise_error('TEST', 404)
 
         assert self.adaptor.content_type == 'text/plain; charset=utf-8'
-        assert err.msg == 'TEST'
+        assert err.msg == 'ERROR 404: TEST'
         assert err.status == 404
 
 

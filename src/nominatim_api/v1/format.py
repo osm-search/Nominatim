@@ -19,12 +19,38 @@ from ..localization import Locales
 from ..result_formatting import FormatDispatcher
 from .classtypes import ICONS
 from . import format_json, format_xml
+from .. import logging as loglib
+from ..server import content_types as ct
 
 class RawDataList(List[Dict[str, Any]]):
     """ Data type for formatting raw data lists 'as is' in json.
     """
 
-dispatch = FormatDispatcher()
+dispatch = FormatDispatcher({'text': ct.CONTENT_TEXT,
+                             'xml': ct.CONTENT_XML,
+                             'debug': ct.CONTENT_HTML})
+
+@dispatch.error_format_func
+def _format_error(content_type: str, msg: str, status: int) -> str:
+    if content_type == ct.CONTENT_XML:
+        return f"""<?xml version="1.0" encoding="UTF-8" ?>
+                   <error>
+                     <code>{status}</code>
+                     <message>{msg}</message>
+                   </error>
+                """
+
+    if content_type == ct.CONTENT_JSON:
+        return f"""{{"error":{{"code":{status},"message":"{msg}"}}}}"""
+
+    if content_type == ct.CONTENT_HTML:
+        loglib.log().section('Execution error')
+        loglib.log().var_dump('Status', status)
+        loglib.log().var_dump('Message', msg)
+        return loglib.get_and_disable()
+
+    return f"ERROR {status}: {msg}"
+
 
 @dispatch.format_func(StatusResult, 'text')
 def _format_status_text(result: StatusResult, _: Mapping[str, Any]) -> str:

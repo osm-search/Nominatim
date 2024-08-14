@@ -12,16 +12,9 @@ import abc
 import math
 
 from ..config import Configuration
-from .. import logging as loglib
 from ..core import NominatimAPIAsync
 from ..result_formatting import FormatDispatcher
-
-CONTENT_TEXT = 'text/plain; charset=utf-8'
-CONTENT_XML = 'text/xml; charset=utf-8'
-CONTENT_HTML = 'text/html; charset=utf-8'
-CONTENT_JSON = 'application/json; charset=utf-8'
-
-CONTENT_TYPE = {'text': CONTENT_TEXT, 'xml': CONTENT_XML, 'debug': CONTENT_HTML}
+from .content_types import CONTENT_TEXT
 
 class ASGIAdaptor(abc.ABC):
     """ Adapter class for the different ASGI frameworks.
@@ -156,22 +149,8 @@ class ASGIAdaptor(abc.ABC):
             message. The message will be formatted according to the
             output format chosen by the request.
         """
-        if self.content_type == CONTENT_XML:
-            msg = f"""<?xml version="1.0" encoding="UTF-8" ?>
-                      <error>
-                        <code>{status}</code>
-                        <message>{msg}</message>
-                      </error>
-                   """
-        elif self.content_type == CONTENT_JSON:
-            msg = f"""{{"error":{{"code":{status},"message":"{msg}"}}}}"""
-        elif self.content_type == CONTENT_HTML:
-            loglib.log().section('Execution error')
-            loglib.log().var_dump('Status', status)
-            loglib.log().var_dump('Message', msg)
-            msg = loglib.get_and_disable()
-
-        raise self.error(msg, status)
+        raise self.error(self.formatting().format_error(self.content_type, msg, status),
+                         status)
 
 
 EndpointFunc = Callable[[NominatimAPIAsync, ASGIAdaptor], Any]

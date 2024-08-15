@@ -17,7 +17,9 @@ from falcon.asgi import App, Request, Response
 from ...config import Configuration
 from ...core import NominatimAPIAsync
 from ... import v1 as api_impl
+from ...result_formatting import FormatDispatcher, load_format_dispatcher
 from ... import logging as loglib
+from ..asgi_adaptor import ASGIAdaptor, EndpointFunc
 
 class HTTPNominatimError(Exception):
     """ A special exception class for errors raised during processing.
@@ -57,15 +59,16 @@ async def timeout_error_handler(req: Request, resp: Response, #pylint: disable=u
         resp.content_type = 'text/plain; charset=utf-8'
 
 
-class ParamWrapper(api_impl.ASGIAdaptor):
+class ParamWrapper(ASGIAdaptor):
     """ Adaptor class for server glue to Falcon framework.
     """
 
     def __init__(self, req: Request, resp: Response,
-                 config: Configuration) -> None:
+                 config: Configuration, formatter: FormatDispatcher) -> None:
         self.request = req
         self.response = resp
         self._config = config
+        self._formatter = formatter
 
 
     def get(self, name: str, default: Optional[str] = None) -> Optional[str]:
@@ -93,21 +96,27 @@ class ParamWrapper(api_impl.ASGIAdaptor):
     def config(self) -> Configuration:
         return self._config
 
+    def formatting(self) -> FormatDispatcher:
+        return self._formatter
+
 
 class EndpointWrapper:
     """ Converter for server glue endpoint functions to Falcon request handlers.
     """
 
-    def __init__(self, name: str, func: api_impl.EndpointFunc, api: NominatimAPIAsync) -> None:
+    def __init__(self, name: str, func: EndpointFunc, api: NominatimAPIAsync,
+                 formatter: FormatDispatcher) -> None:
         self.name = name
         self.func = func
         self.api = api
+        self.formatter = formatter
 
 
     async def on_get(self, req: Request, resp: Response) -> None:
         """ Implementation of the endpoint.
         """
-        await self.func(self.api, ParamWrapper(req, resp, self.api.config))
+        await self.func(self.api, ParamWrapper(req, resp, self.api.config,
+                                               self.formatter))
 
 
 class FileLoggingMiddleware:
@@ -177,8 +186,9 @@ def get_application(project_dir: Path,
     app.add_error_handler(asyncio.TimeoutError, timeout_error_handler)
 
     legacy_urls = api.config.get_bool('SERVE_LEGACY_URLS')
+    formatter = load_format_dispatcher('v1', project_dir)
     for name, func in api_impl.ROUTES:
-        endpoint = EndpointWrapper(name, func, api)
+        endpoint = EndpointWrapper(name, func, api, formatter)
         app.add_route(f"/{name}", endpoint)
         if legacy_urls:
             app.add_route(f"/{name}.php", endpoint)

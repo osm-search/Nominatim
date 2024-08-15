@@ -24,9 +24,11 @@ from starlette.middleware.cors import CORSMiddleware
 from ...config import Configuration
 from ...core import NominatimAPIAsync
 from ... import v1 as api_impl
+from ...result_formatting import FormatDispatcher, load_format_dispatcher
+from ..asgi_adaptor import ASGIAdaptor, EndpointFunc
 from ... import logging as loglib
 
-class ParamWrapper(api_impl.ASGIAdaptor):
+class ParamWrapper(ASGIAdaptor):
     """ Adaptor class for server glue to Starlette framework.
     """
 
@@ -69,7 +71,11 @@ class ParamWrapper(api_impl.ASGIAdaptor):
         return cast(Configuration, self.request.app.state.API.config)
 
 
-def _wrap_endpoint(func: api_impl.EndpointFunc)\
+    def formatting(self) -> FormatDispatcher:
+        return cast(FormatDispatcher, self.request.app.state.API.formatter)
+
+
+def _wrap_endpoint(func: EndpointFunc)\
         -> Callable[[Request], Coroutine[Any, Any, Response]]:
     async def _callback(request: Request) -> Response:
         return cast(Response, await func(request.app.state.API, ParamWrapper(request)))
@@ -164,6 +170,7 @@ def get_application(project_dir: Path,
                     on_shutdown=[_shutdown])
 
     app.state.API = NominatimAPIAsync(project_dir, environ)
+    app.state.formatter = load_format_dispatcher('v1', project_dir)
 
     return app
 

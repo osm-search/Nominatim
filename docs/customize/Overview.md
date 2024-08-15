@@ -7,6 +7,8 @@ the following configurable parts:
   can be set in your local `.env` configuration
 * [Import styles](Import-Styles.md) explains how to write your own import style
   in order to control what kind of OSM data will be imported
+* [API Result Formatting](Result-Formatting.md) shows how to change the
+  output of the Nominatim API
 * [Place ranking](Ranking.md) describes the configuration around classifing
   places in terms of their importance and their role in an address
 * [Tokenizers](Tokenizers.md) describes the configuration of the module

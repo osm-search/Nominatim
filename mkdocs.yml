@@ -35,6 +35,7 @@ nav:
         - 'Overview': 'customize/Overview.md'
         - 'Import Styles': 'customize/Import-Styles.md'
         - 'Configuration Settings': 'customize/Settings.md'
+        - 'API Result Formatting': 'customize/Result-Formatting.md'
         - 'Per-Country Data': 'customize/Country-Settings.md'
         - 'Place Ranking' : 'customize/Ranking.md'
         - 'Importance' : 'customize/Importance.md'

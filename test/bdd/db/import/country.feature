@@ -20,7 +20,8 @@ Feature: Country handling
         Then results contain
             | osm | display_name |
             | N1  | Wenig, Loudou |
-    Scenario: OSM country relations outside expected boundaries are ignored
+
+    Scenario: OSM country relations outside expected boundaries are ignored for naming
         Given the grid
             | 1 |  | 2 |
             | 4 |  | 3 |
@@ -37,6 +38,7 @@ Feature: Country handling
         Then results contain
             | osm | display_name |
             | N1  | Wenig, Germany |
+
     Scenario: Pre-defined country names are used
         Given the grid with origin CH
             | 1 |
@@ -50,3 +52,41 @@ Feature: Country handling
         Then results contain
             | osm | display_name |
             | N1  | Ingb, Switzerland |
+
+    Scenario: For overlapping countries, pre-defined countries are tie-breakers
+        Given the grid with origin US
+            | 1 |   | 2 |   | 5 |
+            |   | 9 |   | 8 |   |
+            | 4 |   | 3 |   | 6 |
+        Given the named places
+            | osm  | class    | type           | admin | country | geometry |
+            | R1   | boundary | administrative | 2     | de      | (1,5,6,4,1) |
+            | R2   | boundary | administrative | 2     | us      | (1,2,3,4,1) |
+        And the named places
+            | osm  | class    | type  | geometry   |
+            | N1   | place    | town  | 9 |
+            | N2   | place    | town  | 8 |
+        When importing
+        Then placex contains
+            | object | country_code |
+            | N1     | us           |
+            | N2     | de           |
+
+    Scenario: For overlapping countries outside pre-define countries prefer smaller partition
+        Given the grid with origin US
+            | 1 |   | 2 |   | 5 |
+            |   | 9 |   | 8 |   |
+            | 4 |   | 3 |   | 6 |
+        Given the named places
+            | osm  | class    | type           | admin | country | geometry |
+            | R1   | boundary | administrative | 2     | ch      | (1,5,6,4,1) |
+            | R2   | boundary | administrative | 2     | de      | (1,2,3,4,1) |
+        And the named places
+            | osm  | class    | type  | geometry   |
+            | N1   | place    | town  | 9 |
+            | N2   | place    | town  | 8 |
+        When importing
+        Then placex contains
+            | object | country_code |
+            | N1     | de           |
+            | N2     | ch           |

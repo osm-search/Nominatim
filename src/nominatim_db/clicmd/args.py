@@ -137,6 +137,7 @@ class NominatimArgs:
 
     # Arguments to all query functions
     format: str
+    list_formats: bool
     addressdetails: bool
     extratags: bool
     namedetails: bool

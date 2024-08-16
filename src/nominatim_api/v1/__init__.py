@@ -11,9 +11,3 @@ Implementation of API version v1 (aka the legacy version).
 #pylint: disable=useless-import-alias
 
 from .server_glue import ROUTES as ROUTES
-
-from . import format as _format
-
-list_formats = _format.dispatch.list_formats
-supports_format = _format.dispatch.supports_format
-format_result = _format.dispatch.format_result

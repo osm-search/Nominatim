@@ -7,7 +7,7 @@
 """
 Subcommand definitions for API calls from the command line.
 """
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Type, Mapping
 import argparse
 import logging
 import json
@@ -15,9 +15,8 @@ import sys
 from functools import reduce
 
 import nominatim_api as napi
-import nominatim_api.v1 as api_output
 from nominatim_api.v1.helpers import zoom_to_rank, deduplicate_results
-from nominatim_api.v1.format import dispatch as formatting
+from nominatim_api.server.content_types import CONTENT_JSON
 import nominatim_api.logging as loglib
 from ..errors import UsageError
 from .args import NominatimArgs
@@ -44,11 +43,16 @@ EXTRADATA_PARAMS = (
     ('namedetails', 'Include a list of alternative names')
 )
 
+def _add_list_format(parser: argparse.ArgumentParser) -> None:
+    group = parser.add_argument_group('Other options')
+    group.add_argument('--list-formats', action='store_true',
+                       help='List supported output formats and exit.')
+
+
 def _add_api_output_arguments(parser: argparse.ArgumentParser) -> None:
-    group = parser.add_argument_group('Output arguments')
-    group.add_argument('--format', default='jsonv2',
-                       choices=formatting.list_formats(napi.SearchResults) + ['debug'],
-                       help='Format of result')
+    group = parser.add_argument_group('Output formatting')
+    group.add_argument('--format', type=str, default='jsonv2',
+                       help='Format of result (use --list-format to see supported formats)')
     for name, desc in EXTRADATA_PARAMS:
         group.add_argument('--' + name, action='store_true', help=desc)
 
@@ -105,6 +109,24 @@ def _get_layers(args: NominatimArgs, default: napi.DataLayer) -> Optional[napi.D
                   (napi.DataLayer[s.upper()] for s in args.layers))
 
 
+def _list_formats(formatter: napi.FormatDispatcher, rtype: Type[Any]) -> int:
+    for fmt in formatter.list_formats(rtype):
+        print(fmt)
+    print('debug')
+
+    return 0
+
+
+def _print_output(formatter: napi.FormatDispatcher, result: Any,
+                  fmt: str, options: Mapping[str, Any]) -> None:
+    output = formatter.format_result(result, fmt, options)
+    if formatter.get_content_type(fmt) == CONTENT_JSON:
+        # reformat the result, so it is pretty-printed
+        json.dump(json.loads(output), sys.stdout, indent=4, ensure_ascii=False)
+    else:
+        sys.stdout.write(output)
+    sys.stdout.write('\n')
+
 class APISearch:
     """\
     Execute a search query.
@@ -135,18 +157,24 @@ class APISearch:
                            help='Preferred area to find search results')
         group.add_argument('--bounded', action='store_true',
                            help='Strictly restrict results to viewbox area')
-
-        group = parser.add_argument_group('Other arguments')
         group.add_argument('--no-dedupe', action='store_false', dest='dedupe',
                            help='Do not remove duplicates from the result list')
+        _add_list_format(parser)
 
 
     def run(self, args: NominatimArgs) -> int:
+        formatter = napi.load_format_dispatcher('v1', args.project_dir)
+
+        if args.list_formats:
+            return _list_formats(formatter, napi.SearchResults)
+
         if args.format == 'debug':
             loglib.set_log_output('text')
+        elif not formatter.supports_format(napi.SearchResults, args.format):
+            raise UsageError(f"Unsupported format '{args.format}'. "
+                             'Use --list-formats to see supported formats.')
 
         api = napi.NominatimAPI(args.project_dir)
-
         params: Dict[str, Any] = {'max_results': args.limit + min(args.limit, 10),
                                   'address_details': True, # needed for display name
                                   'geometry_output': _get_geometry_output(args),
@@ -177,19 +205,10 @@ class APISearch:
             print(loglib.get_and_disable())
             return 0
 
-        output = api_output.format_result(
-                    results,
-                    args.format,
-                    {'extratags': args.extratags,
-                     'namedetails': args.namedetails,
-                     'addressdetails': args.addressdetails})
-        if args.format != 'xml':
-            # reformat the result, so it is pretty-printed
-            json.dump(json.loads(output), sys.stdout, indent=4, ensure_ascii=False)
-        else:
-            sys.stdout.write(output)
-        sys.stdout.write('\n')
-
+        _print_output(formatter, results, args.format,
+                      {'extratags': args.extratags,
+                       'namedetails': args.namedetails,
+                       'addressdetails': args.addressdetails})
         return 0
 
 
@@ -205,9 +224,9 @@ class APIReverse:
 
     def add_args(self, parser: argparse.ArgumentParser) -> None:
         group = parser.add_argument_group('Query arguments')
-        group.add_argument('--lat', type=float, required=True,
+        group.add_argument('--lat', type=float,
                            help='Latitude of coordinate to look up (in WGS84)')
-        group.add_argument('--lon', type=float, required=True,
+        group.add_argument('--lon', type=float,
                            help='Longitude of coordinate to look up (in WGS84)')
         group.add_argument('--zoom', type=int,
                            help='Level of detail required for the address')
@@ -217,14 +236,25 @@ class APIReverse:
                            help='OSM id to lookup in format <NRW><id> (may be repeated)')
 
         _add_api_output_arguments(parser)
+        _add_list_format(parser)
 
 
     def run(self, args: NominatimArgs) -> int:
+        formatter = napi.load_format_dispatcher('v1', args.project_dir)
+
+        if args.list_formats:
+            return _list_formats(formatter, napi.ReverseResults)
+
         if args.format == 'debug':
             loglib.set_log_output('text')
+        elif not formatter.supports_format(napi.ReverseResults, args.format):
+            raise UsageError(f"Unsupported format '{args.format}'. "
+                             'Use --list-formats to see supported formats.')
+
+        if args.lat is None or args.lon is None:
+            raise UsageError("lat' and 'lon' parameters are required.")
 
         api = napi.NominatimAPI(args.project_dir)
-
         result = api.reverse(napi.Point(args.lon, args.lat),
                              max_rank=zoom_to_rank(args.zoom or 18),
                              layers=_get_layers(args, napi.DataLayer.ADDRESS | napi.DataLayer.POI),
@@ -238,18 +268,10 @@ class APIReverse:
             return 0
 
         if result:
-            output = api_output.format_result(
-                        napi.ReverseResults([result]),
-                        args.format,
-                        {'extratags': args.extratags,
-                         'namedetails': args.namedetails,
-                         'addressdetails': args.addressdetails})
-            if args.format != 'xml':
-                # reformat the result, so it is pretty-printed
-                json.dump(json.loads(output), sys.stdout, indent=4, ensure_ascii=False)
-            else:
-                sys.stdout.write(output)
-            sys.stdout.write('\n')
+            _print_output(formatter, napi.ReverseResults([result]), args.format,
+                          {'extratags': args.extratags,
+                           'namedetails': args.namedetails,
+                           'addressdetails': args.addressdetails})
 
             return 0
 
@@ -271,43 +293,45 @@ class APILookup:
     def add_args(self, parser: argparse.ArgumentParser) -> None:
         group = parser.add_argument_group('Query arguments')
         group.add_argument('--id', metavar='OSMID',
-                           action='append', required=True, dest='ids',
+                           action='append', dest='ids',
                            help='OSM id to lookup in format <NRW><id> (may be repeated)')
 
         _add_api_output_arguments(parser)
+        _add_list_format(parser)
 
 
     def run(self, args: NominatimArgs) -> int:
+        formatter = napi.load_format_dispatcher('v1', args.project_dir)
+
+        if args.list_formats:
+            return _list_formats(formatter, napi.ReverseResults)
+
         if args.format == 'debug':
             loglib.set_log_output('text')
+        elif not formatter.supports_format(napi.ReverseResults, args.format):
+            raise UsageError(f"Unsupported format '{args.format}'. "
+                             'Use --list-formats to see supported formats.')
 
-        api = napi.NominatimAPI(args.project_dir)
-
-        if args.format == 'debug':
-            print(loglib.get_and_disable())
-            return 0
+        if args.ids is None:
+            raise UsageError("'id' parameter required.")
 
         places = [napi.OsmID(o[0], int(o[1:])) for o in args.ids]
 
+        api = napi.NominatimAPI(args.project_dir)
         results = api.lookup(places,
                              address_details=True, # needed for display name
                              geometry_output=_get_geometry_output(args),
                              geometry_simplification=args.polygon_threshold or 0.0,
                              locales=_get_locales(args, api.config.DEFAULT_LANGUAGE))
 
-        output = api_output.format_result(
-                    results,
-                    args.format,
-                    {'extratags': args.extratags,
-                     'namedetails': args.namedetails,
-                     'addressdetails': args.addressdetails})
-        if args.format != 'xml':
-            # reformat the result, so it is pretty-printed
-            json.dump(json.loads(output), sys.stdout, indent=4, ensure_ascii=False)
-        else:
-            sys.stdout.write(output)
-        sys.stdout.write('\n')
+        if args.format == 'debug':
+            print(loglib.get_and_disable())
+            return 0
 
+        _print_output(formatter, results, args.format,
+                      {'extratags': args.extratags,
+                       'namedetails': args.namedetails,
+                       'addressdetails': args.addressdetails})
         return 0
 
 
@@ -323,20 +347,21 @@ class APIDetails:
 
     def add_args(self, parser: argparse.ArgumentParser) -> None:
         group = parser.add_argument_group('Query arguments')
-        objs = group.add_mutually_exclusive_group(required=True)
-        objs.add_argument('--node', '-n', type=int,
-                          help="Look up the OSM node with the given ID.")
-        objs.add_argument('--way', '-w', type=int,
-                          help="Look up the OSM way with the given ID.")
-        objs.add_argument('--relation', '-r', type=int,
-                          help="Look up the OSM relation with the given ID.")
-        objs.add_argument('--place_id', '-p', type=int,
-                          help='Database internal identifier of the OSM object to look up')
+        group.add_argument('--node', '-n', type=int,
+                           help="Look up the OSM node with the given ID.")
+        group.add_argument('--way', '-w', type=int,
+                           help="Look up the OSM way with the given ID.")
+        group.add_argument('--relation', '-r', type=int,
+                           help="Look up the OSM relation with the given ID.")
+        group.add_argument('--place_id', '-p', type=int,
+                           help='Database internal identifier of the OSM object to look up')
         group.add_argument('--class', dest='object_class',
                            help=("Class type to disambiguated multiple entries "
                                  "of the same object."))
 
         group = parser.add_argument_group('Output arguments')
+        group.add_argument('--format', type=str, default='json',
+                           help='Format of result (use --list-formats to see supported formats)')
         group.add_argument('--addressdetails', action='store_true',
                            help='Include a breakdown of the address into elements')
         group.add_argument('--keywords', action='store_true',
@@ -351,9 +376,21 @@ class APIDetails:
                            help='Include geometry of result')
         group.add_argument('--lang', '--accept-language', metavar='LANGS',
                            help='Preferred language order for presenting search results')
+        _add_list_format(parser)
 
 
     def run(self, args: NominatimArgs) -> int:
+        formatter = napi.load_format_dispatcher('v1', args.project_dir)
+
+        if args.list_formats:
+            return _list_formats(formatter, napi.DetailedResult)
+
+        if args.format == 'debug':
+            loglib.set_log_output('text')
+        elif not formatter.supports_format(napi.DetailedResult, args.format):
+            raise UsageError(f"Unsupported format '{args.format}'. "
+                             'Use --list-formats to see supported formats.')
+
         place: napi.PlaceRef
         if args.node:
             place = napi.OsmID('N', args.node, args.object_class)
@@ -361,12 +398,13 @@ class APIDetails:
             place = napi.OsmID('W', args.way, args.object_class)
         elif args.relation:
             place = napi.OsmID('R', args.relation, args.object_class)
-        else:
-            assert args.place_id is not None
+        elif  args.place_id is not None:
             place = napi.PlaceID(args.place_id)
+        else:
+            raise UsageError('One of the arguments --node/-n --way/-w '
+                             '--relation/-r --place_id/-p is required/')
 
         api = napi.NominatimAPI(args.project_dir)
-
         locales = _get_locales(args, api.config.DEFAULT_LANGUAGE)
         result = api.details(place,
                              address_details=args.addressdetails,
@@ -378,17 +416,14 @@ class APIDetails:
                                              else napi.GeometryFormat.NONE,
                             locales=locales)
 
+        if args.format == 'debug':
+            print(loglib.get_and_disable())
+            return 0
 
         if result:
-            output = api_output.format_result(
-                        result,
-                        'json',
-                        {'locales': locales,
-                         'group_hierarchy': args.group_hierarchy})
-            # reformat the result, so it is pretty-printed
-            json.dump(json.loads(output), sys.stdout, indent=4, ensure_ascii=False)
-            sys.stdout.write('\n')
-
+            _print_output(formatter, result, args.format or 'json',
+                          {'locales': locales,
+                           'group_hierarchy': args.group_hierarchy})
             return 0
 
         LOG.error("Object not found in database.")
@@ -406,13 +441,30 @@ class APIStatus:
     """
 
     def add_args(self, parser: argparse.ArgumentParser) -> None:
-        formats = api_output.list_formats(napi.StatusResult)
         group = parser.add_argument_group('API parameters')
-        group.add_argument('--format', default=formats[0], choices=formats,
-                           help='Format of result')
+        group.add_argument('--format', type=str, default='text',
+                           help='Format of result (use --list-formats to see supported formats)')
+        _add_list_format(parser)
 
 
     def run(self, args: NominatimArgs) -> int:
+        formatter = napi.load_format_dispatcher('v1', args.project_dir)
+
+        if args.list_formats:
+            return _list_formats(formatter, napi.StatusResult)
+
+        if args.format == 'debug':
+            loglib.set_log_output('text')
+        elif not formatter.supports_format(napi.StatusResult, args.format):
+            raise UsageError(f"Unsupported format '{args.format}'. "
+                             'Use --list-formats to see supported formats.')
+
         status = napi.NominatimAPI(args.project_dir).status()
-        print(api_output.format_result(status, args.format, {}))
+
+        if args.format == 'debug':
+            print(loglib.get_and_disable())
+            return 0
+
+        _print_output(formatter, status, args.format, {})
+
         return 0

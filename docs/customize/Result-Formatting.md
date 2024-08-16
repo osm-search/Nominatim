@@ -66,6 +66,8 @@ For example, let us extend the result for the status call in text format
 and add the server URL. Such a formatter would look like this:
 
 ``` python
+from nominatim_api import StatusResult
+
 @dispatch.format_func(StatusResult, 'text')
 def _format_status_text(result, _):
     header = 'Status for server nominatim.openstreetmap.org'
@@ -86,6 +88,8 @@ as adding formatting functions for all result types using the custom
 format name:
 
 ``` python
+from nominatim_api import StatusResult
+
 @dispatch.format_func(StatusResult, 'chatty')
 def _format_status_text(result, _):
     if result.status:

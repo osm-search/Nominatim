@@ -95,14 +95,32 @@ def _format_status_text(result, _):
     if result.status:
         return f"The server is currently not running. {result.message}"
 
-    return f"Good news! The server is running just fine."
+    return "Good news! The server is running just fine."
 ```
 
 That's all. Nominatim will automatically pick up the new format name and
-will allow the user to use it. Make sure to really define formatters for
-**all** result types. If they are for endpoints that you do not intend to
-use, you can simply return some static string but the function needs to be
-there.
+will allow the user to use it. There is no need to implement formatter
+functions for all the result types, when you invent a new one. The
+available formats will be determined for each API endpoint separately.
+To find out which formats are available, you can use the `--list-formats`
+option of the CLI tool:
+
+```
+me@machine:planet-project$ nominatim status --list-formats
+2024-08-16 19:54:00: Using project directory: /home/nominatim/planet-project
+text
+json
+chatty
+debug
+me@machine:planet-project$
+```
+
+The `debug` format listed in the last line will always appear. It is a
+special format that enables debug output via the command line (the same
+as the `debug=1` parameter enables for the server API). To not clash
+with this built-in function, you shouldn't name your own format 'debug'.
+
+### Content type of new formats
 
 All responses will be returned with the content type application/json by
 default. If your format produces a different content type, you need
@@ -120,6 +138,47 @@ dispatch.set_content_type('chatty', CONTENT_TEXT)
 The `content_types` module used above provides constants for the most
 frequent content types. You set the content type to an arbitrary string,
 if the content type you need is not available.
+
+## Formatting error messages
+
+Any exception thrown during processing of a request is given to
+a special error formatting function. It takes the requested content type,
+the status code and the error message. It should return the error message
+in a form appropriate for the given content type.
+
+You can overwrite the default formatting function with the decorator
+`error_format_func`:
+
+``` python
+import nominatim_api.server.content_types as ct
+
+@dispatch.error_format_func
+def _format_error(content_type: str, msg: str, status: int) -> str:
+    if content_type == ct.CONTENT_XML:
+        return f"""<?xml version="1.0" encoding="UTF-8" ?>
+                     <message>{msg}</message>
+                """
+    if content_type == ct.CONTENT_JSON:
+        return f'"{msg}"'
+
+    return f"ERROR: {msg}"
+```
+
+
+## Debugging custom formatters
+
+The easiest way to try out your custom formatter is by using the Nominatim
+CLI commands. Custom formats can be chosen with the `--format` parameter:
+
+```
+me@machine:planet-project$ nominatim status --format chatty
+2024-08-16 19:54:00: Using project directory: /home/nominatim/planet-project
+Good news! The server is running just fine.
+me@machine:planet-project$
+```
+
+They will also emit full error messages when there is a problem with the
+code you need to debug.
 
 ## Reference
 

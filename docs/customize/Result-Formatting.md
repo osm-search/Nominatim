@@ -180,6 +180,26 @@ me@machine:planet-project$
 They will also emit full error messages when there is a problem with the
 code you need to debug.
 
+!!! danger
+    In some cases, when you make an error with your import statement, the
+    CLI will not give you an error but instead tell you, that the API
+    commands are no longer available:
+
+        me@machine: nominatim status
+        usage: nominatim [-h] [--version] {import,freeze,replication,special-phrases,add-data,index,refresh,admin} ...
+        nominatim: error: argument subcommand: invalid choice: 'status'
+
+    This happens because the CLI tool is meant to still work when the
+    nominatim-api package is not installed. Import errors involving
+    `nominatim_api` are interpreted as "package not installed".
+
+    Use the help command to find out which is the offending import that
+    could not be found:
+
+        me@machine: nominatim -h
+        ... [other help text] ...
+        Nominatim API package not found (was looking for module: nominatim_api.xxx).
+
 ## Reference
 
 ### FormatDispatcher

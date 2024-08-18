@@ -243,7 +243,8 @@ def get_set_parser() -> CommandlineParser:
             raise ex
 
         parser.parser.epilog = \
-            '\n\nNominatim API package not found. The following commands are not available:'\
+            f'\n\nNominatim API package not found (was looking for module: {ex.name}).'\
+            '\nThe following commands are not available:'\
             '\n    export, convert, serve, search, reverse, lookup, details, status'\
             "\n\nRun 'pip install nominatim-api' to install the package."
 

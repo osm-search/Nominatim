@@ -13,6 +13,15 @@ import pytest
 import nominatim_db.clicmd.api
 import nominatim_api as napi
 
+@pytest.mark.parametrize('call', ['search', 'reverse', 'lookup', 'details', 'status'])
+def test_list_format(cli_call, call):
+    assert 0 == cli_call(call, '--list-formats')
+
+
+@pytest.mark.parametrize('call', ['search', 'reverse', 'lookup', 'details', 'status'])
+def test_bad_format(cli_call, call):
+    assert 1 == cli_call(call, '--format', 'rsdfsdfsdfsaefsdfsd')
+
 
 class TestCliStatusCall:
 

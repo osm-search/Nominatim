@@ -15,7 +15,7 @@ import json
 
 import pytest
 
-import nominatim_api.v1 as api_impl
+from nominatim_api.v1.format import dispatch as v1_format
 import nominatim_api as napi
 
 STATUS_FORMATS = {'text', 'json'}
@@ -23,30 +23,30 @@ STATUS_FORMATS = {'text', 'json'}
 # StatusResult
 
 def test_status_format_list():
-    assert set(api_impl.list_formats(napi.StatusResult)) == STATUS_FORMATS
+    assert set(v1_format.list_formats(napi.StatusResult)) == STATUS_FORMATS
 
 
 @pytest.mark.parametrize('fmt', list(STATUS_FORMATS))
 def test_status_supported(fmt):
-    assert api_impl.supports_format(napi.StatusResult, fmt)
+    assert v1_format.supports_format(napi.StatusResult, fmt)
 
 
 def test_status_unsupported():
-    assert not api_impl.supports_format(napi.StatusResult, 'gagaga')
+    assert not v1_format.supports_format(napi.StatusResult, 'gagaga')
 
 
 def test_status_format_text():
-    assert api_impl.format_result(napi.StatusResult(0, 'message here'), 'text', {}) == 'OK'
+    assert v1_format.format_result(napi.StatusResult(0, 'message here'), 'text', {}) == 'OK'
 
 
 def test_status_format_text():
-    assert api_impl.format_result(napi.StatusResult(500, 'message here'), 'text', {}) == 'ERROR: message here'
+    assert v1_format.format_result(napi.StatusResult(500, 'message here'), 'text', {}) == 'ERROR: message here'
 
 
 def test_status_format_json_minimal():
     status = napi.StatusResult(700, 'Bad format.')
 
-    result = api_impl.format_result(status, 'json', {})
+    result = v1_format.format_result(status, 'json', {})
 
     assert result == \
            f'{{"status":700,"message":"Bad format.","software_version":"{napi.__version__}"}}'
@@ -57,7 +57,7 @@ def test_status_format_json_full():
     status.data_updated = dt.datetime(2010, 2, 7, 20, 20, 3, 0, tzinfo=dt.timezone.utc)
     status.database_version = '5.6'
 
-    result = api_impl.format_result(status, 'json', {})
+    result = v1_format.format_result(status, 'json', {})
 
     assert result == \
            f'{{"status":0,"message":"OK","data_updated":"2010-02-07T20:20:03+00:00","software_version":"{napi.__version__}","database_version":"5.6"}}'
@@ -70,7 +70,7 @@ def test_search_details_minimal():
                                  ('place', 'thing'),
                                  napi.Point(1.0, 2.0))
 
-    result = api_impl.format_result(search, 'json', {})
+    result = v1_format.format_result(search, 'json', {})
 
     assert json.loads(result) == \
            {'category': 'place',
@@ -114,7 +114,7 @@ def test_search_details_full():
                   )
     search.localize(napi.Locales())
 
-    result = api_impl.format_result(search, 'json', {})
+    result = v1_format.format_result(search, 'json', {})
 
     assert json.loads(result) == \
            {'place_id': 37563,
@@ -153,7 +153,7 @@ def test_search_details_no_geometry(gtype, isarea):
                                napi.Point(1.0, 2.0),
                                geometry={'type': gtype})
 
-    result = api_impl.format_result(search, 'json', {})
+    result = v1_format.format_result(search, 'json', {})
     js = json.loads(result)
 
     assert js['geometry'] == {'type': 'Point', 'coordinates': [1.0, 2.0]}
@@ -166,7 +166,7 @@ def test_search_details_with_geometry():
                                  napi.Point(1.0, 2.0),
                                  geometry={'geojson': '{"type":"Point","coordinates":[56.947,-87.44]}'})
 
-    result = api_impl.format_result(search, 'json', {})
+    result = v1_format.format_result(search, 'json', {})
     js = json.loads(result)
 
     assert js['geometry'] == {'type': 'Point', 'coordinates': [56.947, -87.44]}
@@ -178,7 +178,7 @@ def test_search_details_with_icon_available():
                                  ('amenity', 'restaurant'),
                                  napi.Point(1.0, 2.0))
 
-    result = api_impl.format_result(search, 'json', {'icon_base_url': 'foo'})
+    result = v1_format.format_result(search, 'json', {'icon_base_url': 'foo'})
     js = json.loads(result)
 
     assert js['icon'] == 'foo/food_restaurant.p.20.png'
@@ -189,7 +189,7 @@ def test_search_details_with_icon_not_available():
                                  ('amenity', 'tree'),
                                  napi.Point(1.0, 2.0))
 
-    result = api_impl.format_result(search, 'json', {'icon_base_url': 'foo'})
+    result = v1_format.format_result(search, 'json', {'icon_base_url': 'foo'})
     js = json.loads(result)
 
     assert 'icon' not in js
@@ -212,7 +212,7 @@ def test_search_details_with_address_minimal():
                                                     distance=0.0)
                                  ])
 
-    result = api_impl.format_result(search, 'json', {})
+    result = v1_format.format_result(search, 'json', {})
     js = json.loads(result)
 
     assert js['address'] == [{'localname': '',
@@ -245,7 +245,7 @@ def test_search_details_with_further_infos(field, outfield):
                                              distance=0.034)
                             ])
 
-    result = api_impl.format_result(search, 'json', {})
+    result = v1_format.format_result(search, 'json', {})
     js = json.loads(result)
 
     assert js[outfield] == [{'localname': 'Trespass',
@@ -279,7 +279,7 @@ def test_search_details_grouped_hierarchy():
                                              distance=0.034)
                                      ])
 
-    result = api_impl.format_result(search, 'json', {'group_hierarchy': True})
+    result = v1_format.format_result(search, 'json', {'group_hierarchy': True})
     js = json.loads(result)
 
     assert js['hierarchy'] == {'note': [{'localname': 'Trespass',
@@ -303,7 +303,7 @@ def test_search_details_keywords_name():
                                      napi.WordInfo(23, 'foo', 'mefoo'),
                                      napi.WordInfo(24, 'foo', 'bafoo')])
 
-    result = api_impl.format_result(search, 'json', {'keywords': True})
+    result = v1_format.format_result(search, 'json', {'keywords': True})
     js = json.loads(result)
 
     assert js['keywords'] == {'name': [{'id': 23, 'token': 'foo'},
@@ -319,7 +319,7 @@ def test_search_details_keywords_address():
                                      napi.WordInfo(23, 'foo', 'mefoo'),
                                      napi.WordInfo(24, 'foo', 'bafoo')])
 
-    result = api_impl.format_result(search, 'json', {'keywords': True})
+    result = v1_format.format_result(search, 'json', {'keywords': True})
     js = json.loads(result)
 
     assert js['keywords'] == {'address': [{'id': 23, 'token': 'foo'},

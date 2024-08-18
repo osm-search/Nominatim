@@ -15,7 +15,7 @@ import xml.etree.ElementTree as ET
 
 import pytest
 
-import nominatim_api.v1 as api_impl
+from nominatim_api.v1.format import dispatch as v1_format
 import nominatim_api as napi
 
 FORMATS = ['json', 'jsonv2', 'geojson', 'geocodejson', 'xml']
@@ -26,7 +26,7 @@ def test_format_reverse_minimal(fmt):
                                  ('amenity', 'post_box'),
                                  napi.Point(0.3, -8.9))
 
-    raw = api_impl.format_result(napi.ReverseResults([reverse]), fmt, {})
+    raw = v1_format.format_result(napi.ReverseResults([reverse]), fmt, {})
 
     if fmt == 'xml':
         root = ET.fromstring(raw)
@@ -38,7 +38,7 @@ def test_format_reverse_minimal(fmt):
 
 @pytest.mark.parametrize('fmt', FORMATS)
 def test_format_reverse_no_result(fmt):
-    raw = api_impl.format_result(napi.ReverseResults(), fmt, {})
+    raw = v1_format.format_result(napi.ReverseResults(), fmt, {})
 
     if fmt == 'xml':
         root = ET.fromstring(raw)
@@ -55,7 +55,7 @@ def test_format_reverse_with_osm_id(fmt):
                                  place_id=5564,
                                  osm_object=('N', 23))
 
-    raw = api_impl.format_result(napi.ReverseResults([reverse]), fmt, {})
+    raw = v1_format.format_result(napi.ReverseResults([reverse]), fmt, {})
 
     if fmt == 'xml':
         root = ET.fromstring(raw).find('result')
@@ -103,7 +103,7 @@ def test_format_reverse_with_address(fmt):
                                  ]))
     reverse.localize(napi.Locales())
 
-    raw = api_impl.format_result(napi.ReverseResults([reverse]), fmt,
+    raw = v1_format.format_result(napi.ReverseResults([reverse]), fmt,
                                  {'addressdetails': True})
 
 
@@ -167,7 +167,7 @@ def test_format_reverse_geocodejson_special_parts():
 
     reverse.localize(napi.Locales())
 
-    raw = api_impl.format_result(napi.ReverseResults([reverse]), 'geocodejson',
+    raw = v1_format.format_result(napi.ReverseResults([reverse]), 'geocodejson',
                                  {'addressdetails': True})
 
     props = json.loads(raw)['features'][0]['properties']['geocoding']
@@ -183,7 +183,7 @@ def test_format_reverse_with_address_none(fmt):
                                  napi.Point(1.0, 2.0),
                                  address_rows=napi.AddressLines())
 
-    raw = api_impl.format_result(napi.ReverseResults([reverse]), fmt,
+    raw = v1_format.format_result(napi.ReverseResults([reverse]), fmt,
                                  {'addressdetails': True})
 
 
@@ -213,7 +213,7 @@ def test_format_reverse_with_extratags(fmt):
                                  napi.Point(1.0, 2.0),
                                  extratags={'one': 'A', 'two':'B'})
 
-    raw = api_impl.format_result(napi.ReverseResults([reverse]), fmt,
+    raw = v1_format.format_result(napi.ReverseResults([reverse]), fmt,
                                  {'extratags': True})
 
     if fmt == 'xml':
@@ -235,7 +235,7 @@ def test_format_reverse_with_extratags_none(fmt):
                                  ('place', 'thing'),
                                  napi.Point(1.0, 2.0))
 
-    raw = api_impl.format_result(napi.ReverseResults([reverse]), fmt,
+    raw = v1_format.format_result(napi.ReverseResults([reverse]), fmt,
                                  {'extratags': True})
 
     if fmt == 'xml':
@@ -258,7 +258,7 @@ def test_format_reverse_with_namedetails_with_name(fmt):
                                  napi.Point(1.0, 2.0),
                                  names={'name': 'A', 'ref':'1'})
 
-    raw = api_impl.format_result(napi.ReverseResults([reverse]), fmt,
+    raw = v1_format.format_result(napi.ReverseResults([reverse]), fmt,
                                  {'namedetails': True})
 
     if fmt == 'xml':
@@ -280,7 +280,7 @@ def test_format_reverse_with_namedetails_without_name(fmt):
                                  ('place', 'thing'),
                                  napi.Point(1.0, 2.0))
 
-    raw = api_impl.format_result(napi.ReverseResults([reverse]), fmt,
+    raw = v1_format.format_result(napi.ReverseResults([reverse]), fmt,
                                  {'namedetails': True})
 
     if fmt == 'xml':
@@ -302,7 +302,7 @@ def test_search_details_with_icon_available(fmt):
                                  ('amenity', 'restaurant'),
                                  napi.Point(1.0, 2.0))
 
-    result = api_impl.format_result(napi.ReverseResults([reverse]), fmt,
+    result = v1_format.format_result(napi.ReverseResults([reverse]), fmt,
                                     {'icon_base_url': 'foo'})
 
     js = json.loads(result)
@@ -316,7 +316,7 @@ def test_search_details_with_icon_not_available(fmt):
                                  ('amenity', 'tree'),
                                  napi.Point(1.0, 2.0))
 
-    result = api_impl.format_result(napi.ReverseResults([reverse]), fmt,
+    result = v1_format.format_result(napi.ReverseResults([reverse]), fmt,
                                     {'icon_base_url': 'foo'})
 
     assert 'icon' not in json.loads(result)

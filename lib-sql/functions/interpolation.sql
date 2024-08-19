@@ -219,10 +219,11 @@ BEGIN
           -- formatted postcode and therefore 'postcode' contains a derived
           -- variant.
           CASE WHEN address ? 'postcode' THEN placex.postcode ELSE NULL::text END as postcode,
-          substring(address->'housenumber','[0-9]+')::integer as hnr
+          (address->'housenumber')::integer as hnr
         FROM placex, generate_series(1, array_upper(waynodes, 1)) nodeidpos
         WHERE osm_type = 'N' and osm_id = waynodes[nodeidpos]::BIGINT
               and address is not NULL and address ? 'housenumber'
+              and address->'housenumber' ~ '^[0-9]{1,6}$'
               and ST_Distance(NEW.linegeo, geometry) < 0.0005
         ORDER BY nodeidpos
     LOOP

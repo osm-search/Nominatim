@@ -38,6 +38,8 @@ class NominatimAPIAsync: #pylint: disable=too-many-instance-attributes
         This class shares most of the functions with its synchronous
         version. There are some additional functions or parameters,
         which are documented below.
+
+        This class should usually be used as a context manager in 'with' context.
     """
     def __init__(self, project_dir: Path,
                  environ: Optional[Mapping[str, str]] = None,
@@ -164,6 +166,14 @@ class NominatimAPIAsync: #pylint: disable=too-many-instance-attributes
         """
         if self._engine is not None:
             await self._engine.dispose()
+
+
+    async def __aenter__(self) -> 'NominatimAPIAsync':
+        return self
+
+
+    async def __aexit__(self, *_: Any) -> None:
+        await self.close()
 
 
     @contextlib.asynccontextmanager
@@ -351,6 +361,8 @@ class NominatimAPI:
     """ This class provides a thin synchronous wrapper around the asynchronous
         Nominatim functions. It creates its own event loop and runs each
         synchronous function call to completion using that loop.
+
+        This class should usually be used as a context manager in 'with' context.
     """
 
     def __init__(self, project_dir: Path,
@@ -376,8 +388,17 @@ class NominatimAPI:
             This function also closes the asynchronous worker loop making
             the NominatimAPI object unusable.
         """
-        self._loop.run_until_complete(self._async_api.close())
-        self._loop.close()
+        if not self._loop.is_closed():
+            self._loop.run_until_complete(self._async_api.close())
+            self._loop.close()
+
+
+    def __enter__(self) -> 'NominatimAPI':
+        return self
+
+
+    def __exit__(self, *_: Any) -> None:
+        self.close()
 
 
     @property

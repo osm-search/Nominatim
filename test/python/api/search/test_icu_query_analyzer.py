@@ -40,10 +40,9 @@ async def conn(table_factory):
     table_factory('word',
                   definition='word_id INT, word_token TEXT, type TEXT, word TEXT, info JSONB')
 
-    api = NominatimAPIAsync(Path('/invalid'), {})
-    async with api.begin() as conn:
-        yield conn
-    await api.close()
+    async with NominatimAPIAsync(Path('/invalid'), {}) as api:
+        async with api.begin() as conn:
+            yield conn
 
 
 @pytest.mark.asyncio

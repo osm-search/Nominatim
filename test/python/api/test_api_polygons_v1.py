@@ -12,19 +12,10 @@ import datetime as dt
 from pathlib import Path
 
 import pytest
-import pytest_asyncio
 
 from fake_adaptor import FakeAdaptor, FakeError, FakeResponse
 
 import nominatim_api.v1.server_glue as glue
-import nominatim_api as napi
-
-@pytest_asyncio.fixture
-async def api():
-    api = napi.NominatimAPIAsync(Path('/invalid'))
-    yield api
-    await api.close()
-
 
 class TestPolygonsEndPoint:
 

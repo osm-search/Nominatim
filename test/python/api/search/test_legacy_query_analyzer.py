@@ -74,10 +74,9 @@ async def conn(table_factory, temp_db_cursor):
     temp_db_cursor.execute("""CREATE OR REPLACE FUNCTION make_standard_name(name TEXT)
                               RETURNS TEXT AS $$ SELECT lower(name); $$ LANGUAGE SQL;""")
 
-    api = NominatimAPIAsync(Path('/invalid'), {})
-    async with api.begin() as conn:
-        yield conn
-    await api.close()
+    async with NominatimAPIAsync(Path('/invalid'), {}) as api:
+        async with api.begin() as conn:
+            yield conn
 
 
 @pytest.mark.asyncio

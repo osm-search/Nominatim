@@ -9,6 +9,7 @@ Helper fixtures for API call tests.
 """
 from pathlib import Path
 import pytest
+import pytest_asyncio
 import time
 import datetime as dt
 
@@ -244,3 +245,9 @@ def frontend(request, event_loop, tmp_path):
 
     for api in testapis:
         api.close()
+
+
+@pytest_asyncio.fixture
+async def api(temp_db):
+    async with napi.NominatimAPIAsync(Path('/invalid')) as api:
+        yield api

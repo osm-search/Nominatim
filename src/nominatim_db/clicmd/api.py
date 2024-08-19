@@ -180,29 +180,32 @@ class APISearch:
             raise UsageError(f"Unsupported format '{args.format}'. "
                              'Use --list-formats to see supported formats.')
 
-        api = napi.NominatimAPI(args.project_dir)
-        params: Dict[str, Any] = {'max_results': args.limit + min(args.limit, 10),
-                                  'address_details': True, # needed for display name
-                                  'geometry_output': _get_geometry_output(args),
-                                  'geometry_simplification': args.polygon_threshold,
-                                  'countries': args.countrycodes,
-                                  'excluded': args.exclude_place_ids,
-                                  'viewbox': args.viewbox,
-                                  'bounded_viewbox': args.bounded,
-                                  'locales': _get_locales(args, api.config.DEFAULT_LANGUAGE)
-                                 }
+        try:
+            with napi.NominatimAPI(args.project_dir) as api:
+                params: Dict[str, Any] = {'max_results': args.limit + min(args.limit, 10),
+                                          'address_details': True, # needed for display name
+                                          'geometry_output': _get_geometry_output(args),
+                                          'geometry_simplification': args.polygon_threshold,
+                                          'countries': args.countrycodes,
+                                          'excluded': args.exclude_place_ids,
+                                          'viewbox': args.viewbox,
+                                          'bounded_viewbox': args.bounded,
+                                          'locales': _get_locales(args, api.config.DEFAULT_LANGUAGE)
+                                         }
 
-        if args.query:
-            results = api.search(args.query, **params)
-        else:
-            results = api.search_address(amenity=args.amenity,
-                                         street=args.street,
-                                         city=args.city,
-                                         county=args.county,
-                                         state=args.state,
-                                         postalcode=args.postalcode,
-                                         country=args.country,
-                                         **params)
+                if args.query:
+                    results = api.search(args.query, **params)
+                else:
+                    results = api.search_address(amenity=args.amenity,
+                                                 street=args.street,
+                                                 city=args.city,
+                                                 county=args.county,
+                                                 state=args.state,
+                                                 postalcode=args.postalcode,
+                                                 country=args.country,
+                                                 **params)
+        except napi.UsageError as ex:
+            raise UsageError(ex) from ex
 
         if args.dedupe and len(results) > 1:
             results = deduplicate_results(results, args.limit)
@@ -260,14 +263,19 @@ class APIReverse:
         if args.lat is None or args.lon is None:
             raise UsageError("lat' and 'lon' parameters are required.")
 
-        api = napi.NominatimAPI(args.project_dir)
-        result = api.reverse(napi.Point(args.lon, args.lat),
-                             max_rank=zoom_to_rank(args.zoom or 18),
-                             layers=_get_layers(args, napi.DataLayer.ADDRESS | napi.DataLayer.POI),
-                             address_details=True, # needed for display name
-                             geometry_output=_get_geometry_output(args),
-                             geometry_simplification=args.polygon_threshold,
-                             locales=_get_locales(args, api.config.DEFAULT_LANGUAGE))
+        layers = _get_layers(args, napi.DataLayer.ADDRESS | napi.DataLayer.POI)
+
+        try:
+            with napi.NominatimAPI(args.project_dir) as api:
+                result = api.reverse(napi.Point(args.lon, args.lat),
+                                     max_rank=zoom_to_rank(args.zoom or 18),
+                                     layers=layers,
+                                     address_details=True, # needed for display name
+                                     geometry_output=_get_geometry_output(args),
+                                     geometry_simplification=args.polygon_threshold,
+                                     locales=_get_locales(args, api.config.DEFAULT_LANGUAGE))
+        except napi.UsageError as ex:
+            raise UsageError(ex) from ex
 
         if args.format == 'debug':
             print(loglib.get_and_disable())
@@ -323,12 +331,15 @@ class APILookup:
 
         places = [napi.OsmID(o[0], int(o[1:])) for o in args.ids]
 
-        api = napi.NominatimAPI(args.project_dir)
-        results = api.lookup(places,
-                             address_details=True, # needed for display name
-                             geometry_output=_get_geometry_output(args),
-                             geometry_simplification=args.polygon_threshold or 0.0,
-                             locales=_get_locales(args, api.config.DEFAULT_LANGUAGE))
+        try:
+            with napi.NominatimAPI(args.project_dir) as api:
+                results = api.lookup(places,
+                                     address_details=True, # needed for display name
+                                     geometry_output=_get_geometry_output(args),
+                                     geometry_simplification=args.polygon_threshold or 0.0,
+                                     locales=_get_locales(args, api.config.DEFAULT_LANGUAGE))
+        except napi.UsageError as ex:
+            raise UsageError(ex) from ex
 
         if args.format == 'debug':
             print(loglib.get_and_disable())
@@ -410,17 +421,20 @@ class APIDetails:
             raise UsageError('One of the arguments --node/-n --way/-w '
                              '--relation/-r --place_id/-p is required/')
 
-        api = napi.NominatimAPI(args.project_dir)
-        locales = _get_locales(args, api.config.DEFAULT_LANGUAGE)
-        result = api.details(place,
-                             address_details=args.addressdetails,
-                             linked_places=args.linkedplaces,
-                             parented_places=args.hierarchy,
-                             keywords=args.keywords,
-                             geometry_output=napi.GeometryFormat.GEOJSON
-                                             if args.polygon_geojson
-                                             else napi.GeometryFormat.NONE,
-                            locales=locales)
+        try:
+            with napi.NominatimAPI(args.project_dir) as api:
+                locales = _get_locales(args, api.config.DEFAULT_LANGUAGE)
+                result = api.details(place,
+                                     address_details=args.addressdetails,
+                                     linked_places=args.linkedplaces,
+                                     parented_places=args.hierarchy,
+                                     keywords=args.keywords,
+                                     geometry_output=napi.GeometryFormat.GEOJSON
+                                                     if args.polygon_geojson
+                                                     else napi.GeometryFormat.NONE,
+                                    locales=locales)
+        except napi.UsageError as ex:
+            raise UsageError(ex) from ex
 
         if args.format == 'debug':
             print(loglib.get_and_disable())
@@ -465,7 +479,11 @@ class APIStatus:
             raise UsageError(f"Unsupported format '{args.format}'. "
                              'Use --list-formats to see supported formats.')
 
-        status = napi.NominatimAPI(args.project_dir).status()
+        try:
+            with napi.NominatimAPI(args.project_dir) as api:
+                status = api.status()
+        except napi.UsageError as ex:
+            raise UsageError(ex) from ex
 
         if args.format == 'debug':
             print(loglib.get_and_disable())

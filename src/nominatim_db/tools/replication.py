@@ -16,8 +16,6 @@ import time
 import types
 import urllib.request as urlrequest
 
-import requests
-
 from ..errors import UsageError
 from ..db import status
 from ..db.connection import Connection, connect, server_version_tuple
@@ -27,9 +25,10 @@ try:
     from osmium.replication.server import ReplicationServer
     from osmium import WriteHandler
     from osmium import version as pyo_version
-except ImportError as exc:
+    import requests
+except ModuleNotFoundError as exc:
     logging.getLogger().critical("pyosmium not installed. Replication functions not available.\n"
-                                 "To install pyosmium via pip: pip3 install osmium")
+                                 "To install pyosmium via pip: pip install osmium")
     raise UsageError("replication tools not available") from exc
 
 LOG = logging.getLogger()

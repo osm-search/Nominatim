@@ -1,3 +1,10 @@
+4.4.1
+ * fix geocodejson output: admin level output should only print boundaries
+ * updating: restrict invalidation of child objects on large street features
+ * restrict valid interpolation house numbers to 0-999999
+ * fix import error when SQLAlchemy 1.4 and psycopg3 are installed
+ * various typo fixes in the documentation
+
 4.4.0
  * add export to SQLite database and SQLite support for the frontend
  * switch to Python frontend as the default frontend

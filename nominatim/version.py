@@ -34,7 +34,7 @@ class NominatimVersion(NamedTuple):
         return f"{self.major}.{self.minor}.{self.patch_level}-{self.db_patch_level}"
 
 
-NOMINATIM_VERSION = NominatimVersion(4, 4, 0, 0)
+NOMINATIM_VERSION = NominatimVersion(4, 4, 1, 0)
 
 POSTGRESQL_REQUIRED_VERSION = (9, 6)
 POSTGIS_REQUIRED_VERSION = (2, 2)

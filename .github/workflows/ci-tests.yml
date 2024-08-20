@@ -65,7 +65,7 @@ jobs:
             - name: Unpack Nominatim
               run: tar xf nominatim-src.tar.bz2
 
-            - uses: actions/setup-python@v4
+            - uses: actions/setup-python@v5
               with:
                 python-version: 3.7
               if: matrix.flavour == 'oldstuff'
@@ -93,7 +93,7 @@ jobs:
               if: matrix.flavour != 'oldstuff'
 
             - name: Install newer pytest-asyncio
-              run: pip3 install -U pytest-asyncio==0.21.1
+              run: pip3 install -U pytest-asyncio
               if: matrix.flavour == 'ubuntu-20'
 
             - name: Install test prerequsites (from pip for Ubuntu 18)
@@ -105,12 +105,12 @@ jobs:
 
             - name: Install latest pylint
               run: pip3 install -U pylint
-              if: matrix.flavour != 'oldstuff'
+              if: matrix.flavour == 'ubuntu-22'
 
             - name: Python linting
               run: python3 -m pylint nominatim
               working-directory: Nominatim
-              if: matrix.flavour != 'oldstuff'
+              if: matrix.flavour == 'ubuntu-22'
 
             - name: Python unit tests
               run: python3 -m pytest test/python

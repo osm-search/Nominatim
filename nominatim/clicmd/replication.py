@@ -142,7 +142,7 @@ class UpdateReplication:
             if not args.do_index:
                 LOG.fatal("Indexing cannot be disabled when running updates continuously.")
                 raise UsageError("Bad argument '--no-index'.")
-            recheck_interval = args.config.get_int('REPLICATION_RECHECK_INTERVAL')
+        recheck_interval = args.config.get_int('REPLICATION_RECHECK_INTERVAL')
 
         tokenizer = tokenizer_factory.get_tokenizer_for_db(args.config)
         indexer = Indexer(args.config.get_libpq_dsn(), tokenizer, args.threads or 1)

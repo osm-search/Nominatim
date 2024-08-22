@@ -7,7 +7,8 @@
 """
 Implementation of classes for API access via libraries.
 """
-from typing import Mapping, Optional, Any, AsyncIterator, Dict, Sequence, List, Tuple, cast
+from typing import Mapping, Optional, Any, AsyncIterator, Dict, Sequence, List,\
+                   Union, Tuple, cast
 import asyncio
 import sys
 import contextlib
@@ -41,7 +42,7 @@ class NominatimAPIAsync: #pylint: disable=too-many-instance-attributes
 
         This class should usually be used as a context manager in 'with' context.
     """
-    def __init__(self, project_dir: Path,
+    def __init__(self, project_dir: Optional[Union[str, Path]] = None,
                  environ: Optional[Mapping[str, str]] = None,
                  loop: Optional[asyncio.AbstractEventLoop] = None) -> None:
         """ Initiate a new frontend object with synchronous API functions.
@@ -365,7 +366,7 @@ class NominatimAPI:
         This class should usually be used as a context manager in 'with' context.
     """
 
-    def __init__(self, project_dir: Path,
+    def __init__(self, project_dir: Optional[Union[str, Path]] = None,
                  environ: Optional[Mapping[str, str]] = None) -> None:
         """ Initiate a new frontend object with synchronous API functions.
 

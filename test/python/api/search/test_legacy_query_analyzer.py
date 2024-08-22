@@ -7,8 +7,6 @@
 """
 Tests for query analyzer for legacy tokenizer.
 """
-from pathlib import Path
-
 import pytest
 import pytest_asyncio
 
@@ -74,7 +72,7 @@ async def conn(table_factory, temp_db_cursor):
     temp_db_cursor.execute("""CREATE OR REPLACE FUNCTION make_standard_name(name TEXT)
                               RETURNS TEXT AS $$ SELECT lower(name); $$ LANGUAGE SQL;""")
 
-    async with NominatimAPIAsync(Path('/invalid'), {}) as api:
+    async with NominatimAPIAsync(environ={}) as api:
         async with api.begin() as conn:
             yield conn
 

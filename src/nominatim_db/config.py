@@ -59,15 +59,17 @@ class Configuration:
         other than string.
     """
 
-    def __init__(self, project_dir: Optional[Path],
+    def __init__(self, project_dir: Optional[Union[Path, str]],
                  environ: Optional[Mapping[str, str]] = None) -> None:
         self.environ = environ or os.environ
-        self.project_dir = project_dir
         self.config_dir = paths.CONFIG_DIR
         self._config = dotenv_values(str(self.config_dir / 'env.defaults'))
-        if self.project_dir is not None and (self.project_dir / '.env').is_file():
-            self.project_dir = self.project_dir.resolve()
-            self._config.update(dotenv_values(str(self.project_dir / '.env')))
+        if project_dir is not None:
+            self.project_dir: Optional[Path] = Path(project_dir).resolve()
+            if (self.project_dir / '.env').is_file():
+                self._config.update(dotenv_values(str(self.project_dir / '.env')))
+        else:
+            self.project_dir = None
 
         class _LibDirs:
             module: Path

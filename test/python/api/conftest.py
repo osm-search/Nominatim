@@ -7,7 +7,6 @@
 """
 Helper fixtures for API call tests.
 """
-from pathlib import Path
 import pytest
 import pytest_asyncio
 import time
@@ -24,7 +23,7 @@ import nominatim_api.logging as loglib
 class APITester:
 
     def __init__(self):
-        self.api = napi.NominatimAPI(Path('/invalid'))
+        self.api = napi.NominatimAPI()
         self.async_to_sync(self.api._async_api.setup_database())
 
 
@@ -229,11 +228,9 @@ def frontend(request, event_loop, tmp_path):
 
             apiobj.async_to_sync(_do_sql())
 
-            event_loop.run_until_complete(convert_sqlite.convert(Path('/invalid'),
-                                                                 db, options))
-            outapi = napi.NominatimAPI(Path('/invalid'),
-                                       {'NOMINATIM_DATABASE_DSN': f"sqlite:dbname={db}",
-                                        'NOMINATIM_USE_US_TIGER_DATA': 'yes'})
+            event_loop.run_until_complete(convert_sqlite.convert(None, db, options))
+            outapi = napi.NominatimAPI(environ={'NOMINATIM_DATABASE_DSN': f"sqlite:dbname={db}",
+                                                'NOMINATIM_USE_US_TIGER_DATA': 'yes'})
             testapis.append(outapi)
 
             return outapi
@@ -249,5 +246,5 @@ def frontend(request, event_loop, tmp_path):
 
 @pytest_asyncio.fixture
 async def api(temp_db):
-    async with napi.NominatimAPIAsync(Path('/invalid')) as api:
+    async with napi.NominatimAPIAsync() as api:
         yield api

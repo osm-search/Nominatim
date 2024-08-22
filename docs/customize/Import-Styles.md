@@ -191,7 +191,7 @@ They take _key match lists_ for main and extra names respectively.
 Address tags will be used to build up the address of an object.
 
 `set_address_tags()` takes a table with arbitrary fields pointing to
-_key match lists_. To fields have a special meaning:
+_key match lists_. Two fields have a special meaning:
 
 * __main__: defines
 the tags that make a full address object out of the OSM object. This

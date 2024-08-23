@@ -218,7 +218,7 @@ are accepted, all other values are discarded.
         main = {'addr:housenumber'},
         extra = {'addr:*'},
         postcode = {'postal_code', 'postcode', 'addr:postcode'},
-        country = {'country-code', 'ISO3166-1'}
+        country = {'country_code', 'ISO3166-1'}
     }
     ```
 
@@ -227,7 +227,7 @@ are accepted, all other values are discarded.
     object will fall back to be entered as a `place=house` in the database
     unless there is another interested main tag to be found.
 
-    Tags with keys `country-code` and `ISO3166-1` are saved with their
+    Tags with keys `country_code` and `ISO3166-1` are saved with their
     value under `country` in the address tag list. The same thing happens
     to postcodes, they will always be saved under the key `postcode` thus
     normalizing the multitude of keys that are used in the OSM database.

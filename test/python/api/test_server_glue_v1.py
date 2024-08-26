@@ -9,7 +9,6 @@ Tests for the Python web frameworks adaptor, v1 API.
 """
 import json
 import xml.etree.ElementTree as ET
-from pathlib import Path
 
 import pytest
 
@@ -242,7 +241,7 @@ class TestStatusEndpoint:
         a = FakeAdaptor()
         self.status = napi.StatusResult(0, 'foo')
 
-        resp = await glue.status_endpoint(napi.NominatimAPIAsync(Path('/invalid')), a)
+        resp = await glue.status_endpoint(napi.NominatimAPIAsync(), a)
 
         assert isinstance(resp, FakeResponse)
         assert resp.status == 200
@@ -254,7 +253,7 @@ class TestStatusEndpoint:
         a = FakeAdaptor()
         self.status = napi.StatusResult(405, 'foo')
 
-        resp = await glue.status_endpoint(napi.NominatimAPIAsync(Path('/invalid')), a)
+        resp = await glue.status_endpoint(napi.NominatimAPIAsync(), a)
 
         assert isinstance(resp, FakeResponse)
         assert resp.status == 500
@@ -266,7 +265,7 @@ class TestStatusEndpoint:
         a = FakeAdaptor(params={'format': 'json'})
         self.status = napi.StatusResult(405, 'foo')
 
-        resp = await glue.status_endpoint(napi.NominatimAPIAsync(Path('/invalid')), a)
+        resp = await glue.status_endpoint(napi.NominatimAPIAsync(), a)
 
         assert isinstance(resp, FakeResponse)
         assert resp.status == 200
@@ -279,7 +278,7 @@ class TestStatusEndpoint:
         self.status = napi.StatusResult(0, 'foo')
 
         with pytest.raises(FakeError):
-            await glue.status_endpoint(napi.NominatimAPIAsync(Path('/invalid')), a)
+            await glue.status_endpoint(napi.NominatimAPIAsync(), a)
 
 
 # details_endpoint()
@@ -305,14 +304,14 @@ class TestDetailsEndpoint:
         a = FakeAdaptor()
 
         with pytest.raises(FakeError, match='^400 -- .*Missing'):
-            await glue.details_endpoint(napi.NominatimAPIAsync(Path('/invalid')), a)
+            await glue.details_endpoint(napi.NominatimAPIAsync(), a)
 
 
     @pytest.mark.asyncio
     async def test_details_by_place_id(self):
         a = FakeAdaptor(params={'place_id': '4573'})
 
-        await glue.details_endpoint(napi.NominatimAPIAsync(Path('/invalid')), a)
+        await glue.details_endpoint(napi.NominatimAPIAsync(), a)
 
         assert self.lookup_args[0].place_id == 4573
 
@@ -321,7 +320,7 @@ class TestDetailsEndpoint:
     async def test_details_by_osm_id(self):
         a = FakeAdaptor(params={'osmtype': 'N', 'osmid': '45'})
 
-        await glue.details_endpoint(napi.NominatimAPIAsync(Path('/invalid')), a)
+        await glue.details_endpoint(napi.NominatimAPIAsync(), a)
 
         assert self.lookup_args[0].osm_type == 'N'
         assert self.lookup_args[0].osm_id == 45
@@ -332,7 +331,7 @@ class TestDetailsEndpoint:
     async def test_details_with_debugging(self):
         a = FakeAdaptor(params={'osmtype': 'N', 'osmid': '45', 'debug': '1'})
 
-        resp = await glue.details_endpoint(napi.NominatimAPIAsync(Path('/invalid')), a)
+        resp = await glue.details_endpoint(napi.NominatimAPIAsync(), a)
         content = ET.fromstring(resp.output)
 
         assert resp.content_type == 'text/html; charset=utf-8'
@@ -345,7 +344,7 @@ class TestDetailsEndpoint:
         self.result = None
 
         with pytest.raises(FakeError, match='^404 -- .*found'):
-            await glue.details_endpoint(napi.NominatimAPIAsync(Path('/invalid')), a)
+            await glue.details_endpoint(napi.NominatimAPIAsync(), a)
 
 
 # reverse_endpoint()
@@ -370,7 +369,7 @@ class TestReverseEndPoint:
         a.params['format'] = 'xml'
 
         with pytest.raises(FakeError, match='^400 -- (?s:.*)missing'):
-            await glue.reverse_endpoint(napi.NominatimAPIAsync(Path('/invalid')), a)
+            await glue.reverse_endpoint(napi.NominatimAPIAsync(), a)
 
 
     @pytest.mark.asyncio
@@ -380,7 +379,7 @@ class TestReverseEndPoint:
         a.params = params
         a.params['format'] = 'json'
 
-        res = await glue.reverse_endpoint(napi.NominatimAPIAsync(Path('/invalid')), a)
+        res = await glue.reverse_endpoint(napi.NominatimAPIAsync(), a)
 
         assert res == ''
 
@@ -391,7 +390,7 @@ class TestReverseEndPoint:
         a.params['lat'] = '56.3'
         a.params['lon'] = '6.8'
 
-        assert await glue.reverse_endpoint(napi.NominatimAPIAsync(Path('/invalid')), a)
+        assert await glue.reverse_endpoint(napi.NominatimAPIAsync(), a)
 
 
     @pytest.mark.asyncio
@@ -400,7 +399,7 @@ class TestReverseEndPoint:
         a.params['q'] = '34.6 2.56'
         a.params['format'] = 'json'
 
-        res = await glue.search_endpoint(napi.NominatimAPIAsync(Path('/invalid')), a)
+        res = await glue.search_endpoint(napi.NominatimAPIAsync(), a)
 
         assert len(json.loads(res.output)) == 1
 
@@ -425,7 +424,7 @@ class TestLookupEndpoint:
         a = FakeAdaptor()
         a.params['format'] = 'json'
 
-        res = await glue.lookup_endpoint(napi.NominatimAPIAsync(Path('/invalid')), a)
+        res = await glue.lookup_endpoint(napi.NominatimAPIAsync(), a)
 
         assert res.output == '[]'
 
@@ -437,7 +436,7 @@ class TestLookupEndpoint:
         a.params['format'] = 'json'
         a.params['osm_ids'] = f'W34,{param},N33333'
 
-        res = await glue.lookup_endpoint(napi.NominatimAPIAsync(Path('/invalid')), a)
+        res = await glue.lookup_endpoint(napi.NominatimAPIAsync(), a)
 
         assert len(json.loads(res.output)) == 1
 
@@ -449,7 +448,7 @@ class TestLookupEndpoint:
         a.params['format'] = 'json'
         a.params['osm_ids'] = f'W34,{param},N33333'
 
-        res = await glue.lookup_endpoint(napi.NominatimAPIAsync(Path('/invalid')), a)
+        res = await glue.lookup_endpoint(napi.NominatimAPIAsync(), a)
 
         assert len(json.loads(res.output)) == 1
 
@@ -460,7 +459,7 @@ class TestLookupEndpoint:
         a.params['format'] = 'json'
         a.params['osm_ids'] = 'N23,W34'
 
-        res = await glue.lookup_endpoint(napi.NominatimAPIAsync(Path('/invalid')), a)
+        res = await glue.lookup_endpoint(napi.NominatimAPIAsync(), a)
 
         assert len(json.loads(res.output)) == 1
 
@@ -485,7 +484,7 @@ class TestSearchEndPointSearch:
         a = FakeAdaptor()
         a.params['q'] = 'something'
 
-        res = await glue.search_endpoint(napi.NominatimAPIAsync(Path('/invalid')), a)
+        res = await glue.search_endpoint(napi.NominatimAPIAsync(), a)
 
         assert len(json.loads(res.output)) == 1
 
@@ -496,7 +495,7 @@ class TestSearchEndPointSearch:
         a.params['q'] = 'something'
         a.params['format'] = 'xml'
 
-        res = await glue.search_endpoint(napi.NominatimAPIAsync(Path('/invalid')), a)
+        res = await glue.search_endpoint(napi.NominatimAPIAsync(), a)
 
         assert res.status == 200
         assert res.output.index('something') > 0
@@ -509,7 +508,7 @@ class TestSearchEndPointSearch:
         a.params['city'] = 'ignored'
 
         with pytest.raises(FakeError, match='^400 -- .*cannot be used together'):
-            res = await glue.search_endpoint(napi.NominatimAPIAsync(Path('/invalid')), a)
+            res = await glue.search_endpoint(napi.NominatimAPIAsync(), a)
 
 
     @pytest.mark.asyncio
@@ -521,7 +520,7 @@ class TestSearchEndPointSearch:
         if not dedupe:
             a.params['dedupe'] = '0'
 
-        res = await glue.search_endpoint(napi.NominatimAPIAsync(Path('/invalid')), a)
+        res = await glue.search_endpoint(napi.NominatimAPIAsync(), a)
 
         assert len(json.loads(res.output)) == numres
 
@@ -544,7 +543,7 @@ class TestSearchEndPointSearchAddress:
         a = FakeAdaptor()
         a.params['street'] = 'something'
 
-        res = await glue.search_endpoint(napi.NominatimAPIAsync(Path('/invalid')), a)
+        res = await glue.search_endpoint(napi.NominatimAPIAsync(), a)
 
         assert len(json.loads(res.output)) == 1
 
@@ -567,6 +566,6 @@ class TestSearchEndPointSearchCategory:
         a = FakeAdaptor()
         a.params['q'] = '[shop=fog]'
 
-        res = await glue.search_endpoint(napi.NominatimAPIAsync(Path('/invalid')), a)
+        res = await glue.search_endpoint(napi.NominatimAPIAsync(), a)
 
         assert len(json.loads(res.output)) == 1

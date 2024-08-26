@@ -7,7 +7,7 @@
 """
 Exporting a Nominatim database to SQlite.
 """
-from typing import Set, Any
+from typing import Set, Any, Optional, Union
 import datetime as dt
 import logging
 from pathlib import Path
@@ -21,7 +21,8 @@ from nominatim_api.sql.sqlalchemy_types import Geometry, IntArray
 
 LOG = logging.getLogger()
 
-async def convert(project_dir: Path, outfile: Path, options: Set[str]) -> None:
+async def convert(project_dir: Optional[Union[str, Path]],
+                  outfile: Path, options: Set[str]) -> None:
     """ Export an existing database to sqlite. The resulting database
         will be usable against the Python frontend of Nominatim.
     """

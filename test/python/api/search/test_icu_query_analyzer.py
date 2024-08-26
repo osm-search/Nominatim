@@ -7,8 +7,6 @@
 """
 Tests for query analyzer for ICU tokenizer.
 """
-from pathlib import Path
-
 import pytest
 import pytest_asyncio
 
@@ -40,7 +38,7 @@ async def conn(table_factory):
     table_factory('word',
                   definition='word_id INT, word_token TEXT, type TEXT, word TEXT, info JSONB')
 
-    async with NominatimAPIAsync(Path('/invalid'), {}) as api:
+    async with NominatimAPIAsync(environ={}) as api:
         async with api.begin() as conn:
             yield conn
 

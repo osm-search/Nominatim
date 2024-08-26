@@ -7,7 +7,6 @@
 """
 Tests for the status API call.
 """
-from pathlib import Path
 import datetime as dt
 import pytest
 
@@ -46,7 +45,7 @@ def test_status_full(apiobj, frontend):
 def test_status_database_not_found(monkeypatch):
     monkeypatch.setenv('NOMINATIM_DATABASE_DSN', 'dbname=rgjdfkgjedkrgdfkngdfkg')
 
-    api = napi.NominatimAPI(Path('/invalid'), {})
+    api = napi.NominatimAPI(environ={})
 
     result = api.status()
 

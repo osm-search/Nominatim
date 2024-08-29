@@ -1,16 +1,21 @@
 # Getting Started
 
-The Nominatim search frontend can directly be used as a Python library in
-scripts and applications. When you have imported your own Nominatim database,
-then it is no longer necessary to run a full web service for it and access
-the database through http requests. There are
-also less constraints on the kinds of data that can be accessed. The library
-allows to get access to more detailed information about the objects saved
-in the database.
+The Nominatim search frontend is implemented as a Python library and can as
+such directly be used in Python scripts and applications. You don't need to
+set up a web frontend and access it through HTTP calls. The library gives
+direct access to the Nominatim database through similar search functions as
+offered by the web API. In addition, it will give you a more complete and
+detailed view on the search objects stored in the database.
 
-!!! danger
-    The library interface is currently in an experimental stage. There might
-    be some smaller adjustments to the public interface until the next version.
+!!! warning
+
+    The Nominatim library is used for accessing a local Nominatim database.
+    It is not meant to be used against web services of Nominatim like the
+    one on https://nominatim.openstreetmap.org. If you need a Python library
+    to access these web services, have a look at
+    [GeoPy](https://geopy.readthedocs.io). Don't forget to consult the
+    usage policy of the service you want to use before accessing such
+    a web service.
 
 ## Installation
 
@@ -19,6 +24,10 @@ Follow the [installation](../admin/Installation.md) and
 [import](../admin/Import.md) instructions to set up your database.
 
 The Nominatim frontend library is contained in the Python package `nominatim-api`.
+You can install the latest released version directly from pip:
+
+    pip install nominatim-api
+
 To install the package from the source tree directly, run:
 
     pip install packaging/nominatim-api
@@ -36,15 +45,13 @@ This code snippet implements a simple search for the town of 'Brugge':
 !!! example
     === "NominatimAPIAsync"
         ``` python
-        from pathlib import Path
         import asyncio
 
         import nominatim_api as napi
 
         async def search(query):
-            api = napi.NominatimAPIAsync(Path('.'))
-
-            return await api.search(query)
+            async with napi.NominatimAPIAsync() as api:
+                return await api.search(query)
 
         results = asyncio.run(search('Brugge'))
         if not results:
@@ -55,13 +62,10 @@ This code snippet implements a simple search for the town of 'Brugge':
 
     === "NominatimAPI"
         ``` python
-        from pathlib import Path
-
         import nominatim_api as napi
 
-        api = napi.NominatimAPI(Path('.'))
-
-        results = api.search('Brugge')
+        with napi.NominatimAPI() as api:
+            results = api.search('Brugge')
 
         if not results:
             print('Cannot find Brugge')
@@ -93,25 +97,31 @@ The same configuration mechanism is used with the
 Nominatim API library. You should therefore be sure you are familiar with
 the section.
 
-The constructor of the 'Nominatim API class' takes one mandatory parameter:
-the path to the [project directory](../admin/Import.md#creating-the-project-directory).
-You should have set up this directory as part of the Nominatim import.
-Any configuration found in the `.env` file in this directory will automatically
-used.
+There are three different ways, how configuration options can be set for
+a 'Nominatim API class'. When you have set up your Nominatim database, you
+have normally created a [project directory](../admin/Import.md#creating-the-project-directory)
+which stores the various configuration and customization files that Nominatim
+needs. You may pass the location of the project directory to your
+'Nominatim API class' constructor and it will read the .env file in the
+directory and set the configuration accordingly.
 
 You may also configure Nominatim by setting environment variables.
-Normally, Nominatim will check the operating system environment. This can be
-overwritten by giving the constructor a dictionary of configuration parameters.
+Normally Nominatim will check the operating system environment. Lets
+say you want to look up 'Brugge' in the special database named 'belgium' instead of the
+standard 'nominatim' database. You can run the example script above like this:
 
-Let us look up 'Brugge' in the special database named 'belgium' instead of the
-standard 'nominatim' database:
+```
+NOMINATIM_DATABASE_DSN=pgsql:dbname=belgium python3 example.py
+```
+
+The third option to configure the library is to hand in the configuration
+parameters into the 'Nominatim API class'. Changing the database would look
+like this:
 
 !!! example
     === "NominatimAPIAsync"
         ``` python
-        from pathlib import Path
         import asyncio
-
         import nominatim_api as napi
 
         config_params = {
@@ -119,50 +129,53 @@ standard 'nominatim' database:
         }
 
         async def search(query):
-            api = napi.NominatimAPIAsync(Path('.'), environ=config_params)
-
-            return await api.search(query)
+            async with napi.NominatimAPIAsync(environ=config_params) as api:
+                return await api.search(query)
 
         results = asyncio.run(search('Brugge'))
         ```
 
     === "NominatimAPI"
         ``` python
-        from pathlib import Path
-
         import nominatim_api as napi
 
         config_params = {
             'NOMINATIM_DATABASE_DSN': 'pgsql:dbname=belgium'
         }
 
-        api = napi.NominatimAPI(Path('.'), environ=config_params)
-
-        results = api.search('Brugge')
+        with napi.NominatimAPI(environ=config_params) as api:
+            results = api.search('Brugge')
         ```
+
+When the `environ` parameter is given, then only configuration variables
+from this dictionary will be used.
 
 ### Presenting results to humans
 
-All search functions return the raw results from the database. There is no
-full human-readable label. To create such a label, you need two things:
+All search functions return full result objects from the database. Such a
+result object contains lots of details: names, address information, OSM tags etc.
+This gives you lots of flexibility what to do with the results.
+
+One of the most common things to get is some kind of human-readable label
+that describes the result in a compact form. Usually this would be the name
+of the object and some parts of the address to explain where in the world
+it is. To create such a label, you need two things:
 
 * the address details of the place
-* adapt the result to the language you wish to use for display
+* all names for the label adapted to the language you wish to use for display
 
 Again searching for 'Brugge', this time with a nicely formatted result:
 
 !!! example
     === "NominatimAPIAsync"
         ``` python
-        from pathlib import Path
         import asyncio
 
         import nominatim_api as napi
 
         async def search(query):
-            api = napi.NominatimAPIAsync(Path('.'))
-
-            return await api.search(query, address_details=True)
+            async with napi.NominatimAPIAsync() as api:
+                return await api.search(query, address_details=True)
 
         results = asyncio.run(search('Brugge'))
 
@@ -174,13 +187,10 @@ Again searching for 'Brugge', this time with a nicely formatted result:
 
     === "NominatimAPI"
         ``` python
-        from pathlib import Path
-
         import nominatim_api as napi
 
-        api = napi.NominatimAPI(Path('.'))
-
-        results = api.search('Brugge', address_details=True)
+        with napi.NominatimAPI() as api:
+            results = api.search('Brugge', address_details=True)
 
         locale = napi.Locales(['fr', 'en'])
         for i, result in enumerate(results):
@@ -236,7 +246,7 @@ Bruges, Flandre-Occidentale, Flandre, Belgique
 
 This is a fairly simple way to create a human-readable description. The
 place information in `address_rows` contains further information about each
-place. For example, which OSM `adlin_level` was used, what category the place
+place. For example, which OSM `admin_level` was used, what category the place
 belongs to or what rank Nominatim has assigned. Use this to adapt the output
 to local address formats.
 

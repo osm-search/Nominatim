@@ -68,7 +68,7 @@ markdown_extensions:
         alternate_style: true
     - def_list
     - toc:
-        permalink: 
+        permalink: 🔗
 extra_css: [extra.css, styles.css]
 exclude_docs: |
     mk_install_instructions.py

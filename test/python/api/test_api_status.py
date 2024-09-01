@@ -45,7 +45,7 @@ def test_status_full(apiobj, frontend):
 def test_status_database_not_found(monkeypatch):
     monkeypatch.setenv('NOMINATIM_DATABASE_DSN', 'dbname=rgjdfkgjedkrgdfkngdfkg')
 
-    api = napi.NominatimAPI(environ={})
+    api = napi.NominatimAPI()
 
     result = api.status()
 

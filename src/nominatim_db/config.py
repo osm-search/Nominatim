@@ -61,7 +61,7 @@ class Configuration:
 
     def __init__(self, project_dir: Optional[Union[Path, str]],
                  environ: Optional[Mapping[str, str]] = None) -> None:
-        self.environ = environ or os.environ
+        self.environ = os.environ if environ is None else environ
         self.config_dir = paths.CONFIG_DIR
         self._config = dotenv_values(str(self.config_dir / 'env.defaults'))
         if project_dir is not None:

@@ -34,7 +34,7 @@ To install the package from the source tree directly, run:
 
 Usually you would want to run this in a virtual environment.
 
-### A simple search example
+## A simple search example
 
 To query the Nominatim database you need to first set up a connection. This
 is done by creating an Nominatim API object. This object exposes all the
@@ -88,7 +88,7 @@ implementations. The documentation itself will usually refer only to
 available only for the synchronous or asynchronous version, this will be
 explicitly mentioned.
 
-### Defining which database to use
+## Defining which database to use
 
 The [Configuration](../admin/Import.md#configuration-setup-in-env)
 section explains how Nominatim is configured using the
@@ -103,7 +103,41 @@ have normally created a [project directory](../admin/Import.md#creating-the-proj
 which stores the various configuration and customization files that Nominatim
 needs. You may pass the location of the project directory to your
 'Nominatim API class' constructor and it will read the .env file in the
-directory and set the configuration accordingly.
+directory and set the configuration accordingly. Here is the simple search
+example, using the configuration from a pre-defined project directory in
+`/srv/nominatim-project`:
+
+!!! example
+    === "NominatimAPIAsync"
+        ``` python
+        import asyncio
+
+        import nominatim_api as napi
+
+        async def search(query):
+            async with napi.NominatimAPIAsync('/srv/nominatim-project') as api:
+                return await api.search(query)
+
+        results = asyncio.run(search('Brugge'))
+        if not results:
+            print('Cannot find Brugge')
+        else:
+            print(f'Found a place at {results[0].centroid.x},{results[0].centroid.y}')
+        ```
+
+    === "NominatimAPI"
+        ``` python
+        import nominatim_api as napi
+
+        with napi.NominatimAPI('/srv/nominatim-project') as api:
+            results = api.search('Brugge')
+
+        if not results:
+            print('Cannot find Brugge')
+        else:
+            print(f'Found a place at {results[0].centroid.x},{results[0].centroid.y}')
+        ```
+
 
 You may also configure Nominatim by setting environment variables.
 Normally Nominatim will check the operating system environment. Lets
@@ -148,9 +182,10 @@ like this:
         ```
 
 When the `environ` parameter is given, then only configuration variables
-from this dictionary will be used.
+from this dictionary will be used. The operating system's environment
+variables will be ignored.
 
-### Presenting results to humans
+## Presenting results to humans
 
 All search functions return full result objects from the database. Such a
 result object contains lots of details: names, address information, OSM tags etc.

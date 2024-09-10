@@ -4,6 +4,7 @@ theme:
   name: material
   features:
     - navigation.tabs
+    - toc.integrate
   plugins:
     - privacy
 copyright: Copyright &copy; Nominatim developer community
@@ -71,6 +72,7 @@ markdown_extensions:
         alternate_style: true
     - def_list
     - toc:
+        toc_depth: 4
         permalink: 🔗
 extra_css: [extra.css, styles.css]
 exclude_docs: |

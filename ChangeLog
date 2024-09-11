@@ -1,3 +1,34 @@
+4.5.0
+ * allow building Nominatim as a pip package
+ * make osm2pgsql building optional
+ * switch importer to psycopg3
+ * allow output format of web search to be customized in self-installations
+ * look up potential postcode areas for postcode results
+ * add word usage statistics for address terms
+ * implement more light-weight CSV format for wiki importance tables
+ * rewrite SQL for place search to use window functions
+ * increase search radius when filtering by postcode
+ * prefer POI points over POI areas
+ * reintroduce full terms for address terms in search_name table
+ * reindex postcodes when their parent is deleted
+ * indexing: precompute counts of affected rows
+ * ensure consistent country assignments for overlapping countries
+ * make Nominatim[Async]API context manager to ensure proper calling of
+   close()
+ * make usage of project dir optional for library
+ * drop interpolations when no parent can be found
+ * style tweaks to reflect OSM usage (man_made, highway and others)
+ * deprecation of: bundled osm2pgsql, legacy tokenizer, PHP frontend
+ * make documentation buildable without CMake
+ * various fixes and improvements to documentation
+
+4.4.1
+ * fix geocodejson output: admin level output should only print boundaries
+ * updating: restrict invalidation of child objects on large street features
+ * restrict valid interpolation house numbers to 0-999999
+ * fix import error when SQLAlchemy 1.4 and psycopg3 are installed
+ * various typo fixes in the documentation
+
 4.4.0
  * add export to SQLite database and SQLite support for the frontend
  * switch to Python frontend as the default frontend
@@ -8,7 +39,7 @@
  * fix regression in search with categories where it was confused with near
    search
  * partially roll back use of SQLAlchemy lambda statements due to bugs
-   in SQLAchemy
+   in SQLAlchemy
  * fix handling of timezones for timestamps from the database
  * fix handling of full address searches in connection with a viewbox
  * fix postcode computation of highway areas

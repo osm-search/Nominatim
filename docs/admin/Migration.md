@@ -20,7 +20,7 @@ breaking changes. **Please read them before running the migration.**
     If you are migrating from a version <3.6, then you still have to follow
     the manual migration steps up to 3.6.
 
-## 4.4.0 -> master
+## 4.4.0 -> 4.5.0
 
 ### New structure for Python packages
 

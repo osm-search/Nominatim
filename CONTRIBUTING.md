@@ -75,7 +75,10 @@ relevant changes are cherry-picked from the master branch.
 
 Checklist for releases:
 
-* [ ] increase version in `nominatim/version.py` and CMakeLists.txt
+* [ ] increase versions in
+  * `src/nominatim_api/version.py`
+  * `src/nominatim_db/version.py`
+  * CMakeLists.txt
 * [ ] update `ChangeLog` (copy information from patch releases from release branch)
 * [ ] complete `docs/admin/Migration.md`
 * [ ] update EOL dates in `SECURITY.md`
@@ -100,3 +103,4 @@ Checklist for releases:
   * compile and import Nominatim
   * run `nominatim --version` to confirm correct version
 * [ ] tag new release and add a release on github.com
+* [ ] build pip packages and upload to pypi

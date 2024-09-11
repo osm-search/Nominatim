@@ -1,5 +1,3 @@
-### Nominatim API
-
 !!! Attention
     The current version of Nominatim implements two different search frontends:
     the old PHP frontend and the new Python frontend. They have a very similar

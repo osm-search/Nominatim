@@ -24,12 +24,11 @@ the placex table:
 
 ```
 import asyncio
-from pathlib import Path
 import sqlalchemy as sa
 from nominatim_api import NominatimAPIAsync
 
 async def print_table_size():
-    api = NominatimAPIAsync(Path('.'))
+    api = NominatimAPIAsync()
 
     async with api.begin() as conn:
         cnt = await conn.scalar(sa.select(sa.func.count()).select_from(conn.t.placex))

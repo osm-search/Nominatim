@@ -1,8 +1,12 @@
 site_name: Nominatim Manual
 theme:
+  font: false
   name: material
   features:
     - navigation.tabs
+    - toc.integrate
+  plugins:
+    - privacy
 copyright: Copyright &copy; Nominatim developer community
 docs_dir: docs
 site_url: https://nominatim.org
@@ -68,7 +72,8 @@ markdown_extensions:
         alternate_style: true
     - def_list
     - toc:
-        permalink: 
+        toc_depth: 4
+        permalink: 🔗
 extra_css: [extra.css, styles.css]
 exclude_docs: |
     mk_install_instructions.py

@@ -34,3 +34,8 @@ th {
 .md-footer__inner {
     display: none;
 }
+
+.headerlink {
+  filter: grayscale(100%);
+  font-size: 80%;
+}

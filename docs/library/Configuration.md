@@ -1,11 +1,13 @@
 # Configuration
 
 When using Nominatim through the library, it can be configured in exactly
-the same way as when running as a service. This means that you should have
-created a [project directory](../admin/Import.md#creating-the-project-directory)
-which contains all files belonging to the Nominatim instance. It can also contain
-an `.env` file with configuration options. Setting configuration parameters
-via environment variables works as well.
+the same way as when running as a service. You may instantiate the library
+against the [project directory](../admin/Import.md#creating-the-project-directory)
+of your Nominatim installation. It contains all files belonging to the
+Nominatim instance. This may include an `.env` file with configuration options.
+Setting configuration parameters via environment variables works as well.
+Alternatively to using the operating system's environment, a set of
+configuration parameters may also be passed to the Nomiantim API object.
 
 Configuration options are resolved in the following order:
 

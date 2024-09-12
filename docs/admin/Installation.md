@@ -131,8 +131,11 @@ of memory that autovacuum takes away from the import process.
 
 ### Downloading the latest release
 
-You can download the [latest release from nominatim.org](https://nominatim.org/downloads/).
+If you want to build Nominatim from source, then
+you can download the [latest release from nominatim.org](https://nominatim.org/downloads/).
 The release contains all necessary files. Just unpack it.
+
+Note that you don't need to do this when you install Nominatim from pip directly.
 
 ### Downloading the latest development version
 
@@ -151,16 +154,16 @@ wget -O Nominatim/data/country_osm_grid.sql.gz https://nominatim.org/data/countr
 
 ### Building Nominatim
 
-#### Building the latest development version with pip
+#### Building the latest release version with pip
 
 Nominatim is easiest to run from its own virtual environment. To create one, run:
 
     sudo apt-get install virtualenv
     virtualenv /srv/nominatim-venv
 
-To install Nominatim directly from the source tree into the virtual environment, run:
+To install the latest release of Nominatim into the virtual environment, run:
 
-    /srv/nominatim-venv/bin/pip install packaging/nominatim-{db,api}
+    /srv/nominatim-venv/bin/pip install nominatim-db nominatim-api
 
 #### Building in legacy CMake mode
 
@@ -168,6 +171,8 @@ To install Nominatim directly from the source tree into the virtual environment,
     Installing Nominatim through CMake is now deprecated. The infrastructure
     will be removed in Nominatim 5.0. Please switch to pip installation.
 
+To build Nominatim with CMake, you need to download and unpack the source code
+as described above.
 The code must be built in a separate directory. Create the directory and
 change into it.
 

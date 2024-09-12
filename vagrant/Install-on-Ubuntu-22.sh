@@ -28,7 +28,7 @@ export DEBIAN_FRONTEND=noninteractive #DOCS:
                         libicu-dev python3-dotenv \
                         python3-pip python3-psutil python3-jinja2 \
                         python3-sqlalchemy python3-asyncpg \
-                        python3-icu python3-datrie python3-yaml git
+                        python3-icu python3-datrie python3-yaml
 
 # Some of the Python packages that come with Ubuntu 22.04 are too old,
 # so install the latest version from pip:
@@ -105,21 +105,14 @@ fi                                    #DOCS:
 # Building and Configuration
 # --------------------------
 #
-# Get the source code from Github and change into the source directory
+# Get the source code from the Nominatim website and unpack it
 #
 if [ "x$1" == "xyes" ]; then  #DOCS:    :::sh
     cd $USERHOME
-    git clone --recursive https://github.com/openstreetmap/Nominatim.git
-    cd Nominatim
+    wget https://nominatim.org/release/Nominatim-4.5.0.tar.bz2
+    tar xf Nominatim-4.5.0.tar.bz2
 else                               #DOCS:
     cd $USERHOME/Nominatim         #DOCS:
-fi                                 #DOCS:
-
-# When installing the latest source from github, you also need to
-# download the country grid:
-
-if [ ! -f data/country_osm_grid.sql.gz ]; then       #DOCS:    :::sh
-    wget -O data/country_osm_grid.sql.gz https://nominatim.org/data/country_grid.sql.gz
 fi                                 #DOCS:
 
 # The code must be built in a separate directory. Create this directory,
@@ -127,7 +120,7 @@ fi                                 #DOCS:
 
     mkdir $USERHOME/build
     cd $USERHOME/build
-    cmake $USERHOME/Nominatim
+    cmake $USERHOME/Nominatim-4.5.0
     make
     sudo make install
 

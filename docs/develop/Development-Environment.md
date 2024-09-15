@@ -26,12 +26,9 @@ following packages should get you started:
 ## Prerequisites for testing and documentation
 
 The Nominatim test suite consists of behavioural tests (using behave) and
-unit tests (using PHPUnit for PHP code and pytest for Python code).
-It has the following additional requirements:
+unit tests (using pytest). It has the following additional requirements:
 
 * [behave test framework](https://behave.readthedocs.io) >= 1.2.6
-* [phpunit](https://phpunit.de) (9.5 is known to work)
-* [PHP CodeSniffer](https://github.com/squizlabs/PHP_CodeSniffer)
 * [Pylint](https://pylint.org/) (CI always runs the latest version from pip)
 * [mypy](http://mypy-lang.org/) (plus typing information for external libs)
 * [Python Typing Extensions](https://github.com/python/typing_extensions) (for Python < 3.9)
@@ -63,7 +60,7 @@ The easiest way, to handle these Python dependencies is to run your
 development from within a virtual environment.
 
 ```sh
-sudo apt install libsqlite3-mod-spatialite php-cli
+sudo apt install libsqlite3-mod-spatialite
 ```
 
 To set up the virtual environment with all necessary packages run:
@@ -84,28 +81,6 @@ Now enter the virtual environment whenever you want to develop:
 
 ```sh
 . ~/nominatim-dev-venv/bin/activate
-```
-
-For installing the PHP development tools, run:
-
-```sh
-sudo apt install php-cgi phpunit php-codesniffer
-```
-
-If your distribution does not have PHPUnit 7.3+, you can install it (as well
-as CodeSniffer) via composer:
-
-```
-sudo apt-get install composer
-composer global require "squizlabs/php_codesniffer=*"
-composer global require "phpunit/phpunit=8.*"
-```
-
-The binaries are found in `.config/composer/vendor/bin`. You need to add this
-to your PATH:
-
-```
-echo 'export PATH=~/.config/composer/vendor/bin:$PATH' > ~/.profile
 ```
 
 ### Running Nominatim during development

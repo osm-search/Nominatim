@@ -32,10 +32,9 @@ projection. The API returns exactly one result or an error when the coordinate
 is in an area with no OSM data coverage.
 
 
-!!! danger "Deprecation warning"
-    The reverse API used to allow address lookup for a single OSM object by
-    its OSM id for `[PHP-only]`. The use is considered deprecated.
-    Use the [Address Lookup API](Lookup.md) instead.
+!!! tip
+    The reverse API allows a lookup of object by coordinate. If you want
+    to look up an object by ID, use the [Address Lookup API](Lookup.md) instead.
 
 !!! danger "Deprecation warning"
     The API can also be used with the URL
@@ -148,8 +147,6 @@ In terms of address details the zoom levels are as follows:
 | Parameter | Value | Default |
 |-----------| ----- | ------- |
 | layer     | comma-separated list of: `address`, `poi`, `railway`, `natural`, `manmade` | _unset_ (no restriction) |
-
-**`[Python-only]`**
 
 The layer filter allows to select places by themes.
 

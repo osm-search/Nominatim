@@ -72,13 +72,6 @@ For running the Python frontend:
     * [starlette](https://www.starlette.io/)
   * [uvicorn](https://www.uvicorn.org/)
 
-For running the legacy PHP frontend (deprecated, will be removed in Nominatim 5.0):
-
-  * [PHP](https://php.net) (7.3+)
-  * PHP-pgsql
-  * PHP-intl (bundled with PHP)
-
-
 For dependencies for running tests and building documentation, see
 the [Development section](../develop/Development-Environment.md).
 

@@ -20,5 +20,5 @@ and can be found in the files in the `sql/functions/` directory.
 
 The __search frontend__ implements the actual API. It takes search
 and reverse geocoding queries from the user, looks up the data and
-returns the results in the requested format. This part is written in PHP
-and can be found in the `lib/` and `website/` directories.
+returns the results in the requested format. This part is located in the
+`nominatim-api` package. The source code can be found in `src/nominatim_api`.

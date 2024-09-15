@@ -9,7 +9,6 @@ Path settings for extra data used by Nominatim (installed version).
 """
 from pathlib import Path
 
-PHPLIB_DIR = None
 SQLLIB_DIR = (Path('@NOMINATIM_LIBDIR@') / 'lib-sql').resolve()
 DATA_DIR = Path('@NOMINATIM_DATADIR@').resolve()
 CONFIG_DIR = Path('@NOMINATIM_CONFIGDIR@').resolve()

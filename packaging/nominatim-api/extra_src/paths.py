@@ -9,7 +9,6 @@ Path settings for extra data used by Nominatim.
 """
 from pathlib import Path
 
-PHPLIB_DIR = None
 DATA_DIR = None
 SQLLIB_DIR = None
 CONFIG_DIR = (Path(__file__) / '..' / 'resources' / 'settings').resolve()

@@ -74,7 +74,6 @@ class Configuration:
         class _LibDirs:
             module: Path
             osm2pgsql: Path
-            php = paths.PHPLIB_DIR
             sql = paths.SQLLIB_DIR
             data = paths.DATA_DIR
 

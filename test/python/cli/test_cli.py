@@ -37,15 +37,6 @@ def test_cli_version(cli_call, capsys):
     assert captured.out.startswith('Nominatim version')
 
 
-def test_cli_serve_php(cli_call, mock_func_factory):
-    func = mock_func_factory(nominatim_db.cli, 'run_php_server')
-
-    cli_call('serve', '--engine', 'php') == 0
-
-    assert func.called == 1
-
-
-
 class TestCliWithDb:
 
     @pytest.fixture(autouse=True)

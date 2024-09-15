@@ -14,7 +14,6 @@ import logging
 from pathlib import Path
 import re
 import shutil
-from textwrap import dedent
 
 from icu import Transliterator
 import psycopg
@@ -120,8 +119,6 @@ class LegacyTokenizer(AbstractTokenizer):
 
         self.normalization = config.TERM_NORMALIZATION
 
-        self._install_php(config, overwrite=True)
-
         with connect(self.dsn) as conn:
             _check_module(module_dir, conn)
             self._save_config(conn, config)
@@ -144,8 +141,6 @@ class LegacyTokenizer(AbstractTokenizer):
             _install_module(config.DATABASE_MODULE_PATH,
                             config.lib_dir.module,
                             config.project_dir / 'module')
-
-        self._install_php(config, overwrite=False)
 
     def finalize_import(self, config: Configuration) -> None:
         """ Do any required postprocessing to make the tokenizer data ready
@@ -270,21 +265,6 @@ class LegacyTokenizer(AbstractTokenizer):
             cur.execute(""" SELECT word FROM word WHERE word is not null
                               ORDER BY search_name_count DESC LIMIT %s""", (num,))
             return list(s[0] for s in cur)
-
-
-    def _install_php(self, config: Configuration, overwrite: bool = True) -> None:
-        """ Install the php script for the tokenizer.
-        """
-        if config.lib_dir.php is not None:
-            php_file = self.data_dir / "tokenizer.php"
-
-            if not php_file.exists() or overwrite:
-                php_file.write_text(dedent(f"""\
-                    <?php
-                    @define('CONST_Max_Word_Frequency', {config.MAX_WORD_FREQUENCY});
-                    @define('CONST_Term_Normalization_Rules', "{config.TERM_NORMALIZATION}");
-                    require_once('{config.lib_dir.php}/tokenizer/legacy_tokenizer.php');
-                    """), encoding='utf-8')
 
 
     def _init_db_tables(self, config: Configuration) -> None:

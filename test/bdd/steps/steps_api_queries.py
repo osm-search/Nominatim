@@ -1,13 +1,10 @@
-# SPDX-License-Identifier: GPL-2.0-only
+# SPDX-License-Identifier: GPL-3.0-or-later
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2022 by the Nominatim developer community.
+# Copyright (C) 2024 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """ Steps that run queries against the API.
-
-    Queries may either be run directly via PHP using the query script
-    or via the HTTP interface using php-cgi.
 """
 from pathlib import Path
 import json
@@ -24,29 +21,6 @@ from check_functions import Bbox, check_for_attributes
 from table_compare import NominatimID
 
 LOG = logging.getLogger(__name__)
-
-BASE_SERVER_ENV = {
-    'HTTP_HOST' : 'localhost',
-    'HTTP_USER_AGENT' : 'Mozilla/5.0 (X11; Linux x86_64; rv:51.0) Gecko/20100101 Firefox/51.0',
-    'HTTP_ACCEPT' : 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-    'HTTP_ACCEPT_ENCODING' : 'gzip, deflate',
-    'HTTP_CONNECTION' : 'keep-alive',
-    'SERVER_SIGNATURE' : '<address>Nominatim BDD Tests</address>',
-    'SERVER_SOFTWARE' : 'Nominatim test',
-    'SERVER_NAME' : 'localhost',
-    'SERVER_ADDR' : '127.0.1.1',
-    'SERVER_PORT' : '80',
-    'REMOTE_ADDR' : '127.0.0.1',
-    'DOCUMENT_ROOT' : '/var/www',
-    'REQUEST_SCHEME' : 'http',
-    'CONTEXT_PREFIX' : '/',
-    'SERVER_ADMIN' : 'webmaster@localhost',
-    'REMOTE_PORT' : '49319',
-    'GATEWAY_INTERFACE' : 'CGI/1.1',
-    'SERVER_PROTOCOL' : 'HTTP/1.1',
-    'REQUEST_METHOD' : 'GET',
-    'REDIRECT_STATUS' : 'CGI'
-}
 
 
 def make_todo_list(context, result_id):
@@ -88,49 +62,11 @@ def send_api_query(endpoint, params, fmt, context):
             for h in context.table.headings:
                 params[h] = context.table[0][h]
 
-    if context.nominatim.api_engine is None:
-        return send_api_query_php(endpoint, params, context)
-
     return asyncio.run(context.nominatim.api_engine(endpoint, params,
                                                     Path(context.nominatim.website_dir.name),
                                                     context.nominatim.test_env,
                                                     getattr(context, 'http_headers', {})))
 
-
-
-def send_api_query_php(endpoint, params, context):
-    env = dict(BASE_SERVER_ENV)
-    env['QUERY_STRING'] = urlencode(params)
-
-    env['SCRIPT_NAME'] = f'/{endpoint}.php'
-    env['REQUEST_URI'] = f"{env['SCRIPT_NAME']}?{env['QUERY_STRING']}"
-    env['CONTEXT_DOCUMENT_ROOT'] = os.path.join(context.nominatim.website_dir.name, 'website')
-    env['SCRIPT_FILENAME'] = os.path.join(env['CONTEXT_DOCUMENT_ROOT'],
-                                          f'{endpoint}.php')
-
-    LOG.debug("Environment:" + json.dumps(env, sort_keys=True, indent=2))
-
-    if hasattr(context, 'http_headers'):
-        for k, v in context.http_headers.items():
-            env['HTTP_' + k.upper().replace('-', '_')] = v
-
-    cmd = ['/usr/bin/env', 'php-cgi', '-f', env['SCRIPT_FILENAME']]
-
-    for k,v in params.items():
-        cmd.append(f"{k}={v}")
-
-    outp, err = run_script(cmd, cwd=context.nominatim.website_dir.name, env=env)
-
-    assert len(err) == 0, f"Unexpected PHP error: {err}"
-
-    if outp.startswith('Status: '):
-        status = int(outp[8:11])
-    else:
-        status = 200
-
-    content_start = outp.find('\r\n\r\n')
-
-    return outp[content_start + 4:], status
 
 @given(u'the HTTP header')
 def add_http_header(context):

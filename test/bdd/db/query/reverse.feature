@@ -2,7 +2,6 @@
 Feature: Reverse searches
     Test results of reverse queries
 
-    @v1-api-python-only
     Scenario: POI in POI area
         Given the 0.0001 grid with origin 1,1
           | 1 |   |  |  |  |  |  |  | 2 |

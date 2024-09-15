@@ -3,7 +3,6 @@
 Feature: Layer parameter in reverse geocoding
     Testing correct function of layer selection while reverse geocoding
 
-    @v1-api-python-only
     Scenario: POIs are selected by default
         When sending v1/reverse at 47.14077,9.52414
         Then results contain
@@ -11,7 +10,6 @@ Feature: Layer parameter in reverse geocoding
           | tourism  | viewpoint |
 
 
-    @v1-api-python-only
     Scenario Outline: Same address level POI with different layers
         When sending v1/reverse at 47.14077,9.52414
           | layer   |
@@ -31,7 +29,6 @@ Feature: Layer parameter in reverse geocoding
           | natural,poi     | tourism  |
 
 
-    @v1-api-python-only
      Scenario Outline: POIs are not selected without housenumber for address layer
         When sending v1/reverse at 47.13816,9.52168
           | layer   |
@@ -46,7 +43,6 @@ Feature: Layer parameter in reverse geocoding
           | address     | amenity  | parking  |
 
 
-    @v1-api-python-only
      Scenario: Between natural and low-zoom address prefer natural
          When sending v1/reverse at 47.13636,9.52094
            | layer           | zoom |
@@ -56,7 +52,6 @@ Feature: Layer parameter in reverse geocoding
            | waterway |
 
 
-    @v1-api-python-only
     Scenario Outline: Search for mountain peaks begins at level 12
         When sending v1/reverse at 47.08293,9.57109
           | layer   | zoom   |
@@ -71,7 +66,6 @@ Feature: Layer parameter in reverse geocoding
           | 13   | waterway | river |
 
 
-    @v1-api-python-only
      Scenario Outline: Reverse search with manmade layers
         When sending v1/reverse at 32.46904,-86.44439
           | layer   |

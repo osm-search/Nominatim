@@ -18,20 +18,6 @@ Feature: v1/reverse Parameter Tests
         When sending v1/reverse at ,52.52
         Then a HTTP 400 is returned
 
-    @v1-api-php-only
-    Scenario: Missing osm_id parameter
-        When sending v1/reverse at ,
-          | osm_type |
-          | N |
-        Then a HTTP 400 is returned
-
-    @v1-api-php-only
-    Scenario: Missing osm_type parameter
-        When sending v1/reverse at ,
-          | osm_id |
-          | 3498564 |
-        Then a HTTP 400 is returned
-
 
     Scenario Outline: Bad format for lat or lon
         When sending v1/reverse at ,
@@ -151,7 +137,6 @@ Feature: v1/reverse Parameter Tests
           | foo; evil |
 
 
-    @v1-api-python-only
     Scenario Outline: Reverse debug mode produces valid HTML
         When sending v1/reverse at , with format debug
           | lat   | lon   |

@@ -106,17 +106,6 @@ Feature: Search queries
           | class | type |
           | club  | scout |
 
-    @v1-api-php-only
-    Scenario: With multiple amenity search only the first is used
-        When sending json search query "[club=scout] [church] vaduz"
-        Then results contain
-          | class | type |
-          | club  | scout |
-        When sending json search query "[amenity=place_of_worship] [club=scout] vaduz"
-        Then results contain
-          | class   | type |
-          | amenity | place_of_worship |
-
     Scenario: POI search near given coordinate
         When sending json search query "restaurant near 47.16712,9.51100"
         Then results contain
@@ -127,13 +116,6 @@ Feature: Search queries
         When sending json search query "[leisure=firepit]   47.150° N 9.5340493° E"
         Then results contain
           | class   | type |
-          | leisure | firepit |
-
-    @v1-api-php-only
-    Scenario: Arbitrary key/value search near given coordinate and named place
-        When sending json search query "[leisure=firepit] ebenholz  47° 9′ 26″ N 9° 36′ 45″ E"
-        Then results contain
-          | class    | type |
           | leisure | firepit |
 
 

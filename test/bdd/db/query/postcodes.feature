@@ -98,7 +98,6 @@ Feature: Querying fo postcode variants
 
 
     @fail-legacy
-    @v1-api-python-only
     Scenario: Postcode areas are preferred over postcode points
         Given the grid with origin DE
             | 1 | 2 |

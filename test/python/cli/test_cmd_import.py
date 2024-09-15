@@ -52,7 +52,6 @@ class TestCliImportWithDb:
             mock_func_factory(nominatim_db.tools.refresh, 'load_address_levels_from_config'),
             mock_func_factory(nominatim_db.tools.postcodes, 'update_postcodes'),
             async_mock_func_factory(nominatim_db.indexer.indexer.Indexer, 'index_full'),
-            mock_func_factory(nominatim_db.tools.refresh, 'setup_website'),
         ]
 
         params = ['import', '--osm-file', __file__]
@@ -81,7 +80,6 @@ class TestCliImportWithDb:
             mock_func_factory(nominatim_db.data.country_info, 'create_country_names'),
             mock_func_factory(nominatim_db.tools.postcodes, 'update_postcodes'),
             async_mock_func_factory(nominatim_db.indexer.indexer.Indexer, 'index_full'),
-            mock_func_factory(nominatim_db.tools.refresh, 'setup_website'),
             mock_func_factory(nominatim_db.db.properties, 'set_property')
         ]
 
@@ -98,7 +96,6 @@ class TestCliImportWithDb:
             async_mock_func_factory(nominatim_db.tools.database_import, 'create_search_indices'),
             mock_func_factory(nominatim_db.data.country_info, 'create_country_names'),
             async_mock_func_factory(nominatim_db.indexer.indexer.Indexer, 'index_full'),
-            mock_func_factory(nominatim_db.tools.refresh, 'setup_website'),
             mock_func_factory(nominatim_db.db.properties, 'set_property')
         ]
 
@@ -115,7 +112,6 @@ class TestCliImportWithDb:
         mocks = [
             async_mock_func_factory(nominatim_db.tools.database_import, 'create_search_indices'),
             mock_func_factory(nominatim_db.data.country_info, 'create_country_names'),
-            mock_func_factory(nominatim_db.tools.refresh, 'setup_website'),
             mock_func_factory(nominatim_db.db.properties, 'set_property')
         ]
 

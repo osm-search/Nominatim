@@ -88,7 +88,7 @@ class SetupAll:
 
     async def async_run(self, args: NominatimArgs) -> int:
         from ..data import country_info
-        from ..tools import database_import, refresh, postcodes, freeze
+        from ..tools import database_import, postcodes, freeze
         from ..indexer.indexer import Indexer
 
         num_threads = args.threads or psutil.cpu_count() or 1
@@ -140,11 +140,6 @@ class SetupAll:
 
         LOG.warning('Recompute word counts')
         tokenizer.update_statistics(args.config, threads=num_threads)
-
-        webdir = args.project_dir / 'website'
-        LOG.warning('Setup website at %s', webdir)
-        with connect(args.config.get_libpq_dsn()) as conn:
-            refresh.setup_website(webdir, args.config, conn)
 
         self._finalize_database(args.config.get_libpq_dsn(), args.offline)
 

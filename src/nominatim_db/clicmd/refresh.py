@@ -69,7 +69,8 @@ class UpdateRefresh:
         group.add_argument('--importance', action='store_true',
                            help='Recompute place importances (expensive!)')
         group.add_argument('--website', action='store_true',
-                           help='Refresh the directory that serves the scripts for the web API')
+                           help='DEPRECATED. This function has no function anymore'
+                                ' and will be removed in a future version.')
         group.add_argument('--data-object', action='append',
                            type=_parse_osm_object, metavar='OBJECT',
                            help='Mark the given OSM object as requiring an update'
@@ -159,14 +160,8 @@ class UpdateRefresh:
                 refresh.recompute_importance(conn)
 
         if args.website:
-            webdir = args.project_dir / 'website'
-            LOG.warning('Setting up website directory at %s', webdir)
-            # This is a little bit hacky: call the tokenizer setup, so that
-            # the tokenizer directory gets repopulated as well, in case it
-            # wasn't there yet.
-            self._get_tokenizer(args.config)
-            with connect(args.config.get_libpq_dsn()) as conn:
-                refresh.setup_website(webdir, args.config, conn)
+            LOG.error('WARNING: Website setup is no longer required. '
+                      'This function will be removed in future version of Nominatim.')
 
         if args.data_object or args.data_area:
             with connect(args.config.get_libpq_dsn()) as conn:

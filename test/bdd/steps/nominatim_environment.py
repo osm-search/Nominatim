@@ -110,15 +110,6 @@ class NominatimEnvironment:
 
         self.website_dir = tempfile.TemporaryDirectory()
 
-        try:
-            conn = self.connect_database(dbname)
-        except:
-            conn = False
-        refresh.setup_website(Path(self.website_dir.name) / 'website',
-                              self.get_test_config(), conn)
-        if conn:
-            conn.close()
-
 
     def get_test_config(self):
         cfg = Configuration(Path(self.website_dir.name), environ=self.test_env)

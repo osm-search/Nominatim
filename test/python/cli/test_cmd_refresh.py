@@ -25,7 +25,6 @@ class TestRefresh:
                              ('address-levels', 'load_address_levels_from_config'),
                              ('wiki-data', 'import_wikipedia_articles'),
                              ('importance', 'recompute_importance'),
-                             ('website', 'setup_website'),
                              ])
     def test_refresh_command(self, mock_func_factory, command, func):
         mock_func_factory(nominatim_db.tools.refresh, 'create_functions')

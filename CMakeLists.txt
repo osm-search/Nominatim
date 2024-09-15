@@ -75,25 +75,6 @@ if (BUILD_IMPORTER OR BUILD_API)
 endif()
 
 #-----------------------------------------------------------------------------
-# PHP
-#-----------------------------------------------------------------------------
-
-# Setting PHP binary variable as to command line (prevailing) or auto detect
-
-if (BUILD_API)
-    if (NOT PHP_BIN)
-         find_program (PHP_BIN php)
-    endif()
-    # sanity check if PHP binary exists
-    if (NOT EXISTS ${PHP_BIN})
-        message(WARNING "PHP binary not found. Only Python frontend can be used.")
-        set(PHP_BIN "")
-    else()
-        message (STATUS "Using PHP binary " ${PHP_BIN})
-    endif()
-endif()
-
-#-----------------------------------------------------------------------------
 # import scripts and utilities (importer only)
 #-----------------------------------------------------------------------------
 
@@ -125,8 +106,6 @@ if (BUILD_TESTS)
     find_program(PYTHON_BEHAVE behave)
     find_program(PYLINT NAMES pylint3 pylint)
     find_program(PYTEST NAMES pytest py.test-3 py.test)
-    find_program(PHPCS phpcs)
-    find_program(PHPUNIT phpunit)
 
     if (PYTHON_BEHAVE)
         message(STATUS "Using Python behave binary ${PYTHON_BEHAVE}")
@@ -139,24 +118,6 @@ if (BUILD_TESTS)
         endforeach()
     else()
         message(WARNING "behave not found. BDD tests disabled." )
-    endif()
-
-    if (PHPUNIT)
-        message(STATUS "Using phpunit binary ${PHPUNIT}")
-        add_test(NAME php
-                 COMMAND ${PHPUNIT} ./
-                 WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test/php)
-    else()
-        message(WARNING "phpunit not found. PHP unit tests disabled." )
-    endif()
-
-    if (PHPCS)
-        message(STATUS "Using phpcs binary ${PHPCS}")
-        add_test(NAME phpcs
-                 COMMAND ${PHPCS} --report-width=120 --colors lib-php
-                 WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
-    else()
-        message(WARNING "phpcs not found. PHP linting tests disabled." )
     endif()
 
     if (PYLINT)
@@ -203,11 +164,7 @@ if (BUILD_IMPORTER)
             DESTINATION ${CMAKE_INSTALL_BINDIR}
             RENAME nominatim)
 
-    if (EXISTS ${PHP_BIN})
-        configure_file(${PROJECT_SOURCE_DIR}/cmake/paths-py.tmpl paths-py.installed)
-    else()
-        configure_file(${PROJECT_SOURCE_DIR}/cmake/paths-py-no-php.tmpl paths-py.installed)
-    endif()
+    configure_file(${PROJECT_SOURCE_DIR}/cmake/paths-py-no-php.tmpl paths-py.installed)
 
     foreach (submodule nominatim_db nominatim_api)
         install(DIRECTORY src/${submodule}
@@ -241,10 +198,6 @@ endif()
 if (BUILD_MODULE)
     install(PROGRAMS ${PROJECT_BINARY_DIR}/module/nominatim.so
             DESTINATION ${NOMINATIM_LIBDIR}/module)
-endif()
-
-if (BUILD_API AND EXISTS ${PHP_BIN})
-    install(DIRECTORY lib-php DESTINATION ${NOMINATIM_LIBDIR})
 endif()
 
 install(FILES settings/env.defaults

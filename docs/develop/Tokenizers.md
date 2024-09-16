@@ -91,14 +91,9 @@ for a custom tokenizer implementation.
 
 ### Directory Structure
 
-Nominatim expects two files for a tokenizer:
-
-* `nominatim/tokenizer/<NAME>_tokenizer.py` containing the Python part of the
-  implementation
-* `lib-php/tokenizer/<NAME>_tokenizer.php` with the PHP part of the
-  implementation
-
-where `<NAME>` is a unique name for the tokenizer consisting of only lower-case
+Nominatim expects a single file `src/nominatim_db/tokenizer/<NAME>_tokenizer.py`
+containing the Python part of the implementation.
+`<NAME>` is a unique name for the tokenizer consisting of only lower-case
 letters, digits and underscore. A tokenizer also needs to install some SQL
 functions. By convention, these should be placed in `lib-sql/tokenizer`.
 
@@ -282,73 +277,3 @@ permanently. The indexer calls this function when all processing is done and
 replaces the content of the `token_info` column with the returned value before
 the trigger stores the information in the database. May return NULL if no
 information should be stored permanently.
-
-### PHP Tokenizer class
-
-The PHP tokenizer class is instantiated once per request and responsible for
-analyzing the incoming query. Multiple requests may be in flight in
-parallel.
-
-The class is expected to be found under the
-name of `\Nominatim\Tokenizer`. To find the class the PHP code includes the file
-`tokenizer/tokenizer.php` in the project directory. This file must be created
-when the tokenizer is first set up on import. The file should initialize any
-configuration variables by setting PHP constants and then require the file
-with the actual implementation of the tokenizer.
-
-The tokenizer class must implement the following functions:
-
-```php
-public function __construct(object &$oDB)
-```
-
-The constructor of the class receives a database connection that can be used
-to query persistent data in the database.
-
-```php
-public function checkStatus()
-```
-
-Check that the tokenizer can access its persistent data structures. If there
-is an issue, throw an `\Exception`.
-
-```php
-public function normalizeString(string $sTerm) : string
-```
-
-Normalize string to a form to be used for comparisons when reordering results.
-Nominatim reweighs results how well the final display string matches the actual
-query. Before comparing result and query, names and query are normalised against
-this function. The tokenizer can thus remove all properties that should not be
-taken into account for reweighing, e.g. special characters or case.
-
-```php
-public function tokensForSpecialTerm(string $sTerm) : array
-```
-
-Return the list of special term tokens that match the given term.
-
-```php
-public function extractTokensFromPhrases(array &$aPhrases) : TokenList
-```
-
-Parse the given phrases, splitting them into word lists and retrieve the
-matching tokens.
-
-The phrase array may take on two forms. In unstructured searches (using `q=`
-parameter) the search query is split at the commas and the elements are
-put into a sorted list. For structured searches the phrase array is an
-associative array where the key designates the type of the term (street, city,
-county etc.) The tokenizer may ignore the phrase type at this stage in parsing.
-Matching phrase type and appropriate search token type will be done later
-when the SearchDescription is built.
-
-For each phrase in the list of phrases, the function must analyse the phrase
-string and then call `setWordSets()` to communicate the result of the analysis.
-A word set is a list of strings, where each string refers to a search token.
-A phrase may have multiple interpretations. Therefore a list of word sets is
-usually attached to the phrase. The search tokens themselves are returned
-by the function in an associative array, where the key corresponds to the
-strings given in the word sets. The value is a list of search tokens. Thus
-a single string in the list of word sets may refer to multiple search tokens.
-

@@ -57,8 +57,7 @@ parameter that is understood by libpq. See the [Postgres documentation](https://
 | **After Changes:** | cannot be changed after import |
 
 Defines the name of the database user that will run search queries. Usually
-this is the user under which the webserver is executed. When running Nominatim
-via php-fpm, you can also define a separate query user. The Postgres user
+this is the user under which the webserver is executed. The Postgres user
 needs to be set up before starting the import.
 
 Nominatim grants minimal rights to this user to all tables that are needed
@@ -544,38 +543,6 @@ the local languages (in OSM: the name tag without any language suffix) is
 used.
 
 
-#### NOMINATIM_SEARCH_BATCH_MODE
-
-| Summary            |                                                     |
-| --------------     | --------------------------------------------------- |
-| **Description:**   | Enable a special batch query mode |
-| **Format:**        | boolean |
-| **Default:**       | no |
-| **After Changes:** | run `nominatim refresh --website` |
-| **Comment:**       | PHP frontend only |
-
-
-This feature is currently undocumented and potentially broken.
-
-
-#### NOMINATIM_SEARCH_NAME_ONLY_THRESHOLD
-
-| Summary            |                                                     |
-| --------------     | --------------------------------------------------- |
-| **Description:**   | Threshold for switching the search index lookup strategy |
-| **Format:**        | integer |
-| **Default:**       | 500 |
-| **After Changes:** | run `nominatim refresh --website` |
-| **Comment:**       | PHP frontend only |
-
-This setting defines the threshold over which a name is no longer considered
-as rare. When searching for places with rare names, only the name is used
-for place lookups. Otherwise the name and any address information is used.
-
-This setting only has an effect after `nominatim refresh --word-counts` has
-been called to compute the word frequencies.
-
-
 #### NOMINATIM_LOOKUP_MAX_COUNT
 
 | Summary            |                                                     |
@@ -616,7 +583,6 @@ Setting this parameter to 0 disables polygon output completely.
 | **Format:**        | boolean |
 | **Default:**       | no |
 | **After Changes:** | run `nominatim refresh --website` |
-| **Comment:**       | PHP frontend only |
 
 Enable to search elements just within countries.
 
@@ -728,7 +694,8 @@ The entries in the log file have the following format:
     <request time> <execution time in s> <number of results> <type> "<query string>"
 
 Request time is the time when the request was started. The execution time is
-given in seconds and corresponds to the time the query took executing in PHP.
+given in seconds and includes the entire time the query was queued and executed
+in the frontend.
 type contains the name of the endpoint used.
 
 Can be used as the same time as NOMINATIM_LOG_DB.

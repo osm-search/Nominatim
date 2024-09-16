@@ -353,19 +353,6 @@ Feature: Search queries
         | svg                |
         | geokml             |
 
-    @v1-api-php-only
-    Scenario: Search along a route
-        When sending json search query "rathaus" with address
-        Then result addresses contain
-          | ID | town |
-          | 0  | Schaan |
-        When sending json search query "rathaus" with address
-          | bounded | routewidth | route                              |
-          | 1       | 0.1        |  9.54353,47.11772,9.54314,47.11894 |
-        Then result addresses contain
-          | town |
-          | Triesenberg |
-
 
     Scenario: Array parameters are ignored
         When sending json search query "Vaduz" with address

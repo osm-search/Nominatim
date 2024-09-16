@@ -11,17 +11,15 @@ from typing import MutableSequence, Tuple, Any, Type, Mapping, Sequence, List, c
 import csv
 import gzip
 import logging
-from textwrap import dedent
 from pathlib import Path
 
 from psycopg import sql as pysql
 
 from ..config import Configuration
 from ..db.connection import Connection, connect, postgis_version_tuple,\
-                            drop_tables, table_exists
+                            drop_tables
 from ..db.utils import execute_file
 from ..db.sql_preprocessor import SQLPreprocessor
-from ..version import NOMINATIM_VERSION
 
 LOG = logging.getLogger()
 
@@ -97,34 +95,6 @@ def create_functions(conn: Connection, config: Configuration,
     sql.run_sql_file(conn, 'functions.sql',
                      disable_diff_updates=not enable_diff_updates,
                      debug=enable_debug)
-
-
-
-WEBSITE_SCRIPTS = (
-    'deletable.php',
-    'details.php',
-    'lookup.php',
-    'polygons.php',
-    'reverse.php',
-    'search.php',
-    'status.php'
-)
-
-# constants needed by PHP scripts: PHP name, config name, type
-PHP_CONST_DEFS = (
-    ('Database_DSN', 'DATABASE_DSN', str),
-    ('Default_Language', 'DEFAULT_LANGUAGE', str),
-    ('Log_DB', 'LOG_DB', bool),
-    ('Log_File', 'LOG_FILE', Path),
-    ('NoAccessControl', 'CORS_NOACCESSCONTROL', bool),
-    ('Places_Max_ID_count', 'LOOKUP_MAX_COUNT', int),
-    ('PolygonOutput_MaximumTypes', 'POLYGON_OUTPUT_MAX_TYPES', int),
-    ('Search_BatchMode', 'SEARCH_BATCH_MODE', bool),
-    ('Search_NameOnlySearchFrequencyThreshold', 'SEARCH_NAME_ONLY_THRESHOLD', str),
-    ('Use_US_Tiger_Data', 'USE_US_TIGER_DATA', bool),
-    ('MapIcon_URL', 'MAPICON_URL', str),
-    ('Search_WithinCountries', 'SEARCH_WITHIN_COUNTRIES', bool),
-)
 
 
 def import_wikipedia_articles(dsn: str, data_path: Path, ignore_errors: bool = False) -> int:
@@ -270,46 +240,6 @@ def _quote_php_variable(var_type: Type[Any], config: Configuration,
 
     quoted = value.replace("'", "\\'")
     return f"'{quoted}'"
-
-
-def setup_website(basedir: Path, config: Configuration, conn: Connection) -> None:
-    """ Create the website script stubs.
-    """
-    if config.lib_dir.php is None:
-        LOG.info("Python frontend does not require website setup. Skipping.")
-        return
-
-    if not basedir.exists():
-        LOG.info('Creating website directory.')
-        basedir.mkdir()
-
-    assert config.project_dir is not None
-    basedata = dedent(f"""\
-                      <?php
-
-                      @define('CONST_Debug', $_GET['debug'] ?? false);
-                      @define('CONST_LibDir', '{config.lib_dir.php}');
-                      @define('CONST_TokenizerDir', '{config.project_dir / 'tokenizer'}');
-                      @define('CONST_NominatimVersion', '{NOMINATIM_VERSION!s}');
-
-                      """)
-
-    for php_name, conf_name, var_type in PHP_CONST_DEFS:
-        varout = _quote_php_variable(var_type, config, conf_name)
-
-        basedata += f"@define('CONST_{php_name}', {varout});\n"
-
-    template = "\nrequire_once(CONST_LibDir.'/website/{}');\n"
-
-    search_name_table_exists = bool(conn and table_exists(conn, 'search_name'))
-
-    for script in WEBSITE_SCRIPTS:
-        if not search_name_table_exists and script == 'search.php':
-            out = template.format('reverse-only-search.php')
-        else:
-            out = template.format(script)
-
-        (basedir / script).write_text(basedata + out, 'utf-8')
 
 
 def invalidate_osm_object(osm_type: str, osm_id: int, conn: Connection,

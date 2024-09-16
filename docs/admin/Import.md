@@ -257,8 +257,8 @@ successfully.
 nominatim admin --check-database
 ```
 
-Now you can try out your installation by executing a simple query on the
-command line:
+If you have installed the `nominatim-api` package, then you can try out
+your installation by executing a simple query on the command line:
 
 ``` sh
 nominatim search --query Berlin
@@ -270,10 +270,8 @@ or, when you have a reverse-only installation:
 nominatim reverse --lat 51 --lon 45
 ```
 
-If you want to run Nominatim as a service, you need to make a choice between
-running the modern Python frontend and the legacy PHP frontend.
-Make sure you have installed the right packages as per
-[Installation](Installation.md#software).
+If you want to run Nominatim as a service, make sure you have installed
+the right packages as per [Installation](Installation.md#software).
 
 #### Testing the Python frontend
 
@@ -291,35 +289,14 @@ or, if you prefer to use Starlette instead of Falcon as webserver,
 nominatim serve --engine starlette
 ```
 
-Go to `http://localhost:8088/status.php` and you should see the message `OK`.
-You can also run a search query, e.g. `http://localhost:8088/search.php?q=Berlin`
+Go to `http://localhost:8088/status` and you should see the message `OK`.
+You can also run a search query, e.g. `http://localhost:8088/search?q=Berlin`
 or, for reverse-only installations a reverse query,
-e.g. `http://localhost:8088/reverse.php?lat=27.1750090510034&lon=78.04209025`.
+e.g. `http://localhost:8088/reverse?lat=27.1750090510034&lon=78.04209025`.
 
 Do not use this test server in production.
 To run Nominatim via webservers like Apache or nginx, please continue reading
 [Deploy the Python frontend](Deployment-Python.md).
-
-#### Testing the PHP frontend
-
-!!! danger
-    The PHP fronted is deprecated and will be removed in Nominatim 5.0.
-
-You can run a small test server with the PHP frontend like this:
-
-```sh
-nominatim serve --engine php
-```
-
-Go to `http://localhost:8088/status.php` and you should see the message `OK`.
-You can also run a search query, e.g. `http://localhost:8088/search.php?q=Berlin`
-or, for reverse-only installations a reverse query,
-e.g. `http://localhost:8088/reverse.php?lat=27.1750090510034&lon=78.04209025`.
-
-Do not use this test server in production.
-To run Nominatim via webservers like Apache or nginx, please continue reading
-[Deploy the PHP frontend](Deployment-PHP.md).
-
 
 
 ## Enabling search by category phrases

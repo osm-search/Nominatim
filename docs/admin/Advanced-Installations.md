@@ -194,7 +194,7 @@ On the client side you now need to configure the import to point to the
 correct location of the library **on the database server**. Add the following
 line to your your `.env` file:
 
-```php
+```
 NOMINATIM_DATABASE_MODULE_PATH="<directory on the database server where nominatim.so resides>"
 ```
 

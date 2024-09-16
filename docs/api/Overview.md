@@ -1,12 +1,3 @@
-!!! Attention
-    The current version of Nominatim implements two different search frontends:
-    the old PHP frontend and the new Python frontend. They have a very similar
-    API but differ in some implementation details. These are marked in the
-    documentation as `[Python-only]` or `[PHP-only]`.
-
-    `https://nominatim.openstreetmap.org` implements the **Python frontend**.
-    So users should refer to the **`[Python-only]`** comments.
-
 This section describes the API V1 of the Nominatim web service. The
 service offers the following endpoints:
 

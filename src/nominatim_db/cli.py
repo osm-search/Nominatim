@@ -19,7 +19,6 @@ from pathlib import Path
 
 from .config import Configuration
 from .errors import UsageError
-from .tools.exec_utils import run_php_server
 from . import clicmd
 from . import version
 from .clicmd.args import NominatimArgs, Subcommand
@@ -154,10 +153,10 @@ class AdminServe:
     from the current project directory. This webserver is only suitable
     for testing and development. Do not use it in production setups!
 
-    There are different webservers available. The default 'php' engine
-    runs the classic PHP frontend. The other engines are Python servers
-    which run the new Python frontend code. This is highly experimental
-    at the moment and may not include the full API.
+    There are two different webserver implementations for Python available:
+    falcon (the default) and starlette. You need to make sure the
+    appropriate Python packages as well as the uvicorn package are
+    installed to use this function.
 
     By the default, the webserver can be accessed at: http://127.0.0.1:8088
     """
@@ -167,19 +166,12 @@ class AdminServe:
         group.add_argument('--server', default='127.0.0.1:8088',
                            help='The address the server will listen to.')
         group.add_argument('--engine', default='falcon',
-                           choices=('php', 'falcon', 'starlette'),
+                           choices=('falcon', 'starlette'),
                            help='Webserver framework to run. (default: falcon)')
 
 
     def run(self, args: NominatimArgs) -> int:
-        if args.engine == 'php':
-            if args.config.lib_dir.php is None:
-                raise UsageError("PHP frontend not configured.")
-            LOG.warning('\n\nWARNING: the PHP frontend is deprecated '
-                        'and will be removed in Nominatim 5.0.\n\n')
-            run_php_server(args.server, args.project_dir / 'website')
-        else:
-            asyncio.run(self.run_uvicorn(args))
+        asyncio.run(self.run_uvicorn(args))
 
         return 0
 

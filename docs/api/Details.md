@@ -59,13 +59,6 @@ When set, then JSON output will be wrapped in a callback function with
 the given name. See [JSONP](https://en.wikipedia.org/wiki/JSONP) for more
 information.
 
-| Parameter | Value | Default |
-|-----------| ----- | ------- |
-| pretty    | 0 or 1 | 0 |
-
-`[PHP-only]` Add indentation to the output to make it more human-readable.
-
-
 ### Output details
 
 | Parameter | Value | Default |
@@ -95,10 +88,8 @@ members.
 |-----------| ----- | ------- |
 | hierarchy  | 0 or 1 | 0 |
 
-Include details of places lower in the address hierarchy.
-
-`[Python-only]` will only return properly parented places. These are address
-or POI-like places that reuse the address of their parent street or place.
+Include details of POIs and address that depend on the place. Only POIs
+that use this place to determine their address will be returned.
 
 | Parameter | Value | Default |
 |-----------| ----- | ------- |
@@ -129,7 +120,7 @@ as the ["Accept-Language" HTTP header](https://developer.mozilla.org/en-US/docs/
 
 ##### JSON
 
-[https://nominatim.openstreetmap.org/details.php?osmtype=W&osmid=38210407&format=json](https://nominatim.openstreetmap.org/details.php?osmtype=W&osmid=38210407&format=json)
+[https://nominatim.openstreetmap.org/details?osmtype=W&osmid=38210407&format=json](https://nominatim.openstreetmap.org/details?osmtype=W&osmid=38210407&format=json)
 
 
 ```json

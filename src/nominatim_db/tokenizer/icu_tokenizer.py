@@ -13,7 +13,6 @@ from typing import Optional, Sequence, List, Tuple, Mapping, Any, cast, \
 import itertools
 import logging
 from pathlib import Path
-from textwrap import dedent
 
 from psycopg.types.json import Jsonb
 from psycopg import sql as pysql
@@ -64,7 +63,6 @@ class ICUTokenizer(AbstractTokenizer):
         """
         self.loader = ICURuleLoader(config)
 
-        self._install_php(config.lib_dir.php, overwrite=True)
         self._save_config()
 
         if init_db:
@@ -80,8 +78,6 @@ class ICUTokenizer(AbstractTokenizer):
 
         with connect(self.dsn) as conn:
             self.loader.load_config_from_db(conn)
-
-        self._install_php(config.lib_dir.php, overwrite=False)
 
 
     def finalize_import(self, config: Configuration) -> None:
@@ -279,22 +275,6 @@ class ICUTokenizer(AbstractTokenizer):
                              GROUP BY word
                              ORDER BY count DESC LIMIT %s""", (num,))
             return list(s[0].split('@')[0] for s in cur)
-
-
-    def _install_php(self, phpdir: Optional[Path], overwrite: bool = True) -> None:
-        """ Install the php script for the tokenizer.
-        """
-        if phpdir is not None:
-            assert self.loader is not None
-            php_file = self.data_dir / "tokenizer.php"
-
-            if not php_file.exists() or overwrite:
-                php_file.write_text(dedent(f"""\
-                    <?php
-                    @define('CONST_Max_Word_Frequency', 10000000);
-                    @define('CONST_Term_Normalization_Rules', "{self.loader.normalization_rules}");
-                    @define('CONST_Transliteration', "{self.loader.get_search_rules()}");
-                    require_once('{phpdir}/tokenizer/icu_tokenizer.php');"""), encoding='utf-8')
 
 
     def _save_config(self) -> None:

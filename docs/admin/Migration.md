@@ -20,6 +20,18 @@ breaking changes. **Please read them before running the migration.**
     If you are migrating from a version <3.6, then you still have to follow
     the manual migration steps up to 3.6.
 
+## 4.5.0 -> master
+
+### PHP frontend removed
+
+The PHP frontend has been completely removed. Please switch to the Python
+frontend.
+
+Without the PHP code, the `nominatim refresh --website` command is no longer
+needed. It currently omits a warning and does otherwise nothing. It will be
+removed in later versions of Nominatim. So make sure you remove it from your
+scripts.
+
 ## 4.4.0 -> 4.5.0
 
 ### New structure for Python packages

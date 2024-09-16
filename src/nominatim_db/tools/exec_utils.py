@@ -14,18 +14,11 @@ import re
 import subprocess
 import shutil
 
-from ..typing import StrPath
 from ..db.connection import get_pg_env
 from ..errors import UsageError
 from ..version import OSM2PGSQL_REQUIRED_VERSION
 
 LOG = logging.getLogger()
-
-def run_php_server(server_address: str, base_dir: StrPath) -> None:
-    """ Run the built-in server from the given directory.
-    """
-    subprocess.run(['/usr/bin/env', 'php', '-S', server_address],
-                   cwd=str(base_dir), check=True)
 
 
 def run_osm2pgsql(options: Mapping[str, Any]) -> None:

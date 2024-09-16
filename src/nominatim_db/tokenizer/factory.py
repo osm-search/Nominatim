@@ -15,9 +15,6 @@ be used consistently when querying and updating the database.
 This module provides the functions to create and configure a new tokenizer
 as well as instantiating the appropriate tokenizer for updating an existing
 database.
-
-A tokenizer usually also includes PHP code for querying. The appropriate PHP
-normalizer module is installed, when the tokenizer is created.
 """
 from typing import Optional
 import logging

@@ -44,11 +44,9 @@ class NominatimEnvironment:
         self.api_db_done = False
         self.website_dir = None
 
-        self.api_engine = None
-        if config['API_ENGINE'] != 'php':
-            if not hasattr(self, f"create_api_request_func_{config['API_ENGINE']}"):
-                raise RuntimeError(f"Unknown API engine '{config['API_ENGINE']}'")
-            self.api_engine = getattr(self, f"create_api_request_func_{config['API_ENGINE']}")()
+        if not hasattr(self, f"create_api_request_func_{config['API_ENGINE']}"):
+            raise RuntimeError(f"Unknown API engine '{config['API_ENGINE']}'")
+        self.api_engine = getattr(self, f"create_api_request_func_{config['API_ENGINE']}")()
 
         if self.tokenizer == 'legacy' and self.server_module_path is None:
             raise RuntimeError("You must set -DSERVER_MODULE_PATH when testing the legacy tokenizer.")
@@ -109,15 +107,6 @@ class NominatimEnvironment:
             self.website_dir.cleanup()
 
         self.website_dir = tempfile.TemporaryDirectory()
-
-        try:
-            conn = self.connect_database(dbname)
-        except:
-            conn = False
-        refresh.setup_website(Path(self.website_dir.name) / 'website',
-                              self.get_test_config(), conn)
-        if conn:
-            conn.close()
 
 
     def get_test_config(self):

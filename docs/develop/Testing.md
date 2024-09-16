@@ -8,7 +8,7 @@ the tests, see the [Development setup chapter](Development-Environment.md).
 
 There are two kind of tests in this test suite. There are functional tests
 which test the API interface using a BDD test framework and there are unit
-tests for specific PHP functions.
+tests for the Python code.
 
 This test directory is structured as follows:
 
@@ -20,27 +20,10 @@ This test directory is structured as follows:
   | +-  db         Tests for internal data processing on import and update
   | +-  api        Tests for API endpoints (search, reverse, etc.)
   |
-  +-   php         PHP unit tests
   +-   python      Python unit tests
   +-   testdb      Base data for generating API test database
   +-   testdata    Additional test data used by unit tests
 ```
-
-## PHP Unit Tests (`test/php`)
-
-Unit tests for PHP code can be found in the `php/` directory. They test selected
-PHP functions. Very low coverage.
-
-To execute the test suite run
-
-    cd test/php
-    UNIT_TEST_DSN='pgsql:dbname=nominatim_unit_tests' phpunit ../
-
-It will read phpunit.xml which points to the library, test path, bootstrap
-strip and sets other parameters.
-
-It will use (and destroy) a local database 'nominatim_unit_tests'. You can set
-a different connection string with e.g. UNIT_TEST_DSN='pgsql:dbname=foo_unit_tests'.
 
 ## Python Unit Tests (`test/python`)
 
@@ -118,7 +101,7 @@ and compromises the following data:
  * extract of Autauga country, Alabama, US (for tests against Tiger data)
  * additional data from `test/testdb/additional_api_test.data.osm`
 
-API tests should only be testing the functionality of the website PHP code.
+API tests should only be testing the functionality of the website frontend code.
 Most tests should be formulated as BDD DB creation tests (see below) instead.
 
 ### DB Creation Tests (`test/bdd/db`)

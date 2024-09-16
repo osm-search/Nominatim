@@ -42,16 +42,6 @@ Feature: Object details
       | N300209696:highway |
 
 
-    @v1-api-php-only
-    Scenario: Details for interpolation way just return the dependent street
-        When sending details query for W1
-        Then the result is valid json
-        And results contain
-            | category |
-            | highway |
-
-
-     @v1-api-python-only
      Scenario: Details for interpolation way return the interpolation
         When sending details query for W1
         Then the result is valid json
@@ -60,17 +50,6 @@ Feature: Object details
             | place    | houses | W        | 1      | 15          |
 
 
-     @v1-api-php-only
-     @Fail
-     Scenario: Details for Tiger way just return the dependent street
-        When sending details query for 112871
-        Then the result is valid json
-        And results contain
-            | category |
-            | highway |
-
-
-     @v1-api-python-only
      @Fail
      Scenario: Details for interpolation way return the interpolation
         When sending details query for 112871
@@ -81,17 +60,6 @@ Feature: Object details
         And result has not attributes osm_type,osm_id
 
 
-     @v1-api-php-only
-     @Fail
-     Scenario: Details for postcodes just return the dependent place
-        When sending details query for 112820
-        Then the result is valid json
-        And results contain
-            | category |
-            | boundary |
-
-
-     @v1-api-python-only
      @Fail
      Scenario: Details for interpolation way return the interpolation
         When sending details query for 112820
@@ -102,7 +70,6 @@ Feature: Object details
         And result has not attributes osm_type,osm_id
 
 
-    @v1-api-python-only
     Scenario Outline: Details debug output returns no errors
         When sending debug details query for <feature>
         Then the result is valid html

@@ -72,7 +72,6 @@ class Configuration:
             self.project_dir = None
 
         class _LibDirs:
-            module: Path
             osm2pgsql: Path
             sql = paths.SQLLIB_DIR
             data = paths.DATA_DIR

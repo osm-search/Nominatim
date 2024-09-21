@@ -266,8 +266,7 @@ class NominatimEnvironment:
         if self.website_dir is not None:
             cmdline = list(cmdline) + ['--project-dir', self.website_dir.name]
 
-        cli.nominatim(module_dir=None,
-                      osm2pgsql_path=None,
+        cli.nominatim(osm2pgsql_path=None,
                       cli_args=cmdline,
                       environ=self.test_env)
 

@@ -2,4 +2,4 @@
 
 from nominatim_db import cli
 
-exit(cli.nominatim(module_dir=None, osm2pgsql_path=None))
+exit(cli.nominatim(osm2pgsql_path=None))

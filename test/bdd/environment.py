@@ -27,7 +27,6 @@ userconfig = {
     'TEST_DB' : 'test_nominatim',
     'API_TEST_DB' : 'test_api_nominatim',
     'API_TEST_FILE'  : TEST_BASE_DIR / 'testdb' / 'apidb-test-data.pbf',
-    'SERVER_MODULE_PATH' : None,
     'TOKENIZER' : None, # Test with a custom tokenizer
     'STYLE' : 'extratags',
     'API_ENGINE': 'falcon'

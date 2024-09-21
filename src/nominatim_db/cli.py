@@ -120,10 +120,6 @@ class CommandlineParser:
         try:
             ret = args.command.run(args)
 
-            if args.config.TOKENIZER == 'legacy':
-                log.warning('WARNING: the "legacy" tokenizer is deprecated '
-                            'and will be removed in Nominatim 5.0.')
-
             return ret
         except UsageError as exception:
             if log.isEnabledFor(logging.DEBUG):

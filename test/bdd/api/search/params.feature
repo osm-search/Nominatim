@@ -69,7 +69,6 @@ Feature: Search queries
           | 0 |
         Then there are duplicates
 
-    @fail-legacy
     Scenario: Search with bounded viewbox in right area
         When sending json search query "post" with address
           | bounded | viewbox |

@@ -1,7 +1,6 @@
 @DB
 Feature: Searches in Japan
     Test specifically for searches of Japanese addresses and in Japanese language.
-    @fail-legacy
     Scenario: A block house-number is parented to the neighbourhood
         Given the grid with origin JP
           | 1 |   |   |   | 2 |

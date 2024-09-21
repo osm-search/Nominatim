@@ -34,7 +34,6 @@ class NominatimEnvironment:
         self.api_test_file = config['API_TEST_FILE']
         self.tokenizer = config['TOKENIZER']
         self.import_style = config['STYLE']
-        self.server_module_path = config['SERVER_MODULE_PATH']
         self.reuse_template = not config['REMOVE_TEMPLATE']
         self.keep_scenario_db = config['KEEP_TEST_DB']
 
@@ -47,9 +46,6 @@ class NominatimEnvironment:
         if not hasattr(self, f"create_api_request_func_{config['API_ENGINE']}"):
             raise RuntimeError(f"Unknown API engine '{config['API_ENGINE']}'")
         self.api_engine = getattr(self, f"create_api_request_func_{config['API_ENGINE']}")()
-
-        if self.tokenizer == 'legacy' and self.server_module_path is None:
-            raise RuntimeError("You must set -DSERVER_MODULE_PATH when testing the legacy tokenizer.")
 
     def connect_database(self, dbname):
         """ Return a connection to the database with the given name.
@@ -100,9 +96,6 @@ class NominatimEnvironment:
         if self.import_style is not None:
             self.test_env['NOMINATIM_IMPORT_STYLE'] = self.import_style
 
-        if self.server_module_path:
-            self.test_env['NOMINATIM_DATABASE_MODULE_PATH'] = self.server_module_path
-
         if self.website_dir is not None:
             self.website_dir.cleanup()
 
@@ -111,7 +104,6 @@ class NominatimEnvironment:
 
     def get_test_config(self):
         cfg = Configuration(Path(self.website_dir.name), environ=self.test_env)
-        cfg.set_libdirs(module=self.server_module_path)
         return cfg
 
     def get_libpq_dsn(self):
@@ -190,12 +182,8 @@ class NominatimEnvironment:
                     self.run_nominatim('add-data', '--tiger-data', str(testdata / 'tiger'))
                     self.run_nominatim('freeze')
 
-                    if self.tokenizer == 'legacy':
-                        phrase_file = str(testdata / 'specialphrases_testdb.sql')
-                        run_script(['psql', '-d', self.api_test_db, '-f', phrase_file])
-                    else:
-                        csv_path = str(testdata / 'full_en_phrases_test.csv')
-                        self.run_nominatim('special-phrases', '--import-from-csv', csv_path)
+                    csv_path = str(testdata / 'full_en_phrases_test.csv')
+                    self.run_nominatim('special-phrases', '--import-from-csv', csv_path)
                 except:
                     self.db_drop_database(self.api_test_db)
                     raise
@@ -278,7 +266,7 @@ class NominatimEnvironment:
         if self.website_dir is not None:
             cmdline = list(cmdline) + ['--project-dir', self.website_dir.name]
 
-        cli.nominatim(module_dir=self.server_module_path,
+        cli.nominatim(module_dir=None,
                       osm2pgsql_path=None,
                       cli_args=cmdline,
                       environ=self.test_env)

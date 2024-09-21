@@ -60,9 +60,3 @@ def before_scenario(context, scenario):
 def after_scenario(context, scenario):
     if 'DB' in context.tags:
         context.nominatim.teardown_db(context)
-
-
-def before_tag(context, tag):
-    if tag == 'fail-legacy':
-        if context.config.userdata['TOKENIZER'] == 'legacy':
-            context.scenario.skip("Not implemented in legacy tokenizer")

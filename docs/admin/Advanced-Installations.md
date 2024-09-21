@@ -131,76 +131,13 @@ script ([Geofabrik](https://download.geofabrik.de)) provides daily updates.
 
 ## Using an external PostgreSQL database
 
-You can install Nominatim using a database that runs on a different server when
-you have physical access to the file system on the other server. Nominatim
-uses a custom normalization library that needs to be made accessible to the
-PostgreSQL server. This section explains how to set up the normalization
-library.
+You can install Nominatim using a database that runs on a different server.
+Simply point the configuration variable `NOMINATIM_DATABASE_DSN` to the
+server and follow the standard import documentation.
 
-!!! note
-    The external module is only needed when using the legacy tokenizer.
-    If you have chosen the ICU tokenizer, then you can ignore this section
-    and follow the standard import documentation.
-
-### Option 1: Compiling the library on the database server
-
-The most sure way to get a working library is to compile it on the database
-server. From the prerequisites you need at least cmake, gcc and the
-PostgreSQL server package.
-
-Clone or unpack the Nominatim source code, enter the source directory and
-create and enter a build directory.
-
-```sh
-cd Nominatim
-mkdir build
-cd build
-```
-
-Now configure cmake to only build the PostgreSQL module and build it:
-
-```
-cmake -DBUILD_IMPORTER=off -DBUILD_API=off -DBUILD_TESTS=off -DBUILD_DOCS=off -DBUILD_OSM2PGSQL=off ..
-make
-```
-
-When done, you find the normalization library in `build/module/nominatim.so`.
-Copy it to a place where it is readable and executable by the PostgreSQL server
-process.
-
-### Option 2: Compiling the library on the import machine
-
-You can also compile the normalization library on the machine from where you
-run the import.
-
-!!! important
-    You can only do this when the database server and the import machine have
-    the same architecture and run the same version of Linux. Otherwise there is
-    no guarantee that the compiled library is compatible with the PostgreSQL
-    server running on the database server.
-
-Make sure that the PostgreSQL server package is installed on the machine
-**with the same version as on the database server**. You do not need to install
-the PostgreSQL server itself.
-
-Download and compile Nominatim as per standard instructions. Once done, you find
-the normalization library in `build/module/nominatim.so`. Copy the file to
-the database server at a location where it is readable and executable by the
-PostgreSQL server process.
-
-### Running the import
-
-On the client side you now need to configure the import to point to the
-correct location of the library **on the database server**. Add the following
-line to your your `.env` file:
-
-```
-NOMINATIM_DATABASE_MODULE_PATH="<directory on the database server where nominatim.so resides>"
-```
-
-Now change the `NOMINATIM_DATABASE_DSN` to point to your remote server and continue
-to follow the [standard instructions for importing](Import.md).
-
+The import will be faster, if the import is run directly from the database
+machine. You can easily switch to a different machine for the query frontend
+after the import.
 
 ## Moving the database to another machine
 
@@ -225,20 +162,9 @@ target machine.
     data updates but the resulting database is only about a third of the size
     of a full database.
 
-Next install Nominatim on the target machine by following the standard installation
-instructions. Again, make sure to use the same version as the source machine.
+Next install nominatim-api on the target machine by following the standard
+installation instructions. Again, make sure to use the same version as the
+source machine.
 
 Create a project directory on your destination machine and set up the `.env`
-file to match the configuration on the source machine. Finally run
-
-    nominatim refresh --website
-
-to make sure that the local installation of Nominatim will be used.
-
-If you are using the legacy tokenizer you might also have to switch to the
-PostgreSQL module that was compiled on your target machine. If you get errors
-that PostgreSQL cannot find or access `nominatim.so` then rerun
-
-    nominatim refresh --functions
-
-on the target machine to update the the location of the module.
+file to match the configuration on the source machine. That's all.

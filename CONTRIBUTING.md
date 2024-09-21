@@ -61,8 +61,7 @@ pylint3 --extension-pkg-whitelist=osmium nominatim
 Before submitting a pull request make sure that the tests pass:
 
 ```
-  cd build
-  make test
+  make tests
 ```
 
 ## Releases

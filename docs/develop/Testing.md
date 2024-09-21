@@ -72,8 +72,6 @@ The tests can be configured with a set of environment variables (`behave -D key=
  * `DB_PORT` - (optional) port of database on host
  * `DB_USER` - (optional) username of database login
  * `DB_PASS` - (optional) password for database login
- * `SERVER_MODULE_PATH` - (optional) path on the Postgres server to Nominatim
-                          module shared library file (only needed for legacy tokenizer)
  * `REMOVE_TEMPLATE` - if true, the template and API database will not be reused
                        during the next run. Reusing the base templates speeds
                        up tests considerably but might lead to outdated errors

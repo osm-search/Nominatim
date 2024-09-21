@@ -64,26 +64,6 @@ Nominatim grants minimal rights to this user to all tables that are needed
 for running geocoding queries.
 
 
-#### NOMINATIM_DATABASE_MODULE_PATH
-
-| Summary            |                                                     |
-| --------------     | --------------------------------------------------- |
-| **Description:**   | Directory where to find the PostgreSQL server module |
-| **Format:**        | path |
-| **Default:**       | _empty_ (use `<project_directory>/module`) |
-| **After Changes:** | run `nominatim refresh --functions` |
-| **Comment:**       | Legacy tokenizer only |
-
-Defines the directory in which the PostgreSQL server module `nominatim.so`
-is stored. The directory and module must be accessible by the PostgreSQL
-server.
-
-For information on how to use this setting when working with external databases,
-see [Advanced Installations](../admin/Advanced-Installations.md).
-
-The option is only used by the Legacy tokenizer and ignored otherwise.
-
-
 #### NOMINATIM_TOKENIZER
 
 | Summary            |                                                     |
@@ -113,20 +93,6 @@ on the file format.
 
 If a relative path is given, then the file is searched first relative to the
 project directory and then in the global settings directory.
-
-#### NOMINATIM_MAX_WORD_FREQUENCY
-
-| Summary            |                                                     |
-| --------------     | --------------------------------------------------- |
-| **Description:**   | Number of occurrences before a word is considered frequent |
-| **Format:**        | int |
-| **Default:**       | 50000 |
-| **After Changes:** | cannot be changed after import |
-| **Comment:**       | Legacy tokenizer only |
-
-The word frequency count is used by the Legacy tokenizer to automatically
-identify _stop words_. Any partial term that occurs more often then what
-is defined in this setting, is effectively ignored during search.
 
 
 #### NOMINATIM_LIMIT_REINDEXING
@@ -160,25 +126,6 @@ in the search index. Set this to a comma separated list of language
 codes, to restrict import to a subset of languages.
 
 Currently only affects the initial import of country names and special phrases.
-
-
-#### NOMINATIM_TERM_NORMALIZATION
-
-| Summary            |                                                     |
-| --------------     | --------------------------------------------------- |
-| **Description:**   | Rules for normalizing terms for comparisons |
-| **Format:**        | string: semicolon-separated list of ICU rules |
-| **Default:**       | :: NFD (); [[:Nonspacing Mark:] [:Cf:]] >;  :: lower (); [[:Punctuation:][:Space:]]+ > ' '; :: NFC (); |
-| **Comment:**       | Legacy tokenizer only |
-
-[Special phrases](Special-Phrases.md) have stricter matching requirements than
-normal search terms. They must appear exactly in the query after this term
-normalization has been applied.
-
-Only has an effect on the Legacy tokenizer. For the ICU tokenizer the rules
-defined in the
-[normalization section](Tokenizers.md#normalization-and-transliteration)
-will be used.
 
 
 #### NOMINATIM_USE_US_TIGER_DATA

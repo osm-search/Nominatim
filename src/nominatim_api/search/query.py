@@ -101,7 +101,6 @@ class Token(ABC):
     count: int
     addr_count: int
     lookup_word: str
-    is_indexed: bool
 
 
     @abstractmethod

@@ -167,8 +167,7 @@ class SearchBuilder:
         expected_count = sum(t.count for t in hnrs)
 
         partials = {t.token: t.addr_count for trange in address
-                       for t in self.query.get_partials_list(trange)
-                       if t.is_indexed}
+                       for t in self.query.get_partials_list(trange)}
 
         if not partials:
             # can happen when none of the partials is indexed
@@ -219,11 +218,9 @@ class SearchBuilder:
         addr_partials = [t for r in address for t in self.query.get_partials_list(r)]
         addr_tokens = list({t.token for t in addr_partials})
 
-        partials_indexed = all(t.is_indexed for t in name_partials.values()) \
-                           and all(t.is_indexed for t in addr_partials)
         exp_count = min(t.count for t in name_partials.values()) / (2**(len(name_partials) - 1))
 
-        if (len(name_partials) > 3 or exp_count < 8000) and partials_indexed:
+        if (len(name_partials) > 3 or exp_count < 8000):
             yield penalty, exp_count, dbf.lookup_by_names(list(name_partials.keys()), addr_tokens)
             return
 
@@ -232,8 +229,6 @@ class SearchBuilder:
         name_fulls = self.query.get_tokens(name, TokenType.WORD)
         if name_fulls:
             fulls_count = sum(t.count for t in name_fulls)
-            if partials_indexed:
-                penalty += 1.2 * sum(t.penalty for t in addr_partials if not t.is_indexed)
 
             if fulls_count < 50000 or addr_count < 30000:
                 yield penalty,fulls_count / (2**len(addr_tokens)), \
@@ -243,8 +238,7 @@ class SearchBuilder:
         # To catch remaining results, lookup by name and address
         # We only do this if there is a reasonable number of results expected.
         exp_count = exp_count / (2**len(addr_tokens)) if addr_tokens else exp_count
-        if exp_count < 10000 and addr_count < 20000\
-           and all(t.is_indexed for t in name_partials.values()):
+        if exp_count < 10000 and addr_count < 20000:
             penalty += 0.35 * max(1 if name_fulls else 0.1,
                                   5 - len(name_partials) - len(addr_tokens))
             yield penalty, exp_count,\
@@ -260,11 +254,10 @@ class SearchBuilder:
         addr_restrict_tokens = []
         addr_lookup_tokens = []
         for t in addr_partials:
-            if t.is_indexed:
-                if t.addr_count > 20000:
-                    addr_restrict_tokens.append(t.token)
-                else:
-                    addr_lookup_tokens.append(t.token)
+            if t.addr_count > 20000:
+                addr_restrict_tokens.append(t.token)
+            else:
+                addr_lookup_tokens.append(t.token)
 
         if addr_restrict_tokens:
             lookup.append(dbf.FieldLookup('nameaddress_vector',
@@ -289,13 +282,12 @@ class SearchBuilder:
             addr_restrict_tokens = []
             addr_lookup_tokens = []
             for t in addr_partials:
-                if t.is_indexed:
-                    if t.addr_count > 20000:
-                        addr_restrict_tokens.append(t.token)
-                    else:
-                        addr_lookup_tokens.append(t.token)
+                if t.addr_count > 20000:
+                    addr_restrict_tokens.append(t.token)
+                else:
+                    addr_lookup_tokens.append(t.token)
         else:
-            addr_restrict_tokens = [t.token for t in addr_partials if t.is_indexed]
+            addr_restrict_tokens = [t.token for t in addr_partials]
             addr_lookup_tokens = []
 
         return dbf.lookup_by_any_name([t.token for t in name_fulls],

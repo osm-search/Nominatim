@@ -13,7 +13,7 @@ ignored-classes=NominatimArgs,closing
 # 'too-many-ancestors' is triggered already by deriving from UserDict
 # 'not-context-manager' disabled because it causes false positives once
 #   typed Python is enabled. See also https://github.com/PyCQA/pylint/issues/5273
-disable=too-few-public-methods,duplicate-code,too-many-ancestors,bad-option-value,no-self-use,not-context-manager,use-dict-literal,chained-comparison,attribute-defined-outside-init,too-many-boolean-expressions,contextmanager-generator-missing-cleanup
+disable=too-few-public-methods,duplicate-code,too-many-ancestors,bad-option-value,no-self-use,not-context-manager,use-dict-literal,chained-comparison,attribute-defined-outside-init,too-many-boolean-expressions,contextmanager-generator-missing-cleanup,too-many-positional-arguments
 
 good-names=i,j,x,y,m,t,fd,db,cc,x1,x2,y1,y2,pt,k,v,nr
 

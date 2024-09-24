@@ -68,8 +68,7 @@ def cli_call():
         Returns a function that can be called with the desired CLI arguments.
     """
     def _call_nominatim(*args):
-        return nominatim_db.cli.nominatim(module_dir='MODULE NOT AVAILABLE',
-                                          osm2pgsql_path='OSM2PGSQL NOT AVAILABLE',
+        return nominatim_db.cli.nominatim(osm2pgsql_path='OSM2PGSQL NOT AVAILABLE',
                                           cli_args=args)
 
     return _call_nominatim

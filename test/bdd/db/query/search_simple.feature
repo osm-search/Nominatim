@@ -77,7 +77,6 @@ Feature: Searching of simple objects
          | W1  |
 
 
-     @fail-legacy
      Scenario Outline: Special cased american states will be found
         Given the grid
          | 1 |    | 2 |

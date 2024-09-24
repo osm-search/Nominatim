@@ -195,7 +195,6 @@ Feature: Import of postcodes
          | E45 2    | gb      | 23          | 5 |
          | Y45      | gb      | 21          | 5 |
 
-    @fail-legacy
     Scenario: Postcodes outside all countries are not added to the postcode and word table
         Given the places
             | osm | class | type  | addr+postcode | addr+housenumber | addr+place  | geometry  |

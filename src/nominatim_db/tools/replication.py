@@ -125,7 +125,8 @@ def update(dsn: str, options: MutableMapping[str, Any],
     # Read updates into file.
     with _make_replication_server(options['base_url'], socket_timeout) as repl:
         outhandler = WriteHandler(str(options['import_file']))
-        endseq = repl.apply_diffs(outhandler, startseq + 1,
+        # tyoing: work around typing bug in pyosmium 4.0
+        endseq = repl.apply_diffs(outhandler, startseq + 1, # type: ignore[arg-type]
                                   max_size=options['max_diff_size'] * 1024)
         outhandler.close()
 

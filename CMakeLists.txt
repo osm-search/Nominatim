@@ -44,7 +44,6 @@ endif()
 
 set(BUILD_IMPORTER on CACHE BOOL "Build everything for importing/updating the database")
 set(BUILD_API on CACHE BOOL "Build everything for the API server")
-set(BUILD_MODULE off CACHE BOOL "Build PostgreSQL module for legacy tokenizer")
 set(BUILD_TESTS on CACHE BOOL "Build test suite")
 set(BUILD_OSM2PGSQL on CACHE BOOL "Build osm2pgsql (expert only)")
 set(INSTALL_MUNIN_PLUGINS on CACHE BOOL "Install Munin plugins for supervising Nominatim")
@@ -140,14 +139,6 @@ if (BUILD_TESTS)
 endif()
 
 #-----------------------------------------------------------------------------
-# Postgres module
-#-----------------------------------------------------------------------------
-
-if (BUILD_MODULE)
-    add_subdirectory(module)
-endif()
-
-#-----------------------------------------------------------------------------
 # Installation
 #-----------------------------------------------------------------------------
 
@@ -193,11 +184,6 @@ if (BUILD_OSM2PGSQL)
     else()
         install(TARGETS osm2pgsql RUNTIME DESTINATION ${NOMINATIM_LIBDIR})
     endif()
-endif()
-
-if (BUILD_MODULE)
-    install(PROGRAMS ${PROJECT_BINARY_DIR}/module/nominatim.so
-            DESTINATION ${NOMINATIM_LIBDIR}/module)
 endif()
 
 install(FILES settings/env.defaults

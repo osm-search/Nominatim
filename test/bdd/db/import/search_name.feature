@@ -11,7 +11,6 @@ Feature: Creation of search terms
          | object | name_vector |
          | N1     | #New York, #Big Apple |
 
-    @fail-legacy
     Scenario: Comma-separated names appear as a single full name
         Given the places
          | osm | class   | type | name+alt_name |

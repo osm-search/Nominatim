@@ -8,7 +8,6 @@ Feature: Country handling
             |   | 10 |   |
             | 4 |    | 3 |
 
-    @fail-legacy
     Scenario: When country names are changed old ones are no longer searchable
         Given the places
             | osm | class    | type           | admin | name+name:xy | country | geometry |
@@ -27,7 +26,6 @@ Feature: Country handling
         When sending search query "Wenig, Loudou"
         Then exactly 0 results are returned
 
-    @fail-legacy
     Scenario: When country names are deleted they are no longer searchable
         Given the places
             | osm | class    | type           | admin | name+name:xy | country | geometry |
@@ -83,7 +81,6 @@ Feature: Country handling
             | N10 | Wenig, Lilly |
 
 
-    @fail-legacy
     Scenario: When a localised name is deleted, the standard name takes over
         Given the places
             | osm | class    | type           | admin | name+name:de | country | geometry |

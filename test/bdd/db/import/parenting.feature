@@ -104,7 +104,6 @@ Feature: Parenting of objects
          | N3     | W2 |
          | N4     | W1 |
 
-    @fail-legacy
     Scenario: addr:street tag parents to appropriately named street, locale names
         Given the grid
          | 10 |   |   |   |   | 11 |

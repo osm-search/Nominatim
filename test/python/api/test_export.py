@@ -14,8 +14,7 @@ import nominatim_db.cli
 @pytest.fixture
 def run_export(tmp_path, capsys):
     def _exec(args):
-        assert 0 == nominatim_db.cli.nominatim(module_dir='MODULE NOT AVAILABLE',
-                                               osm2pgsql_path='OSM2PGSQL NOT AVAILABLE',
+        assert 0 == nominatim_db.cli.nominatim(osm2pgsql_path='OSM2PGSQL NOT AVAILABLE',
                                                cli_args=['export', '--project-dir', str(tmp_path)]
                                                         + args)
         return capsys.readouterr().out.split('\r\n')

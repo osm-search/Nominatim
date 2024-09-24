@@ -15,53 +15,6 @@ they can be configured.
     chosen tokenizer is very limited as well. See the comments in each tokenizer
     section.
 
-## Legacy tokenizer
-
-!!! danger
-    The Legacy tokenizer is deprecated and will be removed in Nominatim 5.0.
-    If you still use a database with the legacy tokenizer, you must reimport
-    it using the ICU tokenizer below.
-
-The legacy tokenizer implements the analysis algorithms of older Nominatim
-versions. It uses a special Postgresql module to normalize names and queries.
-This tokenizer is automatically installed and used when upgrading an older
-database. It should not be used for new installations anymore.
-
-### Compiling the PostgreSQL module
-
-The tokeinzer needs a special C module for PostgreSQL which is not compiled
-by default. If you need the legacy tokenizer, compile Nominatim as follows:
-
-```
-mkdir build
-cd build
-cmake -DBUILD_MODULE=on
-make
-```
-
-### Enabling the tokenizer
-
-To enable the tokenizer add the following line to your project configuration:
-
-```
-NOMINATIM_TOKENIZER=legacy
-```
-
-The Postgresql module for the tokenizer is available in the `module` directory
-and also installed with the remainder of the software under
-`lib/nominatim/module/nominatim.so`. You can specify a custom location for
-the module with
-
-```
-NOMINATIM_DATABASE_MODULE_PATH=<path to directory where nominatim.so resides>
-```
-
-This is in particular useful when the database runs on a different server.
-See [Advanced installations](../admin/Advanced-Installations.md#using-an-external-postgresql-database) for details.
-
-There are no other configuration options for the legacy tokenizer. All
-normalization functions are hard-coded.
-
 ## ICU tokenizer
 
 The ICU tokenizer uses the [ICU library](http://site.icu-project.org/) to

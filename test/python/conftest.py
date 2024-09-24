@@ -109,7 +109,7 @@ def table_factory(temp_db_conn):
 @pytest.fixture
 def def_config():
     cfg = Configuration(None)
-    cfg.set_libdirs(module='.', osm2pgsql='.')
+    cfg.set_libdirs(osm2pgsql=None)
     return cfg
 
 
@@ -118,7 +118,7 @@ def project_env(tmp_path):
     projdir = tmp_path / 'project'
     projdir.mkdir()
     cfg = Configuration(projdir)
-    cfg.set_libdirs(module='.', osm2pgsql='.')
+    cfg.set_libdirs(osm2pgsql=None)
     return cfg
 
 
@@ -208,7 +208,7 @@ def osmline_table(temp_db_with_extensions, table_factory):
 def sql_preprocessor_cfg(tmp_path, table_factory, temp_db_with_extensions):
     table_factory('country_name', 'partition INT', ((0, ), (1, ), (2, )))
     cfg = Configuration(None)
-    cfg.set_libdirs(module='.', osm2pgsql='.', sql=tmp_path)
+    cfg.set_libdirs(osm2pgsql=None, sql=tmp_path)
     return cfg
 
 

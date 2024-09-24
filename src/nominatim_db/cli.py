@@ -111,18 +111,13 @@ class CommandlineParser:
 
         args.config = Configuration(args.project_dir,
                                     environ=kwargs.get('environ', os.environ))
-        args.config.set_libdirs(module=kwargs['module_dir'],
-                                osm2pgsql=kwargs['osm2pgsql_path'])
+        args.config.set_libdirs(osm2pgsql=kwargs['osm2pgsql_path'])
 
         log = logging.getLogger()
         log.warning('Using project directory: %s', str(args.project_dir))
 
         try:
             ret = args.command.run(args)
-
-            if args.config.TOKENIZER == 'legacy':
-                log.warning('WARNING: the "legacy" tokenizer is deprecated '
-                            'and will be removed in Nominatim 5.0.')
 
             return ret
         except UsageError as exception:

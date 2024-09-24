@@ -123,7 +123,7 @@ class ICUToken(qmod.Token):
             lookup_word = row.word_token
 
         return ICUToken(penalty=penalty, token=row.word_id, count=max(1, count),
-                        lookup_word=lookup_word, is_indexed=True,
+                        lookup_word=lookup_word,
                         word_token=row.word_token, info=row.info,
                         addr_count=max(1, addr_count))
 
@@ -259,7 +259,9 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
             if len(part.token) <= 4 and part[0].isdigit()\
                and not node.has_tokens(i+1, qmod.TokenType.HOUSENUMBER):
                 query.add_token(qmod.TokenRange(i, i+1), qmod.TokenType.HOUSENUMBER,
-                                ICUToken(0.5, 0, 1, 1, part.token, True, part.token, None))
+                                ICUToken(penalty=0.5, token=0,
+                                         count=1, addr_count=1, lookup_word=part.token,
+                                         word_token=part.token, info=None))
 
 
     def rerank_tokens(self, query: qmod.QueryStruct, parts: QueryParts) -> None:

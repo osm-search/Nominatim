@@ -140,8 +140,8 @@ def test_get_bool(make_config, monkeypatch, value, result):
 def test_get_bool_empty(make_config):
     config = make_config()
 
-    assert config.DATABASE_MODULE_PATH == ''
-    assert not config.get_bool('DATABASE_MODULE_PATH')
+    assert config.TOKENIZER_CONFIG == ''
+    assert not config.get_bool('TOKENIZER_CONFIG')
 
 
 @pytest.mark.parametrize("value,result", [('0', 0), ('1', 1),
@@ -167,10 +167,10 @@ def test_get_int_bad_values(make_config, monkeypatch, value):
 def test_get_int_empty(make_config):
     config = make_config()
 
-    assert config.DATABASE_MODULE_PATH == ''
+    assert config.TOKENIZER_CONFIG == ''
 
     with pytest.raises(UsageError):
-        config.get_int('DATABASE_MODULE_PATH')
+        config.get_int('TOKENIZER_CONFIG')
 
 
 @pytest.mark.parametrize("value,outlist", [('sd', ['sd']),
@@ -193,8 +193,8 @@ def test_get_str_list_empty(make_config):
 def test_get_path_empty(make_config):
     config = make_config()
 
-    assert config.DATABASE_MODULE_PATH == ''
-    assert not config.get_path('DATABASE_MODULE_PATH')
+    assert config.TOKENIZER_CONFIG == ''
+    assert not config.get_path('TOKENIZER_CONFIG')
 
 
 def test_get_path_absolute(make_config, monkeypatch):

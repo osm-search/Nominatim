@@ -9,7 +9,6 @@ Path settings for extra data used by Nominatim.
 """
 from pathlib import Path
 
-PHPLIB_DIR = (Path(__file__) / '..' / '..' / '..' / 'lib-php').resolve()
 SQLLIB_DIR = (Path(__file__) / '..' / '..' / '..' / 'lib-sql').resolve()
 DATA_DIR = (Path(__file__) / '..' / '..' / '..' / 'data').resolve()
 CONFIG_DIR = (Path(__file__) / '..' / '..' / '..' / 'settings').resolve()

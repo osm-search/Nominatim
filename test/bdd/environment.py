@@ -27,7 +27,6 @@ userconfig = {
     'TEST_DB' : 'test_nominatim',
     'API_TEST_DB' : 'test_api_nominatim',
     'API_TEST_FILE'  : TEST_BASE_DIR / 'testdb' / 'apidb-test-data.pbf',
-    'SERVER_MODULE_PATH' : None,
     'TOKENIZER' : None, # Test with a custom tokenizer
     'STYLE' : 'extratags',
     'API_ENGINE': 'falcon'
@@ -60,9 +59,3 @@ def before_scenario(context, scenario):
 def after_scenario(context, scenario):
     if 'DB' in context.tags:
         context.nominatim.teardown_db(context)
-
-
-def before_tag(context, tag):
-    if tag == 'fail-legacy':
-        if context.config.userdata['TOKENIZER'] == 'legacy':
-            context.scenario.skip("Not implemented in legacy tokenizer")

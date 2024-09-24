@@ -28,9 +28,8 @@ def check_database_integrity(context):
         assert cur.fetchone()[0] == 0, "Duplicates found in place_addressline"
 
         # word table must not have empty word_tokens
-        if context.nominatim.tokenizer != 'legacy':
-            cur.execute("SELECT count(*) FROM word WHERE word_token = ''")
-            assert cur.fetchone()[0] == 0, "Empty word tokens found in word table"
+        cur.execute("SELECT count(*) FROM word WHERE word_token = ''")
+        assert cur.fetchone()[0] == 0, "Empty word tokens found in word table"
 
 
 
@@ -324,13 +323,8 @@ def check_word_table_for_postcodes(context, exclude, postcodes):
     plist.sort()
 
     with context.db.cursor() as cur:
-        if nctx.tokenizer != 'legacy':
-            cur.execute("SELECT word FROM word WHERE type = 'P' and word = any(%s)",
-                        (plist,))
-        else:
-            cur.execute("""SELECT word FROM word WHERE word = any(%s)
-                             and class = 'place' and type = 'postcode'""",
-                        (plist,))
+        cur.execute("SELECT word FROM word WHERE type = 'P' and word = any(%s)",
+                    (plist,))
 
         found = [row['word'] for row in cur]
         assert len(found) == len(set(found)), f"Duplicate rows for postcodes: {found}"

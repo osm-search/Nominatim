@@ -1,6 +1,6 @@
 # Database Migrations
 
-Nominatim offers automatic migrations since version 3.7. Please follow
+Nominatim offers automatic migrations for versions 4.3+. Please follow
 the following steps:
 
 * Stop any updates that are potentially running
@@ -17,8 +17,9 @@ Below you find additional migrations and hints about other structural and
 breaking changes. **Please read them before running the migration.**
 
 !!! note
-    If you are migrating from a version <3.6, then you still have to follow
-    the manual migration steps up to 3.6.
+    If you are migrating from a version <4.3, you need to install 4.3
+    first and migrate to 4.3 first. Then you can migrate to the current
+    version. It is strongly recommended to do a reimport instead.
 
 ## 4.5.0 -> master
 

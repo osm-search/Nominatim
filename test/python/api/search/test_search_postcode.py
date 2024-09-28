@@ -59,6 +59,19 @@ def test_postcode_with_country(apiobj, frontend):
     assert results[0].place_id == 101
 
 
+def test_postcode_area(apiobj, frontend):
+    apiobj.add_postcode(place_id=100, country_code='ch', postcode='12345')
+    apiobj.add_placex(place_id=200, country_code='ch', postcode='12345',
+                      osm_type='R', osm_id=34, class_='boundary', type='postal_code',
+                      geometry='POLYGON((0 0, 1 0, 1 1, 0 1, 0 0))')
+
+    results = run_search(apiobj, frontend, 0.3, ['12345'], [0.0])
+
+    assert len(results) == 1
+    assert results[0].place_id == 200
+    assert results[0].bbox.area == 1
+
+
 class TestPostcodeSearchWithAddress:
 
     @pytest.fixture(autouse=True)

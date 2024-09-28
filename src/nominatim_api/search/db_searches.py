@@ -616,6 +616,8 @@ class PostcodeSearch(AbstractSearch):
 
             for prow in await conn.execute(placex_sql, _details_to_bind_params(details)):
                 result = nres.create_from_placex_row(prow, nres.SearchResult)
+                if result is not None:
+                    result.bbox = Bbox.from_wkb(prow.bbox)
                 break
             else:
                 result = nres.create_from_postcode_row(row, nres.SearchResult)

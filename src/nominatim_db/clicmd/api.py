@@ -12,6 +12,7 @@ import argparse
 import logging
 import json
 import sys
+import pprint
 from functools import reduce
 
 import nominatim_api as napi
@@ -113,24 +114,29 @@ def _list_formats(formatter: napi.FormatDispatcher, rtype: Type[Any]) -> int:
     for fmt in formatter.list_formats(rtype):
         print(fmt)
     print('debug')
+    print('raw')
 
     return 0
 
 
 def _print_output(formatter: napi.FormatDispatcher, result: Any,
                   fmt: str, options: Mapping[str, Any]) -> None:
-    output = formatter.format_result(result, fmt, options)
-    if formatter.get_content_type(fmt) == CONTENT_JSON:
-        # reformat the result, so it is pretty-printed
-        try:
-            json.dump(json.loads(output), sys.stdout, indent=4, ensure_ascii=False)
-        except json.decoder.JSONDecodeError as err:
-            # Catch the error here, so that data can be debugged,
-            # when people are developping custom result formatters.
-            LOG.fatal("Parsing json failed: %s\nUnformatted output:\n%s", err, output)
+
+    if fmt == 'raw':
+        pprint.pprint(result)
     else:
-        sys.stdout.write(output)
-    sys.stdout.write('\n')
+        output = formatter.format_result(result, fmt, options)
+        if formatter.get_content_type(fmt) == CONTENT_JSON:
+            # reformat the result, so it is pretty-printed
+            try:
+                json.dump(json.loads(output), sys.stdout, indent=4, ensure_ascii=False)
+            except json.decoder.JSONDecodeError as err:
+                # Catch the error here, so that data can be debugged,
+                # when people are developping custom result formatters.
+                LOG.fatal("Parsing json failed: %s\nUnformatted output:\n%s", err, output)
+        else:
+            sys.stdout.write(output)
+        sys.stdout.write('\n')
 
 
 class APISearch:
@@ -174,7 +180,7 @@ class APISearch:
         if args.list_formats:
             return _list_formats(formatter, napi.SearchResults)
 
-        if args.format == 'debug':
+        if args.format in ('debug', 'raw'):
             loglib.set_log_output('text')
         elif not formatter.supports_format(napi.SearchResults, args.format):
             raise UsageError(f"Unsupported format '{args.format}'. "
@@ -254,7 +260,7 @@ class APIReverse:
         if args.list_formats:
             return _list_formats(formatter, napi.ReverseResults)
 
-        if args.format == 'debug':
+        if args.format in ('debug', 'raw'):
             loglib.set_log_output('text')
         elif not formatter.supports_format(napi.ReverseResults, args.format):
             raise UsageError(f"Unsupported format '{args.format}'. "
@@ -320,7 +326,7 @@ class APILookup:
         if args.list_formats:
             return _list_formats(formatter, napi.ReverseResults)
 
-        if args.format == 'debug':
+        if args.format in ('debug', 'raw'):
             loglib.set_log_output('text')
         elif not formatter.supports_format(napi.ReverseResults, args.format):
             raise UsageError(f"Unsupported format '{args.format}'. "
@@ -402,7 +408,7 @@ class APIDetails:
         if args.list_formats:
             return _list_formats(formatter, napi.DetailedResult)
 
-        if args.format == 'debug':
+        if args.format in ('debug', 'raw'):
             loglib.set_log_output('text')
         elif not formatter.supports_format(napi.DetailedResult, args.format):
             raise UsageError(f"Unsupported format '{args.format}'. "
@@ -473,7 +479,7 @@ class APIStatus:
         if args.list_formats:
             return _list_formats(formatter, napi.StatusResult)
 
-        if args.format == 'debug':
+        if args.format in ('debug', 'raw'):
             loglib.set_log_output('text')
         elif not formatter.supports_format(napi.StatusResult, args.format):
             raise UsageError(f"Unsupported format '{args.format}'. "

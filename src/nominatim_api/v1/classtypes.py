@@ -48,7 +48,12 @@ def bbox_from_result(result: Union[ReverseResult, SearchResult]) -> Bbox:
         around the centroid according to dimensions derived from the
         search rank.
     """
+    if result.category == ('place', 'postcode') and result.bbox is None:
+        return Bbox.from_point(result.centroid,
+                               0.05 - 0.012 * (result.rank_search - 21))
+
     if (result.osm_object and result.osm_object[0] == 'N') or result.bbox is None:
+
         extent = NODE_EXTENT.get(result.category, 0.00005)
         return Bbox.from_point(result.centroid, extent)
 

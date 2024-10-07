@@ -11,22 +11,55 @@ from typing import Mapping, List, Optional
 
 import re
 
+
 class Locales:
     """ Helper class for localization of names.
 
-        It takes a list of language prefixes in their order of preferred
-        usage.
+    Keyword arguments:
+    langs: List[str] -- list of language prefixes in 
+        their order of preferred usage.
+    output_name_tags_config: str -- string object 
+        containing output name tags in their order of preferred usage.
+        default -- 
+        `name:XX,name,brand,official_name:XX,short_name:XX,official_name,short_name,ref`
     """
 
-    def __init__(self, langs: Optional[List[str]] = None):
+    def __init__(
+        self,
+        langs: Optional[List[str]] = None,
+        output_name_tags_config: str = (
+            "name:XX,name,brand,official_name:XX,short_name:XX,official_name,short_name,ref"
+        )
+    ):
         self.languages = langs or []
         self.name_tags: List[str] = []
 
-        # Build the list of supported tags. It is currently hard-coded.
-        self._add_lang_tags('name')
-        self._add_tags('name', 'brand')
-        self._add_lang_tags('official_name', 'short_name')
-        self._add_tags('official_name', 'short_name', 'ref')
+        # Build the list of supported tags
+        self._build_output_name_tags(output_name_tags_config)
+
+
+    def _build_output_name_tags(self, nominatim_output_names: str) -> None:
+        """
+        Build the list of supported tags. Dynamic implementation.
+        """
+        nominatim_output_names: List[str] = nominatim_output_names.split(",")
+        lang_tags: List[str] = []
+        tags: List[str] = []
+        for name in nominatim_output_names:
+            if name.endswith(":XX"): # Identifies Lang Tag
+                lang_tags.append(name[:-3])
+                if tags:# Determines tags batch is over, lang tag batch begins
+                    self._add_tags(*tags)
+                    tags = []
+            else: # Identifies Tag
+                tags.append(name)
+                if lang_tags: # Determines lang tags batch is over, tag batch begins
+                    self._add_lang_tags(*lang_tags)
+                    lang_tags = []
+        if lang_tags: # Adds lefover lang tags
+            self._add_lang_tags(*lang_tags)
+        if tags: # Adds lefover tags
+            self._add_tags(*tags)
 
 
     def __bool__(self) -> bool:

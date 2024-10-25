@@ -7,7 +7,7 @@
 """
 Server implementation using the falcon webserver framework.
 """
-from typing import Optional, Mapping, cast, Any, List
+from typing import Optional, Mapping, Any, List
 from pathlib import Path
 import datetime as dt
 import asyncio
@@ -72,11 +72,11 @@ class ParamWrapper(ASGIAdaptor):
 
 
     def get(self, name: str, default: Optional[str] = None) -> Optional[str]:
-        return cast(Optional[str], self.request.get_param(name, default=default))
+        return self.request.get_param(name, default=default)
 
 
     def get_header(self, name: str, default: Optional[str] = None) -> Optional[str]:
-        return cast(Optional[str], self.request.get_header(name, default=default))
+        return self.request.get_header(name, default=default)
 
 
     def error(self, msg: str, status: int = 400) -> HTTPNominatimError:
@@ -91,7 +91,7 @@ class ParamWrapper(ASGIAdaptor):
 
 
     def base_uri(self) -> str:
-        return cast (str, self.request.forwarded_prefix)
+        return self.request.forwarded_prefix
 
     def config(self) -> Configuration:
         return self._config
@@ -183,7 +183,7 @@ def get_application(project_dir: Path,
     app.add_error_handler(HTTPNominatimError, nominatim_error_handler)
     app.add_error_handler(TimeoutError, timeout_error_handler)
     # different from TimeoutError in Python <= 3.10
-    app.add_error_handler(asyncio.TimeoutError, timeout_error_handler)
+    app.add_error_handler(asyncio.TimeoutError, timeout_error_handler) # type: ignore[arg-type]
 
     legacy_urls = api.config.get_bool('SERVE_LEGACY_URLS')
     formatter = load_format_dispatcher('v1', project_dir)

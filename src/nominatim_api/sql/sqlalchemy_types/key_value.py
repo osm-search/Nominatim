@@ -48,12 +48,12 @@ class KeyValueConcat(sa.sql.expression.FunctionElement[Any]):
     name = 'JsonConcat'
     inherit_cache = True
 
-@compiles(KeyValueConcat) # type: ignore[no-untyped-call, misc]
+@compiles(KeyValueConcat)
 def default_json_concat(element: KeyValueConcat, compiler: 'sa.Compiled', **kw: Any) -> str:
     arg1, arg2 = list(element.clauses)
     return "(%s || coalesce(%s, ''::hstore))" % (compiler.process(arg1, **kw), compiler.process(arg2, **kw))
 
-@compiles(KeyValueConcat, 'sqlite') # type: ignore[no-untyped-call, misc]
+@compiles(KeyValueConcat, 'sqlite')
 def sqlite_json_concat(element: KeyValueConcat, compiler: 'sa.Compiled', **kw: Any) -> str:
     arg1, arg2 = list(element.clauses)
     return "json_patch(%s, coalesce(%s, '{}'))" % (compiler.process(arg1, **kw), compiler.process(arg2, **kw))

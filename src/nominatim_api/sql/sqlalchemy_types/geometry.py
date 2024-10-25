@@ -27,7 +27,7 @@ class Geometry_DistanceSpheroid(sa.sql.expression.FunctionElement[float]):
     inherit_cache = True
 
 
-@compiles(Geometry_DistanceSpheroid) # type: ignore[no-untyped-call, misc]
+@compiles(Geometry_DistanceSpheroid)
 def _default_distance_spheroid(element: Geometry_DistanceSpheroid,
                                compiler: 'sa.Compiled', **kw: Any) -> str:
     return "ST_DistanceSpheroid(%s,"\
@@ -35,7 +35,7 @@ def _default_distance_spheroid(element: Geometry_DistanceSpheroid,
              % compiler.process(element.clauses, **kw)
 
 
-@compiles(Geometry_DistanceSpheroid, 'sqlite') # type: ignore[no-untyped-call, misc]
+@compiles(Geometry_DistanceSpheroid, 'sqlite')
 def _spatialite_distance_spheroid(element: Geometry_DistanceSpheroid,
                                   compiler: 'sa.Compiled', **kw: Any) -> str:
     return "COALESCE(Distance(%s, true), 0.0)" % compiler.process(element.clauses, **kw)
@@ -48,14 +48,14 @@ class Geometry_IsLineLike(sa.sql.expression.FunctionElement[Any]):
     inherit_cache = True
 
 
-@compiles(Geometry_IsLineLike) # type: ignore[no-untyped-call, misc]
+@compiles(Geometry_IsLineLike)
 def _default_is_line_like(element: Geometry_IsLineLike,
                           compiler: 'sa.Compiled', **kw: Any) -> str:
     return "ST_GeometryType(%s) IN ('ST_LineString', 'ST_MultiLineString')" % \
                compiler.process(element.clauses, **kw)
 
 
-@compiles(Geometry_IsLineLike, 'sqlite') # type: ignore[no-untyped-call, misc]
+@compiles(Geometry_IsLineLike, 'sqlite')
 def _sqlite_is_line_like(element: Geometry_IsLineLike,
                          compiler: 'sa.Compiled', **kw: Any) -> str:
     return "ST_GeometryType(%s) IN ('LINESTRING', 'MULTILINESTRING')" % \
@@ -69,14 +69,14 @@ class Geometry_IsAreaLike(sa.sql.expression.FunctionElement[Any]):
     inherit_cache = True
 
 
-@compiles(Geometry_IsAreaLike) # type: ignore[no-untyped-call, misc]
+@compiles(Geometry_IsAreaLike)
 def _default_is_area_like(element: Geometry_IsAreaLike,
                           compiler: 'sa.Compiled', **kw: Any) -> str:
     return "ST_GeometryType(%s) IN ('ST_Polygon', 'ST_MultiPolygon')" % \
                compiler.process(element.clauses, **kw)
 
 
-@compiles(Geometry_IsAreaLike, 'sqlite') # type: ignore[no-untyped-call, misc]
+@compiles(Geometry_IsAreaLike, 'sqlite')
 def _sqlite_is_area_like(element: Geometry_IsAreaLike,
                          compiler: 'sa.Compiled', **kw: Any) -> str:
     return "ST_GeometryType(%s) IN ('POLYGON', 'MULTIPOLYGON')" % \
@@ -90,14 +90,14 @@ class Geometry_IntersectsBbox(sa.sql.expression.FunctionElement[Any]):
     inherit_cache = True
 
 
-@compiles(Geometry_IntersectsBbox) # type: ignore[no-untyped-call, misc]
+@compiles(Geometry_IntersectsBbox)
 def _default_intersects(element: Geometry_IntersectsBbox,
                         compiler: 'sa.Compiled', **kw: Any) -> str:
     arg1, arg2 = list(element.clauses)
     return "%s && %s" % (compiler.process(arg1, **kw), compiler.process(arg2, **kw))
 
 
-@compiles(Geometry_IntersectsBbox, 'sqlite') # type: ignore[no-untyped-call, misc]
+@compiles(Geometry_IntersectsBbox, 'sqlite')
 def _sqlite_intersects(element: Geometry_IntersectsBbox,
                        compiler: 'sa.Compiled', **kw: Any) -> str:
     return "MbrIntersects(%s) = 1" % compiler.process(element.clauses, **kw)
@@ -113,14 +113,14 @@ class Geometry_ColumnIntersectsBbox(sa.sql.expression.FunctionElement[Any]):
     inherit_cache = True
 
 
-@compiles(Geometry_ColumnIntersectsBbox) # type: ignore[no-untyped-call, misc]
+@compiles(Geometry_ColumnIntersectsBbox)
 def default_intersects_column(element: Geometry_ColumnIntersectsBbox,
                               compiler: 'sa.Compiled', **kw: Any) -> str:
     arg1, arg2 = list(element.clauses)
     return "%s && %s" % (compiler.process(arg1, **kw), compiler.process(arg2, **kw))
 
 
-@compiles(Geometry_ColumnIntersectsBbox, 'sqlite') # type: ignore[no-untyped-call, misc]
+@compiles(Geometry_ColumnIntersectsBbox, 'sqlite')
 def spatialite_intersects_column(element: Geometry_ColumnIntersectsBbox,
                                  compiler: 'sa.Compiled', **kw: Any) -> str:
     arg1, arg2 = list(element.clauses)
@@ -144,12 +144,12 @@ class Geometry_ColumnDWithin(sa.sql.expression.FunctionElement[Any]):
     inherit_cache = True
 
 
-@compiles(Geometry_ColumnDWithin) # type: ignore[no-untyped-call, misc]
+@compiles(Geometry_ColumnDWithin)
 def default_dwithin_column(element: Geometry_ColumnDWithin,
                            compiler: 'sa.Compiled', **kw: Any) -> str:
     return "ST_DWithin(%s)" % compiler.process(element.clauses, **kw)
 
-@compiles(Geometry_ColumnDWithin, 'sqlite') # type: ignore[no-untyped-call, misc]
+@compiles(Geometry_ColumnDWithin, 'sqlite')
 def spatialite_dwithin_column(element: Geometry_ColumnDWithin,
                               compiler: 'sa.Compiled', **kw: Any) -> str:
     geom1, geom2, dist = list(element.clauses)
@@ -275,7 +275,7 @@ class Geometry(types.UserDefinedType): # type: ignore[type-arg]
             return Geometry_DistanceSpheroid(self, other)
 
 
-@compiles(Geometry, 'sqlite') # type: ignore[no-untyped-call]
+@compiles(Geometry, 'sqlite')
 def get_col_spec(self, *args, **kwargs): # type: ignore[no-untyped-def]
     return 'GEOMETRY'
 
@@ -302,7 +302,7 @@ def _add_function_alias(func: str, ftype: type, alias: str) -> None:
     def _sqlite_impl(element: Any, compiler: Any, **kw: Any) -> Any:
         return func_templ % compiler.process(element.clauses, **kw)
 
-    compiles(_FuncDef, 'sqlite')(_sqlite_impl) # type: ignore[no-untyped-call]
+    compiles(_FuncDef, 'sqlite')(_sqlite_impl)
 
 for alias in SQLITE_FUNCTION_ALIAS:
     _add_function_alias(*alias)

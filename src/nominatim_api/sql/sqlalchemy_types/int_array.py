@@ -77,7 +77,7 @@ class ArrayAgg(sa.sql.functions.GenericFunction[Any]):
     inherit_cache = True
 
 
-@compiles(ArrayAgg, 'sqlite') # type: ignore[no-untyped-call, misc]
+@compiles(ArrayAgg, 'sqlite')
 def sqlite_array_agg(element: ArrayAgg, compiler: 'sa.Compiled', **kw: Any) -> str:
     return "group_concat(%s, ',')" % compiler.process(element.clauses, **kw)
 
@@ -90,14 +90,14 @@ class ArrayContains(sa.sql.expression.FunctionElement[Any]):
     inherit_cache = True
 
 
-@compiles(ArrayContains) # type: ignore[no-untyped-call, misc]
+@compiles(ArrayContains)
 def generic_array_contains(element: ArrayContains, compiler: 'sa.Compiled', **kw: Any) -> str:
     arg1, arg2 = list(element.clauses)
     return "(%s @> %s)" % (compiler.process(arg1, **kw),
                            compiler.process(arg2, **kw))
 
 
-@compiles(ArrayContains, 'sqlite') # type: ignore[no-untyped-call, misc]
+@compiles(ArrayContains, 'sqlite')
 def sqlite_array_contains(element: ArrayContains, compiler: 'sa.Compiled', **kw: Any) -> str:
     return "array_contains(%s)" % compiler.process(element.clauses, **kw)
 
@@ -111,12 +111,12 @@ class ArrayCat(sa.sql.expression.FunctionElement[Any]):
     inherit_cache = True
 
 
-@compiles(ArrayCat) # type: ignore[no-untyped-call, misc]
+@compiles(ArrayCat)
 def generic_array_cat(element: ArrayCat, compiler: 'sa.Compiled', **kw: Any) -> str:
     return "array_cat(%s)" % compiler.process(element.clauses, **kw)
 
 
-@compiles(ArrayCat, 'sqlite') # type: ignore[no-untyped-call, misc]
+@compiles(ArrayCat, 'sqlite')
 def sqlite_array_cat(element: ArrayCat, compiler: 'sa.Compiled', **kw: Any) -> str:
     arg1, arg2 = list(element.clauses)
     return "(%s || ',' || %s)" % (compiler.process(arg1, **kw), compiler.process(arg2, **kw))

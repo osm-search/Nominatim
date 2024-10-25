@@ -28,7 +28,7 @@ class PlacexGeometryReverseLookuppolygon(sa.sql.functions.GenericFunction[Any]):
     inherit_cache = True
 
 
-@compiles(PlacexGeometryReverseLookuppolygon) # type: ignore[no-untyped-call, misc]
+@compiles(PlacexGeometryReverseLookuppolygon)
 def _default_intersects(element: PlacexGeometryReverseLookuppolygon,
                         compiler: 'sa.Compiled', **kw: Any) -> str:
     return ("(ST_GeometryType(placex.geometry) in ('ST_Polygon', 'ST_MultiPolygon')"
@@ -39,7 +39,7 @@ def _default_intersects(element: PlacexGeometryReverseLookuppolygon,
             " AND placex.linked_place_id is null)")
 
 
-@compiles(PlacexGeometryReverseLookuppolygon, 'sqlite') # type: ignore[no-untyped-call, misc]
+@compiles(PlacexGeometryReverseLookuppolygon, 'sqlite')
 def _sqlite_intersects(element: PlacexGeometryReverseLookuppolygon,
                        compiler: 'sa.Compiled', **kw: Any) -> str:
     return ("(ST_GeometryType(placex.geometry) in ('POLYGON', 'MULTIPOLYGON')"
@@ -60,7 +60,7 @@ class IntersectsReverseDistance(sa.sql.functions.GenericFunction[Any]):
         self.tablename = table.name
 
 
-@compiles(IntersectsReverseDistance) # type: ignore[no-untyped-call, misc]
+@compiles(IntersectsReverseDistance)
 def default_reverse_place_diameter(element: IntersectsReverseDistance,
                                    compiler: 'sa.Compiled', **kw: Any) -> str:
     table = element.tablename
@@ -73,7 +73,7 @@ def default_reverse_place_diameter(element: IntersectsReverseDistance,
                tuple(map(lambda c: compiler.process(c, **kw), element.clauses))
 
 
-@compiles(IntersectsReverseDistance, 'sqlite') # type: ignore[no-untyped-call, misc]
+@compiles(IntersectsReverseDistance, 'sqlite')
 def sqlite_reverse_place_diameter(element: IntersectsReverseDistance,
                                   compiler: 'sa.Compiled', **kw: Any) -> str:
     geom1, rank, geom2 = list(element.clauses)
@@ -101,7 +101,7 @@ class IsBelowReverseDistance(sa.sql.functions.GenericFunction[Any]):
     inherit_cache = True
 
 
-@compiles(IsBelowReverseDistance) # type: ignore[no-untyped-call, misc]
+@compiles(IsBelowReverseDistance)
 def default_is_below_reverse_distance(element: IsBelowReverseDistance,
                                       compiler: 'sa.Compiled', **kw: Any) -> str:
     dist, rank = list(element.clauses)
@@ -109,7 +109,7 @@ def default_is_below_reverse_distance(element: IsBelowReverseDistance,
                                                 compiler.process(rank, **kw))
 
 
-@compiles(IsBelowReverseDistance, 'sqlite') # type: ignore[no-untyped-call, misc]
+@compiles(IsBelowReverseDistance, 'sqlite')
 def sqlite_is_below_reverse_distance(element: IsBelowReverseDistance,
                                      compiler: 'sa.Compiled', **kw: Any) -> str:
     dist, rank = list(element.clauses)
@@ -126,7 +126,7 @@ class IsAddressPoint(sa.sql.functions.GenericFunction[Any]):
                          table.c.housenumber, table.c.name)
 
 
-@compiles(IsAddressPoint) # type: ignore[no-untyped-call, misc]
+@compiles(IsAddressPoint)
 def default_is_address_point(element: IsAddressPoint,
                              compiler: 'sa.Compiled', **kw: Any) -> str:
     rank, hnr, name = list(element.clauses)
@@ -136,7 +136,7 @@ def default_is_address_point(element: IsAddressPoint,
                 compiler.process(name, **kw))
 
 
-@compiles(IsAddressPoint, 'sqlite') # type: ignore[no-untyped-call, misc]
+@compiles(IsAddressPoint, 'sqlite')
 def sqlite_is_address_point(element: IsAddressPoint,
                             compiler: 'sa.Compiled', **kw: Any) -> str:
     rank, hnr, name = list(element.clauses)
@@ -153,7 +153,7 @@ class CrosscheckNames(sa.sql.functions.GenericFunction[Any]):
     name = 'CrosscheckNames'
     inherit_cache = True
 
-@compiles(CrosscheckNames) # type: ignore[no-untyped-call, misc]
+@compiles(CrosscheckNames)
 def compile_crosscheck_names(element: CrosscheckNames,
                              compiler: 'sa.Compiled', **kw: Any) -> str:
     arg1, arg2 = list(element.clauses)
@@ -161,7 +161,7 @@ def compile_crosscheck_names(element: CrosscheckNames,
             compiler.process(arg1, **kw), compiler.process(arg2, **kw))
 
 
-@compiles(CrosscheckNames, 'sqlite') # type: ignore[no-untyped-call, misc]
+@compiles(CrosscheckNames, 'sqlite')
 def compile_sqlite_crosscheck_names(element: CrosscheckNames,
                                     compiler: 'sa.Compiled', **kw: Any) -> str:
     arg1, arg2 = list(element.clauses)
@@ -178,12 +178,12 @@ class JsonArrayEach(sa.sql.functions.GenericFunction[Any]):
     inherit_cache = True
 
 
-@compiles(JsonArrayEach) # type: ignore[no-untyped-call, misc]
+@compiles(JsonArrayEach)
 def default_json_array_each(element: JsonArrayEach, compiler: 'sa.Compiled', **kw: Any) -> str:
     return "json_array_elements(%s)" % compiler.process(element.clauses, **kw)
 
 
-@compiles(JsonArrayEach, 'sqlite') # type: ignore[no-untyped-call, misc]
+@compiles(JsonArrayEach, 'sqlite')
 def sqlite_json_array_each(element: JsonArrayEach, compiler: 'sa.Compiled', **kw: Any) -> str:
     return "json_each(%s)" % compiler.process(element.clauses, **kw)
 
@@ -196,7 +196,7 @@ class Greatest(sa.sql.functions.GenericFunction[Any]):
     inherit_cache = True
 
 
-@compiles(Greatest, 'sqlite') # type: ignore[no-untyped-call, misc]
+@compiles(Greatest, 'sqlite')
 def sqlite_greatest(element: Greatest, compiler: 'sa.Compiled', **kw: Any) -> str:
     return "max(%s)" % compiler.process(element.clauses, **kw)
 
@@ -209,13 +209,13 @@ class RegexpWord(sa.sql.functions.GenericFunction[Any]):
     inherit_cache = True
 
 
-@compiles(RegexpWord, 'postgresql') # type: ignore[no-untyped-call, misc]
+@compiles(RegexpWord, 'postgresql')
 def postgres_regexp_nocase(element: RegexpWord, compiler: 'sa.Compiled', **kw: Any) -> str:
     arg1, arg2 = list(element.clauses)
     return "%s ~* ('\\m(' || %s  || ')\\M')::text" % (compiler.process(arg2, **kw), compiler.process(arg1, **kw))
 
 
-@compiles(RegexpWord, 'sqlite') # type: ignore[no-untyped-call, misc]
+@compiles(RegexpWord, 'sqlite')
 def sqlite_regexp_nocase(element: RegexpWord, compiler: 'sa.Compiled', **kw: Any) -> str:
     arg1, arg2 = list(element.clauses)
     return "regexp('\\b(' || %s  || ')\\b', %s)" % (compiler.process(arg1, **kw), compiler.process(arg2, **kw))

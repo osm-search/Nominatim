@@ -30,7 +30,7 @@ class LookupAll(LookupType):
                          sa.type_coerce(tokens, IntArray))
 
 
-@compiles(LookupAll) # type: ignore[no-untyped-call, misc]
+@compiles(LookupAll)
 def _default_lookup_all(element: LookupAll,
                         compiler: 'sa.Compiled', **kw: Any) -> str:
     _, col, _, tokens = list(element.clauses)
@@ -38,7 +38,7 @@ def _default_lookup_all(element: LookupAll,
                            compiler.process(tokens, **kw))
 
 
-@compiles(LookupAll, 'sqlite') # type: ignore[no-untyped-call, misc]
+@compiles(LookupAll, 'sqlite')
 def _sqlite_lookup_all(element: LookupAll,
                         compiler: 'sa.Compiled', **kw: Any) -> str:
     place, col, colname, tokens = list(element.clauses)
@@ -69,14 +69,14 @@ class LookupAny(LookupType):
         super().__init__(table.c.place_id, getattr(table.c, column), column,
                          sa.type_coerce(tokens, IntArray))
 
-@compiles(LookupAny) # type: ignore[no-untyped-call, misc]
+@compiles(LookupAny)
 def _default_lookup_any(element: LookupAny,
                         compiler: 'sa.Compiled', **kw: Any) -> str:
     _, col, _, tokens = list(element.clauses)
     return "(%s && %s)" % (compiler.process(col, **kw),
                            compiler.process(tokens, **kw))
 
-@compiles(LookupAny, 'sqlite') # type: ignore[no-untyped-call, misc]
+@compiles(LookupAny, 'sqlite')
 def _sqlite_lookup_any(element: LookupAny,
                         compiler: 'sa.Compiled', **kw: Any) -> str:
     place, _, colname, tokens = list(element.clauses)
@@ -101,14 +101,14 @@ class Restrict(LookupType):
                          sa.type_coerce(tokens, IntArray))
 
 
-@compiles(Restrict) # type: ignore[no-untyped-call, misc]
+@compiles(Restrict)
 def _default_restrict(element: Restrict,
                         compiler: 'sa.Compiled', **kw: Any) -> str:
     arg1, arg2 = list(element.clauses)
     return "(coalesce(null, %s) @> %s)" % (compiler.process(arg1, **kw),
                                            compiler.process(arg2, **kw))
 
-@compiles(Restrict, 'sqlite') # type: ignore[no-untyped-call, misc]
+@compiles(Restrict, 'sqlite')
 def _sqlite_restrict(element: Restrict,
                         compiler: 'sa.Compiled', **kw: Any) -> str:
     return "array_contains(%s)" % compiler.process(element.clauses, **kw)

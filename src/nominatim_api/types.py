@@ -434,7 +434,7 @@ class LookupDetails:
                        else field.default
             if field.metadata and 'transform' in field.metadata:
                 return field.metadata['transform'](v)
-            if not isinstance(v, field.type):
+            if not isinstance(v, field.type): # type: ignore[arg-type]
                 raise UsageError(f"Parameter '{field.name}' needs to be of {field.type!s}.")
             return v
 

@@ -7,6 +7,26 @@
 
 -- Assorted helper functions for the triggers.
 
+CREATE OR REPLACE FUNCTION get_center_point(place GEOMETRY)
+  RETURNS GEOMETRY
+  AS $$
+DECLARE
+  geom_type TEXT;
+BEGIN
+  geom_type := ST_GeometryType(place);
+  IF geom_type = ' ST_Point' THEN
+    RETURN place;
+  END IF;
+  IF geom_type = 'ST_LineString' THEN
+    RETURN ST_LineInterpolatePoint(place, 0.5);
+  END IF;
+
+  RETURN ST_PointOnSurface(place);
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE;
+
+
 CREATE OR REPLACE FUNCTION geometry_sector(partition INTEGER, place geometry)
   RETURNS INTEGER
   AS $$
@@ -19,6 +39,7 @@ BEGIN
 END;
 $$
 LANGUAGE plpgsql IMMUTABLE;
+
 
 
 CREATE OR REPLACE FUNCTION array_merge(a INTEGER[], b INTEGER[])

@@ -176,8 +176,8 @@ BEGIN
   END IF;
 
   NEW.parent_place_id := get_interpolation_parent(NEW.token_info, NEW.partition,
-                                                 ST_PointOnSurface(NEW.linegeo),
-                                                 NEW.linegeo);
+                                                  get_center_point(NEW.linegeo),
+                                                  NEW.linegeo);
 
   -- Cannot find a parent street. We will not be able to display a reliable
   -- address, so drop entire interpolation.

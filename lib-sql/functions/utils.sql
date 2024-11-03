@@ -27,15 +27,11 @@ $$
 LANGUAGE plpgsql IMMUTABLE;
 
 
-CREATE OR REPLACE FUNCTION geometry_sector(partition INTEGER, place geometry)
+CREATE OR REPLACE FUNCTION geometry_sector(partition INTEGER, place GEOMETRY)
   RETURNS INTEGER
   AS $$
-DECLARE
-  NEWgeometry geometry;
 BEGIN
---  RAISE WARNING '%',place;
-  NEWgeometry := ST_PointOnSurface(place);
-  RETURN (partition*1000000) + (500-ST_X(NEWgeometry)::integer)*1000 + (500-ST_Y(NEWgeometry)::integer);
+  RETURN (partition*1000000) + (500-ST_X(place)::INTEGER)*1000 + (500-ST_Y(place)::INTEGER);
 END;
 $$
 LANGUAGE plpgsql IMMUTABLE;
@@ -179,16 +175,13 @@ $$
 LANGUAGE plpgsql STABLE;
 
 
-CREATE OR REPLACE FUNCTION get_country_code(place geometry)
+CREATE OR REPLACE FUNCTION get_country_code(place_centre geometry)
   RETURNS TEXT
   AS $$
 DECLARE
-  place_centre GEOMETRY;
   nearcountry RECORD;
   countries TEXT[];
 BEGIN
-  place_centre := ST_PointOnSurface(place);
-
 -- RAISE WARNING 'get_country_code, start: %', ST_AsText(place_centre);
 
   -- Try for a OSM polygon

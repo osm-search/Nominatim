@@ -322,6 +322,48 @@ jobs:
           - name: Check full import
             run: nominatim admin --check-database
 
+    migrate:
+      runs-on: ubuntu-24.04
+      needs: create-archive
+
+      steps:
+          - uses: actions/download-artifact@v4
+            with:
+                name: full-source
+
+          - name: Unpack Nominatim
+            run: tar xf nominatim-src.tar.bz2
+
+          - uses: ./Nominatim/.github/actions/setup-postgresql
+            with:
+                postgresql-version: 17
+                postgis-version: 3
+
+          - name: Install Python dependencies
+            run: |
+              sudo apt-get install --no-install-recommends virtualenv osm2pgsql
+
+          - name: Install Nominatim master version
+            run: |
+              virtualenv master
+              cd Nominatim
+              ../master/bin/pip install packaging/nominatim-db
+
+          - name: Install Nominatim from pypi
+            run: |
+              virtualenv release
+              ./release/bin/pip install nominatim-db
+
+          - name: Import Nominatim database using release
+            run: |
+              ./release/bin/nominatim import --osm-file Nominatim/test/testdb/apidb-test-data.pbf
+              ./release/bin/nominatim add-data --file Nominatim/test/testdb/additional_api_test.data.osm
+
+          - name: Migrate to master version
+            run: |
+              ./master/bin/nominatim admin --migrate
+              ./release/bin/nominatim add-data --file Nominatim/test/testdb/additional_api_test.data.osm
+
     codespell:
       runs-on: ubuntu-latest
       steps:

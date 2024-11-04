@@ -175,18 +175,18 @@ $$
 LANGUAGE plpgsql STABLE;
 
 
-CREATE OR REPLACE FUNCTION get_country_code(place_centre geometry)
+CREATE OR REPLACE FUNCTION get_country_code(place geometry)
   RETURNS TEXT
   AS $$
 DECLARE
   nearcountry RECORD;
   countries TEXT[];
 BEGIN
--- RAISE WARNING 'get_country_code, start: %', ST_AsText(place_centre);
+-- RAISE WARNING 'get_country_code, start: %', ST_AsText(place);
 
   -- Try for a OSM polygon
   SELECT array_agg(country_code) FROM location_area_country
-    WHERE country_code is not null and st_covers(geometry, place_centre)
+    WHERE country_code is not null and st_covers(geometry, place)
     INTO countries;
 
   IF array_length(countries, 1) = 1 THEN
@@ -197,7 +197,7 @@ BEGIN
     -- more than one country found, confirm against the fallback data what to choose
     FOR nearcountry IN
         SELECT country_code FROM country_osm_grid
-          WHERE ST_Covers(geometry, place_centre) AND country_code = ANY(countries)
+          WHERE ST_Covers(geometry, place) AND country_code = ANY(countries)
           ORDER BY area ASC
     LOOP
         RETURN nearcountry.country_code;
@@ -217,18 +217,18 @@ BEGIN
     RETURN countries[1];
   END IF;
 
--- RAISE WARNING 'osm fallback: %', ST_AsText(place_centre);
+-- RAISE WARNING 'osm fallback: %', ST_AsText(place);
 
   -- Try for OSM fallback data
   -- The order is to deal with places like HongKong that are 'states' within another polygon
   FOR nearcountry IN
     SELECT country_code from country_osm_grid
-    WHERE st_covers(geometry, place_centre) order by area asc limit 1
+    WHERE st_covers(geometry, place) order by area asc limit 1
   LOOP
     RETURN nearcountry.country_code;
   END LOOP;
 
--- RAISE WARNING 'near osm fallback: %', ST_AsText(place_centre);
+-- RAISE WARNING 'near osm fallback: %', ST_AsText(place);
 
   RETURN NULL;
 END;

@@ -668,7 +668,7 @@ BEGIN
   NEW.place_id := nextval('seq_place');
   NEW.indexed_status := 1; --STATUS_NEW
 
-  NEW.centroid := ST_PointOnSurface(NEW.geometry);
+  NEW.centroid := get_center_point(NEW.geometry);
   NEW.country_code := lower(get_country_code(NEW.centroid));
 
   NEW.partition := get_partition(NEW.country_code);
@@ -870,7 +870,7 @@ BEGIN
   END IF;
 
   -- Compute a preliminary centroid.
-  NEW.centroid := ST_PointOnSurface(NEW.geometry);
+  NEW.centroid := get_center_point(NEW.geometry);
 
     -- recalculate country and partition
   IF NEW.rank_search = 4 AND NEW.address is not NULL AND NEW.address ? 'country' THEN

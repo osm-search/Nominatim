@@ -7,18 +7,35 @@
 
 -- Assorted helper functions for the triggers.
 
-CREATE OR REPLACE FUNCTION geometry_sector(partition INTEGER, place geometry)
-  RETURNS INTEGER
+CREATE OR REPLACE FUNCTION get_center_point(place GEOMETRY)
+  RETURNS GEOMETRY
   AS $$
 DECLARE
-  NEWgeometry geometry;
+  geom_type TEXT;
 BEGIN
---  RAISE WARNING '%',place;
-  NEWgeometry := ST_PointOnSurface(place);
-  RETURN (partition*1000000) + (500-ST_X(NEWgeometry)::integer)*1000 + (500-ST_Y(NEWgeometry)::integer);
+  geom_type := ST_GeometryType(place);
+  IF geom_type = ' ST_Point' THEN
+    RETURN place;
+  END IF;
+  IF geom_type = 'ST_LineString' THEN
+    RETURN ST_LineInterpolatePoint(place, 0.5);
+  END IF;
+
+  RETURN ST_PointOnSurface(place);
 END;
 $$
 LANGUAGE plpgsql IMMUTABLE;
+
+
+CREATE OR REPLACE FUNCTION geometry_sector(partition INTEGER, place GEOMETRY)
+  RETURNS INTEGER
+  AS $$
+BEGIN
+  RETURN (partition*1000000) + (500-ST_X(place)::INTEGER)*1000 + (500-ST_Y(place)::INTEGER);
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE;
+
 
 
 CREATE OR REPLACE FUNCTION array_merge(a INTEGER[], b INTEGER[])
@@ -158,16 +175,13 @@ $$
 LANGUAGE plpgsql STABLE;
 
 
-CREATE OR REPLACE FUNCTION get_country_code(place geometry)
+CREATE OR REPLACE FUNCTION get_country_code(place_centre geometry)
   RETURNS TEXT
   AS $$
 DECLARE
-  place_centre GEOMETRY;
   nearcountry RECORD;
   countries TEXT[];
 BEGIN
-  place_centre := ST_PointOnSurface(place);
-
 -- RAISE WARNING 'get_country_code, start: %', ST_AsText(place_centre);
 
   -- Try for a OSM polygon

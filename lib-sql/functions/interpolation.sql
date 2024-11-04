@@ -121,6 +121,8 @@ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION osmline_insert()
   RETURNS TRIGGER
   AS $$
+DECLARE
+  centroid GEOMETRY;
 BEGIN
   NEW.place_id := nextval('seq_place');
   NEW.indexed_date := now();
@@ -135,10 +137,11 @@ BEGIN
       END IF;
 
       NEW.indexed_status := 1; --STATUS_NEW
-      NEW.country_code := lower(get_country_code(NEW.linegeo));
+      centroid := get_center_point(NEW.linegeo);
+      NEW.country_code := lower(get_country_code(centroid));
 
       NEW.partition := get_partition(NEW.country_code);
-      NEW.geometry_sector := geometry_sector(NEW.partition, NEW.linegeo);
+      NEW.geometry_sector := geometry_sector(NEW.partition, centroid);
   END IF;
 
   RETURN NEW;
@@ -176,8 +179,8 @@ BEGIN
   END IF;
 
   NEW.parent_place_id := get_interpolation_parent(NEW.token_info, NEW.partition,
-                                                 ST_PointOnSurface(NEW.linegeo),
-                                                 NEW.linegeo);
+                                                  get_center_point(NEW.linegeo),
+                                                  NEW.linegeo);
 
   -- Cannot find a parent street. We will not be able to display a reliable
   -- address, so drop entire interpolation.

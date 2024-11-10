@@ -61,7 +61,6 @@ def bbox_from_result(result: Union[ReverseResult, SearchResult]) -> Bbox:
     return result.bbox
 
 
-# pylint: disable=line-too-long
 OSM_ATTRIBUTION = 'Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright'
 
 

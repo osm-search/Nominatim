@@ -20,9 +20,6 @@ from . import results as nres
 from .logging import log
 from .types import AnyPoint, DataLayer, ReverseDetails, GeometryFormat, Bbox
 
-# In SQLAlchemy expression which compare with NULL need to be expressed with
-# the equal sign.
-# pylint: disable=singleton-comparison
 
 RowFunc = Callable[[Optional[SaRow], Type[nres.ReverseResult]], Optional[nres.ReverseResult]]
 

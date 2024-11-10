@@ -14,7 +14,7 @@ import importlib
 
 from .server.content_types import CONTENT_JSON
 
-T = TypeVar('T')  # pylint: disable=invalid-name
+T = TypeVar('T')
 FormatFunc = Callable[[T, Mapping[str, Any]], str]
 ErrorFormatFunc = Callable[[str, str, int], str]
 

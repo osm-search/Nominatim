@@ -45,7 +45,6 @@ class SpecialPhraseLoader(Protocol):
 
 
 class SPImporter():
-    # pylint: disable-msg=too-many-instance-attributes
     """
         Class handling the process of special phrases importation into the database.
 

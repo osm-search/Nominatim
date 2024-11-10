@@ -116,7 +116,6 @@ class UpdateReplication:
         return update_interval
 
     async def _update(self, args: NominatimArgs) -> None:
-        # pylint: disable=too-many-locals
         from ..tools import replication
         from ..indexer.indexer import Indexer
         from ..tokenizer import factory as tokenizer_factory

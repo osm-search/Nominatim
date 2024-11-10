@@ -7,8 +7,6 @@
 """
 Module for forward search.
 """
-# pylint: disable=useless-import-alias
-
 from .geocoder import (ForwardGeocoder as ForwardGeocoder)
 from .query import (Phrase as Phrase,
                     PhraseType as PhraseType)

@@ -16,6 +16,7 @@ from ..errors import UsageError
 from ..config import Configuration
 from ..tokenizer.base import AbstractTokenizer
 
+
 def _flatten_name_list(names: Any) -> Dict[str, str]:
     if names is None:
         return {}
@@ -39,14 +40,12 @@ def _flatten_name_list(names: Any) -> Dict[str, str]:
     return flat
 
 
-
 class _CountryInfo:
     """ Caches country-specific properties from the configuration file.
     """
 
     def __init__(self) -> None:
         self._info: Dict[str, Dict[str, Any]] = {}
-
 
     def load(self, config: Configuration) -> None:
         """ Load the country properties from the configuration files,
@@ -63,7 +62,6 @@ class _CountryInfo:
                                          for x in prop['languages'].split(',')]
                 prop['names'] = _flatten_name_list(prop.get('names'))
 
-
     def items(self) -> Iterable[Tuple[str, Dict[str, Any]]]:
         """ Return tuples of (country_code, property dict) as iterable.
         """
@@ -73,7 +71,6 @@ class _CountryInfo:
         """ Get country information for the country with the given country code.
         """
         return self._info.get(country_code, {})
-
 
 
 _COUNTRY_INFO = _CountryInfo()
@@ -86,13 +83,16 @@ def setup_country_config(config: Configuration) -> None:
     """
     _COUNTRY_INFO.load(config)
 
+
 @overload
 def iterate() -> Iterable[Tuple[str, Dict[str, Any]]]:
     ...
 
+
 @overload
 def iterate(prop: str) -> Iterable[Tuple[str, Any]]:
     ...
+
 
 def iterate(prop: Optional[str] = None) -> Iterable[Tuple[str, Dict[str, Any]]]:
     """ Iterate over country code and properties.
@@ -168,7 +168,7 @@ def create_country_names(conn: Connection, tokenizer: AbstractTokenizer,
 
                 # country names (only in languages as provided)
                 if name:
-                    names.update({k : v for k, v in name.items() if _include_key(k)})
+                    names.update({k: v for k, v in name.items() if _include_key(k)})
 
                 analyzer.add_country_names(code, names)
 

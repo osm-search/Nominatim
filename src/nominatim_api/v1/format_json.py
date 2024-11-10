@@ -13,7 +13,6 @@ from ..utils.json_writer import JsonWriter
 from ..results import AddressLines, ReverseResults, SearchResults
 from . import classtypes as cl
 
-#pylint: disable=too-many-branches
 
 def _write_osm_id(out: JsonWriter, osm_object: Optional[Tuple[str, int]]) -> None:
     if osm_object is not None:
@@ -22,7 +21,7 @@ def _write_osm_id(out: JsonWriter, osm_object: Optional[Tuple[str, int]]) -> Non
 
 
 def _write_typed_address(out: JsonWriter, address: Optional[AddressLines],
-                               country_code: Optional[str]) -> None:
+                         country_code: Optional[str]) -> None:
     parts = {}
     for line in (address or []):
         if line.isaddress:
@@ -52,12 +51,11 @@ def _write_geocodejson_address(out: JsonWriter,
                 out.keyval('postcode', line.local_name)
             elif line.category[1] == 'house_number':
                 out.keyval('housenumber', line.local_name)
-            elif (obj_place_id is None or obj_place_id != line.place_id) \
-                 and line.rank_address >= 4 and line.rank_address < 28:
+            elif ((obj_place_id is None or obj_place_id != line.place_id)
+                  and line.rank_address >= 4 and line.rank_address < 28):
                 rank_name = GEOCODEJSON_RANKS[line.rank_address]
                 if rank_name not in extra:
                     extra[rank_name] = line.local_name
-
 
     for k, v in extra.items():
         out.keyval(k, v)
@@ -87,17 +85,16 @@ def format_base_json(results: Union[ReverseResults, SearchResults],
         _write_osm_id(out, result.osm_object)
 
         out.keyval('lat', f"{result.centroid.lat}")\
-             .keyval('lon', f"{result.centroid.lon}")\
-             .keyval(class_label, result.category[0])\
-             .keyval('type', result.category[1])\
-             .keyval('place_rank', result.rank_search)\
-             .keyval('importance', result.calculated_importance())\
-             .keyval('addresstype', cl.get_label_tag(result.category, result.extratags,
-                                                     result.rank_address,
-                                                     result.country_code))\
-             .keyval('name', result.locale_name or '')\
-             .keyval('display_name', result.display_name or '')
-
+           .keyval('lon', f"{result.centroid.lon}")\
+           .keyval(class_label, result.category[0])\
+           .keyval('type', result.category[1])\
+           .keyval('place_rank', result.rank_search)\
+           .keyval('importance', result.calculated_importance())\
+           .keyval('addresstype', cl.get_label_tag(result.category, result.extratags,
+                                                   result.rank_address,
+                                                   result.country_code))\
+           .keyval('name', result.locale_name or '')\
+           .keyval('display_name', result.display_name or '')
 
         if options.get('icon_base_url', None):
             icon = cl.ICONS.get(result.category)
@@ -117,10 +114,10 @@ def format_base_json(results: Union[ReverseResults, SearchResults],
 
         bbox = cl.bbox_from_result(result)
         out.key('boundingbox').start_array()\
-             .value(f"{bbox.minlat:0.7f}").next()\
-             .value(f"{bbox.maxlat:0.7f}").next()\
-             .value(f"{bbox.minlon:0.7f}").next()\
-             .value(f"{bbox.maxlon:0.7f}").next()\
+           .value(f"{bbox.minlat:0.7f}").next()\
+           .value(f"{bbox.maxlat:0.7f}").next()\
+           .value(f"{bbox.minlon:0.7f}").next()\
+           .value(f"{bbox.maxlon:0.7f}").next()\
            .end_array().next()
 
         if result.geometry:
@@ -153,9 +150,9 @@ def format_base_geojson(results: Union[ReverseResults, SearchResults],
     out = JsonWriter()
 
     out.start_object()\
-         .keyval('type', 'FeatureCollection')\
-         .keyval('licence', cl.OSM_ATTRIBUTION)\
-         .key('features').start_array()
+       .keyval('type', 'FeatureCollection')\
+       .keyval('licence', cl.OSM_ATTRIBUTION)\
+       .key('features').start_array()
 
     for result in results:
         out.start_object()\
@@ -187,7 +184,7 @@ def format_base_geojson(results: Union[ReverseResults, SearchResults],
         if options.get('namedetails', False):
             out.keyval('namedetails', result.names)
 
-        out.end_object().next() # properties
+        out.end_object().next()  # properties
 
         out.key('bbox').start_array()
         for coord in cl.bbox_from_result(result).coords:
@@ -214,20 +211,20 @@ def format_base_geocodejson(results: Union[ReverseResults, SearchResults],
     out = JsonWriter()
 
     out.start_object()\
-         .keyval('type', 'FeatureCollection')\
-         .key('geocoding').start_object()\
-           .keyval('version', '0.1.0')\
-           .keyval('attribution', cl.OSM_ATTRIBUTION)\
-           .keyval('licence', 'ODbL')\
-           .keyval_not_none('query', options.get('query'))\
-           .end_object().next()\
-         .key('features').start_array()
+       .keyval('type', 'FeatureCollection')\
+       .key('geocoding').start_object()\
+                        .keyval('version', '0.1.0')\
+                        .keyval('attribution', cl.OSM_ATTRIBUTION)\
+                        .keyval('licence', 'ODbL')\
+                        .keyval_not_none('query', options.get('query'))\
+                        .end_object().next()\
+       .key('features').start_array()
 
     for result in results:
         out.start_object()\
              .keyval('type', 'Feature')\
              .key('properties').start_object()\
-               .key('geocoding').start_object()
+                               .key('geocoding').start_object()
 
         out.keyval_not_none('place_id', result.place_id)
 

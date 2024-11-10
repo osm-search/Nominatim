@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 from .sqlalchemy_types import Geometry, KeyValueStore, IntArray
 
-#pylint: disable=too-many-instance-attributes
+
 class SearchTables:
     """ Data class that holds the tables of the Nominatim database.
 
@@ -22,16 +22,19 @@ class SearchTables:
     def __init__(self, meta: sa.MetaData) -> None:
         self.meta = meta
 
-        self.import_status = sa.Table('import_status', meta,
+        self.import_status = sa.Table(
+            'import_status', meta,
             sa.Column('lastimportdate', sa.DateTime(True), nullable=False),
             sa.Column('sequence_id', sa.Integer),
             sa.Column('indexed', sa.Boolean))
 
-        self.properties = sa.Table('nominatim_properties', meta,
+        self.properties = sa.Table(
+            'nominatim_properties', meta,
             sa.Column('property', sa.Text, nullable=False),
             sa.Column('value', sa.Text))
 
-        self.placex = sa.Table('placex', meta,
+        self.placex = sa.Table(
+            'placex', meta,
             sa.Column('place_id', sa.BigInteger, nullable=False),
             sa.Column('parent_place_id', sa.BigInteger),
             sa.Column('linked_place_id', sa.BigInteger),
@@ -55,14 +58,16 @@ class SearchTables:
             sa.Column('postcode', sa.Text),
             sa.Column('centroid', Geometry))
 
-        self.addressline = sa.Table('place_addressline', meta,
+        self.addressline = sa.Table(
+            'place_addressline', meta,
             sa.Column('place_id', sa.BigInteger),
             sa.Column('address_place_id', sa.BigInteger),
             sa.Column('distance', sa.Float),
             sa.Column('fromarea', sa.Boolean),
             sa.Column('isaddress', sa.Boolean))
 
-        self.postcode = sa.Table('location_postcode', meta,
+        self.postcode = sa.Table(
+            'location_postcode', meta,
             sa.Column('place_id', sa.BigInteger),
             sa.Column('parent_place_id', sa.BigInteger),
             sa.Column('rank_search', sa.SmallInteger),
@@ -73,7 +78,8 @@ class SearchTables:
             sa.Column('postcode', sa.Text),
             sa.Column('geometry', Geometry))
 
-        self.osmline = sa.Table('location_property_osmline', meta,
+        self.osmline = sa.Table(
+            'location_property_osmline', meta,
             sa.Column('place_id', sa.BigInteger, nullable=False),
             sa.Column('osm_id', sa.BigInteger),
             sa.Column('parent_place_id', sa.BigInteger),
@@ -87,19 +93,22 @@ class SearchTables:
             sa.Column('postcode', sa.Text),
             sa.Column('country_code', sa.String(2)))
 
-        self.country_name = sa.Table('country_name', meta,
+        self.country_name = sa.Table(
+            'country_name', meta,
             sa.Column('country_code', sa.String(2)),
             sa.Column('name', KeyValueStore),
             sa.Column('derived_name', KeyValueStore),
             sa.Column('partition', sa.Integer))
 
-        self.country_grid = sa.Table('country_osm_grid', meta,
+        self.country_grid = sa.Table(
+            'country_osm_grid', meta,
             sa.Column('country_code', sa.String(2)),
             sa.Column('area', sa.Float),
             sa.Column('geometry', Geometry))
 
         # The following tables are not necessarily present.
-        self.search_name = sa.Table('search_name', meta,
+        self.search_name = sa.Table(
+            'search_name', meta,
             sa.Column('place_id', sa.BigInteger),
             sa.Column('importance', sa.Float),
             sa.Column('search_rank', sa.SmallInteger),
@@ -109,7 +118,8 @@ class SearchTables:
             sa.Column('country_code', sa.String(2)),
             sa.Column('centroid', Geometry))
 
-        self.tiger = sa.Table('location_property_tiger', meta,
+        self.tiger = sa.Table(
+            'location_property_tiger', meta,
             sa.Column('place_id', sa.BigInteger),
             sa.Column('parent_place_id', sa.BigInteger),
             sa.Column('startnumber', sa.Integer),

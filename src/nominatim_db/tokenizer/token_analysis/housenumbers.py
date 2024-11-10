@@ -19,16 +19,18 @@ RE_DIGIT_ALPHA = re.compile(r'(\d)\s*([^\d\s␣])')
 RE_ALPHA_DIGIT = re.compile(r'([^\s\d␣])\s*(\d)')
 RE_NAMED_PART = re.compile(r'[a-z]{4}')
 
-### Configuration section
+# Configuration section
+
 
 def configure(*_: Any) -> None:
     """ All behaviour is currently hard-coded.
     """
     return None
 
-### Analysis section
+# Analysis section
 
-def create(normalizer: Any, transliterator: Any, config: None) -> 'HousenumberTokenAnalysis': # pylint: disable=W0613
+
+def create(normalizer: Any, transliterator: Any, config: None) -> 'HousenumberTokenAnalysis':
     """ Create a new token analysis instance for this module.
     """
     return HousenumberTokenAnalysis(normalizer, transliterator)

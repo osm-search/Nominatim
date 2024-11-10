@@ -33,6 +33,7 @@ except ModuleNotFoundError as exc:
 
 LOG = logging.getLogger()
 
+
 def init_replication(conn: Connection, base_url: str,
                      socket_timeout: int = 60) -> None:
     """ Set up replication for the server at the given base URL.
@@ -82,6 +83,7 @@ def check_for_updates(conn: Connection, base_url: str,
 
     LOG.warning("New data available (%i => %i).", seq, state.sequence)
     return 0
+
 
 class UpdateState(Enum):
     """ Possible states after an update has run.
@@ -176,12 +178,12 @@ def _make_replication_server(url: str, timeout: int) -> ContextManager[Replicati
             """ Download a resource from the given URL and return a byte sequence
                 of the content.
             """
-            headers = {"User-Agent" : f"Nominatim (pyosmium/{pyo_version.pyosmium_release})"}
+            headers = {"User-Agent": f"Nominatim (pyosmium/{pyo_version.pyosmium_release})"}
 
             if self.session is not None:
                 return self.session.get(url.get_full_url(),
-                                       headers=headers, timeout=timeout or None,
-                                       stream=True)
+                                        headers=headers, timeout=timeout or None,
+                                        stream=True)
 
             @contextmanager
             def _get_url_with_session() -> Iterator[requests.Response]:

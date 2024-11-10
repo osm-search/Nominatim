@@ -36,6 +36,7 @@ from ...data import country_info
 from .base import ProcessInfo
 from .config import SanitizerConfig
 
+
 class _AnalyzerByLanguage:
     """ Processor for tagging the language of names in a place.
     """
@@ -47,7 +48,6 @@ class _AnalyzerByLanguage:
 
         self._compute_default_languages(config.get('use-defaults', 'no'))
 
-
     def _compute_default_languages(self, use_defaults: str) -> None:
         self.deflangs: Dict[Optional[str], List[str]] = {}
 
@@ -55,17 +55,15 @@ class _AnalyzerByLanguage:
             for ccode, clangs in country_info.iterate('languages'):
                 if len(clangs) == 1 or use_defaults == 'all':
                     if self.whitelist:
-                        self.deflangs[ccode] = [l for l in clangs if l in self.whitelist]
+                        self.deflangs[ccode] = [cl for cl in clangs if cl in self.whitelist]
                     else:
                         self.deflangs[ccode] = clangs
-
 
     def _suffix_matches(self, suffix: str) -> bool:
         if self.whitelist is None:
             return len(suffix) in (2, 3) and suffix.islower()
 
         return suffix in self.whitelist
-
 
     def __call__(self, obj: ProcessInfo) -> None:
         if not obj.names:
@@ -80,14 +78,13 @@ class _AnalyzerByLanguage:
             else:
                 langs = self.deflangs.get(obj.place.country_code)
 
-
             if langs:
                 if self.replace:
                     name.set_attr('analyzer', langs[0])
                 else:
                     more_names.append(name.clone(attr={'analyzer': langs[0]}))
 
-                more_names.extend(name.clone(attr={'analyzer': l}) for l in langs[1:])
+                more_names.extend(name.clone(attr={'analyzer': lg}) for lg in langs[1:])
 
         obj.names.extend(more_names)
 

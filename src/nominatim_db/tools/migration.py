@@ -13,7 +13,7 @@ import logging
 from ..errors import UsageError
 from ..config import Configuration
 from ..db import properties
-from ..db.connection import connect, Connection,\
+from ..db.connection import connect, Connection, \
                             table_exists, register_hstore
 from ..version import NominatimVersion, NOMINATIM_VERSION, parse_version
 from ..tokenizer import factory as tokenizer_factory
@@ -21,7 +21,8 @@ from . import refresh
 
 LOG = logging.getLogger()
 
-_MIGRATION_FUNCTIONS : List[Tuple[NominatimVersion, Callable[..., None]]] = []
+_MIGRATION_FUNCTIONS: List[Tuple[NominatimVersion, Callable[..., None]]] = []
+
 
 def migrate(config: Configuration, paths: Any) -> int:
     """ Check for the current database version and execute migrations,

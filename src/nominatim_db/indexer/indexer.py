@@ -21,6 +21,7 @@ from . import runners
 
 LOG = logging.getLogger()
 
+
 class Indexer:
     """ Main indexing routine.
     """
@@ -29,7 +30,6 @@ class Indexer:
         self.dsn = dsn
         self.tokenizer = tokenizer
         self.num_threads = num_threads
-
 
     def has_pending(self) -> bool:
         """ Check if any data still needs indexing.
@@ -40,7 +40,6 @@ class Indexer:
             with conn.cursor() as cur:
                 cur.execute("SELECT 'a' FROM placex WHERE indexed_status > 0 LIMIT 1")
                 return cur.rowcount > 0
-
 
     async def index_full(self, analyse: bool = True) -> None:
         """ Index the complete database. This will first index boundaries
@@ -74,7 +73,6 @@ class Indexer:
 
                 if not self.has_pending():
                     break
-
 
     async def index_boundaries(self, minrank: int, maxrank: int) -> int:
         """ Index only administrative boundaries within the given rank range.
@@ -138,7 +136,6 @@ class Indexer:
                                    (minrank, maxrank))
                 total_tuples = {row.rank_address: row.count for row in cur}
 
-
         with self.tokenizer.name_analyzer() as analyzer:
             for rank in range(max(1, minrank), maxrank + 1):
                 if rank >= 30:
@@ -156,14 +153,12 @@ class Indexer:
 
         return total
 
-
     async def index_postcodes(self) -> int:
         """Index the entries of the location_postcode table.
         """
         LOG.warning("Starting indexing postcodes using %s threads", self.num_threads)
 
         return await self._index(runners.PostcodeRunner(), batch=20)
-
 
     def update_status_table(self) -> None:
         """ Update the status in the status table to 'indexed'.
@@ -193,7 +188,7 @@ class Indexer:
 
         if total_tuples > 0:
             async with await psycopg.AsyncConnection.connect(
-                                 self.dsn, row_factory=psycopg.rows.dict_row) as aconn,\
+                                 self.dsn, row_factory=psycopg.rows.dict_row) as aconn, \
                        QueryPool(self.dsn, self.num_threads, autocommit=True) as pool:
                 fetcher_time = 0.0
                 tstart = time.time()
@@ -223,7 +218,6 @@ class Indexer:
                      fetcher_time, pool.wait_time)
 
         return progress.done()
-
 
     def _prepare_indexing(self, runner: runners.Runner) -> int:
         with connect(self.dsn) as conn:

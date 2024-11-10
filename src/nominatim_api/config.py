@@ -8,5 +8,5 @@
 # This file is just a placeholder to make the config module available
 # during development. It will be replaced by nominatim_db/config.py on
 # installation.
-# pylint: skip-file
+# flake8: noqa
 from nominatim_db.config import *

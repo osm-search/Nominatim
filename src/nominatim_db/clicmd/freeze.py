@@ -12,10 +12,6 @@ import argparse
 from ..db.connection import connect
 from .args import NominatimArgs
 
-# Do not repeat documentation of subcommand classes.
-# pylint: disable=C0111
-# Using non-top-level imports to avoid eventually unused imports.
-# pylint: disable=E0012,C0415
 
 class SetupFreeze:
     """\
@@ -30,8 +26,7 @@ class SetupFreeze:
     """
 
     def add_args(self, parser: argparse.ArgumentParser) -> None:
-        pass # No options
-
+        pass  # No options
 
     def run(self, args: NominatimArgs) -> int:
         from ..tools import freeze

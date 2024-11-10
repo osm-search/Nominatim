@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2022 by the Nominatim developer community.
+# Copyright (C) 2024 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Specialized processor for postcodes. Supports a 'lookup' variant of the
@@ -13,16 +13,18 @@ from typing import Any, List
 from ...data.place_name import PlaceName
 from .generic_mutation import MutationVariantGenerator
 
-### Configuration section
+# Configuration section
+
 
 def configure(*_: Any) -> None:
     """ All behaviour is currently hard-coded.
     """
     return None
 
-### Analysis section
+# Analysis section
 
-def create(normalizer: Any, transliterator: Any, config: None) -> 'PostcodeTokenAnalysis': # pylint: disable=W0613
+
+def create(normalizer: Any, transliterator: Any, config: None) -> 'PostcodeTokenAnalysis':
     """ Create a new token analysis instance for this module.
     """
     return PostcodeTokenAnalysis(normalizer, transliterator)
@@ -44,12 +46,10 @@ class PostcodeTokenAnalysis:
 
         self.mutator = MutationVariantGenerator(' ', (' ', ''))
 
-
     def get_canonical_id(self, name: PlaceName) -> str:
         """ Return the standard form of the postcode.
         """
         return name.name.strip().upper()
-
 
     def compute_variants(self, norm_name: str) -> List[str]:
         """ Compute the spelling variants for the given normalized postcode.

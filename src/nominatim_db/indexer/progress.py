@@ -14,6 +14,7 @@ LOG = logging.getLogger()
 
 INITIAL_PROGRESS = 10
 
+
 class ProgressLogger:
     """ Tracks and prints progress for the indexing process.
         `name` is the name of the indexing step being tracked.

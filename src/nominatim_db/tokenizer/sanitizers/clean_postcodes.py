@@ -26,6 +26,7 @@ from ...data.postcode_format import PostcodeFormatter
 from .base import ProcessInfo
 from .config import SanitizerConfig
 
+
 class _PostcodeSanitizer:
 
     def __init__(self, config: SanitizerConfig) -> None:
@@ -35,7 +36,6 @@ class _PostcodeSanitizer:
         default_pattern = config.get('default-pattern')
         if default_pattern is not None and isinstance(default_pattern, str):
             self.matcher.set_default_pattern(default_pattern)
-
 
     def __call__(self, obj: ProcessInfo) -> None:
         if not obj.address:
@@ -55,7 +55,6 @@ class _PostcodeSanitizer:
                 postcode.name = formatted[0]
                 postcode.set_attr('variant', formatted[1])
 
-
     def scan(self, postcode: str, country: Optional[str]) -> Optional[Tuple[str, str]]:
         """ Check the postcode for correct formatting and return the
             normalized version. Returns None if the postcode does not
@@ -67,10 +66,8 @@ class _PostcodeSanitizer:
 
         assert country is not None
 
-        return self.matcher.normalize(country, match),\
-               ' '.join(filter(lambda p: p is not None, match.groups()))
-
-
+        return self.matcher.normalize(country, match), \
+            ' '.join(filter(lambda p: p is not None, match.groups()))
 
 
 def create(config: SanitizerConfig) -> Callable[[ProcessInfo], None]:

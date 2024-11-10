@@ -35,7 +35,7 @@ def run_osm2pgsql(options: Mapping[str, Any]) -> None:
            '--number-processes', '1' if options['append'] else str(options['threads']),
            '--cache', str(options['osm2pgsql_cache']),
            '--style', str(options['osm2pgsql_style'])
-          ]
+           ]
 
     if str(options['osm2pgsql_style']).endswith('.lua'):
         env['LUA_PATH'] = ';'.join((str(options['osm2pgsql_style_path'] / '?.lua'),
@@ -49,7 +49,6 @@ def run_osm2pgsql(options: Mapping[str, Any]) -> None:
     else:
         cmd.extend(('--output', 'gazetteer', '--hstore', '--latlon'))
         cmd.extend(_mk_tablespace_options('main', options))
-
 
     if options['flatnode_file']:
         cmd.extend(('--flat-nodes', options['flatnode_file']))

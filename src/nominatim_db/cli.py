@@ -25,6 +25,7 @@ from .clicmd.args import NominatimArgs, Subcommand
 
 LOG = logging.getLogger()
 
+
 class CommandlineParser:
     """ Wraps some of the common functions for parsing the command line
         and setting up subcommands.
@@ -57,7 +58,6 @@ class CommandlineParser:
         group.add_argument('-j', '--threads', metavar='NUM', type=int,
                            help='Number of parallel threads to use')
 
-
     def nominatim_version_text(self) -> str:
         """ Program name and version number as string
         """
@@ -65,7 +65,6 @@ class CommandlineParser:
         if version.GIT_COMMIT_HASH is not None:
             text += f' ({version.GIT_COMMIT_HASH})'
         return text
-
 
     def add_subcommand(self, name: str, cmd: Subcommand) -> None:
         """ Add a subcommand to the parser. The subcommand must be a class
@@ -81,7 +80,6 @@ class CommandlineParser:
                                       add_help=False)
         parser.set_defaults(command=cmd)
         cmd.add_args(parser)
-
 
     def run(self, **kwargs: Any) -> int:
         """ Parse the command line arguments of the program and execute the
@@ -122,7 +120,7 @@ class CommandlineParser:
             return ret
         except UsageError as exception:
             if log.isEnabledFor(logging.DEBUG):
-                raise # use Python's exception printing
+                raise  # use Python's exception printing
             log.fatal('FATAL: %s', exception)
 
         # If we get here, then execution has failed in some way.
@@ -139,7 +137,6 @@ class CommandlineParser:
 # a subcommand.
 #
 # No need to document the functions each time.
-# pylint: disable=C0111
 class AdminServe:
     """\
     Start a simple web server for serving the API.
@@ -164,15 +161,13 @@ class AdminServe:
                            choices=('falcon', 'starlette'),
                            help='Webserver framework to run. (default: falcon)')
 
-
     def run(self, args: NominatimArgs) -> int:
         asyncio.run(self.run_uvicorn(args))
 
         return 0
 
-
     async def run_uvicorn(self, args: NominatimArgs) -> None:
-        import uvicorn # pylint: disable=import-outside-toplevel
+        import uvicorn
 
         server_info = args.server.split(':', 1)
         host = server_info[0]
@@ -226,7 +221,7 @@ def get_set_parser() -> CommandlineParser:
         parser.add_subcommand('details', apicmd.APIDetails())
         parser.add_subcommand('status', apicmd.APIStatus())
     except ModuleNotFoundError as ex:
-        if not ex.name or 'nominatim_api' not in ex.name: # pylint: disable=E1135
+        if not ex.name or 'nominatim_api' not in ex.name:
             raise ex
 
         parser.parser.epilog = \
@@ -234,7 +229,6 @@ def get_set_parser() -> CommandlineParser:
             '\nThe following commands are not available:'\
             '\n    export, convert, serve, search, reverse, lookup, details, status'\
             "\n\nRun 'pip install nominatim-api' to install the package."
-
 
     return parser
 

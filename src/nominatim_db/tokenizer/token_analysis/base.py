@@ -12,6 +12,7 @@ from typing import Mapping, List, Any
 from ...typing import Protocol
 from ...data.place_name import PlaceName
 
+
 class Analyzer(Protocol):
     """ The `create()` function of an analysis module needs to return an
         object that implements the following functions.

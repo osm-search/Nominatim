@@ -15,10 +15,6 @@ from pathlib import Path
 from ..errors import UsageError
 from .args import NominatimArgs
 
-# Do not repeat documentation of subcommand classes.
-# pylint: disable=C0111
-# Using non-top-level imports to avoid eventually unused imports.
-# pylint: disable=E0012,C0415
 
 class WithAction(argparse.Action):
     """ Special action that saves a list of flags, given on the command-line
@@ -42,7 +38,6 @@ class WithAction(argparse.Action):
             full_option_strings.append(f"--without-{opt[2:]}")
 
         super().__init__(full_option_strings, argparse.SUPPRESS, nargs=0, **kwargs)
-
 
     def __call__(self, parser: argparse.ArgumentParser, namespace: argparse.Namespace,
                  values: Union[str, Sequence[Any], None],
@@ -80,7 +75,6 @@ class ConvertDB:
                            help='Enable/disable support for search API (default: disabled)')
         group.add_argument('--details', action=WithAction, dest_set=self.options, default=True,
                            help='Enable/disable support for details API (default: enabled)')
-
 
     def run(self, args: NominatimArgs) -> int:
         if args.output.exists():

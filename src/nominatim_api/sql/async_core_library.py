@@ -7,9 +7,9 @@
 """
 Import the base library to use with asynchronous SQLAlchemy.
 """
-# pylint: disable=invalid-name, ungrouped-imports, unused-import
-
 from typing import Any
+
+# flake8: noqa
 
 try:
     import sqlalchemy.dialects.postgresql.psycopg

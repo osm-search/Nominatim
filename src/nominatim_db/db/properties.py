@@ -11,6 +11,7 @@ from typing import Optional, cast
 
 from .connection import Connection, table_exists
 
+
 def set_property(conn: Connection, name: str, value: str) -> None:
     """ Add or replace the property with the given name.
     """

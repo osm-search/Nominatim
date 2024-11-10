@@ -15,7 +15,6 @@ from ..results import AddressLines, ReverseResult, ReverseResults, \
                       SearchResult, SearchResults
 from . import classtypes as cl
 
-#pylint: disable=too-many-branches
 
 def _write_xml_address(root: ET.Element, address: AddressLines,
                        country_code: Optional[str]) -> None:
@@ -30,7 +29,7 @@ def _write_xml_address(root: ET.Element, address: AddressLines,
             if line.names and 'ISO3166-2' in line.names and line.admin_level:
                 parts[f"ISO3166-2-lvl{line.admin_level}"] = line.names['ISO3166-2']
 
-    for k,v in parts.items():
+    for k, v in parts.items():
         ET.SubElement(root, k).text = v
 
     if country_code:
@@ -120,7 +119,7 @@ def format_base_xml(results: Union[ReverseResults, SearchResults],
         if options.get('namedetails', False):
             eroot = ET.SubElement(root if simple else place, 'namedetails')
             if result.names:
-                for k,v in result.names.items():
+                for k, v in result.names.items():
                     ET.SubElement(eroot, 'name', attrib={'desc': k}).text = v
 
     return '<?xml version="1.0" encoding="UTF-8" ?>\n' + ET.tostring(root, encoding='unicode')

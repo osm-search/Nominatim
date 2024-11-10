@@ -10,6 +10,7 @@ the tokenizer.
 """
 from typing import Optional, Mapping, Any, Tuple
 
+
 class PlaceInfo:
     """ This data class contains all information the tokenizer can access
         about a place.
@@ -17,7 +18,6 @@ class PlaceInfo:
 
     def __init__(self, info: Mapping[str, Any]) -> None:
         self._info = info
-
 
     @property
     def name(self) -> Optional[Mapping[str, str]]:
@@ -27,7 +27,6 @@ class PlaceInfo:
             The property may be None if the place has no names.
         """
         return self._info.get('name')
-
 
     @property
     def address(self) -> Optional[Mapping[str, str]]:
@@ -43,7 +42,6 @@ class PlaceInfo:
         """
         return self._info.get('address')
 
-
     @property
     def country_code(self) -> Optional[str]:
         """ The country code of the country the place is in. Guaranteed
@@ -51,7 +49,6 @@ class PlaceInfo:
             any country, the property is set to None.
         """
         return self._info.get('country_code')
-
 
     @property
     def rank_address(self) -> int:
@@ -61,7 +58,6 @@ class PlaceInfo:
         """
         return self._info.get('rank_address', 0)
 
-
     @property
     def centroid(self) -> Optional[Tuple[float, float]]:
         """ A center point of the place in WGS84. May be None when the
@@ -70,17 +66,15 @@ class PlaceInfo:
         x, y = self._info.get('centroid_x'), self._info.get('centroid_y')
         return None if x is None or y is None else (x, y)
 
-
     def is_a(self, key: str, value: str) -> bool:
         """ Set to True when the place's primary tag corresponds to the given
             key and value.
         """
         return self._info.get('class') == key and self._info.get('type') == value
 
-
     def is_country(self) -> bool:
         """ Set to True when the place is a valid country boundary.
         """
         return self.rank_address == 4 \
-               and self.is_a('boundary', 'administrative') \
-               and self.country_code is not None
+            and self.is_a('boundary', 'administrative') \
+            and self.country_code is not None

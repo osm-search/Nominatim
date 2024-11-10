@@ -15,7 +15,6 @@ from sqlalchemy.ext.compiler import compiles
 
 from ..typing import SaColumn
 
-# pylint: disable=all
 
 class PlacexGeometryReverseLookuppolygon(sa.sql.functions.GenericFunction[Any]):
     """ Check for conditions that allow partial index use on
@@ -69,8 +68,8 @@ def default_reverse_place_diameter(element: IntersectsReverseDistance,
            f" AND {table}.name is not null"\
            f" AND {table}.linked_place_id is null"\
            f" AND {table}.osm_type = 'N'" + \
-           " AND ST_Buffer(%s, reverse_place_diameter(%s)) && %s)" % \
-               tuple(map(lambda c: compiler.process(c, **kw), element.clauses))
+           " AND ST_Buffer(%s, reverse_place_diameter(%s)) && %s)" \
+        % tuple(map(lambda c: compiler.process(c, **kw), element.clauses))
 
 
 @compiles(IntersectsReverseDistance, 'sqlite')
@@ -79,17 +78,17 @@ def sqlite_reverse_place_diameter(element: IntersectsReverseDistance,
     geom1, rank, geom2 = list(element.clauses)
     table = element.tablename
 
-    return (f"({table}.rank_address between 4 and 25"\
-            f" AND {table}.type != 'postcode'"\
-            f" AND {table}.name is not null"\
-            f" AND {table}.linked_place_id is null"\
-            f" AND {table}.osm_type = 'N'"\
-             " AND MbrIntersects(%s, ST_Expand(%s, 14.0 * exp(-0.2 * %s) - 0.03))"\
-            f" AND {table}.place_id IN"\
-             " (SELECT place_id FROM placex_place_node_areas"\
-             "  WHERE ROWID IN (SELECT ROWID FROM SpatialIndex"\
-             "  WHERE f_table_name = 'placex_place_node_areas'"\
-             "  AND search_frame = %s)))") % (
+    return (f"({table}.rank_address between 4 and 25"
+            f" AND {table}.type != 'postcode'"
+            f" AND {table}.name is not null"
+            f" AND {table}.linked_place_id is null"
+            f" AND {table}.osm_type = 'N'"
+            "  AND MbrIntersects(%s, ST_Expand(%s, 14.0 * exp(-0.2 * %s) - 0.03))"
+            f" AND {table}.place_id IN"
+            "  (SELECT place_id FROM placex_place_node_areas"
+            "   WHERE ROWID IN (SELECT ROWID FROM SpatialIndex"
+            "   WHERE f_table_name = 'placex_place_node_areas'"
+            "   AND search_frame = %s)))") % (
                 compiler.process(geom1, **kw),
                 compiler.process(geom2, **kw),
                 compiler.process(rank, **kw),
@@ -153,6 +152,7 @@ class CrosscheckNames(sa.sql.functions.GenericFunction[Any]):
     name = 'CrosscheckNames'
     inherit_cache = True
 
+
 @compiles(CrosscheckNames)
 def compile_crosscheck_names(element: CrosscheckNames,
                              compiler: 'sa.Compiled', **kw: Any) -> str:
@@ -188,7 +188,6 @@ def sqlite_json_array_each(element: JsonArrayEach, compiler: 'sa.Compiled', **kw
     return "json_each(%s)" % compiler.process(element.clauses, **kw)
 
 
-
 class Greatest(sa.sql.functions.GenericFunction[Any]):
     """ Function to compute maximum of all its input parameters.
     """
@@ -201,7 +200,6 @@ def sqlite_greatest(element: Greatest, compiler: 'sa.Compiled', **kw: Any) -> st
     return "max(%s)" % compiler.process(element.clauses, **kw)
 
 
-
 class RegexpWord(sa.sql.functions.GenericFunction[Any]):
     """ Check if a full word is in a given string.
     """
@@ -212,10 +210,12 @@ class RegexpWord(sa.sql.functions.GenericFunction[Any]):
 @compiles(RegexpWord, 'postgresql')
 def postgres_regexp_nocase(element: RegexpWord, compiler: 'sa.Compiled', **kw: Any) -> str:
     arg1, arg2 = list(element.clauses)
-    return "%s ~* ('\\m(' || %s  || ')\\M')::text" % (compiler.process(arg2, **kw), compiler.process(arg1, **kw))
+    return "%s ~* ('\\m(' || %s  || ')\\M')::text" \
+        % (compiler.process(arg2, **kw), compiler.process(arg1, **kw))
 
 
 @compiles(RegexpWord, 'sqlite')
 def sqlite_regexp_nocase(element: RegexpWord, compiler: 'sa.Compiled', **kw: Any) -> str:
     arg1, arg2 = list(element.clauses)
-    return "regexp('\\b(' || %s  || ')\\b', %s)" % (compiler.process(arg1, **kw), compiler.process(arg2, **kw))
+    return "regexp('\\b(' || %s  || ')\\b', %s)"\
+        % (compiler.process(arg1, **kw), compiler.process(arg2, **kw))

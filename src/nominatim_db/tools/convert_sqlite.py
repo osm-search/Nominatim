@@ -21,6 +21,7 @@ from nominatim_api.sql.sqlalchemy_types import Geometry, IntArray
 
 LOG = logging.getLogger()
 
+
 async def convert(project_dir: Optional[Union[str, Path]],
                   outfile: Path, options: Set[str]) -> None:
     """ Export an existing database to sqlite. The resulting database
@@ -53,7 +54,6 @@ class SqliteWriter:
         self.dest = dest
         self.options = options
 
-
     async def write(self) -> None:
         """ Create the database structure and copy the data from
             the source database to the destination.
@@ -66,7 +66,6 @@ class SqliteWriter:
         if 'search' in self.options:
             await self.create_word_table()
         await self.create_indexes()
-
 
     async def create_tables(self) -> None:
         """ Set up the database tables.
@@ -87,7 +86,6 @@ class SqliteWriter:
                         sa.func.RecoverGeometryColumn(table.name, col.name, 4326,
                                                       col.type.subtype.upper(), 'XY')))
 
-
     async def create_class_tables(self) -> None:
         """ Set up the table that serve class/type-specific geometries.
         """
@@ -98,7 +96,6 @@ class SqliteWriter:
                 sa.Table(res[0], db.t.meta,
                          sa.Column('place_id', sa.BigInteger),
                          sa.Column('centroid', Geometry))
-
 
     async def create_word_table(self) -> None:
         """ Create the word table.
@@ -121,7 +118,6 @@ class SqliteWriter:
             await self.dest.execute(dest.insert(), data)
 
         await self.dest.connection.run_sync(sa.Index('idx_word_woken', dest.c.word_token).create)
-
 
     async def copy_data(self) -> None:
         """ Copy data for all registered tables.
@@ -150,7 +146,6 @@ class SqliteWriter:
         await self.dest.connection.run_sync(pg_tables.create)
         data = [{'tablename': t} for t in self.dest.t.meta.tables]
         await self.dest.execute(pg_tables.insert().values(data))
-
 
     async def create_indexes(self) -> None:
         """ Add indexes necessary for the frontend.
@@ -197,13 +192,11 @@ class SqliteWriter:
                     await self.dest.execute(sa.select(
                       sa.func.CreateSpatialIndex(t, 'centroid')))
 
-
     async def create_spatial_index(self, table: str, column: str) -> None:
         """ Create a spatial index on the given table and column.
         """
         await self.dest.execute(sa.select(
                   sa.func.CreateSpatialIndex(getattr(self.dest.t, table).name, column)))
-
 
     async def create_index(self, table_name: str, column: str) -> None:
         """ Create a simple index on the given table and column.
@@ -211,7 +204,6 @@ class SqliteWriter:
         table = getattr(self.dest.t, table_name)
         await self.dest.connection.run_sync(
             sa.Index(f"idx_{table}_{column}", getattr(table.c, column)).create)
-
 
     async def create_search_index(self) -> None:
         """ Create the tables and indexes needed for word lookup.
@@ -242,7 +234,6 @@ class SqliteWriter:
         await self.dest.connection.run_sync(
             sa.Index('idx_reverse_search_name_word', rsn.c.word).create)
 
-
     def select_from(self, table: str) -> SaSelect:
         """ Create the SQL statement to select the source columns and rows.
         """
@@ -258,9 +249,9 @@ class SqliteWriter:
                                         columns.geometry),
                                        else_=sa.func.ST_SimplifyPreserveTopology(
                                                 columns.geometry, 0.0001)
-                                )).label('geometry'))
+                                       )).label('geometry'))
 
         sql = sa.select(*(sa.func.ST_AsText(c).label(c.name)
-                             if isinstance(c.type, Geometry) else c for c in columns))
+                        if isinstance(c.type, Geometry) else c for c in columns))
 
         return sql

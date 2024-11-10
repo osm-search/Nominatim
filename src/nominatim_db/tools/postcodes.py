@@ -25,6 +25,7 @@ from ..tokenizer.base import AbstractAnalyzer, AbstractTokenizer
 
 LOG = logging.getLogger()
 
+
 def _to_float(numstr: str, max_value: float) -> float:
     """ Convert the number in string into a float. The number is expected
         to be in the range of [-max_value, max_value]. Otherwise rises a
@@ -36,6 +37,7 @@ def _to_float(numstr: str, max_value: float) -> float:
 
     return num
 
+
 class _PostcodeCollector:
     """ Collector for postcodes of a single country.
     """
@@ -45,7 +47,6 @@ class _PostcodeCollector:
         self.matcher = matcher
         self.collected: Dict[str, PointsCentroid] = defaultdict(PointsCentroid)
         self.normalization_cache: Optional[Tuple[str, Optional[str]]] = None
-
 
     def add(self, postcode: str, x: float, y: float) -> None:
         """ Add the given postcode to the collection cache. If the postcode
@@ -62,7 +63,6 @@ class _PostcodeCollector:
 
             if normalized:
                 self.collected[normalized] += (x, y)
-
 
     def commit(self, conn: Connection, analyzer: AbstractAnalyzer, project_dir: Path) -> None:
         """ Update postcodes for the country from the postcodes selected so far
@@ -97,9 +97,9 @@ class _PostcodeCollector:
                               """).format(pysql.Literal(self.country)),
                     to_update)
 
-
-    def _compute_changes(self, conn: Connection) \
-          -> Tuple[List[Tuple[str, float, float]], List[str], List[Tuple[float, float, str]]]:
+    def _compute_changes(
+            self, conn: Connection
+            ) -> Tuple[List[Tuple[str, float, float]], List[str], List[Tuple[float, float, str]]]:
         """ Compute which postcodes from the collected postcodes have to be
             added or modified and which from the location_postcode table
             have to be deleted.
@@ -124,7 +124,6 @@ class _PostcodeCollector:
         self.collected = defaultdict(PointsCentroid)
 
         return to_add, to_delete, to_update
-
 
     def _update_from_external(self, analyzer: AbstractAnalyzer, project_dir: Path) -> None:
         """ Look for an external postcode file for the active country in
@@ -154,7 +153,6 @@ class _PostcodeCollector:
 
         finally:
             csvfile.close()
-
 
     def _open_external(self, project_dir: Path) -> Optional[TextIO]:
         fname = project_dir / f'{self.country}_postcodes.csv'
@@ -224,6 +222,7 @@ def update_postcodes(dsn: str, project_dir: Path, tokenizer: AbstractTokenizer) 
             conn.commit()
 
         analyzer.update_postcodes_from_db()
+
 
 def can_compute(dsn: str) -> bool:
     """

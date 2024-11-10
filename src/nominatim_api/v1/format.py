@@ -22,13 +22,16 @@ from . import format_json, format_xml
 from .. import logging as loglib
 from ..server import content_types as ct
 
+
 class RawDataList(List[Dict[str, Any]]):
     """ Data type for formatting raw data lists 'as is' in json.
     """
 
+
 dispatch = FormatDispatcher({'text': ct.CONTENT_TEXT,
                              'xml': ct.CONTENT_XML,
                              'debug': ct.CONTENT_HTML})
+
 
 @dispatch.error_format_func
 def _format_error(content_type: str, msg: str, status: int) -> str:
@@ -65,13 +68,13 @@ def _format_status_json(result: StatusResult, _: Mapping[str, Any]) -> str:
     out = JsonWriter()
 
     out.start_object()\
-         .keyval('status', result.status)\
-         .keyval('message', result.message)\
-         .keyval_not_none('data_updated', result.data_updated,
-                          lambda v: v.isoformat())\
-         .keyval('software_version', str(result.software_version))\
-         .keyval_not_none('database_version', result.database_version, str)\
-       .end_object()
+        .keyval('status', result.status)\
+        .keyval('message', result.message)\
+        .keyval_not_none('data_updated', result.data_updated,
+                         lambda v: v.isoformat())\
+        .keyval('software_version', str(result.software_version))\
+        .keyval_not_none('database_version', result.database_version, str)\
+        .end_object()
 
     return out()
 
@@ -119,7 +122,7 @@ def _add_parent_rows_grouped(writer: JsonWriter, rows: AddressLines,
     writer.key('hierarchy').start_object()
     for group, grouped in data.items():
         writer.key(group).start_array()
-        grouped.sort() # sorts alphabetically by local name
+        grouped.sort()  # sorts alphabetically by local name
         for line in grouped:
             writer.raw(line).next()
         writer.end_array().next()
@@ -135,32 +138,32 @@ def _format_details_json(result: DetailedResult, options: Mapping[str, Any]) -> 
 
     out = JsonWriter()
     out.start_object()\
-         .keyval_not_none('place_id', result.place_id)\
-         .keyval_not_none('parent_place_id', result.parent_place_id)
+        .keyval_not_none('place_id', result.place_id)\
+        .keyval_not_none('parent_place_id', result.parent_place_id)
 
     if result.osm_object is not None:
         out.keyval('osm_type', result.osm_object[0])\
            .keyval('osm_id', result.osm_object[1])
 
     out.keyval('category', result.category[0])\
-         .keyval('type', result.category[1])\
-         .keyval('admin_level', result.admin_level)\
-         .keyval('localname', result.locale_name or '')\
-         .keyval('names', result.names or {})\
-         .keyval('addresstags', result.address or {})\
-         .keyval_not_none('housenumber', result.housenumber)\
-         .keyval_not_none('calculated_postcode', result.postcode)\
-         .keyval_not_none('country_code', result.country_code)\
-         .keyval_not_none('indexed_date', result.indexed_date, lambda v: v.isoformat())\
-         .keyval_not_none('importance', result.importance)\
-         .keyval('calculated_importance', result.calculated_importance())\
-         .keyval('extratags', result.extratags or {})\
-         .keyval_not_none('calculated_wikipedia', result.wikipedia)\
-         .keyval('rank_address', result.rank_address)\
-         .keyval('rank_search', result.rank_search)\
-         .keyval('isarea', 'Polygon' in (geom or result.geometry.get('type') or ''))\
-         .key('centroid').raw(centroid).next()\
-         .key('geometry').raw(geom or centroid).next()
+       .keyval('type', result.category[1])\
+       .keyval('admin_level', result.admin_level)\
+       .keyval('localname', result.locale_name or '')\
+       .keyval('names', result.names or {})\
+       .keyval('addresstags', result.address or {})\
+       .keyval_not_none('housenumber', result.housenumber)\
+       .keyval_not_none('calculated_postcode', result.postcode)\
+       .keyval_not_none('country_code', result.country_code)\
+       .keyval_not_none('indexed_date', result.indexed_date, lambda v: v.isoformat())\
+       .keyval_not_none('importance', result.importance)\
+       .keyval('calculated_importance', result.calculated_importance())\
+       .keyval('extratags', result.extratags or {})\
+       .keyval_not_none('calculated_wikipedia', result.wikipedia)\
+       .keyval('rank_address', result.rank_address)\
+       .keyval('rank_search', result.rank_search)\
+       .keyval('isarea', 'Polygon' in (geom or result.geometry.get('type') or ''))\
+       .key('centroid').raw(centroid).next()\
+       .key('geometry').raw(geom or centroid).next()
 
     if options.get('icon_base_url', None):
         icon = ICONS.get(result.category)
@@ -241,31 +244,31 @@ def _format_search_xml(results: SearchResults, options: Mapping[str, Any]) -> st
                                       extra)
 
 
-
 @dispatch.format_func(SearchResults, 'geojson')
 def _format_search_geojson(results: SearchResults,
-                            options: Mapping[str, Any]) -> str:
+                           options: Mapping[str, Any]) -> str:
     return format_json.format_base_geojson(results, options, False)
 
 
 @dispatch.format_func(SearchResults, 'geocodejson')
 def _format_search_geocodejson(results: SearchResults,
-                                options: Mapping[str, Any]) -> str:
+                               options: Mapping[str, Any]) -> str:
     return format_json.format_base_geocodejson(results, options, False)
 
 
 @dispatch.format_func(SearchResults, 'json')
 def _format_search_json(results: SearchResults,
-                         options: Mapping[str, Any]) -> str:
+                        options: Mapping[str, Any]) -> str:
     return format_json.format_base_json(results, options, False,
                                         class_label='class')
 
 
 @dispatch.format_func(SearchResults, 'jsonv2')
 def _format_search_jsonv2(results: SearchResults,
-                           options: Mapping[str, Any]) -> str:
+                          options: Mapping[str, Any]) -> str:
     return format_json.format_base_json(results, options, False,
                                         class_label='category')
+
 
 @dispatch.format_func(RawDataList, 'json')
 def _format_raw_data_json(results: RawDataList,  _: Mapping[str, Any]) -> str:
@@ -275,7 +278,7 @@ def _format_raw_data_json(results: RawDataList,  _: Mapping[str, Any]) -> str:
         out.start_object()
         for k, v in res.items():
             if isinstance(v, dt.datetime):
-                out.keyval(k, v.isoformat(sep= ' ', timespec='seconds'))
+                out.keyval(k, v.isoformat(sep=' ', timespec='seconds'))
             else:
                 out.keyval(k, v)
         out.end_object().next()

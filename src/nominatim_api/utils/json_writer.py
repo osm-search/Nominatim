@@ -12,9 +12,10 @@ import io
 try:
     import ujson as json
 except ModuleNotFoundError:
-    import json # type: ignore[no-redef]
+    import json  # type: ignore[no-redef]
 
-T = TypeVar('T') # pylint: disable=invalid-name
+T = TypeVar('T')
+
 
 class JsonWriter:
     """ JSON encoder that renders the output directly into an output
@@ -33,7 +34,6 @@ class JsonWriter:
         self.data = io.StringIO()
         self.pending = ''
 
-
     def __call__(self) -> str:
         """ Return the rendered JSON content as a string.
             The writer remains usable after calling this function.
@@ -44,7 +44,6 @@ class JsonWriter:
             self.pending = ''
         return self.data.getvalue()
 
-
     def start_object(self) -> 'JsonWriter':
         """ Write the open bracket of a JSON object.
         """
@@ -52,7 +51,6 @@ class JsonWriter:
             self.data.write(self.pending)
         self.pending = '{'
         return self
-
 
     def end_object(self) -> 'JsonWriter':
         """ Write the closing bracket of a JSON object.
@@ -63,7 +61,6 @@ class JsonWriter:
         self.pending = '}'
         return self
 
-
     def start_array(self) -> 'JsonWriter':
         """ Write the opening bracket of a JSON array.
         """
@@ -71,7 +68,6 @@ class JsonWriter:
             self.data.write(self.pending)
         self.pending = '['
         return self
-
 
     def end_array(self) -> 'JsonWriter':
         """ Write the closing bracket of a JSON array.
@@ -82,7 +78,6 @@ class JsonWriter:
         self.pending = ']'
         return self
 
-
     def key(self, name: str) -> 'JsonWriter':
         """ Write the key string of a JSON object.
         """
@@ -92,14 +87,12 @@ class JsonWriter:
         self.pending = ':'
         return self
 
-
     def value(self, value: Any) -> 'JsonWriter':
         """ Write out a value as JSON. The function uses the json.dumps()
             function for encoding the JSON. Thus any value that can be
             encoded by that function is permissible here.
         """
         return self.raw(json.dumps(value, ensure_ascii=False))
-
 
     def float(self, value: float, precision: int) -> 'JsonWriter':
         """ Write out a float value with the given precision.
@@ -114,7 +107,6 @@ class JsonWriter:
         self.pending = ','
         return self
 
-
     def raw(self, raw_json: str) -> 'JsonWriter':
         """ Write out the given value as is. This function is useful if
             a value is already available in JSON format.
@@ -125,7 +117,6 @@ class JsonWriter:
         self.data.write(raw_json)
         return self
 
-
     def keyval(self, key: str, value: Any) -> 'JsonWriter':
         """ Write out an object element with the given key and value.
             This is a shortcut for calling 'key()', 'value()' and 'next()'.
@@ -133,7 +124,6 @@ class JsonWriter:
         self.key(key)
         self.value(value)
         return self.next()
-
 
     def keyval_not_none(self, key: str, value: Optional[T],
                         transform: Optional[Callable[[T], Any]] = None) -> 'JsonWriter':

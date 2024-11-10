@@ -14,7 +14,6 @@ import dataclasses
 from ..logging import log
 from . import query as qmod
 
-# pylint: disable=too-many-return-statements,too-many-branches
 
 @dataclasses.dataclass
 class TypedRange:
@@ -35,8 +34,9 @@ PENALTY_TOKENCHANGE = {
 
 TypedRangeSeq = List[TypedRange]
 
+
 @dataclasses.dataclass
-class TokenAssignment: # pylint: disable=too-many-instance-attributes
+class TokenAssignment:
     """ Representation of a possible assignment of token types
         to the tokens in a tokenized query.
     """
@@ -48,7 +48,6 @@ class TokenAssignment: # pylint: disable=too-many-instance-attributes
     country: Optional[qmod.TokenRange] = None
     near_item: Optional[qmod.TokenRange] = None
     qualifier: Optional[qmod.TokenRange] = None
-
 
     @staticmethod
     def from_ranges(ranges: TypedRangeSeq) -> 'TokenAssignment':
@@ -83,11 +82,9 @@ class _TokenSequence:
         self.direction = direction
         self.penalty = penalty
 
-
     def __str__(self) -> str:
         seq = ''.join(f'[{r.trange.start} - {r.trange.end}: {r.ttype.name}]' for r in self.seq)
         return f'{seq} (dir: {self.direction}, penalty: {self.penalty})'
-
 
     @property
     def end_pos(self) -> int:
@@ -95,13 +92,11 @@ class _TokenSequence:
         """
         return self.seq[-1].trange.end if self.seq else 0
 
-
     def has_types(self, *ttypes: qmod.TokenType) -> bool:
         """ Check if the current sequence contains any typed ranges of
             the given types.
         """
         return any(s.ttype in ttypes for s in self.seq)
-
 
     def is_final(self) -> bool:
         """ Return true when the sequence cannot be extended by any
@@ -109,8 +104,7 @@ class _TokenSequence:
         """
         # Country and category must be the final term for left-to-right
         return len(self.seq) > 1 and \
-               self.seq[-1].ttype in (qmod.TokenType.COUNTRY, qmod.TokenType.NEAR_ITEM)
-
+            self.seq[-1].ttype in (qmod.TokenType.COUNTRY, qmod.TokenType.NEAR_ITEM)
 
     def appendable(self, ttype: qmod.TokenType) -> Optional[int]:
         """ Check if the give token type is appendable to the existing sequence.
@@ -149,10 +143,10 @@ class _TokenSequence:
                     return None
                 if len(self.seq) > 2 \
                    or self.has_types(qmod.TokenType.POSTCODE, qmod.TokenType.COUNTRY):
-                    return None # direction left-to-right: housenumber must come before anything
-            elif self.direction == -1 \
-                 or self.has_types(qmod.TokenType.POSTCODE, qmod.TokenType.COUNTRY):
-                return -1 # force direction right-to-left if after other terms
+                    return None  # direction left-to-right: housenumber must come before anything
+            elif (self.direction == -1
+                  or self.has_types(qmod.TokenType.POSTCODE, qmod.TokenType.COUNTRY)):
+                return -1  # force direction right-to-left if after other terms
 
             return self.direction
 
@@ -196,7 +190,6 @@ class _TokenSequence:
 
         return None
 
-
     def advance(self, ttype: qmod.TokenType, end_pos: int,
                 btype: qmod.BreakType) -> Optional['_TokenSequence']:
         """ Return a new token sequence state with the given token type
@@ -223,7 +216,6 @@ class _TokenSequence:
 
         return _TokenSequence(newseq, newdir, self.penalty + new_penalty)
 
-
     def _adapt_penalty_from_priors(self, priors: int, new_dir: int) -> bool:
         if priors >= 2:
             if self.direction == 0:
@@ -235,7 +227,6 @@ class _TokenSequence:
                     return False
 
         return True
-
 
     def recheck_sequence(self) -> bool:
         """ Check that the sequence is a fully valid token assignment
@@ -264,9 +255,8 @@ class _TokenSequence:
 
         return True
 
-
     def _get_assignments_postcode(self, base: TokenAssignment,
-                                  query_len: int)  -> Iterator[TokenAssignment]:
+                                  query_len: int) -> Iterator[TokenAssignment]:
         """ Yield possible assignments of Postcode searches with an
             address component.
         """
@@ -278,12 +268,11 @@ class _TokenSequence:
             # <address>,<postcode> should give preference to address search
             if base.postcode.start == 0:
                 penalty = self.penalty
-                self.direction = -1 # name searches are only possible backwards
+                self.direction = -1  # name searches are only possible backwards
             else:
                 penalty = self.penalty + 0.1
-                self.direction = 1 # name searches are only possible forwards
+                self.direction = 1  # name searches are only possible forwards
             yield dataclasses.replace(base, penalty=penalty)
-
 
     def _get_assignments_address_forward(self, base: TokenAssignment,
                                          query: qmod.QueryStruct) -> Iterator[TokenAssignment]:
@@ -320,7 +309,6 @@ class _TokenSequence:
             yield dataclasses.replace(base, name=name, address=[addr] + base.address[1:],
                                       penalty=penalty + PENALTY_TOKENCHANGE[query.nodes[i].btype])
 
-
     def _get_assignments_address_backward(self, base: TokenAssignment,
                                           query: qmod.QueryStruct) -> Iterator[TokenAssignment]:
         """ Yield possible assignments of address searches with
@@ -354,7 +342,6 @@ class _TokenSequence:
             log().comment(f'split last word = name ({i - last.start})')
             yield dataclasses.replace(base, name=name, address=base.address[:-1] + [addr],
                                       penalty=penalty + PENALTY_TOKENCHANGE[query.nodes[i].btype])
-
 
     def get_assignments(self, query: qmod.QueryStruct) -> Iterator[TokenAssignment]:
         """ Yield possible assignments for the current sequence.

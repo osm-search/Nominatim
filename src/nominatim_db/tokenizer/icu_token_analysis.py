@@ -14,8 +14,9 @@ from icu import Transliterator
 from .token_analysis.base import Analyzer
 
 if TYPE_CHECKING:
-    from typing import Any
-    from .icu_rule_loader import TokenAnalyzerRule # pylint: disable=cyclic-import
+    from typing import Any  # noqa
+    from .icu_rule_loader import TokenAnalyzerRule
+
 
 class ICUTokenAnalysis:
     """ Container class collecting the transliterators and token analysis
@@ -34,7 +35,6 @@ class ICUTokenAnalysis:
 
         self.analysis = {name: arules.create(self.normalizer, self.to_ascii)
                          for name, arules in analysis_rules.items()}
-
 
     def get_analyzer(self, name: Optional[str]) -> Analyzer:
         """ Return the given named analyzer. If no analyzer with that

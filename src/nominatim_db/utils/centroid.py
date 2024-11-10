@@ -10,6 +10,7 @@ Functions for computation of centroids.
 from typing import Tuple, Any
 from collections.abc import Collection
 
+
 class PointsCentroid:
     """ Centroid computation from single points using an online algorithm.
         More points may be added at any time.
@@ -32,10 +33,8 @@ class PointsCentroid:
         return (float(self.sum_x/self.count)/10000000,
                 float(self.sum_y/self.count)/10000000)
 
-
     def __len__(self) -> int:
         return self.count
-
 
     def __iadd__(self, other: Any) -> 'PointsCentroid':
         if isinstance(other, Collection) and len(other) == 2:

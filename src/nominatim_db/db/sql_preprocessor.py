@@ -15,6 +15,7 @@ from .connection import Connection, server_version_tuple, postgis_version_tuple
 from ..config import Configuration
 from ..db.query_pool import QueryPool
 
+
 def _get_partitions(conn: Connection) -> Set[int]:
     """ Get the set of partitions currently in use.
     """
@@ -34,6 +35,7 @@ def _get_tables(conn: Connection) -> Set[str]:
         cur.execute("SELECT tablename FROM pg_tables WHERE schemaname = 'public'")
 
         return set((row[0] for row in list(cur)))
+
 
 def _get_middle_db_format(conn: Connection, tables: Set[str]) -> str:
     """ Returns the version of the slim middle tables.
@@ -73,8 +75,9 @@ def _setup_postgresql_features(conn: Connection) -> Dict[str, Any]:
     ps3 = postgis_version >= (3, 0)
     return {
         'has_index_non_key_column': pg11plus,
-        'spgist_geom' : 'SPGIST' if pg11plus and ps3 else 'GIST'
+        'spgist_geom': 'SPGIST' if pg11plus and ps3 else 'GIST'
     }
+
 
 class SQLPreprocessor:
     """ A environment for preprocessing SQL files from the
@@ -102,7 +105,6 @@ class SQLPreprocessor:
         self.env.globals['db'] = db_info
         self.env.globals['postgres'] = _setup_postgresql_features(conn)
 
-
     def run_string(self, conn: Connection, template: str, **kwargs: Any) -> None:
         """ Execute the given SQL template string on the connection.
             The keyword arguments may supply additional parameters
@@ -114,7 +116,6 @@ class SQLPreprocessor:
             cur.execute(sql)
         conn.commit()
 
-
     def run_sql_file(self, conn: Connection, name: str, **kwargs: Any) -> None:
         """ Execute the given SQL file on the connection. The keyword arguments
             may supply additional parameters for preprocessing.
@@ -124,7 +125,6 @@ class SQLPreprocessor:
         with conn.cursor() as cur:
             cur.execute(sql)
         conn.commit()
-
 
     async def run_parallel_sql_file(self, dsn: str, name: str, num_threads: int = 1,
                                     **kwargs: Any) -> None:

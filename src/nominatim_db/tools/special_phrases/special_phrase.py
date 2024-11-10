@@ -12,6 +12,7 @@
 """
 from typing import Any
 
+
 class SpecialPhrase:
     """
         Model representing a special phrase.
@@ -29,9 +30,9 @@ class SpecialPhrase:
             return False
 
         return self.p_label == other.p_label \
-               and self.p_class == other.p_class \
-               and self.p_type == other.p_type \
-               and self.p_operator == other.p_operator
+            and self.p_class == other.p_class \
+            and self.p_type == other.p_type \
+            and self.p_operator == other.p_operator
 
     def __hash__(self) -> int:
         return hash((self.p_label, self.p_class, self.p_type, self.p_operator))

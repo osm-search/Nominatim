@@ -16,12 +16,12 @@ from ..core import NominatimAPIAsync
 from ..result_formatting import FormatDispatcher
 from .content_types import CONTENT_TEXT
 
+
 class ASGIAdaptor(abc.ABC):
     """ Adapter class for the different ASGI frameworks.
         Wraps functionality over concrete requests and responses.
     """
     content_type: str = CONTENT_TEXT
-
 
     @abc.abstractmethod
     def get(self, name: str, default: Optional[str] = None) -> Optional[str]:
@@ -35,13 +35,11 @@ class ASGIAdaptor(abc.ABC):
             not provided, return the 'default' value.
         """
 
-
     @abc.abstractmethod
     def error(self, msg: str, status: int = 400) -> Exception:
         """ Construct an appropriate exception from the given error message.
             The exception must result in a HTTP error with the given status.
         """
-
 
     @abc.abstractmethod
     def create_response(self, status: int, output: str, num_results: int) -> Any:
@@ -55,24 +53,20 @@ class ASGIAdaptor(abc.ABC):
             body of the response to 'output'.
         """
 
-
     @abc.abstractmethod
     def base_uri(self) -> str:
         """ Return the URI of the original request.
         """
-
 
     @abc.abstractmethod
     def config(self) -> Configuration:
         """ Return the current configuration object.
         """
 
-
     @abc.abstractmethod
     def formatting(self) -> FormatDispatcher:
         """ Return the formatting object to use.
         """
-
 
     def get_int(self, name: str, default: Optional[int] = None) -> int:
         """ Return an input parameter as an int. Raises an exception if
@@ -96,7 +90,6 @@ class ASGIAdaptor(abc.ABC):
             self.raise_error(f"Parameter '{name}' must be a number.")
 
         return intval
-
 
     def get_float(self, name: str, default: Optional[float] = None) -> float:
         """ Return an input parameter as a flaoting-point number. Raises an
@@ -124,7 +117,6 @@ class ASGIAdaptor(abc.ABC):
 
         return fval
 
-
     def get_bool(self, name: str, default: Optional[bool] = None) -> bool:
         """ Return an input parameter as bool. Only '0' is accepted as
             an input for 'false' all other inputs will be interpreted as 'true'.
@@ -142,7 +134,6 @@ class ASGIAdaptor(abc.ABC):
             self.raise_error(f"Parameter '{name}' missing.")
 
         return value != '0'
-
 
     def raise_error(self, msg: str, status: int = 400) -> NoReturn:
         """ Raise an exception resulting in the given HTTP status and

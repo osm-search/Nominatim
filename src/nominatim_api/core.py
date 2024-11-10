@@ -7,7 +7,7 @@
 """
 Implementation of classes for API access via libraries.
 """
-from typing import Mapping, Optional, Any, AsyncIterator, Dict, Sequence, List,\
+from typing import Mapping, Optional, Any, AsyncIterator, Dict, Sequence, List, \
                    Union, Tuple, cast
 import asyncio
 import sys
@@ -21,7 +21,7 @@ from .errors import UsageError
 from .sql.sqlalchemy_schema import SearchTables
 from .sql.async_core_library import PGCORE_LIB, PGCORE_ERROR
 from .config import Configuration
-from .sql import sqlite_functions, sqlalchemy_functions #pylint: disable=unused-import
+from .sql import sqlite_functions, sqlalchemy_functions  # noqa
 from .connection import SearchConnection
 from .status import get_status, StatusResult
 from .lookup import get_detailed_place, get_simple_place
@@ -31,7 +31,7 @@ from . import types as ntyp
 from .results import DetailedResult, ReverseResult, SearchResults
 
 
-class NominatimAPIAsync: #pylint: disable=too-many-instance-attributes
+class NominatimAPIAsync:
     """ The main frontend to the Nominatim database implements the
         functions for lookup, forward and reverse geocoding using
         asynchronous functions.
@@ -61,18 +61,17 @@ class NominatimAPIAsync: #pylint: disable=too-many-instance-attributes
         """
         self.config = Configuration(project_dir, environ)
         self.query_timeout = self.config.get_int('QUERY_TIMEOUT') \
-                             if self.config.QUERY_TIMEOUT else None
+            if self.config.QUERY_TIMEOUT else None
         self.reverse_restrict_to_country_area = self.config.get_bool('SEARCH_WITHIN_COUNTRIES')
         self.server_version = 0
 
         if sys.version_info >= (3, 10):
             self._engine_lock = asyncio.Lock()
         else:
-            self._engine_lock = asyncio.Lock(loop=loop) # pylint: disable=unexpected-keyword-arg
+            self._engine_lock = asyncio.Lock(loop=loop)
         self._engine: Optional[sa_asyncio.AsyncEngine] = None
         self._tables: Optional[SearchTables] = None
         self._property_cache: Dict[str, Any] = {'DB:server_version': 0}
-
 
     async def setup_database(self) -> None:
         """ Set up the SQL engine and connections.
@@ -94,7 +93,6 @@ class NominatimAPIAsync: #pylint: disable=too-many-instance-attributes
                 extra_args['poolclass'] = sa.pool.AsyncAdaptedQueuePool
                 extra_args['max_overflow'] = 0
                 extra_args['pool_size'] = self.config.get_int('API_POOL_SIZE')
-
 
             is_sqlite = self.config.DATABASE_DSN.startswith('sqlite:')
 
@@ -156,9 +154,8 @@ class NominatimAPIAsync: #pylint: disable=too-many-instance-attributes
 
             self._property_cache['DB:server_version'] = server_version
 
-            self._tables = SearchTables(sa.MetaData()) # pylint: disable=no-member
+            self._tables = SearchTables(sa.MetaData())
             self._engine = engine
-
 
     async def close(self) -> None:
         """ Close all active connections to the database. The NominatimAPIAsync
@@ -168,14 +165,11 @@ class NominatimAPIAsync: #pylint: disable=too-many-instance-attributes
         if self._engine is not None:
             await self._engine.dispose()
 
-
     async def __aenter__(self) -> 'NominatimAPIAsync':
         return self
 
-
     async def __aexit__(self, *_: Any) -> None:
         await self.close()
-
 
     @contextlib.asynccontextmanager
     async def begin(self) -> AsyncIterator[SearchConnection]:
@@ -194,7 +188,6 @@ class NominatimAPIAsync: #pylint: disable=too-many-instance-attributes
         async with self._engine.begin() as conn:
             yield SearchConnection(conn, self._tables, self._property_cache)
 
-
     async def status(self) -> StatusResult:
         """ Return the status of the database.
         """
@@ -206,7 +199,6 @@ class NominatimAPIAsync: #pylint: disable=too-many-instance-attributes
             return StatusResult(700, 'Database connection failed')
 
         return status
-
 
     async def details(self, place: ntyp.PlaceRef, **params: Any) -> Optional[DetailedResult]:
         """ Get detailed information about a place in the database.
@@ -220,7 +212,6 @@ class NominatimAPIAsync: #pylint: disable=too-many-instance-attributes
                 await make_query_analyzer(conn)
             return await get_detailed_place(conn, place, details)
 
-
     async def lookup(self, places: Sequence[ntyp.PlaceRef], **params: Any) -> SearchResults:
         """ Get simple information about a list of places.
 
@@ -233,7 +224,6 @@ class NominatimAPIAsync: #pylint: disable=too-many-instance-attributes
                 await make_query_analyzer(conn)
             return SearchResults(filter(None,
                                         [await get_simple_place(conn, p, details) for p in places]))
-
 
     async def reverse(self, coord: ntyp.AnyPoint, **params: Any) -> Optional[ReverseResult]:
         """ Find a place by its coordinates. Also known as reverse geocoding.
@@ -255,7 +245,6 @@ class NominatimAPIAsync: #pylint: disable=too-many-instance-attributes
                                        self.reverse_restrict_to_country_area)
             return await geocoder.lookup(coord)
 
-
     async def search(self, query: str, **params: Any) -> SearchResults:
         """ Find a place by free-text search. Also known as forward geocoding.
         """
@@ -266,13 +255,11 @@ class NominatimAPIAsync: #pylint: disable=too-many-instance-attributes
         async with self.begin() as conn:
             conn.set_query_timeout(self.query_timeout)
             geocoder = ForwardGeocoder(conn, ntyp.SearchDetails.from_kwargs(params),
-                                       self.config.get_int('REQUEST_TIMEOUT') \
-                                         if self.config.REQUEST_TIMEOUT else None)
+                                       self.config.get_int('REQUEST_TIMEOUT')
+                                       if self.config.REQUEST_TIMEOUT else None)
             phrases = [Phrase(PhraseType.NONE, p.strip()) for p in query.split(',')]
             return await geocoder.lookup(phrases)
 
-
-    # pylint: disable=too-many-arguments,too-many-branches
     async def search_address(self, amenity: Optional[str] = None,
                              street: Optional[str] = None,
                              city: Optional[str] = None,
@@ -326,10 +313,9 @@ class NominatimAPIAsync: #pylint: disable=too-many-instance-attributes
                     details.layers |= ntyp.DataLayer.POI
 
             geocoder = ForwardGeocoder(conn, details,
-                                       self.config.get_int('REQUEST_TIMEOUT') \
-                                         if self.config.REQUEST_TIMEOUT else None)
+                                       self.config.get_int('REQUEST_TIMEOUT')
+                                       if self.config.REQUEST_TIMEOUT else None)
             return await geocoder.lookup(phrases)
-
 
     async def search_category(self, categories: List[Tuple[str, str]],
                               near_query: Optional[str] = None,
@@ -352,10 +338,9 @@ class NominatimAPIAsync: #pylint: disable=too-many-instance-attributes
                     await make_query_analyzer(conn)
 
             geocoder = ForwardGeocoder(conn, details,
-                                       self.config.get_int('REQUEST_TIMEOUT') \
-                                         if self.config.REQUEST_TIMEOUT else None)
+                                       self.config.get_int('REQUEST_TIMEOUT')
+                                       if self.config.REQUEST_TIMEOUT else None)
             return await geocoder.lookup_pois(categories, phrases)
-
 
 
 class NominatimAPI:
@@ -382,7 +367,6 @@ class NominatimAPI:
         self._loop = asyncio.new_event_loop()
         self._async_api = NominatimAPIAsync(project_dir, environ, loop=self._loop)
 
-
     def close(self) -> None:
         """ Close all active connections to the database.
 
@@ -393,14 +377,11 @@ class NominatimAPI:
             self._loop.run_until_complete(self._async_api.close())
             self._loop.close()
 
-
     def __enter__(self) -> 'NominatimAPI':
         return self
 
-
     def __exit__(self, *_: Any) -> None:
         self.close()
-
 
     @property
     def config(self) -> Configuration:
@@ -426,7 +407,6 @@ class NominatimAPI:
               data_updated(datetime): Timestamp with the age of the data.
         """
         return self._loop.run_until_complete(self._async_api.status())
-
 
     def details(self, place: ntyp.PlaceRef, **params: Any) -> Optional[DetailedResult]:
         """ Get detailed information about a place in the database.
@@ -510,7 +490,6 @@ class NominatimAPI:
         """
         return self._loop.run_until_complete(self._async_api.details(place, **params))
 
-
     def lookup(self, places: Sequence[ntyp.PlaceRef], **params: Any) -> SearchResults:
         """ Get simple information about a list of places.
 
@@ -586,7 +565,6 @@ class NominatimAPI:
                    in the formats requested in the `geometry_output` parameter.
         """
         return self._loop.run_until_complete(self._async_api.lookup(places, **params))
-
 
     def reverse(self, coord: ntyp.AnyPoint, **params: Any) -> Optional[ReverseResult]:
         """ Find a place by its coordinates. Also known as reverse geocoding.
@@ -668,7 +646,6 @@ class NominatimAPI:
               distance (Optional[float]): Distance in degree from the input point.
         """
         return self._loop.run_until_complete(self._async_api.reverse(coord, **params))
-
 
     def search(self, query: str, **params: Any) -> SearchResults:
         """ Find a place by free-text search. Also known as forward geocoding.
@@ -769,8 +746,6 @@ class NominatimAPI:
         return self._loop.run_until_complete(
                    self._async_api.search(query, **params))
 
-
-    # pylint: disable=too-many-arguments
     def search_address(self, amenity: Optional[str] = None,
                        street: Optional[str] = None,
                        city: Optional[str] = None,
@@ -887,7 +862,6 @@ class NominatimAPI:
         return self._loop.run_until_complete(
                    self._async_api.search_address(amenity, street, city, county,
                                                   state, country, postalcode, **params))
-
 
     def search_category(self, categories: List[Tuple[str, str]],
                         near_query: Optional[str] = None,

@@ -18,6 +18,7 @@ from .exec_utils import run_osm2pgsql
 
 LOG = logging.getLogger()
 
+
 def _run_osm2pgsql(dsn: str, options: MutableMapping[str, Any]) -> None:
     run_osm2pgsql(options)
 

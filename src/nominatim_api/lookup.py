@@ -127,7 +127,7 @@ async def find_in_postcode(conn: SearchConnection, place: ntyp.PlaceRef,
 
 async def find_in_all_tables(conn: SearchConnection, place: ntyp.PlaceRef,
                              add_geometries: GeomFunc
-                            ) -> Tuple[Optional[SaRow], RowFunc[nres.BaseResultT]]:
+                             ) -> Tuple[Optional[SaRow], RowFunc[nres.BaseResultT]]:
     """ Search for the given place in all data tables
         and return the base information.
     """
@@ -218,7 +218,6 @@ async def get_simple_place(conn: SearchConnection, place: ntyp.PlaceRef,
             out.append(sa.func.ST_AsSVG(col, 0, 7).label('geometry_svg'))
 
         return sql.add_columns(*out)
-
 
     row_func: RowFunc[nres.SearchResult]
     row, row_func = await find_in_all_tables(conn, place, _add_geometry)

@@ -23,6 +23,7 @@ LOG = logging.getLogger()
 Cursor = psycopg.Cursor[Any]
 Connection = psycopg.Connection[Any]
 
+
 def execute_scalar(conn: Connection, sql: psycopg.abc.Query, args: Any = None) -> Any:
     """ Execute query that returns a single value. The value is returned.
         If the query yields more than one row, a ValueError is raised.
@@ -42,9 +43,10 @@ def execute_scalar(conn: Connection, sql: psycopg.abc.Query, args: Any = None) -
 def table_exists(conn: Connection, table: str) -> bool:
     """ Check that a table with the given name exists in the database.
     """
-    num = execute_scalar(conn,
-            """SELECT count(*) FROM pg_tables
-               WHERE tablename = %s and schemaname = 'public'""", (table, ))
+    num = execute_scalar(
+        conn,
+        """SELECT count(*) FROM pg_tables
+           WHERE tablename = %s and schemaname = 'public'""", (table, ))
     return num == 1 if isinstance(num, int) else False
 
 
@@ -52,9 +54,9 @@ def table_has_column(conn: Connection, table: str, column: str) -> bool:
     """ Check if the table 'table' exists and has a column with name 'column'.
     """
     has_column = execute_scalar(conn,
-                    """SELECT count(*) FROM information_schema.columns
-                       WHERE table_name = %s and column_name = %s""",
-                    (table, column))
+                                """SELECT count(*) FROM information_schema.columns
+                                   WHERE table_name = %s and column_name = %s""",
+                                (table, column))
     return has_column > 0 if isinstance(has_column, int) else False
 
 
@@ -77,8 +79,9 @@ def index_exists(conn: Connection, index: str, table: Optional[str] = None) -> b
 
     return True
 
+
 def drop_tables(conn: Connection, *names: str,
-               if_exists: bool = True, cascade: bool = False) -> None:
+                if_exists: bool = True, cascade: bool = False) -> None:
     """ Drop one or more tables with the given names.
         Set `if_exists` to False if a non-existent table should raise
         an exception instead of just being ignored. `cascade` will cause

@@ -132,8 +132,8 @@ def report_system_information(config: Configuration) -> None:
     - PostgreSQL version: {postgresql_ver}
     - PostGIS version: {postgis_ver}
     - OS: {os_name_info()}
-    
-    
+
+
     **Hardware Configuration:**
     - RAM: {friendly_memory_string(psutil.virtual_memory().total)}
     - number of CPUs: {psutil.cpu_count(logical=False)}
@@ -144,13 +144,13 @@ def report_system_information(config: Configuration) -> None:
     ```
     {run_command(["df", "-h"])}
     ```
-    
+
     **lsblk - list block devices: **
     ```
     {run_command("lsblk")}
     ```
-    
-    
+
+
     **Postgresql Configuration:**
     ```
     {postgresql_config}

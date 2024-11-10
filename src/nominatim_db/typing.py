@@ -11,9 +11,6 @@ Complex type definitions are moved here, to keep the source files readable.
 """
 from typing import Any, Union, Mapping, TypeVar, Sequence, TYPE_CHECKING
 
-# Generics variable names do not confirm to naming styles, ignore globally here.
-# pylint: disable=invalid-name,abstract-method,multiple-statements
-# pylint: disable=missing-class-docstring,useless-import-alias
 
 if TYPE_CHECKING:
     import os
@@ -26,8 +23,10 @@ SysEnv = Mapping[str, str]
 
 T_ResultKey = TypeVar('T_ResultKey', int, str)
 
+
 class DictCursorResult(Mapping[str, Any]):
     def __getitem__(self, x: Union[int, str]) -> Any: ...
+
 
 DictCursorResults = Sequence[DictCursorResult]
 

@@ -15,6 +15,7 @@ import re
 from ..results import SearchResult, SearchResults, SourceTable
 from ..types import SearchDetails, GeometryFormat
 
+
 REVERSE_MAX_RANKS = [2, 2, 2,   # 0-2   Continent/Sea
                      4, 4,      # 3-4   Country
                      8,         # 5     State
@@ -28,7 +29,7 @@ REVERSE_MAX_RANKS = [2, 2, 2,   # 0-2   Continent/Sea
                      26,        # 16    Major Streets
                      27,        # 17    Minor Streets
                      30         # 18    Building
-                    ]
+                     ]
 
 
 def zoom_to_rank(zoom: int) -> int:
@@ -52,7 +53,6 @@ def feature_type_to_rank(feature_type: Optional[str]) -> Tuple[int, int]:
     return FEATURE_TYPE_TO_RANK.get(feature_type, (0, 30))
 
 
-#pylint: disable=too-many-arguments,too-many-branches
 def extend_query_parts(queryparts: Dict[str, Any], details: Dict[str, Any],
                        feature_type: Optional[str],
                        namedetails: bool, extratags: bool,
@@ -135,14 +135,17 @@ def _is_postcode_relation_for(result: SearchResult, postcode: str) -> bool:
            and result.names.get('ref') == postcode
 
 
-def _deg(axis:str) -> str:
+def _deg(axis: str) -> str:
     return f"(?P<{axis}_deg>\\d+\\.\\d+)°?"
+
 
 def _deg_min(axis: str) -> str:
     return f"(?P<{axis}_deg>\\d+)[°\\s]+(?P<{axis}_min>[\\d.]+)[′']*"
 
+
 def _deg_min_sec(axis: str) -> str:
     return f"(?P<{axis}_deg>\\d+)[°\\s]+(?P<{axis}_min>\\d+)[′'\\s]+(?P<{axis}_sec>[\\d.]+)[\"″]*"
+
 
 COORD_REGEX = [re.compile(r'(?:(?P<pre>.*?)\s+)??' + r + r'(?:\s+(?P<post>.*))?') for r in (
     r"(?P<ns>[NS])\s*" + _deg('lat') + r"[\s,]+" + r"(?P<ew>[EW])\s*" + _deg('lon'),
@@ -153,6 +156,7 @@ COORD_REGEX = [re.compile(r'(?:(?P<pre>.*?)\s+)??' + r + r'(?:\s+(?P<post>.*))?'
     _deg_min_sec('lat') + r"\s*(?P<ns>[NS])[\s,]+" + _deg_min_sec('lon') + r"\s*(?P<ew>[EW])",
     r"\[?(?P<lat_deg>[+-]?\d+\.\d+)[\s,]+(?P<lon_deg>[+-]?\d+\.\d+)\]?"
 )]
+
 
 def extract_coords_from_query(query: str) -> Tuple[str, Optional[float], Optional[float]]:
     """ Look for something that is formatted like a coordinate at the
@@ -184,6 +188,7 @@ def extract_coords_from_query(query: str) -> Tuple[str, Optional[float], Optiona
 
 
 CATEGORY_REGEX = re.compile(r'(?P<pre>.*?)\[(?P<cls>[a-zA-Z_]+)=(?P<typ>[a-zA-Z_]+)\](?P<post>.*)')
+
 
 def extract_category_from_query(query: str) -> Tuple[str, Optional[str], Optional[str]]:
     """ Extract a hidden category specification of the form '[key=value]' from

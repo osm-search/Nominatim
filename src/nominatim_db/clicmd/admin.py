@@ -57,7 +57,6 @@ class AdminFuncs:
         mgroup.add_argument('--place-id', type=int,
                             help='Analyse indexing of the given Nominatim object')
 
-
     def run(self, args: NominatimArgs) -> int:
         # pylint: disable=too-many-return-statements
         if args.warm:
@@ -92,7 +91,6 @@ class AdminFuncs:
             return 0
 
         return 1
-
 
     def _warm(self, args: NominatimArgs) -> int:
         try:

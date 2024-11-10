@@ -15,6 +15,7 @@ import re
 from ...config import flatten_config_list
 from ...errors import UsageError
 
+
 class ICUVariant(NamedTuple):
     """ A single replacement rule for variant creation.
     """
@@ -64,7 +65,6 @@ class _VariantMaker:
     def __init__(self, normalizer: Any) -> None:
         self.norm = normalizer
 
-
     def compute(self, rule: Any) -> Iterator[ICUVariant]:
         """ Generator for all ICUVariant tuples from a single variant rule.
         """
@@ -87,7 +87,6 @@ class _VariantMaker:
             if src and repl:
                 for froms, tos in _create_variants(*src, repl, decompose):
                     yield ICUVariant(froms, tos)
-
 
     def _parse_variant_word(self, name: str) -> Optional[Tuple[str, str, str]]:
         name = name.strip()

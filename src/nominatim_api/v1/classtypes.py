@@ -15,6 +15,7 @@ from typing import Tuple, Optional, Mapping, Union
 from ..results import ReverseResult, SearchResult
 from ..types import Bbox
 
+
 def get_label_tag(category: Tuple[str, str], extratags: Optional[Mapping[str, str]],
                   rank: int, country: Optional[str]) -> str:
     """ Create a label tag for the given place that can be used as an XML name.
@@ -33,8 +34,8 @@ def get_label_tag(category: Tuple[str, str], extratags: Optional[Mapping[str, st
         label = category[1] if category[1] != 'yes' else category[0]
     elif rank < 28:
         label = 'road'
-    elif category[0] == 'place'\
-         and category[1] in ('house_number', 'house_name', 'country_code'):
+    elif (category[0] == 'place'
+          and category[1] in ('house_number', 'house_name', 'country_code')):
         label = category[1]
     else:
         label = category[0]

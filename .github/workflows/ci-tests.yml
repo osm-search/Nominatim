@@ -103,12 +103,12 @@ jobs:
             - name: Install Python webservers
               run: pip3 install falcon starlette asgi_lifespan
 
-            - name: Install latest pylint
-              run: pip3 install -U pylint
+            - name: Install latest flake8
+              run: pip3 install -U flake8
               if: matrix.flavour == 'ubuntu-22'
 
             - name: Python linting
-              run: python3 -m pylint src
+              run: python3 -m flake8 src
               working-directory: Nominatim
               if: matrix.flavour == 'ubuntu-22'
 

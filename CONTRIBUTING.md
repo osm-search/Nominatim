@@ -30,6 +30,19 @@ feature pull requests. If you plan to make larger changes, please open
 an issue first or comment on the appropriate issue already existing so
 that duplicate work can be avoided.
 
+### Using AI-assisted code generators
+
+PRs that include AI-generated content, may that be in code, in the PR
+description or in documentation need to
+
+1. clearly mark the AI-generated sections as such, for example, by
+   mentioning all use of AI in the PR description, and
+2. include proof that you have run the generated code on an actual
+   installation of Nominatim. Adding and excuting tests will not be
+   sufficient. You need to show that the code actually solves the problem
+   the PR claims to solve.
+
+
 ## Coding style
 
 Nominatim historically hasn't followed a particular coding style but we
@@ -46,13 +59,10 @@ are in process of consolidating the style. The following rules apply:
    * no spaces after opening and before closing bracket
    * leave out space between a function name and bracket
      but add one between control statement(if, while, etc.) and bracket
- * for PHP variables use CamelCase with a prefixing letter indicating the type
-   (i - integer, f - float, a - array, s - string, o - object)
 
-The coding style is enforced with PHPCS and pylint. It can be tested with:
+The coding style is enforced with pylint. It can be tested with:
 
 ```
-phpcs --report-width=120 --colors .
 pylint3 --extension-pkg-whitelist=osmium nominatim
 ```
 

@@ -22,10 +22,9 @@ import nominatim_api.logging as loglib
 from ..errors import UsageError
 from .args import NominatimArgs
 
-# Do not repeat documentation of subcommand classes.
-# pylint: disable=C0111
 
 LOG = logging.getLogger()
+
 
 STRUCTURED_QUERY = (
     ('amenity', 'name and/or type of POI'),
@@ -37,12 +36,14 @@ STRUCTURED_QUERY = (
     ('postalcode', 'postcode')
 )
 
+
 EXTRADATA_PARAMS = (
     ('addressdetails', 'Include a breakdown of the address into elements'),
     ('extratags', ("Include additional information if available "
                    "(e.g. wikipedia link, opening hours)")),
     ('namedetails', 'Include a list of alternative names')
 )
+
 
 def _add_list_format(parser: argparse.ArgumentParser) -> None:
     group = parser.add_argument_group('Other options')
@@ -62,7 +63,7 @@ def _add_api_output_arguments(parser: argparse.ArgumentParser) -> None:
     group.add_argument('--polygon-output',
                        choices=['geojson', 'kml', 'svg', 'text'],
                        help='Output geometry of results as a GeoJSON, KML, SVG or WKT')
-    group.add_argument('--polygon-threshold', type=float, default = 0.0,
+    group.add_argument('--polygon-threshold', type=float, default=0.0,
                        metavar='TOLERANCE',
                        help=("Simplify output geometry."
                              "Parameter is difference tolerance in degrees."))
@@ -173,7 +174,6 @@ class APISearch:
                            help='Do not remove duplicates from the result list')
         _add_list_format(parser)
 
-
     def run(self, args: NominatimArgs) -> int:
         formatter = napi.load_format_dispatcher('v1', args.project_dir)
 
@@ -189,7 +189,7 @@ class APISearch:
         try:
             with napi.NominatimAPI(args.project_dir) as api:
                 params: Dict[str, Any] = {'max_results': args.limit + min(args.limit, 10),
-                                          'address_details': True, # needed for display name
+                                          'address_details': True,  # needed for display name
                                           'geometry_output': _get_geometry_output(args),
                                           'geometry_simplification': args.polygon_threshold,
                                           'countries': args.countrycodes,
@@ -197,7 +197,7 @@ class APISearch:
                                           'viewbox': args.viewbox,
                                           'bounded_viewbox': args.bounded,
                                           'locales': _get_locales(args, api.config.DEFAULT_LANGUAGE)
-                                         }
+                                          }
 
                 if args.query:
                     results = api.search(args.query, **params)
@@ -253,7 +253,6 @@ class APIReverse:
         _add_api_output_arguments(parser)
         _add_list_format(parser)
 
-
     def run(self, args: NominatimArgs) -> int:
         formatter = napi.load_format_dispatcher('v1', args.project_dir)
 
@@ -276,7 +275,7 @@ class APIReverse:
                 result = api.reverse(napi.Point(args.lon, args.lat),
                                      max_rank=zoom_to_rank(args.zoom or 18),
                                      layers=layers,
-                                     address_details=True, # needed for display name
+                                     address_details=True,  # needed for display name
                                      geometry_output=_get_geometry_output(args),
                                      geometry_simplification=args.polygon_threshold,
                                      locales=_get_locales(args, api.config.DEFAULT_LANGUAGE))
@@ -299,7 +298,6 @@ class APIReverse:
         return 42
 
 
-
 class APILookup:
     """\
     Execute API lookup query.
@@ -318,7 +316,6 @@ class APILookup:
 
         _add_api_output_arguments(parser)
         _add_list_format(parser)
-
 
     def run(self, args: NominatimArgs) -> int:
         formatter = napi.load_format_dispatcher('v1', args.project_dir)
@@ -340,7 +337,7 @@ class APILookup:
         try:
             with napi.NominatimAPI(args.project_dir) as api:
                 results = api.lookup(places,
-                                     address_details=True, # needed for display name
+                                     address_details=True,  # needed for display name
                                      geometry_output=_get_geometry_output(args),
                                      geometry_simplification=args.polygon_threshold or 0.0,
                                      locales=_get_locales(args, api.config.DEFAULT_LANGUAGE))
@@ -401,7 +398,6 @@ class APIDetails:
                            help='Preferred language order for presenting search results')
         _add_list_format(parser)
 
-
     def run(self, args: NominatimArgs) -> int:
         formatter = napi.load_format_dispatcher('v1', args.project_dir)
 
@@ -421,7 +417,7 @@ class APIDetails:
             place = napi.OsmID('W', args.way, args.object_class)
         elif args.relation:
             place = napi.OsmID('R', args.relation, args.object_class)
-        elif  args.place_id is not None:
+        elif args.place_id is not None:
             place = napi.PlaceID(args.place_id)
         else:
             raise UsageError('One of the arguments --node/-n --way/-w '
@@ -435,10 +431,10 @@ class APIDetails:
                                      linked_places=args.linkedplaces,
                                      parented_places=args.hierarchy,
                                      keywords=args.keywords,
-                                     geometry_output=napi.GeometryFormat.GEOJSON
-                                                     if args.polygon_geojson
-                                                     else napi.GeometryFormat.NONE,
-                                    locales=locales)
+                                     geometry_output=(napi.GeometryFormat.GEOJSON
+                                                      if args.polygon_geojson
+                                                      else napi.GeometryFormat.NONE),
+                                     locales=locales)
         except napi.UsageError as ex:
             raise UsageError(ex) from ex
 
@@ -471,7 +467,6 @@ class APIStatus:
         group.add_argument('--format', type=str, default='text',
                            help='Format of result (use --list-formats to see supported formats)')
         _add_list_format(parser)
-
 
     def run(self, args: NominatimArgs) -> int:
         formatter = napi.load_format_dispatcher('v1', args.project_dir)

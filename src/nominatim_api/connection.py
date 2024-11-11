@@ -21,6 +21,7 @@ from .logging import log
 
 T = TypeVar('T')
 
+
 class SearchConnection:
     """ An extended SQLAlchemy connection class, that also contains
         the table definitions. The underlying asynchronous SQLAlchemy
@@ -32,11 +33,10 @@ class SearchConnection:
                  tables: SearchTables,
                  properties: Dict[str, Any]) -> None:
         self.connection = conn
-        self.t = tables # pylint: disable=invalid-name
+        self.t = tables
         self._property_cache = properties
         self._classtables: Optional[Set[str]] = None
         self.query_timeout: Optional[int] = None
-
 
     def set_query_timeout(self, timeout: Optional[int]) -> None:
         """ Set the timeout after which a query over this connection
@@ -44,24 +44,20 @@ class SearchConnection:
         """
         self.query_timeout = timeout
 
-
     async def scalar(self, sql: sa.sql.base.Executable,
-                     params: Union[Mapping[str, Any], None] = None
-                    ) -> Any:
+                     params: Union[Mapping[str, Any], None] = None) -> Any:
         """ Execute a 'scalar()' query on the connection.
         """
         log().sql(self.connection, sql, params)
         return await asyncio.wait_for(self.connection.scalar(sql, params), self.query_timeout)
 
-
     async def execute(self, sql: 'sa.Executable',
                       params: Union[Mapping[str, Any], Sequence[Mapping[str, Any]], None] = None
-                     ) -> 'sa.Result[Any]':
+                      ) -> 'sa.Result[Any]':
         """ Execute a 'execute()' query on the connection.
         """
         log().sql(self.connection, sql, params)
         return await asyncio.wait_for(self.connection.execute(sql, params), self.query_timeout)
-
 
     async def get_property(self, name: str, cached: bool = True) -> str:
         """ Get a property from Nominatim's property table.
@@ -89,7 +85,6 @@ class SearchConnection:
 
         return cast(str, value)
 
-
     async def get_db_property(self, name: str) -> Any:
         """ Get a setting from the database. At the moment, only
             'server_version', the version of the database software, can
@@ -101,7 +96,6 @@ class SearchConnection:
             raise ValueError(f"DB setting '{name}' not found in database.")
 
         return self._property_cache['DB:server_version']
-
 
     async def get_cached_value(self, group: str, name: str,
                                factory: Callable[[], Awaitable[T]]) -> T:
@@ -124,7 +118,6 @@ class SearchConnection:
         self._property_cache[full_name] = value
 
         return value
-
 
     async def get_class_table(self, cls: str, typ: str) -> Optional[SaFromClause]:
         """ Lookup up if there is a classtype table for the given category

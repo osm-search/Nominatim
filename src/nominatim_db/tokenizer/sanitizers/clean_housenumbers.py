@@ -30,6 +30,7 @@ from ...data.place_name import PlaceName
 from .base import ProcessInfo
 from .config import SanitizerConfig
 
+
 class _HousenumberSanitizer:
 
     def __init__(self, config: SanitizerConfig) -> None:
@@ -37,7 +38,6 @@ class _HousenumberSanitizer:
         self.split_regexp = config.get_delimiter()
 
         self.filter_name = config.get_filter('convert-to-name', 'FAIL_ALL')
-
 
     def __call__(self, obj: ProcessInfo) -> None:
         if not obj.address:
@@ -57,7 +57,6 @@ class _HousenumberSanitizer:
 
         obj.address = new_address
 
-
     def sanitize(self, value: str) -> Iterator[str]:
         """ Extract housenumbers in a regularized format from an OSM value.
 
@@ -67,7 +66,6 @@ class _HousenumberSanitizer:
         for hnr in self.split_regexp.split(value):
             if hnr:
                 yield from self._regularize(hnr)
-
 
     def _regularize(self, hnr: str) -> Iterator[str]:
         yield hnr

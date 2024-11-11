@@ -60,10 +60,10 @@ are in process of consolidating the style. The following rules apply:
    * leave out space between a function name and bracket
      but add one between control statement(if, while, etc.) and bracket
 
-The coding style is enforced with pylint. It can be tested with:
+The coding style is enforced with flake8. It can be tested with:
 
 ```
-pylint3 --extension-pkg-whitelist=osmium nominatim
+make lint
 ```
 
 ## Testing

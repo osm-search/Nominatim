@@ -23,6 +23,7 @@ from .db_searches import AbstractSearch
 from .query_analyzer_factory import make_query_analyzer, AbstractQueryAnalyzer
 from .query import Phrase, QueryStruct
 
+
 class ForwardGeocoder:
     """ Main class responsible for place search.
     """
@@ -34,13 +35,11 @@ class ForwardGeocoder:
         self.timeout = dt.timedelta(seconds=timeout or 1000000)
         self.query_analyzer: Optional[AbstractQueryAnalyzer] = None
 
-
     @property
     def limit(self) -> int:
         """ Return the configured maximum number of search results.
         """
         return self.params.max_results
-
 
     async def build_searches(self,
                              phrases: List[Phrase]) -> Tuple[QueryStruct, List[AbstractSearch]]:
@@ -67,7 +66,6 @@ class ForwardGeocoder:
             searches.sort(key=lambda s: (s.penalty, s.SEARCH_PRIO))
 
         return query, searches
-
 
     async def execute_searches(self, query: QueryStruct,
                                searches: List[AbstractSearch]) -> SearchResults:
@@ -103,7 +101,6 @@ class ForwardGeocoder:
 
         return SearchResults(results.values())
 
-
     def pre_filter_results(self, results: SearchResults) -> SearchResults:
         """ Remove results that are significantly worse than the
             best match.
@@ -114,7 +111,6 @@ class ForwardGeocoder:
 
         return results
 
-
     def sort_and_cut_results(self, results: SearchResults) -> SearchResults:
         """ Remove badly matching results, sort by ranking and
             limit to the configured number of results.
@@ -124,13 +120,12 @@ class ForwardGeocoder:
             min_rank = results[0].rank_search
             min_ranking = results[0].ranking
             results = SearchResults(r for r in results
-                                    if r.ranking + 0.03 * (r.rank_search - min_rank)
-                                       < min_ranking + 0.5)
+                                    if (r.ranking + 0.03 * (r.rank_search - min_rank)
+                                        < min_ranking + 0.5))
 
             results = SearchResults(results[:self.limit])
 
         return results
-
 
     def rerank_by_query(self, query: QueryStruct, results: SearchResults) -> None:
         """ Adjust the accuracy of the localized result according to how well
@@ -138,7 +133,7 @@ class ForwardGeocoder:
         """
         assert self.query_analyzer is not None
         qwords = [word for phrase in query.source
-                       for word in re.split('[, ]+', phrase.text) if word]
+                  for word in re.split('[, ]+', phrase.text) if word]
         if not qwords:
             return
 
@@ -166,7 +161,6 @@ class ForwardGeocoder:
             if result.rank_address == 4:
                 distance *= 2
             result.accuracy += distance * 0.4 / sum(len(w) for w in qwords)
-
 
     async def lookup_pois(self, categories: List[Tuple[str, str]],
                           phrases: List[Phrase]) -> SearchResults:
@@ -197,7 +191,6 @@ class ForwardGeocoder:
 
         return results
 
-
     async def lookup(self, phrases: List[Phrase]) -> SearchResults:
         """ Look up a single free-text query.
         """
@@ -223,7 +216,6 @@ class ForwardGeocoder:
         return results
 
 
-# pylint: disable=invalid-name,too-many-locals
 def _dump_searches(searches: List[AbstractSearch], query: QueryStruct,
                    start: int = 0) -> Iterator[Optional[List[Any]]]:
     yield ['Penalty', 'Lookups', 'Housenr', 'Postcode', 'Countries',
@@ -242,12 +234,11 @@ def _dump_searches(searches: List[AbstractSearch], query: QueryStruct,
             ranks = ranks[:100] + '...'
         return f"{f.column}({ranks},def={f.default:.3g})"
 
-    def fmt_lookup(l: Any) -> str:
-        if not l:
+    def fmt_lookup(lk: Any) -> str:
+        if not lk:
             return ''
 
-        return f"{l.lookup_type}({l.column}{tk(l.tokens)})"
-
+        return f"{lk.lookup_type}({lk.column}{tk(lk.tokens)})"
 
     def fmt_cstr(c: Any) -> str:
         if not c:

@@ -10,7 +10,6 @@ Custom functions for SQLite.
 from typing import cast, Optional, Set, Any
 import json
 
-# pylint: disable=protected-access
 
 def weigh_search(search_vector: Optional[str], rankings: str, default: float) -> float:
     """ Custom weight function for search results.
@@ -118,5 +117,5 @@ async def _make_aggregate(aioconn: Any, *args: Any) -> None:
 def _create_aggregate(conn: Any, name: str, nargs: int, aggregate: Any) -> None:
     try:
         conn.await_(_make_aggregate(conn._connection, name, nargs, aggregate))
-    except Exception as error: # pylint: disable=broad-exception-caught
+    except Exception as error:
         conn._handle_exception(error)

@@ -7,7 +7,7 @@
 """
 Custom type for an array of integers.
 """
-from typing import Any, List, cast, Optional
+from typing import Any, List, Optional
 
 import sqlalchemy as sa
 from sqlalchemy.ext.compiler import compiles
@@ -15,7 +15,6 @@ from sqlalchemy.dialects.postgresql import ARRAY
 
 from ...typing import SaDialect, SaColumn
 
-# pylint: disable=all
 
 class IntList(sa.types.TypeDecorator[Any]):
     """ A list of integers saved as a text of comma-separated numbers.
@@ -46,12 +45,11 @@ class IntArray(sa.types.TypeDecorator[Any]):
 
     def load_dialect_impl(self, dialect: SaDialect) -> sa.types.TypeEngine[Any]:
         if dialect.name == 'postgresql':
-            return ARRAY(sa.Integer()) #pylint: disable=invalid-name
+            return ARRAY(sa.Integer())
 
         return IntList()
 
-
-    class comparator_factory(sa.types.UserDefinedType.Comparator): # type: ignore[type-arg]
+    class comparator_factory(sa.types.UserDefinedType.Comparator):  # type: ignore[type-arg]
 
         def __add__(self, other: SaColumn) -> 'sa.ColumnOperators':
             """ Concate the array with the given array. If one of the
@@ -59,13 +57,11 @@ class IntArray(sa.types.TypeDecorator[Any]):
             """
             return ArrayCat(self.expr, other)
 
-
         def contains(self, other: SaColumn, **kwargs: Any) -> 'sa.ColumnOperators':
             """ Return true if the array contains all the value of the argument
                 array.
             """
             return ArrayContains(self.expr, other)
-
 
 
 class ArrayAgg(sa.sql.functions.GenericFunction[Any]):
@@ -80,7 +76,6 @@ class ArrayAgg(sa.sql.functions.GenericFunction[Any]):
 @compiles(ArrayAgg, 'sqlite')
 def sqlite_array_agg(element: ArrayAgg, compiler: 'sa.Compiled', **kw: Any) -> str:
     return "group_concat(%s, ',')" % compiler.process(element.clauses, **kw)
-
 
 
 class ArrayContains(sa.sql.expression.FunctionElement[Any]):
@@ -102,7 +97,6 @@ def sqlite_array_contains(element: ArrayContains, compiler: 'sa.Compiled', **kw:
     return "array_contains(%s)" % compiler.process(element.clauses, **kw)
 
 
-
 class ArrayCat(sa.sql.expression.FunctionElement[Any]):
     """ Function to check if an array is fully contained in another.
     """
@@ -120,4 +114,3 @@ def generic_array_cat(element: ArrayCat, compiler: 'sa.Compiled', **kw: Any) -> 
 def sqlite_array_cat(element: ArrayCat, compiler: 'sa.Compiled', **kw: Any) -> str:
     arg1, arg2 = list(element.clauses)
     return "(%s || ',' || %s)" % (compiler.process(arg1, **kw), compiler.process(arg2, **kw))
-

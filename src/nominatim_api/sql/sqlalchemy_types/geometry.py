@@ -9,7 +9,6 @@ Custom types for SQLAlchemy.
 """
 from __future__ import annotations
 from typing import Callable, Any, cast
-import sys
 
 import sqlalchemy as sa
 from sqlalchemy.ext.compiler import compiles
@@ -17,7 +16,6 @@ from sqlalchemy import types
 
 from ...typing import SaColumn, SaBind
 
-#pylint: disable=all
 
 class Geometry_DistanceSpheroid(sa.sql.expression.FunctionElement[float]):
     """ Function to compute the spherical distance in meters.
@@ -126,12 +124,12 @@ def spatialite_intersects_column(element: Geometry_ColumnIntersectsBbox,
     arg1, arg2 = list(element.clauses)
     return "MbrIntersects(%s, %s) = 1 and "\
            "%s.ROWID IN (SELECT ROWID FROM SpatialIndex "\
-                        "WHERE f_table_name = '%s' AND f_geometry_column = '%s' "\
-                        "AND search_frame = %s)" %(
-              compiler.process(arg1, **kw),
-              compiler.process(arg2, **kw),
-              arg1.table.name, arg1.table.name, arg1.name,
-              compiler.process(arg2, **kw))
+           "             WHERE f_table_name = '%s' AND f_geometry_column = '%s' "\
+           "             AND search_frame = %s)"\
+        % (compiler.process(arg1, **kw),
+           compiler.process(arg2, **kw),
+           arg1.table.name, arg1.table.name, arg1.name,
+           compiler.process(arg2, **kw))
 
 
 class Geometry_ColumnDWithin(sa.sql.expression.FunctionElement[Any]):
@@ -149,23 +147,24 @@ def default_dwithin_column(element: Geometry_ColumnDWithin,
                            compiler: 'sa.Compiled', **kw: Any) -> str:
     return "ST_DWithin(%s)" % compiler.process(element.clauses, **kw)
 
+
 @compiles(Geometry_ColumnDWithin, 'sqlite')
 def spatialite_dwithin_column(element: Geometry_ColumnDWithin,
                               compiler: 'sa.Compiled', **kw: Any) -> str:
     geom1, geom2, dist = list(element.clauses)
     return "ST_Distance(%s, %s) < %s and "\
            "%s.ROWID IN (SELECT ROWID FROM SpatialIndex "\
-                        "WHERE f_table_name = '%s' AND f_geometry_column = '%s' "\
-                        "AND search_frame = ST_Expand(%s, %s))" %(
-              compiler.process(geom1, **kw),
-              compiler.process(geom2, **kw),
-              compiler.process(dist, **kw),
-              geom1.table.name, geom1.table.name, geom1.name,
-              compiler.process(geom2, **kw),
-              compiler.process(dist, **kw))
+           "             WHERE f_table_name = '%s' AND f_geometry_column = '%s' "\
+           "             AND search_frame = ST_Expand(%s, %s))"\
+        % (compiler.process(geom1, **kw),
+           compiler.process(geom2, **kw),
+           compiler.process(dist, **kw),
+           geom1.table.name, geom1.table.name, geom1.name,
+           compiler.process(geom2, **kw),
+           compiler.process(dist, **kw))
 
 
-class Geometry(types.UserDefinedType): # type: ignore[type-arg]
+class Geometry(types.UserDefinedType):  # type: ignore[type-arg]
     """ Simplified type decorator for PostGIS geometry. This type
         only supports geometries in 4326 projection.
     """
@@ -174,10 +173,8 @@ class Geometry(types.UserDefinedType): # type: ignore[type-arg]
     def __init__(self, subtype: str = 'Geometry'):
         self.subtype = subtype
 
-
     def get_col_spec(self) -> str:
         return f'GEOMETRY({self.subtype}, 4326)'
-
 
     def bind_processor(self, dialect: 'sa.Dialect') -> Callable[[Any], str]:
         def process(value: Any) -> str:
@@ -187,23 +184,19 @@ class Geometry(types.UserDefinedType): # type: ignore[type-arg]
             return cast(str, value.to_wkt())
         return process
 
-
     def result_processor(self, dialect: 'sa.Dialect', coltype: object) -> Callable[[Any], str]:
         def process(value: Any) -> str:
             assert isinstance(value, str)
             return value
         return process
 
-
     def column_expression(self, col: SaColumn) -> SaColumn:
         return sa.func.ST_AsEWKB(col)
-
 
     def bind_expression(self, bindvalue: SaBind) -> SaColumn:
         return sa.func.ST_GeomFromText(bindvalue, sa.text('4326'), type_=self)
 
-
-    class comparator_factory(types.UserDefinedType.Comparator): # type: ignore[type-arg]
+    class comparator_factory(types.UserDefinedType.Comparator):  # type: ignore[type-arg]
 
         def intersects(self, other: SaColumn, use_index: bool = True) -> 'sa.Operators':
             if not use_index:
@@ -214,14 +207,11 @@ class Geometry(types.UserDefinedType): # type: ignore[type-arg]
 
             return Geometry_IntersectsBbox(self.expr, other)
 
-
         def is_line_like(self) -> SaColumn:
             return Geometry_IsLineLike(self)
 
-
         def is_area(self) -> SaColumn:
             return Geometry_IsAreaLike(self)
-
 
         def within_distance(self, other: SaColumn, distance: SaColumn) -> SaColumn:
             if isinstance(self.expr, sa.Column):
@@ -229,54 +219,43 @@ class Geometry(types.UserDefinedType): # type: ignore[type-arg]
 
             return self.ST_Distance(other) < distance
 
-
         def ST_Distance(self, other: SaColumn) -> SaColumn:
             return sa.func.ST_Distance(self, other, type_=sa.Float)
-
 
         def ST_Contains(self, other: SaColumn) -> SaColumn:
             return sa.func.ST_Contains(self, other, type_=sa.Boolean)
 
-
         def ST_CoveredBy(self, other: SaColumn) -> SaColumn:
             return sa.func.ST_CoveredBy(self, other, type_=sa.Boolean)
-
 
         def ST_ClosestPoint(self, other: SaColumn) -> SaColumn:
             return sa.func.coalesce(sa.func.ST_ClosestPoint(self, other, type_=Geometry),
                                     other)
 
-
         def ST_Buffer(self, other: SaColumn) -> SaColumn:
             return sa.func.ST_Buffer(self, other, type_=Geometry)
-
 
         def ST_Expand(self, other: SaColumn) -> SaColumn:
             return sa.func.ST_Expand(self, other, type_=Geometry)
 
-
         def ST_Collect(self) -> SaColumn:
             return sa.func.ST_Collect(self, type_=Geometry)
-
 
         def ST_Centroid(self) -> SaColumn:
             return sa.func.ST_Centroid(self, type_=Geometry)
 
-
         def ST_LineInterpolatePoint(self, other: SaColumn) -> SaColumn:
             return sa.func.ST_LineInterpolatePoint(self, other, type_=Geometry)
 
-
         def ST_LineLocatePoint(self, other: SaColumn) -> SaColumn:
             return sa.func.ST_LineLocatePoint(self, other, type_=sa.Float)
-
 
         def distance_spheroid(self, other: SaColumn) -> SaColumn:
             return Geometry_DistanceSpheroid(self, other)
 
 
 @compiles(Geometry, 'sqlite')
-def get_col_spec(self, *args, **kwargs): # type: ignore[no-untyped-def]
+def get_col_spec(self, *args, **kwargs):  # type: ignore[no-untyped-def]
     return 'GEOMETRY'
 
 
@@ -289,6 +268,7 @@ SQLITE_FUNCTION_ALIAS = (
     ('ST_LineLocatePoint', sa.Float, 'ST_Line_Locate_Point'),
     ('ST_LineInterpolatePoint', sa.Float, 'ST_Line_Interpolate_Point'),
 )
+
 
 def _add_function_alias(func: str, ftype: type, alias: str) -> None:
     _FuncDef = type(func, (sa.sql.functions.GenericFunction, ), {
@@ -303,6 +283,7 @@ def _add_function_alias(func: str, ftype: type, alias: str) -> None:
         return func_templ % compiler.process(element.clauses, **kw)
 
     compiles(_FuncDef, 'sqlite')(_sqlite_impl)
+
 
 for alias in SQLITE_FUNCTION_ALIAS:
     _add_function_alias(*alias)

@@ -21,6 +21,7 @@ from ...result_formatting import FormatDispatcher, load_format_dispatcher
 from ... import logging as loglib
 from ..asgi_adaptor import ASGIAdaptor, EndpointFunc
 
+
 class HTTPNominatimError(Exception):
     """ A special exception class for errors raised during processing.
     """
@@ -30,7 +31,7 @@ class HTTPNominatimError(Exception):
         self.content_type = content_type
 
 
-async def nominatim_error_handler(req: Request, resp: Response, #pylint: disable=unused-argument
+async def nominatim_error_handler(req: Request, resp: Response,
                                   exception: HTTPNominatimError,
                                   _: Any) -> None:
     """ Special error handler that passes message and content type as
@@ -41,8 +42,8 @@ async def nominatim_error_handler(req: Request, resp: Response, #pylint: disable
     resp.content_type = exception.content_type
 
 
-async def timeout_error_handler(req: Request, resp: Response, #pylint: disable=unused-argument
-                                exception: TimeoutError, #pylint: disable=unused-argument
+async def timeout_error_handler(req: Request, resp: Response,
+                                exception: TimeoutError,
                                 _: Any) -> None:
     """ Special error handler that passes message and content type as
         per exception info.
@@ -70,25 +71,20 @@ class ParamWrapper(ASGIAdaptor):
         self._config = config
         self._formatter = formatter
 
-
     def get(self, name: str, default: Optional[str] = None) -> Optional[str]:
         return self.request.get_param(name, default=default)
-
 
     def get_header(self, name: str, default: Optional[str] = None) -> Optional[str]:
         return self.request.get_header(name, default=default)
 
-
     def error(self, msg: str, status: int = 400) -> HTTPNominatimError:
         return HTTPNominatimError(msg, status, self.content_type)
-
 
     def create_response(self, status: int, output: str, num_results: int) -> None:
         self.response.context.num_results = num_results
         self.response.status = status
         self.response.text = output
         self.response.content_type = self.content_type
-
 
     def base_uri(self) -> str:
         return self.request.forwarded_prefix
@@ -111,7 +107,6 @@ class EndpointWrapper:
         self.api = api
         self.formatter = formatter
 
-
     async def on_get(self, req: Request, resp: Response) -> None:
         """ Implementation of the endpoint.
         """
@@ -124,14 +119,12 @@ class FileLoggingMiddleware:
     """
 
     def __init__(self, file_name: str):
-        self.fd = open(file_name, 'a', buffering=1, encoding='utf8') # pylint: disable=R1732
-
+        self.fd = open(file_name, 'a', buffering=1, encoding='utf8')
 
     async def process_request(self, req: Request, _: Response) -> None:
         """ Callback before the request starts timing.
         """
         req.context.start = dt.datetime.now(tz=dt.timezone.utc)
-
 
     async def process_response(self, req: Request, resp: Response,
                                resource: Optional[EndpointWrapper],
@@ -140,7 +133,7 @@ class FileLoggingMiddleware:
             writes logs for successful requests for search, reverse and lookup.
         """
         if not req_succeeded or resource is None or resp.status != 200\
-            or resource.name not in ('reverse', 'search', 'lookup', 'details'):
+           or resource.name not in ('reverse', 'search', 'lookup', 'details'):
             return
 
         finish = dt.datetime.now(tz=dt.timezone.utc)
@@ -183,7 +176,7 @@ def get_application(project_dir: Path,
     app.add_error_handler(HTTPNominatimError, nominatim_error_handler)
     app.add_error_handler(TimeoutError, timeout_error_handler)
     # different from TimeoutError in Python <= 3.10
-    app.add_error_handler(asyncio.TimeoutError, timeout_error_handler) # type: ignore[arg-type]
+    app.add_error_handler(asyncio.TimeoutError, timeout_error_handler)  # type: ignore[arg-type]
 
     legacy_urls = api.config.get_bool('SERVE_LEGACY_URLS')
     formatter = load_format_dispatcher('v1', project_dir)

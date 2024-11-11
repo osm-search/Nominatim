@@ -24,7 +24,7 @@ pytest:
 	pytest test/python
 
 lint:
-	pylint src
+	flake8 src
 
 bdd:
 	cd test/bdd; behave -DREMOVE_TEMPLATE=1

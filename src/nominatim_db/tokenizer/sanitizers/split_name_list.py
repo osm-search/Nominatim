@@ -16,6 +16,7 @@ from typing import Callable
 from .base import ProcessInfo
 from .config import SanitizerConfig
 
+
 def create(config: SanitizerConfig) -> Callable[[ProcessInfo], None]:
     """ Create a name processing function that splits name values with
         multiple values into their components.

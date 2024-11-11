@@ -17,6 +17,7 @@ from .special_phrase import SpecialPhrase
 
 LOG = logging.getLogger()
 
+
 def _get_wiki_content(lang: str) -> str:
     """
         Request and return the wiki page's content
@@ -43,12 +44,11 @@ class SPWikiLoader:
         self.type_fix_pattern = re.compile(r'\"|&quot;')
 
         self.languages = self.config.get_str_list('LANGUAGES') or \
-                         ['af', 'ar', 'br', 'ca', 'cs', 'de', 'en', 'es',
-                          'et', 'eu', 'fa', 'fi', 'fr', 'gl', 'hr', 'hu',
-                          'ia', 'is', 'it', 'ja', 'mk', 'nl', 'no', 'pl',
-                          'ps', 'pt', 'ru', 'sk', 'sl', 'sv', 'uk', 'vi',
-                          'lv', 'tr']
-
+            ['af', 'ar', 'br', 'ca', 'cs', 'de', 'en', 'es',
+             'et', 'eu', 'fa', 'fi', 'fr', 'gl', 'hr', 'hu',
+             'ia', 'is', 'it', 'ja', 'mk', 'nl', 'no', 'pl',
+             'ps', 'pt', 'ru', 'sk', 'sl', 'sv', 'uk', 'vi',
+             'lv', 'tr']
 
     def generate_phrases(self) -> Iterable[SpecialPhrase]:
         """ Download the wiki pages for the configured languages

@@ -11,9 +11,6 @@ Classes and functions defined in this file are considered stable. Always
 import from this file, not from the source files directly.
 """
 
-# See also https://github.com/PyCQA/pylint/issues/6006
-# pylint: disable=useless-import-alias
-
 from .errors import (UsageError as UsageError)
 from .config import (Configuration as Configuration)
 

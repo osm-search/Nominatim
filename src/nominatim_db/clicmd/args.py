@@ -16,7 +16,9 @@ from ..errors import UsageError
 from ..config import Configuration
 from ..typing import Protocol
 
+
 LOG = logging.getLogger()
+
 
 class Subcommand(Protocol):
     """
@@ -178,7 +180,6 @@ class NominatimArgs:
     polygon_geojson: bool
     group_hierarchy: bool
 
-
     def osm2pgsql_options(self, default_cache: int,
                           default_threads: int) -> Dict[str, Any]:
         """ Return the standard osm2pgsql options that can be derived
@@ -196,9 +197,8 @@ class NominatimArgs:
                                      slim_index=self.config.TABLESPACE_OSM_INDEX,
                                      main_data=self.config.TABLESPACE_PLACE_DATA,
                                      main_index=self.config.TABLESPACE_PLACE_INDEX
-                                    )
-                   )
-
+                                     )
+                    )
 
     def get_osm_file_list(self) -> Optional[List[Path]]:
         """ Return the --osm-file argument as a list of Paths or None

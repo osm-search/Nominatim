@@ -17,7 +17,8 @@ from ...data.place_name import PlaceName
 from .config_variants import get_variant_config
 from .generic_mutation import MutationVariantGenerator
 
-### Configuration section
+# Configuration section
+
 
 def configure(rules: Mapping[str, Any], normalizer: Any, _: Any) -> Dict[str, Any]:
     """ Extract and preprocess the configuration for this module.
@@ -47,7 +48,7 @@ def configure(rules: Mapping[str, Any], normalizer: Any, _: Any) -> Dict[str, An
     return config
 
 
-### Analysis section
+# Analysis section
 
 def create(normalizer: Any, transliterator: Any,
            config: Mapping[str, Any]) -> 'GenericTokenAnalysis':
@@ -77,13 +78,11 @@ class GenericTokenAnalysis:
         # set up mutation rules
         self.mutations = [MutationVariantGenerator(*cfg) for cfg in config['mutations']]
 
-
     def get_canonical_id(self, name: PlaceName) -> str:
         """ Return the normalized form of the name. This is the standard form
             from which possible variants for the name can be derived.
         """
         return cast(str, self.norm.transliterate(name.name)).strip()
-
 
     def compute_variants(self, norm_name: str) -> List[str]:
         """ Compute the spelling variants for the given normalized name
@@ -96,7 +95,6 @@ class GenericTokenAnalysis:
 
         return [name for name in self._transliterate_unique_list(norm_name, variants) if name]
 
-
     def _transliterate_unique_list(self, norm_name: str,
                                    iterable: Iterable[str]) -> Iterator[Optional[str]]:
         seen = set()
@@ -107,7 +105,6 @@ class GenericTokenAnalysis:
             if variant not in seen:
                 seen.add(variant)
                 yield self.to_ascii.transliterate(variant).strip()
-
 
     def _generate_word_variants(self, norm_name: str) -> Iterable[str]:
         baseform = '^ ' + norm_name + ' ^'

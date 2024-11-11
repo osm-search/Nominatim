@@ -22,10 +22,6 @@ from .args import NominatimArgs
 
 LOG = logging.getLogger()
 
-# Do not repeat documentation of subcommand classes.
-# pylint: disable=C0111
-# Using non-top-level imports to make pyosmium optional for replication only.
-# pylint: disable=C0415
 
 class UpdateReplication:
     """\
@@ -71,7 +67,6 @@ class UpdateReplication:
         group.add_argument('--socket-timeout', dest='socket_timeout', type=int, default=60,
                            help='Set timeout for file downloads')
 
-
     def _init_replication(self, args: NominatimArgs) -> int:
         from ..tools import replication, refresh
 
@@ -84,14 +79,12 @@ class UpdateReplication:
                 refresh.create_functions(conn, args.config, True, False)
         return 0
 
-
     def _check_for_updates(self, args: NominatimArgs) -> int:
         from ..tools import replication
 
         with connect(args.config.get_libpq_dsn()) as conn:
             return replication.check_for_updates(conn, base_url=args.config.REPLICATION_URL,
                                                  socket_timeout=args.socket_timeout)
-
 
     def _report_update(self, batchdate: dt.datetime,
                        start_import: dt.datetime,
@@ -105,7 +98,6 @@ class UpdateReplication:
                     f"Indexing: {round_time(end - start_index)} " if start_index else '',
                     round_time(end - start_import),
                     round_time(end - batchdate))
-
 
     def _compute_update_interval(self, args: NominatimArgs) -> int:
         if args.catch_up:
@@ -123,9 +115,7 @@ class UpdateReplication:
 
         return update_interval
 
-
     async def _update(self, args: NominatimArgs) -> None:
-        # pylint: disable=too-many-locals
         from ..tools import replication
         from ..indexer.indexer import Indexer
         from ..tokenizer import factory as tokenizer_factory
@@ -185,7 +175,6 @@ class UpdateReplication:
             if state is replication.UpdateState.NO_CHANGES:
                 LOG.warning("No new changes. Sleeping for %d sec.", recheck_interval)
                 time.sleep(recheck_interval)
-
 
     def run(self, args: NominatimArgs) -> int:
         socket.setdefaulttimeout(args.socket_timeout)

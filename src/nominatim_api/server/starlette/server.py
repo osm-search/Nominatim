@@ -28,6 +28,7 @@ from ...result_formatting import FormatDispatcher, load_format_dispatcher
 from ..asgi_adaptor import ASGIAdaptor, EndpointFunc
 from ... import logging as loglib
 
+
 class ParamWrapper(ASGIAdaptor):
     """ Adaptor class for server glue to Starlette framework.
     """
@@ -35,24 +36,19 @@ class ParamWrapper(ASGIAdaptor):
     def __init__(self, request: Request) -> None:
         self.request = request
 
-
     def get(self, name: str, default: Optional[str] = None) -> Optional[str]:
         return self.request.query_params.get(name, default=default)
 
-
     def get_header(self, name: str, default: Optional[str] = None) -> Optional[str]:
         return self.request.headers.get(name, default)
-
 
     def error(self, msg: str, status: int = 400) -> HTTPException:
         return HTTPException(status, detail=msg,
                              headers={'content-type': self.content_type})
 
-
     def create_response(self, status: int, output: str, num_results: int) -> Response:
         self.request.state.num_results = num_results
         return Response(output, status_code=status, media_type=self.content_type)
-
 
     def base_uri(self) -> str:
         scheme = self.request.url.scheme
@@ -66,10 +62,8 @@ class ParamWrapper(ASGIAdaptor):
 
         return f"{scheme}://{host}{root}"
 
-
     def config(self) -> Configuration:
         return cast(Configuration, self.request.app.state.API.config)
-
 
     def formatting(self) -> FormatDispatcher:
         return cast(FormatDispatcher, self.request.app.state.API.formatter)
@@ -89,7 +83,7 @@ class FileLoggingMiddleware(BaseHTTPMiddleware):
 
     def __init__(self, app: Starlette, file_name: str = ''):
         super().__init__(app)
-        self.fd = open(file_name, 'a', buffering=1, encoding='utf8') # pylint: disable=R1732
+        self.fd = open(file_name, 'a', buffering=1, encoding='utf8')
 
     async def dispatch(self, request: Request,
                        call_next: RequestResponseEndpoint) -> Response:
@@ -118,7 +112,7 @@ class FileLoggingMiddleware(BaseHTTPMiddleware):
         return response
 
 
-async def timeout_error(request: Request, #pylint: disable=unused-argument
+async def timeout_error(request: Request,
                         _: Exception) -> Response:
     """ Error handler for query timeouts.
     """

@@ -14,7 +14,7 @@ import importlib
 
 from .server.content_types import CONTENT_JSON
 
-T = TypeVar('T') # pylint: disable=invalid-name
+T = TypeVar('T')
 FormatFunc = Callable[[T, Mapping[str, Any]], str]
 ErrorFormatFunc = Callable[[str, str, int], str]
 
@@ -31,7 +31,6 @@ class FormatDispatcher:
             self.content_types.update(content_types)
         self.format_functions: Dict[Type[Any], Dict[str, FormatFunc[Any]]] = defaultdict(dict)
 
-
     def format_func(self, result_class: Type[T],
                     fmt: str) -> Callable[[FormatFunc[T]], FormatFunc[T]]:
         """ Decorator for a function that formats a given type of result into the
@@ -43,7 +42,6 @@ class FormatDispatcher:
 
         return decorator
 
-
     def error_format_func(self, func: ErrorFormatFunc) -> ErrorFormatFunc:
         """ Decorator for a function that formats error messges.
             There is only one error formatter per dispatcher. Using
@@ -52,18 +50,15 @@ class FormatDispatcher:
         self.error_handler = func
         return func
 
-
     def list_formats(self, result_type: Type[Any]) -> List[str]:
         """ Return a list of formats supported by this formatter.
         """
         return list(self.format_functions[result_type].keys())
 
-
     def supports_format(self, result_type: Type[Any], fmt: str) -> bool:
         """ Check if the given format is supported by this formatter.
         """
         return fmt in self.format_functions[result_type]
-
 
     def format_result(self, result: Any, fmt: str, options: Mapping[str, Any]) -> str:
         """ Convert the given result into a string using the given format.
@@ -73,7 +68,6 @@ class FormatDispatcher:
         """
         return self.format_functions[type(result)][fmt](result, options)
 
-
     def format_error(self, content_type: str, msg: str, status: int) -> str:
         """ Convert the given error message into a response string
             taking the requested content_type into account.
@@ -82,14 +76,12 @@ class FormatDispatcher:
         """
         return self.error_handler(content_type, msg, status)
 
-
     def set_content_type(self, fmt: str, content_type: str) -> None:
         """ Set the content type for the given format. This is the string
             that will be returned in the Content-Type header of the HTML
             response, when the given format is choosen.
         """
         self.content_types[fmt] = content_type
-
 
     def get_content_type(self, fmt: str) -> str:
         """ Return the content type for the given format.

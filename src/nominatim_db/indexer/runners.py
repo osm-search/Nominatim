@@ -19,10 +19,10 @@ from ..typing import Protocol
 from ..data.place_info import PlaceInfo
 from ..tokenizer.base import AbstractAnalyzer
 
-# pylint: disable=C0111
 
 def _mk_valuelist(template: str, num: int) -> pysql.Composed:
     return pysql.SQL(',').join([pysql.SQL(template)] * num)
+
 
 def _analyze_place(place: DictRow, analyzer: AbstractAnalyzer) -> Json:
     return Json(analyzer.process_place(PlaceInfo(place)))
@@ -41,6 +41,7 @@ SELECT_SQL = pysql.SQL("""SELECT place_id, extra.*
                           LATERAL placex_indexing_prepare(px) as extra """)
 UPDATE_LINE = "(%s, %s::hstore, %s::hstore, %s::int, %s::jsonb)"
 
+
 class AbstractPlacexRunner:
     """ Returns SQL commands for indexing of the placex table.
     """
@@ -48,7 +49,6 @@ class AbstractPlacexRunner:
     def __init__(self, rank: int, analyzer: AbstractAnalyzer) -> None:
         self.rank = rank
         self.analyzer = analyzer
-
 
     def index_places_query(self, batch_size: int) -> Query:
         return pysql.SQL(
@@ -58,7 +58,6 @@ class AbstractPlacexRunner:
                 FROM (VALUES {}) as v(id, name, addr, linked_place_id, ti)
                 WHERE place_id = v.id
             """).format(_mk_valuelist(UPDATE_LINE, batch_size))
-
 
     def index_places_params(self, place: DictRow) -> Sequence[Any]:
         return (place['place_id'],
@@ -118,7 +117,6 @@ class InterpolationRunner:
     def __init__(self, analyzer: AbstractAnalyzer) -> None:
         self.analyzer = analyzer
 
-
     def name(self) -> str:
         return "interpolation lines (location_property_osmline)"
 
@@ -126,13 +124,11 @@ class InterpolationRunner:
         return """SELECT count(*) FROM location_property_osmline
                   WHERE indexed_status > 0"""
 
-
     def sql_get_objects(self) -> Query:
         return """SELECT place_id, get_interpolation_address(address, osm_id) as address
                   FROM location_property_osmline
                   WHERE indexed_status > 0
                   ORDER BY geometry_sector"""
-
 
     def index_places_query(self, batch_size: int) -> Query:
         return pysql.SQL("""UPDATE location_property_osmline
@@ -141,11 +137,9 @@ class InterpolationRunner:
                             WHERE place_id = v.id
                          """).format(_mk_valuelist("(%s, %s::hstore, %s::jsonb)", batch_size))
 
-
     def index_places_params(self, place: DictRow) -> Sequence[Any]:
         return (place['place_id'], place['address'],
                 _analyze_place(place, self.analyzer))
-
 
 
 class PostcodeRunner(Runner):
@@ -155,22 +149,18 @@ class PostcodeRunner(Runner):
     def name(self) -> str:
         return "postcodes (location_postcode)"
 
-
     def sql_count_objects(self) -> Query:
         return 'SELECT count(*) FROM location_postcode WHERE indexed_status > 0'
-
 
     def sql_get_objects(self) -> Query:
         return """SELECT place_id FROM location_postcode
                   WHERE indexed_status > 0
                   ORDER BY country_code, postcode"""
 
-
     def index_places_query(self, batch_size: int) -> Query:
         return pysql.SQL("""UPDATE location_postcode SET indexed_status = 0
                                     WHERE place_id IN ({})""")\
                     .format(pysql.SQL(',').join((pysql.Placeholder() for _ in range(batch_size))))
-
 
     def index_places_params(self, place: DictRow) -> Sequence[Any]:
         return (place['place_id'], )

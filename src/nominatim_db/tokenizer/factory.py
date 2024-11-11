@@ -29,6 +29,7 @@ from ..tokenizer.base import AbstractTokenizer, TokenizerModule
 
 LOG = logging.getLogger()
 
+
 def _import_tokenizer(name: str) -> TokenizerModule:
     """ Load the tokenizer.py module from project directory.
     """

@@ -9,8 +9,6 @@ Version information for Nominatim.
 """
 from typing import NamedTuple, Optional
 
-# See also https://github.com/PyCQA/pylint/issues/6006
-# pylint: disable=useless-import-alias,unused-import
 
 class NominatimVersion(NamedTuple):
     """ Version information for Nominatim. We follow semantic versioning.
@@ -47,7 +45,6 @@ class NominatimVersion(NamedTuple):
         return f"{self.major}.{self.minor}.{self.patch_level}"
 
 
-
 def parse_version(version: str) -> NominatimVersion:
     """ Parse a version string into a version consisting of a tuple of
         four ints: major, minor, patch level, database patch level
@@ -68,4 +65,4 @@ OSM2PGSQL_REQUIRED_VERSION = (1, 8)
 # on every execution of 'make'.
 # cmake/tool-installed.tmpl is used to build the binary 'nominatim'. Inside
 # there is a call to set the variable value below.
-GIT_COMMIT_HASH : Optional[str] = None
+GIT_COMMIT_HASH: Optional[str] = None

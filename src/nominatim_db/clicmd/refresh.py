@@ -18,12 +18,9 @@ from ..db.connection import connect, table_exists
 from ..tokenizer.base import AbstractTokenizer
 from .args import NominatimArgs
 
-# Do not repeat documentation of subcommand classes.
-# pylint: disable=C0111
-# Using non-top-level imports to avoid eventually unused imports.
-# pylint: disable=E0012,C0415
 
 LOG = logging.getLogger()
+
 
 def _parse_osm_object(obj: str) -> Tuple[str, int]:
     """ Parse the given argument into a tuple of OSM type and ID.
@@ -86,8 +83,7 @@ class UpdateRefresh:
         group.add_argument('--enable-debug-statements', action='store_true',
                            help='Enable debug warning statements in functions')
 
-
-    def run(self, args: NominatimArgs) -> int: #pylint: disable=too-many-branches, too-many-statements
+    def run(self, args: NominatimArgs) -> int:
         from ..tools import refresh, postcodes
         from ..indexer.indexer import Indexer
 
@@ -131,7 +127,7 @@ class UpdateRefresh:
 
             LOG.warning('Import secondary importance raster data from %s', args.project_dir)
             if refresh.import_secondary_importance(args.config.get_libpq_dsn(),
-                                                args.project_dir) > 0:
+                                                   args.project_dir) > 0:
                 LOG.fatal('FATAL: Cannot update secondary importance raster data')
                 return 1
             need_function_refresh = True
@@ -172,7 +168,6 @@ class UpdateRefresh:
                 conn.commit()
 
         return 0
-
 
     def _get_tokenizer(self, config: Configuration) -> AbstractTokenizer:
         if self.tokenizer is None:

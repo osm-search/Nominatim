@@ -11,6 +11,7 @@
 import logging
 LOG = logging.getLogger()
 
+
 class SpecialPhrasesImporterStatistics():
     """
         Class handling statistics of the import

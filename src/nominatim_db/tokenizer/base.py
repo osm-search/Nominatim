@@ -17,6 +17,7 @@ from ..config import Configuration
 from ..db.connection import Connection
 from ..data.place_info import PlaceInfo
 
+
 class AbstractAnalyzer(ABC):
     """ The analyzer provides the functions for analysing names and building
         the token database.
@@ -28,16 +29,13 @@ class AbstractAnalyzer(ABC):
     def __enter__(self) -> 'AbstractAnalyzer':
         return self
 
-
     def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
         self.close()
-
 
     @abstractmethod
     def close(self) -> None:
         """ Free all resources used by the analyzer.
         """
-
 
     @abstractmethod
     def get_word_token_info(self, words: List[str]) -> List[Tuple[str, str, int]]:
@@ -57,7 +55,6 @@ class AbstractAnalyzer(ABC):
                     (original word, word token, word id).
         """
 
-
     @abstractmethod
     def normalize_postcode(self, postcode: str) -> str:
         """ Convert the postcode to its standardized form.
@@ -72,13 +69,11 @@ class AbstractAnalyzer(ABC):
                 The given postcode after normalization.
         """
 
-
     @abstractmethod
     def update_postcodes_from_db(self) -> None:
         """ Update the tokenizer's postcode tokens from the current content
             of the `location_postcode` table.
         """
-
 
     @abstractmethod
     def update_special_phrases(self,
@@ -95,7 +90,6 @@ class AbstractAnalyzer(ABC):
                                 ones that already exist.
         """
 
-
     @abstractmethod
     def add_country_names(self, country_code: str, names: Dict[str, str]) -> None:
         """ Add the given names to the tokenizer's list of country tokens.
@@ -105,7 +99,6 @@ class AbstractAnalyzer(ABC):
                               refer to.
                 names: Dictionary of name type to name.
         """
-
 
     @abstractmethod
     def process_place(self, place: PlaceInfo) -> Any:
@@ -120,7 +113,6 @@ class AbstractAnalyzer(ABC):
                 A JSON-serialisable structure that will be handed into
                     the database via the `token_info` field.
         """
-
 
 
 class AbstractTokenizer(ABC):
@@ -146,7 +138,6 @@ class AbstractTokenizer(ABC):
                 tokenizers.
         """
 
-
     @abstractmethod
     def init_from_project(self, config: Configuration) -> None:
         """ Initialise the tokenizer from an existing database setup.
@@ -158,7 +149,6 @@ class AbstractTokenizer(ABC):
               config: Read-only object with configuration options.
         """
 
-
     @abstractmethod
     def finalize_import(self, config: Configuration) -> None:
         """ This function is called at the very end of an import when all
@@ -169,7 +159,6 @@ class AbstractTokenizer(ABC):
             Arguments:
               config: Read-only object with configuration options.
         """
-
 
     @abstractmethod
     def update_sql_functions(self, config: Configuration) -> None:
@@ -183,7 +172,6 @@ class AbstractTokenizer(ABC):
             Arguments:
               config: Read-only object with configuration options.
         """
-
 
     @abstractmethod
     def check_database(self, config: Configuration) -> Optional[str]:
@@ -199,7 +187,6 @@ class AbstractTokenizer(ABC):
                   how to resolve the issue. If everything is okay, return `None`.
         """
 
-
     @abstractmethod
     def update_statistics(self, config: Configuration, threads: int = 1) -> None:
         """ Recompute any tokenizer statistics necessary for efficient lookup.
@@ -208,13 +195,11 @@ class AbstractTokenizer(ABC):
             it to be called in order to work.
         """
 
-
     @abstractmethod
     def update_word_tokens(self) -> None:
         """ Do house-keeping on the tokenizers internal data structures.
             Remove unused word tokens, resort data etc.
         """
-
 
     @abstractmethod
     def name_analyzer(self) -> AbstractAnalyzer:
@@ -230,7 +215,6 @@ class AbstractTokenizer(ABC):
             When used outside the with construct, the caller must ensure to
             call the close() function before destructing the analyzer.
         """
-
 
     @abstractmethod
     def most_frequent_words(self, conn: Connection, num: int) -> List[str]:

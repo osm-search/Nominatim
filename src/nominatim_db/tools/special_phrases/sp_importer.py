@@ -28,6 +28,7 @@ from ...tokenizer.base import AbstractTokenizer
 
 LOG = logging.getLogger()
 
+
 def _classtype_table(phrase_class: str, phrase_type: str) -> str:
     """ Return the name of the table for the given class and type.
     """
@@ -44,7 +45,6 @@ class SpecialPhraseLoader(Protocol):
 
 
 class SPImporter():
-    # pylint: disable-msg=too-many-instance-attributes
     """
         Class handling the process of special phrases importation into the database.
 
@@ -96,7 +96,6 @@ class SPImporter():
         LOG.warning('Import done.')
         self.statistics_handler.notify_import_done()
 
-
     def _fetch_existing_place_classtype_tables(self) -> None:
         """
             Fetch existing place_classtype tables.
@@ -114,7 +113,7 @@ class SPImporter():
                 self.table_phrases_to_delete.add(row[0])
 
     def _load_white_and_black_lists(self) \
-          -> Tuple[Mapping[str, Sequence[str]], Mapping[str, Sequence[str]]]:
+            -> Tuple[Mapping[str, Sequence[str]], Mapping[str, Sequence[str]]]:
         """
             Load white and black lists from phrases-settings.json.
         """
@@ -163,7 +162,6 @@ class SPImporter():
 
         return (phrase.p_class, phrase.p_type)
 
-
     def _create_classtype_table_and_indexes(self,
                                             class_type_pairs: Iterable[Tuple[str, str]]) -> None:
         """
@@ -207,7 +205,6 @@ class SPImporter():
         with self.db_connection.cursor() as db_cursor:
             db_cursor.execute("DROP INDEX idx_placex_classtype")
 
-
     def _create_place_classtype_table(self, sql_tablespace: str,
                                       phrase_class: str, phrase_type: str) -> None:
         """
@@ -223,7 +220,6 @@ class SPImporter():
                                  WHERE class = %s AND type = %s
                              """).format(Identifier(table_name), SQL(sql_tablespace)),
                         (phrase_class, phrase_type))
-
 
     def _create_place_classtype_indexes(self, sql_tablespace: str,
                                         phrase_class: str, phrase_type: str) -> None:
@@ -248,7 +244,6 @@ class SPImporter():
                                           Identifier(base_table),
                                           SQL(sql_tablespace)))
 
-
     def _grant_access_to_webuser(self, phrase_class: str, phrase_type: str) -> None:
         """
             Grant access on read to the table place_classtype for the webuser.
@@ -258,7 +253,6 @@ class SPImporter():
             db_cursor.execute(SQL("""GRANT SELECT ON {} TO {}""")
                               .format(Identifier(table_name),
                                       Identifier(self.config.DATABASE_WEBUSER)))
-
 
     def _remove_non_existent_tables_from_db(self) -> None:
         """

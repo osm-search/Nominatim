@@ -16,7 +16,7 @@ from pathlib import Path
 from psycopg import sql as pysql
 
 from ..config import Configuration
-from ..db.connection import Connection, connect, postgis_version_tuple,\
+from ..db.connection import Connection, connect, postgis_version_tuple, \
                             drop_tables
 from ..db.utils import execute_file
 from ..db.sql_preprocessor import SQLPreprocessor
@@ -24,6 +24,7 @@ from ..db.sql_preprocessor import SQLPreprocessor
 LOG = logging.getLogger()
 
 OSM_TYPE = {'N': 'node', 'W': 'way', 'R': 'relation'}
+
 
 def _add_address_level_rows_from_entry(rows: MutableSequence[Tuple[Any, ...]],
                                        entry: Mapping[str, Any]) -> None:
@@ -51,7 +52,7 @@ def load_address_levels(conn: Connection, table: str, levels: Sequence[Mapping[s
         The table has the following columns:
             country, class, type, rank_search, rank_address
     """
-    rows: List[Tuple[Any, ...]]  = []
+    rows: List[Tuple[Any, ...]] = []
     for entry in levels:
         _add_address_level_rows_from_entry(rows, entry)
 
@@ -198,6 +199,7 @@ def import_secondary_importance(dsn: str, data_path: Path, ignore_errors: bool =
     execute_file(dsn, datafile, ignore_errors=ignore_errors)
 
     return 0
+
 
 def recompute_importance(conn: Connection) -> None:
     """ Recompute wikipedia links and importance for all entries in placex.

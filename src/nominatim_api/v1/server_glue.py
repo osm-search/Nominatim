@@ -27,6 +27,7 @@ from . import helpers
 from ..server import content_types as ct
 from ..server.asgi_adaptor import ASGIAdaptor
 
+
 def build_response(adaptor: ASGIAdaptor, output: str, status: int = 200,
                    num_results: int = 0) -> Any:
     """ Create a response from the given output. Wraps a JSONP function
@@ -47,8 +48,8 @@ def get_accepted_languages(adaptor: ASGIAdaptor) -> str:
     """ Return the accepted languages.
     """
     return adaptor.get('accept-language')\
-           or adaptor.get_header('accept-language')\
-           or adaptor.config().DEFAULT_LANGUAGE
+        or adaptor.get_header('accept-language')\
+        or adaptor.config().DEFAULT_LANGUAGE
 
 
 def setup_debugging(adaptor: ASGIAdaptor) -> bool:
@@ -88,7 +89,7 @@ def parse_format(adaptor: ASGIAdaptor, result_type: Type[Any], default: str) -> 
 
     if not formatting.supports_format(result_type, fmt):
         adaptor.raise_error("Parameter 'format' must be one of: " +
-                          ', '.join(formatting.list_formats(result_type)))
+                            ', '.join(formatting.list_formats(result_type)))
 
     adaptor.content_type = formatting.get_content_type(fmt)
     return fmt
@@ -119,7 +120,7 @@ def parse_geometry_details(adaptor: ASGIAdaptor, fmt: str) -> Dict[str, Any]:
     return {'address_details': True,
             'geometry_simplification': adaptor.get_float('polygon_threshold', 0.0),
             'geometry_output': output
-           }
+            }
 
 
 async def status_endpoint(api: NominatimAPIAsync, params: ASGIAdaptor) -> Any:
@@ -135,7 +136,7 @@ async def status_endpoint(api: NominatimAPIAsync, params: ASGIAdaptor) -> Any:
         status_code = 200
 
     return build_response(params, params.formatting().format_result(result, fmt, {}),
-                                 status=status_code)
+                          status=status_code)
 
 
 async def details_endpoint(api: NominatimAPIAsync, params: ASGIAdaptor) -> Any:
@@ -161,11 +162,11 @@ async def details_endpoint(api: NominatimAPIAsync, params: ASGIAdaptor) -> Any:
                                linked_places=params.get_bool('linkedplaces', True),
                                parented_places=params.get_bool('hierarchy', False),
                                keywords=params.get_bool('keywords', False),
-                               geometry_output = GeometryFormat.GEOJSON
-                                                 if params.get_bool('polygon_geojson', False)
-                                                 else GeometryFormat.NONE,
+                               geometry_output=(GeometryFormat.GEOJSON
+                                                if params.get_bool('polygon_geojson', False)
+                                                else GeometryFormat.NONE),
                                locales=locales
-                              )
+                               )
 
     if debug:
         return build_response(params, loglib.get_and_disable())
@@ -173,10 +174,11 @@ async def details_endpoint(api: NominatimAPIAsync, params: ASGIAdaptor) -> Any:
     if result is None:
         params.raise_error('No place with that OSM ID found.', status=404)
 
-    output = params.formatting().format_result(result, fmt,
-                 {'locales': locales,
-                  'group_hierarchy': params.get_bool('group_hierarchy', False),
-                  'icon_base_url': params.config().MAPICON_URL})
+    output = params.formatting().format_result(
+        result, fmt,
+        {'locales': locales,
+         'group_hierarchy': params.get_bool('group_hierarchy', False),
+         'icon_base_url': params.config().MAPICON_URL})
 
     return build_response(params, output, num_results=1)
 
@@ -253,7 +255,7 @@ async def lookup_endpoint(api: NominatimAPIAsync, params: ASGIAdaptor) -> Any:
 
 
 async def _unstructured_search(query: str, api: NominatimAPIAsync,
-                              details: Dict[str, Any]) -> SearchResults:
+                               details: Dict[str, Any]) -> SearchResults:
     if not query:
         return SearchResults()
 
@@ -290,15 +292,15 @@ async def search_endpoint(api: NominatimAPIAsync, params: ASGIAdaptor) -> Any:
     debug = setup_debugging(params)
     details = parse_geometry_details(params, fmt)
 
-    details['countries']  = params.get('countrycodes', None)
+    details['countries'] = params.get('countrycodes', None)
     details['excluded'] = params.get('exclude_place_ids', None)
     details['viewbox'] = params.get('viewbox', None) or params.get('viewboxlbrt', None)
     details['bounded_viewbox'] = params.get_bool('bounded', False)
     details['dedupe'] = params.get_bool('dedupe', True)
 
     max_results = max(1, min(50, params.get_int('limit', 10)))
-    details['max_results'] = max_results + min(10, max_results) \
-                             if details['dedupe'] else max_results
+    details['max_results'] = (max_results + min(10, max_results)
+                              if details['dedupe'] else max_results)
 
     details['min_rank'], details['max_rank'] = \
         helpers.feature_type_to_rank(params.get('featureType', ''))

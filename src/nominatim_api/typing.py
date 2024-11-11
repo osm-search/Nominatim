@@ -11,7 +11,7 @@ Complex type definitions are moved here, to keep the source files readable.
 """
 from typing import Union, TYPE_CHECKING
 
-# pylint: disable=missing-class-docstring,useless-import-alias
+# flake8: noqa
 
 # SQLAlchemy introduced generic types in version 2.0 making typing
 # incompatible with older versions. Add wrappers here so we don't have

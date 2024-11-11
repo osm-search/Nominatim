@@ -12,6 +12,7 @@ from abc import ABC, abstractmethod
 import dataclasses
 import enum
 
+
 class BreakType(enum.Enum):
     """ Type of break between tokens.
     """
@@ -102,12 +103,12 @@ class Token(ABC):
     addr_count: int
     lookup_word: str
 
-
     @abstractmethod
     def get_category(self) -> Tuple[str, str]:
         """ Return the category restriction for qualifier terms and
             category objects.
         """
+
 
 @dataclasses.dataclass
 class TokenRange:
@@ -119,30 +120,24 @@ class TokenRange:
     def __lt__(self, other: 'TokenRange') -> bool:
         return self.end <= other.start
 
-
     def __le__(self, other: 'TokenRange') -> bool:
         return NotImplemented
-
 
     def __gt__(self, other: 'TokenRange') -> bool:
         return self.start >= other.end
 
-
     def __ge__(self, other: 'TokenRange') -> bool:
         return NotImplemented
-
 
     def replace_start(self, new_start: int) -> 'TokenRange':
         """ Return a new token range with the new start.
         """
         return TokenRange(new_start, self.end)
 
-
     def replace_end(self, new_end: int) -> 'TokenRange':
         """ Return a new token range with the new end.
         """
         return TokenRange(self.start, new_end)
-
 
     def split(self, index: int) -> Tuple['TokenRange', 'TokenRange']:
         """ Split the span into two spans at the given index.
@@ -158,7 +153,6 @@ class TokenList:
     end: int
     ttype: TokenType
     tokens: List[Token]
-
 
     def add_penalty(self, penalty: float) -> None:
         """ Add the given penalty to all tokens in the list.
@@ -180,7 +174,6 @@ class QueryNode:
             given node.
         """
         return any(tl.end == end and tl.ttype in ttypes for tl in self.starting)
-
 
     def get_tokens(self, end: int, ttype: TokenType) -> Optional[List[Token]]:
         """ Get the list of tokens of the given type starting at this node
@@ -220,12 +213,10 @@ class QueryStruct:
         self.nodes: List[QueryNode] = \
             [QueryNode(BreakType.START, source[0].ptype if source else PhraseType.NONE)]
 
-
     def num_token_slots(self) -> int:
         """ Return the length of the query in vertice steps.
         """
         return len(self.nodes) - 1
-
 
     def add_node(self, btype: BreakType, ptype: PhraseType) -> None:
         """ Append a new break node with the given break type.
@@ -233,7 +224,6 @@ class QueryStruct:
             at the node.
         """
         self.nodes.append(QueryNode(btype, ptype))
-
 
     def add_token(self, trange: TokenRange, ttype: TokenType, token: Token) -> None:
         """ Add a token to the query. 'start' and 'end' are the indexes of the
@@ -247,14 +237,13 @@ class QueryStruct:
         """
         snode = self.nodes[trange.start]
         full_phrase = snode.btype in (BreakType.START, BreakType.PHRASE)\
-                      and self.nodes[trange.end].btype in (BreakType.PHRASE, BreakType.END)
+            and self.nodes[trange.end].btype in (BreakType.PHRASE, BreakType.END)
         if snode.ptype.compatible_with(ttype, full_phrase):
             tlist = snode.get_tokens(trange.end, ttype)
             if tlist is None:
                 snode.starting.append(TokenList(trange.end, ttype, [token]))
             else:
                 tlist.append(token)
-
 
     def get_tokens(self, trange: TokenRange, ttype: TokenType) -> List[Token]:
         """ Get the list of tokens of a given type, spanning the given
@@ -263,7 +252,6 @@ class QueryStruct:
         """
         return self.nodes[trange.start].get_tokens(trange.end, ttype) or []
 
-
     def get_partials_list(self, trange: TokenRange) -> List[Token]:
         """ Create a list of partial tokens between the given nodes.
             The list is composed of the first token of type PARTIAL
@@ -271,8 +259,7 @@ class QueryStruct:
             assumed to exist.
         """
         return [next(iter(self.get_tokens(TokenRange(i, i+1), TokenType.PARTIAL)))
-                          for i in range(trange.start, trange.end)]
-
+                for i in range(trange.start, trange.end)]
 
     def iter_token_lists(self) -> Iterator[Tuple[int, QueryNode, TokenList]]:
         """ Iterator over all token lists in the query.
@@ -280,7 +267,6 @@ class QueryStruct:
         for i, node in enumerate(self.nodes):
             for tlist in node.starting:
                 yield i, node, tlist
-
 
     def find_lookup_word_by_id(self, token: int) -> str:
         """ Find the first token with the given token ID and return

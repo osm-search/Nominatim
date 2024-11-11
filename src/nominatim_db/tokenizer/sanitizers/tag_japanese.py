@@ -18,10 +18,12 @@ from .base import ProcessInfo
 from .config import SanitizerConfig
 from ...data.place_name import PlaceName
 
+
 def create(_: SanitizerConfig) -> Callable[[ProcessInfo], None]:
     """Set up the sanitizer
     """
     return tag_japanese
+
 
 def reconbine_housenumber(
     new_address: List[PlaceName],
@@ -56,6 +58,7 @@ def reconbine_housenumber(
         )
     return new_address
 
+
 def reconbine_place(
     new_address: List[PlaceName],
     tmp_neighbourhood: Optional[str],
@@ -88,6 +91,8 @@ def reconbine_place(
             )
         )
     return new_address
+
+
 def tag_japanese(obj: ProcessInfo) -> None:
     """Recombine kind of address
     """

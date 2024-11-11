@@ -18,19 +18,14 @@ import nominatim_api as napi
 from nominatim_api.results import create_from_placex_row, ReverseResult, add_result_details
 from nominatim_api.types import LookupDetails
 
-import sqlalchemy as sa # pylint: disable=C0411
+import sqlalchemy as sa
 
 from ..errors import UsageError
 from .args import NominatimArgs
 
-# Do not repeat documentation of subcommand classes.
-# pylint: disable=C0111
-# Using non-top-level imports to avoid eventually unused imports.
-# pylint: disable=E0012,C0415
-# Needed for SQLAlchemy
-# pylint: disable=singleton-comparison
 
 LOG = logging.getLogger()
+
 
 RANK_RANGE_MAP = {
   'country': (4, 4),
@@ -42,6 +37,7 @@ RANK_RANGE_MAP = {
   'path': (27, 27)
 }
 
+
 RANK_TO_OUTPUT_MAP = {
     4: 'country',
     5: 'state', 6: 'state', 7: 'state', 8: 'state', 9: 'state',
@@ -49,6 +45,7 @@ RANK_TO_OUTPUT_MAP = {
     13: 'city', 14: 'city', 15: 'city', 16: 'city',
     17: 'suburb', 18: 'suburb', 19: 'suburb', 20: 'suburb', 21: 'suburb',
     26: 'street', 27: 'path'}
+
 
 class QueryExport:
     """\
@@ -84,7 +81,6 @@ class QueryExport:
                            dest='relation',
                            help='Export only children of this OSM relation')
 
-
     def run(self, args: NominatimArgs) -> int:
         return asyncio.run(export(args))
 
@@ -104,15 +100,15 @@ async def export(args: NominatimArgs) -> int:
             t = conn.t.placex
 
             sql = sa.select(t.c.place_id, t.c.parent_place_id,
-                        t.c.osm_type, t.c.osm_id, t.c.name,
-                        t.c.class_, t.c.type, t.c.admin_level,
-                        t.c.address, t.c.extratags,
-                        t.c.housenumber, t.c.postcode, t.c.country_code,
-                        t.c.importance, t.c.wikipedia, t.c.indexed_date,
-                        t.c.rank_address, t.c.rank_search,
-                        t.c.centroid)\
-                     .where(t.c.linked_place_id == None)\
-                     .where(t.c.rank_address.between(*output_range))
+                            t.c.osm_type, t.c.osm_id, t.c.name,
+                            t.c.class_, t.c.type, t.c.admin_level,
+                            t.c.address, t.c.extratags,
+                            t.c.housenumber, t.c.postcode, t.c.country_code,
+                            t.c.importance, t.c.wikipedia, t.c.indexed_date,
+                            t.c.rank_address, t.c.rank_search,
+                            t.c.centroid)\
+                    .where(t.c.linked_place_id == None)\
+                    .where(t.c.rank_address.between(*output_range))
 
             parent_place_id = await get_parent_id(conn, args.node, args.way, args.relation)
             if parent_place_id:
@@ -158,7 +154,6 @@ async def dump_results(conn: napi.SearchConnection,
     locale = napi.Locales([lang] if lang else None)
     await add_result_details(conn, results,
                              LookupDetails(address_details=True, locales=locale))
-
 
     for result in results:
         data = {'placeid': result.place_id,

@@ -1,0 +1,8 @@
+[flake8]
+max-line-length = 100
+max-doc-length = 100
+extend-ignore =
+    # something == None constructs are needed for SQLAlchemy
+    E711
+per-file-ignores =
+    __init__.py: F401

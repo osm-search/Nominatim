@@ -29,7 +29,7 @@ The Nominatim test suite consists of behavioural tests (using behave) and
 unit tests (using pytest). It has the following additional requirements:
 
 * [behave test framework](https://behave.readthedocs.io) >= 1.2.6
-* [Pylint](https://pylint.org/) (CI always runs the latest version from pip)
+* [flake8](https://flake8.pycqa.org/en/stable/) (CI always runs the latest version from pip)
 * [mypy](http://mypy-lang.org/) (plus typing information for external libs)
 * [Python Typing Extensions](https://github.com/python/typing_extensions) (for Python < 3.9)
 * [pytest](https://pytest.org)
@@ -55,7 +55,6 @@ the vendored version of osm2pgsql, you need to set the PATH accordingly.
 ### Installing prerequisites on Ubuntu/Debian
 
 The Python tools should always be run with the most recent version.
-In particular, pylint tends to have a lot of breaking changes between versions.
 The easiest way, to handle these Python dependencies is to run your
 development from within a virtual environment.
 
@@ -70,7 +69,7 @@ virtualenv ~/nominatim-dev-venv
 ~/nominatim-dev-venv/bin/pip install\
     psutil psycopg[binary] PyICU SQLAlchemy \
     python-dotenv jinja2 pyYAML datrie behave \
-    mkdocs mkdocstrings mkdocs-gen-files pytest pytest-asyncio pylint \
+    mkdocs mkdocstrings mkdocs-gen-files pytest pytest-asyncio flake8 \
     types-jinja2 types-markupsafe types-psutil types-psycopg2 \
     types-pygments types-pyyaml types-requests types-ujson \
     types-urllib3 typing-extensions unicorn falcon starlette \

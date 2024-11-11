@@ -11,6 +11,7 @@ from typing import Mapping, List, Optional
 
 import re
 
+
 class Locales:
     """ Helper class for localization of names.
 
@@ -28,23 +29,19 @@ class Locales:
         self._add_lang_tags('official_name', 'short_name')
         self._add_tags('official_name', 'short_name', 'ref')
 
-
     def __bool__(self) -> bool:
         return len(self.languages) > 0
-
 
     def _add_tags(self, *tags: str) -> None:
         for tag in tags:
             self.name_tags.append(tag)
             self.name_tags.append(f"_place_{tag}")
 
-
     def _add_lang_tags(self, *tags: str) -> None:
         for tag in tags:
             for lang in self.languages:
                 self.name_tags.append(f"{tag}:{lang}")
                 self.name_tags.append(f"_place_{tag}:{lang}")
-
 
     def display_name(self, names: Optional[Mapping[str, str]]) -> str:
         """ Return the best matching name from a dictionary of names
@@ -63,7 +60,6 @@ class Locales:
 
         # Nothing? Return any of the other names as a default.
         return next(iter(names.values()))
-
 
     @staticmethod
     def from_accept_languages(langstr: str) -> 'Locales':

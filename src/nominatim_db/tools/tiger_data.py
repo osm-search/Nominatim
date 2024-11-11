@@ -27,6 +27,7 @@ from . import freeze
 
 LOG = logging.getLogger()
 
+
 class TigerInput:
     """ Context manager that goes through Tiger input files which may
         either be in a directory or gzipped together in a tar file.
@@ -38,7 +39,7 @@ class TigerInput:
 
         if data_dir.endswith('.tar.gz'):
             try:
-                self.tar_handle = tarfile.open(data_dir) # pylint: disable=consider-using-with
+                self.tar_handle = tarfile.open(data_dir)
             except tarfile.ReadError as err:
                 LOG.fatal("Cannot open '%s'. Is this a tar file?", data_dir)
                 raise UsageError("Cannot open Tiger data file.") from err
@@ -53,10 +54,8 @@ class TigerInput:
         if not self.files:
             LOG.warning("Tiger data import selected but no files found at %s", data_dir)
 
-
     def __enter__(self) -> 'TigerInput':
         return self
-
 
     def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         if self.tar_handle:
@@ -77,7 +76,6 @@ class TigerInput:
 
         return open(cast(str, fname), encoding='utf-8')
 
-
     def __iter__(self) -> Iterator[Dict[str, Any]]:
         """ Iterate over the lines in each file.
         """
@@ -87,7 +85,7 @@ class TigerInput:
 
 
 async def add_tiger_data(data_dir: str, config: Configuration, threads: int,
-                   tokenizer: AbstractTokenizer) -> int:
+                         tokenizer: AbstractTokenizer) -> int:
     """ Import tiger data from directory or tar file `data dir`.
     """
     dsn = config.get_libpq_dsn()

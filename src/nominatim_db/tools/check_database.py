@@ -12,7 +12,7 @@ from enum import Enum
 from textwrap import dedent
 
 from ..config import Configuration
-from ..db.connection import connect, Connection, server_version_tuple,\
+from ..db.connection import connect, Connection, server_version_tuple, \
                             index_exists, table_exists, execute_scalar
 from ..db import properties
 from ..errors import UsageError
@@ -21,6 +21,7 @@ from . import freeze
 from ..version import NOMINATIM_VERSION, parse_version
 
 CHECKLIST = []
+
 
 class CheckState(Enum):
     """ Possible states of a check. FATAL stops check execution entirely.
@@ -31,8 +32,10 @@ class CheckState(Enum):
     NOT_APPLICABLE = 3
     WARN = 4
 
+
 CheckResult = Union[CheckState, Tuple[CheckState, Mapping[str, Any]]]
 CheckFunc = Callable[[Connection, Configuration], CheckResult]
+
 
 def _check(hint: Optional[str] = None) -> Callable[[CheckFunc], CheckFunc]:
     """ Decorator for checks. It adds the function to the list of
@@ -68,6 +71,7 @@ def _check(hint: Optional[str] = None) -> Callable[[CheckFunc], CheckFunc]:
 
     return decorator
 
+
 class _BadConnection:
 
     def __init__(self, msg: str) -> None:
@@ -77,13 +81,14 @@ class _BadConnection:
         """ Dummy function to provide the implementation.
         """
 
+
 def check_database(config: Configuration) -> int:
     """ Run a number of checks on the database and return the status.
     """
     try:
         conn = connect(config.get_libpq_dsn())
     except UsageError as err:
-        conn = _BadConnection(str(err)) # type: ignore[assignment]
+        conn = _BadConnection(str(err))  # type: ignore[assignment]
 
     overall_result = 0
     for check in CHECKLIST:
@@ -110,7 +115,7 @@ def _get_indexes(conn: Connection) -> List[str]:
                'idx_osmline_parent_osm_id',
                'idx_postcode_id',
                'idx_postcode_postcode'
-              ]
+               ]
 
     # These won't exist if --reverse-only import was used
     if table_exists(conn, 'search_name'):
@@ -154,6 +159,7 @@ def check_connection(conn: Any, config: Configuration) -> CheckResult:
 
     return CheckState.OK
 
+
 @_check(hint="""\
              Database version ({db_version}) doesn't match Nominatim version ({nom_version})
 
@@ -194,6 +200,7 @@ def check_database_version(conn: Connection, config: Configuration) -> CheckResu
                                   nom_version=NOMINATIM_VERSION,
                                   instruction=instruction,
                                   config=config)
+
 
 @_check(hint="""\
              placex table not found
@@ -274,7 +281,7 @@ def check_indexing(conn: Connection, _: Configuration) -> CheckResult:
         return CheckState.OK
 
     if freeze.is_frozen(conn):
-        index_cmd="""\
+        index_cmd = """\
             Database is marked frozen, it cannot be updated.
             Low counts of unindexed places are fine."""
         return CheckState.WARN, dict(count=cnt, index_cmd=index_cmd)

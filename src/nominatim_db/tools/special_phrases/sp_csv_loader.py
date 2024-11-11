@@ -16,13 +16,13 @@ import os
 from ...errors import UsageError
 from .special_phrase import SpecialPhrase
 
+
 class SPCsvLoader:
     """
         Handles loading of special phrases from external csv file.
     """
     def __init__(self, csv_path: str) -> None:
         self.csv_path = csv_path
-
 
     def generate_phrases(self) -> Iterable[SpecialPhrase]:
         """ Open and parse the given csv file.
@@ -34,7 +34,6 @@ class SPCsvLoader:
             reader = csv.DictReader(fd, delimiter=',')
             for row in reader:
                 yield SpecialPhrase(row['phrase'], row['class'], row['type'], row['operator'])
-
 
     def _check_csv_validity(self) -> None:
         """

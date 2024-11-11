@@ -20,6 +20,7 @@ if TYPE_CHECKING:
 else:
     _BaseUserDict = UserDict
 
+
 class SanitizerConfig(_BaseUserDict):
     """ The `SanitizerConfig` class is a read-only dictionary
         with configuration options for the sanitizer.
@@ -61,7 +62,6 @@ class SanitizerConfig(_BaseUserDict):
 
         return values
 
-
     def get_bool(self, param: str, default: Optional[bool] = None) -> bool:
         """ Extract a configuration parameter as a boolean.
 
@@ -81,7 +81,6 @@ class SanitizerConfig(_BaseUserDict):
             raise UsageError(f"Parameter '{param}' must be a boolean value ('yes' or 'no').")
 
         return value
-
 
     def get_delimiter(self, default: str = ',;') -> Pattern[str]:
         """ Return the 'delimiters' parameter in the configuration as a
@@ -104,7 +103,6 @@ class SanitizerConfig(_BaseUserDict):
             raise UsageError("Empty 'delimiter' parameter not allowed for sanitizer.")
 
         return re.compile('\\s*[{}]+\\s*'.format(''.join('\\' + d for d in delimiter_set)))
-
 
     def get_filter(self, param: str, default: Union[str, Sequence[str]] = 'PASS_ALL'
                    ) -> Callable[[str], bool]:

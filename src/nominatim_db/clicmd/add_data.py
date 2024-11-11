@@ -18,12 +18,9 @@ from .args import NominatimArgs
 from ..db.connection import connect
 from ..tools.freeze import is_frozen
 
-# Do not repeat documentation of subcommand classes.
-# pylint: disable=C0111
-# Using non-top-level imports to avoid eventually unused imports.
-# pylint: disable=E0012,C0415
 
 LOG = logging.getLogger()
+
 
 class UpdateAddData:
     """\
@@ -65,7 +62,6 @@ class UpdateAddData:
         group2.add_argument('--socket-timeout', dest='socket_timeout', type=int, default=60,
                             help='Set timeout for file downloads')
 
-
     def run(self, args: NominatimArgs) -> int:
         from ..tools import add_osm_data
 
@@ -103,7 +99,6 @@ class UpdateAddData:
 
         return 0
 
-
     async def _add_tiger_data(self, args: NominatimArgs) -> int:
         from ..tokenizer import factory as tokenizer_factory
         from ..tools import tiger_data
@@ -113,5 +108,5 @@ class UpdateAddData:
         tokenizer = tokenizer_factory.get_tokenizer_for_db(args.config)
         return await tiger_data.add_tiger_data(args.tiger_data,
                                                args.config,
-                                               args.threads or psutil.cpu_count()  or 1,
+                                               args.threads or psutil.cpu_count() or 1,
                                                tokenizer)

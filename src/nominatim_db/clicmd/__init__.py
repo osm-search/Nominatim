@@ -7,9 +7,6 @@
 """
 Subcommand definitions for the command-line tool.
 """
-# mypy and pylint disagree about the style of explicit exports,
-# see https://github.com/PyCQA/pylint/issues/6006.
-# pylint: disable=useless-import-alias
 
 from .setup import SetupAll as SetupAll
 from .replication import UpdateReplication as UpdateReplication

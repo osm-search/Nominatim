@@ -14,6 +14,7 @@ import re
 from ..errors import UsageError
 from . import country_info
 
+
 class CountryPostcodeMatcher:
     """ Matches and formats a postcode according to a format definition
         of the given country.
@@ -30,7 +31,6 @@ class CountryPostcodeMatcher:
 
         self.output = config.get('output', r'\g<0>')
 
-
     def match(self, postcode: str) -> Optional[Match[str]]:
         """ Match the given postcode against the postcode pattern for this
             matcher. Returns a `re.Match` object if the match was successful
@@ -43,7 +43,6 @@ class CountryPostcodeMatcher:
             return self.pattern.fullmatch(normalized.group(1))
 
         return None
-
 
     def normalize(self, match: Match[str]) -> str:
         """ Return the default format of the postcode for the given match.
@@ -71,13 +70,11 @@ class PostcodeFormatter:
             else:
                 raise UsageError(f"Invalid entry 'postcode' for country '{ccode}'")
 
-
     def set_default_pattern(self, pattern: str) -> None:
         """ Set the postcode match pattern to use, when a country does not
             have a specific pattern.
         """
         self.default_matcher = CountryPostcodeMatcher('', {'pattern': pattern})
-
 
     def get_matcher(self, country_code: Optional[str]) -> Optional[CountryPostcodeMatcher]:
         """ Return the CountryPostcodeMatcher for the given country.
@@ -92,7 +89,6 @@ class PostcodeFormatter:
 
         return self.country_matcher.get(country_code, self.default_matcher)
 
-
     def match(self, country_code: Optional[str], postcode: str) -> Optional[Match[str]]:
         """ Match the given postcode against the postcode pattern for this
             matcher. Returns a `re.Match` object if the country has a pattern
@@ -104,7 +100,6 @@ class PostcodeFormatter:
         assert country_code is not None
 
         return self.country_matcher.get(country_code, self.default_matcher).match(postcode)
-
 
     def normalize(self, country_code: str, match: Match[str]) -> str:
         """ Return the default format of the postcode for the given match.

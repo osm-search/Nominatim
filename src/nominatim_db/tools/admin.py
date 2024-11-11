@@ -22,6 +22,7 @@ from ..data.place_info import PlaceInfo
 
 LOG = logging.getLogger()
 
+
 def _get_place_info(cursor: Cursor, osm_id: Optional[str],
                     place_id: Optional[int]) -> DictCursorResult:
     sql = """SELECT place_id, extra.*

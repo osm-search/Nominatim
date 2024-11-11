@@ -20,7 +20,7 @@ from psycopg import sql as pysql
 
 from ..errors import UsageError
 from ..config import Configuration
-from ..db.connection import connect, get_pg_env, Connection, server_version_tuple,\
+from ..db.connection import connect, get_pg_env, Connection, server_version_tuple, \
                             postgis_version_tuple, drop_tables, table_exists, execute_scalar
 from ..db.sql_preprocessor import SQLPreprocessor
 from ..db.query_pool import QueryPool
@@ -28,6 +28,7 @@ from .exec_utils import run_osm2pgsql
 from ..version import POSTGRESQL_REQUIRED_VERSION, POSTGIS_REQUIRED_VERSION
 
 LOG = logging.getLogger()
+
 
 def _require_version(module: str, actual: Tuple[int, int], expected: Tuple[int, int]) -> None:
     """ Compares the version for the given module and raises an exception
@@ -251,7 +252,7 @@ async def _progress_print() -> None:
 
 
 async def create_search_indices(conn: Connection, config: Configuration,
-                          drop: bool = False, threads: int = 1) -> None:
+                                drop: bool = False, threads: int = 1) -> None:
     """ Create tables that have explicit partitioning.
     """
 

@@ -60,6 +60,7 @@ from ...data.place_name import PlaceName
 from .base import ProcessInfo
 from .config import SanitizerConfig
 
+
 class _TagSanitizer:
 
     def __init__(self, config: SanitizerConfig) -> None:
@@ -73,7 +74,6 @@ class _TagSanitizer:
         )
 
         self.has_country_code = config.get('country_code', None) is not None
-
 
     def __call__(self, obj: ProcessInfo) -> None:
         tags = obj.names if self.type == 'name' else obj.address
@@ -93,12 +93,10 @@ class _TagSanitizer:
                or not self.filter_name(tag.name):
                 filtered_tags.append(tag)
 
-
         if self.type == 'name':
             obj.names = filtered_tags
         else:
             obj.address = filtered_tags
-
 
     def _set_allowed_ranks(self, ranks: Sequence[str]) -> Tuple[bool, ...]:
         """ Returns a tuple of 31 boolean values corresponding to the
@@ -116,7 +114,6 @@ class _TagSanitizer:
 
             for i in range(start, end + 1):
                 allowed_ranks[i] = True
-
 
         return tuple(allowed_ranks)
 

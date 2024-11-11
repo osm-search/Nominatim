@@ -15,9 +15,9 @@ from sqlalchemy.ext.compiler import compiles
 from ..typing import SaFromClause
 from ..sql.sqlalchemy_types import IntArray
 
-# pylint: disable=consider-using-f-string
 
 LookupType = sa.sql.expression.FunctionElement[Any]
+
 
 class LookupAll(LookupType):
     """ Find all entries in search_name table that contain all of
@@ -40,7 +40,7 @@ def _default_lookup_all(element: LookupAll,
 
 @compiles(LookupAll, 'sqlite')
 def _sqlite_lookup_all(element: LookupAll,
-                        compiler: 'sa.Compiled', **kw: Any) -> str:
+                       compiler: 'sa.Compiled', **kw: Any) -> str:
     place, col, colname, tokens = list(element.clauses)
     return "(%s IN (SELECT CAST(value as bigint) FROM"\
            " (SELECT array_intersect_fuzzy(places) as p FROM"\
@@ -50,13 +50,11 @@ def _sqlite_lookup_all(element: LookupAll,
            "   ORDER BY length(places)) as x) as u,"\
            " json_each('[' || u.p || ']'))"\
            " AND array_contains(%s, %s))"\
-             % (compiler.process(place, **kw),
-                compiler.process(tokens, **kw),
-                compiler.process(colname, **kw),
-                compiler.process(col, **kw),
-                compiler.process(tokens, **kw)
-                )
-
+        % (compiler.process(place, **kw),
+           compiler.process(tokens, **kw),
+           compiler.process(colname, **kw),
+           compiler.process(col, **kw),
+           compiler.process(tokens, **kw))
 
 
 class LookupAny(LookupType):
@@ -69,6 +67,7 @@ class LookupAny(LookupType):
         super().__init__(table.c.place_id, getattr(table.c, column), column,
                          sa.type_coerce(tokens, IntArray))
 
+
 @compiles(LookupAny)
 def _default_lookup_any(element: LookupAny,
                         compiler: 'sa.Compiled', **kw: Any) -> str:
@@ -76,9 +75,10 @@ def _default_lookup_any(element: LookupAny,
     return "(%s && %s)" % (compiler.process(col, **kw),
                            compiler.process(tokens, **kw))
 
+
 @compiles(LookupAny, 'sqlite')
 def _sqlite_lookup_any(element: LookupAny,
-                        compiler: 'sa.Compiled', **kw: Any) -> str:
+                       compiler: 'sa.Compiled', **kw: Any) -> str:
     place, _, colname, tokens = list(element.clauses)
     return "%s IN (SELECT CAST(value as bigint) FROM"\
            " (SELECT array_union(places) as p FROM reverse_search_name"\
@@ -87,7 +87,6 @@ def _sqlite_lookup_any(element: LookupAny,
            " json_each('[' || u.p || ']'))" % (compiler.process(place, **kw),
                                                compiler.process(tokens, **kw),
                                                compiler.process(colname, **kw))
-
 
 
 class Restrict(LookupType):
@@ -103,12 +102,13 @@ class Restrict(LookupType):
 
 @compiles(Restrict)
 def _default_restrict(element: Restrict,
-                        compiler: 'sa.Compiled', **kw: Any) -> str:
+                      compiler: 'sa.Compiled', **kw: Any) -> str:
     arg1, arg2 = list(element.clauses)
     return "(coalesce(null, %s) @> %s)" % (compiler.process(arg1, **kw),
                                            compiler.process(arg2, **kw))
 
+
 @compiles(Restrict, 'sqlite')
 def _sqlite_restrict(element: Restrict,
-                        compiler: 'sa.Compiled', **kw: Any) -> str:
+                     compiler: 'sa.Compiled', **kw: Any) -> str:
     return "array_contains(%s)" % compiler.process(element.clauses, **kw)

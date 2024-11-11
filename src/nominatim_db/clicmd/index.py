@@ -16,11 +16,6 @@ from ..db import status
 from ..db.connection import connect
 from .args import NominatimArgs
 
-# Do not repeat documentation of subcommand classes.
-# pylint: disable=C0111
-# Using non-top-level imports to avoid eventually unused imports.
-# pylint: disable=E0012,C0415
-
 
 class UpdateIndex:
     """\
@@ -43,7 +38,6 @@ class UpdateIndex:
         group.add_argument('--maxrank', '-R', type=int, metavar='RANK', default=30,
                            help='Maximum/finishing rank')
 
-
     def run(self, args: NominatimArgs) -> int:
         asyncio.run(self._do_index(args))
 
@@ -54,7 +48,6 @@ class UpdateIndex:
 
         return 0
 
-
     async def _do_index(self, args: NominatimArgs) -> None:
         from ..tokenizer import factory as tokenizer_factory
 
@@ -64,7 +57,7 @@ class UpdateIndex:
         indexer = Indexer(args.config.get_libpq_dsn(), tokenizer,
                           args.threads or psutil.cpu_count() or 1)
 
-        has_pending = True # run at least once
+        has_pending = True  # run at least once
         while has_pending:
             if not args.no_boundaries:
                 await indexer.index_boundaries(args.minrank, args.maxrank)

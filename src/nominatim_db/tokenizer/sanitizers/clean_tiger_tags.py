@@ -19,6 +19,7 @@ from .config import SanitizerConfig
 
 COUNTY_MATCH = re.compile('(.*), [A-Z][A-Z]')
 
+
 def _clean_tiger_county(obj: ProcessInfo) -> None:
     """ Remove the state reference from tiger:county tags.
 

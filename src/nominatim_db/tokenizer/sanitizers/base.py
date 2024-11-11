@@ -27,7 +27,6 @@ class ProcessInfo:
         self.names = self._convert_name_dict(place.name)
         self.address = self._convert_name_dict(place.address)
 
-
     @staticmethod
     def _convert_name_dict(names: Optional[Mapping[str, str]]) -> List[PlaceName]:
         """ Convert a dictionary of names into a list of PlaceNames.

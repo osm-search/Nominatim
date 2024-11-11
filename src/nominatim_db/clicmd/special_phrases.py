@@ -18,12 +18,9 @@ from ..tools.special_phrases.sp_wiki_loader import SPWikiLoader
 from ..tools.special_phrases.sp_csv_loader import SPCsvLoader
 from .args import NominatimArgs
 
+
 LOG = logging.getLogger()
 
-# Do not repeat documentation of subcommand classes.
-# pylint: disable=C0111
-# Using non-top-level imports to avoid eventually unused imports.
-# pylint: disable=E0012,C0415
 
 class ImportSpecialPhrases:
     """\
@@ -62,7 +59,6 @@ class ImportSpecialPhrases:
         group.add_argument('--no-replace', action='store_true',
                            help='Keep the old phrases and only add the new ones')
 
-
     def run(self, args: NominatimArgs) -> int:
 
         if args.import_from_wiki:
@@ -76,7 +72,6 @@ class ImportSpecialPhrases:
             self.start_import(args, SPCsvLoader(args.import_from_csv))
 
         return 0
-
 
     def start_import(self, args: NominatimArgs, loader: SpecialPhraseLoader) -> None:
         """

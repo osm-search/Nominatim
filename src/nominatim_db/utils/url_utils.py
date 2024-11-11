@@ -7,13 +7,14 @@
 """
 Helper functions for accessing URL.
 """
-from typing import IO
+from typing import IO  # noqa
 import logging
 import urllib.request as urlrequest
 
 from ..version import NOMINATIM_VERSION
 
 LOG = logging.getLogger()
+
 
 def get_url(url: str) -> str:
     """ Get the contents from the given URL and return it as a UTF-8 string.
@@ -24,7 +25,7 @@ def get_url(url: str) -> str:
 
     try:
         request = urlrequest.Request(url, headers=headers)
-        with urlrequest.urlopen(request) as response: # type: IO[bytes]
+        with urlrequest.urlopen(request) as response:  # type: IO[bytes]
             return response.read().decode('utf-8')
     except Exception:
         LOG.fatal('Failed to load URL: %s', url)

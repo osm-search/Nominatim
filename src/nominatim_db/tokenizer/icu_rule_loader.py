@@ -61,7 +61,6 @@ class ICURuleLoader:
         # Load optional sanitizer rule set.
         self.sanitizer_rules = rules.get('sanitizers', [])
 
-
     def load_config_from_db(self, conn: Connection) -> None:
         """ Get previously saved parts of the configuration from the
             database.
@@ -81,7 +80,6 @@ class ICURuleLoader:
             self.analysis_rules = []
         self._setup_analysis()
 
-
     def save_config_to_db(self, conn: Connection) -> None:
         """ Save the part of the configuration that cannot be changed into
             the database.
@@ -90,19 +88,16 @@ class ICURuleLoader:
         set_property(conn, DBCFG_IMPORT_TRANS_RULES, self.transliteration_rules)
         set_property(conn, DBCFG_IMPORT_ANALYSIS_RULES, json.dumps(self.analysis_rules))
 
-
     def make_sanitizer(self) -> PlaceSanitizer:
         """ Create a place sanitizer from the configured rules.
         """
         return PlaceSanitizer(self.sanitizer_rules, self.config)
-
 
     def make_token_analysis(self) -> ICUTokenAnalysis:
         """ Create a token analyser from the reviouly loaded rules.
         """
         return ICUTokenAnalysis(self.normalization_rules,
                                 self.transliteration_rules, self.analysis)
-
 
     def get_search_rules(self) -> str:
         """ Return the ICU rules to be used during search.
@@ -116,23 +111,20 @@ class ICURuleLoader:
         rules.write(self.transliteration_rules)
         return rules.getvalue()
 
-
     def get_normalization_rules(self) -> str:
         """ Return rules for normalisation of a term.
         """
         return self.normalization_rules
-
 
     def get_transliteration_rules(self) -> str:
         """ Return the rules for converting a string into its asciii representation.
         """
         return self.transliteration_rules
 
-
     def _setup_analysis(self) -> None:
         """ Process the rules used for creating the various token analyzers.
         """
-        self.analysis: Dict[Optional[str], TokenAnalyzerRule]  = {}
+        self.analysis: Dict[Optional[str], TokenAnalyzerRule] = {}
 
         if not isinstance(self.analysis_rules, list):
             raise UsageError("Configuration section 'token-analysis' must be a list.")
@@ -140,7 +132,7 @@ class ICURuleLoader:
         norm = Transliterator.createFromRules("rule_loader_normalization",
                                               self.normalization_rules)
         trans = Transliterator.createFromRules("rule_loader_transliteration",
-                                              self.transliteration_rules)
+                                               self.transliteration_rules)
 
         for section in self.analysis_rules:
             name = section.get('id', None)
@@ -153,7 +145,6 @@ class ICURuleLoader:
                 raise UsageError("Syntax error in ICU tokenizer config.")
             self.analysis[name] = TokenAnalyzerRule(section, norm, trans,
                                                     self.config)
-
 
     @staticmethod
     def _cfg_to_icu_rules(rules: Mapping[str, Any], section: str) -> str:
@@ -188,7 +179,6 @@ class TokenAnalyzerRule:
 
         self.config = self._analysis_mod.configure(rules, normalizer,
                                                    transliterator)
-
 
     def create(self, normalizer: Any, transliterator: Any) -> Analyzer:
         """ Create a new analyser instance for the given rule.

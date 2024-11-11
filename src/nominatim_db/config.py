@@ -25,7 +25,8 @@ from .errors import UsageError
 from . import paths
 
 LOG = logging.getLogger()
-CONFIG_CACHE : Dict[str, Any] = {}
+CONFIG_CACHE: Dict[str, Any] = {}
+
 
 def flatten_config_list(content: Any, section: str = '') -> List[Any]:
     """ Flatten YAML configuration lists that contain include sections
@@ -79,13 +80,11 @@ class Configuration:
         self.lib_dir = _LibDirs()
         self._private_plugins: Dict[str, object] = {}
 
-
     def set_libdirs(self, **kwargs: StrPath) -> None:
         """ Set paths to library functions and data.
         """
         for key, value in kwargs.items():
             setattr(self.lib_dir, key, None if value is None else Path(value))
-
 
     def __getattr__(self, name: str) -> str:
         name = 'NOMINATIM_' + name
@@ -94,7 +93,6 @@ class Configuration:
             return self.environ[name]
 
         return self._config[name] or ''
-
 
     def get_bool(self, name: str) -> bool:
         """ Return the given configuration parameter as a boolean.
@@ -107,7 +105,6 @@ class Configuration:
               `True` for values of '1', 'yes' and 'true', `False` otherwise.
         """
         return getattr(self, name).lower() in ('1', 'yes', 'true')
-
 
     def get_int(self, name: str) -> int:
         """ Return the given configuration parameter as an int.
@@ -128,11 +125,10 @@ class Configuration:
             LOG.fatal("Invalid setting NOMINATIM_%s. Needs to be a number.", name)
             raise UsageError("Configuration error.") from exp
 
-
     def get_str_list(self, name: str) -> Optional[List[str]]:
         """ Return the given configuration parameter as a list of strings.
             The values are assumed to be given as a comma-sparated list and
-            will be stripped before returning them. 
+            will be stripped before returning them.
 
             Parameters:
               name: Name of the configuration parameter with the NOMINATIM_
@@ -147,7 +143,6 @@ class Configuration:
         raw = getattr(self, name)
 
         return [v.strip() for v in raw.split(',')] if raw else None
-
 
     def get_path(self, name: str) -> Optional[Path]:
         """ Return the given configuration parameter as a Path.
@@ -174,7 +169,6 @@ class Configuration:
 
         return cfgpath.resolve()
 
-
     def get_libpq_dsn(self) -> str:
         """ Get configured database DSN converted into the key/value format
             understood by libpq and psycopg.
@@ -194,7 +188,6 @@ class Configuration:
 
         return dsn
 
-
     def get_database_params(self) -> Mapping[str, Union[str, int, None]]:
         """ Get the configured parameters for the database connection
             as a mapping.
@@ -205,7 +198,6 @@ class Configuration:
             return dict((p.split('=', 1) for p in dsn[6:].split(';')))
 
         return conninfo_to_dict(dsn)
-
 
     def get_import_style_file(self) -> Path:
         """ Return the import style file as a path object. Translates the
@@ -219,7 +211,6 @@ class Configuration:
 
         return self.find_config_file('', 'IMPORT_STYLE')
 
-
     def get_os_env(self) -> Dict[str, str]:
         """ Return a copy of the OS environment with the Nominatim configuration
             merged in.
@@ -228,7 +219,6 @@ class Configuration:
         env.update(self.environ)
 
         return env
-
 
     def load_sub_configuration(self, filename: StrPath,
                                config: Optional[str] = None) -> Any:
@@ -266,7 +256,6 @@ class Configuration:
 
         CONFIG_CACHE[str(configfile)] = result
         return result
-
 
     def load_plugin_module(self, module_name: str, internal_path: str) -> Any:
         """ Load a Python module as a plugin.
@@ -310,7 +299,6 @@ class Configuration:
 
         return sys.modules.get(module_name) or importlib.import_module(module_name)
 
-
     def find_config_file(self, filename: StrPath,
                          config: Optional[str] = None) -> Path:
         """ Resolve the location of a configuration file given a filename and
@@ -334,7 +322,6 @@ class Configuration:
 
                 filename = cfg_filename
 
-
         search_paths = [self.project_dir, self.config_dir]
         for path in search_paths:
             if path is not None and (path / filename).is_file():
@@ -344,7 +331,6 @@ class Configuration:
                   filename, search_paths)
         raise UsageError("Config file not found.")
 
-
     def _load_from_yaml(self, cfgfile: Path) -> Any:
         """ Load a YAML configuration file. This installs a special handler that
             allows to include other YAML files using the '!include' operator.
@@ -352,7 +338,6 @@ class Configuration:
         yaml.add_constructor('!include', self._yaml_include_representer,
                              Loader=yaml.SafeLoader)
         return yaml.safe_load(cfgfile.read_text(encoding='utf-8'))
-
 
     def _yaml_include_representer(self, loader: Any, node: yaml.Node) -> Any:
         """ Handler for the '!include' operator in YAML files.

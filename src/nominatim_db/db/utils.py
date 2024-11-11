@@ -18,6 +18,7 @@ from ..errors import UsageError
 
 LOG = logging.getLogger()
 
+
 def _pipe_to_proc(proc: 'subprocess.Popen[bytes]',
                   fdesc: Union[IO[bytes], gzip.GzipFile]) -> int:
     assert proc.stdin is not None
@@ -30,6 +31,7 @@ def _pipe_to_proc(proc: 'subprocess.Popen[bytes]',
         chunk = fdesc.read(2048)
 
     return len(chunk)
+
 
 def execute_file(dsn: str, fname: Path,
                  ignore_errors: bool = False,

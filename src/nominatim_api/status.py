@@ -16,6 +16,7 @@ import sqlalchemy as sa
 from .connection import SearchConnection
 from .version import NOMINATIM_API_VERSION
 
+
 @dataclasses.dataclass
 class StatusResult:
     """ Result of a call to the status API.

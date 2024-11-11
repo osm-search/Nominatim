@@ -28,10 +28,8 @@ class WeightedStrings:
     def __bool__(self) -> bool:
         return bool(self.values)
 
-
     def __iter__(self) -> Iterator[Tuple[str, float]]:
         return iter(zip(self.values, self.penalties))
-
 
     def get_penalty(self, value: str, default: float = 1000.0) -> float:
         """ Get the penalty for the given value. Returns the given default
@@ -54,10 +52,8 @@ class WeightedCategories:
     def __bool__(self) -> bool:
         return bool(self.values)
 
-
     def __iter__(self) -> Iterator[Tuple[Tuple[str, str], float]]:
         return iter(zip(self.values, self.penalties))
-
 
     def get_penalty(self, value: Tuple[str, str], default: float = 1000.0) -> float:
         """ Get the penalty for the given value. Returns the given default
@@ -68,7 +64,6 @@ class WeightedCategories:
         except ValueError:
             pass
         return default
-
 
     def sql_restrict(self, table: SaFromClause) -> SaExpression:
         """ Return an SQLAlcheny expression that restricts the
@@ -125,7 +120,6 @@ class FieldRanking:
                 ranking.penalty -= min_penalty
         return min_penalty
 
-
     def sql_penalty(self, table: SaFromClause) -> SaColumn:
         """ Create an SQL expression for the rankings.
         """
@@ -177,7 +171,6 @@ class SearchData:
 
     qualifiers: WeightedCategories = WeightedCategories([], [])
 
-
     def set_strings(self, field: str, tokens: List[Token]) -> None:
         """ Set on of the WeightedStrings properties from the given
             token list. Adapt the global penalty, so that the
@@ -190,7 +183,6 @@ class SearchData:
                                     [t.penalty - min_penalty for t in tokens])
 
             setattr(self, field, wstrs)
-
 
     def set_qualifiers(self, tokens: List[Token]) -> None:
         """ Set the qulaifier field from the given tokens.
@@ -206,7 +198,6 @@ class SearchData:
             self.penalty += min_penalty
             self.qualifiers = WeightedCategories(list(categories.keys()),
                                                  list(categories.values()))
-
 
     def set_ranking(self, rankings: List[FieldRanking]) -> None:
         """ Set the list of rankings and normalize the ranking.

@@ -26,7 +26,7 @@ from .logging import log
 from .localization import Locales
 
 # This file defines complex result data classes.
-# pylint: disable=too-many-instance-attributes
+
 
 def _mingle_name_tags(names: Optional[Dict[str, str]]) -> Optional[Dict[str, str]]:
     """ Mix-in names from linked places, so that they show up
@@ -153,7 +153,6 @@ class AddressLines(List[AddressLine]):
         return label_parts
 
 
-
 @dataclasses.dataclass
 class WordInfo:
     """ Each entry in the list of search terms contains the
@@ -183,7 +182,7 @@ class BaseResult:
     category: Tuple[str, str]
     centroid: Point
 
-    place_id : Optional[int] = None
+    place_id: Optional[int] = None
     osm_object: Optional[Tuple[str, int]] = None
     parent_place_id: Optional[int] = None
     linked_place_id: Optional[int] = None
@@ -220,13 +219,11 @@ class BaseResult:
         """
         return self.centroid[1]
 
-
     @property
     def lon(self) -> float:
         """ Get the longitude (or x) of the center point of the place.
         """
         return self.centroid[0]
-
 
     def calculated_importance(self) -> float:
         """ Get a valid importance value. This is either the stored importance
@@ -234,7 +231,6 @@ class BaseResult:
             search rank.
         """
         return self.importance or (0.40001 - (self.rank_search/75.0))
-
 
     def localize(self, locales: Locales) -> None:
         """ Fill the locale_name and the display_name field for the
@@ -247,8 +243,8 @@ class BaseResult:
             self.display_name = self.locale_name
 
 
-
 BaseResultT = TypeVar('BaseResultT', bound=BaseResult)
+
 
 @dataclasses.dataclass
 class DetailedResult(BaseResult):
@@ -279,13 +275,12 @@ class SearchResult(BaseResult):
     bbox: Optional[Bbox] = None
     accuracy: float = 0.0
 
-
     @property
     def ranking(self) -> float:
         """ Return the ranking, a combined measure of accuracy and importance.
         """
         return (self.accuracy if self.accuracy is not None else 1) \
-               - self.calculated_importance()
+            - self.calculated_importance()
 
 
 class SearchResults(List[SearchResult]):
@@ -295,7 +290,7 @@ class SearchResults(List[SearchResult]):
 
 
 def _filter_geometries(row: SaRow) -> Dict[str, str]:
-    return {k[9:]: v for k, v in row._mapping.items() # pylint: disable=W0212
+    return {k[9:]: v for k, v in row._mapping.items()
             if k.startswith('geometry_')}
 
 
@@ -312,9 +307,9 @@ def create_from_placex_row(row: Optional[SaRow],
                       place_id=row.place_id,
                       osm_object=(row.osm_type, row.osm_id),
                       category=(row.class_, row.type),
-                      parent_place_id = row.parent_place_id,
-                      linked_place_id = getattr(row, 'linked_place_id', None),
-                      admin_level = getattr(row, 'admin_level', 15),
+                      parent_place_id=row.parent_place_id,
+                      linked_place_id=getattr(row, 'linked_place_id', None),
+                      admin_level=getattr(row, 'admin_level', 15),
                       names=_mingle_name_tags(row.name),
                       address=row.address,
                       extratags=row.extratags,
@@ -345,7 +340,7 @@ def create_from_osmline_row(row: Optional[SaRow],
 
     res = class_type(source_table=SourceTable.OSMLINE,
                      place_id=row.place_id,
-                     parent_place_id = row.parent_place_id,
+                     parent_place_id=row.parent_place_id,
                      osm_object=('W', row.osm_id),
                      category=('place', 'houses' if hnr is None else 'house'),
                      address=row.address,
@@ -382,7 +377,7 @@ def create_from_tiger_row(row: Optional[SaRow],
 
     res = class_type(source_table=SourceTable.TIGER,
                      place_id=row.place_id,
-                     parent_place_id = row.parent_place_id,
+                     parent_place_id=row.parent_place_id,
                      osm_object=(osm_type or row.osm_type, osm_id or row.osm_id),
                      category=('place', 'houses' if hnr is None else 'house'),
                      postcode=row.postcode,
@@ -401,7 +396,7 @@ def create_from_tiger_row(row: Optional[SaRow],
 
 
 def create_from_postcode_row(row: Optional[SaRow],
-                          class_type: Type[BaseResultT]) -> Optional[BaseResultT]:
+                             class_type: Type[BaseResultT]) -> Optional[BaseResultT]:
     """ Construct a new result and add the data from the result row
         from the postcode table. 'class_type' defines
         the type of result to return. Returns None if the row is None.
@@ -411,7 +406,7 @@ def create_from_postcode_row(row: Optional[SaRow],
 
     return class_type(source_table=SourceTable.POSTCODE,
                       place_id=row.place_id,
-                      parent_place_id = row.parent_place_id,
+                      parent_place_id=row.parent_place_id,
                       category=('place', 'postcode'),
                       names={'ref': row.postcode},
                       rank_search=row.rank_search,
@@ -422,7 +417,7 @@ def create_from_postcode_row(row: Optional[SaRow],
 
 
 def create_from_country_row(row: Optional[SaRow],
-                        class_type: Type[BaseResultT]) -> Optional[BaseResultT]:
+                            class_type: Type[BaseResultT]) -> Optional[BaseResultT]:
     """ Construct a new result and add the data from the result row
         from the fallback country tables. 'class_type' defines
         the type of result to return. Returns None if the row is None.
@@ -535,7 +530,7 @@ async def _finalize_entry(conn: SearchConnection, result: BaseResultT) -> None:
                 distance=0.0))
         result.address_rows.append(AddressLine(
             category=('place', 'country_code'),
-            names={'ref': result.country_code}, extratags = {},
+            names={'ref': result.country_code}, extratags={},
             fromarea=True, isaddress=False, rank_address=4,
             distance=0.0))
 
@@ -580,12 +575,12 @@ async def complete_address_details(conn: SearchConnection, results: List[BaseRes
     for result in results:
         _setup_address_details(result)
 
-    ### Lookup entries from place_address line
+    # Lookup entries from place_address line
 
     lookup_ids = [{'pid': r.place_id,
                    'lid': _get_address_lookup_id(r),
                    'names': list(r.address.values()) if r.address else [],
-                   'c': ('SRID=4326;' + r.centroid.to_wkt()) if r.centroid else '' }
+                   'c': ('SRID=4326;' + r.centroid.to_wkt()) if r.centroid else ''}
                   for r in results if r.place_id]
 
     if not lookup_ids:
@@ -621,7 +616,6 @@ async def complete_address_details(conn: SearchConnection, results: List[BaseRes
             .order_by(taddr.c.distance.desc())\
             .order_by(t.c.rank_search.desc())
 
-
     current_result = None
     current_rank_address = -1
     for row in await conn.execute(sql):
@@ -649,8 +643,7 @@ async def complete_address_details(conn: SearchConnection, results: List[BaseRes
     for result in results:
         await _finalize_entry(conn, result)
 
-
-    ### Finally add the record for the parent entry where necessary.
+    # Finally add the record for the parent entry where necessary.
 
     parent_lookup_ids = list(filter(lambda e: e['pid'] != e['lid'], lookup_ids))
     if parent_lookup_ids:
@@ -661,7 +654,7 @@ async def complete_address_details(conn: SearchConnection, results: List[BaseRes
                         t.c.class_, t.c.type, t.c.extratags,
                         t.c.admin_level,
                         t.c.rank_address)\
-                 .where(t.c.place_id == ltab.c.value['lid'].as_integer())
+                .where(t.c.place_id == ltab.c.value['lid'].as_integer())
 
         for row in await conn.execute(sql):
             current_result = next((r for r in results if r.place_id == row.src_place_id), None)
@@ -677,7 +670,7 @@ async def complete_address_details(conn: SearchConnection, results: List[BaseRes
                     fromarea=True, isaddress=True,
                     rank_address=row.rank_address, distance=0.0))
 
-    ### Now sort everything
+    # Now sort everything
     def mk_sort_key(place_id: Optional[int]) -> Callable[[AddressLine], Tuple[bool, int, bool]]:
         return lambda a: (a.place_id != place_id, -a.rank_address, a.isaddress)
 
@@ -706,7 +699,7 @@ async def complete_linked_places(conn: SearchConnection, result: BaseResult) -> 
         return
 
     sql = _placex_select_address_row(conn, result.centroid)\
-            .where(conn.t.placex.c.linked_place_id == result.place_id)
+        .where(conn.t.placex.c.linked_place_id == result.place_id)
 
     for row in await conn.execute(sql):
         result.linked_rows.append(_result_row_to_address_row(row))
@@ -745,8 +738,8 @@ async def complete_parented_places(conn: SearchConnection, result: BaseResult) -
         return
 
     sql = _placex_select_address_row(conn, result.centroid)\
-            .where(conn.t.placex.c.parent_place_id == result.place_id)\
-            .where(conn.t.placex.c.rank_search == 30)
+        .where(conn.t.placex.c.parent_place_id == result.place_id)\
+        .where(conn.t.placex.c.rank_search == 30)
 
     for row in await conn.execute(sql):
         result.parented_rows.append(_result_row_to_address_row(row))

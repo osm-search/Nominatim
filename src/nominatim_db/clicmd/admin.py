@@ -15,10 +15,6 @@ from ..errors import UsageError
 from ..db.connection import connect, table_exists
 from .args import NominatimArgs
 
-# Do not repeat documentation of subcommand classes.
-# pylint: disable=C0111
-# Using non-top-level imports to avoid eventually unused imports.
-# pylint: disable=E0012,C0415
 
 LOG = logging.getLogger()
 
@@ -57,9 +53,7 @@ class AdminFuncs:
         mgroup.add_argument('--place-id', type=int,
                             help='Analyse indexing of the given Nominatim object')
 
-
     def run(self, args: NominatimArgs) -> int:
-        # pylint: disable=too-many-return-statements
         if args.warm:
             return self._warm(args)
 
@@ -92,7 +86,6 @@ class AdminFuncs:
             return 0
 
         return 1
-
 
     def _warm(self, args: NominatimArgs) -> int:
         try:

@@ -19,7 +19,6 @@ from binascii import unhexlify
 from .errors import UsageError
 from .localization import Locales
 
-# pylint: disable=no-member,too-many-boolean-expressions,too-many-instance-attributes
 
 @dataclasses.dataclass
 class PlaceID:
@@ -72,13 +71,11 @@ class Point(NamedTuple):
     x: float
     y: float
 
-
     @property
     def lat(self) -> float:
         """ Return the latitude of the point.
         """
         return self.y
-
 
     @property
     def lon(self) -> float:
@@ -86,12 +83,10 @@ class Point(NamedTuple):
         """
         return self.x
 
-
     def to_geojson(self) -> str:
         """ Return the point in GeoJSON format.
         """
         return f'{{"type": "Point","coordinates": [{self.x}, {self.y}]}}'
-
 
     @staticmethod
     def from_wkb(wkb: Union[str, bytes]) -> 'Point':
@@ -114,7 +109,6 @@ class Point(NamedTuple):
             raise ValueError("Only WGS84 WKB supported.")
 
         return Point(x, y)
-
 
     @staticmethod
     def from_param(inp: Any) -> 'Point':
@@ -144,18 +138,17 @@ class Point(NamedTuple):
 
         return Point(x, y)
 
-
     def to_wkt(self) -> str:
         """ Return the WKT representation of the point.
         """
         return f'POINT({self.x} {self.y})'
 
 
-
 AnyPoint = Union[Point, Tuple[float, float]]
 
 WKB_BBOX_HEADER_LE = b'\x01\x03\x00\x00\x20\xE6\x10\x00\x00\x01\x00\x00\x00\x05\x00\x00\x00'
 WKB_BBOX_HEADER_BE = b'\x00\x20\x00\x00\x03\x00\x00\x10\xe6\x00\x00\x00\x01\x00\x00\x00\x05'
+
 
 class Bbox:
     """ A bounding box in WGS84 projection.
@@ -169,13 +162,11 @@ class Bbox:
         """
         self.coords = (minx, miny, maxx, maxy)
 
-
     @property
     def minlat(self) -> float:
         """ Southern-most latitude, corresponding to the minimum y coordinate.
         """
         return self.coords[1]
-
 
     @property
     def maxlat(self) -> float:
@@ -183,13 +174,11 @@ class Bbox:
         """
         return self.coords[3]
 
-
     @property
     def minlon(self) -> float:
         """ Western-most longitude, corresponding to the minimum x coordinate.
         """
         return self.coords[0]
-
 
     @property
     def maxlon(self) -> float:
@@ -197,28 +186,24 @@ class Bbox:
         """
         return self.coords[2]
 
-
     @property
     def area(self) -> float:
         """ Return the area of the box in WGS84.
         """
         return (self.coords[2] - self.coords[0]) * (self.coords[3] - self.coords[1])
 
-
     def contains(self, pt: Point) -> bool:
         """ Check if the point is inside or on the boundary of the box.
         """
         return self.coords[0] <= pt[0] and self.coords[1] <= pt[1]\
-               and self.coords[2] >= pt[0] and self.coords[3] >= pt[1]
-
+            and self.coords[2] >= pt[0] and self.coords[3] >= pt[1]
 
     def to_wkt(self) -> str:
         """ Return the WKT representation of the Bbox. This
             is a simple polygon with four points.
         """
         return 'POLYGON(({0} {1},{0} {3},{2} {3},{2} {1},{0} {1}))'\
-                  .format(*self.coords) # pylint: disable=consider-using-f-string
-
+            .format(*self.coords)
 
     @staticmethod
     def from_wkb(wkb: Union[None, str, bytes]) -> 'Optional[Bbox]':
@@ -242,14 +227,12 @@ class Bbox:
 
         return Bbox(min(x1, x2), min(y1, y2), max(x1, x2), max(y1, y2))
 
-
     @staticmethod
     def from_point(pt: Point, buffer: float) -> 'Bbox':
         """ Return a Bbox around the point with the buffer added to all sides.
         """
         return Bbox(pt[0] - buffer, pt[1] - buffer,
                     pt[0] + buffer, pt[1] + buffer)
-
 
     @staticmethod
     def from_param(inp: Any) -> 'Bbox':
@@ -383,7 +366,9 @@ def format_categories(categories: List[Tuple[str, str]]) -> List[Tuple[str, str]
     """
     return categories
 
-TParam = TypeVar('TParam', bound='LookupDetails') # pylint: disable=invalid-name
+
+TParam = TypeVar('TParam', bound='LookupDetails')
+
 
 @dataclasses.dataclass
 class LookupDetails:
@@ -434,7 +419,7 @@ class LookupDetails:
                        else field.default
             if field.metadata and 'transform' in field.metadata:
                 return field.metadata['transform'](v)
-            if not isinstance(v, field.type): # type: ignore[arg-type]
+            if not isinstance(v, field.type):  # type: ignore[arg-type]
                 raise UsageError(f"Parameter '{field.name}' needs to be of {field.type!s}.")
             return v
 
@@ -446,14 +431,16 @@ class LookupDetails:
 class ReverseDetails(LookupDetails):
     """ Collection of parameters for the reverse call.
     """
+
     max_rank: int = dataclasses.field(default=30,
-                                      metadata={'transform': lambda v: max(0, min(v, 30))}
-                                     )
+                                      metadata={'transform': lambda v: max(0, min(v, 30))})
     """ Highest address rank to return.
     """
+
     layers: DataLayer = DataLayer.ADDRESS | DataLayer.POI
     """ Filter which kind of data to include.
     """
+
 
 @dataclasses.dataclass
 class SearchDetails(LookupDetails):
@@ -463,54 +450,63 @@ class SearchDetails(LookupDetails):
     """ Maximum number of results to be returned. The actual number of results
         may be less.
     """
+
     min_rank: int = dataclasses.field(default=0,
-                                      metadata={'transform': lambda v: max(0, min(v, 30))}
-                                     )
+                                      metadata={'transform': lambda v: max(0, min(v, 30))})
     """ Lowest address rank to return.
     """
+
     max_rank: int = dataclasses.field(default=30,
-                                      metadata={'transform': lambda v: max(0, min(v, 30))}
-                                     )
+                                      metadata={'transform': lambda v: max(0, min(v, 30))})
     """ Highest address rank to return.
     """
+
     layers: Optional[DataLayer] = dataclasses.field(default=None,
-                                                    metadata={'transform': lambda r : r})
+                                                    metadata={'transform': lambda r: r})
     """ Filter which kind of data to include. When 'None' (the default) then
         filtering by layers is disabled.
     """
+
     countries: List[str] = dataclasses.field(default_factory=list,
                                              metadata={'transform': format_country})
     """ Restrict search results to the given countries. An empty list (the
         default) will disable this filter.
     """
+
     excluded: List[int] = dataclasses.field(default_factory=list,
                                             metadata={'transform': format_excluded})
     """ List of OSM objects to exclude from the results. Currently only
         works when the internal place ID is given.
         An empty list (the default) will disable this filter.
     """
+
     viewbox: Optional[Bbox] = dataclasses.field(default=None,
                                                 metadata={'transform': Bbox.from_param})
     """ Focus the search on a given map area.
     """
+
     bounded_viewbox: bool = False
     """ Use 'viewbox' as a filter and restrict results to places within the
         given area.
     """
+
     near: Optional[Point] = dataclasses.field(default=None,
                                               metadata={'transform': Point.from_param})
     """ Order results by distance to the given point.
     """
+
     near_radius: Optional[float] = dataclasses.field(default=None,
-                                              metadata={'transform': lambda r : r})
+                                                     metadata={'transform': lambda r: r})
     """ Use near point as a filter and drop results outside the given
         radius. Radius is given in degrees WSG84.
     """
+
     categories: List[Tuple[str, str]] = dataclasses.field(default_factory=list,
                                                           metadata={'transform': format_categories})
     """ Restrict search to places with one of the given class/type categories.
         An empty list (the default) will disable this filter.
     """
+
     viewbox_x2: Optional[Bbox] = None
 
     def __post_init__(self) -> None:
@@ -520,7 +516,6 @@ class SearchDetails(LookupDetails):
             self.viewbox_x2 = Bbox(self.viewbox.minlon - xext, self.viewbox.minlat - yext,
                                    self.viewbox.maxlon + xext, self.viewbox.maxlat + yext)
 
-
     def restrict_min_max_rank(self, new_min: int, new_max: int) -> None:
         """ Change the min_rank and max_rank fields to respect the
             given boundaries.
@@ -528,7 +523,6 @@ class SearchDetails(LookupDetails):
         assert new_min <= new_max
         self.min_rank = max(self.min_rank, new_min)
         self.max_rank = min(self.max_rank, new_max)
-
 
     def is_impossible(self) -> bool:
         """ Check if the parameter configuration is contradictionary and
@@ -541,7 +535,6 @@ class SearchDetails(LookupDetails):
                 or (self.layers is not None and not self.layers)
                 or (self.max_rank <= 4 and
                     self.layers is not None and not self.layers & DataLayer.ADDRESS))
-
 
     def layer_enabled(self, layer: DataLayer) -> bool:
         """ Check if the given layer has been chosen. Also returns

@@ -39,7 +39,6 @@ class PlaceSanitizer:
 
                 self.handlers.append(module.create(SanitizerConfig(func)))
 
-
     def process_names(self, place: PlaceInfo) -> Tuple[List[PlaceName], List[PlaceName]]:
         """ Extract a sanitized list of names and address parts from the
             given place. The function returns a tuple

@@ -17,7 +17,7 @@ from pathlib import Path
 from psycopg.types.json import Jsonb
 from psycopg import sql as pysql
 
-from ..db.connection import connect, Connection, Cursor, server_version_tuple,\
+from ..db.connection import connect, Connection, Cursor, server_version_tuple, \
                             drop_tables, table_exists, execute_scalar
 from ..config import Configuration
 from ..db.sql_preprocessor import SQLPreprocessor
@@ -32,10 +32,11 @@ DBCFG_TERM_NORMALIZATION = "tokenizer_term_normalization"
 
 LOG = logging.getLogger()
 
-WORD_TYPES =(('country_names', 'C'),
-             ('postcodes', 'P'),
-             ('full_word', 'W'),
-             ('housenumbers', 'H'))
+WORD_TYPES = (('country_names', 'C'),
+              ('postcodes', 'P'),
+              ('full_word', 'W'),
+              ('housenumbers', 'H'))
+
 
 def create(dsn: str, data_dir: Path) -> 'ICUTokenizer':
     """ Create a new instance of the tokenizer provided by this module.
@@ -54,7 +55,6 @@ class ICUTokenizer(AbstractTokenizer):
         self.data_dir = data_dir
         self.loader: Optional[ICURuleLoader] = None
 
-
     def init_new_db(self, config: Configuration, init_db: bool = True) -> None:
         """ Set up a new tokenizer for the database.
 
@@ -70,7 +70,6 @@ class ICUTokenizer(AbstractTokenizer):
             self._setup_db_tables(config)
             self._create_base_indices(config, 'word')
 
-
     def init_from_project(self, config: Configuration) -> None:
         """ Initialise the tokenizer from the project directory.
         """
@@ -79,13 +78,11 @@ class ICUTokenizer(AbstractTokenizer):
         with connect(self.dsn) as conn:
             self.loader.load_config_from_db(conn)
 
-
     def finalize_import(self, config: Configuration) -> None:
         """ Do any required postprocessing to make the tokenizer data ready
             for use.
         """
         self._create_lookup_indices(config, 'word')
-
 
     def update_sql_functions(self, config: Configuration) -> None:
         """ Reimport the SQL functions for this tokenizer.
@@ -94,13 +91,11 @@ class ICUTokenizer(AbstractTokenizer):
             sqlp = SQLPreprocessor(conn, config)
             sqlp.run_sql_file(conn, 'tokenizer/icu_tokenizer.sql')
 
-
     def check_database(self, config: Configuration) -> None:
         """ Check that the tokenizer is set up correctly.
         """
         # Will throw an error if there is an issue.
         self.init_from_project(config)
-
 
     def update_statistics(self, config: Configuration, threads: int = 2) -> None:
         """ Recompute frequencies for all name words.
@@ -126,28 +121,29 @@ class ICUTokenizer(AbstractTokenizer):
                                      SELECT unnest(nameaddress_vector) as id, count(*)
                                      FROM search_name GROUP BY id""")
                     cur.execute('CREATE INDEX ON addressword_frequencies(id)')
-                    cur.execute("""CREATE OR REPLACE FUNCTION word_freq_update(wid INTEGER,
-                                                                               INOUT info JSONB)
-                                   AS $$
-                                   DECLARE rec RECORD;
-                                   BEGIN
-                                   IF info is null THEN
-                                     info = '{}'::jsonb;
-                                   END IF;
-                                   FOR rec IN SELECT count FROM word_frequencies WHERE id = wid
-                                   LOOP
-                                     info = info || jsonb_build_object('count', rec.count);
-                                   END LOOP;
-                                   FOR rec IN SELECT count FROM addressword_frequencies WHERE id = wid
-                                   LOOP
-                                     info = info || jsonb_build_object('addr_count', rec.count);
-                                   END LOOP;
-                                   IF info = '{}'::jsonb THEN
-                                     info = null;
-                                   END IF;
-                                   END;
-                                   $$ LANGUAGE plpgsql IMMUTABLE;
-                                """)
+                    cur.execute("""
+                        CREATE OR REPLACE FUNCTION word_freq_update(wid INTEGER,
+                                                                    INOUT info JSONB)
+                        AS $$
+                        DECLARE rec RECORD;
+                        BEGIN
+                        IF info is null THEN
+                          info = '{}'::jsonb;
+                        END IF;
+                        FOR rec IN SELECT count FROM word_frequencies WHERE id = wid
+                        LOOP
+                          info = info || jsonb_build_object('count', rec.count);
+                        END LOOP;
+                        FOR rec IN SELECT count FROM addressword_frequencies WHERE id = wid
+                        LOOP
+                          info = info || jsonb_build_object('addr_count', rec.count);
+                        END LOOP;
+                        IF info = '{}'::jsonb THEN
+                          info = null;
+                        END IF;
+                        END;
+                        $$ LANGUAGE plpgsql IMMUTABLE;
+                        """)
                     LOG.info('Update word table with recomputed frequencies')
                     drop_tables(conn, 'tmp_word')
                     cur.execute("""CREATE TABLE tmp_word AS
@@ -200,8 +196,6 @@ class ICUTokenizer(AbstractTokenizer):
         self._create_lookup_indices(config, 'tmp_word')
         self._move_temporary_word_table('tmp_word')
 
-
-
     def _cleanup_housenumbers(self) -> None:
         """ Remove unused house numbers.
         """
@@ -235,15 +229,12 @@ class ICUTokenizer(AbstractTokenizer):
                                 (list(candidates.values()), ))
                 conn.commit()
 
-
-
     def update_word_tokens(self) -> None:
         """ Remove unused tokens.
         """
         LOG.warning("Cleaning up housenumber tokens.")
         self._cleanup_housenumbers()
         LOG.warning("Tokenizer house-keeping done.")
-
 
     def name_analyzer(self) -> 'ICUNameAnalyzer':
         """ Create a new analyzer for tokenizing names and queries
@@ -264,7 +255,6 @@ class ICUTokenizer(AbstractTokenizer):
         return ICUNameAnalyzer(self.dsn, self.loader.make_sanitizer(),
                                self.loader.make_token_analysis())
 
-
     def most_frequent_words(self, conn: Connection, num: int) -> List[str]:
         """ Return a list of the `num` most frequent full words
             in the database.
@@ -276,7 +266,6 @@ class ICUTokenizer(AbstractTokenizer):
                              ORDER BY count DESC LIMIT %s""", (num,))
             return list(s[0].split('@')[0] for s in cur)
 
-
     def _save_config(self) -> None:
         """ Save the configuration that needs to remain stable for the given
             database as database properties.
@@ -284,7 +273,6 @@ class ICUTokenizer(AbstractTokenizer):
         assert self.loader is not None
         with connect(self.dsn) as conn:
             self.loader.save_config_to_db(conn)
-
 
     def _setup_db_tables(self, config: Configuration) -> None:
         """ Set up the word table and fill it with pre-computed word
@@ -309,7 +297,6 @@ class ICUTokenizer(AbstractTokenizer):
             """)
             conn.commit()
 
-
     def _create_base_indices(self, config: Configuration, table_name: str) -> None:
         """ Set up the word table and fill it with pre-computed word
             frequencies.
@@ -330,20 +317,20 @@ class ICUTokenizer(AbstractTokenizer):
                                 column_type=ctype)
             conn.commit()
 
-
     def _create_lookup_indices(self, config: Configuration, table_name: str) -> None:
         """ Create additional indexes used when running the API.
         """
         with connect(self.dsn) as conn:
             sqlp = SQLPreprocessor(conn, config)
             # Index required for details lookup.
-            sqlp.run_string(conn, """
+            sqlp.run_string(
+                conn,
+                """
                 CREATE INDEX IF NOT EXISTS idx_{{table_name}}_word_id
                   ON {{table_name}} USING BTREE (word_id) {{db.tablespace.search_index}}
-            """,
-            table_name=table_name)
+                """,
+                table_name=table_name)
             conn.commit()
-
 
     def _move_temporary_word_table(self, old: str) -> None:
         """ Rename all tables and indexes used by the tokenizer.
@@ -359,8 +346,6 @@ class ICUTokenizer(AbstractTokenizer):
                     cur.execute(f"""ALTER INDEX idx_{old}_{name}
                                     RENAME TO idx_word_{name}""")
             conn.commit()
-
-
 
 
 class ICUNameAnalyzer(AbstractAnalyzer):
@@ -379,7 +364,6 @@ class ICUNameAnalyzer(AbstractAnalyzer):
 
         self._cache = _TokenCache()
 
-
     def close(self) -> None:
         """ Free all resources used by the analyzer.
         """
@@ -387,19 +371,16 @@ class ICUNameAnalyzer(AbstractAnalyzer):
             self.conn.close()
             self.conn = None
 
-
     def _search_normalized(self, name: str) -> str:
         """ Return the search token transliteration of the given name.
         """
         return cast(str, self.token_analysis.search.transliterate(name)).strip()
-
 
     def _normalized(self, name: str) -> str:
         """ Return the normalized version of the given name with all
             non-relevant information removed.
         """
         return cast(str, self.token_analysis.normalizer.transliterate(name)).strip()
-
 
     def get_word_token_info(self, words: Sequence[str]) -> List[Tuple[str, str, int]]:
         """ Return token information for the given list of words.
@@ -432,8 +413,7 @@ class ICUNameAnalyzer(AbstractAnalyzer):
             part_ids = {r[0]: r[1] for r in cur}
 
         return [(k, v, full_ids.get(v, None)) for k, v in full_tokens.items()] \
-               + [(k, v, part_ids.get(v, None)) for k, v in partial_tokens.items()]
-
+            + [(k, v, part_ids.get(v, None)) for k, v in partial_tokens.items()]
 
     def normalize_postcode(self, postcode: str) -> str:
         """ Convert the postcode to a standardized form.
@@ -442,7 +422,6 @@ class ICUNameAnalyzer(AbstractAnalyzer):
             'token_normalized_postcode()'.
         """
         return postcode.strip().upper()
-
 
     def update_postcodes_from_db(self) -> None:
         """ Update postcode tokens in the word table from the location_postcode
@@ -516,9 +495,6 @@ class ICUNameAnalyzer(AbstractAnalyzer):
             with self.conn.cursor() as cur:
                 cur.executemany("""SELECT create_postcode_word(%s, %s)""", terms)
 
-
-
-
     def update_special_phrases(self, phrases: Iterable[Tuple[str, str, str, str]],
                                should_replace: bool) -> None:
         """ Replace the search index for special phrases with the new phrases.
@@ -548,7 +524,6 @@ class ICUNameAnalyzer(AbstractAnalyzer):
         LOG.info("Total phrases: %s. Added: %s. Deleted: %s",
                  len(norm_phrases), added, deleted)
 
-
     def _add_special_phrases(self, cursor: Cursor,
                              new_phrases: Set[Tuple[str, str, str, str]],
                              existing_phrases: Set[Tuple[str, str, str, str]]) -> int:
@@ -568,10 +543,9 @@ class ICUNameAnalyzer(AbstractAnalyzer):
 
         return added
 
-
     def _remove_special_phrases(self, cursor: Cursor,
-                             new_phrases: Set[Tuple[str, str, str, str]],
-                             existing_phrases: Set[Tuple[str, str, str, str]]) -> int:
+                                new_phrases: Set[Tuple[str, str, str, str]],
+                                existing_phrases: Set[Tuple[str, str, str, str]]) -> int:
         """ Remove all phrases from the database that are no longer in the
             new phrase list.
         """
@@ -587,7 +561,6 @@ class ICUNameAnalyzer(AbstractAnalyzer):
 
         return len(to_delete)
 
-
     def add_country_names(self, country_code: str, names: Mapping[str, str]) -> None:
         """ Add default names for the given country to the search index.
         """
@@ -598,7 +571,6 @@ class ICUNameAnalyzer(AbstractAnalyzer):
         self._add_country_full_names(country_code,
                                      self.sanitizer.process_names(info)[0],
                                      internal=True)
-
 
     def _add_country_full_names(self, country_code: str, names: Sequence[PlaceName],
                                 internal: bool = False) -> None:
@@ -651,7 +623,6 @@ class ICUNameAnalyzer(AbstractAnalyzer):
                           """
                 cur.execute(sql, (country_code, list(new_tokens)))
 
-
     def process_place(self, place: PlaceInfo) -> Mapping[str, Any]:
         """ Determine tokenizer information about the given place.
 
@@ -674,7 +645,6 @@ class ICUNameAnalyzer(AbstractAnalyzer):
 
         return token_info.to_dict()
 
-
     def _process_place_address(self, token_info: '_TokenInfo',
                                address: Sequence[PlaceName]) -> None:
         for item in address:
@@ -687,11 +657,10 @@ class ICUNameAnalyzer(AbstractAnalyzer):
             elif item.kind == 'place':
                 if not item.suffix:
                     token_info.add_place(itertools.chain(*self._compute_name_tokens([item])))
-            elif not item.kind.startswith('_') and not item.suffix and \
-                 item.kind not in ('country', 'full', 'inclusion'):
+            elif (not item.kind.startswith('_') and not item.suffix and
+                  item.kind not in ('country', 'full', 'inclusion')):
                 token_info.add_address_term(item.kind,
                                             itertools.chain(*self._compute_name_tokens([item])))
-
 
     def _compute_housenumber_token(self, hnr: PlaceName) -> Tuple[Optional[int], Optional[str]]:
         """ Normalize the housenumber and return the word token and the
@@ -728,7 +697,6 @@ class ICUNameAnalyzer(AbstractAnalyzer):
 
         return result
 
-
     def _retrieve_full_tokens(self, name: str) -> List[int]:
         """ Get the full name token for the given name, if it exists.
             The name is only retrieved for the standard analyser.
@@ -748,7 +716,6 @@ class ICUNameAnalyzer(AbstractAnalyzer):
         self._cache.fulls[norm_name] = full
 
         return full
-
 
     def _compute_name_tokens(self, names: Sequence[PlaceName]) -> Tuple[Set[int], Set[int]]:
         """ Computes the full name and partial name tokens for the given
@@ -786,7 +753,6 @@ class ICUNameAnalyzer(AbstractAnalyzer):
             partial_tokens.update(part)
 
         return full_tokens, partial_tokens
-
 
     def _add_postcode(self, item: PlaceName) -> Optional[str]:
         """ Make sure the normalized postcode is present in the word table.
@@ -835,10 +801,8 @@ class _TokenInfo:
         self.address_tokens: Dict[str, str] = {}
         self.postcode: Optional[str] = None
 
-
     def _mk_array(self, tokens: Iterable[Any]) -> str:
         return f"{{{','.join((str(s) for s in tokens))}}}"
-
 
     def to_dict(self) -> Dict[str, Any]:
         """ Return the token information in database importable format.
@@ -866,12 +830,10 @@ class _TokenInfo:
 
         return out
 
-
     def set_names(self, fulls: Iterable[int], partials: Iterable[int]) -> None:
         """ Adds token information for the normalised names.
         """
         self.names = self._mk_array(itertools.chain(fulls, partials))
-
 
     def add_housenumber(self, token: Optional[int], hnr: Optional[str]) -> None:
         """ Extract housenumber information from a list of normalised
@@ -882,7 +844,6 @@ class _TokenInfo:
             self.housenumbers.add(hnr)
             self.housenumber_tokens.add(token)
 
-
     def add_street(self, tokens: Iterable[int]) -> None:
         """ Add addr:street match terms.
         """
@@ -890,12 +851,10 @@ class _TokenInfo:
             self.street_tokens = set()
         self.street_tokens.update(tokens)
 
-
     def add_place(self, tokens: Iterable[int]) -> None:
         """ Add addr:place search and match terms.
         """
         self.place_tokens.update(tokens)
-
 
     def add_address_term(self, key: str, partials: Iterable[int]) -> None:
         """ Add additional address terms.

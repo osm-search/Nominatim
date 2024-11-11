@@ -28,6 +28,7 @@ UPDATE_TABLES = [
     'wikipedia_%'
 ]
 
+
 def drop_update_tables(conn: Connection) -> None:
     """ Drop all tables only necessary for updating the database from
         OSM replication data.
@@ -49,8 +50,8 @@ def drop_flatnode_file(fpath: Optional[Path]) -> None:
     if fpath and fpath.exists():
         fpath.unlink()
 
+
 def is_frozen(conn: Connection) -> bool:
     """ Returns true if database is in a frozen state
     """
-
     return table_exists(conn, 'place') is False

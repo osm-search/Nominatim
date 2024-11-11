@@ -15,7 +15,6 @@ from sqlalchemy.dialects.sqlite import JSON as sqlite_json
 
 from ...typing import SaDialect
 
-# pylint: disable=all
 
 class Json(sa.types.TypeDecorator[Any]):
     """ Dialect-independent type for JSON.
@@ -25,6 +24,6 @@ class Json(sa.types.TypeDecorator[Any]):
 
     def load_dialect_impl(self, dialect: SaDialect) -> sa.types.TypeEngine[Any]:
         if dialect.name == 'postgresql':
-            return JSONB(none_as_null=True) # type: ignore[no-untyped-call]
+            return JSONB(none_as_null=True)  # type: ignore[no-untyped-call]
 
         return sqlite_json(none_as_null=True)

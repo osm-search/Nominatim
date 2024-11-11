@@ -9,6 +9,7 @@ Data class for a single name of a place.
 """
 from typing import Optional, Dict, Mapping
 
+
 class PlaceName:
     """ Each name and address part of a place is encapsulated in an object of
         this class. It saves not only the name proper but also describes the
@@ -32,10 +33,8 @@ class PlaceName:
         self.suffix = suffix
         self.attr: Dict[str, str] = {}
 
-
     def __repr__(self) -> str:
         return f"PlaceName(name={self.name!r},kind={self.kind!r},suffix={self.suffix!r})"
-
 
     def clone(self, name: Optional[str] = None,
               kind: Optional[str] = None,
@@ -57,20 +56,17 @@ class PlaceName:
 
         return newobj
 
-
     def set_attr(self, key: str, value: str) -> None:
         """ Add the given property to the name. If the property was already
             set, then the value is overwritten.
         """
         self.attr[key] = value
 
-
     def get_attr(self, key: str, default: Optional[str] = None) -> Optional[str]:
         """ Return the given property or the value of 'default' if it
             is not set.
         """
         return self.attr.get(key, default)
-
 
     def has_attr(self, key: str) -> bool:
         """ Check if the given attribute is set.

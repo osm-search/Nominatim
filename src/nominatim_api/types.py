@@ -61,6 +61,17 @@ class OsmID:
         if self.osm_type not in ('N', 'W', 'R'):
             raise ValueError(f"Illegal OSM type '{self.osm_type}'. Must be one of N, W, R.")
 
+    def class_as_housenumber(self) -> Optional[int]:
+        """ Interpret the class property as a housenumber and return it.
+
+            If the OSM ID points to an interpolation, then the class may be
+            a number pointing to the exact number requested. This function
+            returns the housenumber as an int, if class is set and is a number.
+        """
+        if self.osm_class and self.osm_class.isdigit():
+            return int(self.osm_class)
+        return None
+
 
 PlaceRef = Union[PlaceID, OsmID]
 

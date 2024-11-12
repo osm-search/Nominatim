@@ -24,7 +24,7 @@ from .config import Configuration
 from .sql import sqlite_functions, sqlalchemy_functions  # noqa
 from .connection import SearchConnection
 from .status import get_status, StatusResult
-from .lookup import get_detailed_place, get_simple_place
+from .lookup import get_places, get_detailed_place
 from .reverse import ReverseGeocoder
 from .search import ForwardGeocoder, Phrase, PhraseType, make_query_analyzer
 from . import types as ntyp
@@ -222,8 +222,7 @@ class NominatimAPIAsync:
             conn.set_query_timeout(self.query_timeout)
             if details.keywords:
                 await make_query_analyzer(conn)
-            return SearchResults(filter(None,
-                                        [await get_simple_place(conn, p, details) for p in places]))
+            return await get_places(conn, places, details)
 
     async def reverse(self, coord: ntyp.AnyPoint, **params: Any) -> Optional[ReverseResult]:
         """ Find a place by its coordinates. Also known as reverse geocoding.

@@ -172,7 +172,7 @@ class APIMiddleware:
         assert self.app is not None
         legacy_urls = self.api.config.get_bool('SERVE_LEGACY_URLS')
         formatter = load_format_dispatcher('v1', self.api.config.project_dir)
-        for name, func in api_impl.ROUTES:
+        for name, func in await api_impl.get_routes(self.api):
             endpoint = EndpointWrapper(name, func, self.api, formatter)
             self.app.add_route(f"/{name}", endpoint)
             if legacy_urls:

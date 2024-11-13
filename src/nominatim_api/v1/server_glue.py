@@ -8,7 +8,7 @@
 Generic part of the server implementation of the v1 API.
 Combine with the scaffolding provided for the various Python ASGI frameworks.
 """
-from typing import Optional, Any, Type, Dict, cast
+from typing import Optional, Any, Type, Dict, cast, Sequence, Tuple
 from functools import reduce
 import dataclasses
 from urllib.parse import urlencode
@@ -25,7 +25,8 @@ from ..results import DetailedResult, ReverseResults, SearchResult, SearchResult
 from ..localization import Locales
 from . import helpers
 from ..server import content_types as ct
-from ..server.asgi_adaptor import ASGIAdaptor
+from ..server.asgi_adaptor import ASGIAdaptor, EndpointFunc
+from ..sql.async_core_library import PGCORE_ERROR
 
 
 def build_response(adaptor: ASGIAdaptor, output: str, status: int = 200,
@@ -417,12 +418,25 @@ async def polygons_endpoint(api: NominatimAPIAsync, params: ASGIAdaptor) -> Any:
     return build_response(params, params.formatting().format_result(results, fmt, {}))
 
 
-ROUTES = [
-    ('status', status_endpoint),
-    ('details', details_endpoint),
-    ('reverse', reverse_endpoint),
-    ('lookup', lookup_endpoint),
-    ('search', search_endpoint),
-    ('deletable', deletable_endpoint),
-    ('polygons', polygons_endpoint),
-]
+async def get_routes(api: NominatimAPIAsync) -> Sequence[Tuple[str, EndpointFunc]]:
+    routes = [
+        ('status', status_endpoint),
+        ('details', details_endpoint),
+        ('reverse', reverse_endpoint),
+        ('lookup', lookup_endpoint),
+        ('deletable', deletable_endpoint),
+        ('polygons', polygons_endpoint),
+    ]
+
+    def has_search_name(conn: sa.engine.Connection) -> bool:
+        insp = sa.inspect(conn)
+        return insp.has_table('search_name')
+
+    try:
+        async with api.begin() as conn:
+            if await conn.connection.run_sync(has_search_name):
+                routes.append(('search', search_endpoint))
+    except (PGCORE_ERROR, sa.exc.OperationalError):
+        pass  # ignored
+
+    return routes

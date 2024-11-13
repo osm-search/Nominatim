@@ -7,7 +7,8 @@
 """
 Server implementation using the starlette webserver framework.
 """
-from typing import Any, Optional, Mapping, Callable, cast, Coroutine, Dict, Awaitable
+from typing import Any, Optional, Mapping, Callable, cast, Coroutine, Dict, \
+                   Awaitable, AsyncIterator
 from pathlib import Path
 import datetime as dt
 import asyncio
@@ -150,12 +151,12 @@ def get_application(project_dir: Path,
     }
 
     @contextlib.asynccontextmanager
-    async def lifespan(app: Starlette) -> None:
+    async def lifespan(app: Starlette) -> AsyncIterator[Any]:
         app.state.API = NominatimAPIAsync(project_dir, environ)
         config = app.state.API.config
 
         legacy_urls = config.get_bool('SERVE_LEGACY_URLS')
-        for name, func in api_impl.ROUTES:
+        for name, func in await api_impl.get_routes(app.state.API):
             endpoint = _wrap_endpoint(func)
             app.routes.append(Route(f"/{name}", endpoint=endpoint))
             if legacy_urls:

@@ -147,12 +147,36 @@ class FileLoggingMiddleware:
                       f'{resource.name} "{params}"\n')
 
 
-class APIShutdown:
-    """ Middleware that closes any open database connections.
+class APIMiddleware:
+    """ Middleware managing the Nominatim database connection.
     """
 
-    def __init__(self, api: NominatimAPIAsync) -> None:
-        self.api = api
+    def __init__(self, project_dir: Path, environ: Optional[Mapping[str, str]]) -> None:
+        self.api = NominatimAPIAsync(project_dir, environ)
+        self.app: Optional[App] = None
+
+    @property
+    def config(self) -> Configuration:
+        """ Get the configuration for Nominatim.
+        """
+        return self.api.config
+
+    def set_app(self, app: App) -> None:
+        """ Set the Falcon application this middleware is connected to.
+        """
+        self.app = app
+
+    async def process_startup(self, *_: Any) -> None:
+        """ Process the ASGI lifespan startup event.
+        """
+        assert self.app is not None
+        legacy_urls = self.api.config.get_bool('SERVE_LEGACY_URLS')
+        formatter = load_format_dispatcher('v1', self.api.config.project_dir)
+        for name, func in await api_impl.get_routes(self.api):
+            endpoint = EndpointWrapper(name, func, self.api, formatter)
+            self.app.add_route(f"/{name}", endpoint)
+            if legacy_urls:
+                self.app.add_route(f"/{name}.php", endpoint)
 
     async def process_shutdown(self, *_: Any) -> None:
         """Process the ASGI lifespan shutdown event.
@@ -164,27 +188,21 @@ def get_application(project_dir: Path,
                     environ: Optional[Mapping[str, str]] = None) -> App:
     """ Create a Nominatim Falcon ASGI application.
     """
-    api = NominatimAPIAsync(project_dir, environ)
+    apimw = APIMiddleware(project_dir, environ)
 
-    middleware: List[object] = [APIShutdown(api)]
-    log_file = api.config.LOG_FILE
+    middleware: List[object] = [apimw]
+    log_file = apimw.config.LOG_FILE
     if log_file:
         middleware.append(FileLoggingMiddleware(log_file))
 
-    app = App(cors_enable=api.config.get_bool('CORS_NOACCESSCONTROL'),
+    app = App(cors_enable=apimw.config.get_bool('CORS_NOACCESSCONTROL'),
               middleware=middleware)
+
+    apimw.set_app(app)
     app.add_error_handler(HTTPNominatimError, nominatim_error_handler)
     app.add_error_handler(TimeoutError, timeout_error_handler)
     # different from TimeoutError in Python <= 3.10
     app.add_error_handler(asyncio.TimeoutError, timeout_error_handler)  # type: ignore[arg-type]
-
-    legacy_urls = api.config.get_bool('SERVE_LEGACY_URLS')
-    formatter = load_format_dispatcher('v1', project_dir)
-    for name, func in api_impl.ROUTES:
-        endpoint = EndpointWrapper(name, func, api, formatter)
-        app.add_route(f"/{name}", endpoint)
-        if legacy_urls:
-            app.add_route(f"/{name}.php", endpoint)
 
     return app
 

@@ -8,4 +8,4 @@
 Implementation of API version v1 (aka the legacy version).
 """
 
-from .server_glue import ROUTES as ROUTES
+from .server_glue import get_routes as get_routes

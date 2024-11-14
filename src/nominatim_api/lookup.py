@@ -43,7 +43,7 @@ class LookupTuple:
 class LookupCollector:
     """ Result collector for the simple lookup.
 
-        Allows for lookup of multiple places simultaniously.
+        Allows for lookup of multiple places simultaneously.
     """
 
     def __init__(self, places: Iterable[ntyp.PlaceRef],

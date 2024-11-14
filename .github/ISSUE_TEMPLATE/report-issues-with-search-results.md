@@ -17,11 +17,11 @@ assignees: ''
 
 ## What result did you expect?
 
-**When the result in the right place and just named wrongly:** 
+**When the result is in the right place and just named wrongly:** 
 
 <!-- Please tell us the display name you expected. -->
 
-**When the result missing completely:**
+**When the result is missing completely:**
 
 <!-- Make sure that the data you are looking for is in OpenStreetMap. Provide a link to the OpenStreetMap object or if you cannot get it, a link to the map on https://openstreetmap.org where you expect the result to be.
 

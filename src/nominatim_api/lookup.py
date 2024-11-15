@@ -201,22 +201,24 @@ async def find_in_placex(conn: SearchConnection, collector: Collector) -> bool:
                     t.c.geometry.ST_Expand(0).label('bbox'),
                     t.c.centroid)
 
-    osm_ids = [{'i': i, 'ot': p.osm_type, 'oi': p.osm_id, 'oc': p.osm_class or ''}
-               for i, p in collector.enumerate_free_osm_ids()]
+    for osm_type in ('N', 'W', 'R'):
+        osm_ids = [{'i': i, 'oi': p.osm_id, 'oc': p.osm_class or ''}
+                   for i, p in collector.enumerate_free_osm_ids()
+                   if p.osm_type == osm_type]
 
-    if osm_ids:
-        oid_tab = sa.func.JsonArrayEach(sa.type_coerce(osm_ids, sa.JSON))\
-                    .table_valued(sa.column('value', type_=sa.JSON))
-        psql = sql.add_columns(oid_tab.c.value['i'].as_integer().label('_idx'))\
-                  .where(t.c.osm_type == oid_tab.c.value['ot'].as_string())\
-                  .where(t.c.osm_id == oid_tab.c.value['oi'].as_string().cast(sa.BigInteger))\
-                  .where(sa.or_(oid_tab.c.value['oc'].as_string() == '',
-                                oid_tab.c.value['oc'].as_string() == t.c.class_))\
-                  .order_by(t.c.class_)
+        if osm_ids:
+            oid_tab = sa.func.JsonArrayEach(sa.type_coerce(osm_ids, sa.JSON))\
+                        .table_valued(sa.column('value', type_=sa.JSON))
+            psql = sql.add_columns(oid_tab.c.value['i'].as_integer().label('_idx'))\
+                      .where(t.c.osm_type == osm_type)\
+                      .where(t.c.osm_id == oid_tab.c.value['oi'].as_string().cast(sa.BigInteger))\
+                      .where(sa.or_(oid_tab.c.value['oc'].as_string() == '',
+                                    oid_tab.c.value['oc'].as_string() == t.c.class_))\
+                      .order_by(t.c.class_)
 
-        if await collector.add_rows_from_sql(conn, psql, t.c.geometry,
-                                             nres.create_from_placex_row):
-            return True
+            if await collector.add_rows_from_sql(conn, psql, t.c.geometry,
+                                                 nres.create_from_placex_row):
+                return True
 
     place_ids = [{'i': i, 'id': p.place_id}
                  for i, p in collector.enumerate_free_place_ids()]

@@ -37,31 +37,6 @@ nominatim import --continue indexing
 Otherwise it's best to start the full setup from the beginning.
 
 
-
-### nominatim.so version mismatch
-
-When running the import you may get a version mismatch:
-`COPY_END for place failed: ERROR: incompatible library "/srv/Nominatim/nominatim/build/module/nominatim.so": version mismatch`
-
-pg_config seems to use bad includes sometimes when multiple versions
-of PostgreSQL are available in the system. Make sure you remove the
-server development libraries (`postgresql-server-dev-13` on Ubuntu)
-and recompile (`cmake .. && make`).
-
-
-### I see the error "ERROR: permission denied for language c"
-
-`nominatim.so`, written in C, is required to be installed on the database
-server. Some managed database (cloud) services like Amazon RDS do not allow
-this. There is currently no work-around other than installing a database
-on a non-managed machine.
-
-
-### I see the error: "function transliteration(text) does not exist"
-
-Reinstall the nominatim functions with `nominatim refresh --functions`
-and check for any errors, e.g. a missing `nominatim.so` file.
-
 ### I see the error: "ERROR: mmap (remap) failed"
 
 This may be a simple out-of-memory error. Try reducing the memory used
@@ -103,39 +78,6 @@ for default Ubuntu operating system for example it's `www-data`.
    GRANT SELECT ON ALL TABLES IN SCHEMA public TO "www-data";
 ```
 
-### Website reports "Could not load library "nominatim.so"
-
-Example error message
-
-```
-   SELECT make_standard_name('3039 E MEADOWLARK LN') [nativecode=ERROR: could not
-   load library "/srv/nominatim/Nominatim-3.1.0/build/module/nominatim.so":
-   /srv/nominatim/Nominatim-3.1.0/build/module/nominatim.so: cannot open shared
-   object file: Permission denied
-   CONTEXT: PL/pgSQL function make_standard_name(text) line 5 at assignment]
-```
-
-The PostgreSQL database, i.e. user `postgres`, needs to have access to that file.
-
-The permission need to be read & executable by everybody, but not writeable
-by everybody, e.g.
-
-```
-   -rwxr-xr-x 1 nominatim nominatim 297984 build/module/nominatim.so
-```
-
-Try `chmod a+r nominatim.so; chmod a+x nominatim.so`.
-
-When you recently updated your operating system, updated PostgreSQL to
-a new version or moved files (e.g. the build directory) you should
-recreate `nominatim.so`. Try
-
-```
-   cd build
-   rm -r module/
-   cmake $main_Nominatim_path && make
-```
-
 ### Setup fails with "DB Error: extension not found"
 
 Make sure you have the PostgreSQL extensions "hstore" and "postgis" installed.
@@ -172,4 +114,6 @@ for more information.
 
 ### Can I import negative OSM ids into Nominatim?
 
-See [this question of Stackoverflow](https://help.openstreetmap.org/questions/64662/nominatim-flatnode-with-negative-id).
+No, negative IDs are no longer supported by osm2pgsql. You can use
+large 64-bit IDs that are guaranteed not to clash with OSM IDs. However,
+you will not able to use a flatnode file with them.

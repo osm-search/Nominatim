@@ -22,15 +22,10 @@ and can't offer support.
 
 ### Software
 
-!!! Warning
-    For larger installations you **must have** PostgreSQL 11+ and PostGIS 3+
-    otherwise import and queries will be slow to the point of being unusable.
-    Query performance has marked improvements with PostgreSQL 13+ and PostGIS 3.2+.
-
 For running Nominatim:
 
-  * [PostgreSQL](https://www.postgresql.org) (9.6+ will work, 11+ strongly recommended)
-  * [PostGIS](https://postgis.net) (2.2+ will work, 3.0+ strongly recommended)
+  * [PostgreSQL](https://www.postgresql.org) (12+ will work, 13+ strongly recommended)
+  * [PostGIS](https://postgis.net) (3.0+ will work, 3.2+ strongly recommended)
   * [osm2pgsql](https://osm2pgsql.org) (1.8+, optional when building with CMake)
   * [Python 3](https://www.python.org/) (3.7+)
 

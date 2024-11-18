@@ -42,13 +42,13 @@ jobs:
                     - flavour: ubuntu-20
                       ubuntu: 20
                       postgresql: 12
-                      postgis: 3
                       lua: '5.1'
+                      dependencies: pip
                     - flavour: ubuntu-24
                       ubuntu: 24
                       postgresql: 17
-                      postgis: 3
                       lua: '5.3'
+                      dependencies: apt
 
         runs-on: ubuntu-${{ matrix.ubuntu }}.04
 
@@ -60,57 +60,66 @@ jobs:
             - name: Unpack Nominatim
               run: tar xf nominatim-src.tar.bz2
 
-            - uses: actions/setup-python@v5
-              with:
-                python-version: 3.7
-              if: matrix.flavour == 'oldstuff'
-
             - uses: ./Nominatim/.github/actions/setup-postgresql
               with:
                   postgresql-version: ${{ matrix.postgresql }}
-                  postgis-version: ${{ matrix.postgis }}
 
             - uses: ./Nominatim/.github/actions/build-nominatim
               with:
-                  flavour: ${{ matrix.flavour }}
-                  lua: ${{ matrix.lua }}
+                  dependencies: ${{ matrix.dependencies }}
+
+            - name: Compile osm2pgsql
+              run: |
+                  sudo apt-get install -y -qq libboost-system-dev libboost-filesystem-dev libexpat1-dev zlib1g-dev libbz2-dev libpq-dev libproj-dev libicu-dev liblua${LUA_VERSION}-dev lua-dkjson nlohmann-json3-dev 
+                  mkdir osm2pgsql-build
+                  cd osm2pgsql-build
+                  git clone https://github.com/osm2pgsql-dev/osm2pgsql
+                  mkdir build
+                  cd build
+                  cmake ../osm2pgsql
+                  make
+                  sudo make install
+                  cd ../..
+                  rm -rf osm2pgsql-build
+              if: matrix.ubuntu == '20'
+              env:
+                  LUA_VERSION: ${{ matrix.lua }}
 
             - name: Install test prerequisites
-              run: pip3 install behave==1.2.6
+              run: ./venv/bin/pip install behave==1.2.6
 
-            - name: Install test prerequisites
-              run: sudo apt-get install -y -qq python3-pytest python3-pytest-asyncio uvicorn
+            - name: Install test prerequisites (apt)
+              run: sudo apt-get install -y -qq python3-pytest python3-pytest-asyncio uvicorn python3-falcon python3-aiosqlite python3-pyosmium
+              if: matrix.dependencies == 'apt'
 
-            - name: Install newer pytest-asyncio
-              run: pip3 install -U pytest-asyncio
-              if: matrix.flavour == 'ubuntu-20'
-
-            - name: Install Python webservers
-              run: pip3 install falcon starlette asgi_lifespan
+            - name: Install test prerequisites (pip)
+              run: ./venv/bin/pip install pytest-asyncio falcon starlette asgi_lifespan aiosqlite osmium uvicorn
+              if: matrix.dependencies == 'pip'
 
             - name: Install latest flake8
-              run: pip3 install -U flake8
+              run: ./venv/bin/pip install -U flake8
 
             - name: Python linting
-              run: python3 -m flake8 src
+              run: ../venv/bin/python -m flake8 src
               working-directory: Nominatim
 
+            - name: Install mypy and typechecking info
+              run: ./venv/bin/pip install -U mypy types-PyYAML types-jinja2 types-psutil types-requests types-ujson types-Pygments typing-extensions
+              if: matrix.dependencies == 'pip'
+
+            - name: Python static typechecking
+              run: ../venv/bin/python -m mypy --strict --python-version 3.8 src
+              working-directory: Nominatim
+              if: matrix.dependencies == 'pip'
+
             - name: Python unit tests
-              run: python3 -m pytest test/python
+              run: ../venv/bin/python -m pytest test/python
               working-directory: Nominatim
 
             - name: BDD tests
               run: |
-                  export PATH=$GITHUB_WORKSPACE/build/osm2pgsql:$PATH
-                  python3 -m behave -DREMOVE_TEMPLATE=1 --format=progress3
+                  ../../../venv/bin/python -m behave -DREMOVE_TEMPLATE=1 --format=progress3
               working-directory: Nominatim/test/bdd
-
-            - name: Install mypy and typechecking info
-              run: pip3 install -U mypy osmium uvicorn types-PyYAML types-jinja2 types-psycopg2 types-psutil types-requests types-ujson types-Pygments typing-extensions
-
-            - name: Python static typechecking
-              run: python3 -m mypy --strict --python-version 3.8 src
-              working-directory: Nominatim
 
     install:
         runs-on: ubuntu-latest
@@ -186,12 +195,10 @@ jobs:
             - name: Add nominatim to path
               run: |
                 sudo ln -s /home/nominatim/nominatim-venv/bin/nominatim /usr/local/bin/nominatim
-              if: matrix.ubuntu == 24
 
             - name: Need lua binary
               run: |
                 sudo apt-get install -y lua5.4 lua-dkjson
-              if: matrix.ubuntu == 24
 
             - name: Print version
               run: nominatim --version
@@ -221,19 +228,9 @@ jobs:
               run: nominatim admin --warm
               working-directory: /home/nominatim/nominatim-project
 
-            - name: Prepare update (Ubuntu)
-              run: apt-get install -y python3-pip
-              shell: bash
-
-            - name: Install osmium (Ubuntu 22)
-              run: |
-                  pip3 install --user osmium
-              if: matrix.ubuntu == 22
-
-            - name: Install osmium (Ubuntu 24)
+            - name: Install osmium
               run: |
                   /home/nominatim/nominatim-venv/bin/pip install osmium
-              if: matrix.ubuntu == 24
 
             - name: Run update
               run: |
@@ -260,7 +257,7 @@ jobs:
               working-directory: /home/nominatim/nominatim-project
 
     install-no-superuser:
-      runs-on: ubuntu-latest
+      runs-on: ubuntu-24.04
       needs: create-archive
 
       steps:
@@ -274,12 +271,8 @@ jobs:
           - uses: ./Nominatim/.github/actions/setup-postgresql
             with:
                 postgresql-version: 16
-                postgis-version: 3
 
           - uses: ./Nominatim/.github/actions/build-nominatim
-            with:
-                flavour: ubuntu-22
-                lua: 5.3
 
           - name: Prepare import environment
             run: |
@@ -288,7 +281,7 @@ jobs:
 
           - name: Prepare Database
             run: |
-                nominatim import --prepare-database
+                ./venv/bin/nominatim import --prepare-database
 
           - name: Create import user
             run: |
@@ -298,10 +291,10 @@ jobs:
 
           - name: Run import
             run: |
-                NOMINATIM_DATABASE_DSN="pgsql:host=127.0.0.1;dbname=nominatim;user=osm-import;password=osm-import" nominatim import --continue import-from-file --osm-file test.pbf
+                NOMINATIM_DATABASE_DSN="pgsql:host=127.0.0.1;dbname=nominatim;user=osm-import;password=osm-import" ./venv/bin/nominatim import --continue import-from-file --osm-file test.pbf
 
           - name: Check full import
-            run: nominatim admin --check-database
+            run: ./venv/bin/nominatim admin --check-database
 
     migrate:
       runs-on: ubuntu-24.04
@@ -318,7 +311,6 @@ jobs:
           - uses: ./Nominatim/.github/actions/setup-postgresql
             with:
                 postgresql-version: 17
-                postgis-version: 3
 
           - name: Install Python dependencies
             run: |

@@ -138,19 +138,17 @@ class NominatimAPIAsync:
                     async with engine.begin() as conn:
                         result = await conn.scalar(sa.text('SHOW server_version_num'))
                         server_version = int(result)
-                        if server_version >= 110000:
-                            await conn.execute(sa.text("SET jit_above_cost TO '-1'"))
-                            await conn.execute(sa.text(
-                                    "SET max_parallel_workers_per_gather TO '0'"))
+                        await conn.execute(sa.text("SET jit_above_cost TO '-1'"))
+                        await conn.execute(sa.text(
+                                "SET max_parallel_workers_per_gather TO '0'"))
                 except (PGCORE_ERROR, sa.exc.OperationalError):
                     server_version = 0
 
-                if server_version >= 110000:
-                    @sa.event.listens_for(engine.sync_engine, "connect")
-                    def _on_connect(dbapi_con: Any, _: Any) -> None:
-                        cursor = dbapi_con.cursor()
-                        cursor.execute("SET jit_above_cost TO '-1'")
-                        cursor.execute("SET max_parallel_workers_per_gather TO '0'")
+                @sa.event.listens_for(engine.sync_engine, "connect")
+                def _on_connect(dbapi_con: Any, _: Any) -> None:
+                    cursor = dbapi_con.cursor()
+                    cursor.execute("SET jit_above_cost TO '-1'")
+                    cursor.execute("SET max_parallel_workers_per_gather TO '0'")
 
             self._property_cache['DB:server_version'] = server_version
 

@@ -12,7 +12,7 @@ from enum import Enum
 from textwrap import dedent
 
 from ..config import Configuration
-from ..db.connection import connect, Connection, server_version_tuple, \
+from ..db.connection import connect, Connection, \
                             index_exists, table_exists, execute_scalar
 from ..db import properties
 from ..errors import UsageError
@@ -121,10 +121,9 @@ def _get_indexes(conn: Connection) -> List[str]:
     if table_exists(conn, 'search_name'):
         indexes.extend(('idx_search_name_nameaddress_vector',
                         'idx_search_name_name_vector',
-                        'idx_search_name_centroid'))
-        if server_version_tuple(conn) >= (11, 0, 0):
-            indexes.extend(('idx_placex_housenumber',
-                            'idx_osmline_parent_osm_id_with_hnr'))
+                        'idx_search_name_centroid',
+                        'idx_placex_housenumber',
+                        'idx_osmline_parent_osm_id_with_hnr'))
 
     # These won't exist if --no-updates import was used
     if table_exists(conn, 'place'):

@@ -184,21 +184,21 @@ CREATE INDEX idx_placex_geometry_address_area_candidates ON placex
 
 -- Usage: - POI is within building with housenumber
 CREATE INDEX idx_placex_geometry_buildings ON placex
-  USING {{postgres.spgist_geom}} (geometry) {{db.tablespace.address_index}}
+  USING SPGIST (geometry) {{db.tablespace.address_index}}
   WHERE address is not null and rank_search = 30
         and ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon');
 
 -- Usage: - linking of similar named places to boundaries
 --        - linking of place nodes with same type to boundaries
 CREATE INDEX idx_placex_geometry_placenode ON placex
-  USING {{postgres.spgist_geom}} (geometry) {{db.tablespace.address_index}}
+  USING SPGIST (geometry) {{db.tablespace.address_index}}
   WHERE osm_type = 'N' and rank_search < 26
         and class = 'place' and type != 'postcode';
 
 -- Usage: - is node part of a way?
 --        - find parent of interpolation spatially
 CREATE INDEX idx_placex_geometry_lower_rank_ways ON placex
-  USING {{postgres.spgist_geom}} (geometry) {{db.tablespace.address_index}}
+  USING SPGIST (geometry) {{db.tablespace.address_index}}
   WHERE osm_type = 'W' and rank_search >= 26;
 
 -- Usage: - linking place nodes by wikidata tag to boundaries

@@ -17,7 +17,7 @@ from pathlib import Path
 from psycopg.types.json import Jsonb
 from psycopg import sql as pysql
 
-from ..db.connection import connect, Connection, Cursor, server_version_tuple, \
+from ..db.connection import connect, Connection, Cursor, \
                             drop_tables, table_exists, execute_scalar
 from ..config import Configuration
 from ..db.sql_preprocessor import SQLPreprocessor
@@ -110,80 +110,37 @@ class ICUTokenizer(AbstractTokenizer):
                     cur.execute(pysql.SQL('SET max_parallel_workers_per_gather TO {}')
                                      .format(pysql.Literal(min(threads, 6),)))
 
-                if server_version_tuple(conn) < (12, 0):
-                    LOG.info('Computing word frequencies')
-                    drop_tables(conn, 'word_frequencies', 'addressword_frequencies')
-                    cur.execute("""CREATE TEMP TABLE word_frequencies AS
-                                     SELECT unnest(name_vector) as id, count(*)
-                                     FROM search_name GROUP BY id""")
-                    cur.execute('CREATE INDEX ON word_frequencies(id)')
-                    cur.execute("""CREATE TEMP TABLE addressword_frequencies AS
-                                     SELECT unnest(nameaddress_vector) as id, count(*)
-                                     FROM search_name GROUP BY id""")
-                    cur.execute('CREATE INDEX ON addressword_frequencies(id)')
-                    cur.execute("""
-                        CREATE OR REPLACE FUNCTION word_freq_update(wid INTEGER,
-                                                                    INOUT info JSONB)
-                        AS $$
-                        DECLARE rec RECORD;
-                        BEGIN
-                        IF info is null THEN
-                          info = '{}'::jsonb;
-                        END IF;
-                        FOR rec IN SELECT count FROM word_frequencies WHERE id = wid
-                        LOOP
-                          info = info || jsonb_build_object('count', rec.count);
-                        END LOOP;
-                        FOR rec IN SELECT count FROM addressword_frequencies WHERE id = wid
-                        LOOP
-                          info = info || jsonb_build_object('addr_count', rec.count);
-                        END LOOP;
-                        IF info = '{}'::jsonb THEN
-                          info = null;
-                        END IF;
-                        END;
-                        $$ LANGUAGE plpgsql IMMUTABLE;
-                        """)
-                    LOG.info('Update word table with recomputed frequencies')
-                    drop_tables(conn, 'tmp_word')
-                    cur.execute("""CREATE TABLE tmp_word AS
-                                    SELECT word_id, word_token, type, word,
-                                           word_freq_update(word_id, info) as info
-                                    FROM word
-                                """)
-                    drop_tables(conn, 'word_frequencies', 'addressword_frequencies')
-                else:
-                    LOG.info('Computing word frequencies')
-                    drop_tables(conn, 'word_frequencies')
-                    cur.execute("""
-                      CREATE TEMP TABLE word_frequencies AS
-                      WITH word_freq AS MATERIALIZED (
-                               SELECT unnest(name_vector) as id, count(*)
-                                     FROM search_name GROUP BY id),
-                           addr_freq AS MATERIALIZED (
-                               SELECT unnest(nameaddress_vector) as id, count(*)
-                                     FROM search_name GROUP BY id)
-                      SELECT coalesce(a.id, w.id) as id,
-                             (CASE WHEN w.count is null THEN '{}'::JSONB
-                                  ELSE jsonb_build_object('count', w.count) END
-                              ||
-                              CASE WHEN a.count is null THEN '{}'::JSONB
-                                  ELSE jsonb_build_object('addr_count', a.count) END) as info
-                      FROM word_freq w FULL JOIN addr_freq a ON a.id = w.id;
-                      """)
-                    cur.execute('CREATE UNIQUE INDEX ON word_frequencies(id) INCLUDE(info)')
-                    cur.execute('ANALYSE word_frequencies')
-                    LOG.info('Update word table with recomputed frequencies')
-                    drop_tables(conn, 'tmp_word')
-                    cur.execute("""CREATE TABLE tmp_word AS
-                                    SELECT word_id, word_token, type, word,
-                                           (CASE WHEN wf.info is null THEN word.info
-                                            ELSE coalesce(word.info, '{}'::jsonb) || wf.info
-                                            END) as info
-                                    FROM word LEFT JOIN word_frequencies wf
-                                         ON word.word_id = wf.id
-                                """)
-                    drop_tables(conn, 'word_frequencies')
+                LOG.info('Computing word frequencies')
+                drop_tables(conn, 'word_frequencies')
+                cur.execute("""
+                  CREATE TEMP TABLE word_frequencies AS
+                  WITH word_freq AS MATERIALIZED (
+                           SELECT unnest(name_vector) as id, count(*)
+                                 FROM search_name GROUP BY id),
+                       addr_freq AS MATERIALIZED (
+                           SELECT unnest(nameaddress_vector) as id, count(*)
+                                 FROM search_name GROUP BY id)
+                  SELECT coalesce(a.id, w.id) as id,
+                         (CASE WHEN w.count is null THEN '{}'::JSONB
+                              ELSE jsonb_build_object('count', w.count) END
+                          ||
+                          CASE WHEN a.count is null THEN '{}'::JSONB
+                              ELSE jsonb_build_object('addr_count', a.count) END) as info
+                  FROM word_freq w FULL JOIN addr_freq a ON a.id = w.id;
+                  """)
+                cur.execute('CREATE UNIQUE INDEX ON word_frequencies(id) INCLUDE(info)')
+                cur.execute('ANALYSE word_frequencies')
+                LOG.info('Update word table with recomputed frequencies')
+                drop_tables(conn, 'tmp_word')
+                cur.execute("""CREATE TABLE tmp_word AS
+                                SELECT word_id, word_token, type, word,
+                                       (CASE WHEN wf.info is null THEN word.info
+                                        ELSE coalesce(word.info, '{}'::jsonb) || wf.info
+                                        END) as info
+                                FROM word LEFT JOIN word_frequencies wf
+                                     ON word.word_id = wf.id
+                            """)
+                drop_tables(conn, 'word_frequencies')
 
             with conn.cursor() as cur:
                 cur.execute('SET max_parallel_workers_per_gather TO 0')

@@ -16,8 +16,7 @@ from pathlib import Path
 from psycopg import sql as pysql
 
 from ..config import Configuration
-from ..db.connection import Connection, connect, postgis_version_tuple, \
-                            drop_tables
+from ..db.connection import Connection, connect, drop_tables
 from ..db.utils import execute_file
 from ..db.sql_preprocessor import SQLPreprocessor
 
@@ -189,12 +188,6 @@ def import_secondary_importance(dsn: str, data_path: Path, ignore_errors: bool =
     datafile = data_path / 'secondary_importance.sql.gz'
     if not datafile.exists():
         return 1
-
-    with connect(dsn) as conn:
-        postgis_version = postgis_version_tuple(conn)
-        if postgis_version[0] < 3:
-            LOG.error('PostGIS version is too old for using OSM raster data.')
-            return 2
 
     execute_file(dsn, datafile, ignore_errors=ignore_errors)
 

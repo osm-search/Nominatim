@@ -57,8 +57,8 @@ def parse_version(version: str) -> NominatimVersion:
 
 NOMINATIM_VERSION = parse_version('4.5.0-0')
 
-POSTGRESQL_REQUIRED_VERSION = (9, 6)
-POSTGIS_REQUIRED_VERSION = (2, 2)
+POSTGRESQL_REQUIRED_VERSION = (12, 0)
+POSTGIS_REQUIRED_VERSION = (3, 0)
 OSM2PGSQL_REQUIRED_VERSION = (1, 8)
 
 # Cmake sets a variable @GIT_HASH@ by executing 'git --log'. It is not run

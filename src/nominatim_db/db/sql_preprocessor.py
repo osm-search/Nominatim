@@ -11,7 +11,7 @@ from typing import Set, Dict, Any, cast
 
 import jinja2
 
-from .connection import Connection, server_version_tuple, postgis_version_tuple
+from .connection import Connection
 from ..config import Configuration
 from ..db.query_pool import QueryPool
 
@@ -69,14 +69,7 @@ def _setup_postgresql_features(conn: Connection) -> Dict[str, Any]:
     """ Set up a dictionary with various optional Postgresql/Postgis features that
         depend on the database version.
     """
-    pg_version = server_version_tuple(conn)
-    postgis_version = postgis_version_tuple(conn)
-    pg11plus = pg_version >= (11, 0, 0)
-    ps3 = postgis_version >= (3, 0)
-    return {
-        'has_index_non_key_column': pg11plus,
-        'spgist_geom': 'SPGIST' if pg11plus and ps3 else 'GIST'
-    }
+    return {}
 
 
 class SQLPreprocessor:

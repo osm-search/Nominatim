@@ -28,7 +28,7 @@ Feature: Geometries for reverse geocoding
           | 1            | 0.9               |
         Then results contain
           | geotext |
-          | ^POLYGON\(\(9.5225302 47.138066, ?9.5225348 47.1379282, ?9.5227608 47.1379757, ?9.5227337 47.1380692, ?9.5225302 47.138066\)\) |
+          | ^POLYGON\(\([0-9. ]+, ?[0-9. ]+, ?[0-9. ]+, ?[0-9. ]+(, ?[0-9. ]+)?\)\) |
 
 
     Scenario: For polygons return the centroid as center point

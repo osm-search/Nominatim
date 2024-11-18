@@ -18,7 +18,7 @@ import urllib.request as urlrequest
 
 from ..errors import UsageError
 from ..db import status
-from ..db.connection import Connection, connect, server_version_tuple
+from ..db.connection import Connection, connect
 from .exec_utils import run_osm2pgsql
 
 try:
@@ -156,7 +156,7 @@ def run_osm2pgsql_updates(conn: Connection, options: MutableMapping[str, Any]) -
 
     # Consume updates with osm2pgsql.
     options['append'] = True
-    options['disable_jit'] = server_version_tuple(conn) >= (11, 0)
+    options['disable_jit'] = True
     run_osm2pgsql(options)
 
     # Handle deletions

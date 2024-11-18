@@ -37,21 +37,16 @@ jobs:
         needs: create-archive
         strategy:
             matrix:
-                flavour: [oldstuff, "ubuntu-20", "ubuntu-22"]
+                flavour: ["ubuntu-20", "ubuntu-24"]
                 include:
-                    - flavour: oldstuff
-                      ubuntu: 20
-                      postgresql: '9.6'
-                      postgis: '2.5'
-                      lua: '5.1'
                     - flavour: ubuntu-20
                       ubuntu: 20
-                      postgresql: 13
+                      postgresql: 12
                       postgis: 3
-                      lua: '5.3'
-                    - flavour: ubuntu-22
-                      ubuntu: 22
-                      postgresql: 15
+                      lua: '5.1'
+                    - flavour: ubuntu-24
+                      ubuntu: 24
+                      postgresql: 17
                       postgis: 3
                       lua: '5.3'
 
@@ -80,37 +75,25 @@ jobs:
                   flavour: ${{ matrix.flavour }}
                   lua: ${{ matrix.lua }}
 
-            - name: Install test prerequisites (behave from apt)
-              run: sudo apt-get install -y -qq python3-behave
-              if: matrix.flavour == 'ubuntu-20'
-
-            - name: Install test prerequisites (behave from pip)
+            - name: Install test prerequisites
               run: pip3 install behave==1.2.6
-              if: (matrix.flavour == 'oldstuff') || (matrix.flavour == 'ubuntu-22')
 
-            - name: Install test prerequisites (from apt for Ununtu 2x)
+            - name: Install test prerequisites
               run: sudo apt-get install -y -qq python3-pytest python3-pytest-asyncio uvicorn
-              if: matrix.flavour != 'oldstuff'
 
             - name: Install newer pytest-asyncio
               run: pip3 install -U pytest-asyncio
               if: matrix.flavour == 'ubuntu-20'
-
-            - name: Install test prerequisites (from pip for Ubuntu 18)
-              run: pip3 install pytest pytest-asyncio uvicorn
-              if: matrix.flavour == 'oldstuff'
 
             - name: Install Python webservers
               run: pip3 install falcon starlette asgi_lifespan
 
             - name: Install latest flake8
               run: pip3 install -U flake8
-              if: matrix.flavour == 'ubuntu-22'
 
             - name: Python linting
               run: python3 -m flake8 src
               working-directory: Nominatim
-              if: matrix.flavour == 'ubuntu-22'
 
             - name: Python unit tests
               run: python3 -m pytest test/python
@@ -124,12 +107,10 @@ jobs:
 
             - name: Install mypy and typechecking info
               run: pip3 install -U mypy osmium uvicorn types-PyYAML types-jinja2 types-psycopg2 types-psutil types-requests types-ujson types-Pygments typing-extensions
-              if: matrix.flavour != 'oldstuff'
 
             - name: Python static typechecking
-              run: python3 -m mypy --strict src
+              run: python3 -m mypy --strict --python-version 3.8 src
               working-directory: Nominatim
-              if: matrix.flavour != 'oldstuff'
 
     install:
         runs-on: ubuntu-latest

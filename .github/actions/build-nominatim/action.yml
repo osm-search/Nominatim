@@ -25,7 +25,7 @@ runs:
           shell: bash
         - name: Install${{ matrix.flavour }} prerequisites
           run: |
-            sudo apt-get install -y -qq libboost-system-dev libboost-filesystem-dev libexpat1-dev zlib1g-dev libbz2-dev libpq-dev libproj-dev libicu-dev liblua${LUA_VERSION}-dev lua${LUA_VERSION} lua-dkjson nlohmann-json3-dev libspatialite7 libsqlite3-mod-spatialite
+            sudo apt-get install -y -qq libboost-system-dev libboost-filesystem-dev libexpat1-dev zlib1g-dev libbz2-dev libpq-dev libproj-dev libicu-dev liblua${LUA_VERSION}-dev lua${LUA_VERSION} lua-dkjson nlohmann-json3-dev libspatialite-dev libsqlite3-mod-spatialite
             if [ "$FLAVOUR" == "oldstuff" ]; then
                 pip3 install MarkupSafe==2.0.1 python-dotenv jinja2==2.8 psutil==5.4.2 pyicu==2.9 osmium PyYAML==5.1 sqlalchemy==1.4.31 psycopg==3.1.7 datrie asyncpg aiosqlite
             else

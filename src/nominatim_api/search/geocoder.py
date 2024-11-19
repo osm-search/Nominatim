@@ -116,7 +116,7 @@ class ForwardGeocoder:
             limit to the configured number of results.
         """
         if results:
-            results.sort(key=lambda r: r.ranking)
+            results.sort(key=lambda r: (r.ranking, 0 if r.bbox is None else -r.bbox.area))
             min_rank = results[0].rank_search
             min_ranking = results[0].ranking
             results = SearchResults(r for r in results

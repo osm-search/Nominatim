@@ -92,13 +92,14 @@ Checklist for releases:
 * [ ] complete `docs/admin/Migration.md`
 * [ ] update EOL dates in `SECURITY.md`
 * [ ] commit and make sure CI tests pass
+* [ ] update OSMF production repo and release new version -post1 there
 * [ ] test migration
   * download, build and import previous version
   * migrate using master version
   * run updates using master version
 * [ ] prepare tarball:
-  * `git clone --recursive https://github.com/osm-search/Nominatim` (switch to right branch!)
-  * `rm -r .git* osm2pgsql/.git*`
+  * `git clone https://github.com/osm-search/Nominatim` (switch to right branch!)
+  * `rm -r .git*`
   * copy country data into `data/`
   * add version to base directory and package
 * [ ] upload tarball to https://nominatim.org

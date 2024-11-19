@@ -25,15 +25,7 @@ export DEBIAN_FRONTEND=noninteractive #DOCS:
                         libbz2-dev libpq-dev liblua5.3-dev lua5.3 lua-dkjson \
                         nlohmann-json3-dev postgresql-14-postgis-3 \
                         postgresql-contrib-14 postgresql-14-postgis-3-scripts \
-                        libicu-dev python3-dotenv \
-                        python3-pip python3-psutil python3-jinja2 \
-                        python3-sqlalchemy python3-asyncpg \
-                        python3-icu python3-datrie python3-yaml git
-
-# Some of the Python packages that come with Ubuntu 22.04 are too old,
-# so install the latest version from pip:
-
-    pip3 install --user psycopg[binary]
+                        libicu-dev virtualenv git
 
 #
 # System Configuration
@@ -109,7 +101,7 @@ fi                                    #DOCS:
 #
 if [ "x$1" == "xyes" ]; then  #DOCS:    :::sh
     cd $USERHOME
-    git clone --recursive https://github.com/openstreetmap/Nominatim.git
+    git clone https://github.com/osm-search/Nominatim.git
     cd Nominatim
 else                               #DOCS:
     cd $USERHOME/Nominatim         #DOCS:
@@ -122,14 +114,31 @@ if [ ! -f data/country_osm_grid.sql.gz ]; then       #DOCS:    :::sh
     wget -O data/country_osm_grid.sql.gz https://nominatim.org/data/country_grid.sql.gz
 fi                                 #DOCS:
 
-# The code must be built in a separate directory. Create this directory,
-# then configure and build Nominatim in there:
+# Nominatim needs osm2pgsql >= 1.8. The version that comes with Ubuntu is
+# too old. Download and compile your own:
 
-    mkdir $USERHOME/build
-    cd $USERHOME/build
-    cmake $USERHOME/Nominatim
+    cd $USERHOME
+    git clone https://github.com/osm2pgsql-dev/osm2pgsql
+    mkdir osm2pgsql-build
+    cd osm2pgsql-build
+    cmake ../osm2pgsql
     make
     sudo make install
+    cd $USERHOME/Nominatim
+
+# Nominatim should be installed in a separate Python virtual environment.
+# Create the virtual environment:
+
+    virtualenv $USERHOME/nominatim-venv
+
+# We want the faster binary version pf psycopg, so install that:
+
+    $USERHOME/nominatim-venv/bin/pip install psycopg[binary]
+
+# Now install Nominatim using pip:
+
+    cd $USERHOME/Nominatim
+    $USERHOME/nominatim-venv/bin/pip install packaging/nominatim-db
 
 # Nominatim is now ready to use. You can continue with
 # [importing a database from OSM data](../admin/Import.md). If you want to set up
@@ -138,17 +147,18 @@ fi                                 #DOCS:
 # Setting up the Python frontend
 # ==============================
 #
-# Some of the Python packages in Ubuntu are too old. Therefore run the
-# frontend from a Python virtualenv with current packages.
+# The Python frontend is contained in the nominatim-api package. To run
+# the API as a webservice, you also need falcon with uvicorn to serve the API.
+# It is generally recommended to run falcon/uvicorn on top of gunicorn.
 #
-# To set up the virtualenv, run:
+# To install all packages, run:
 
 #DOCS:```sh
-sudo apt-get install -y virtualenv
-virtualenv $USERHOME/nominatim-venv
-$USERHOME/nominatim-venv/bin/pip install SQLAlchemy PyICU psycopg[binary] \
-              psycopg2-binary python-dotenv PyYAML falcon uvicorn gunicorn
+$USERHOME/nominatim-venv/bin/pip install falcon uvicorn gunicorn
+cd $USERHOME/Nominatim
+$USERHOME/nominatim-venv/bin/pip install packaging/nominatim-api
 #DOCS:```
+
 
 # Next you need to create a systemd job that runs Nominatim on gunicorn.
 # First create a systemd job that manages the socket file:
@@ -178,14 +188,11 @@ Requires=nominatim.socket
 
 [Service]
 Type=simple
-Environment="PYTHONPATH=/usr/local/lib/nominatim/lib-python/"
 User=www-data
 Group=www-data
 WorkingDirectory=$USERHOME/nominatim-project
-ExecStart=$USERHOME/nominatim-venv/bin/gunicorn -b unix:/run/nominatim.sock -w 4 -k uvicorn.workers.UvicornWorker nominatim_api.server.falcon.server:run_wsgi
+ExecStart=$USERHOME/nominatim-venv/bin/gunicorn -b unix:/run/nominatim.sock -w 4 -k uvicorn.workers.UvicornWorker "nominatim_api.server.falcon.server:run_wsgi()"
 ExecReload=/bin/kill -s HUP \$MAINPID
-StandardOutput=append:/var/log/gunicorn-nominatim.log
-StandardError=inherit
 PrivateTmp=true
 TimeoutStopSec=5
 KillMode=mixed

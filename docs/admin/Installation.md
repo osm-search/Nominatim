@@ -41,19 +41,6 @@ Furthermore the following Python libraries are required:
 
 These will be installed automatically when using pip installation.
 
-When using legacy CMake-based installation:
-
-  * [cmake](https://cmake.org/)
-  * [expat](https://libexpat.github.io/)
-  * [proj](https://proj.org/)
-  * [bzip2](http://www.bzip.org/)
-  * [zlib](https://www.zlib.net/)
-  * [ICU](http://site.icu-project.org/)
-  * [nlohmann/json](https://json.nlohmann.me/)
-  * [Boost libraries](https://www.boost.org/), including system and file system
-  * PostgreSQL client libraries
-  * a recent C++ compiler (gcc 5+ or Clang 3.8+)
-
 For running continuous updates:
 
   * [pyosmium](https://osmcode.org/pyosmium/)
@@ -124,11 +111,10 @@ The release contains all necessary files. Just unpack it.
 
 ### Downloading the latest development version
 
-If you want to install latest development version from github, make sure to
-also check out the osm2pgsql subproject:
+If you want to install latest development version from github:
 
 ```
-git clone --recursive https://github.com/openstreetmap/Nominatim.git
+git clone https://github.com/osm-search/Nominatim.git
 ```
 
 The development version does not include the country grid. Download it separately:
@@ -139,8 +125,6 @@ wget -O Nominatim/data/country_osm_grid.sql.gz https://nominatim.org/data/countr
 
 ### Building Nominatim
 
-#### Building the latest development version with pip
-
 Nominatim is easiest to run from its own virtual environment. To create one, run:
 
     sudo apt-get install virtualenv
@@ -150,36 +134,5 @@ To install Nominatim directly from the source tree into the virtual environment,
 
     /srv/nominatim-venv/bin/pip install packaging/nominatim-{db,api}
 
-#### Building in legacy CMake mode
-
-!!! warning
-    Installing Nominatim through CMake is now deprecated. The infrastructure
-    will be removed in Nominatim 5.0. Please switch to pip installation.
-
-The code must be built in a separate directory. Create the directory and
-change into it.
-
-```
-mkdir build
-cd build
-```
-
-Nominatim uses cmake and make for building. Assuming that you have created the
-build at the same level as the Nominatim source directory run:
-
-```
-cmake ../Nominatim
-make
-sudo make install
-```
-
-Nominatim installs itself into `/usr/local` per default. To choose a different
-installation directory add `-DCMAKE_INSTALL_PREFIX=<install root>` to the
-cmake command. Make sure that the `bin` directory is available in your path
-in that case, e.g.
-
-```
-export PATH=<install root>/bin:$PATH
-```
 
 Now continue with [importing the database](Import.md).

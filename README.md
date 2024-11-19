@@ -27,21 +27,21 @@ can be found at nominatim.org as well.
 
 A quick summary of the necessary steps:
 
-1. Compile Nominatim:
+1. Create a Python virtualenv and install the packages:
 
-        mkdir build
-        cd build
-        cmake ..
-        make
-        sudo make install
+        python3 -m venv nominatim-venv
+        ./nominatim-venv/bin/pip install packaging/nominatim-{api,db}
 
 2. Create a project directory, get OSM data and import:
 
         mkdir nominatim-project
         cd nominatim-project
-        nominatim import --osm-file <your planet file>
+        ../nominatim-venv/bin/nominatim import --osm-file <your planet file>
 
-3. Point your webserver to the nominatim-project/website directory.
+3. Start the webserver:
+
+        ./nominatim-venv/bin/pip install uvicorn falcon
+        ../nominatim-venv/bin/nominatim serve
 
 
 License

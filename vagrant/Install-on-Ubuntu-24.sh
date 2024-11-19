@@ -98,7 +98,7 @@ fi                                    #DOCS:
 #
 if [ "x$1" == "xyes" ]; then  #DOCS:    :::sh
     cd $USERHOME
-    git clone https://github.com/openstreetmap/Nominatim.git
+    git clone https://github.com/osm-search/Nominatim.git
     cd Nominatim
 else                               #DOCS:
     cd $USERHOME/Nominatim         #DOCS:
@@ -115,6 +115,10 @@ fi                                 #DOCS:
 # Create the virtual environment:
 
     virtualenv $USERHOME/nominatim-venv
+
+# We want the faster binary version pf psycopg, so install that:
+
+    $USERHOME/nominatim-venv/bin/pip install psycopg[binary]
 
 # Now install Nominatim using pip:
 
@@ -143,7 +147,7 @@ fi                                 #DOCS:
 # To install all packages, run:
 
 #DOCS:```sh
-$USERHOME/nominatim-venv/bin/pip install psycopg[binary] falcon uvicorn gunicorn
+$USERHOME/nominatim-venv/bin/pip install falcon uvicorn gunicorn
 cd $USERHOME/Nominatim
 $USERHOME/nominatim-venv/bin/pip install packaging/nominatim-api
 #DOCS:```
@@ -179,10 +183,8 @@ Type=simple
 User=www-data
 Group=www-data
 WorkingDirectory=$USERHOME/nominatim-project
-ExecStart=$USERHOME/nominatim-venv/bin/gunicorn -b unix:/run/nominatim.sock -w 4 -k uvicorn.workers.UvicornWorker nominatim_api.server.falcon.server:run_wsgi
+ExecStart=$USERHOME/nominatim-venv/bin/gunicorn -b unix:/run/nominatim.sock -w 4 -k uvicorn.workers.UvicornWorker "nominatim_api.server.falcon.server:run_wsgi()"
 ExecReload=/bin/kill -s HUP \$MAINPID
-StandardOutput=append:/var/log/gunicorn-nominatim.log
-StandardError=inherit
 PrivateTmp=true
 TimeoutStopSec=5
 KillMode=mixed

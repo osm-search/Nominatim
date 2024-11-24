@@ -37,7 +37,7 @@ cd Nominatim
 ```
 
 The recommended way to deploy a Python ASGI application is to run
-the ASGI runner [uvicorn](https://uvicorn.org/)
+the ASGI runner [uvicorn](https://www.uvicorn.org/)
 together with [gunicorn](https://gunicorn.org/) HTTP server. We use
 Falcon here as the web framework.
 

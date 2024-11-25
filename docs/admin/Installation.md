@@ -127,17 +127,22 @@ you might consider setting:
 and even reduce `autovacuum_work_mem` further. This will reduce the amount
 of memory that autovacuum takes away from the import process.
 
+## Installing the latest release
+
+The latest release can be simply installed via Pypi. Make sure you have
+osm2pgsql, PostgreSQL and libICU in its development version installed.
+
+Then just run:
+
+    pip install nominatim-{db,api}
+
 ## Downloading and building Nominatim
 
-### Downloading the latest release
+The following instructions are only relevant, if you want to build and
+install Nominatim from source.
 
-If you want to build Nominatim from source, then
-you can download the [latest release from nominatim.org](https://nominatim.org/downloads/).
+You can download the [latest release from nominatim.org](https://nominatim.org/downloads/).
 The release contains all necessary files. Just unpack it.
-
-Note that you don't need to do this when you install Nominatim from pip directly.
-
-### Downloading the latest development version
 
 If you want to install latest development version from github, make sure to
 also check out the osm2pgsql subproject:

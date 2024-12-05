@@ -6,7 +6,8 @@ osm2pgsql = {}
 function osm2pgsql.define_table(...) end
 
 -- provide path to flex-style lua file
-flex = require('import-extratags')
+package.path = arg[0]:match("(.*/)") .. "?.lua;" .. package.path
+local flex = require('import-extratags')
 local json = require ('dkjson')
 
 

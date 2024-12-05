@@ -75,6 +75,7 @@ class Configuration:
         class _LibDirs:
             osm2pgsql: Path
             sql = paths.SQLLIB_DIR
+            lua = paths.LUALIB_DIR
             data = paths.DATA_DIR
 
         self.lib_dir = _LibDirs()
@@ -207,7 +208,7 @@ class Configuration:
         style = getattr(self, 'IMPORT_STYLE')
 
         if style in ('admin', 'street', 'address', 'full', 'extratags'):
-            return self.config_dir / f'import-{style}.lua'
+            return self.lib_dir.lua / f'import-{style}.lua'
 
         return self.find_config_file('', 'IMPORT_STYLE')
 

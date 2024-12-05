@@ -11,4 +11,5 @@ from pathlib import Path
 
 DATA_DIR = (Path(__file__) / '..' / 'resources').resolve()
 SQLLIB_DIR = (DATA_DIR / 'lib-sql')
+LUALIB_DIR = (DATA_DIR / 'lib-lua')
 CONFIG_DIR = (DATA_DIR / 'settings')

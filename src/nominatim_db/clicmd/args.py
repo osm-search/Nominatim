@@ -189,7 +189,7 @@ class NominatimArgs:
         return dict(osm2pgsql=self.config.OSM2PGSQL_BINARY or self.config.lib_dir.osm2pgsql,
                     osm2pgsql_cache=self.osm2pgsql_cache or default_cache,
                     osm2pgsql_style=self.config.get_import_style_file(),
-                    osm2pgsql_style_path=self.config.config_dir,
+                    osm2pgsql_style_path=self.config.lib_dir.lua,
                     threads=self.threads or default_threads,
                     dsn=self.config.get_libpq_dsn(),
                     flatnode_file=str(self.config.get_path('FLATNODE_FILE') or ''),

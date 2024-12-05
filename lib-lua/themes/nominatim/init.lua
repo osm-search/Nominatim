@@ -105,7 +105,7 @@ function Place.new(object, geom_func)
     self.object = object
     self.geom_func = geom_func
 
-    self.admin_level = tonumber(self.object:grab_tag('admin_level'))
+    self.admin_level = tonumber(self.object.tags.admin_level or 15) or 15
     if self.admin_level == nil
        or self.admin_level <= 0 or self.admin_level > 15
        or math.floor(self.admin_level) ~= self.admin_level then
@@ -118,25 +118,36 @@ function Place.new(object, geom_func)
     self.address = {}
     self.extratags = {}
 
+    self.intags = {}
+    for k, v in pairs(self.object.tags) do
+        if PRE_DELETE ~= nil and PRE_DELETE(k, v) then
+            -- ignore
+        elseif PRE_EXTRAS ~= nil and PRE_EXTRAS(k, v) then
+            self.extratags[k] = v
+        elseif k ~= 'admin_level' then
+            self.intags[k] = v
+        end
+    end
+
     return self
 end
 
 function Place:clean(data)
-    for k, v in pairs(self.object.tags) do
+    for k, v in pairs(self.intags) do
         if data.delete ~= nil and data.delete(k, v) then
-            self.object.tags[k] = nil
+            self.intags[k] = nil
         elseif data.extra ~= nil and data.extra(k, v) then
             self.extratags[k] = v
-            self.object.tags[k] = nil
+            self.intags[k] = nil
         end
     end
 end
 
 function Place:delete(data)
     if data.match ~= nil then
-        for k, v in pairs(self.object.tags) do
+        for k, v in pairs(self.intags) do
             if data.match(k, v) then
-                self.object.tags[k] = nil
+                self.intags[k] = nil
             end
         end
     end
@@ -146,9 +157,9 @@ function Place:grab_extratags(data)
     local count = 0
 
     if data.match ~= nil then
-        for k, v in pairs(self.object.tags) do
+        for k, v in pairs(self.intags) do
             if data.match(k, v) then
-                self.object.tags[k] = nil
+                self.intags[k] = nil
                 self.extratags[k] = v
                 count = count + 1
             end
@@ -175,7 +186,7 @@ function Place:grab_address_parts(data)
     local count = 0
 
     if data.groups ~= nil then
-        for k, v in pairs(self.object.tags) do
+        for k, v in pairs(self.intags) do
             local atype = data.groups(k, v)
 
             if atype ~= nil then
@@ -188,7 +199,7 @@ function Place:grab_address_parts(data)
                 else
                     self.address[atype] = v
                 end
-                self.object.tags[k] = nil
+                self.intags[k] = nil
             end
         end
     end
@@ -201,12 +212,12 @@ function Place:grab_name_parts(data)
     local fallback = nil
 
     if data.groups ~= nil then
-        for k, v in pairs(self.object.tags) do
+        for k, v in pairs(self.intags) do
             local atype = data.groups(k, v)
 
             if atype ~= nil then
                 self.names[k] = v
-                self.object.tags[k] = nil
+                self.intags[k] = nil
                 if atype == 'main' then
                     self.has_name = true
                 elseif atype == 'house' then
@@ -226,7 +237,7 @@ function Place:write_place(k, v, mtype, save_extra_mains)
         return 0
     end
 
-    v = v or self.object.tags[k]
+    v = v or self.intags[k]
     if v == nil then
         return 0
     end
@@ -242,7 +253,7 @@ function Place:write_place(k, v, mtype, save_extra_mains)
     if mtype == 'named_with_key' then
         local names = {}
         local prefix = k .. ':name'
-        for namek, namev in pairs(self.object.tags) do
+        for namek, namev in pairs(self.intags) do
             if namek:sub(1, #prefix) == prefix
                and (#namek == #prefix
                     or namek:sub(#prefix + 1, #prefix + 1) == ':') then
@@ -274,7 +285,7 @@ function Place:write_row(k, v, save_extra_mains)
     end
 
     if save_extra_mains ~= nil then
-        for extra_k, extra_v in pairs(self.object.tags) do
+        for extra_k, extra_v in pairs(self.intags) do
             if extra_k ~= k and save_extra_mains(extra_k, extra_v) then
                 self.extratags[extra_k] = extra_v
             end
@@ -292,7 +303,7 @@ function Place:write_row(k, v, save_extra_mains)
     }
 
     if save_extra_mains then
-        for tk, tv in pairs(self.object.tags) do
+        for tk, tv in pairs(self.intags) do
             if save_extra_mains(tk, tv) then
                 self.extratags[tk] = nil
             end
@@ -478,10 +489,8 @@ else
 end
 
 function module.process_tags(o)
-    o:clean{delete = PRE_DELETE, extra = PRE_EXTRAS}
-
     -- Exception for boundary/place double tagging
-    if o.object.tags.boundary == 'administrative' then
+    if o.intags.boundary == 'administrative' then
         o:grab_extratags{match = function (k, v)
             return k == 'place' and v:sub(1,3) ~= 'isl'
         end}
@@ -509,7 +518,7 @@ function module.process_tags(o)
     o:clean{delete = POST_DELETE}
 
     -- collect main keys
-    for k, v in pairs(o.object.tags) do
+    for k, v in pairs(o.intags) do
         local ktype = MAIN_KEYS[k]
         if ktype == 'fallback' then
             if o.has_name then

@@ -22,10 +22,9 @@
 
 local module = {}
 
-local PRE_DELETE = nil
-local PRE_EXTRAS = nil
 local POST_DELETE = nil
-local MAIN_KEYS = nil
+local MAIN_KEYS = {admin_level = {'delete'}}
+local PRE_FILTER = {prefix = {}, suffix = {}}
 local NAMES = nil
 local ADDRESS_TAGS = nil
 local SAVE_EXTRA_MAINS = false
@@ -95,6 +94,140 @@ module.RELATION_TYPES = {
     waterway = module.relation_as_multiline
 }
 
+--------- Built-in place transformation functions --------------------------
+
+local PlaceTransform = {}
+
+-- Special transform meanings which are interpreted elsewhere
+PlaceTransform.fallback = 'fallback'
+PlaceTransform.delete = 'delete'
+PlaceTransform.extra = 'extra'
+
+-- always: unconditionally use that place
+function PlaceTransform.always(place)
+    return place
+end
+
+-- never: unconditionally drop the place
+function PlaceTransform.never()
+    return nil
+end
+
+-- named: use the place if it has a fully-qualified name
+function PlaceTransform.named(place)
+    if place.has_name then
+        return place
+    end
+end
+
+-- named_with_key: use place if there is a name with the main key prefix
+function PlaceTransform.named_with_key(place, k)
+    local names = {}
+    local prefix = k .. ':name'
+    for namek, namev in pairs(place.intags) do
+        if namek:sub(1, #prefix) == prefix
+           and (#namek == #prefix
+                or namek:sub(#prefix + 1, #prefix + 1) == ':') then
+            names[namek:sub(#k + 2)] = namev
+        end
+    end
+
+    if next(names) ~= nil then
+        return place:clone{names=names}
+    end
+end
+
+----------------- other helper functions -----------------------------
+
+local function lookup_prefilter_classification(k, v)
+    -- full matches
+    local desc = MAIN_KEYS[k]
+    local fullmatch = desc and (desc[v] or desc[1])
+    if fullmatch ~= nil then
+        return fullmatch
+    end
+    -- suffixes
+    for slen, slist in pairs(PRE_FILTER.suffix) do
+        if #k >= slen then
+            local group = slist[k:sub(-slen)]
+            if group ~= nil then
+                return group
+            end
+        end
+    end
+    -- prefixes
+    for slen, slist in pairs(PRE_FILTER.prefix) do
+        if #k >= slen then
+            local group = slist[k:sub(1, slen)]
+            if group ~= nil then
+                return group
+            end
+        end
+    end
+end
+
+
+local function merge_filters_into_main(group, keys, tags)
+    if keys ~= nil then
+        for _, key in pairs(keys) do
+            -- ignore suffix and prefix matches
+            if key:sub(1, 1) ~= '*' and key:sub(#key, #key) ~= '*' then
+                if MAIN_KEYS[key] == nil then
+                    MAIN_KEYS[key] = {}
+                end
+                MAIN_KEYS[key][1] = group
+            end
+        end
+    end
+
+    if tags ~= nil then
+        for key, values in pairs(tags) do
+            if MAIN_KEYS[key] == nil then
+                MAIN_KEYS[key] = {}
+            end
+            for _, v in pairs(values) do
+                MAIN_KEYS[key][v] = group
+            end
+        end
+    end
+end
+
+
+local function remove_group_from_main(group)
+    for key, values in pairs(MAIN_KEYS) do
+        for _, ttype in pairs(values) do
+            if ttype == group then
+                values[ttype] = nil
+            end
+        end
+        if next(values) == nil then
+            MAIN_KEYS[key] = nil
+        end
+    end
+end
+
+
+local function add_pre_filter(data)
+    for group, keys in pairs(data) do
+        for _, key in pairs(keys) do
+            local klen = #key - 1
+            if key:sub(1, 1) == '*' then
+                if klen > 0 then
+                    if PRE_FILTER.suffix[klen] == nil then
+                        PRE_FILTER.suffix[klen] = {}
+                    end
+                    PRE_FILTER.suffix[klen][key:sub(2)] = group
+                end
+            elseif key:sub(#key, #key) == '*' then
+                if PRE_FILTER.prefix[klen] == nil then
+                    PRE_FILTER.prefix[klen] = {}
+                end
+                PRE_FILTER.prefix[klen][key:sub(1, klen)] = group
+            end
+        end
+    end
+end
+
 ------------- Place class ------------------------------------------
 
 local Place = {}
@@ -119,14 +252,23 @@ function Place.new(object, geom_func)
     self.extratags = {}
 
     self.intags = {}
+
+    local has_main_tags = false
     for k, v in pairs(self.object.tags) do
-        if PRE_DELETE ~= nil and PRE_DELETE(k, v) then
-            -- ignore
-        elseif PRE_EXTRAS ~= nil and PRE_EXTRAS(k, v) then
+        local group = lookup_prefilter_classification(k, v)
+        if group == 'extra' then
             self.extratags[k] = v
-        elseif k ~= 'admin_level' then
+        elseif group ~= 'delete' then
             self.intags[k] = v
+            if group ~= nil then
+                has_main_tags = true
+            end
         end
+    end
+
+    if not has_main_tags then
+        -- no interesting tags, don't bother processing
+        self.intags = {}
     end
 
     return self
@@ -222,7 +364,7 @@ function Place:grab_name_parts(data)
                     self.has_name = true
                 elseif atype == 'house' then
                     self.has_name = true
-                    fallback = {'place', 'house', 'always'}
+                    fallback = {'place', 'house', PlaceTransform.always}
                 end
             end
         end
@@ -232,45 +374,17 @@ function Place:grab_name_parts(data)
 end
 
 
-function Place:write_place(k, v, mtype, save_extra_mains)
-    if mtype == nil then
-        return 0
-    end
-
+function Place:write_place(k, v, mfunc, save_extra_mains)
     v = v or self.intags[k]
     if v == nil then
         return 0
     end
 
-    if type(mtype) == 'table' then
-        mtype = mtype[v] or mtype[1]
-    end
-
-    if mtype == 'always' or (self.has_name and mtype == 'named') then
-        return self:write_row(k, v, save_extra_mains)
-    end
-
-    if mtype == 'named_with_key' then
-        local names = {}
-        local prefix = k .. ':name'
-        for namek, namev in pairs(self.intags) do
-            if namek:sub(1, #prefix) == prefix
-               and (#namek == #prefix
-                    or namek:sub(#prefix + 1, #prefix + 1) == ':') then
-                names[namek:sub(#k + 2)] = namev
-            end
-        end
-
-        if next(names) ~= nil then
-            local saved_names = self.names
-            self.names = names
-
-            local results = self:write_row(k, v, save_extra_mains)
-
-            self.names = saved_names
-
-            return results
-        end
+    local place = mfunc(self, k, v)
+    if place then
+        local res = place:write_row(k, v, save_extra_mains)
+        self.num_entries = self.num_entries + res
+        return res
     end
 
     return 0
@@ -310,9 +424,22 @@ function Place:write_row(k, v, save_extra_mains)
         end
     end
 
-    self.num_entries = self.num_entries + 1
-
     return 1
+end
+
+
+function Place:clone(data)
+    local cp = setmetatable({}, Place)
+    cp.object = self.object
+    cp.geometry = data.geometry or self.geometry
+    cp.geom_func = self.geom_func
+    cp.intags = data.intags or self.intags
+    cp.admin_level = data.admin_level or self.admin_level
+    cp.names = data.names or self.names
+    cp.address = data.address or self.address
+    cp.extratags = data.extratags or self.extratags
+
+    return cp
 end
 
 
@@ -489,6 +616,10 @@ else
 end
 
 function module.process_tags(o)
+    if next(o.intags) == nil then
+        return  -- shortcut when pre-filtering has removed all tags
+    end
+
     -- Exception for boundary/place double tagging
     if o.intags.boundary == 'administrative' then
         o:grab_extratags{match = function (k, v)
@@ -501,17 +632,17 @@ function module.process_tags(o)
 
     -- address keys
     if o:grab_address_parts{groups=ADDRESS_TAGS} > 0 and fallback == nil then
-        fallback = {'place', 'house', 'always'}
+        fallback = {'place', 'house', PlaceTransform.always}
     end
     if o.address.country ~= nil and #o.address.country ~= 2 then
         o.address['country'] = nil
     end
     if POSTCODE_FALLBACK and fallback == nil and o.address.postcode ~= nil then
-        fallback = {'place', 'postcode', 'always'}
+        fallback = {'place', 'postcode', PlaceTransform.always}
     end
 
     if o.address.interpolation ~= nil then
-        o:write_place('place', 'houses', 'always', SAVE_EXTRA_MAINS)
+        o:write_place('place', 'houses', PlaceTransform.always, SAVE_EXTRA_MAINS)
         return
     end
 
@@ -519,13 +650,14 @@ function module.process_tags(o)
 
     -- collect main keys
     for k, v in pairs(o.intags) do
-        local ktype = MAIN_KEYS[k]
-        if ktype == 'fallback' then
-            if o.has_name then
-                fallback = {k, v, 'named'}
+        local ktable = MAIN_KEYS[k]
+        if ktable then
+            local ktype = ktable[v] or ktable[1]
+            if type(ktype) == 'function' then
+                o:write_place(k, v, ktype, SAVE_EXTRA_MAINS)
+            elseif ktype == 'fallback' and o.has_name then
+                fallback = {k, v, PlaceTransform.named}
             end
-        elseif ktype ~= nil then
-            o:write_place(k, v, MAIN_KEYS[k], SAVE_EXTRA_MAINS)
         end
     end
 
@@ -536,22 +668,66 @@ end
 
 --------- Convenience functions for simple style configuration -----------------
 
-
 function module.set_prefilters(data)
-    PRE_DELETE = module.tag_match{keys = data.delete_keys, tags = data.delete_tags}
-    PRE_EXTRAS = module.tag_match{keys = data.extra_keys,
-                                  tags = data.extra_tags}
-    module.TAGINFO_MAIN.delete_tags = data.delete_tags
+    remove_group_from_main('delete')
+    merge_filters_into_main('delete', data.delete_keys, data.delete_tags)
+
+    remove_group_from_main('extra')
+    merge_filters_into_main('extra', data.extra_keys, data.extra_tags)
+
+    PRE_FILTER = {prefix = {}, suffix = {}}
+    add_pre_filter{delete = data.delete_keys, extra = data.extra_keys}
 end
+
+
+function module.ignore_tags(data)
+    merge_filters_into_main('delete', data)
+    add_pre_filter{delete = data}
+end
+
+
+function module.add_for_extratags(data)
+    merge_filters_into_main('extra', data)
+    add_pre_filter{extra = data}
+end
+
 
 function module.set_main_tags(data)
-    MAIN_KEYS = data
-    local keys = {}
-    for k, _ in pairs(data) do
-        table.insert(keys, k)
+    for key, values in pairs(MAIN_KEYS) do
+        for _, ttype in pairs(values) do
+            if ttype == 'fallback' or type(ttype) == 'function' then
+                values[ttype] = nil
+            end
+        end
+        if next(values) == nil then
+            MAIN_KEYS[key] = nil
+        end
     end
-    module.TAGINFO_MAIN.keys = keys
+    module.add_main_tags(data)
 end
+
+
+function module.add_main_tags(data)
+    for k, v in pairs(data) do
+        if MAIN_KEYS[k] == nil then
+            MAIN_KEYS[k] = {}
+        end
+        if type(v) == 'function' then
+            MAIN_KEYS[k][1] = v
+        elseif type(v) == 'string' then
+            MAIN_KEYS[k][1] = PlaceTransform[v]
+        elseif type(v) == 'table' then
+            for subk, subv in pairs(v) do
+                if type(subv) == 'function' then
+                    MAIN_KEYS[k][subk] = subv
+                else
+                    MAIN_KEYS[k][subk] = PlaceTransform[subv]
+                end
+            end
+        end
+    end
+end
+
 
 function module.set_name_tags(data)
     NAMES = module.tag_group(data)
@@ -564,7 +740,10 @@ function module.set_name_tags(data)
             end
         end
     end
+    remove_group_from_main('fallback:name')
+    merge_filters_into_main('fallback:name', data.house)
 end
+
 
 function module.set_address_tags(data)
     if data.postcode_fallback ~= nil then
@@ -583,7 +762,16 @@ function module.set_address_tags(data)
             end
         end
     end
+
+    remove_group_from_main('fallback:address')
+    remove_group_from_main('fallback:postcode')
+    merge_filters_into_main('fallback:address', data.main)
+    if POSTCODE_FALLBACK then
+        merge_filters_into_main('fallback:postcode', data.postcode)
+    end
+    merge_filters_into_main('fallback:address', data.interpolation)
 end
+
 
 function module.set_unused_handling(data)
     if data.extra_keys == nil and data.extra_tags == nil then

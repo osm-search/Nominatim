@@ -40,12 +40,6 @@ if type(themepark) ~= 'table' then
     themepark = nil
 end
 
--- tables required for taginfo
-module.TAGINFO_MAIN = {keys = {}, delete_tags = {}}
-module.TAGINFO_NAME_KEYS = {}
-module.TAGINFO_ADDRESS_KEYS = {}
-
-
 -- The single place table.
 local place_table_definition = {
     name = "place",
@@ -902,6 +896,11 @@ function module.set_relation_types(data)
             module.RELATION_TYPES[k] = module.relation_as_multiline
         end
     end
+end
+
+
+function module.get_taginfo()
+    return {main = MAIN_KEYS, name = NAMES, address = ADDRESS_TAGS}
 end
 
 return module

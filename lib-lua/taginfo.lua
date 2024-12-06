@@ -7,13 +7,31 @@ function osm2pgsql.define_table(...) end
 
 -- provide path to flex-style lua file
 package.path = arg[0]:match("(.*/)") .. "?.lua;" .. package.path
-local flex = require('import-extratags')
+local flex = require('import-' .. (arg[1] or 'extratags'))
 local json = require ('dkjson')
 
+local NAME_DESCRIPTIONS = {
+    'Searchable auxiliary name of the place',
+    main = 'Searchable primary name of the place',
+    house = 'House name part of an address, searchable'
+}
+local ADDRESS_DESCRIPTIONS = {
+    'Used to determine the address of a place',
+    main = 'Primary key for an address point',
+    postcode = 'Used to determine the postcode of a place',
+    country = 'Used to determine country of a place (only if written as two-letter code)',
+    interpolation = 'Primary key for an address interpolation line'
+}
 
 ------------ helper functions ---------------------
+-- Sets the key order for the resulting JSON table
+local function set_keyorder(table, order)
+    setmetatable(table, {
+        __jsonorder = order
+    })
+end
 
-function get_key_description(key, description)
+local function get_key_description(key, description)
     local desc = {}
     desc.key = key
     desc.description = description
@@ -21,35 +39,60 @@ function get_key_description(key, description)
     return desc
 end
 
--- Sets the key order for the resulting JSON table
-function set_keyorder(table, order)
-    setmetatable(table, {
-        __jsonorder = order
-    })
+local function get_key_value_description(key, value, description)
+    local desc = {key = key, value = value, description = description}
+    set_keyorder(desc, {'key', 'value', 'description'})
+    return desc
 end
 
+local function group_table_to_keys(tags, data, descriptions)
+    for group, values in pairs(data) do
+        local desc = descriptions[group] or descriptions[1]
+        for _, key in pairs(values) do
+            if key:sub(1, 1) ~= '*' and key:sub(#key, #key) ~= '*' then
+                table.insert(tags, get_key_description(key, desc))
+            end
+        end
+    end
+end
 
 -- Prints the collected tags in the required format in JSON
-function print_taginfo()
+local function print_taginfo()
+    local taginfo = flex.get_taginfo()
     local tags = {}
 
-    for _, k in ipairs(flex.TAGINFO_MAIN.keys) do
-        local desc = get_key_description(k, 'POI/feature in the search database')
-        if flex.TAGINFO_MAIN.delete_tags[k] ~= nil then
-            desc.description = string.format('%s (except for values: %s).', desc.description,
-                                table.concat(flex.TAGINFO_MAIN.delete_tags[k], ', '))
+    for k, values in pairs(taginfo.main) do
+        if values[1] == nil or values[1] == 'delete' or values[1] == 'extra' then
+            for v, group in pairs(values) do
+                if type(v) == 'string' and group ~= 'delete' and group ~= 'extra' then
+                    local text = 'POI/feature in the search database'
+                    if type(group) ~= 'function' then
+                        text = 'Fallback ' .. text
+                    end
+                    table.insert(tags, get_key_value_description(k, v, text))
+                end
+            end
+        elseif type(values[1]) == 'function' or values[1] == 'fallback' then
+            local desc = 'POI/feature in the search database'
+            if values[1] == 'fallback' then
+                desc = 'Fallback ' .. desc
+            end
+            local excp = {}
+            for v, group in pairs(values) do
+                if group == 'delete' or group == 'extra' then
+                    table.insert(excp, v)
+                end
+            end
+            if next(excp) ~= nil then
+                desc = desc .. string.format(' (except for values: %s)',
+                                             table.concat(excp, ', '))
+            end
+            table.insert(tags, get_key_description(k, desc))
         end
-        table.insert(tags, desc)
     end
 
-    for k, _ in pairs(flex.TAGINFO_NAME_KEYS) do
-        local desc = get_key_description(k, 'Searchable name of the place.')
-        table.insert(tags, desc)
-    end
-    for k, _ in pairs(flex.TAGINFO_ADDRESS_KEYS) do
-        local desc = get_key_description(k, 'Used to determine the address of a place.')
-        table.insert(tags, desc)
-    end
+    group_table_to_keys(tags, taginfo.name, NAME_DESCRIPTIONS)
+    group_table_to_keys(tags, taginfo.address, ADDRESS_DESCRIPTIONS)
 
     local format = {
         data_format = 1,

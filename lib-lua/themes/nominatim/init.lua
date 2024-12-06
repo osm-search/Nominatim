@@ -636,10 +636,10 @@ function module.process_tags(o)
     end
 
     -- name keys
-    local fallback = o:grab_name_parts{groups=NAMES}
+    local fallback = o:grab_name_parts{groups=NAME_FILTER}
 
     -- address keys
-    if o:grab_address_parts{groups=ADDRESS_TAGS} > 0 and fallback == nil then
+    if o:grab_address_parts{groups=ADDRESS_FILTER} > 0 and fallback == nil then
         fallback = {'place', 'house', PlaceTransform.always}
     end
     if o.address.country ~= nil and #o.address.country ~= 2 then
@@ -686,7 +686,7 @@ function module.set_prefilters(data)
 end
 
 
-function module.ignore_tags(data)
+function module.ignore_keys(data)
     merge_filters_into_main('delete', data)
     add_pre_filter{delete = data}
 end
@@ -735,47 +735,71 @@ function module.add_main_tags(data)
 end
 
 
-function module.set_name_tags(data)
-    NAMES = module.tag_group(data)
-
-    for _, lst in pairs(data) do
-        for _, k in ipairs(lst) do
-            local key = process_key(k)
-            if key ~= nil then
-                module.TAGINFO_NAME_KEYS[key] = true
-            end
+function module.modify_name_tags(data)
+    for k,v in pairs(data) do
+        if next(v) then
+            NAMES[k] = v
+        else
+            NAMES[k] = nil
         end
     end
+    NAME_FILTER = module.tag_group(NAMES)
     remove_group_from_main('fallback:name')
-    merge_filters_into_main('fallback:name', data.house)
+    if data.house ~= nil then
+        merge_filters_into_main('fallback:name', data.house)
+    end
+end
+
+
+function module.set_name_tags(data)
+    NAMES = {}
+    module.modify_name_tags(data)
 end
 
 
 function module.set_address_tags(data)
-    if data.postcode_fallback ~= nil then
-        POSTCODE_FALLBACK = data.postcode_fallback
-        data.postcode_fallback = nil
-    end
-    ADDRESS_TAGS = module.tag_group(data)
+    ADDRESS_TAGS = {}
+    module.modify_address_tags(data)
+end
 
-    for _, lst in pairs(data) do
-        if lst ~= nil then
-            for _, k in ipairs(lst) do
-                local key = process_key(k)
-                if key ~= nil then
-                    module.TAGINFO_ADDRESS_KEYS[key] = true
-                end
-            end
+
+function module.modify_address_tags(data)
+    for k, v in pairs(data) do
+        if k == 'postcode_fallback' then
+            POSTCODE_FALLBACK = v
+        elseif next(v) == nil then
+            ADDRESS_TAGS[k] = nil
+        else
+            ADDRESS_TAGS[k] = v
         end
     end
 
+    ADDRESS_FILTER = module.tag_group(ADDRESS_TAGS)
+
     remove_group_from_main('fallback:address')
-    remove_group_from_main('fallback:postcode')
     merge_filters_into_main('fallback:address', data.main)
+    merge_filters_into_main('fallback:address', data.interpolation)
+    remove_group_from_main('fallback:postcode')
     if POSTCODE_FALLBACK then
         merge_filters_into_main('fallback:postcode', data.postcode)
     end
-    merge_filters_into_main('fallback:address', data.interpolation)
+end
+
+
+function module.set_address_tags(data)
+    ADDRESS_TAGS_SOURCE = {}
+    module.modify_address_tags(data)
+end
+
+
+function module.set_postcode_fallback(enable)
+    if POSTCODE_FALLBACK ~= enable then
+        remove_group_from_main('fallback:postcode')
+        if enable then
+            merge_filters_into_main('fallback:postcode', ADDRESS_TAGS.postcode)
+        end
+    end
+    POSTCODE_FALLBACK = enable
 end
 
 

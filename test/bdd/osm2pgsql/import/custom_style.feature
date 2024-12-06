@@ -2,7 +2,7 @@
 Feature: Import with custom styles by osm2pgsql
     Tests for the example customizations given in the documentation.
 
-    Scenario: Custom main tags
+    Scenario: Custom main tags (set new ones)
         Given the lua style file
             """
             local flex = require('import-full')
@@ -27,6 +27,35 @@ Feature: Import with custom styles by osm2pgsql
             | N11    | boundary | administrative |
             | N13    | highway  | primary        |
             | N15    | highway  | primary        |
+
+    Scenario: Custom main tags (modify existing)
+        Given the lua style file
+            """
+            local flex = require('import-full')
+
+            flex.add_main_tags{
+                amenity = {prison = 'delete'},
+                highway = {stop = 'named'},
+                aeroway = 'named'
+            }
+            """
+        When loading osm data
+            """
+            n10 Tamenity=hotel x0 y0
+            n11 Tamenity=prison x0 y0
+            n12 Thighway=stop x0 y0
+            n13 Thighway=stop,name=BigStop x0 y0
+            n14 Thighway=give_way x0 y0
+            n15 Thighway=bus_stop x0 y0
+            n16 Taeroway=no,name=foo x0 y0
+            n17 Taeroway=taxiway,name=D15 x0 y0
+            """
+        Then place contains exactly
+            | object | class   | type     |
+            | N10    | amenity | hotel    |
+            | N13    | highway | stop     |
+            | N15    | highway | bus_stop |
+            | N17    | aeroway | taxiway  |
 
     Scenario: Prefiltering tags
         Given the lua style file
@@ -56,6 +85,38 @@ Feature: Import with custom styles by osm2pgsql
             | N4:tourism | - |
             | N4:amenity | - |
 
+    Scenario: Ignore some tags
+        Given the lua style file
+            """
+            local flex = require('import-extratags')
+
+            flex.ignore_keys{'ref:*', 'surface'}
+            """
+        When loading osm data
+            """
+            n100 Thighway=residential,ref=34,ref:bodo=34,surface=gray,extra=1 x0 y0
+            """
+        Then place contains exactly
+            | object | name         | extratags    |
+            | N100   | 'ref' : '34' | 'extra': '1' |
+
+
+    Scenario: Add for extratags
+        Given the lua style file
+            """
+            local flex = require('import-full')
+
+            flex.add_for_extratags{'ref:*', 'surface'}
+            """
+        When loading osm data
+            """
+            n100 Thighway=residential,ref=34,ref:bodo=34,surface=gray,extra=1 x0 y0
+            """
+        Then place contains exactly
+            | object | name         | extratags    |
+            | N100   | 'ref' : '34' | 'ref:bodo': '34', 'surface': 'gray' |
+
+
     Scenario: Name tags
         Given the lua style file
             """
@@ -77,6 +138,22 @@ Feature: Import with custom styles by osm2pgsql
             | object     | name                       |
             | N3:highway | 'name': 'Greens'           |
             | N4:highway | 'name': 'Red', 'ref': '45' |
+
+    Scenario: Modify name tags
+        Given the lua style file
+            """
+            local flex = require('import-full')
+
+            flex.modify_name_tags{house = {}, extra = {'o'}}
+            """
+        When loading osm data
+            """
+            n1 Ttourism=hotel,ref=45,o=good
+            n2 Taddr:housename=Old,addr:street=Away
+            """
+        Then place contains exactly
+            | object     | name        |
+            | N1:tourism | 'o': 'good' |
 
     Scenario: Address tags
         Given the lua style file
@@ -101,7 +178,24 @@ Feature: Import with custom styles by osm2pgsql
             | N1:tourism | hotel | 'street': 'Foo' |
             | N2:place   | house | 'housenumber': '23', 'street': 'Budd', 'postcode': '5567' |
 
-    Scenario: Unused handling
+    Scenario: Modify address tags
+        Given the lua style file
+            """
+            local flex = require('import-full')
+
+            flex.set_address_tags{
+                extra = {'addr:*'},
+            }
+            """
+        When loading osm data
+            """
+            n2 Taddr:housenumber=23,addr:street=Budd,is_in:city=Faraway,postal_code=5567 x0 y0
+            """
+        Then place contains exactly
+            | object     | type  | address |
+            | N2:place   | house | 'housenumber': '23', 'street': 'Budd', 'postcode': '5567' |
+
+    Scenario: Unused handling (delete)
         Given the lua style file
             """
             local flex = require('import-full')
@@ -121,6 +215,31 @@ Feature: Import with custom styles by osm2pgsql
             | object     | type  | address                 | extratags        |
             | N1:tourism | hotel | 'tiger:county': 'Fargo' | -                |
             | N2:tourism | hotel | -                       | 'else': 'other'  |
+
+    Scenario: Unused handling (extra)
+        Given the lua style file
+            """
+            local flex = require('flex-base')
+            flex.set_main_tags{highway = 'always',
+                               wikipedia = 'extra'}
+            flex.add_for_extratags{'wikipedia:*', 'wikidata'}
+            flex.set_unused_handling{extra_keys = {'surface'}}
+            """
+        When loading osm data
+            """
+            n100 Thighway=path,foo=bar,wikipedia=en:Path x0 y0
+            n234 Thighway=path,surface=rough x0 y0
+            n445 Thighway=path,name=something x0 y0
+            n446 Thighway=path,wikipedia:en=Path,wikidata=Q23 x0 y0
+            n567 Thighway=path,surface=dirt,wikipedia:en=Path x0 y0
+            """
+        Then place contains exactly
+            | object       | type  | extratags              |
+            | N100:highway | path  | 'wikipedia': 'en:Path' |
+            | N234:highway | path  | 'surface': 'rough' |
+            | N445:highway | path  | - |
+            | N446:highway | path  | 'wikipedia:en': 'Path', 'wikidata': 'Q23' |
+            | N567:highway | path  | 'surface': 'dirt', 'wikipedia:en': 'Path' |
 
     Scenario: Additional relation types
         Given the lua style file

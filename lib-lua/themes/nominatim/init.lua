@@ -22,12 +22,13 @@
 
 local module = {}
 
-local POST_DELETE = nil
 local MAIN_KEYS = {admin_level = {'delete'}}
 local PRE_FILTER = {prefix = {}, suffix = {}}
-local NAMES = nil
-local ADDRESS_TAGS = nil
-local SAVE_EXTRA_MAINS = false
+local NAMES = {}
+local NAME_FILTER = nil
+local ADDRESS_TAGS = {}
+local ADDRESS_FILTER = nil
+local EXTRATAGS_FILTER
 local POSTCODE_FALLBACK = true
 
 -- This file can also be directly require'd instead of running it under
@@ -136,6 +137,24 @@ function PlaceTransform.named_with_key(place, k)
         return place:clone{names=names}
     end
 end
+
+--------- Built-in extratags transformation functions ---------------
+
+local function default_extratags_filter(p, k)
+    -- Default handling is to copy over place tag for boundaries.
+    -- Nominatim needs this.
+    if k ~= 'boundary' or p.intags.place == nil then
+        return p.extratags
+    end
+
+    local extra = { place = p.intags.place }
+    for kin, vin in pairs(p.extratags) do
+        extra[kin] = vin
+    end
+
+    return extra
+end
+EXTRATAGS_FILTER = default_extratags_filter
 
 ----------------- other helper functions -----------------------------
 
@@ -374,7 +393,7 @@ function Place:grab_name_parts(data)
 end
 
 
-function Place:write_place(k, v, mfunc, save_extra_mains)
+function Place:write_place(k, v, mfunc)
     v = v or self.intags[k]
     if v == nil then
         return 0
@@ -382,7 +401,7 @@ function Place:write_place(k, v, mfunc, save_extra_mains)
 
     local place = mfunc(self, k, v)
     if place then
-        local res = place:write_row(k, v, save_extra_mains)
+        local res = place:write_row(k, v)
         self.num_entries = self.num_entries + res
         return res
     end
@@ -390,7 +409,7 @@ function Place:write_place(k, v, mfunc, save_extra_mains)
     return 0
 end
 
-function Place:write_row(k, v, save_extra_mains)
+function Place:write_row(k, v)
     if self.geometry == nil then
         self.geometry = self.geom_func(self.object)
     end
@@ -398,12 +417,9 @@ function Place:write_row(k, v, save_extra_mains)
         return 0
     end
 
-    if save_extra_mains ~= nil then
-        for extra_k, extra_v in pairs(self.intags) do
-            if extra_k ~= k and save_extra_mains(extra_k, extra_v) then
-                self.extratags[extra_k] = extra_v
-            end
-        end
+    local extratags = EXTRATAGS_FILTER(self, k, v)
+    if not (extratags and next(extratags)) then
+        extratags = nil
     end
 
     insert_row{
@@ -412,17 +428,9 @@ function Place:write_row(k, v, save_extra_mains)
         admin_level = self.admin_level,
         name = next(self.names) and self.names,
         address = next(self.address) and self.address,
-        extratags = next(self.extratags) and self.extratags,
+        extratags = extratags,
         geometry = self.geometry
     }
-
-    if save_extra_mains then
-        for tk, tv in pairs(self.intags) do
-            if save_extra_mains(tk, tv) then
-                self.extratags[tk] = nil
-            end
-        end
-    end
 
     return 1
 end
@@ -534,7 +542,7 @@ function module.tag_group(data)
         end
     end
 
-    return function (k, v)
+    return function (k)
         local val = fullmatches[k]
         if val ~= nil then
             return val
@@ -642,11 +650,9 @@ function module.process_tags(o)
     end
 
     if o.address.interpolation ~= nil then
-        o:write_place('place', 'houses', PlaceTransform.always, SAVE_EXTRA_MAINS)
+        o:write_place('place', 'houses', PlaceTransform.always)
         return
     end
-
-    o:clean{delete = POST_DELETE}
 
     -- collect main keys
     for k, v in pairs(o.intags) do
@@ -654,7 +660,7 @@ function module.process_tags(o)
         if ktable then
             local ktype = ktable[v] or ktable[1]
             if type(ktype) == 'function' then
-                o:write_place(k, v, ktype, SAVE_EXTRA_MAINS)
+                o:write_place(k, v, ktype)
             elseif ktype == 'fallback' and o.has_name then
                 fallback = {k, v, PlaceTransform.named}
             end
@@ -662,7 +668,7 @@ function module.process_tags(o)
     end
 
     if fallback ~= nil and o.num_entries == 0 then
-        o:write_place(fallback[1], fallback[2], fallback[3], SAVE_EXTRA_MAINS)
+        o:write_place(fallback[1], fallback[2], fallback[3])
     end
 end
 
@@ -774,12 +780,44 @@ end
 
 
 function module.set_unused_handling(data)
-    if data.extra_keys == nil and data.extra_tags == nil then
-        POST_DELETE = module.tag_match{keys = data.delete_keys, tags = data.delete_tags}
-        SAVE_EXTRA_MAINS = function() return true end
+    if type(data) == 'function' then
+        EXTRATAGS_FILTER = data
+    elseif data == nil then
+        EXTRATAGS_FILTER = default_extratags_filter
+    elseif data.extra_keys == nil and data.extra_tags == nil then
+        local delfilter = module.tag_match{keys = data.delete_keys, tags = data.delete_tags}
+        EXTRATAGS_FILTER = function (p, k)
+            local extra = {}
+            for kin, vin in pairs(p.intags) do
+                if kin ~= k and not delfilter(kin, vin) then
+                    extra[kin] = vin
+                end
+            end
+            if next(extra) == nil then
+                return p.extratags
+            end
+            for kextra, vextra in pairs(p.extratags) do
+                extra[kextra] = vextra
+            end
+            return extra
+        end
     elseif data.delete_keys == nil and data.delete_tags == nil then
-        POST_DELETE = nil
-        SAVE_EXTRA_MAINS = module.tag_match{keys = data.extra_keys, tags = data.extra_tags}
+        local incfilter = module.tag_match{keys = data.extra_keys, tags = data.extra_tags}
+        EXTRATAGS_FILTER = function (p, k)
+            local extra = {}
+            for kin, vin in pairs(p.intags) do
+                if kin ~= k and incfilter(kin, vin) then
+                    extra[kin] = vin
+                end
+            end
+            if next(extra) == nil then
+                return p.extratags
+            end
+            for kextra, vextra in pairs(p.extratags) do
+                extra[kextra] = vextra
+            end
+            return extra
+        end
     else
         error("unused handler can have only 'extra_keys' or 'delete_keys' set.")
     end

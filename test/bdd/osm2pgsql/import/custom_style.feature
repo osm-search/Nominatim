@@ -33,7 +33,7 @@ Feature: Import with custom styles by osm2pgsql
             """
             local flex = require('import-full')
 
-            flex.add_main_tags{
+            flex.modify_main_tags{
                 amenity = {prison = 'delete'},
                 highway = {stop = 'named'},
                 aeroway = 'named'

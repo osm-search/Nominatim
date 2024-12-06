@@ -131,7 +131,7 @@ Feature: Tag evaluation
         When loading osm data
             """
             n8001 Tshop=shoes,note:de=Nein,xx=yy
-            n8002 Tshop=shoes,building=no,ele=234
+            n8002 Tshop=shoes,natural=no,ele=234
             n8003 Tshop=shoes,name:source=survey
             """
         Then place contains exactly

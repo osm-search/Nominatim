@@ -65,6 +65,8 @@ local place_table_definition = {
 }
 
 local insert_row
+local script_path = debug.getinfo(1, "S").source:match("@?(.*/)")
+local PRESETS = loadfile(script_path .. 'presets.lua')()
 
 if themepark then
     themepark:add_table(place_table_definition)
@@ -687,12 +689,26 @@ end
 
 
 function module.ignore_keys(data)
+    if type(data) == 'string' then
+        local preset = data
+        data = PRESETS.IGNORE_KEYS[data]
+        if data == nil then
+            error('Unknown preset for ignored keys: ' .. preset)
+        end
+    end
     merge_filters_into_main('delete', data)
     add_pre_filter{delete = data}
 end
 
 
 function module.add_for_extratags(data)
+    if type(data) == 'string' then
+        local preset = data
+        data = PRESETS.EXTRATAGS[data] or PRESETS.IGNORE_KEYS[data]
+        if data == nil then
+            error('Unknown preset for extratags: ' .. preset)
+        end
+    end
     merge_filters_into_main('extra', data)
     add_pre_filter{extra = data}
 end
@@ -709,11 +725,25 @@ function module.set_main_tags(data)
             MAIN_KEYS[key] = nil
         end
     end
-    module.add_main_tags(data)
+    module.modify_main_tags(data)
 end
 
 
-function module.add_main_tags(data)
+function module.modify_main_tags(data)
+    if type(data) == 'string' then
+        local preset = data
+        if data:sub(1, 7) == 'street/' then
+            data = PRESETS.MAIN_TAGS_STREETS[data:sub(8)]
+        elseif data:sub(1, 4) == 'poi/' then
+            data = PRESETS.MAIN_TAGS_POIS(data:sub(5))
+        else
+            data = PRESETS.MAIN_TAGS[data]
+        end
+        if data == nil then
+            error('Unknown preset for main tags: ' .. preset)
+        end
+    end
+
     for k, v in pairs(data) do
         if MAIN_KEYS[k] == nil then
             MAIN_KEYS[k] = {}
@@ -736,6 +766,14 @@ end
 
 
 function module.modify_name_tags(data)
+    if type(data) == 'string' then
+        local preset = data
+        data = PRESETS.NAME_TAGS[data]
+        if data == nil then
+            error('Unknown preset for name keys: ' .. preset)
+        end
+    end
+
     for k,v in pairs(data) do
         if next(v) then
             NAMES[k] = v
@@ -764,6 +802,14 @@ end
 
 
 function module.modify_address_tags(data)
+    if type(data) == 'string' then
+        local preset = data
+        data = PRESETS.ADDRESS_TAGS[data]
+        if data == nil then
+            error('Unknown preset for address keys: ' .. preset)
+        end
+    end
+
     for k, v in pairs(data) do
         if k == 'postcode_fallback' then
             POSTCODE_FALLBACK = v

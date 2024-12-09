@@ -223,3 +223,36 @@ Feature: Tag evaluation
             | object | name+name |
             | W2     | Road      |
             | W5     | Road      |
+
+
+    Scenario: Tourism information
+        When loading osm data
+            """
+            n100 Ttourism=information
+            n101 Ttourism=information,name=Generic
+            n102 Ttourism=information,information=guidepost
+            n103 Thighway=information,information=house
+            """
+        Then place contains exactly
+            | object           | type        |
+            | N101:tourism     | information |
+            | N102:information | guidepost   |
+            | N103:highway     | information |
+
+
+    Scenario: Water feautures
+        When loading osm data
+            """
+            n20 Tnatural=water
+            n21 Tnatural=water,name=SomePond
+            n22 Tnatural=water,water=pond
+            n23 Tnatural=water,water=pond,name=Pond
+            n24 Tnatural=water,water=river,name=BigRiver
+            n25 Tnatural=water,water=yes
+            n26 Tnatural=water,water=yes,name=Random
+            """
+        Then place contains exactly
+            | object      | type  |
+            | N21:natural | water |
+            | N23:water   | pond  |
+            | N26:natural | water |

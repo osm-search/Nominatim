@@ -16,6 +16,43 @@ local function filter_footways(place)
     return false
 end
 
+local function include_when_tag_present(key, value, named)
+    if named then
+        return function(place)
+                   if place.has_name and place.intags[key] == value then
+                       return place
+                   end
+                   return false
+               end
+    else
+        return function(place)
+                   if place.intags[key] == value then
+                       return place
+                   end
+                   return false
+               end
+    end
+end
+
+local function exclude_when_key_present(key, named)
+    if named then
+        return function(place)
+                   if place.has_name and place.intags[key] == nil then
+                       return place
+                   end
+                   return false
+               end
+    else
+        return function(place)
+                   if place.intags[key] == nil then
+                       return place
+                   end
+                   return false
+               end
+
+    end
+end
+
 -- Main tag definition
 
 module.MAIN_TAGS = {}
@@ -65,9 +102,21 @@ module.MAIN_TAGS.natural = {
                yes = 'delete',
                no = 'delete',
                coastline = 'delete',
-               saddle = 'fallback'},
+               saddle = 'fallback',
+               water = exclude_when_key_present('water', true)},
     mountain_pass = {'always',
-                     no = 'delete'}
+                     no = 'delete'},
+    water = {include_when_tag_present('natural', 'water', true),
+             river = 'never',
+             stream = 'never',
+             canal = 'never',
+             ditch = 'never',
+             drain = 'never',
+             fish_pass = 'never',
+             yes = 'delete',
+             intermittent = 'delete',
+             tidal = 'delete'
+             }
 }
 
 module.MAIN_TAGS_POIS = function (group)
@@ -114,6 +163,7 @@ module.MAIN_TAGS_POIS = function (group)
     historic = {'always',
                 yes = group,
                 no = group},
+    information = {include_when_tag_present('tourism', 'information')},
     junction = {'fallback',
                 no = group},
     leisure = {'always',
@@ -148,7 +198,8 @@ module.MAIN_TAGS_POIS = function (group)
             no = group},
     tourism = {'always',
                no = group,
-               yes = group},
+               yes = group,
+               information = 'fallback'},
     tunnel = {'named_with_key',
               no = group}
 } end

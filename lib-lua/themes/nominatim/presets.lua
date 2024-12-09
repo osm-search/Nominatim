@@ -2,6 +2,20 @@
 
 local module = {}
 
+-- Customized main tag filter functions
+
+local EXCLUDED_FOOTWAYS = { sidewalk = 1, crossing = 1, link = 1, traffic_aisle }
+
+local function filter_footways(place)
+    if place.has_name then
+        local footway = place.object.tags.footway
+        if footway == nil or EXCLUDED_FOOTWAYS[footway] ~= 1 then
+            return place
+        end
+    end
+    return false
+end
+
 -- Main tag definition
 
 module.MAIN_TAGS = {}
@@ -156,7 +170,7 @@ module.MAIN_TAGS_STREETS.default = {
                service = 'named',
                cycleway = 'named',
                path = 'named',
-               footway = 'named',
+               footway = filter_footways,
                steps = 'named',
                bridleway = 'named',
                track = 'named',

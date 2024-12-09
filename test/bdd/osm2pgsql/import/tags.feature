@@ -206,3 +206,20 @@ Feature: Tag evaluation
             | object | class | type   | address                 |
             | N13001 | place | houses | 'interpolation': 'odd'  |
             | N13002 | place | houses | 'interpolation': 'even' |
+
+
+    Scenario: Footways
+        When loading osm data
+            """
+            n1 x0.0 y0.0
+            n2 x0 y0.0001
+            w1 Thighway=footway Nn1,n2
+            w2 Thighway=footway,name=Road Nn1,n2
+            w3 Thighway=footway,name=Road,footway=sidewalk Nn1,n2
+            w4 Thighway=footway,name=Road,footway=crossing Nn1,n2
+            w5 Thighway=footway,name=Road,footway=residential Nn1,n2
+            """
+        Then place contains exactly
+            | object | name+name |
+            | W2     | Road      |
+            | W5     | Road      |

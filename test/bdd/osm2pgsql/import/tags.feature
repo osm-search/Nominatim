@@ -269,3 +269,18 @@ Feature: Tag evaluation
             | N1:place    | house | 'housenumber': '23' | -    |
             | N2:place    | house | 'housenumber': '23' | 'addr:housename': 'Foo' |
             | N3:place    | house | 'housenumber': '23' | -    |
+
+
+    Scenario: Waterway locks
+        When loading osm data
+            """
+            n1 Twaterway=river,lock=yes
+            n2 Twaterway=river,lock=yes,lock_name=LeLock
+            n3 Twaterway=river,lock=yes,name=LeWater
+            n4 Tamenity=parking,lock=yes,lock_name=Gold
+            """
+        Then place contains exactly
+            | object      | type    | name |
+            | N2:lock     | yes     | 'name': 'LeLock' |
+            | N3:waterway | river   | 'name': 'LeWater' |
+            | N4:amenity  | parking | - |

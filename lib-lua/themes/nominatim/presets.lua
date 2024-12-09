@@ -53,6 +53,17 @@ local function exclude_when_key_present(key, named)
     end
 end
 
+local function lock_transform(place)
+    if place.object.tags.waterway ~= nil then
+        local name = place.object.tags.lock_name
+        if name ~= nil then
+            return place:clone{names={name=name, ref=place.object.tags.lock_ref}}
+        end
+    end
+
+    return false
+end
+
 -- Main tag definition
 
 module.MAIN_TAGS = {}
@@ -169,6 +180,7 @@ module.MAIN_TAGS_POIS = function (group)
     leisure = {'always',
                nature_reserve = 'fallback',
                no = group},
+    lock = {yes = lock_transform},
     man_made = {pier = 'always',
                 tower = 'always',
                 bridge = 'always',

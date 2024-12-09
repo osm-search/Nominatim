@@ -74,6 +74,14 @@
           "stone" : 30,
           "" : [22, 0]
       },
+      "water" : {
+          "lake" : [20, 0],
+          "reservoir" : [20, 0],
+          "wastewater" : [24, 0],
+          "pond" : [24, 0],
+          "fountain" : [24, 0],
+          "" : [22, 0]
+      },
       "waterway" : {
           "river" : [19, 0],
           "stream" : [22, 0],

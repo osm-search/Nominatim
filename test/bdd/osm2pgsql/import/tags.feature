@@ -256,3 +256,16 @@ Feature: Tag evaluation
             | N21:natural | water |
             | N23:water   | pond  |
             | N26:natural | water |
+
+    Scenario: Drop name for address fallback
+        When loading osm data
+            """
+            n1 Taddr:housenumber=23,name=Foo
+            n2 Taddr:housenumber=23,addr:housename=Foo
+            n3 Taddr:housenumber=23
+            """
+        Then place contains exactly
+            | object      | type  | address             | name |
+            | N1:place    | house | 'housenumber': '23' | -    |
+            | N2:place    | house | 'housenumber': '23' | 'addr:housename': 'Foo' |
+            | N3:place    | house | 'housenumber': '23' | -    |

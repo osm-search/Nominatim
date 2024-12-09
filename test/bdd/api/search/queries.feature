@@ -192,7 +192,7 @@ Feature: Search queries
         Then exactly 1 result is returned
         And results contain
           | class   |
-          | natural |
+          | water |
 
     Examples:
       | data |

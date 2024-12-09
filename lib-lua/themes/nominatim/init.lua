@@ -134,6 +134,22 @@ function PlaceTransform.named_with_key(place, k)
     end
 end
 
+-- Special transform used with address fallbacks: ignore all names
+-- except for those marked as being part of the address.
+local function address_fallback(place)
+    if next(place.names) == nil or NAMES.house == nil then
+        return place
+    end
+
+    local names = {}
+    for k, v in pairs(place.names) do
+        if NAME_FILTER(k, v) == 'house' then
+            names[k] = v
+        end
+    end
+    return place:clone{names=names}
+end
+
 --------- Built-in extratags transformation functions ---------------
 
 local function default_extratags_filter(p, k)
@@ -379,7 +395,7 @@ function Place:grab_name_parts(data)
                     self.has_name = true
                 elseif atype == 'house' then
                     self.has_name = true
-                    fallback = {'place', 'house', PlaceTransform.always}
+                    fallback = {'place', 'house', address_fallback}
                 end
             end
         end
@@ -636,7 +652,7 @@ function module.process_tags(o)
 
     -- address keys
     if o:grab_address_parts{groups=ADDRESS_FILTER} > 0 and fallback == nil then
-        fallback = {'place', 'house', PlaceTransform.always}
+        fallback = {'place', 'house', address_fallback}
     end
     if o.address.country ~= nil and #o.address.country ~= 2 then
         o.address['country'] = nil

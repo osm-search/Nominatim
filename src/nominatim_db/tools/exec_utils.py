@@ -39,7 +39,10 @@ def run_osm2pgsql(options: Mapping[str, Any]) -> None:
 
     if str(options['osm2pgsql_style']).endswith('.lua'):
         env['LUA_PATH'] = ';'.join((str(options['osm2pgsql_style_path'] / '?.lua'),
-                                    os.environ.get('LUAPATH', ';')))
+                                    os.environ.get('LUA_PATH', ';')))
+        env['THEMEPARK_PATH'] = str(options['osm2pgsql_style_path'] / 'themes')
+        if 'THEMEPARK_PATH' in os.environ:
+            env['THEMEPARK_PATH'] += ':' + os.environ['THEMEPARK_PATH']
         cmd.extend(('--output', 'flex'))
 
         for flavour in ('data', 'index'):

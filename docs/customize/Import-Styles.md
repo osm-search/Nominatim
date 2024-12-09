@@ -1,95 +1,123 @@
-## Configuring the Import
+# Configuring the Import of OSM data
 
 In the very first step of a Nominatim import, OSM data is loaded into the
 database. Nominatim uses [osm2pgsql](https://osm2pgsql.org) for this task.
 It comes with a [flex style](https://osm2pgsql.org/doc/manual.html#the-flex-output)
 specifically tailored to filter and convert OSM data into Nominatim's
-internal data representation.
-
-There are a number of default configurations for the flex style which
-result in geocoding databases of different detail. The
+internal data representation. Nominatim ships with a few preset
+configurations for this import, each results in a geocoding database of
+different detail. The
 [Import section](../admin/Import.md#filtering-imported-data) explains
 these default configurations in detail.
 
-You can also create your own custom style. Put the style file into your
-project directory and then set `NOMINATIM_IMPORT_STYLE` to the name of the file.
-It is always recommended to start with one of the standard styles and customize
-those. You find the standard styles under the name `import-<stylename>.lua`
-in the standard Nominatim configuration path (usually `/etc/nominatim` or
-`/usr/local/etc/nominatim`).
+If you want to have more control over which OSM data is added to the database,
+you can also create your own custom style. Create a new lua style file, put it
+into your project directory and then set `NOMINATIM_IMPORT_STYLE` to the name
+of the file. Custom style files can be used to modify the existing preset
+configurations or to implement your own configuration from scratch.
 
 The remainder of the page describes how the flex style works and how to
 customize it.
 
-### The `flex-base.lua` module
+## The `flex-base` lua module
 
 The core of Nominatim's flex import configuration is the `flex-base` module.
 It defines the table layout used by Nominatim and provides standard
-implementations for the import callbacks that make it easy to customize
+implementations for the import callbacks that help with customizing
 how OSM tags are used by Nominatim.
 
-Every custom style should include this module to make sure that the correct
+Every custom style must include this module to make sure that the correct
 tables are created. Thus start your custom style as follows:
 
 ``` lua
 local flex = require('flex-base')
-
 ```
 
-The following sections explain how the module can be customized.
+### Using preset configurations
 
+If you want to start with one of the existing presets, then you can import
+its settings using the `import_topic()` function:
 
-### Changing the recognized tags
+```
+local flex = require('flex-base')
 
-If you just want to change which OSM tags are recognized during import,
-then there are a number of convenience functions to set the tag lists used
-during the processing.
+flex.import_topic('streets')
+```
 
-!!! warning
-    There are no built-in defaults for the tag lists, so all the functions
-    need to be called from your style script to fully process the data.
-    Make sure you start from one of the default style and only modify
-    the data you are interested in. You can also derive your style from an
-    existing style by importing the appropriate module, e.g.
-    `local flex = require('import-street')`.
+The `import_topic` function takes an optional second configuration
+parameter. The available options are explained in the
+[themepark section](#using-osm2pgsql-themepark).
 
-Many of the following functions take _key match lists_. These lists can
+!!! note
+    You can also directly import the preset style files, e.g.
+    `local flex = require('import-street')`. It is not possible to
+    set extra configuration this way.
+
+### How processing works
+
+When Nominatim processes an OSM object, it looks for four kinds of tags:
+The _main tags_ classify what kind of place the OSM object represents. One
+OSM object can have more than one main tag. In such case one database entry
+is created for each main tag. _Name tags_ represent searchable names of the
+place. _Address tags_ are used to compute the address hierarchy of the place.
+Address are used for searching and for creating a display name of the place.
+_Extra tags_ are any tags that are not directly related to search but
+contain interesting additional information.
+
+!!! danger
+    Some tags in the extratags category are used by Nominatim to better
+    classify the place. You want to make sure these are always present
+    in custom styles.
+
+Configuring the style means deciding which key and/or key/value is used
+in which category.
+
+## Changing the recognized tags
+
+The flex style offers a number of functions to set the classification of
+each OSM tag. Most of these functions can also take a preset string instead
+of a tag descriptions. These presets describe common configurations that
+are also used in the definition of the predefined styles. This section
+lists the configuration functions and the accepted presets.
+
+#### Key match lists
+
+Some of the following functions take _key match lists_. These lists can
 contain three kinds of strings to match against tag keys:
 A string that ends in an asterisk `*` is a prefix match and accordingly matches
 against any key that starts with the given string (minus the `*`). 
 A suffix match can be defined similarly with a string that starts with a `*`.
 Any other string is matched exactly against tag keys.
 
+###  Main tags
 
-#### `set_main_tags()` - principal tags
+`set/modify_main_tags()` allow to define which tags are used as main tags. It
+takes a lua table parameter which defines for keys and key/value
+combinations, how they are classified.
 
-If a principal or main tag is found on an OSM object, then the object
-is included in Nominatim's search index. A single object may also have
-multiple main tags. In that case, the object will be included multiple
-times in the index, once for each main tag.
+The following classifications are recognised:
 
-The flex script distinguishes between four types of main tags:
+| classification  | meaning |
+| :-------------- | :------ |
+| always          | Unconditionally use this tag as a main tag. |
+| named           | Consider as main tag, when the object has a primary name (see [names](#name-tags) below) |
+| named_with_key  | Consider as main tag, when the object has a primary name with a domain prefix. For example, if the main tag is  `bridge=yes`, then it will only be added as an extra entry, if there is a tag `bridge:name[:XXX]` for the same object. If this property is set, all names that are not domain-specific are ignored. |
+| fallback        | Consider as main tag only when no other main tag was found. Fallback always implies `named`, i.e. fallbacks are only tried for objects with primary names. |
+| delete          | Completely ignore the tag in any further processing |
+| extra           | Move the tag to extratags and then ignore it for further processing |
+| `<function>`| Advanced handling, see [below](#advanced-main-tag-handling) |
 
-* __always__: a main tag that is used unconditionally
-* __named__: consider this main tag only, if the object has a proper name
-  (a reference is not enough, see below).
-* __named_with_key__: consider this main tag only, when the object has
-  a proper name with a domain prefix. For example, if the main tag is
-  `bridge=yes`, then it will only be added as an extra row, if there is
-  a tag `bridge:name[:XXX]` for the same object. If this property is set,
-  all other names that are not domain-specific are ignored.
-* __fallback__: use this main tag only, if there is no other main tag.
-  Fallback always implied `named`, i.e. fallbacks are only tried for
-  named objects.
+Each key in the table parameter defines an OSM tag key. The value may
+be directly a classification as described above. Then the tag will
+be considered a main tag for any possible value that is not further defined.
+To further restrict which values are acceptable, give a table with the
+permitted values and their kind of main tag. If the table contains a simple
+value without key, then this is used as default for values that are not listed.
 
-The `set_main_tags()` function takes exactly one table parameter which
-defines the keys and key/value combinations to include and the kind of
-main tag. Each lua table key defines an OSM tag key. The value may
-be a string defining the kind of main key as described above. Then the tag will
-be considered a main tag for any possible value. To further restrict
-which values are acceptable, give a table with the permitted values
-and their kind of main tag. If the table contains a simple value without
-key, then this is used as default for values that are not listed.
+`set_main_tags()` will completely replace the current main tag configuration
+with the new configuration. `modify_main_tags()` will merge the new
+configuration with the existing one. Otherwise, the two functions do exactly
+the same.
 
 !!! example
     ``` lua
@@ -97,28 +125,149 @@ key, then this is used as default for values that are not listed.
 
     flex.set_main_tags{
         boundary = {administrative = 'named'},
-        highway = {'always', street_lamp = 'named'},
+        highway = {'always', street_lamp = 'named', no = 'delete'},
         landuse = 'fallback'
     }
     ```
 
     In this example an object with a `boundary` tag will only be included
     when it has a value of `administrative`. Objects with `highway` tags are
-    always included. However when the value is `street_lamp` then the object
-    must have a name, too. With any other value, the object is included
-    independently of the name. Finally, if a `landuse` tag is present then
-    it will be used independely of the concrete value if neither boundary
+    always included with two exceptions: the troll tag `highway=no` is
+    deleted on the spot and when the value is `street_lamp` then the object
+    must have a name, too. Finally, if a `landuse` tag is present then
+    it will be used independently of the concrete value when neither boundary
     nor highway tags were found and the object is named.
 
+##### Presets
 
-#### `set_prefilters()` - ignoring tags
+| Name   | Description |
+| :----- | :---------- |
+| admin  | Basic tag set collecting places and administrative boundaries. This set is needed also to ensure proper address computation and should therefore always be present. You can disable selected place types like `place=locality` after adding this set, if they are not relevant for your use case. |
+| all_boundaries | Extends the set of recognised boundaries and places to all available ones. |
+| natural | Tags for natural features like rivers and mountain peaks. |
+| street/default | Tags for streets. Major streets are always included, minor ones only when they have a name. |
+| street/car | Tags for all streets that can be used by a motor vehicle. |
+| street/all | Includes all highway features named and unnamed. |
+| poi/delete | Adds most POI features with and without name. Some frequent but very domain-specific values are excluded by deleting them. |
+| poi/extra | Like 'poi/delete' but excluded values are moved to extratags. |
 
-Pre-filtering of tags allows to ignore them for any further processing.
-Thus pre-filtering takes precedence over any other tag processing. This is
-useful when some specific key/value combinations need to be excluded from
-processing. When tags are filtered, they may either be deleted completely
-or moved to `extratags`. Extra tags are saved with the object and returned
-to the user when requested, but are not used otherwise.
+
+##### Advanced main tag handling
+
+The groups described above are in fact only a preset for a filtering function
+that is used to make the final decision how a pre-selected main tag is entered
+into Nominatim's internal table. To further customize handling you may also
+supply your own filtering function.
+
+The function takes up to three parameters: a Place object of the object
+being processed, the key of the main tag and the value of the main tag.
+The function may return one of three values:
+
+* `nil` or `false` causes the entry to be ignored
+* the Place object causes the place to be added as is
+* `Place.copy(names=..., address=..., extratags=...) causes the
+  place to be enter into the database but with name/address/extratags
+  set to the given different values.
+
+The Place object has some read-only values that can be used to determine
+the handling:
+
+* **object** is the original OSM object data handed in by osm2pgsql
+* **admin_level** is the content of the admin_level tag, parsed into an integer and normalized to a value between 0 and 15
+* **has_name** is a boolean indicating if the object has a primary name tag
+* **names** is a table with the collected list of name tags
+* **address** is a table with the collected list of address tags
+* **extratags** is a table with the collected list of additional tags to save
+
+!!! example
+    ``` lua
+    local flex = require('flex-base')
+
+    flex.add_topic('street')
+
+    local function no_sidewalks(place, k, v)
+        if place.object.tags.footway == 'sidewalk' then
+            return false
+        end
+
+        -- default behaviour is to have all footways
+        return place
+    end
+
+    flex.modify_main_tags(highway = {'footway' = no_sidewalks}
+    ```
+    This script adds a custom handler for `highway=footway`. It only includes
+    them in the database, when the object doesn't have a tag `footway=sidewalk`
+    indicating that it is just part of a larger street which should already
+    be indexed. Note that it is not necessary to check the key and value
+    of the main tag because the function is only used for the specific
+    main tag.
+
+
+### Ignored tags
+
+The function `ignore_keys()` sets the `delete` classification for keys.
+This function takes a _key match list_ so that it is possible to exclude
+groups of keys.
+
+Note that full matches always take precedence over suffix matches, which
+in turn take precedence over prefix matches.
+
+!!! example
+    ``` lua
+    local flex = require('flex-base')
+
+    flex.add_topic('admin')
+    flex.ignore_keys{'old_name', 'old_name:*'}
+    ```
+
+    This example uses the `admin` preset with the exception that names
+    that are no longer are in current use, are ignored.
+
+##### Presets
+
+| Name     | Description |
+| :-----   | :---------- |
+| metatags | Tags with meta information about the OSM tag like source, notes and import sources. |
+| name     | Non-names that describe in fact properties or name parts. These names can throw off search and should always be removed. |
+| address  | Extra `addr:*` tags that are not useful for Nominatim. |
+
+
+### Tags for `extratags`
+
+The function `add_for_extratags()` sets the `extra` classification for keys.
+This function takes a
+_key match list_ so that it is possible to move groups of keys to extratags.
+
+Note that full matches always take precedence over suffix matches, which
+in turn take precedence over prefix matches.
+
+!!! example
+    ``` lua
+    local flex = require('flex-base')
+
+    flex.add_topic('street')
+    flex.add_for_extratags{'surface', 'access', 'vehicle', 'maxspeed'}
+    ```
+
+    This example uses the `street` preset but adds a couple of tags that
+    are of interest about the condition of the street.
+
+##### Presets
+
+| Name     | Description |
+| :-----   | :---------- |
+| required | Tags that Nominatim will use for various computations when present in extratags. Always include these. |
+
+In addition, all [presets from ignored tags](#presets_1) are accepted.
+
+### General pre-filtering
+
+_(deprecated)_ `set_prefilters()` allows to set the `delete` and `extra`
+classification for main tags.
+
+This function removes all previously set main tags with `delete` and `extra`
+classification and then adds the newly defined tags.
 
 `set_prefilters()` takes a table with four optional fields:
 
@@ -130,47 +279,34 @@ to the user when requested, but are not used otherwise.
 * __extra_tags__ contains a table of tag keys pointing to a list of tag
   values. Tags with matching key/value pairs are moved to extratags.
 
-Key list may contain three kinds of strings:
-A string that ends in an asterisk `*` is a prefix match and accordingly matches
-against any key that starts with the given string (minus the `*`). 
-A suffix match can be defined similarly with a string that starts with a `*`.
-Any other string is matched exactly against tag keys.
+!!! danger "Deprecation warning"
+    Use of this function should be replaced with `modify_main_tags()` to
+    set the data from `delete_tags` and `extra_tags`, with `ignore_keys()`
+    for the `delete_keys` parameter and with `add_for_extratags()` for the
+    `extra_keys` parameter.
 
-!!! example
-    ``` lua
-    local flex = require('import-full')
+### Name tags
 
-    flex.set_prefilters{
-        delete_keys = {'source', 'source:*'},
-        extra_tags = {amenity = {'yes', 'no'}}
-    }
-    flex.set_main_tags{
-        amenity = 'always'
-    }
-    ```
+`set/modify_name_tags()` allow to define the tags used for naming places. Name tags
+can only be selected by their keys. The import script distinguishes
+between primary and auxiliary names. A primary name is the given name of
+a place. Having a primary name makes a place _named_. This is important
+for main tags that are only included when a name is present. Auxiliary names
+are identifiers like references. They may be searched for but should not
+be included on their own.
 
-    In this example any tags `source` and tags that begin with `source:`  are
-    deleted before any other processing is done. Getting rid of frequent tags
-    this way can speed up the import.
+The functions take a table with two optional fields `main` and `extra`.
+They take _key match lists_ for primary and auxiliary names respectively.
+A third field `house` can contain tags for names that appear in place of
+house numbers in addresses. This field can only contain complete key names.
+'house tags' are special in that they cause the OSM object to be added to
+the database independently of the presence of other main tags.
 
-    Tags with `amenity=yes` or `amenity=no` are moved to extratags. Later
-    all tags with an `amenity` key are made a main tag. This effectively means
-    that Nominatim will use all amenity tags except for those with value
-    yes and no.
-
-#### `set_name_tags()` - defining names
-
-The flex script distinguishes between two kinds of names:
-
-* __main__: the primary names make an object fully searchable.
-  Main tags of type _named_ will only cause the object to be included when
-  such a primary name is present. Primary names are usually those found
-  in the `name` tag and its variants.
-* __extra__: extra names are still added to the search index but they are
-  alone not sufficient to make an object named.
-
-`set_name_tags()` takes a table with two optional fields `main` and `extra`.
-They take _key match lists_ for main and extra names respectively.
+`set_name_tags()` overwrites the current configuration, while
+`modify_name_tags()` replaces the fields that are given. (Be aware that
+the fields are replaced as a whole. `main = {'foo_name'}` will cause
+`foo_name` to become the only recognised primary name. Any previously
+defined primary names are forgotten.)
 
 !!! example
     ``` lua
@@ -186,29 +322,33 @@ They take _key match lists_ for main and extra names respectively.
     only include those that have a common name and not those which just
     have some reference ID from the city.
 
-#### `set_address_tags()` - defining address parts
+##### Presets
 
-Address tags will be used to build up the address of an object.
+| Name     | Description |
+| :-----   | :---------- |
+| core     | Basic set of recognised names for all places. |
+| address  | Additional names useful when indexing full addresses. |
+| poi      | Extended set of recognised names for pois. Use on top of the core set. |
 
-`set_address_tags()` takes a table with arbitrary fields pointing to
-_key match lists_. Two fields have a special meaning:
+### Address tags
 
-* __main__: defines
-the tags that make a full address object out of the OSM object. This
-is usually the housenumber or variants thereof. If a main address tag
-appears, then the object will always be included, if necessary with a
-fallback of `place=house`. If the key has a prefix of `addr:` or `is_in:`
-this will be stripped.
+`set/modify_address_tags()` defines the tags that will be used to build
+up the address of an object. Address tags can only be chosen by their key.
 
-* __extra__: defines all supplementary tags for addresses, tags like `addr:street`, `addr:city` etc. If the key has a prefix of `addr:` or `is_in:` this will be stripped.
+The functions take a table with arbitrary fields, each defining
+a key list or _key match list_. Some fields have a special meaning:
 
-All other fields will be handled as summary fields. If a key matches the
-key match list, then its value will be added to the address tags with the
-name of the field as key. If multiple tags match, then an arbitrary one
-wins.
+| Field     | Type      | Description |
+| :---------| :-------- | :-----------|
+| main      | key list  | Tags that make a full address object out of the OSM object. This is usually the house number or variants thereof. If a main address tag appears, then the object will always be included, if necessary with a fallback of `place=house`. If the key has a prefix of `addr:` or `is_in:` this will be stripped. |
+| extra     | key match list | Supplementary tags for addresses, tags like `addr:street`, `addr:city` etc. If the key has a prefix of `addr:` or `is_in:` this will be stripped. |
+| interpolation | key list | Tags that identify address interpolation lines. |
+| country   | key match list | Tags that may contain the country the place is in. The first found value with a two-letter code will be accepted, all other values are discarded. |
+| _other_   | key match list | Summary field. If a key matches the key match list, then its value will be added to the address tags with the name of the field as key. If multiple tags match, then an arbitrary one wins. |
 
-Country tags are handled slightly special. Only tags with a two-letter code
-are accepted, all other values are discarded.
+`set_address_tags()` overwrites the current configuration, while
+`modify_address_tags()` replaces the fields that are given. (Be aware that
+the fields are replaced as a whole.)
 
 !!! example
     ``` lua
@@ -232,20 +372,32 @@ are accepted, all other values are discarded.
     to postcodes, they will always be saved under the key `postcode` thus
     normalizing the multitude of keys that are used in the OSM database.
 
+##### Presets
 
-#### `set_unused_handling()` - processing remaining tags
+| Name     | Description |
+| :-----   | :---------- |
+| core     | Basic set of tags needed to recognise address relationship for any place. Always include this. |
+| houses   | Additional set of tags needed to recognise proper addresses |
 
-This function defines what to do with tags that remain after all tags
+### Handling of unclassified tags
+
+`set_unused_handling()` defines what to do with tags that remain after all tags
 have been classified using the functions above. There are two ways in
 which the function can be used:
 
 `set_unused_handling(delete_keys = ..., delete_tags = ...)` deletes all
 keys that match the descriptions in the parameters and moves all remaining
 tags into the extratags list.
+
 `set_unused_handling(extra_keys = ..., extra_tags = ...)` moves all tags
 matching the parameters into the extratags list and then deletes the remaining
 tags. For the format of the parameters see the description in `set_prefilters()`
 above.
+
+When no special handling is set, then unused tags will be discarded with one
+exception: place tags are kept in extratags for administrative boundaries.
+When using a custom setting, you should also make sure that the place tag
+is added for extratags.
 
 !!! example
     ``` lua
@@ -263,17 +415,23 @@ above.
     already delete the tiger tags with `set_prefilters()` because that
     would remove tiger:county before the address tags are processed.
 
-### Customizing osm2pgsql callbacks
+## Customizing osm2pgsql callbacks
 
 osm2pgsql expects the flex style to implement three callbacks, one process
 function per OSM type. If you want to implement special handling for
 certain OSM types, you can override the default implementations provided
 by the flex-base module.
 
-#### Changing the relation types to be handled
+### Enabling additional relation types
 
-The default scripts only allows relations of type `multipolygon`, `boundary`
-and `waterway`. To add other types relations, set `RELATION_TYPES` for
+OSM relations can represent very diverse
+[types of real-world objects](https://wiki.openstreetmap.org/wiki/Key:type). To
+be able to process them correctly, Nominatim needs to understand how to
+create a geometry for each type. By default, the script knows how to
+process relations of type `multipolygon`, `boundary` and `waterway`. All
+other relation types are ignored.
+
+To add other types relations, set `RELATION_TYPES` for
 the type to the kind of geometry that should be created. The following
 kinds of geometries can be used:
 
@@ -297,7 +455,7 @@ kinds of geometries can be used:
     geometry.
 
 
-#### Adding additional logic to processing functions
+### Adding additional logic to processing functions
 
 The default processing functions are also exported by the flex-base module
 as `process_node`, `process_way` and `process_relation`. These can be used
@@ -322,110 +480,83 @@ logic.
 
 ### Customizing the main processing function
 
-The main processing function of the flex style can be found in the function
-`process_tags`. This function is called for all OSM object kinds and is
-responsible for filtering the tags and writing out the rows into Postgresql.
+!!! danger "Deprecation Warning"
+    The style used to allow overwriting the internal processing function
+    `process_tags()`. While this is currently still possible, it is no longer
+    encouraged and may stop working in future versions. The internal
+    `Place` class should now be considered read-only.
+
+
+## Using osm2pgsql-themepark
+
+The Nominatim osm2pgsql style is designed so that it can also be used as
+a theme for [osm2pgsql-themepark](https://osm2pgsql.org/themepark/). This
+makes it easy to combine Nominatim with other projects like
+[openstreetmap-carto](https://github.com/gravitystorm/openstreetmap-carto)
+in the same database.
+
+To set up one of the preset styles, simply include a topic with the same name:
+
+```
+local themepark = require('themepark')
+themepark:add_topic('nominatim/address')
+```
+
+Themepark topics offer two configuration options:
+
+* **street_theme** allows to choose one of the sub topics for streets:
+    * _default_ - include all major streets and named minor paths
+    * _car_ - include all streets physically usable by cars
+    * _all_ - include all major streets and minor paths
+* **with_extratags**, when set to a truthy value, then tags that are
+  not specifically used for address or naming are added to the
+  extratags column
+
+The customization functions described in the
+[Changing recognized tags](#changing-the-recognized-tags) section
+are available from the theme. To access the theme you need to explicitly initialise it.
 
 !!! Example
     ``` lua
-    local flex = require('import-full')
+    local themepark = require('themepark')
 
-    local original_process_tags = flex.process_tags
+    themepark:add_topic('nominatim/full', {with_extratags = true})
 
-    function flex.process_tags(o)
-        if o.object.tags.highway ~= nil and o.object.tags.access == 'no' then
-            return
-        end
+    local flex = themepark:init_theme('nominatim')
 
-        original_process_tags(o)
-    end
+    flex.modify_main_tags{'amenity' = {
+                           'waste_basket' = 'delete'}
+                      }
     ```
+    This example uses the full Nominatim configuration but disables
+    importing waste baskets.
 
-    This example shows the most simple customization of the process_tags function.
-    It simply adds some additional processing before running the original code.
-    To do that, first save the original function and then overwrite process_tags
-    from the module. In this example all highways which are not accessible
-    by anyone will be ignored.
+You may also write a new configuration from scratch. Simply omit including
+a Nominatim topic and only call the required customization functions.
 
+Customizing the osm2pgsql processing functions as explained
+[above](#adding-additional-logic-to-processing-functions) is not possible
+when running under themepark. Instead include other topics that make the
+necessary modifications or add an additional processor before including
+the Nominatim topic.
 
-#### The `Place` class
+!!! Example
+    ``` lua
+    local themepark = require('themepark')
 
-The `process_tags` function receives a Lua object of `Place` type which comes
-with some handy functions to collect the data necessary for geocoding and
-writing it into the place table. Always use this object to fill the table.
+    local function discard_country_boundaries(object)
+        if object.tags.boundary == 'administrative' and object.tags.admin_level == '2' then
+            return 'stop'
+        end
+    end
 
-The Place class has some attributes which you may access read-only:
+    themepark:add_proc('relation', discard_country_boundaries)
+    -- Order matters here. The topic needs to be added after the custom callback.
+    themepark:add_topic('nominatim/full', {with_extratags = true})
+    ```
+    Discarding country-level boundaries when running under themepark.
 
-* __object__ is the original OSM object data handed in by osm2pgsql
-* __admin_level__ is the content of the admin_level tag, parsed into an
-  integer and normalized to a value between 0 and 15
-* __has_name__ is a boolean indicating if the object has a full name
-* __names__ is a table with the collected list of name tags
-* __address__ is a table with the collected list of address tags
-* __extratags__ is a table with the collected list of additional tags to save
-
-There are a number of functions to fill these fields. All functions expect
-a table parameter with fields as indicated in the description.
-Many of these functions expect match functions which are described in detail
-further below.
-
-* __delete{match=...}__ removes all tags that match the match function given
-  in _match_.
-* __grab_extratags{match=...}__ moves all tags that match the match function
-  given in _match_ into extratags. Returns the number of tags moved.
-* __clean{delete=..., extra=...}__ deletes all tags that match _delete_ and
-  moves the ones that match _extra_  into extratags
-* __grab_address_parts{groups=...}__ moves matching tags into the address table.
-  _groups_ must be a group match function. Tags of the group `main` and
-  `extra` are added to the address table as is but with `addr:` and `is_in:`
-  prefixes removed from the tag key. All other groups are added with the
-  group name as key and the value from the tag. Multiple values of the same
-  group overwrite each other. The function returns the number of tags saved
-  from the main group.
-* __grab_main_parts{groups=...}__ moves matching tags into the name table.
-  _groups_ must be a group match function. If a tags of the group `main` is
-  present, the object will be marked as having a name. Tags of group `house`
-  produce a fallback to `place=house`. This fallback is return by the function
-  if present.
-
-There are two functions to write a row into the place table. Both functions
-expect the main tag (key and value) for the row and then use the collected
-information from the name, address, extratags etc. fields to complete the row.
-They also have a boolean parameter `save_extra_mains` which defines how any
-unprocessed tags are handled: when True, the tags will be saved as extratags,
-when False, they will be simply discarded.
-
-* __write_row(key, value, save_extra_mains)__ creates a new table row from
-  the current state of the Place object.
-* __write_place(key, value, mtype, save_extra_mains)__ creates a new row
-  conditionally. When value is nil, the function will attempt to look up the
-  value in the object tags. If value is still nil or mtype is nil, the row
-  is ignored. An mtype of `always` will then always write out the row,
-  a mtype of `named` only, when the object has a full name. When mtype
-  is `named_with_key`, the function checks for a domain name, i.e. a name
-  tag prefixed with the name of the main key. Only if at least one is found,
-  the row will be written. The names are replaced with the domain names found.
-
-#### Match functions
-
-The Place functions usually expect either a _match function_ or a
-_group match function_ to find the tags to apply their function to.
-
-The __match function__ is a Lua function which takes two parameters,
-key and value, and returns a boolean to indicate that a tag matches. The
-flex-base module has a convenience function `tag_match()` to create such a
-function. It takes a table with two optional fields: `keys` takes a key match
-list (see above), `tags` takes a table with keys that point to a list of
-possible values, thus defining key/value matches.
-
-The __group match function__ is a Lua function which also takes two parameters,
-key and value, and returns a string indicating to which group or type they
-belong to. The `tag_group()` can be used to create such a function. It expects
-a table where the group names are the keys and the values are a key match list.
-
-
-
-### Using the gazetteer output of osm2pgsql
+## osm2pgsql gazetteer output
 
 Nominatim still allows you to configure the gazetteer output to remain
 backwards compatible with older imports. It will be automatically used
@@ -435,7 +566,7 @@ of Nominatim. Do not use the gazetteer output for new imports. There is no
 guarantee that new versions of Nominatim are fully compatible with the
 gazetteer output.
 
-### Changing the Style of Existing Databases
+## Changing the style of existing databases
 
 There is normally no issue changing the style of a database that is already
 imported and now kept up-to-date with change files. Just be aware that any

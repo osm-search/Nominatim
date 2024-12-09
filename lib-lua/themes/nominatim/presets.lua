@@ -270,7 +270,9 @@ module.IGNORE_KEYS.metatags = {'note', 'note:*', 'source', 'source:*', '*source'
                                'is_in:postcode'}
 module.IGNORE_KEYS.name = {'*:prefix', '*:suffix', 'name:prefix:*', 'name:suffix:*',
                            'name:etymology', 'name:signed', 'name:botanical'}
-module.IGNORE_KEYS.address = {'addr:street:*', 'addr:TW:dataset'}
+module.IGNORE_KEYS.address = {'addr:street:*', 'addr:city:*', 'addr:district:*',
+                              'addr:province:*', 'addr:subdistrict:*', 'addr:place:*',
+                              'addr:TW:dataset'}
 
 -- Extra tags (prefiltered away)
 

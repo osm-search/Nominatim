@@ -59,7 +59,9 @@ The easiest way, to handle these Python dependencies is to run your
 development from within a virtual environment.
 
 ```sh
-sudo apt install libsqlite3-mod-spatialite
+sudo apt install libsqlite3-mod-spatialite osm2pgsql \
+                 postgresql-postgis postgresql-postgis-scripts \
+                 pkg-config libicu-dev virtualenv
 ```
 
 To set up the virtual environment with all necessary packages run:

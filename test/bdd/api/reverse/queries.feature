@@ -10,13 +10,17 @@ Feature: Reverse geocoding
     Examples:
      | lat      | lon |
      | 0.0      | 0.0 |
-     | -34.830  | -56.105 |
-     | 45.174   | -103.072 |
-     | 21.156   | -12.2744 |
      | 91.3     | 0.4    |
      | -700     | 0.4    |
      | 0.2      | 324.44 |
      | 0.2      | -180.4 |
+
+
+    Scenario: Unknown countries fall back to default country grid
+        When sending v1/reverse at 45.174,-103.072
+        Then results contain
+          | category | type    | display_name |
+          | place    | country | United States |
 
 
     @Tiger

@@ -2,6 +2,22 @@
 
 local module = {}
 
+-- Helper functions
+
+local function group_merge(group1, group2)
+    for name, values in pairs(group2) do
+        if group1[name] == nil then
+            group1[name] = values
+        else
+            for _, v in pairs(values) do
+                table.insert(group1[name], v)
+            end
+        end
+    end
+
+    return group1
+end
+
 -- Customized main tag filter functions
 
 local EXCLUDED_FOOTWAYS = { sidewalk = 1, crossing = 1, link = 1, traffic_aisle }
@@ -310,10 +326,9 @@ module.NAME_TAGS.core = {main = {'name', 'name:*',
                                   'loc_ref', 'old_ref', 'ISO3166-2'}
                         }
 module.NAME_TAGS.address = {house = {'addr:housename'}}
-module.NAME_TAGS.poi = {extra = {'ref', 'int_ref', 'nat_ref', 'reg_ref',
-                                       'loc_ref', 'old_ref',
-                                       'iata', 'icao',
-                                       'ISO3166-2'}}
+module.NAME_TAGS.poi = group_merge({main = {'brand'},
+                                    extra = {'iata', 'icao'}},
+                                   module.NAME_TAGS.core)
 
 -- Address tagging
 
@@ -347,7 +362,8 @@ module.IGNORE_KEYS.metatags = {'note', 'note:*', 'source', 'source:*', '*source'
                                'type',
                                'is_in:postcode'}
 module.IGNORE_KEYS.name = {'*:prefix', '*:suffix', 'name:prefix:*', 'name:suffix:*',
-                           'name:etymology', 'name:signed', 'name:botanical'}
+                           'name:etymology', 'name:etymology:*',
+                           'name:signed', 'name:botanical'}
 module.IGNORE_KEYS.address = {'addr:street:*', 'addr:city:*', 'addr:district:*',
                               'addr:province:*', 'addr:subdistrict:*', 'addr:place:*',
                               'addr:TW:dataset'}

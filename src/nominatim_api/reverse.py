@@ -478,14 +478,15 @@ class ReverseGeocoder:
         log().var_dump('Country codes', ccodes)
         return ccodes
 
-    async def lookup_country(self, ccodes: List[str]) -> Optional[SaRow]:
+    async def lookup_country(self, ccodes: List[str]) -> Tuple[Optional[SaRow], RowFunc]:
         """ Lookup the country for the current search.
         """
+        row_func = nres.create_from_placex_row
         if not ccodes:
             ccodes = await self.lookup_country_codes()
 
         if not ccodes:
-            return None
+            return None, row_func
 
         t = self.conn.t.placex
         if self.max_rank > 4:
@@ -537,7 +538,32 @@ class ReverseGeocoder:
 
             address_row = (await self.conn.execute(sql, self.bind_params)).one_or_none()
 
-        return address_row
+        if address_row is None:
+            # finally fall back to country table
+            t = self.conn.t.country_name
+            tgrid = self.conn.t.country_grid
+
+            sql = sa.select(tgrid.c.country_code,
+                            tgrid.c.geometry.ST_Centroid().ST_Collect().ST_Centroid()
+                                 .label('centroid'),
+                            tgrid.c.geometry.ST_Collect().ST_Expand(0).label('bbox'))\
+                    .where(tgrid.c.country_code.in_(ccodes))\
+                    .group_by(tgrid.c.country_code)
+
+            sub = sql.subquery('grid')
+            sql = sa.select(t.c.country_code,
+                            t.c.name.merge(t.c.derived_name).label('name'),
+                            sub.c.centroid, sub.c.bbox)\
+                    .join(sub, t.c.country_code == sub.c.country_code)\
+                    .order_by(t.c.country_code)\
+                    .limit(1)
+
+            sql = self._add_geometry_columns(sql, sub.c.centroid)
+
+            address_row = (await self.conn.execute(sql, self.bind_params)).one_or_none()
+            row_func = nres.create_from_country_row
+
+        return address_row, row_func
 
     async def lookup(self, coord: AnyPoint) -> Optional[nres.ReverseResult]:
         """ Look up a single coordinate. Returns the place information,
@@ -566,12 +592,12 @@ class ReverseGeocoder:
             if self.max_rank > 4:
                 row = await self.lookup_area()
             if row is None and self.layer_enabled(DataLayer.ADDRESS):
-                row = await self.lookup_country(ccodes)
+                row, row_func = await self.lookup_country(ccodes)
 
         result = row_func(row, nres.ReverseResult)
         if result is not None:
             assert row is not None
-            result.distance = row.distance
+            result.distance = getattr(row,  'distance', 0)
             if hasattr(row, 'bbox'):
                 result.bbox = Bbox.from_wkb(row.bbox)
             await nres.add_result_details(self.conn, [result], self.params)

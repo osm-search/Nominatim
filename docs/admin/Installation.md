@@ -26,7 +26,7 @@ For running Nominatim:
 
   * [PostgreSQL](https://www.postgresql.org) (12+ will work, 13+ strongly recommended)
   * [PostGIS](https://postgis.net) (3.0+ will work, 3.2+ strongly recommended)
-  * [osm2pgsql](https://osm2pgsql.org) (1.8+, optional when building with CMake)
+  * [osm2pgsql](https://osm2pgsql.org) (1.8+)
   * [Python 3](https://www.python.org/) (3.7+)
 
 Furthermore the following Python libraries are required:

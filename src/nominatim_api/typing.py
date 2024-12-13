@@ -21,9 +21,11 @@ if TYPE_CHECKING:
     from typing import Any
     import sqlalchemy as sa
     import os
-    from typing_extensions import (TypeAlias as TypeAlias)
+    from typing_extensions import (TypeAlias as TypeAlias,
+                                   Protocol as Protocol)
 else:
     TypeAlias = str
+    Protocol = object
 
 StrPath = Union[str, 'os.PathLike[str]']
 

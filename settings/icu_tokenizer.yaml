@@ -1,3 +1,5 @@
+query-preprocessing:
+    - step: normalize
 normalization:
     - ":: lower ()"
     - ":: Hans-Hant"

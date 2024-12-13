@@ -16,12 +16,14 @@ from icu import Transliterator
 
 import sqlalchemy as sa
 
+from ..errors import UsageError
 from ..typing import SaRow
 from ..sql.sqlalchemy_types import Json
 from ..connection import SearchConnection
 from ..logging import log
-from ..search import query as qmod
-from ..search.query_analyzer_factory import AbstractQueryAnalyzer
+from . import query as qmod
+from ..query_preprocessing.config import QueryConfig
+from .query_analyzer_factory import AbstractQueryAnalyzer
 
 
 DB_TO_TOKEN_TYPE = {
@@ -151,6 +153,8 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
         self.transliterator = await self.conn.get_cached_value('ICUTOK', 'transliterator',
                                                                _make_transliterator)
 
+        await self._setup_preprocessing()
+
         if 'word' not in self.conn.t.meta.tables:
             sa.Table('word', self.conn.t.meta,
                      sa.Column('word_id', sa.Integer),
@@ -159,15 +163,36 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
                      sa.Column('word', sa.Text),
                      sa.Column('info', Json))
 
+    async def _setup_preprocessing(self) -> None:
+        """ Load the rules for preprocessing and set up the handlers.
+        """
+
+        rules = self.conn.config.load_sub_configuration('icu_tokenizer.yaml',
+                                                        config='TOKENIZER_CONFIG')
+        preprocessing_rules = rules.get('query-preprocessing', [])
+
+        self.preprocessors = []
+
+        for func in preprocessing_rules:
+            if 'step' not in func:
+                raise UsageError("Preprocessing rule is missing the 'step' attribute.")
+            if not isinstance(func['step'], str):
+                raise UsageError("'step' attribute must be a simple string.")
+
+            module = self.conn.config.load_plugin_module(
+                        func['step'], 'nominatim_api.query_preprocessing')
+            self.preprocessors.append(
+                module.create(QueryConfig(func).set_normalizer(self.normalizer)))
+
     async def analyze_query(self, phrases: List[qmod.Phrase]) -> qmod.QueryStruct:
         """ Analyze the given list of phrases and return the
             tokenized query.
         """
         log().section('Analyze query (using ICU tokenizer)')
-        normalized = list(filter(lambda p: p.text,
-                                 (qmod.Phrase(p.ptype, self.normalize_text(p.text))
-                                  for p in phrases)))
-        query = qmod.QueryStruct(normalized)
+        for func in self.preprocessors:
+            phrases = func(phrases)
+        query = qmod.QueryStruct(phrases)
+
         log().var_dump('Normalized query', query.source)
         if not query.source:
             return query

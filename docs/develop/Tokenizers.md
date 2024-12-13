@@ -91,14 +91,19 @@ for a custom tokenizer implementation.
 
 ### Directory Structure
 
-Nominatim expects a single file `src/nominatim_db/tokenizer/<NAME>_tokenizer.py`
-containing the Python part of the implementation.
+Nominatim expects two files containing the Python part of the implementation:
+
+ * `src/nominatim_db/tokenizer/<NAME>_tokenizer.py` contains the tokenizer
+   code used during import and
+ * `src/nominatim_api/search/NAME>_tokenizer.py` has the code used during
+   query time.
+
 `<NAME>` is a unique name for the tokenizer consisting of only lower-case
 letters, digits and underscore. A tokenizer also needs to install some SQL
 functions. By convention, these should be placed in `lib-sql/tokenizer`.
 
 If the tokenizer has a default configuration file, this should be saved in
-the `settings/<NAME>_tokenizer.<SUFFIX>`.
+`settings/<NAME>_tokenizer.<SUFFIX>`.
 
 ### Configuration and Persistence
 
@@ -110,9 +115,11 @@ are tied to a database installation and must only be read during installation
 time. If they are needed for the runtime then they must be saved into the
 `nominatim_properties` table and later loaded from there.
 
-### The Python module
+### The Python modules
 
-The Python module is expect to export a single factory function:
+#### `src/nominatim_db/tokenizer/`
+
+The import Python module is expected to export a single factory function:
 
 ```python
 def create(dsn: str, data_dir: Path) -> AbstractTokenizer
@@ -122,6 +129,20 @@ The `dsn` parameter contains the DSN of the Nominatim database. The `data_dir`
 is a directory in the project directory that the tokenizer may use to save
 database-specific data. The function must return the instance of the tokenizer
 class as defined below.
+
+#### `src/nominatim_api/search/`
+
+The query-time Python module must also export a factory function:
+
+``` python
+def create_query_analyzer(conn: SearchConnection) -> AbstractQueryAnalyzer
+```
+
+The `conn` parameter contains the current search connection. See the
+[library documentation](../library/Low-Level-DB-Access.md#searchconnection-class)
+for details on the class. The function must return the instance of the tokenizer
+class as defined below.
+
 
 ### Python Tokenizer Class
 
@@ -135,6 +156,13 @@ and implement the abstract functions defined there.
 ### Python Analyzer Class
 
 ::: nominatim_db.tokenizer.base.AbstractAnalyzer
+    options:
+        heading_level: 6
+
+
+### Python Query Analyzer Class
+
+::: nominatim_api.search.query_analyzer_factory.AbstractQueryAnalyzer
     options:
         heading_level: 6
 

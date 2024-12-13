@@ -4,12 +4,11 @@ The tokenizer module in Nominatim is responsible for analysing the names given
 to OSM objects and the terms of an incoming query in order to make sure, they
 can be matched appropriately.
 
-Nominatim offers different tokenizer modules, which behave differently and have
-different configuration options. This sections describes the tokenizers and how
-they can be configured.
+Nominatim currently offers only one tokenizer module, the ICU tokenizer. This section
+describes the tokenizer and how it can be configured.
 
 !!! important
-    The use of a tokenizer is tied to a database installation. You need to choose
+    The selection of tokenizer is tied to a database installation. You need to choose
     and configure the tokenizer before starting the initial import. Once the import
     is done, you cannot switch to another tokenizer anymore. Reconfiguring the
     chosen tokenizer is very limited as well. See the comments in each tokenizer
@@ -43,10 +42,19 @@ On import the tokenizer processes names in the following three stages:
    See the [Token analysis](#token-analysis) section below for more
    information.
 
-During query time, only normalization and transliteration are relevant.
-An incoming query is first split into name chunks (this usually means splitting
-the string at the commas) and the each part is normalised and transliterated.
-The result is used to look up places in the search index.
+During query time, the tokeinzer is responsible for processing incoming
+queries. This happens in two stages:
+
+1. During **query preprocessing** the incoming text is split into name
+   chunks and normalised. This usually means applying the same normalisation
+   as during the import process but may involve other processing like,
+   for example, word break detection.
+2. The **token analysis** step breaks down the query parts into tokens,
+   looks them up in the database and assignes them possible functions and
+   probabilities.
+
+Query processing can be further customized while the rest of the analysis
+is hard-coded.
 
 ### Configuration
 
@@ -58,6 +66,8 @@ have no effect.
 Here is an example configuration file:
 
 ``` yaml
+query-preprocessing:
+    - normalize
 normalization:
     - ":: lower ()"
     - "ß > 'ss'" # German szet is unambiguously equal to double ss
@@ -80,6 +90,22 @@ token-analysis:
 
 The configuration file contains four sections:
 `normalization`, `transliteration`, `sanitizers` and `token-analysis`.
+
+#### Query preprocessing
+
+The section for `query-preprocessing` defines an ordered list of functions
+that are applied to the query before the token analysis.
+
+The following is a list of preprocessors that are shipped with Nominatim.
+
+##### normalize
+
+::: nominatim_api.query_preprocessing.normalize
+    options:
+        members: False
+        heading_level: 6
+        docstring_section_style: spacy
+
 
 #### Normalization and Transliteration
 

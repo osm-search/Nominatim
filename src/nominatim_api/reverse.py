@@ -362,6 +362,8 @@ class ReverseGeocoder:
             # later only a minimum of results needs to be checked with ST_Contains.
             inner = sa.select(t, sa.literal(0.0).label('distance'))\
                       .where(t.c.rank_search.between(5, MAX_RANK_PARAM))\
+                      .where(t.c.rank_address != 5)\
+                      .where(t.c.rank_address != 11)\
                       .where(t.c.geometry.intersects(WKT_PARAM))\
                       .where(sa.func.PlacexGeometryReverseLookuppolygon())\
                       .order_by(sa.desc(t.c.rank_search))\

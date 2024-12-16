@@ -27,7 +27,7 @@ into a database query to find the right place.
 It is the core task of the tokenizer to create, manage and assign the search
 tokens. The tokenizer is involved in two distinct operations:
 
-* __at import time__: scanning names of OSM objects, normalizing them and
+* __at import time__: scanning s of OSM objects, normalizing them and
   building up the list of search tokens.
 * __at query time__: scanning the query and returning the appropriate search
   tokens.
@@ -44,7 +44,7 @@ trigger is responsible to fill out all secondary tables with extra geocoding
 information. This part is written in PL/pgSQL.
 
 The tokenizer is involved in both parts. When the indexer prepares a place,
-it hands it over to the tokenizer to inspect the names and create all the
+it hands it over to the tokenizer to inspect the s and create all the
 search tokens applicable for the place. This usually involves updating the
 tokenizer's internal token lists and creating a list of all token IDs for
 the specific place. This list is later needed in the PL/pgSQL part where the
@@ -95,7 +95,7 @@ Nominatim expects two files containing the Python part of the implementation:
 
  * `src/nominatim_db/tokenizer/<NAME>_tokenizer.py` contains the tokenizer
    code used during import and
- * `src/nominatim_api/search/NAME>_tokenizer.py` has the code used during
+ * `src/nominatim_api/search/<NAME>_tokenizer.py` has the code used during
    query time.
 
 `<NAME>` is a unique name for the tokenizer consisting of only lower-case

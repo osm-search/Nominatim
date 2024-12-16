@@ -232,15 +232,19 @@ Feature: Tag evaluation
             n101 Ttourism=information,name=Generic
             n102 Ttourism=information,information=guidepost
             n103 Thighway=information,information=house
+            n104 Ttourism=information,information=yes,name=Something
+            n105 Ttourism=information,information=route_marker,name=3
             """
         Then place contains exactly
             | object           | type        |
+            | N100:tourism     | information |
             | N101:tourism     | information |
             | N102:information | guidepost   |
             | N103:highway     | information |
+            | N104:tourism     | information |
 
 
-    Scenario: Water feautures
+    Scenario: Water features
         When loading osm data
             """
             n20 Tnatural=water

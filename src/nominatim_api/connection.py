@@ -18,6 +18,7 @@ from .typing import SaFromClause
 from .sql.sqlalchemy_schema import SearchTables
 from .sql.sqlalchemy_types import Geometry
 from .logging import log
+from .config import Configuration
 
 T = TypeVar('T')
 
@@ -31,9 +32,11 @@ class SearchConnection:
 
     def __init__(self, conn: AsyncConnection,
                  tables: SearchTables,
-                 properties: Dict[str, Any]) -> None:
+                 properties: Dict[str, Any],
+                 config: Configuration) -> None:
         self.connection = conn
         self.t = tables
+        self.config = config
         self._property_cache = properties
         self._classtables: Optional[Set[str]] = None
         self.query_timeout: Optional[int] = None

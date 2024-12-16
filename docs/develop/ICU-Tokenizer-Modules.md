@@ -14,10 +14,11 @@ of sanitizers and token analysis.
     implemented, it is not guaranteed to be stable at the moment.
 
 
-## Using non-standard sanitizers and token analyzers
+## Using non-standard modules
 
-Sanitizer names (in the `step` property) and token analysis names (in the
-`analyzer`) may refer to externally supplied modules. There are two ways
+Sanitizer names (in the `step` property), token analysis names (in the
+`analyzer`) and query preprocessor names (in the `step` property)
+may refer to externally supplied modules. There are two ways
 to include external modules: through a library or from the project directory.
 
 To include a module from a library, use the absolute import path as name and
@@ -26,6 +27,47 @@ make sure the library can be found in your PYTHONPATH.
 To use a custom module without creating a library, you can put the module
 somewhere in your project directory and then use the relative path to the
 file. Include the whole name of the file including the `.py` ending.
+
+## Custom query preprocessors
+
+A query preprocessor must export a single factory function `create` with
+the following signature:
+
+``` python
+create(self, config: QueryConfig) -> Callable[[list[Phrase]], list[Phrase]]
+```
+
+The function receives the custom configuration for the preprocessor and
+returns a callable (function or class) with the actual preprocessing
+code. When a query comes in, then the callable gets a list of phrases
+and needs to return the transformed list of phrases. The list and phrases
+may be changed in place or a completely new list may be generated.
+
+The `QueryConfig` is a simple dictionary which contains all configuration
+options given in the yaml configuration of the ICU tokenizer. It is up to
+the function to interpret the values.
+
+A `nominatim_api.search.Phrase` describes a part of the query that contains one or more independent
+search terms. Breaking a query into phrases helps reducing the number of
+possible tokens Nominatim has to take into account. However a phrase break
+is definitive: a multi-term search word cannot go over a phrase break.
+A Phrase object has two fields:
+
+ * `ptype` further refines the type of phrase (see list below)
+ * `text` contains the query text for the phrase
+
+The order of phrases matters to Nominatim when doing further processing.
+Thus, while you may split or join phrases, you should not reorder them
+unless you really know what you are doing.
+
+Phrase types (`nominatim_api.search.PhraseType`) can further help narrowing
+down how the tokens in the phrase are interpreted. The following phrase types
+are known:
+
+::: nominatim_api.search.PhraseType
+    options:
+        heading_level: 6
+
 
 ## Custom sanitizer modules
 
@@ -90,21 +132,22 @@ adding extra attributes) or completely replace the list with a different one.
 The following sanitizer removes the directional prefixes from street names
 in the US:
 
-``` python
-import re
+!!! example
+    ``` python
+    import re
 
-def _filter_function(obj):
-    if obj.place.country_code == 'us' \
-       and obj.place.rank_address >= 26 and obj.place.rank_address <= 27:
-        for name in obj.names:
-            name.name = re.sub(r'^(north|south|west|east) ',
-                               '',
-                               name.name,
-                               flags=re.IGNORECASE)
+    def _filter_function(obj):
+        if obj.place.country_code == 'us' \
+           and obj.place.rank_address >= 26 and obj.place.rank_address <= 27:
+            for name in obj.names:
+                name.name = re.sub(r'^(north|south|west|east) ',
+                                   '',
+                                   name.name,
+                                   flags=re.IGNORECASE)
 
-def create(config):
-    return _filter_function
-```
+    def create(config):
+        return _filter_function
+    ```
 
 This is the most simple form of a sanitizer module. If defines a single
 filter function and implements the required `create()` function by returning
@@ -128,13 +171,13 @@ sanitizers:
 
 !!! warning
     This example is just a simplified show case on how to create a sanitizer.
-    It is not really read for real-world use: while the sanitizer would
+    It is not really meant for real-world use: while the sanitizer would
     correctly transform `West 5th Street` into `5th Street`. it would also
     shorten a simple `North Street` to `Street`.
 
 For more sanitizer examples, have a look at the sanitizers provided by Nominatim.
 They can be found in the directory
-[`nominatim/tokenizer/sanitizers`](https://github.com/osm-search/Nominatim/tree/master/nominatim/tokenizer/sanitizers).
+[`src/nominatim_db/tokenizer/sanitizers`](https://github.com/osm-search/Nominatim/tree/master/src/nominatim_db/tokenizer/sanitizers).
 
 
 ## Custom token analysis module

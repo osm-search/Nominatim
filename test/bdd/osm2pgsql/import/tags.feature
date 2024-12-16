@@ -131,7 +131,7 @@ Feature: Tag evaluation
         When loading osm data
             """
             n8001 Tshop=shoes,note:de=Nein,xx=yy
-            n8002 Tshop=shoes,building=no,ele=234
+            n8002 Tshop=shoes,natural=no,ele=234
             n8003 Tshop=shoes,name:source=survey
             """
         Then place contains exactly
@@ -206,3 +206,85 @@ Feature: Tag evaluation
             | object | class | type   | address                 |
             | N13001 | place | houses | 'interpolation': 'odd'  |
             | N13002 | place | houses | 'interpolation': 'even' |
+
+
+    Scenario: Footways
+        When loading osm data
+            """
+            n1 x0.0 y0.0
+            n2 x0 y0.0001
+            w1 Thighway=footway Nn1,n2
+            w2 Thighway=footway,name=Road Nn1,n2
+            w3 Thighway=footway,name=Road,footway=sidewalk Nn1,n2
+            w4 Thighway=footway,name=Road,footway=crossing Nn1,n2
+            w5 Thighway=footway,name=Road,footway=residential Nn1,n2
+            """
+        Then place contains exactly
+            | object | name+name |
+            | W2     | Road      |
+            | W5     | Road      |
+
+
+    Scenario: Tourism information
+        When loading osm data
+            """
+            n100 Ttourism=information
+            n101 Ttourism=information,name=Generic
+            n102 Ttourism=information,information=guidepost
+            n103 Thighway=information,information=house
+            n104 Ttourism=information,information=yes,name=Something
+            n105 Ttourism=information,information=route_marker,name=3
+            """
+        Then place contains exactly
+            | object           | type        |
+            | N100:tourism     | information |
+            | N101:tourism     | information |
+            | N102:information | guidepost   |
+            | N103:highway     | information |
+            | N104:tourism     | information |
+
+
+    Scenario: Water features
+        When loading osm data
+            """
+            n20 Tnatural=water
+            n21 Tnatural=water,name=SomePond
+            n22 Tnatural=water,water=pond
+            n23 Tnatural=water,water=pond,name=Pond
+            n24 Tnatural=water,water=river,name=BigRiver
+            n25 Tnatural=water,water=yes
+            n26 Tnatural=water,water=yes,name=Random
+            """
+        Then place contains exactly
+            | object      | type  |
+            | N21:natural | water |
+            | N23:water   | pond  |
+            | N26:natural | water |
+
+    Scenario: Drop name for address fallback
+        When loading osm data
+            """
+            n1 Taddr:housenumber=23,name=Foo
+            n2 Taddr:housenumber=23,addr:housename=Foo
+            n3 Taddr:housenumber=23
+            """
+        Then place contains exactly
+            | object      | type  | address             | name |
+            | N1:place    | house | 'housenumber': '23' | -    |
+            | N2:place    | house | 'housenumber': '23' | 'addr:housename': 'Foo' |
+            | N3:place    | house | 'housenumber': '23' | -    |
+
+
+    Scenario: Waterway locks
+        When loading osm data
+            """
+            n1 Twaterway=river,lock=yes
+            n2 Twaterway=river,lock=yes,lock_name=LeLock
+            n3 Twaterway=river,lock=yes,name=LeWater
+            n4 Tamenity=parking,lock=yes,lock_name=Gold
+            """
+        Then place contains exactly
+            | object      | type    | name |
+            | N2:lock     | yes     | 'name': 'LeLock' |
+            | N3:waterway | river   | 'name': 'LeWater' |
+            | N4:amenity  | parking | - |

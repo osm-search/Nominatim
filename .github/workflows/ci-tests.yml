@@ -185,9 +185,6 @@ jobs:
             - name: Prepare import environment
               run: |
                   mv Nominatim/test/testdb/apidb-test-data.pbf test.pbf
-                  mv Nominatim/settings/flex-base.lua flex-base.lua
-                  mv Nominatim/settings/import-extratags.lua import-extratags.lua
-                  mv Nominatim/settings/taginfo.lua taginfo.lua
                   rm -rf Nominatim
                   mkdir data-env-reverse
               working-directory: /home/nominatim
@@ -205,7 +202,7 @@ jobs:
               working-directory: /home/nominatim/nominatim-project
 
             - name: Print taginfo
-              run: lua taginfo.lua
+              run: lua ./nominatim-venv/lib/*/site-packages/nominatim_db/resources/lib-lua/taginfo.lua
               working-directory: /home/nominatim
 
             - name: Collect host OS information

@@ -27,7 +27,6 @@ Feature: Object details
     Examples:
      | class |
      | tourism |
-     | natural |
      | mountain_pass |
 
 

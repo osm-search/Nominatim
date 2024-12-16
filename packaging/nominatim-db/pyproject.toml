@@ -44,6 +44,7 @@ include = [
     "src/nominatim_db",
     "scripts",
     "lib-sql/**/*.sql",
+    "lib-lua/**/*.lua",
     "settings",
     "data/words.sql",
     "extra_src/nominatim_db/paths.py"
@@ -65,6 +66,7 @@ packages = ["src/nominatim_db"]
 
 [tool.hatch.build.targets.wheel.force-include]
 "lib-sql" = "nominatim_db/resources/lib-sql"
+"lib-lua" = "nominatim_db/resources/lib-lua"
 "settings" = "nominatim_db/resources/settings"
 "data/country_osm_grid.sql.gz" = "nominatim_db/resources/country_osm_grid.sql.gz"
 "data/words.sql" = "nominatim_db/resources/words.sql"

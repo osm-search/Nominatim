@@ -11,4 +11,5 @@ from pathlib import Path
 
 DATA_DIR = None
 SQLLIB_DIR = None
+LUALIB_DIR = None
 CONFIG_DIR = (Path(__file__) / '..' / 'resources' / 'settings').resolve()

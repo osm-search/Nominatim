@@ -10,5 +10,6 @@ Path settings for extra data used by Nominatim.
 from pathlib import Path
 
 SQLLIB_DIR = (Path(__file__) / '..' / '..' / '..' / 'lib-sql').resolve()
+LUALIB_DIR = (Path(__file__) / '..' / '..' / '..' / 'lib-lua').resolve()
 DATA_DIR = (Path(__file__) / '..' / '..' / '..' / 'data').resolve()
 CONFIG_DIR = (Path(__file__) / '..' / '..' / '..' / 'settings').resolve()

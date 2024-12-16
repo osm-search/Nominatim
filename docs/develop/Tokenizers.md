@@ -95,7 +95,7 @@ Nominatim expects two files containing the Python part of the implementation:
 
  * `src/nominatim_db/tokenizer/<NAME>_tokenizer.py` contains the tokenizer
    code used during import and
- * `src/nominatim_api/search/NAME>_tokenizer.py` has the code used during
+ * `src/nominatim_api/search/<NAME>_tokenizer.py` has the code used during
    query time.
 
 `<NAME>` is a unique name for the tokenizer consisting of only lower-case

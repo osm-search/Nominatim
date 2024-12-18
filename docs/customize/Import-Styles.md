@@ -60,7 +60,7 @@ The _main tags_ classify what kind of place the OSM object represents. One
 OSM object can have more than one main tag. In such case one database entry
 is created for each main tag. _Name tags_ represent searchable names of the
 place. _Address tags_ are used to compute the address hierarchy of the place.
-Address are used for searching and for creating a display name of the place.
+Address tags are used for searching and for creating a display name of the place.
 _Extra tags_ are any tags that are not directly related to search but
 contain interesting additional information.
 
@@ -76,7 +76,7 @@ in which category.
 
 The flex style offers a number of functions to set the classification of
 each OSM tag. Most of these functions can also take a preset string instead
-of a tag descriptions. These presets describe common configurations that
+of a tag description. These presets describe common configurations that
 are also used in the definition of the predefined styles. This section
 lists the configuration functions and the accepted presets.
 
@@ -95,7 +95,7 @@ Any other string is matched exactly against tag keys.
 takes a lua table parameter which defines for keys and key/value
 combinations, how they are classified.
 
-The following classifications are recognised:
+The following classifications are recognized:
 
 | classification  | meaning |
 | :-------------- | :------ |
@@ -133,7 +133,7 @@ the same.
     In this example an object with a `boundary` tag will only be included
     when it has a value of `administrative`. Objects with `highway` tags are
     always included with two exceptions: the troll tag `highway=no` is
-    deleted on the spot and when the value is `street_lamp` then the object
+    deleted on the spot. And when the value is `street_lamp` then the object
     must have a name, too. Finally, if a `landuse` tag is present then
     it will be used independently of the concrete value when neither boundary
     nor highway tags were found and the object is named.
@@ -143,7 +143,7 @@ the same.
 | Name   | Description |
 | :----- | :---------- |
 | admin  | Basic tag set collecting places and administrative boundaries. This set is needed also to ensure proper address computation and should therefore always be present. You can disable selected place types like `place=locality` after adding this set, if they are not relevant for your use case. |
-| all_boundaries | Extends the set of recognised boundaries and places to all available ones. |
+| all_boundaries | Extends the set of recognized boundaries and places to all available ones. |
 | natural | Tags for natural features like rivers and mountain peaks. |
 | street/default | Tags for streets. Major streets are always included, minor ones only when they have a name. |
 | street/car | Tags for all streets that can be used by a motor vehicle. |
@@ -229,7 +229,7 @@ in turn take precedence over prefix matches.
 | Name     | Description |
 | :-----   | :---------- |
 | metatags | Tags with meta information about the OSM tag like source, notes and import sources. |
-| name     | Non-names that describe in fact properties or name parts. These names can throw off search and should always be removed. |
+| name     | Non-names that actually describe properties or name parts. These names can throw off search and should always be removed. |
 | address  | Extra `addr:*` tags that are not useful for Nominatim. |
 
 
@@ -305,7 +305,7 @@ the database independently of the presence of other main tags.
 `set_name_tags()` overwrites the current configuration, while
 `modify_name_tags()` replaces the fields that are given. (Be aware that
 the fields are replaced as a whole. `main = {'foo_name'}` will cause
-`foo_name` to become the only recognised primary name. Any previously
+`foo_name` to become the only recognized primary name. Any previously
 defined primary names are forgotten.)
 
 !!! example
@@ -326,9 +326,9 @@ defined primary names are forgotten.)
 
 | Name     | Description |
 | :-----   | :---------- |
-| core     | Basic set of recognised names for all places. |
+| core     | Basic set of recogniced names for all places. |
 | address  | Additional names useful when indexing full addresses. |
-| poi      | Extended set of recognised names for pois. Use on top of the core set. |
+| poi      | Extended set of recognized names for pois. Use on top of the core set. |
 
 ### Address tags
 
@@ -376,8 +376,8 @@ the fields are replaced as a whole.)
 
 | Name     | Description |
 | :-----   | :---------- |
-| core     | Basic set of tags needed to recognise address relationship for any place. Always include this. |
-| houses   | Additional set of tags needed to recognise proper addresses |
+| core     | Basic set of tags needed to recognize address relationship for any place. Always include this. |
+| houses   | Additional set of tags needed to recognize proper addresses |
 
 ### Handling of unclassified tags
 
@@ -514,7 +514,7 @@ Themepark topics offer two configuration options:
 
 The customization functions described in the
 [Changing recognized tags](#changing-the-recognized-tags) section
-are available from the theme. To access the theme you need to explicitly initialise it.
+are available from the theme. To access the theme you need to explicitly initialize it.
 
 !!! Example
     ``` lua
@@ -568,7 +568,7 @@ gazetteer output.
 
 ## Changing the style of existing databases
 
-There is normally no issue changing the style of a database that is already
+There is usually no issue changing the style of a database that is already
 imported and now kept up-to-date with change files. Just be aware that any
 change in the style applies to updates only. If you want to change the data
 that is already in the database, then a reimport is necessary.

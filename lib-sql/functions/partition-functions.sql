@@ -125,14 +125,16 @@ BEGIN
 
   IF in_rank_search <= 4 and not in_estimate THEN
     INSERT INTO location_area_country (place_id, country_code, geometry)
-      values (in_place_id, in_country_code, in_geometry);
+      (SELECT in_place_id, in_country_code, geom
+       FROM split_geometry(in_geometry) as geom);
     RETURN TRUE;
   END IF;
 
 {% for partition in db.partitions %}
   IF in_partition = {{ partition }} THEN
     INSERT INTO location_area_large_{{ partition }} (partition, place_id, country_code, keywords, rank_search, rank_address, isguess, postcode, centroid, geometry)
-      values (in_partition, in_place_id, in_country_code, in_keywords, in_rank_search, in_rank_address, in_estimate, postcode, in_centroid, in_geometry);
+      (SELECT in_partition, in_place_id, in_country_code, in_keywords, in_rank_search, in_rank_address, in_estimate, postcode, in_centroid, geom
+       FROM split_geometry(in_geometry) as geom);
     RETURN TRUE;
   END IF;
 {% endfor %}

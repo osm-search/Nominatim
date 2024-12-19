@@ -348,8 +348,6 @@ CREATE OR REPLACE FUNCTION add_location(place_id BIGINT, country_code varchar(2)
   RETURNS BOOLEAN
   AS $$
 DECLARE
-  locationid INTEGER;
-  secgeo GEOMETRY;
   postcode TEXT;
 BEGIN
   PERFORM deleteLocationArea(partition, place_id, rank_search);
@@ -360,18 +358,19 @@ BEGIN
       postcode := upper(trim (in_postcode));
   END IF;
 
-  IF ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon') THEN
-    FOR secgeo IN select split_geometry(geometry) AS geom LOOP
-      PERFORM insertLocationAreaLarge(partition, place_id, country_code, keywords, rank_search, rank_address, false, postcode, centroid, secgeo);
-    END LOOP;
-
-  ELSEIF ST_GeometryType(geometry) = 'ST_Point' THEN
-    secgeo := place_node_fuzzy_area(geometry, rank_search);
-    PERFORM insertLocationAreaLarge(partition, place_id, country_code, keywords, rank_search, rank_address, true, postcode, centroid, secgeo);
-
+  IF ST_Dimension(geometry) = 2 THEN
+    RETURN insertLocationAreaLarge(partition, place_id, country_code, keywords,
+                                   rank_search, rank_address, false, postcode,
+                                   centroid, geometry);
   END IF;
 
-  RETURN true;
+  IF ST_Dimension(geometry) = 0 THEN
+    RETURN insertLocationAreaLarge(partition, place_id, country_code, keywords,
+                                   rank_search, rank_address, true, postcode,
+                                   centroid, place_node_fuzzy_area(geometry, rank_search));
+  END IF;
+
+  RETURN false;
 END;
 $$
 LANGUAGE plpgsql;

@@ -50,7 +50,7 @@ queries. This happens in two stages:
    as during the import process but may involve other processing like,
    for example, word break detection.
 2. The **token analysis** step breaks down the query parts into tokens,
-   looks them up in the database and assignes them possible functions and
+   looks them up in the database and assigns them possible functions and
    probabilities.
 
 Query processing can be further customized while the rest of the analysis

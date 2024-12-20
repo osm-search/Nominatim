@@ -326,7 +326,7 @@ defined primary names are forgotten.)
 
 | Name     | Description |
 | :-----   | :---------- |
-| core     | Basic set of recogniced names for all places. |
+| core     | Basic set of recognized names for all places. |
 | address  | Additional names useful when indexing full addresses. |
 | poi      | Extended set of recognized names for pois. Use on top of the core set. |
 

@@ -393,19 +393,21 @@ DECLARE
   geo RECORD;
   area FLOAT;
   remainingdepth INTEGER;
-  added INTEGER;
 BEGIN
-
 --  RAISE WARNING 'quad_split_geometry: maxarea=%, depth=%',maxarea,maxdepth;
 
-  IF (ST_GeometryType(geometry) not in ('ST_Polygon','ST_MultiPolygon') OR NOT ST_IsValid(geometry)) THEN
+  IF not ST_IsValid(geometry) THEN
+    RETURN;
+  END IF;
+
+  IF ST_Dimension(geometry) != 2 OR maxdepth <= 1 THEN
     RETURN NEXT geometry;
     RETURN;
   END IF;
 
   remainingdepth := maxdepth - 1;
   area := ST_AREA(geometry);
-  IF remainingdepth < 1 OR area < maxarea THEN
+  IF area < maxarea THEN
     RETURN NEXT geometry;
     RETURN;
   END IF;
@@ -425,7 +427,6 @@ BEGIN
   xmid := (xmin+xmax)/2;
   ymid := (ymin+ymax)/2;
 
-  added := 0;
   FOR seg IN 1..4 LOOP
 
     IF seg = 1 THEN
@@ -441,16 +442,13 @@ BEGIN
       secbox := ST_SetSRID(ST_MakeBox2D(ST_Point(xmid,ymid),ST_Point(xmax,ymax)),4326);
     END IF;
 
-    IF st_intersects(geometry, secbox) THEN
-      secgeo := st_intersection(geometry, secbox);
-      IF NOT ST_IsEmpty(secgeo) AND ST_GeometryType(secgeo) in ('ST_Polygon','ST_MultiPolygon') THEN
-        FOR geo IN select quad_split_geometry(secgeo, maxarea, remainingdepth) as geom LOOP
-          IF NOT ST_IsEmpty(geo.geom) AND ST_GeometryType(geo.geom) in ('ST_Polygon','ST_MultiPolygon') THEN
-            added := added + 1;
-            RETURN NEXT geo.geom;
-          END IF;
-        END LOOP;
-      END IF;
+    secgeo := st_intersection(geometry, secbox);
+    IF NOT ST_IsEmpty(secgeo) AND ST_Dimension(secgeo) = 2 THEN
+      FOR geo IN SELECT quad_split_geometry(secgeo, maxarea, remainingdepth) as geom LOOP
+        IF NOT ST_IsEmpty(geo.geom) AND ST_Dimension(geo.geom) = 2 THEN
+          RETURN NEXT geo.geom;
+        END IF;
+      END LOOP;
     END IF;
   END LOOP;
 
@@ -466,10 +464,22 @@ CREATE OR REPLACE FUNCTION split_geometry(geometry GEOMETRY)
 DECLARE
   geo RECORD;
 BEGIN
-  -- 10000000000 is ~~ 1x1 degree
-  FOR geo IN select quad_split_geometry(geometry, 0.25, 20) as geom LOOP
-    RETURN NEXT geo.geom;
-  END LOOP;
+  IF ST_GeometryType(geometry) = 'ST_MultiPolygon'
+     and ST_Area(geometry) * 10 > ST_Area(Box2D(geometry))
+  THEN
+    FOR geo IN
+        SELECT quad_split_geometry(g, 0.25, 20) as geom
+        FROM (SELECT (ST_Dump(geometry)).geom::geometry(Polygon, 4326) AS g) xx
+    LOOP
+      RETURN NEXT geo.geom;
+    END LOOP;
+  ELSE
+    FOR geo IN
+        SELECT quad_split_geometry(geometry, 0.25, 20) as geom
+    LOOP
+      RETURN NEXT geo.geom;
+    END LOOP;
+  END IF;
   RETURN;
 END;
 $$

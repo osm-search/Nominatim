@@ -267,3 +267,34 @@ Feature: Rank assignment
           | object      | rank_search | rank_address |
           | N23:amenity | 30          | 30           |
           | N23:place   | 16          | 16           |
+
+    Scenario: Address rank 25 is only used for addr:place
+        Given the grid
+           | 10 | 33 | 34 | 11 |
+        Given the places
+          | osm | class | type    | name |
+          | N10 | place | village | vil  |
+          | N11 | place | farm    | farm |
+        And the places
+          | osm | class   | type        | name | geometry |
+          | W1  | highway | residential | RD   | 33,11    |
+        And the places
+          | osm | class   | type        | name | addr+farm | geometry |
+          | W2  | highway | residential | RD2  | farm       | 34,11    |
+        And the places
+          | osm | class | type  | housenr |
+          | N33 | place | house | 23      |
+        And the places
+          | osm | class | type  | housenr | addr+place |
+          | N34 | place | house | 23      | farm       |
+        When importing
+        Then placex contains
+          | object | parent_place_id |
+          | N11    | N10             |
+          | N33    | W1              |
+          | N34    | N11             |
+        And place_addressline contains
+          | object | address |
+          | W1     | N10     |
+          | W2     | N10     |
+          | W2     | N11     |

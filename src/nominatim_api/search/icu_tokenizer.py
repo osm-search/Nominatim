@@ -11,6 +11,8 @@ from typing import Tuple, Dict, List, Optional, NamedTuple, Iterator, Any, cast
 from collections import defaultdict
 import dataclasses
 import difflib
+import re
+from itertools import zip_longest
 
 from icu import Transliterator
 
@@ -242,16 +244,22 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
         wordnr = 0
         for phrase in query.source:
             query.nodes[-1].ptype = phrase.ptype
-            for word in phrase.text.split(' '):
+            phrase_split = re.split('([ :-])', phrase.text)
+            # The zip construct will give us the pairs of word/break from
+            # the regular expression split. As the split array ends on the
+            # final word, we simply use the fillvalue to even out the list and
+            # add the phrase break at the end.
+            for word, breakchar in zip_longest(*[iter(phrase_split)]*2, fillvalue=','):
+                if not word:
+                    continue
                 trans = self.transliterator.transliterate(word)
                 if trans:
                     for term in trans.split(' '):
                         if term:
                             parts.append(QueryPart(term, word, wordnr))
                             query.add_node(qmod.BreakType.TOKEN, phrase.ptype)
-                    query.nodes[-1].btype = qmod.BreakType.WORD
+                    query.nodes[-1].btype = qmod.BreakType(breakchar)
                 wordnr += 1
-            query.nodes[-1].btype = qmod.BreakType.PHRASE
 
             for word, wrange in yield_words(parts, phrase_start):
                 words[word].append(wrange)

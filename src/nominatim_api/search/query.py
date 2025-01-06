@@ -21,7 +21,13 @@ class BreakType(enum.Enum):
     END = '>'
     """ End of the query. """
     PHRASE = ','
-    """ Break between two phrases. """
+    """ Hard break between two phrases. Address parts cannot cross hard
+        phrase boundaries."""
+    SOFT_PHRASE = ':'
+    """ Likely break between two phrases. Address parts should not cross soft
+        phrase boundaries. Soft breaks can be inserted by a preprocessor
+        that is analysing the input string.
+    """
     WORD = ' '
     """ Break between words. """
     PART = '-'

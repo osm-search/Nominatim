@@ -133,7 +133,7 @@ class ForwardGeocoder:
         """
         assert self.query_analyzer is not None
         qwords = [word for phrase in query.source
-                  for word in re.split('[, ]+', phrase.text) if word]
+                  for word in re.split('[-,: ]+', phrase.text) if word]
         if not qwords:
             return
 
@@ -146,7 +146,7 @@ class ForwardGeocoder:
             distance = 0.0
             norm = self.query_analyzer.normalize_text(' '.join((result.display_name,
                                                                 result.country_code or '')))
-            words = set((w for w in norm.split(' ') if w))
+            words = set((w for w in re.split('[-,: ]+', norm) if w))
             if not words:
                 continue
             for qword in qwords:

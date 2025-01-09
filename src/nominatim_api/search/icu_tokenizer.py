@@ -7,10 +7,12 @@
 """
 Implementation of query analysis for the ICU tokenizer.
 """
-from typing import Tuple, Dict, List, Optional, NamedTuple, Iterator, Any, cast
+from typing import Tuple, Dict, List, Optional, Iterator, Any, cast
 from collections import defaultdict
 import dataclasses
 import difflib
+import re
+from itertools import zip_longest
 
 from icu import Transliterator
 
@@ -34,17 +36,30 @@ DB_TO_TOKEN_TYPE = {
     'C': qmod.TokenType.COUNTRY
 }
 
+PENALTY_IN_TOKEN_BREAK = {
+     qmod.BreakType.START: 0.5,
+     qmod.BreakType.END: 0.5,
+     qmod.BreakType.PHRASE: 0.5,
+     qmod.BreakType.SOFT_PHRASE: 0.5,
+     qmod.BreakType.WORD: 0.1,
+     qmod.BreakType.PART: 0.0,
+     qmod.BreakType.TOKEN: 0.0
+}
 
-class QueryPart(NamedTuple):
+
+@dataclasses.dataclass
+class QueryPart:
     """ Normalized and transliterated form of a single term in the query.
         When the term came out of a split during the transliteration,
         the normalized string is the full word before transliteration.
         The word number keeps track of the word before transliteration
         and can be used to identify partial transliterated terms.
+        Penalty is the break penalty for the break following the token.
     """
     token: str
     normalized: str
     word_number: int
+    penalty: float
 
 
 QueryParts = List[QueryPart]
@@ -58,10 +73,12 @@ def yield_words(terms: List[QueryPart], start: int) -> Iterator[Tuple[str, qmod.
     total = len(terms)
     for first in range(start, total):
         word = terms[first].token
-        yield word, qmod.TokenRange(first, first + 1)
+        penalty = PENALTY_IN_TOKEN_BREAK[qmod.BreakType.WORD]
+        yield word, qmod.TokenRange(first, first + 1, penalty=penalty)
         for last in range(first + 1, min(first + 20, total)):
             word = ' '.join((word, terms[last].token))
-            yield word, qmod.TokenRange(first, last + 1)
+            penalty += terms[last - 1].penalty
+            yield word, qmod.TokenRange(first, last + 1, penalty=penalty)
 
 
 @dataclasses.dataclass
@@ -94,25 +111,25 @@ class ICUToken(qmod.Token):
         self.penalty += (distance/len(self.lookup_word))
 
     @staticmethod
-    def from_db_row(row: SaRow) -> 'ICUToken':
+    def from_db_row(row: SaRow, base_penalty: float = 0.0) -> 'ICUToken':
         """ Create a ICUToken from the row of the word table.
         """
         count = 1 if row.info is None else row.info.get('count', 1)
         addr_count = 1 if row.info is None else row.info.get('addr_count', 1)
 
-        penalty = 0.0
+        penalty = base_penalty
         if row.type == 'w':
-            penalty = 0.3
+            penalty += 0.3
         elif row.type == 'W':
             if len(row.word_token) == 1 and row.word_token == row.word:
-                penalty = 0.2 if row.word.isdigit() else 0.3
+                penalty += 0.2 if row.word.isdigit() else 0.3
         elif row.type == 'H':
-            penalty = sum(0.1 for c in row.word_token if c != ' ' and not c.isdigit())
+            penalty += sum(0.1 for c in row.word_token if c != ' ' and not c.isdigit())
             if all(not c.isdigit() for c in row.word_token):
                 penalty += 0.2 * (len(row.word_token) - 1)
         elif row.type == 'C':
             if len(row.word_token) == 1:
-                penalty = 0.3
+                penalty += 0.3
 
         if row.info is None:
             lookup_word = row.word
@@ -202,7 +219,7 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
 
         for row in await self.lookup_in_db(list(words.keys())):
             for trange in words[row.word_token]:
-                token = ICUToken.from_db_row(row)
+                token = ICUToken.from_db_row(row, trange.penalty or 0.0)
                 if row.type == 'S':
                     if row.info['op'] in ('in', 'near'):
                         if trange.start == 0:
@@ -242,16 +259,24 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
         wordnr = 0
         for phrase in query.source:
             query.nodes[-1].ptype = phrase.ptype
-            for word in phrase.text.split(' '):
+            phrase_split = re.split('([ :-])', phrase.text)
+            # The zip construct will give us the pairs of word/break from
+            # the regular expression split. As the split array ends on the
+            # final word, we simply use the fillvalue to even out the list and
+            # add the phrase break at the end.
+            for word, breakchar in zip_longest(*[iter(phrase_split)]*2, fillvalue=','):
+                if not word:
+                    continue
                 trans = self.transliterator.transliterate(word)
                 if trans:
                     for term in trans.split(' '):
                         if term:
-                            parts.append(QueryPart(term, word, wordnr))
+                            parts.append(QueryPart(term, word, wordnr,
+                                                   PENALTY_IN_TOKEN_BREAK[qmod.BreakType.TOKEN]))
                             query.add_node(qmod.BreakType.TOKEN, phrase.ptype)
-                    query.nodes[-1].btype = qmod.BreakType.WORD
+                    query.nodes[-1].btype = qmod.BreakType(breakchar)
+                    parts[-1].penalty = PENALTY_IN_TOKEN_BREAK[qmod.BreakType(breakchar)]
                 wordnr += 1
-            query.nodes[-1].btype = qmod.BreakType.PHRASE
 
             for word, wrange in yield_words(parts, phrase_start):
                 words[word].append(wrange)
@@ -272,7 +297,7 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
         """ Add tokens to query that are not saved in the database.
         """
         for part, node, i in zip(parts, query.nodes, range(1000)):
-            if len(part.token) <= 4 and part[0].isdigit()\
+            if len(part.token) <= 4 and part.token.isdigit()\
                and not node.has_tokens(i+1, qmod.TokenType.HOUSENUMBER):
                 query.add_token(qmod.TokenRange(i, i+1), qmod.TokenType.HOUSENUMBER,
                                 ICUToken(penalty=0.5, token=0,

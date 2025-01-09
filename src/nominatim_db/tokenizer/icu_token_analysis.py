@@ -25,6 +25,8 @@ class ICUTokenAnalysis:
 
     def __init__(self, norm_rules: str, trans_rules: str,
                  analysis_rules: Mapping[Optional[str], 'TokenAnalyzerRule']):
+        # additional break signs are not relevant during name analysis
+        norm_rules += ";[[:Space:][-:]]+ > ' ';"
         self.normalizer = Transliterator.createFromRules("icu_normalization",
                                                          norm_rules)
         trans_rules += ";[:Space:]+ > ' '"

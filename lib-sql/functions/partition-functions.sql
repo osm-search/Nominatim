@@ -17,28 +17,6 @@ CREATE TYPE nearfeaturecentr AS (
   centroid GEOMETRY
 );
 
--- feature intersects geometry
--- for areas and linestrings they must touch at least along a line
-CREATE OR REPLACE FUNCTION is_relevant_geometry(de9im TEXT, geom_type TEXT)
-RETURNS BOOLEAN
-AS $$
-BEGIN
-  IF substring(de9im from 1 for 2) != 'FF' THEN
-    RETURN TRUE;
-  END IF;
-
-  IF geom_type = 'ST_Point' THEN
-    RETURN substring(de9im from 4 for 1) = '0';
-  END IF;
-
-  IF geom_type in ('ST_LineString', 'ST_MultiLineString') THEN
-    RETURN substring(de9im from 4 for 1) = '1';
-  END IF;
-
-  RETURN substring(de9im from 4 for 1) = '2';
-END
-$$ LANGUAGE plpgsql IMMUTABLE;
-
 CREATE OR REPLACE function getNearFeatures(in_partition INTEGER, feature GEOMETRY,
                                            feature_centroid GEOMETRY,
                                            maxrank INTEGER)
@@ -59,7 +37,12 @@ BEGIN
              isguess, postcode, centroid
       FROM location_area_large_{{ partition }}
       WHERE geometry && feature
-        AND is_relevant_geometry(ST_Relate(geometry, feature), ST_GeometryType(feature))
+        AND CASE WHEN ST_Dimension(feature) = 0
+                     THEN _ST_Covers(geometry, feature)
+                 WHEN ST_Dimension(feature) = 2
+                     THEN ST_Relate(geometry, feature, 'T********')
+                 ELSE ST_NPoints(ST_Intersection(geometry, feature)) > 1
+            END
         AND rank_address < maxrank
             -- Postcodes currently still use rank_search to define for which
             -- features they are relevant.
@@ -142,14 +125,16 @@ BEGIN
 
   IF in_rank_search <= 4 and not in_estimate THEN
     INSERT INTO location_area_country (place_id, country_code, geometry)
-      values (in_place_id, in_country_code, in_geometry);
+      (SELECT in_place_id, in_country_code, geom
+       FROM split_geometry(in_geometry) as geom);
     RETURN TRUE;
   END IF;
 
 {% for partition in db.partitions %}
   IF in_partition = {{ partition }} THEN
     INSERT INTO location_area_large_{{ partition }} (partition, place_id, country_code, keywords, rank_search, rank_address, isguess, postcode, centroid, geometry)
-      values (in_partition, in_place_id, in_country_code, in_keywords, in_rank_search, in_rank_address, in_estimate, postcode, in_centroid, in_geometry);
+      (SELECT in_partition, in_place_id, in_country_code, in_keywords, in_rank_search, in_rank_address, in_estimate, postcode, in_centroid, geom
+       FROM split_geometry(in_geometry) as geom);
     RETURN TRUE;
   END IF;
 {% endfor %}

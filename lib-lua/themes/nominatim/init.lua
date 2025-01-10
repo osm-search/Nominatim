@@ -425,7 +425,7 @@ function Place:write_row(k, v)
     if self.geometry == nil then
         self.geometry = self.geom_func(self.object)
     end
-    if self.geometry:is_null() then
+    if self.geometry == nil or self.geometry:is_null() then
         return 0
     end
 
@@ -608,6 +608,9 @@ function module.process_way(object)
 
         if geom:is_null() then
             geom = o:as_linestring()
+            if geom:is_null() or geom:length() > 30 then
+                return nil
+            end
         end
 
         return geom

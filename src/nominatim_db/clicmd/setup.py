@@ -122,13 +122,16 @@ class SetupAll:
 
         LOG.warning('Post-process tables')
         with connect(args.config.get_libpq_dsn()) as conn:
+            conn.autocommit = True
             await database_import.create_search_indices(conn, args.config,
                                                         drop=args.no_updates,
                                                         threads=num_threads)
             LOG.warning('Create search index for default country names.')
+            conn.autocommit = False
             country_info.create_country_names(conn, tokenizer,
                                               args.config.get_str_list('LANGUAGES'))
             if args.no_updates:
+                conn.autocommit = True
                 freeze.drop_update_tables(conn)
         tokenizer.finalize_import(args.config)
 
@@ -183,6 +186,7 @@ class SetupAll:
         from ..tools import database_import, refresh
 
         with connect(config.get_libpq_dsn()) as conn:
+            conn.autocommit = True
             LOG.warning('Create functions (1st pass)')
             refresh.create_functions(conn, config, False, False)
             LOG.warning('Create tables')

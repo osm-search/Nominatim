@@ -23,14 +23,10 @@ def test_refresh_import_secondary_importance_non_existing(dsn):
 
 def test_refresh_import_secondary_importance_testdb(dsn, src_dir, temp_db_conn, temp_db_cursor):
     temp_db_cursor.execute('CREATE EXTENSION postgis')
+    temp_db_cursor.execute('CREATE EXTENSION postgis_raster')
+    assert refresh.import_secondary_importance(dsn, src_dir / 'test' / 'testdb') == 0
 
-    if postgis_version_tuple(temp_db_conn)[0] < 3:
-        assert refresh.import_secondary_importance(dsn, src_dir / 'test' / 'testdb') > 0
-    else:
-        temp_db_cursor.execute('CREATE EXTENSION postgis_raster')
-        assert refresh.import_secondary_importance(dsn, src_dir / 'test' / 'testdb') == 0
-
-        assert temp_db_cursor.table_exists('secondary_importance')
+    assert temp_db_cursor.table_exists('secondary_importance')
 
 
 @pytest.mark.parametrize("replace", (True, False))
@@ -41,8 +37,7 @@ def test_refresh_import_wikipedia(dsn, src_dir, table_factory, temp_db_cursor, r
     # use the small wikipedia file for the API testdb
     assert refresh.import_wikipedia_articles(dsn, src_dir / 'test' / 'testdb') == 0
 
-    assert temp_db_cursor.table_rows('wikipedia_article') > 0
-    assert temp_db_cursor.table_rows('wikipedia_redirect') > 0
+    assert temp_db_cursor.table_rows('wikimedia_importance') > 0
 
 
 def test_recompute_importance(placex_table, table_factory, temp_db_conn, temp_db_cursor):

@@ -111,14 +111,17 @@ Then you can install Nominatim with:
 
     pip install nominatim-db nominatim-api
 
-## Downloading and building Nominatim
+## Downloading and building Nominatim from source
 
-### Downloading the latest release
+The following instructions are only relevant, if you want to build and
+install Nominatim **from source**.
+
+### Downloading the source for the latest release
 
 You can download the [latest release from nominatim.org](https://nominatim.org/downloads/).
 The release contains all necessary files. Just unpack it.
 
-### Downloading the latest development version
+### Downloading the source for the latest development version
 
 If you want to install latest development version from github:
 
@@ -132,7 +135,7 @@ The development version does not include the country grid. Download it separatel
 wget -O Nominatim/data/country_osm_grid.sql.gz https://nominatim.org/data/country_grid.sql.gz
 ```
 
-### Building Nominatim
+### Building Nominatim from source
 
 Nominatim is easiest to run from its own virtual environment. To create one, run:
 

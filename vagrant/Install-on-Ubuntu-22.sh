@@ -25,7 +25,7 @@ export DEBIAN_FRONTEND=noninteractive #DOCS:
                         libbz2-dev libpq-dev liblua5.3-dev lua5.3 lua-dkjson \
                         nlohmann-json3-dev postgresql-14-postgis-3 \
                         postgresql-contrib-14 postgresql-14-postgis-3-scripts \
-                        libicu-dev virtualenv git
+                        libicu-dev virtualenv
 
 #
 # System Configuration
@@ -97,23 +97,6 @@ fi                                    #DOCS:
 # Building and Configuration
 # --------------------------
 #
-# Get the source code from Github and change into the source directory
-#
-if [ "x$1" == "xyes" ]; then  #DOCS:    :::sh
-    cd $USERHOME
-    git clone https://github.com/osm-search/Nominatim.git
-    cd Nominatim
-else                               #DOCS:
-    cd $USERHOME/Nominatim         #DOCS:
-fi                                 #DOCS:
-
-# When installing the latest source from github, you also need to
-# download the country grid:
-
-if [ ! -f data/country_osm_grid.sql.gz ]; then       #DOCS:    :::sh
-    wget -O data/country_osm_grid.sql.gz https://nominatim.org/data/country_grid.sql.gz
-fi                                 #DOCS:
-
 # Nominatim needs osm2pgsql >= 1.8. The version that comes with Ubuntu is
 # too old. Download and compile your own:
 
@@ -124,7 +107,6 @@ fi                                 #DOCS:
     cmake ../osm2pgsql
     make
     sudo make install
-    cd $USERHOME/Nominatim
 
 # Nominatim should be installed in a separate Python virtual environment.
 # Create the virtual environment:
@@ -137,8 +119,7 @@ fi                                 #DOCS:
 
 # Now install Nominatim using pip:
 
-    cd $USERHOME/Nominatim
-    $USERHOME/nominatim-venv/bin/pip install packaging/nominatim-db
+    $USERHOME/nominatim-venv/bin/pip install nominatim-db
 
 # Nominatim is now ready to use. You can continue with
 # [importing a database from OSM data](../admin/Import.md). If you want to set up
@@ -154,9 +135,7 @@ fi                                 #DOCS:
 # To install all packages, run:
 
 #DOCS:```sh
-$USERHOME/nominatim-venv/bin/pip install falcon uvicorn gunicorn
-cd $USERHOME/Nominatim
-$USERHOME/nominatim-venv/bin/pip install packaging/nominatim-api
+$USERHOME/nominatim-venv/bin/pip install falcon uvicorn gunicorn nominatim-api
 #DOCS:```
 
 

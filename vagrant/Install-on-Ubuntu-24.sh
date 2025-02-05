@@ -21,7 +21,7 @@ export DEBIAN_FRONTEND=noninteractive #DOCS:
 # Now you can install all packages needed for Nominatim:
 
     sudo apt-get install -y osm2pgsql postgresql-postgis postgresql-postgis-scripts \
-                            pkg-config libicu-dev virtualenv git
+                            pkg-config libicu-dev virtualenv
 
 
 #
@@ -94,23 +94,6 @@ fi                                    #DOCS:
 # Building and Configuration
 # --------------------------
 #
-# Get the source code from Github and change into the source directory
-#
-if [ "x$1" == "xyes" ]; then  #DOCS:    :::sh
-    cd $USERHOME
-    git clone https://github.com/osm-search/Nominatim.git
-    cd Nominatim
-else                               #DOCS:
-    cd $USERHOME/Nominatim         #DOCS:
-fi                                 #DOCS:
-
-# When installing the latest source from github, you also need to
-# download the country grid:
-
-if [ ! -f data/country_osm_grid.sql.gz ]; then       #DOCS:    :::sh
-    wget -O data/country_osm_grid.sql.gz https://nominatim.org/data/country_grid.sql.gz
-fi                                 #DOCS:
-
 # Nominatim should be installed in a separate Python virtual environment.
 # Create the virtual environment:
 
@@ -122,8 +105,7 @@ fi                                 #DOCS:
 
 # Now install Nominatim using pip:
 
-    cd $USERHOME/Nominatim
-    $USERHOME/nominatim-venv/bin/pip install packaging/nominatim-db
+    $USERHOME/nominatim-venv/bin/pip install nominatim-db
 
 # Nominatim is now ready to use. The nominatim binary is available at
 # `$USERHOME/venv/bin/nominatim`. If you want to have 'nominatim' in your
@@ -147,9 +129,7 @@ fi                                 #DOCS:
 # To install all packages, run:
 
 #DOCS:```sh
-$USERHOME/nominatim-venv/bin/pip install falcon uvicorn gunicorn
-cd $USERHOME/Nominatim
-$USERHOME/nominatim-venv/bin/pip install packaging/nominatim-api
+$USERHOME/nominatim-venv/bin/pip install falcon uvicorn gunicorn nominatim-api
 #DOCS:```
 
 # Next you need to create a systemd job that runs Nominatim on gunicorn.

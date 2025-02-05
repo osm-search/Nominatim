@@ -87,7 +87,6 @@ Checklist for releases:
 * [ ] increase versions in
   * `src/nominatim_api/version.py`
   * `src/nominatim_db/version.py`
-  * CMakeLists.txt
 * [ ] update `ChangeLog` (copy information from patch releases from release branch)
 * [ ] complete `docs/admin/Migration.md`
 * [ ] update EOL dates in `SECURITY.md`

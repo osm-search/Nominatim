@@ -55,7 +55,7 @@ def parse_version(version: str) -> NominatimVersion:
     return NominatimVersion(*[int(x) for x in parts[:2] + parts[2].split('-')])
 
 
-NOMINATIM_VERSION = parse_version('4.5.0-0')
+NOMINATIM_VERSION = parse_version('5.0.0-0')
 
 POSTGRESQL_REQUIRED_VERSION = (12, 0)
 POSTGIS_REQUIRED_VERSION = (3, 0)

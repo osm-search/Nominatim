@@ -1,3 +1,28 @@
+5.0.0
+ * increase required versions for PostgreSQL (12+), PostGIS (3.0+)
+ * remove installation via cmake and debundle osm2pgsql
+ * remove deprecated PHP frontend
+ * remove deprecated legacy tokenizer
+ * add configurable pre-processing of queries
+ * add query pre-processor to split up Japanese addresses
+ * rewrite of osm2pgsql style implementation
+   (also adds support for osm2pgsql-themepark)
+ * reduce the number of SQL queries needed to complete a 'lookup' call
+ * improve computation of centroid for lines with only two points
+ * improve bbox output for postcode areas
+ * improve result order by returning the largest object when other things are
+   equal
+ * add fallback for reverse geocoding to default country tables
+ * exclude postcode areas from reverse geocoding
+ * disable search endpoint when database is reverse-only (regression)
+ * minor performance improvements to area split algorithm
+ * switch table and index creation to use autocommit mode to avoid deadlocks
+ * drop overly long ways during import
+ * restrict automatic migrations to versions 4.3+
+ * switch linting from pylint to flake8
+ * switch tests to use a wikimedia test file in the new CSV style
+ * various fixes and improvements to documentation
+
 4.5.0
  * allow building Nominatim as a pip package
  * make osm2pgsql building optional

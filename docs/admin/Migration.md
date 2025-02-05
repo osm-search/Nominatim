@@ -9,19 +9,15 @@ the following steps:
 * Update the frontend: `pip install -U nominatim-api`
 * (optionally) Restart updates
 
-If you are still using CMake for the installation of Nominatim, then you
-need to update the software in one step before migrating the database.
-It is not recommended to do this while the machine is serving requests.
-
 Below you find additional migrations and hints about other structural and
 breaking changes. **Please read them before running the migration.**
 
 !!! note
     If you are migrating from a version <4.3, you need to install 4.3
-    first and migrate to 4.3 first. Then you can migrate to the current
+    and migrate to 4.3 first. Then you can migrate to the current
     version. It is strongly recommended to do a reimport instead.
 
-## 4.5.0 -> master
+## 4.5.0 -> 5.0.0
 
 ### PHP frontend removed
 
@@ -32,6 +28,42 @@ Without the PHP code, the `nominatim refresh --website` command is no longer
 needed. It currently omits a warning and does otherwise nothing. It will be
 removed in later versions of Nominatim. So make sure you remove it from your
 scripts.
+
+### CMake building removed
+
+Nominatim can now only be installed via pip. Please follow the installation
+instructions for the current version to change to pip.
+
+### osm2pgsql no longer vendored in
+
+Nominatim no longer ships its own version of osm2pgsql. Please install a
+stock version of osm2pgsql from your distribution. See the
+[installation instruction for osm2pgsql](https://osm2pgsql.org/doc/install.html)
+for details. A minimum version of 1.8 is required. The current stable versions
+of Ubuntu and Debian already ship with an appropriate versions. For older
+installation, you may have to compile a newer osm2pgsql yourself.
+
+### Legacy tokenizer removed
+
+The `legacy` tokenizer is no longer enabled. This tokenizer has been superseded
+by the `ICU` tokenizer a long time ago. In the unlikely case that your database
+still uses the `legacy` tokenizer, you must reimport your database.
+
+### osm2pgsql style overhauled
+
+There are some fundamental changes to how customized osm2pgsql styles should
+be written. The changes are mostly backwards compatible, i.e. custom styles
+should still work with the new implementation. The only exception is a
+customization of the `process_tags()` function. This function is no longer
+considered public and neither are the helper functions used in it.
+They currently still work but will be removed at some point. If you have
+been making changes to `process_tags`, please review your style and try
+to switch to the new convenience functions.
+
+For more information on the changes, see the
+[pull request](https://github.com/osm-search/Nominatim/pull/3615)
+and read the new
+[customization documentation](https://nominatim.org/release-docs/latest/customize/Import-Styles/).
 
 ## 4.4.0 -> 4.5.0
 

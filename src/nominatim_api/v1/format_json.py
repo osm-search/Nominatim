@@ -249,6 +249,9 @@ def format_base_geocodejson(results: Union[ReverseResults, SearchResults],
                         out.keyval(f"level{line.admin_level}", line.local_name)
             out.end_object().next()
 
+        if options.get('extratags', False):
+            out.keyval('extra', result.extratags)
+
         out.end_object().next().end_object().next()
 
         out.key('geometry').raw(result.geometry.get('geojson')

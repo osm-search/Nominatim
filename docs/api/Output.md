@@ -106,8 +106,11 @@ The following feature attributes are implemented:
  * `name` - localised name of the place
  * `housenumber`, `street`, `locality`, `district`, `postcode`, `city`,
    `county`, `state`, `country` -
-   provided when it can be determined from the address
+   provided when it can be determined from the address (only with `addressdetails=1`)
  * `admin` - list of localised names of administrative boundaries (only with `addressdetails=1`)
+ * `extra` - dictionary with additional useful tags like `website` or `maxspeed`
+   (only with `extratags=1`)
+
 
 Use `polygon_geojson` to output the full geometry of the object instead
 of the centroid.

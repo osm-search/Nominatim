@@ -37,10 +37,10 @@ jobs:
         needs: create-archive
         strategy:
             matrix:
-                flavour: ["ubuntu-20", "ubuntu-24"]
+                flavour: ["ubuntu-22", "ubuntu-24"]
                 include:
-                    - flavour: ubuntu-20
-                      ubuntu: 20
+                    - flavour: ubuntu-22
+                      ubuntu: 22
                       postgresql: 12
                       lua: '5.1'
                       dependencies: pip
@@ -81,7 +81,7 @@ jobs:
                   sudo make install
                   cd ../..
                   rm -rf osm2pgsql-build
-              if: matrix.ubuntu == '20'
+              if: matrix.ubuntu == '22'
               env:
                   LUA_VERSION: ${{ matrix.lua }}
 

@@ -19,7 +19,6 @@ dependencies = [
     "python-dotenv",
     "jinja2",
     "pyYAML>=5.1",
-    "datrie",
     "psutil",
     "PyICU"
 ]

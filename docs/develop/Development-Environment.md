@@ -70,7 +70,7 @@ To set up the virtual environment with all necessary packages run:
 virtualenv ~/nominatim-dev-venv
 ~/nominatim-dev-venv/bin/pip install\
     psutil psycopg[binary] PyICU SQLAlchemy \
-    python-dotenv jinja2 pyYAML datrie behave \
+    python-dotenv jinja2 pyYAML behave \
     mkdocs mkdocstrings mkdocs-gen-files pytest pytest-asyncio flake8 \
     types-jinja2 types-markupsafe types-psutil types-psycopg2 \
     types-pygments types-pyyaml types-requests types-ujson \

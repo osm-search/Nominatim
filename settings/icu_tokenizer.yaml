@@ -46,7 +46,7 @@ sanitizers:
     - step: strip-brace-terms
     - step: tag-analyzer-by-language
       filter-kind: [".*name.*"]
-      whitelist: [bg,ca,cs,da,de,el,en,es,et,eu,fi,fr,gl,hu,it,ja,mg,ms,nl,no,pl,pt,ro,ru,sk,sl,sv,tr,uk,vi]
+      whitelist: [bg,ca,cs,da,de,el,en,es,et,eu,fi,fr,gl,hu,it,ja,mg,ms,nl,"no",pl,pt,ro,ru,sk,sl,sv,tr,uk,vi]
       use-defaults: all
       mode: append
     - step: tag-japanese
@@ -158,7 +158,7 @@ token-analysis:
       mode: variant-only
       variants:
           - !include icu-rules/variants-nl.yaml
-    - id: no
+    - id: "no"
       analyzer: generic
       mode: variant-only
       variants:
@@ -183,9 +183,6 @@ token-analysis:
       mode: variant-only
       variants:
           - !include icu-rules/variants-ru.yaml
-      mutations:
-          - pattern: ё
-            replacements: ["ё", "е"]
     - id: sk
       analyzer: generic
       mode: variant-only

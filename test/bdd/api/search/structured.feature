@@ -67,3 +67,13 @@ Feature: Structured search queries
         Then result addresses contain
           | town |
           | Vaduz |
+
+    #3651
+    Scenario: Structured search with surrounding extra characters
+        When sending xml search query "" with address
+          | street             | city  | postalcode |
+          | "19 Am schrägen Weg" | "Vaduz" | "9491"  |
+        Then result addresses contain
+          | house_number | road |
+          | 19           | Am Schrägen Weg |
+

@@ -244,7 +244,7 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
             standardized form search will work with. All information removed
             at this stage is inevitably lost.
         """
-        return cast(str, self.normalizer.transliterate(text))
+        return cast(str, self.normalizer.transliterate(text)).strip('-: ')
 
     def split_query(self, query: qmod.QueryStruct) -> Tuple[QueryParts, WordDict]:
         """ Transliterate the phrases and split them into tokens.

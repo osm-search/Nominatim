@@ -27,5 +27,5 @@ def create(config: QueryConfig) -> QueryProcessingFunc:
 
     return lambda phrases: list(
         filter(lambda p: p.text,
-               (Phrase(p.ptype, cast(str, normalizer.transliterate(p.text)))
+               (Phrase(p.ptype, cast(str, normalizer.transliterate(p.text)).strip('-: '))
                 for p in phrases)))

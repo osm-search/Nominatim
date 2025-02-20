@@ -67,19 +67,20 @@ QueryParts = List[QueryPart]
 WordDict = Dict[str, List[qmod.TokenRange]]
 
 
-def yield_words(terms: List[QueryPart], start: int) -> Iterator[Tuple[str, qmod.TokenRange]]:
-    """ Return all combinations of words in the terms list after the
-        given position.
+def extract_words(terms: List[QueryPart], start: int,  words: WordDict) -> None:
+    """ Add all combinations of words in the terms list after the
+        given position to the word list.
     """
     total = len(terms)
+    base_penalty = PENALTY_IN_TOKEN_BREAK[qmod.BreakType.WORD]
     for first in range(start, total):
         word = terms[first].token
-        penalty = PENALTY_IN_TOKEN_BREAK[qmod.BreakType.WORD]
-        yield word, qmod.TokenRange(first, first + 1, penalty=penalty)
+        penalty = base_penalty
+        words[word].append(qmod.TokenRange(first, first + 1, penalty=penalty))
         for last in range(first + 1, min(first + 20, total)):
             word = ' '.join((word, terms[last].token))
             penalty += terms[last - 1].penalty
-            yield word, qmod.TokenRange(first, last + 1, penalty=penalty)
+            words[word].append(qmod.TokenRange(first, last + 1, penalty=penalty))
 
 
 @dataclasses.dataclass
@@ -256,7 +257,7 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
         """
         parts: QueryParts = []
         phrase_start = 0
-        words = defaultdict(list)
+        words: WordDict = defaultdict(list)
         for phrase in query.source:
             query.nodes[-1].ptype = phrase.ptype
             phrase_split = re.split('([ :-])', phrase.text)
@@ -277,8 +278,7 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
                     query.nodes[-1].btype = qmod.BreakType(breakchar)
                     parts[-1].penalty = PENALTY_IN_TOKEN_BREAK[qmod.BreakType(breakchar)]
 
-            for word, wrange in yield_words(parts, phrase_start):
-                words[word].append(wrange)
+            extract_words(parts, phrase_start, words)
 
             phrase_start = len(parts)
         query.nodes[-1].btype = qmod.BreakType.END

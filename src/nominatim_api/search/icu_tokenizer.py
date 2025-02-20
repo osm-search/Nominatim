@@ -50,15 +50,16 @@ PENALTY_IN_TOKEN_BREAK = {
 @dataclasses.dataclass
 class QueryPart:
     """ Normalized and transliterated form of a single term in the query.
+
         When the term came out of a split during the transliteration,
         the normalized string is the full word before transliteration.
-        The word number keeps track of the word before transliteration
-        and can be used to identify partial transliterated terms.
+        Check the subsequent break type to figure out if the word is
+        continued.
+
         Penalty is the break penalty for the break following the token.
     """
     token: str
     normalized: str
-    word_number: int
     penalty: float
 
 
@@ -256,7 +257,6 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
         parts: QueryParts = []
         phrase_start = 0
         words = defaultdict(list)
-        wordnr = 0
         for phrase in query.source:
             query.nodes[-1].ptype = phrase.ptype
             phrase_split = re.split('([ :-])', phrase.text)
@@ -271,12 +271,11 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
                 if trans:
                     for term in trans.split(' '):
                         if term:
-                            parts.append(QueryPart(term, word, wordnr,
+                            parts.append(QueryPart(term, word,
                                                    PENALTY_IN_TOKEN_BREAK[qmod.BreakType.TOKEN]))
                             query.add_node(qmod.BreakType.TOKEN, phrase.ptype)
                     query.nodes[-1].btype = qmod.BreakType(breakchar)
                     parts[-1].penalty = PENALTY_IN_TOKEN_BREAK[qmod.BreakType(breakchar)]
-                wordnr += 1
 
             for word, wrange in yield_words(parts, phrase_start):
                 words[word].append(wrange)
@@ -323,7 +322,7 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
             elif tlist.ttype not in (qmod.TokenType.COUNTRY, qmod.TokenType.PARTIAL):
                 norm = parts[i].normalized
                 for j in range(i + 1, tlist.end):
-                    if parts[j - 1].word_number != parts[j].word_number:
+                    if node.btype != qmod.BreakType.TOKEN:
                         norm += '  ' + parts[j].normalized
                 for token in tlist.tokens:
                     cast(ICUToken, token).rematch(norm)

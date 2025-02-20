@@ -148,7 +148,6 @@ class SearchBuilder:
                                                  [t.token for r in address
                                                   for t in self.query.get_partials_list(r)],
                                                  lookups.Restrict)]
-                penalty += 0.2
             yield dbs.PostcodeSearch(penalty, sdata)
 
     def build_housenumber_search(self, sdata: dbf.SearchData, hnrs: List[Token],

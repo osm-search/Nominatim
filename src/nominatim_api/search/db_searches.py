@@ -581,9 +581,13 @@ class PostcodeSearch(AbstractSearch):
                      .where((tsearch.c.name_vector + tsearch.c.nameaddress_vector)
                             .contains(sa.type_coerce(self.lookups[0].tokens,
                                                      IntArray)))
+            # Do NOT add rerank penalties based on the address terms.
+            # The standard rerank penalty only checks the address vector
+            # while terms may appear in name and address vector. This would
+            # lead to overly high penalties.
+            # We assume that a postcode is precise enough to not require
+            # additional full name matches.
 
-        for ranking in self.rankings:
-            penalty += ranking.sql_penalty(conn.t.search_name)
         penalty += sa.case(*((t.c.postcode == v, p) for v, p in self.postcodes),
                            else_=1.0)
 

@@ -60,13 +60,19 @@ The order of phrases matters to Nominatim when doing further processing.
 Thus, while you may split or join phrases, you should not reorder them
 unless you really know what you are doing.
 
-Phrase types (`nominatim_api.search.PhraseType`) can further help narrowing
-down how the tokens in the phrase are interpreted. The following phrase types
-are known:
+Phrase types can further help narrowing down how the tokens in the phrase
+are interpreted. The following phrase types are known:
 
-::: nominatim_api.search.PhraseType
-    options:
-        heading_level: 6
+| Name           | Description |
+|----------------|-------------|
+| PHRASE_ANY     | No specific designation (i.e. source is free-form query) |
+| PHRASE_AMENITY | Contains name or type of a POI |
+| PHRASE_STREET  | Contains a street name optionally with a housenumber |
+| PHRASE_CITY    | Contains the postal city |
+| PHRASE_COUNTY  | Contains the equivalent of a county |
+| PHRASE_STATE   | Contains a state or province |
+| PHRASE_POSTCODE| Contains a postal code |
+| PHRASE_COUNTRY | Contains the country name or code |
 
 
 ## Custom sanitizer modules

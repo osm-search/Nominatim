@@ -9,7 +9,7 @@ Tests for creating abstract searches from token assignments.
 """
 import pytest
 
-from nominatim_api.search.query import Token, TokenRange, PhraseType, QueryStruct, Phrase
+from nominatim_api.search.query import Token, TokenRange, QueryStruct, Phrase
 import nominatim_api.search.query as qmod
 from nominatim_api.search.db_search_builder import SearchBuilder
 from nominatim_api.search.token_assignment import TokenAssignment
@@ -22,11 +22,11 @@ class MyToken(Token):
 
 
 def make_query(*args):
-    q = QueryStruct([Phrase(PhraseType.NONE, '')])
+    q = QueryStruct([Phrase(qmod.PHRASE_ANY, '')])
 
     for _ in range(max(inner[0] for tlist in args for inner in tlist)):
-        q.add_node(qmod.BREAK_WORD, PhraseType.NONE)
-    q.add_node(qmod.BREAK_END, PhraseType.NONE)
+        q.add_node(qmod.BREAK_WORD, qmod.PHRASE_ANY)
+    q.add_node(qmod.BREAK_END, qmod.PHRASE_ANY)
 
     for start, tlist in enumerate(args):
         for end, ttype, tinfo in tlist:
@@ -392,10 +392,10 @@ def test_name_only_search_with_countries():
 
 def make_counted_searches(name_part, name_full, address_part, address_full,
                           num_address_parts=1):
-    q = QueryStruct([Phrase(PhraseType.NONE, '')])
+    q = QueryStruct([Phrase(qmod.PHRASE_ANY, '')])
     for i in range(1 + num_address_parts):
-        q.add_node(qmod.BREAK_WORD, PhraseType.NONE)
-    q.add_node(qmod.BREAK_END, PhraseType.NONE)
+        q.add_node(qmod.BREAK_WORD, qmod.PHRASE_ANY)
+    q.add_node(qmod.BREAK_END, qmod.PHRASE_ANY)
 
     q.add_token(TokenRange(0, 1), qmod.TOKEN_PARTIAL,
                 MyToken(0.5, 1, name_part, 1, 'name_part'))

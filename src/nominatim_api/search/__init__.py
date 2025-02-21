@@ -9,5 +9,12 @@ Module for forward search.
 """
 from .geocoder import (ForwardGeocoder as ForwardGeocoder)
 from .query import (Phrase as Phrase,
-                    PhraseType as PhraseType)
+                    PHRASE_ANY as PHRASE_ANY,
+                    PHRASE_AMENITY as PHRASE_AMENITY,
+                    PHRASE_STREET as PHRASE_STREET,
+                    PHRASE_CITY as PHRASE_CITY,
+                    PHRASE_COUNTY as PHRASE_COUNTY,
+                    PHRASE_STATE as PHRASE_STATE,
+                    PHRASE_POSTCODE as PHRASE_POSTCODE,
+                    PHRASE_COUNTRY as PHRASE_COUNTRY)
 from .query_analyzer_factory import (make_query_analyzer as make_query_analyzer)

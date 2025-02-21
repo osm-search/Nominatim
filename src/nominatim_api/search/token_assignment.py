@@ -293,7 +293,7 @@ class _TokenSequence:
         #  * the containing phrase is strictly typed
         if (base.housenumber and first.end < base.housenumber.start)\
            or (base.qualifier and base.qualifier > first)\
-           or (query.nodes[first.start].ptype != qmod.PhraseType.NONE):
+           or (query.nodes[first.start].ptype != qmod.PHRASE_ANY):
             return
 
         penalty = self.penalty
@@ -329,7 +329,7 @@ class _TokenSequence:
         #  * the containing phrase is strictly typed
         if (base.housenumber and last.start > base.housenumber.end)\
            or (base.qualifier and base.qualifier < last)\
-           or (query.nodes[last.start].ptype != qmod.PhraseType.NONE):
+           or (query.nodes[last.start].ptype != qmod.PHRASE_ANY):
             return
 
         penalty = self.penalty
@@ -393,7 +393,7 @@ def yield_token_assignments(query: qmod.QueryStruct) -> Iterator[TokenAssignment
         another. It does not include penalties for transitions within a
         type.
     """
-    todo = [_TokenSequence([], direction=0 if query.source[0].ptype == qmod.PhraseType.NONE else 1)]
+    todo = [_TokenSequence([], direction=0 if query.source[0].ptype == qmod.PHRASE_ANY else 1)]
 
     while todo:
         state = todo.pop()

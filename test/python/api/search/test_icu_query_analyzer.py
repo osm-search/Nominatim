@@ -11,7 +11,7 @@ import pytest
 import pytest_asyncio
 
 from nominatim_api import NominatimAPIAsync
-from nominatim_api.search.query import Phrase, PhraseType
+from nominatim_api.search.query import Phrase
 import nominatim_api.search.query as qmod
 import nominatim_api.search.icu_tokenizer as tok
 from nominatim_api.logging import set_log_output, get_and_disable
@@ -26,7 +26,7 @@ async def add_word(conn, word_id, word_token, wtype, word, info = None):
 
 
 def make_phrase(query):
-    return [Phrase(PhraseType.NONE, s) for s in query.split(',')]
+    return [Phrase(qmod.PHRASE_ANY, s) for s in query.split(',')]
 
 @pytest_asyncio.fixture
 async def conn(table_factory):
@@ -63,7 +63,7 @@ async def test_single_phrase_with_unknown_terms(conn):
     query = await ana.analyze_query(make_phrase('foo BAR'))
 
     assert len(query.source) == 1
-    assert query.source[0].ptype == PhraseType.NONE
+    assert query.source[0].ptype == qmod.PHRASE_ANY
     assert query.source[0].text == 'foo bar'
 
     assert query.num_token_slots() == 2

@@ -10,7 +10,6 @@ Datastructures for a tokenized query.
 from typing import List, Tuple, Optional, Iterator
 from abc import ABC, abstractmethod
 import dataclasses
-import enum
 
 
 BreakType = str
@@ -57,44 +56,45 @@ TOKEN_NEAR_ITEM = 'N'
 """ Special term used as searchable object(e.g. supermarket in ...). """
 
 
-class PhraseType(enum.Enum):
-    """ Designation of a phrase.
+PhraseType = int
+""" Designation of a phrase.
+"""
+PHRASE_ANY = 0
+""" No specific designation (i.e. source is free-form query). """
+PHRASE_AMENITY = 1
+""" Contains name or type of a POI. """
+PHRASE_STREET = 2
+""" Contains a street name optionally with a housenumber. """
+PHRASE_CITY = 3
+""" Contains the postal city. """
+PHRASE_COUNTY = 4
+""" Contains the equivalent of a county. """
+PHRASE_STATE = 5
+""" Contains a state or province. """
+PHRASE_POSTCODE = 6
+""" Contains a postal code. """
+PHRASE_COUNTRY = 7
+""" Contains the country name or code. """
+
+
+def _phrase_compatible_with(ptype: PhraseType, ttype: TokenType,
+                            is_full_phrase: bool) -> bool:
+    """ Check if the given token type can be used with the phrase type.
     """
-    NONE = 0
-    """ No specific designation (i.e. source is free-form query). """
-    AMENITY = enum.auto()
-    """ Contains name or type of a POI. """
-    STREET = enum.auto()
-    """ Contains a street name optionally with a housenumber. """
-    CITY = enum.auto()
-    """ Contains the postal city. """
-    COUNTY = enum.auto()
-    """ Contains the equivalent of a county. """
-    STATE = enum.auto()
-    """ Contains a state or province. """
-    POSTCODE = enum.auto()
-    """ Contains a postal code. """
-    COUNTRY = enum.auto()
-    """ Contains the country name or code. """
+    if ptype == PHRASE_ANY:
+        return not is_full_phrase or ttype != TOKEN_QUALIFIER
+    if ptype == PHRASE_AMENITY:
+        return ttype in (TOKEN_WORD, TOKEN_PARTIAL)\
+               or (is_full_phrase and ttype == TOKEN_NEAR_ITEM)\
+               or (not is_full_phrase and ttype == TOKEN_QUALIFIER)
+    if ptype == PHRASE_STREET:
+        return ttype in (TOKEN_WORD, TOKEN_PARTIAL, TOKEN_HOUSENUMBER)
+    if ptype == PHRASE_POSTCODE:
+        return ttype == TOKEN_POSTCODE
+    if ptype == PHRASE_COUNTRY:
+        return ttype == TOKEN_COUNTRY
 
-    def compatible_with(self, ttype: TokenType,
-                        is_full_phrase: bool) -> bool:
-        """ Check if the given token type can be used with the phrase type.
-        """
-        if self == PhraseType.NONE:
-            return not is_full_phrase or ttype != TOKEN_QUALIFIER
-        if self == PhraseType.AMENITY:
-            return ttype in (TOKEN_WORD, TOKEN_PARTIAL)\
-                   or (is_full_phrase and ttype == TOKEN_NEAR_ITEM)\
-                   or (not is_full_phrase and ttype == TOKEN_QUALIFIER)
-        if self == PhraseType.STREET:
-            return ttype in (TOKEN_WORD, TOKEN_PARTIAL, TOKEN_HOUSENUMBER)
-        if self == PhraseType.POSTCODE:
-            return ttype == TOKEN_POSTCODE
-        if self == PhraseType.COUNTRY:
-            return ttype == TOKEN_COUNTRY
-
-        return ttype in (TOKEN_WORD, TOKEN_PARTIAL)
+    return ttype in (TOKEN_WORD, TOKEN_PARTIAL)
 
 
 @dataclasses.dataclass
@@ -218,7 +218,7 @@ class QueryStruct:
     def __init__(self, source: List[Phrase]) -> None:
         self.source = source
         self.nodes: List[QueryNode] = \
-            [QueryNode(BREAK_START, source[0].ptype if source else PhraseType.NONE)]
+            [QueryNode(BREAK_START, source[0].ptype if source else PHRASE_ANY)]
 
     def num_token_slots(self) -> int:
         """ Return the length of the query in vertice steps.
@@ -245,7 +245,7 @@ class QueryStruct:
         snode = self.nodes[trange.start]
         full_phrase = snode.btype in (BREAK_START, BREAK_PHRASE)\
             and self.nodes[trange.end].btype in (BREAK_PHRASE, BREAK_END)
-        if snode.ptype.compatible_with(ttype, full_phrase):
+        if _phrase_compatible_with(snode.ptype, ttype, full_phrase):
             tlist = snode.get_tokens(trange.end, ttype)
             if tlist is None:
                 snode.starting.append(TokenList(trange.end, ttype, [token]))

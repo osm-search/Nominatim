@@ -22,30 +22,30 @@ def mktoken(tid: int):
                    lookup_word='foo')
 
 
-@pytest.mark.parametrize('ptype,ttype', [('NONE', 'W'),
-                                         ('AMENITY', 'Q'),
-                                         ('STREET', 'w'),
-                                         ('CITY', 'W'),
-                                         ('COUNTRY', 'C'),
-                                         ('POSTCODE', 'P')])
+@pytest.mark.parametrize('ptype,ttype', [(query.PHRASE_ANY, 'W'),
+                                         (query.PHRASE_AMENITY, 'Q'),
+                                         (query.PHRASE_STREET, 'w'),
+                                         (query.PHRASE_CITY, 'W'),
+                                         (query.PHRASE_COUNTRY, 'C'),
+                                         (query.PHRASE_POSTCODE, 'P')])
 def test_phrase_compatible(ptype, ttype):
-    assert query.PhraseType[ptype].compatible_with(ttype, False)
+    assert query._phrase_compatible_with(ptype, ttype, False)
 
 
-@pytest.mark.parametrize('ptype', ['COUNTRY', 'POSTCODE'])
+@pytest.mark.parametrize('ptype', [query.PHRASE_COUNTRY, query.PHRASE_POSTCODE])
 def test_phrase_incompatible(ptype):
-    assert not query.PhraseType[ptype].compatible_with(query.TOKEN_PARTIAL, True)
+    assert not query._phrase_compatible_with(ptype, query.TOKEN_PARTIAL, True)
 
 
 def test_query_node_empty():
-    qn = query.QueryNode(query.BREAK_PHRASE, query.PhraseType.NONE)
+    qn = query.QueryNode(query.BREAK_PHRASE, query.PHRASE_ANY)
 
     assert not qn.has_tokens(3, query.TOKEN_PARTIAL)
     assert qn.get_tokens(3, query.TOKEN_WORD) is None
 
 
 def test_query_node_with_content():
-    qn = query.QueryNode(query.BREAK_PHRASE, query.PhraseType.NONE)
+    qn = query.QueryNode(query.BREAK_PHRASE, query.PHRASE_ANY)
     qn.starting.append(query.TokenList(2, query.TOKEN_PARTIAL, [mktoken(100), mktoken(101)]))
     qn.starting.append(query.TokenList(2, query.TOKEN_WORD, [mktoken(1000)]))
 
@@ -67,9 +67,9 @@ def test_query_struct_empty():
 
 
 def test_query_struct_with_tokens():
-    q = query.QueryStruct([query.Phrase(query.PhraseType.NONE, 'foo bar')])
-    q.add_node(query.BREAK_WORD, query.PhraseType.NONE)
-    q.add_node(query.BREAK_END, query.PhraseType.NONE)
+    q = query.QueryStruct([query.Phrase(query.PHRASE_ANY, 'foo bar')])
+    q.add_node(query.BREAK_WORD, query.PHRASE_ANY)
+    q.add_node(query.BREAK_END, query.PHRASE_ANY)
 
     assert q.num_token_slots() == 2
 
@@ -91,9 +91,9 @@ def test_query_struct_with_tokens():
 
 
 def test_query_struct_incompatible_token():
-    q = query.QueryStruct([query.Phrase(query.PhraseType.COUNTRY, 'foo bar')])
-    q.add_node(query.BREAK_WORD, query.PhraseType.COUNTRY)
-    q.add_node(query.BREAK_END, query.PhraseType.NONE)
+    q = query.QueryStruct([query.Phrase(query.PHRASE_COUNTRY, 'foo bar')])
+    q.add_node(query.BREAK_WORD, query.PHRASE_COUNTRY)
+    q.add_node(query.BREAK_END, query.PHRASE_ANY)
 
     q.add_token(query.TokenRange(0, 1), query.TOKEN_PARTIAL, mktoken(1))
     q.add_token(query.TokenRange(1, 2), query.TOKEN_COUNTRY, mktoken(100))
@@ -103,8 +103,8 @@ def test_query_struct_incompatible_token():
 
 
 def test_query_struct_amenity_single_word():
-    q = query.QueryStruct([query.Phrase(query.PhraseType.AMENITY, 'bar')])
-    q.add_node(query.BREAK_END, query.PhraseType.NONE)
+    q = query.QueryStruct([query.Phrase(query.PHRASE_AMENITY, 'bar')])
+    q.add_node(query.BREAK_END, query.PHRASE_ANY)
 
     q.add_token(query.TokenRange(0, 1), query.TOKEN_PARTIAL, mktoken(1))
     q.add_token(query.TokenRange(0, 1), query.TOKEN_NEAR_ITEM, mktoken(2))
@@ -116,9 +116,9 @@ def test_query_struct_amenity_single_word():
 
 
 def test_query_struct_amenity_two_words():
-    q = query.QueryStruct([query.Phrase(query.PhraseType.AMENITY, 'foo bar')])
-    q.add_node(query.BREAK_WORD, query.PhraseType.AMENITY)
-    q.add_node(query.BREAK_END, query.PhraseType.NONE)
+    q = query.QueryStruct([query.Phrase(query.PHRASE_AMENITY, 'foo bar')])
+    q.add_node(query.BREAK_WORD, query.PHRASE_AMENITY)
+    q.add_node(query.BREAK_END, query.PHRASE_ANY)
 
     for trange in [(0, 1), (1, 2)]:
         q.add_token(query.TokenRange(*trange), query.TOKEN_PARTIAL, mktoken(1))

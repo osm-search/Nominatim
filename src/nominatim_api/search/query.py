@@ -38,23 +38,23 @@ BREAK_TOKEN = '`'
 """
 
 
-class TokenType(enum.Enum):
-    """ Type of token.
-    """
-    WORD = enum.auto()
-    """ Full name of a place. """
-    PARTIAL = enum.auto()
-    """ Word term without breaks, does not necessarily represent a full name. """
-    HOUSENUMBER = enum.auto()
-    """ Housenumber term. """
-    POSTCODE = enum.auto()
-    """ Postal code term. """
-    COUNTRY = enum.auto()
-    """ Country name or reference. """
-    QUALIFIER = enum.auto()
-    """ Special term used together with name (e.g. _Hotel_ Bellevue). """
-    NEAR_ITEM = enum.auto()
-    """ Special term used as searchable object(e.g. supermarket in ...). """
+TokenType = str
+""" Type of token.
+"""
+TOKEN_WORD = 'W'
+""" Full name of a place. """
+TOKEN_PARTIAL = 'w'
+""" Word term without breaks, does not necessarily represent a full name. """
+TOKEN_HOUSENUMBER = 'H'
+""" Housenumber term. """
+TOKEN_POSTCODE = 'P'
+""" Postal code term. """
+TOKEN_COUNTRY = 'C'
+""" Country name or reference. """
+TOKEN_QUALIFIER = 'Q'
+""" Special term used together with name (e.g. _Hotel_ Bellevue). """
+TOKEN_NEAR_ITEM = 'N'
+""" Special term used as searchable object(e.g. supermarket in ...). """
 
 
 class PhraseType(enum.Enum):
@@ -82,19 +82,19 @@ class PhraseType(enum.Enum):
         """ Check if the given token type can be used with the phrase type.
         """
         if self == PhraseType.NONE:
-            return not is_full_phrase or ttype != TokenType.QUALIFIER
+            return not is_full_phrase or ttype != TOKEN_QUALIFIER
         if self == PhraseType.AMENITY:
-            return ttype in (TokenType.WORD, TokenType.PARTIAL)\
-                   or (is_full_phrase and ttype == TokenType.NEAR_ITEM)\
-                   or (not is_full_phrase and ttype == TokenType.QUALIFIER)
+            return ttype in (TOKEN_WORD, TOKEN_PARTIAL)\
+                   or (is_full_phrase and ttype == TOKEN_NEAR_ITEM)\
+                   or (not is_full_phrase and ttype == TOKEN_QUALIFIER)
         if self == PhraseType.STREET:
-            return ttype in (TokenType.WORD, TokenType.PARTIAL, TokenType.HOUSENUMBER)
+            return ttype in (TOKEN_WORD, TOKEN_PARTIAL, TOKEN_HOUSENUMBER)
         if self == PhraseType.POSTCODE:
-            return ttype == TokenType.POSTCODE
+            return ttype == TOKEN_POSTCODE
         if self == PhraseType.COUNTRY:
-            return ttype == TokenType.COUNTRY
+            return ttype == TOKEN_COUNTRY
 
-        return ttype in (TokenType.WORD, TokenType.PARTIAL)
+        return ttype in (TOKEN_WORD, TOKEN_PARTIAL)
 
 
 @dataclasses.dataclass
@@ -265,7 +265,7 @@ class QueryStruct:
             going to the subsequent node. Such PARTIAL tokens are
             assumed to exist.
         """
-        return [next(iter(self.get_tokens(TokenRange(i, i+1), TokenType.PARTIAL)))
+        return [next(iter(self.get_tokens(TokenRange(i, i+1), TOKEN_PARTIAL)))
                 for i in range(trange.start, trange.end)]
 
     def iter_token_lists(self) -> Iterator[Tuple[int, QueryNode, TokenList]]:
@@ -285,5 +285,5 @@ class QueryStruct:
             for tlist in node.starting:
                 for t in tlist.tokens:
                     if t.token == token:
-                        return f"[{tlist.ttype.name[0]}]{t.lookup_word}"
+                        return f"[{tlist.ttype}]{t.lookup_word}"
         return 'None'

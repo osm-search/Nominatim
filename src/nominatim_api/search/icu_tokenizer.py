@@ -29,11 +29,11 @@ from .query_analyzer_factory import AbstractQueryAnalyzer
 
 
 DB_TO_TOKEN_TYPE = {
-    'W': qmod.TokenType.WORD,
-    'w': qmod.TokenType.PARTIAL,
-    'H': qmod.TokenType.HOUSENUMBER,
-    'P': qmod.TokenType.POSTCODE,
-    'C': qmod.TokenType.COUNTRY
+    'W': qmod.TOKEN_WORD,
+    'w': qmod.TOKEN_PARTIAL,
+    'H': qmod.TOKEN_HOUSENUMBER,
+    'P': qmod.TOKEN_POSTCODE,
+    'C': qmod.TOKEN_COUNTRY
 }
 
 PENALTY_IN_TOKEN_BREAK = {
@@ -225,12 +225,12 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
                 if row.type == 'S':
                     if row.info['op'] in ('in', 'near'):
                         if trange.start == 0:
-                            query.add_token(trange, qmod.TokenType.NEAR_ITEM, token)
+                            query.add_token(trange, qmod.TOKEN_NEAR_ITEM, token)
                     else:
                         if trange.start == 0 and trange.end == query.num_token_slots():
-                            query.add_token(trange, qmod.TokenType.NEAR_ITEM, token)
+                            query.add_token(trange, qmod.TOKEN_NEAR_ITEM, token)
                         else:
-                            query.add_token(trange, qmod.TokenType.QUALIFIER, token)
+                            query.add_token(trange, qmod.TOKEN_QUALIFIER, token)
                 else:
                     query.add_token(trange, DB_TO_TOKEN_TYPE[row.type], token)
 
@@ -297,8 +297,8 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
         """
         for part, node, i in zip(parts, query.nodes, range(1000)):
             if len(part.token) <= 4 and part.token.isdigit()\
-               and not node.has_tokens(i+1, qmod.TokenType.HOUSENUMBER):
-                query.add_token(qmod.TokenRange(i, i+1), qmod.TokenType.HOUSENUMBER,
+               and not node.has_tokens(i+1, qmod.TOKEN_HOUSENUMBER):
+                query.add_token(qmod.TokenRange(i, i+1), qmod.TOKEN_HOUSENUMBER,
                                 ICUToken(penalty=0.5, token=0,
                                          count=1, addr_count=1, lookup_word=part.token,
                                          word_token=part.token, info=None))
@@ -307,19 +307,19 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
         """ Add penalties to tokens that depend on presence of other token.
         """
         for i, node, tlist in query.iter_token_lists():
-            if tlist.ttype == qmod.TokenType.POSTCODE:
+            if tlist.ttype == qmod.TOKEN_POSTCODE:
                 for repl in node.starting:
-                    if repl.end == tlist.end and repl.ttype != qmod.TokenType.POSTCODE \
-                       and (repl.ttype != qmod.TokenType.HOUSENUMBER
+                    if repl.end == tlist.end and repl.ttype != qmod.TOKEN_POSTCODE \
+                       and (repl.ttype != qmod.TOKEN_HOUSENUMBER
                             or len(tlist.tokens[0].lookup_word) > 4):
                         repl.add_penalty(0.39)
-            elif (tlist.ttype == qmod.TokenType.HOUSENUMBER
+            elif (tlist.ttype == qmod.TOKEN_HOUSENUMBER
                   and len(tlist.tokens[0].lookup_word) <= 3):
                 if any(c.isdigit() for c in tlist.tokens[0].lookup_word):
                     for repl in node.starting:
-                        if repl.end == tlist.end and repl.ttype != qmod.TokenType.HOUSENUMBER:
+                        if repl.end == tlist.end and repl.ttype != qmod.TOKEN_HOUSENUMBER:
                             repl.add_penalty(0.5 - tlist.tokens[0].penalty)
-            elif tlist.ttype not in (qmod.TokenType.COUNTRY, qmod.TokenType.PARTIAL):
+            elif tlist.ttype not in (qmod.TOKEN_COUNTRY, qmod.TOKEN_PARTIAL):
                 norm = parts[i].normalized
                 for j in range(i + 1, tlist.end):
                     if node.btype != qmod.BREAK_TOKEN:
@@ -341,7 +341,7 @@ def _dump_word_tokens(query: qmod.QueryStruct) -> Iterator[List[Any]]:
         for tlist in node.starting:
             for token in tlist.tokens:
                 t = cast(ICUToken, token)
-                yield [tlist.ttype.name, t.token, t.word_token or '',
+                yield [tlist.ttype, t.token, t.word_token or '',
                        t.lookup_word or '', t.penalty, t.count, t.info]
 
 

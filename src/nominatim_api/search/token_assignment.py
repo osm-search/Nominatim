@@ -56,17 +56,17 @@ class TokenAssignment:
         """
         out = TokenAssignment()
         for token in ranges:
-            if token.ttype == qmod.TokenType.PARTIAL:
+            if token.ttype == qmod.TOKEN_PARTIAL:
                 out.address.append(token.trange)
-            elif token.ttype == qmod.TokenType.HOUSENUMBER:
+            elif token.ttype == qmod.TOKEN_HOUSENUMBER:
                 out.housenumber = token.trange
-            elif token.ttype == qmod.TokenType.POSTCODE:
+            elif token.ttype == qmod.TOKEN_POSTCODE:
                 out.postcode = token.trange
-            elif token.ttype == qmod.TokenType.COUNTRY:
+            elif token.ttype == qmod.TOKEN_COUNTRY:
                 out.country = token.trange
-            elif token.ttype == qmod.TokenType.NEAR_ITEM:
+            elif token.ttype == qmod.TOKEN_NEAR_ITEM:
                 out.near_item = token.trange
-            elif token.ttype == qmod.TokenType.QUALIFIER:
+            elif token.ttype == qmod.TOKEN_QUALIFIER:
                 out.qualifier = token.trange
         return out
 
@@ -84,7 +84,7 @@ class _TokenSequence:
         self.penalty = penalty
 
     def __str__(self) -> str:
-        seq = ''.join(f'[{r.trange.start} - {r.trange.end}: {r.ttype.name}]' for r in self.seq)
+        seq = ''.join(f'[{r.trange.start} - {r.trange.end}: {r.ttype}]' for r in self.seq)
         return f'{seq} (dir: {self.direction}, penalty: {self.penalty})'
 
     @property
@@ -105,7 +105,7 @@ class _TokenSequence:
         """
         # Country and category must be the final term for left-to-right
         return len(self.seq) > 1 and \
-            self.seq[-1].ttype in (qmod.TokenType.COUNTRY, qmod.TokenType.NEAR_ITEM)
+            self.seq[-1].ttype in (qmod.TOKEN_COUNTRY, qmod.TOKEN_NEAR_ITEM)
 
     def appendable(self, ttype: qmod.TokenType) -> Optional[int]:
         """ Check if the give token type is appendable to the existing sequence.
@@ -114,23 +114,23 @@ class _TokenSequence:
             new direction of the sequence after adding such a type. The
             token is not added.
         """
-        if ttype == qmod.TokenType.WORD:
+        if ttype == qmod.TOKEN_WORD:
             return None
 
         if not self.seq:
             # Append unconditionally to the empty list
-            if ttype == qmod.TokenType.COUNTRY:
+            if ttype == qmod.TOKEN_COUNTRY:
                 return -1
-            if ttype in (qmod.TokenType.HOUSENUMBER, qmod.TokenType.QUALIFIER):
+            if ttype in (qmod.TOKEN_HOUSENUMBER, qmod.TOKEN_QUALIFIER):
                 return 1
             return self.direction
 
         # Name tokens are always acceptable and don't change direction
-        if ttype == qmod.TokenType.PARTIAL:
+        if ttype == qmod.TOKEN_PARTIAL:
             # qualifiers cannot appear in the middle of the query. They need
             # to be near the next phrase.
             if self.direction == -1 \
-               and any(t.ttype == qmod.TokenType.QUALIFIER for t in self.seq[:-1]):
+               and any(t.ttype == qmod.TOKEN_QUALIFIER for t in self.seq[:-1]):
                 return None
             return self.direction
 
@@ -138,54 +138,54 @@ class _TokenSequence:
         if self.has_types(ttype):
             return None
 
-        if ttype == qmod.TokenType.HOUSENUMBER:
+        if ttype == qmod.TOKEN_HOUSENUMBER:
             if self.direction == 1:
-                if len(self.seq) == 1 and self.seq[0].ttype == qmod.TokenType.QUALIFIER:
+                if len(self.seq) == 1 and self.seq[0].ttype == qmod.TOKEN_QUALIFIER:
                     return None
                 if len(self.seq) > 2 \
-                   or self.has_types(qmod.TokenType.POSTCODE, qmod.TokenType.COUNTRY):
+                   or self.has_types(qmod.TOKEN_POSTCODE, qmod.TOKEN_COUNTRY):
                     return None  # direction left-to-right: housenumber must come before anything
             elif (self.direction == -1
-                  or self.has_types(qmod.TokenType.POSTCODE, qmod.TokenType.COUNTRY)):
+                  or self.has_types(qmod.TOKEN_POSTCODE, qmod.TOKEN_COUNTRY)):
                 return -1  # force direction right-to-left if after other terms
 
             return self.direction
 
-        if ttype == qmod.TokenType.POSTCODE:
+        if ttype == qmod.TOKEN_POSTCODE:
             if self.direction == -1:
-                if self.has_types(qmod.TokenType.HOUSENUMBER, qmod.TokenType.QUALIFIER):
+                if self.has_types(qmod.TOKEN_HOUSENUMBER, qmod.TOKEN_QUALIFIER):
                     return None
                 return -1
             if self.direction == 1:
-                return None if self.has_types(qmod.TokenType.COUNTRY) else 1
-            if self.has_types(qmod.TokenType.HOUSENUMBER, qmod.TokenType.QUALIFIER):
+                return None if self.has_types(qmod.TOKEN_COUNTRY) else 1
+            if self.has_types(qmod.TOKEN_HOUSENUMBER, qmod.TOKEN_QUALIFIER):
                 return 1
             return self.direction
 
-        if ttype == qmod.TokenType.COUNTRY:
+        if ttype == qmod.TOKEN_COUNTRY:
             return None if self.direction == -1 else 1
 
-        if ttype == qmod.TokenType.NEAR_ITEM:
+        if ttype == qmod.TOKEN_NEAR_ITEM:
             return self.direction
 
-        if ttype == qmod.TokenType.QUALIFIER:
+        if ttype == qmod.TOKEN_QUALIFIER:
             if self.direction == 1:
                 if (len(self.seq) == 1
-                    and self.seq[0].ttype in (qmod.TokenType.PARTIAL, qmod.TokenType.NEAR_ITEM)) \
+                    and self.seq[0].ttype in (qmod.TOKEN_PARTIAL, qmod.TOKEN_NEAR_ITEM)) \
                    or (len(self.seq) == 2
-                       and self.seq[0].ttype == qmod.TokenType.NEAR_ITEM
-                       and self.seq[1].ttype == qmod.TokenType.PARTIAL):
+                       and self.seq[0].ttype == qmod.TOKEN_NEAR_ITEM
+                       and self.seq[1].ttype == qmod.TOKEN_PARTIAL):
                     return 1
                 return None
             if self.direction == -1:
                 return -1
 
-            tempseq = self.seq[1:] if self.seq[0].ttype == qmod.TokenType.NEAR_ITEM else self.seq
+            tempseq = self.seq[1:] if self.seq[0].ttype == qmod.TOKEN_NEAR_ITEM else self.seq
             if len(tempseq) == 0:
                 return 1
-            if len(tempseq) == 1 and self.seq[0].ttype == qmod.TokenType.HOUSENUMBER:
+            if len(tempseq) == 1 and self.seq[0].ttype == qmod.TOKEN_HOUSENUMBER:
                 return None
-            if len(tempseq) > 1 or self.has_types(qmod.TokenType.POSTCODE, qmod.TokenType.COUNTRY):
+            if len(tempseq) > 1 or self.has_types(qmod.TOKEN_POSTCODE, qmod.TOKEN_COUNTRY):
                 return -1
             return 0
 
@@ -240,18 +240,18 @@ class _TokenSequence:
         # housenumbers may not be further than 2 words from the beginning.
         # If there are two words in front, give it a penalty.
         hnrpos = next((i for i, tr in enumerate(self.seq)
-                       if tr.ttype == qmod.TokenType.HOUSENUMBER),
+                       if tr.ttype == qmod.TOKEN_HOUSENUMBER),
                       None)
         if hnrpos is not None:
             if self.direction != -1:
-                priors = sum(1 for t in self.seq[:hnrpos] if t.ttype == qmod.TokenType.PARTIAL)
+                priors = sum(1 for t in self.seq[:hnrpos] if t.ttype == qmod.TOKEN_PARTIAL)
                 if not self._adapt_penalty_from_priors(priors, -1):
                     return False
             if self.direction != 1:
-                priors = sum(1 for t in self.seq[hnrpos+1:] if t.ttype == qmod.TokenType.PARTIAL)
+                priors = sum(1 for t in self.seq[hnrpos+1:] if t.ttype == qmod.TOKEN_PARTIAL)
                 if not self._adapt_penalty_from_priors(priors, 1):
                     return False
-            if any(t.ttype == qmod.TokenType.NEAR_ITEM for t in self.seq):
+            if any(t.ttype == qmod.TOKEN_NEAR_ITEM for t in self.seq):
                 self.penalty += 1.0
 
         return True

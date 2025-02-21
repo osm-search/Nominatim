@@ -97,7 +97,7 @@ class SearchBuilder:
                 builder = self.build_poi_search(sdata)
             elif assignment.housenumber:
                 hnr_tokens = self.query.get_tokens(assignment.housenumber,
-                                                   qmod.TokenType.HOUSENUMBER)
+                                                   qmod.TOKEN_HOUSENUMBER)
                 builder = self.build_housenumber_search(sdata, hnr_tokens, assignment.address)
             else:
                 builder = self.build_special_search(sdata, assignment.address,
@@ -173,7 +173,7 @@ class SearchBuilder:
                                                  list(partials), lookups.LookupAll))
         else:
             addr_fulls = [t.token for t
-                          in self.query.get_tokens(address[0], qmod.TokenType.WORD)]
+                          in self.query.get_tokens(address[0], qmod.TOKEN_WORD)]
             if len(addr_fulls) > 5:
                 return
             sdata.lookups.append(
@@ -216,7 +216,7 @@ class SearchBuilder:
 
         addr_count = min(t.addr_count for t in addr_partials) if addr_partials else 30000
         # Partial term to frequent. Try looking up by rare full names first.
-        name_fulls = self.query.get_tokens(name, qmod.TokenType.WORD)
+        name_fulls = self.query.get_tokens(name, qmod.TOKEN_WORD)
         if name_fulls:
             fulls_count = sum(t.count for t in name_fulls)
 
@@ -285,7 +285,7 @@ class SearchBuilder:
                          db_field: str = 'name_vector') -> dbf.FieldRanking:
         """ Create a ranking expression for a name term in the given range.
         """
-        name_fulls = self.query.get_tokens(trange, qmod.TokenType.WORD)
+        name_fulls = self.query.get_tokens(trange, qmod.TOKEN_WORD)
         ranks = [dbf.RankedTokens(t.penalty, [t.token]) for t in name_fulls]
         ranks.sort(key=lambda r: r.penalty)
         # Fallback, sum of penalty for partials
@@ -304,10 +304,10 @@ class SearchBuilder:
         while todo:
             neglen, pos, rank = heapq.heappop(todo)
             for tlist in self.query.nodes[pos].starting:
-                if tlist.ttype in (qmod.TokenType.PARTIAL, qmod.TokenType.WORD):
+                if tlist.ttype in (qmod.TOKEN_PARTIAL, qmod.TOKEN_WORD):
                     if tlist.end < trange.end:
                         chgpenalty = PENALTY_WORDCHANGE[self.query.nodes[tlist.end].btype]
-                        if tlist.ttype == qmod.TokenType.PARTIAL:
+                        if tlist.ttype == qmod.TOKEN_PARTIAL:
                             penalty = rank.penalty + chgpenalty \
                                       + max(t.penalty for t in tlist.tokens)
                             heapq.heappush(todo, (neglen - 1, tlist.end,
@@ -317,7 +317,7 @@ class SearchBuilder:
                                 heapq.heappush(todo, (neglen - 1, tlist.end,
                                                       rank.with_token(t, chgpenalty)))
                     elif tlist.end == trange.end:
-                        if tlist.ttype == qmod.TokenType.PARTIAL:
+                        if tlist.ttype == qmod.TOKEN_PARTIAL:
                             ranks.append(dbf.RankedTokens(rank.penalty
                                                           + max(t.penalty for t in tlist.tokens),
                                                           rank.tokens))
@@ -357,11 +357,11 @@ class SearchBuilder:
         if assignment.housenumber:
             sdata.set_strings('housenumbers',
                               self.query.get_tokens(assignment.housenumber,
-                                                    qmod.TokenType.HOUSENUMBER))
+                                                    qmod.TOKEN_HOUSENUMBER))
         if assignment.postcode:
             sdata.set_strings('postcodes',
                               self.query.get_tokens(assignment.postcode,
-                                                    qmod.TokenType.POSTCODE))
+                                                    qmod.TOKEN_POSTCODE))
         if assignment.qualifier:
             tokens = self.get_qualifier_tokens(assignment.qualifier)
             if not tokens:
@@ -391,7 +391,7 @@ class SearchBuilder:
             optionally filtered by the country list from the details
             parameters.
         """
-        tokens = self.query.get_tokens(trange, qmod.TokenType.COUNTRY)
+        tokens = self.query.get_tokens(trange, qmod.TOKEN_COUNTRY)
         if self.details.countries:
             tokens = [t for t in tokens if t.lookup_word in self.details.countries]
 
@@ -402,7 +402,7 @@ class SearchBuilder:
             optionally filtered by the qualifier list from the details
             parameters.
         """
-        tokens = self.query.get_tokens(trange, qmod.TokenType.QUALIFIER)
+        tokens = self.query.get_tokens(trange, qmod.TOKEN_QUALIFIER)
         if self.details.categories:
             tokens = [t for t in tokens if t.get_category() in self.details.categories]
 
@@ -415,7 +415,7 @@ class SearchBuilder:
         """
         if assignment.near_item:
             tokens: Dict[Tuple[str, str], float] = {}
-            for t in self.query.get_tokens(assignment.near_item, qmod.TokenType.NEAR_ITEM):
+            for t in self.query.get_tokens(assignment.near_item, qmod.TOKEN_NEAR_ITEM):
                 cat = t.get_category()
                 # The category of a near search will be that of near_item.
                 # Thus, if search is restricted to a category parameter,

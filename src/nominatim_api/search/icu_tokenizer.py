@@ -37,13 +37,13 @@ DB_TO_TOKEN_TYPE = {
 }
 
 PENALTY_IN_TOKEN_BREAK = {
-     qmod.BreakType.START: 0.5,
-     qmod.BreakType.END: 0.5,
-     qmod.BreakType.PHRASE: 0.5,
-     qmod.BreakType.SOFT_PHRASE: 0.5,
-     qmod.BreakType.WORD: 0.1,
-     qmod.BreakType.PART: 0.0,
-     qmod.BreakType.TOKEN: 0.0
+     qmod.BREAK_START: 0.5,
+     qmod.BREAK_END: 0.5,
+     qmod.BREAK_PHRASE: 0.5,
+     qmod.BREAK_SOFT_PHRASE: 0.5,
+     qmod.BREAK_WORD: 0.1,
+     qmod.BREAK_PART: 0.0,
+     qmod.BREAK_TOKEN: 0.0
 }
 
 
@@ -72,7 +72,7 @@ def extract_words(terms: List[QueryPart], start: int,  words: WordDict) -> None:
         given position to the word list.
     """
     total = len(terms)
-    base_penalty = PENALTY_IN_TOKEN_BREAK[qmod.BreakType.WORD]
+    base_penalty = PENALTY_IN_TOKEN_BREAK[qmod.BREAK_WORD]
     for first in range(start, total):
         word = terms[first].token
         penalty = base_penalty
@@ -273,15 +273,15 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
                     for term in trans.split(' '):
                         if term:
                             parts.append(QueryPart(term, word,
-                                                   PENALTY_IN_TOKEN_BREAK[qmod.BreakType.TOKEN]))
-                            query.add_node(qmod.BreakType.TOKEN, phrase.ptype)
-                    query.nodes[-1].btype = qmod.BreakType(breakchar)
-                    parts[-1].penalty = PENALTY_IN_TOKEN_BREAK[qmod.BreakType(breakchar)]
+                                                   PENALTY_IN_TOKEN_BREAK[qmod.BREAK_TOKEN]))
+                            query.add_node(qmod.BREAK_TOKEN, phrase.ptype)
+                    query.nodes[-1].btype = breakchar
+                    parts[-1].penalty = PENALTY_IN_TOKEN_BREAK[breakchar]
 
             extract_words(parts, phrase_start, words)
 
             phrase_start = len(parts)
-        query.nodes[-1].btype = qmod.BreakType.END
+        query.nodes[-1].btype = qmod.BREAK_END
 
         return parts, words
 
@@ -322,16 +322,16 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
             elif tlist.ttype not in (qmod.TokenType.COUNTRY, qmod.TokenType.PARTIAL):
                 norm = parts[i].normalized
                 for j in range(i + 1, tlist.end):
-                    if node.btype != qmod.BreakType.TOKEN:
+                    if node.btype != qmod.BREAK_TOKEN:
                         norm += '  ' + parts[j].normalized
                 for token in tlist.tokens:
                     cast(ICUToken, token).rematch(norm)
 
 
 def _dump_transliterated(query: qmod.QueryStruct, parts: QueryParts) -> str:
-    out = query.nodes[0].btype.value
+    out = query.nodes[0].btype
     for node, part in zip(query.nodes[1:], parts):
-        out += part.token + node.btype.value
+        out += part.token + node.btype
     return out
 
 

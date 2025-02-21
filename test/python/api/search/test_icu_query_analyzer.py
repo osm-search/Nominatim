@@ -11,7 +11,8 @@ import pytest
 import pytest_asyncio
 
 from nominatim_api import NominatimAPIAsync
-from nominatim_api.search.query import Phrase, PhraseType, TokenType, BreakType
+from nominatim_api.search.query import Phrase, PhraseType, TokenType
+import nominatim_api.search.query as qmod
 import nominatim_api.search.icu_tokenizer as tok
 from nominatim_api.logging import set_log_output, get_and_disable
 
@@ -96,7 +97,7 @@ async def test_splitting_in_transliteration(conn):
     assert query.num_token_slots() == 2
     assert query.nodes[0].starting
     assert query.nodes[1].starting
-    assert query.nodes[1].btype == BreakType.TOKEN
+    assert query.nodes[1].btype == qmod.BREAK_TOKEN
 
 
 @pytest.mark.asyncio

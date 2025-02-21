@@ -13,29 +13,29 @@ import dataclasses
 import enum
 
 
-class BreakType(enum.Enum):
-    """ Type of break between tokens.
-    """
-    START = '<'
-    """ Begin of the query. """
-    END = '>'
-    """ End of the query. """
-    PHRASE = ','
-    """ Hard break between two phrases. Address parts cannot cross hard
-        phrase boundaries."""
-    SOFT_PHRASE = ':'
-    """ Likely break between two phrases. Address parts should not cross soft
-        phrase boundaries. Soft breaks can be inserted by a preprocessor
-        that is analysing the input string.
-    """
-    WORD = ' '
-    """ Break between words. """
-    PART = '-'
-    """ Break inside a word, for example a hyphen or apostrophe. """
-    TOKEN = '`'
-    """ Break created as a result of tokenization.
-        This may happen in languages without spaces between words.
-    """
+BreakType = str
+""" Type of break between tokens.
+"""
+BREAK_START = '<'
+""" Begin of the query. """
+BREAK_END = '>'
+""" End of the query. """
+BREAK_PHRASE = ','
+""" Hard break between two phrases. Address parts cannot cross hard
+    phrase boundaries."""
+BREAK_SOFT_PHRASE = ':'
+""" Likely break between two phrases. Address parts should not cross soft
+    phrase boundaries. Soft breaks can be inserted by a preprocessor
+    that is analysing the input string.
+"""
+BREAK_WORD = ' '
+""" Break between words. """
+BREAK_PART = '-'
+""" Break inside a word, for example a hyphen or apostrophe. """
+BREAK_TOKEN = '`'
+""" Break created as a result of tokenization.
+    This may happen in languages without spaces between words.
+"""
 
 
 class TokenType(enum.Enum):
@@ -218,7 +218,7 @@ class QueryStruct:
     def __init__(self, source: List[Phrase]) -> None:
         self.source = source
         self.nodes: List[QueryNode] = \
-            [QueryNode(BreakType.START, source[0].ptype if source else PhraseType.NONE)]
+            [QueryNode(BREAK_START, source[0].ptype if source else PhraseType.NONE)]
 
     def num_token_slots(self) -> int:
         """ Return the length of the query in vertice steps.
@@ -243,8 +243,8 @@ class QueryStruct:
             be added to, then the token is silently dropped.
         """
         snode = self.nodes[trange.start]
-        full_phrase = snode.btype in (BreakType.START, BreakType.PHRASE)\
-            and self.nodes[trange.end].btype in (BreakType.PHRASE, BreakType.END)
+        full_phrase = snode.btype in (BREAK_START, BREAK_PHRASE)\
+            and self.nodes[trange.end].btype in (BREAK_PHRASE, BREAK_END)
         if snode.ptype.compatible_with(ttype, full_phrase):
             tlist = snode.get_tokens(trange.end, ttype)
             if tlist is None:

@@ -429,11 +429,11 @@ class SearchBuilder:
 
 
 PENALTY_WORDCHANGE = {
-    qmod.BreakType.START: 0.0,
-    qmod.BreakType.END: 0.0,
-    qmod.BreakType.PHRASE: 0.0,
-    qmod.BreakType.SOFT_PHRASE: 0.0,
-    qmod.BreakType.WORD: 0.1,
-    qmod.BreakType.PART: 0.2,
-    qmod.BreakType.TOKEN: 0.4
+    qmod.BREAK_START: 0.0,
+    qmod.BREAK_END: 0.0,
+    qmod.BREAK_PHRASE: 0.0,
+    qmod.BREAK_SOFT_PHRASE: 0.0,
+    qmod.BREAK_WORD: 0.1,
+    qmod.BREAK_PART: 0.2,
+    qmod.BREAK_TOKEN: 0.4
 }

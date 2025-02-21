@@ -24,13 +24,13 @@ class TypedRange:
 
 
 PENALTY_TOKENCHANGE = {
-    qmod.BreakType.START: 0.0,
-    qmod.BreakType.END: 0.0,
-    qmod.BreakType.PHRASE: 0.0,
-    qmod.BreakType.SOFT_PHRASE: 0.0,
-    qmod.BreakType.WORD: 0.1,
-    qmod.BreakType.PART: 0.2,
-    qmod.BreakType.TOKEN: 0.4
+    qmod.BREAK_START: 0.0,
+    qmod.BREAK_END: 0.0,
+    qmod.BREAK_PHRASE: 0.0,
+    qmod.BREAK_SOFT_PHRASE: 0.0,
+    qmod.BREAK_WORD: 0.1,
+    qmod.BREAK_PART: 0.2,
+    qmod.BREAK_TOKEN: 0.4
 }
 
 TypedRangeSeq = List[TypedRange]
@@ -205,7 +205,7 @@ class _TokenSequence:
             new_penalty = 0.0
         else:
             last = self.seq[-1]
-            if btype != qmod.BreakType.PHRASE and last.ttype == ttype:
+            if btype != qmod.BREAK_PHRASE and last.ttype == ttype:
                 # extend the existing range
                 newseq = self.seq[:-1] + [TypedRange(ttype, last.trange.replace_end(end_pos))]
                 new_penalty = 0.0

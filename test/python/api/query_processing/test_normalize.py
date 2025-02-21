@@ -26,9 +26,9 @@ def run_preprocessor_on(query, norm):
 
 def test_normalize_simple():
     norm = ':: lower();'
-    query = [qmod.Phrase(qmod.PhraseType.NONE, 'Hallo')]
+    query = [qmod.Phrase(qmod.PHRASE_ANY, 'Hallo')]
 
     out = run_preprocessor_on(query, norm)
 
     assert len(out) == 1
-    assert out == [qmod.Phrase(qmod.PhraseType.NONE, 'hallo')]
+    assert out == [qmod.Phrase(qmod.PHRASE_ANY, 'hallo')]

@@ -37,7 +37,6 @@ Furthermore the following Python libraries are required:
   * [Jinja2](https://palletsprojects.com/p/jinja/)
   * [PyICU](https://pypi.org/project/PyICU/)
   * [PyYaml](https://pyyaml.org/) (5.1+)
-  * [datrie](https://github.com/pytries/datrie)
 
 These will be installed automatically when using pip installation.
 

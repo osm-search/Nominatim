@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Generic processor for names that creates abbreviation variants.
@@ -10,12 +10,11 @@ Generic processor for names that creates abbreviation variants.
 from typing import Mapping, Dict, Any, Iterable, Iterator, Optional, List, cast
 import itertools
 
-import datrie
-
 from ...errors import UsageError
 from ...data.place_name import PlaceName
 from .config_variants import get_variant_config
 from .generic_mutation import MutationVariantGenerator
+from .simple_trie import SimpleTrie
 
 # Configuration section
 
@@ -25,8 +24,7 @@ def configure(rules: Mapping[str, Any], normalizer: Any, _: Any) -> Dict[str, An
     """
     config: Dict[str, Any] = {}
 
-    config['replacements'], config['chars'] = get_variant_config(rules.get('variants'),
-                                                                 normalizer)
+    config['replacements'], _ = get_variant_config(rules.get('variants'), normalizer)
     config['variant_only'] = rules.get('mode', '') == 'variant-only'
 
     # parse mutation rules
@@ -68,12 +66,8 @@ class GenericTokenAnalysis:
         self.variant_only = config['variant_only']
 
         # Set up datrie
-        if config['replacements']:
-            self.replacements = datrie.Trie(config['chars'])
-            for src, repllist in config['replacements']:
-                self.replacements[src] = repllist
-        else:
-            self.replacements = None
+        self.replacements: Optional[SimpleTrie[List[str]]] = \
+            SimpleTrie(config['replacements']) if config['replacements'] else None
 
         # set up mutation rules
         self.mutations = [MutationVariantGenerator(*cfg) for cfg in config['mutations']]
@@ -116,10 +110,10 @@ class GenericTokenAnalysis:
             pos = 0
             force_space = False
             while pos < baselen:
-                full, repl = self.replacements.longest_prefix_item(baseform[pos:],
-                                                                   (None, None))
-                if full is not None:
-                    done = baseform[startpos:pos]
+                frm = pos
+                repl, pos = self.replacements.longest_prefix(baseform, pos)
+                if repl is not None:
+                    done = baseform[startpos:frm]
                     partials = [v + done + r
                                 for v, r in itertools.product(partials, repl)
                                 if not force_space or r.startswith(' ')]
@@ -128,11 +122,10 @@ class GenericTokenAnalysis:
                         # to be helpful. Only use the original term.
                         startpos = 0
                         break
-                    startpos = pos + len(full)
-                    if full[-1] == ' ':
-                        startpos -= 1
+                    if baseform[pos - 1] == ' ':
+                        pos -= 1
                         force_space = True
-                    pos = startpos
+                    startpos = pos
                 else:
                     pos += 1
                     force_space = False

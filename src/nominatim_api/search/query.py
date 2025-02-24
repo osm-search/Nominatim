@@ -10,91 +10,91 @@ Datastructures for a tokenized query.
 from typing import List, Tuple, Optional, Iterator
 from abc import ABC, abstractmethod
 import dataclasses
-import enum
 
 
-class BreakType(enum.Enum):
-    """ Type of break between tokens.
+BreakType = str
+""" Type of break between tokens.
+"""
+BREAK_START = '<'
+""" Begin of the query. """
+BREAK_END = '>'
+""" End of the query. """
+BREAK_PHRASE = ','
+""" Hard break between two phrases. Address parts cannot cross hard
+    phrase boundaries."""
+BREAK_SOFT_PHRASE = ':'
+""" Likely break between two phrases. Address parts should not cross soft
+    phrase boundaries. Soft breaks can be inserted by a preprocessor
+    that is analysing the input string.
+"""
+BREAK_WORD = ' '
+""" Break between words. """
+BREAK_PART = '-'
+""" Break inside a word, for example a hyphen or apostrophe. """
+BREAK_TOKEN = '`'
+""" Break created as a result of tokenization.
+    This may happen in languages without spaces between words.
+"""
+
+
+TokenType = str
+""" Type of token.
+"""
+TOKEN_WORD = 'W'
+""" Full name of a place. """
+TOKEN_PARTIAL = 'w'
+""" Word term without breaks, does not necessarily represent a full name. """
+TOKEN_HOUSENUMBER = 'H'
+""" Housenumber term. """
+TOKEN_POSTCODE = 'P'
+""" Postal code term. """
+TOKEN_COUNTRY = 'C'
+""" Country name or reference. """
+TOKEN_QUALIFIER = 'Q'
+""" Special term used together with name (e.g. _Hotel_ Bellevue). """
+TOKEN_NEAR_ITEM = 'N'
+""" Special term used as searchable object(e.g. supermarket in ...). """
+
+
+PhraseType = int
+""" Designation of a phrase.
+"""
+PHRASE_ANY = 0
+""" No specific designation (i.e. source is free-form query). """
+PHRASE_AMENITY = 1
+""" Contains name or type of a POI. """
+PHRASE_STREET = 2
+""" Contains a street name optionally with a housenumber. """
+PHRASE_CITY = 3
+""" Contains the postal city. """
+PHRASE_COUNTY = 4
+""" Contains the equivalent of a county. """
+PHRASE_STATE = 5
+""" Contains a state or province. """
+PHRASE_POSTCODE = 6
+""" Contains a postal code. """
+PHRASE_COUNTRY = 7
+""" Contains the country name or code. """
+
+
+def _phrase_compatible_with(ptype: PhraseType, ttype: TokenType,
+                            is_full_phrase: bool) -> bool:
+    """ Check if the given token type can be used with the phrase type.
     """
-    START = '<'
-    """ Begin of the query. """
-    END = '>'
-    """ End of the query. """
-    PHRASE = ','
-    """ Hard break between two phrases. Address parts cannot cross hard
-        phrase boundaries."""
-    SOFT_PHRASE = ':'
-    """ Likely break between two phrases. Address parts should not cross soft
-        phrase boundaries. Soft breaks can be inserted by a preprocessor
-        that is analysing the input string.
-    """
-    WORD = ' '
-    """ Break between words. """
-    PART = '-'
-    """ Break inside a word, for example a hyphen or apostrophe. """
-    TOKEN = '`'
-    """ Break created as a result of tokenization.
-        This may happen in languages without spaces between words.
-    """
+    if ptype == PHRASE_ANY:
+        return not is_full_phrase or ttype != TOKEN_QUALIFIER
+    if ptype == PHRASE_AMENITY:
+        return ttype in (TOKEN_WORD, TOKEN_PARTIAL)\
+               or (is_full_phrase and ttype == TOKEN_NEAR_ITEM)\
+               or (not is_full_phrase and ttype == TOKEN_QUALIFIER)
+    if ptype == PHRASE_STREET:
+        return ttype in (TOKEN_WORD, TOKEN_PARTIAL, TOKEN_HOUSENUMBER)
+    if ptype == PHRASE_POSTCODE:
+        return ttype == TOKEN_POSTCODE
+    if ptype == PHRASE_COUNTRY:
+        return ttype == TOKEN_COUNTRY
 
-
-class TokenType(enum.Enum):
-    """ Type of token.
-    """
-    WORD = enum.auto()
-    """ Full name of a place. """
-    PARTIAL = enum.auto()
-    """ Word term without breaks, does not necessarily represent a full name. """
-    HOUSENUMBER = enum.auto()
-    """ Housenumber term. """
-    POSTCODE = enum.auto()
-    """ Postal code term. """
-    COUNTRY = enum.auto()
-    """ Country name or reference. """
-    QUALIFIER = enum.auto()
-    """ Special term used together with name (e.g. _Hotel_ Bellevue). """
-    NEAR_ITEM = enum.auto()
-    """ Special term used as searchable object(e.g. supermarket in ...). """
-
-
-class PhraseType(enum.Enum):
-    """ Designation of a phrase.
-    """
-    NONE = 0
-    """ No specific designation (i.e. source is free-form query). """
-    AMENITY = enum.auto()
-    """ Contains name or type of a POI. """
-    STREET = enum.auto()
-    """ Contains a street name optionally with a housenumber. """
-    CITY = enum.auto()
-    """ Contains the postal city. """
-    COUNTY = enum.auto()
-    """ Contains the equivalent of a county. """
-    STATE = enum.auto()
-    """ Contains a state or province. """
-    POSTCODE = enum.auto()
-    """ Contains a postal code. """
-    COUNTRY = enum.auto()
-    """ Contains the country name or code. """
-
-    def compatible_with(self, ttype: TokenType,
-                        is_full_phrase: bool) -> bool:
-        """ Check if the given token type can be used with the phrase type.
-        """
-        if self == PhraseType.NONE:
-            return not is_full_phrase or ttype != TokenType.QUALIFIER
-        if self == PhraseType.AMENITY:
-            return ttype in (TokenType.WORD, TokenType.PARTIAL)\
-                   or (is_full_phrase and ttype == TokenType.NEAR_ITEM)\
-                   or (not is_full_phrase and ttype == TokenType.QUALIFIER)
-        if self == PhraseType.STREET:
-            return ttype in (TokenType.WORD, TokenType.PARTIAL, TokenType.HOUSENUMBER)
-        if self == PhraseType.POSTCODE:
-            return ttype == TokenType.POSTCODE
-        if self == PhraseType.COUNTRY:
-            return ttype == TokenType.COUNTRY
-
-        return ttype in (TokenType.WORD, TokenType.PARTIAL)
+    return ttype in (TOKEN_WORD, TOKEN_PARTIAL)
 
 
 @dataclasses.dataclass
@@ -218,7 +218,7 @@ class QueryStruct:
     def __init__(self, source: List[Phrase]) -> None:
         self.source = source
         self.nodes: List[QueryNode] = \
-            [QueryNode(BreakType.START, source[0].ptype if source else PhraseType.NONE)]
+            [QueryNode(BREAK_START, source[0].ptype if source else PHRASE_ANY)]
 
     def num_token_slots(self) -> int:
         """ Return the length of the query in vertice steps.
@@ -243,9 +243,9 @@ class QueryStruct:
             be added to, then the token is silently dropped.
         """
         snode = self.nodes[trange.start]
-        full_phrase = snode.btype in (BreakType.START, BreakType.PHRASE)\
-            and self.nodes[trange.end].btype in (BreakType.PHRASE, BreakType.END)
-        if snode.ptype.compatible_with(ttype, full_phrase):
+        full_phrase = snode.btype in (BREAK_START, BREAK_PHRASE)\
+            and self.nodes[trange.end].btype in (BREAK_PHRASE, BREAK_END)
+        if _phrase_compatible_with(snode.ptype, ttype, full_phrase):
             tlist = snode.get_tokens(trange.end, ttype)
             if tlist is None:
                 snode.starting.append(TokenList(trange.end, ttype, [token]))
@@ -265,7 +265,7 @@ class QueryStruct:
             going to the subsequent node. Such PARTIAL tokens are
             assumed to exist.
         """
-        return [next(iter(self.get_tokens(TokenRange(i, i+1), TokenType.PARTIAL)))
+        return [next(iter(self.get_tokens(TokenRange(i, i+1), TOKEN_PARTIAL)))
                 for i in range(trange.start, trange.end)]
 
     def iter_token_lists(self) -> Iterator[Tuple[int, QueryNode, TokenList]]:
@@ -285,5 +285,5 @@ class QueryStruct:
             for tlist in node.starting:
                 for t in tlist.tokens:
                     if t.token == token:
-                        return f"[{tlist.ttype.name[0]}]{t.lookup_word}"
+                        return f"[{tlist.ttype}]{t.lookup_word}"
         return 'None'

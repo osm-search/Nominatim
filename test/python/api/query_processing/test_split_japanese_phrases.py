@@ -27,8 +27,8 @@ def run_preprocessor_on(query):
                                       ('大阪府大阪', '大阪府:大阪'),
                                       ('大阪市大阪', '大阪市:大阪')])
 def test_split_phrases(inp, outp):
-    query = [qmod.Phrase(qmod.PhraseType.NONE, inp)]
+    query = [qmod.Phrase(qmod.PHRASE_ANY, inp)]
 
     out = run_preprocessor_on(query)
 
-    assert out == [qmod.Phrase(qmod.PhraseType.NONE, outp)]
+    assert out == [qmod.Phrase(qmod.PHRASE_ANY, outp)]

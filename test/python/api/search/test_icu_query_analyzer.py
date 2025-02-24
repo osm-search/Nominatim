@@ -11,7 +11,8 @@ import pytest
 import pytest_asyncio
 
 from nominatim_api import NominatimAPIAsync
-from nominatim_api.search.query import Phrase, PhraseType, TokenType, BreakType
+from nominatim_api.search.query import Phrase
+import nominatim_api.search.query as qmod
 import nominatim_api.search.icu_tokenizer as tok
 from nominatim_api.logging import set_log_output, get_and_disable
 
@@ -25,7 +26,7 @@ async def add_word(conn, word_id, word_token, wtype, word, info = None):
 
 
 def make_phrase(query):
-    return [Phrase(PhraseType.NONE, s) for s in query.split(',')]
+    return [Phrase(qmod.PHRASE_ANY, s) for s in query.split(',')]
 
 @pytest_asyncio.fixture
 async def conn(table_factory):
@@ -62,7 +63,7 @@ async def test_single_phrase_with_unknown_terms(conn):
     query = await ana.analyze_query(make_phrase('foo BAR'))
 
     assert len(query.source) == 1
-    assert query.source[0].ptype == PhraseType.NONE
+    assert query.source[0].ptype == qmod.PHRASE_ANY
     assert query.source[0].text == 'foo bar'
 
     assert query.num_token_slots() == 2
@@ -96,12 +97,12 @@ async def test_splitting_in_transliteration(conn):
     assert query.num_token_slots() == 2
     assert query.nodes[0].starting
     assert query.nodes[1].starting
-    assert query.nodes[1].btype == BreakType.TOKEN
+    assert query.nodes[1].btype == qmod.BREAK_TOKEN
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize('term,order', [('23456', ['POSTCODE', 'HOUSENUMBER', 'WORD', 'PARTIAL']),
-                                        ('3', ['HOUSENUMBER', 'POSTCODE', 'WORD', 'PARTIAL'])
+@pytest.mark.parametrize('term,order', [('23456', ['P', 'H', 'W', 'w']),
+                                        ('3', ['H', 'P', 'W', 'w'])
                                        ])
 async def test_penalty_postcodes_and_housenumbers(conn, term, order):
     ana = await tok.create_query_analyzer(conn)
@@ -115,7 +116,7 @@ async def test_penalty_postcodes_and_housenumbers(conn, term, order):
 
     assert query.num_token_slots() == 1
 
-    torder = [(tl.tokens[0].penalty, tl.ttype.name) for tl in query.nodes[0].starting]
+    torder = [(tl.tokens[0].penalty, tl.ttype) for tl in query.nodes[0].starting]
     torder.sort()
 
     assert [t[1] for t in torder] == order
@@ -131,7 +132,7 @@ async def test_category_words_only_at_beginning(conn):
 
     assert query.num_token_slots() == 3
     assert len(query.nodes[0].starting) == 1
-    assert query.nodes[0].starting[0].ttype == TokenType.NEAR_ITEM
+    assert query.nodes[0].starting[0].ttype == qmod.TOKEN_NEAR_ITEM
     assert not query.nodes[2].starting
 
 
@@ -145,7 +146,7 @@ async def test_freestanding_qualifier_words_become_category(conn):
 
     assert query.num_token_slots() == 1
     assert len(query.nodes[0].starting) == 1
-    assert query.nodes[0].starting[0].ttype == TokenType.NEAR_ITEM
+    assert query.nodes[0].starting[0].ttype == qmod.TOKEN_NEAR_ITEM
 
 
 @pytest.mark.asyncio
@@ -158,9 +159,9 @@ async def test_qualifier_words(conn):
     query = await ana.analyze_query(make_phrase('foo BAR foo BAR foo'))
 
     assert query.num_token_slots() == 5
-    assert set(t.ttype for t in query.nodes[0].starting) == {TokenType.QUALIFIER}
-    assert set(t.ttype for t in query.nodes[2].starting) == {TokenType.QUALIFIER}
-    assert set(t.ttype for t in query.nodes[4].starting) == {TokenType.QUALIFIER}
+    assert set(t.ttype for t in query.nodes[0].starting) == {qmod.TOKEN_QUALIFIER}
+    assert set(t.ttype for t in query.nodes[2].starting) == {qmod.TOKEN_QUALIFIER}
+    assert set(t.ttype for t in query.nodes[4].starting) == {qmod.TOKEN_QUALIFIER}
 
 
 @pytest.mark.asyncio
@@ -172,10 +173,10 @@ async def test_add_unknown_housenumbers(conn):
     query = await ana.analyze_query(make_phrase('466 23 99834 34a'))
 
     assert query.num_token_slots() == 4
-    assert query.nodes[0].starting[0].ttype == TokenType.HOUSENUMBER
+    assert query.nodes[0].starting[0].ttype == qmod.TOKEN_HOUSENUMBER
     assert len(query.nodes[0].starting[0].tokens) == 1
     assert query.nodes[0].starting[0].tokens[0].token == 0
-    assert query.nodes[1].starting[0].ttype == TokenType.HOUSENUMBER
+    assert query.nodes[1].starting[0].ttype == qmod.TOKEN_HOUSENUMBER
     assert len(query.nodes[1].starting[0].tokens) == 1
     assert query.nodes[1].starting[0].tokens[0].token == 1
     assert not query.nodes[2].starting

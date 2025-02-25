@@ -25,6 +25,7 @@ from ..logging import log
 from . import query as qmod
 from ..query_preprocessing.config import QueryConfig
 from .query_analyzer_factory import AbstractQueryAnalyzer
+from .postcode_parser import PostcodeParser
 
 
 DB_TO_TOKEN_TYPE = {
@@ -117,6 +118,7 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
     """
     def __init__(self, conn: SearchConnection) -> None:
         self.conn = conn
+        self.postcode_parser = PostcodeParser(conn.config)
 
     async def setup(self) -> None:
         """ Set up static data structures needed for the analysis.
@@ -199,6 +201,11 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
                     query.add_token(trange, DB_TO_TOKEN_TYPE[row.type], token)
 
         self.add_extra_tokens(query)
+        for start, end, pc in self.postcode_parser.parse(query):
+            query.add_token(qmod.TokenRange(start, end),
+                            qmod.TOKEN_POSTCODE,
+                            ICUToken(penalty=0.1, token=0, count=1, addr_count=1,
+                                     lookup_word=pc, word_token=pc, info=None))
         self.rerank_tokens(query)
 
         log().table_dump('Word tokens', _dump_word_tokens(query))
@@ -240,9 +247,13 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
     async def lookup_in_db(self, words: List[str]) -> 'sa.Result[Any]':
         """ Return the token information from the database for the
             given word tokens.
+
+            This function excludes postcode tokens
         """
         t = self.conn.t.meta.tables['word']
-        return await self.conn.execute(t.select().where(t.c.word_token.in_(words)))
+        return await self.conn.execute(t.select()
+                                        .where(t.c.word_token.in_(words))
+                                        .where(t.c.type != 'P'))
 
     def add_extra_tokens(self, query: qmod.QueryStruct) -> None:
         """ Add tokens to query that are not saved in the database.

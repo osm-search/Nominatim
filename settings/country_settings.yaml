@@ -1809,7 +1809,8 @@ us:
     languages: en
     names: !include country-names/us.yaml
     postcode:
-      pattern: "ddddd"
+      pattern: "(ddddd)(?:-dddd)?"
+      output: \1
 
 
 # Uruguay (Uruguay)

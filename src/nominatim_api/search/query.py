@@ -171,10 +171,32 @@ class TokenList:
 @dataclasses.dataclass
 class QueryNode:
     """ A node of the query representing a break between terms.
+
+        The node also contains information on the source term
+        ending at the node. The tokens are created from this information.
     """
     btype: BreakType
     ptype: PhraseType
+
+    penalty: float
+    """ Penalty for the break at this node.
+    """
+    term_lookup: str
+    """ Transliterated term following this node.
+    """
+    term_normalized: str
+    """ Normalised form of term following this node.
+        When the token resulted from a split during transliteration,
+        then this string contains the complete source term.
+    """
+
     starting: List[TokenList] = dataclasses.field(default_factory=list)
+
+    def adjust_break(self, btype: BreakType, penalty: float) -> None:
+        """ Change the break type and penalty for this node.
+        """
+        self.btype = btype
+        self.penalty = penalty
 
     def has_tokens(self, end: int, *ttypes: TokenType) -> bool:
         """ Check if there are tokens of the given types ending at the
@@ -218,19 +240,22 @@ class QueryStruct:
     def __init__(self, source: List[Phrase]) -> None:
         self.source = source
         self.nodes: List[QueryNode] = \
-            [QueryNode(BREAK_START, source[0].ptype if source else PHRASE_ANY)]
+            [QueryNode(BREAK_START, source[0].ptype if source else PHRASE_ANY,
+                       0.0, '', '')]
 
     def num_token_slots(self) -> int:
         """ Return the length of the query in vertice steps.
         """
         return len(self.nodes) - 1
 
-    def add_node(self, btype: BreakType, ptype: PhraseType) -> None:
+    def add_node(self, btype: BreakType, ptype: PhraseType,
+                 break_penalty: float = 0.0,
+                 term_lookup: str = '', term_normalized: str = '') -> None:
         """ Append a new break node with the given break type.
             The phrase type denotes the type for any tokens starting
             at the node.
         """
-        self.nodes.append(QueryNode(btype, ptype))
+        self.nodes.append(QueryNode(btype, ptype, break_penalty, term_lookup, term_normalized))
 
     def add_token(self, trange: TokenRange, ttype: TokenType, token: Token) -> None:
         """ Add a token to the query. 'start' and 'end' are the indexes of the
@@ -287,3 +312,11 @@ class QueryStruct:
                     if t.token == token:
                         return f"[{tlist.ttype}]{t.lookup_word}"
         return 'None'
+
+    def get_transliterated_query(self) -> str:
+        """ Return a string representation of the transliterated query
+            with the character representation of the different break types.
+
+            For debugging purposes only.
+        """
+        return ''.join(''.join((n.term_lookup, n.btype)) for n in self.nodes)

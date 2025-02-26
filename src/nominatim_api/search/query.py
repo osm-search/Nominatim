@@ -7,8 +7,9 @@
 """
 Datastructures for a tokenized query.
 """
-from typing import List, Tuple, Optional, Iterator
+from typing import Dict, List, Tuple, Optional, Iterator
 from abc import ABC, abstractmethod
+from collections import defaultdict
 import dataclasses
 
 
@@ -320,3 +321,34 @@ class QueryStruct:
             For debugging purposes only.
         """
         return ''.join(''.join((n.term_lookup, n.btype)) for n in self.nodes)
+
+    def extract_words(self, base_penalty: float = 0.0,
+                      start: int = 0,
+                      endpos: Optional[int] = None) -> Dict[str, List[TokenRange]]:
+        """ Add all combinations of words that can be formed from the terms
+            between the given start and endnode. The terms are joined with
+            spaces for each break. Words can never go across a BREAK_PHRASE.
+
+            The functions returns a dictionary of possible words with their
+            position within the query and a penalty. The penalty is computed
+            from the base_penalty plus the penalty for each node the word
+            crosses.
+        """
+        if endpos is None:
+            endpos = len(self.nodes)
+
+        words: Dict[str, List[TokenRange]] = defaultdict(list)
+
+        for first in range(start, endpos - 1):
+            word = self.nodes[first + 1].term_lookup
+            penalty = base_penalty
+            words[word].append(TokenRange(first, first + 1, penalty=penalty))
+            if self.nodes[first + 1].btype != BREAK_PHRASE:
+                for last in range(first + 2, min(first + 20, endpos)):
+                    word = ' '.join((word, self.nodes[last].term_lookup))
+                    penalty += self.nodes[last - 1].penalty
+                    words[word].append(TokenRange(first, last, penalty=penalty))
+                    if self.nodes[last].btype == BREAK_PHRASE:
+                        break
+
+        return words

@@ -46,3 +46,20 @@ def test_token_range_unimplemented_ops():
         nq.TokenRange(1, 3) <= nq.TokenRange(10, 12)
     with pytest.raises(TypeError):
         nq.TokenRange(1, 3) >= nq.TokenRange(10, 12)
+
+
+def test_query_extract_words():
+    q = nq.QueryStruct([])
+    q.add_node(nq.BREAK_WORD, nq.PHRASE_ANY, 0.1, '12', '')
+    q.add_node(nq.BREAK_TOKEN, nq.PHRASE_ANY, 0.0, 'ab', '')
+    q.add_node(nq.BREAK_PHRASE, nq.PHRASE_ANY, 0.0, '12', '')
+    q.add_node(nq.BREAK_END, nq.PHRASE_ANY, 0.5, 'hallo', '')
+
+    words = q.extract_words(base_penalty=1.0)
+
+    assert set(words.keys()) \
+             == {'12', 'ab', 'hallo', '12 ab', 'ab 12', '12 ab 12'}
+    assert sorted(words['12']) == [nq.TokenRange(0, 1, 1.0), nq.TokenRange(2, 3, 1.0)]
+    assert words['12 ab'] == [nq.TokenRange(0, 2, 1.1)]
+    assert words['hallo'] == [nq.TokenRange(3, 4, 1.0)]
+

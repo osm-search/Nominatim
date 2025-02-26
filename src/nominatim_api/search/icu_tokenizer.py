@@ -8,7 +8,6 @@
 Implementation of query analysis for the ICU tokenizer.
 """
 from typing import Tuple, Dict, List, Optional, Iterator, Any, cast
-from collections import defaultdict
 import dataclasses
 import difflib
 import re
@@ -45,29 +44,6 @@ PENALTY_IN_TOKEN_BREAK = {
      qmod.BREAK_PART: 0.0,
      qmod.BREAK_TOKEN: 0.0
 }
-
-
-WordDict = Dict[str, List[qmod.TokenRange]]
-
-
-def extract_words(query: qmod.QueryStruct, start: int,  words: WordDict) -> None:
-    """ Add all combinations of words in the terms list starting with
-        the term leading into node 'start'.
-
-        The words found will be added into the 'words' dictionary with
-        their start and end position.
-    """
-    nodes = query.nodes
-    total = len(nodes)
-    base_penalty = PENALTY_IN_TOKEN_BREAK[qmod.BREAK_WORD]
-    for first in range(start, total):
-        word = nodes[first].term_lookup
-        penalty = base_penalty
-        words[word].append(qmod.TokenRange(first - 1, first, penalty=penalty))
-        for last in range(first + 1, min(first + 20, total)):
-            word = ' '.join((word, nodes[last].term_lookup))
-            penalty += nodes[last - 1].penalty
-            words[word].append(qmod.TokenRange(first - 1, last, penalty=penalty))
 
 
 @dataclasses.dataclass
@@ -203,8 +179,9 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
         if not query.source:
             return query
 
-        words = self.split_query(query)
+        self.split_query(query)
         log().var_dump('Transliterated query', lambda: query.get_transliterated_query())
+        words = query.extract_words(base_penalty=PENALTY_IN_TOKEN_BREAK[qmod.BREAK_WORD])
 
         for row in await self.lookup_in_db(list(words.keys())):
             for trange in words[row.word_token]:
@@ -235,14 +212,9 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
         """
         return cast(str, self.normalizer.transliterate(text)).strip('-: ')
 
-    def split_query(self, query: qmod.QueryStruct) -> WordDict:
+    def split_query(self, query: qmod.QueryStruct) -> None:
         """ Transliterate the phrases and split them into tokens.
-
-            Returns a dictionary of words for lookup together
-            with their position.
         """
-        phrase_start = 1
-        words: WordDict = defaultdict(list)
         for phrase in query.source:
             query.nodes[-1].ptype = phrase.ptype
             phrase_split = re.split('([ :-])', phrase.text)
@@ -263,12 +235,7 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
                     query.nodes[-1].adjust_break(breakchar,
                                                  PENALTY_IN_TOKEN_BREAK[breakchar])
 
-            extract_words(query, phrase_start, words)
-
-            phrase_start = len(query.nodes)
         query.nodes[-1].adjust_break(qmod.BREAK_END, PENALTY_IN_TOKEN_BREAK[qmod.BREAK_END])
-
-        return words
 
     async def lookup_in_db(self, words: List[str]) -> 'sa.Result[Any]':
         """ Return the token information from the database for the

@@ -298,12 +298,12 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
 
 
 def _dump_word_tokens(query: qmod.QueryStruct) -> Iterator[List[Any]]:
-    yield ['type', 'token', 'word_token', 'lookup_word', 'penalty', 'count', 'info']
-    for node in query.nodes:
+    yield ['type', 'from', 'to', 'token', 'word_token', 'lookup_word', 'penalty', 'count', 'info']
+    for i, node in enumerate(query.nodes):
         for tlist in node.starting:
             for token in tlist.tokens:
                 t = cast(ICUToken, token)
-                yield [tlist.ttype, t.token, t.word_token or '',
+                yield [tlist.ttype, str(i), str(tlist.end), t.token, t.word_token or '',
                        t.lookup_word or '', t.penalty, t.count, t.info]
 
 

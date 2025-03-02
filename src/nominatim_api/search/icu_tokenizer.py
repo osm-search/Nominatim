@@ -24,6 +24,7 @@ from ..connection import SearchConnection
 from ..logging import log
 from . import query as qmod
 from ..query_preprocessing.config import QueryConfig
+from ..query_preprocessing.base import QueryProcessingFunc
 from .query_analyzer_factory import AbstractQueryAnalyzer
 from .postcode_parser import PostcodeParser
 
@@ -112,61 +113,51 @@ class ICUToken(qmod.Token):
                         addr_count=max(1, addr_count))
 
 
-class ICUQueryAnalyzer(AbstractQueryAnalyzer):
-    """ Converter for query strings into a tokenized query
-        using the tokens created by a ICU tokenizer.
-    """
-    def __init__(self, conn: SearchConnection) -> None:
-        self.conn = conn
-        self.postcode_parser = PostcodeParser(conn.config)
+@dataclasses.dataclass
+class ICUAnalyzerConfig:
+    postcode_parser: PostcodeParser
+    normalizer: Transliterator
+    transliterator: Transliterator
+    preprocessors: List[QueryProcessingFunc]
 
-    async def setup(self) -> None:
-        """ Set up static data structures needed for the analysis.
-        """
-        async def _make_normalizer() -> Any:
-            rules = await self.conn.get_property('tokenizer_import_normalisation')
-            return Transliterator.createFromRules("normalization", rules)
+    @staticmethod
+    async def create(conn: SearchConnection) -> 'ICUAnalyzerConfig':
+        rules = await conn.get_property('tokenizer_import_normalisation')
+        normalizer = Transliterator.createFromRules("normalization", rules)
 
-        self.normalizer = await self.conn.get_cached_value('ICUTOK', 'normalizer',
-                                                           _make_normalizer)
+        rules = await conn.get_property('tokenizer_import_transliteration')
+        transliterator = Transliterator.createFromRules("transliteration", rules)
 
-        async def _make_transliterator() -> Any:
-            rules = await self.conn.get_property('tokenizer_import_transliteration')
-            return Transliterator.createFromRules("transliteration", rules)
+        preprocessing_rules = conn.config.load_sub_configuration('icu_tokenizer.yaml',
+                                                                 config='TOKENIZER_CONFIG')\
+                                         .get('query-preprocessing', [])
 
-        self.transliterator = await self.conn.get_cached_value('ICUTOK', 'transliterator',
-                                                               _make_transliterator)
-
-        await self._setup_preprocessing()
-
-        if 'word' not in self.conn.t.meta.tables:
-            sa.Table('word', self.conn.t.meta,
-                     sa.Column('word_id', sa.Integer),
-                     sa.Column('word_token', sa.Text, nullable=False),
-                     sa.Column('type', sa.Text, nullable=False),
-                     sa.Column('word', sa.Text),
-                     sa.Column('info', Json))
-
-    async def _setup_preprocessing(self) -> None:
-        """ Load the rules for preprocessing and set up the handlers.
-        """
-
-        rules = self.conn.config.load_sub_configuration('icu_tokenizer.yaml',
-                                                        config='TOKENIZER_CONFIG')
-        preprocessing_rules = rules.get('query-preprocessing', [])
-
-        self.preprocessors = []
-
+        preprocessors: List[QueryProcessingFunc] = []
         for func in preprocessing_rules:
             if 'step' not in func:
                 raise UsageError("Preprocessing rule is missing the 'step' attribute.")
             if not isinstance(func['step'], str):
                 raise UsageError("'step' attribute must be a simple string.")
 
-            module = self.conn.config.load_plugin_module(
+            module = conn.config.load_plugin_module(
                         func['step'], 'nominatim_api.query_preprocessing')
-            self.preprocessors.append(
-                module.create(QueryConfig(func).set_normalizer(self.normalizer)))
+            preprocessors.append(
+                module.create(QueryConfig(func).set_normalizer(normalizer)))
+
+        return ICUAnalyzerConfig(PostcodeParser(conn.config),
+                                 normalizer, transliterator, preprocessors)
+
+
+class ICUQueryAnalyzer(AbstractQueryAnalyzer):
+    """ Converter for query strings into a tokenized query
+        using the tokens created by a ICU tokenizer.
+    """
+    def __init__(self, conn: SearchConnection, config: ICUAnalyzerConfig) -> None:
+        self.conn = conn
+        self.postcode_parser = config.postcode_parser
+        self.normalizer = config.normalizer
+        self.transliterator = config.transliterator
+        self.preprocessors = config.preprocessors
 
     async def analyze_query(self, phrases: List[qmod.Phrase]) -> qmod.QueryStruct:
         """ Analyze the given list of phrases and return the
@@ -311,7 +302,17 @@ async def create_query_analyzer(conn: SearchConnection) -> AbstractQueryAnalyzer
     """ Create and set up a new query analyzer for a database based
         on the ICU tokenizer.
     """
-    out = ICUQueryAnalyzer(conn)
-    await out.setup()
+    async def _get_config() -> ICUAnalyzerConfig:
+        if 'word' not in conn.t.meta.tables:
+            sa.Table('word', conn.t.meta,
+                     sa.Column('word_id', sa.Integer),
+                     sa.Column('word_token', sa.Text, nullable=False),
+                     sa.Column('type', sa.Text, nullable=False),
+                     sa.Column('word', sa.Text),
+                     sa.Column('info', Json))
 
-    return out
+        return await ICUAnalyzerConfig.create(conn)
+
+    config = await conn.get_cached_value('ICUTOK', 'config', _get_config)
+
+    return ICUQueryAnalyzer(conn, config)

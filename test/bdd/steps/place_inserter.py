@@ -28,9 +28,11 @@ class PlaceColumn:
         assert 'osm_type' in self.columns, "osm column missing"
 
         if force_name and 'name' not in self.columns:
-            self._add_hstore('name', 'name',
-                             ''.join(random.choice(string.printable)
-                                     for _ in range(int(random.random()*30))))
+            self._add_hstore(
+                'name',
+                'name',
+                ''.join(random.choices(string.printable, k=random.randrange(30))),
+            )
 
         return self
 
@@ -104,7 +106,7 @@ class PlaceColumn:
         if self.columns['osm_type'] == 'N' and self.geometry is None:
             pt = self.context.osm.grid_node(self.columns['osm_id'])
             if pt is None:
-                pt = (random.random()*360 - 180, random.random()*180 - 90)
+                pt = (random.uniform(-180, 180), random.uniform(-90, 90))
 
             self.geometry = "ST_SetSRID(ST_Point(%f, %f), 4326)" % pt
         else:

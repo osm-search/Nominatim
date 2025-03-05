@@ -144,7 +144,7 @@ class Point(NamedTuple):
         except ValueError as exc:
             raise UsageError('Point parameter needs to be numbers.') from exc
 
-        if x < -180.0 or x > 180.0 or y < -90.0 or y > 90.0:
+        if not -180 <= x <= 180 or not -90 <= y <= 90.0:
             raise UsageError('Point coordinates invalid.')
 
         return Point(x, y)

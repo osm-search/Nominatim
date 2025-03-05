@@ -102,10 +102,10 @@ def server_version_tuple(conn: Connection) -> Tuple[int, int]:
         Converts correctly for pre-10 and post-10 PostgreSQL versions.
     """
     version = conn.info.server_version
-    if version < 100000:
-        return (int(version / 10000), int((version % 10000) / 100))
-
-    return (int(version / 10000), version % 10000)
+    major, minor = divmod(version, 10000)
+    if major < 10:
+        minor //= 100
+    return major, minor
 
 
 def postgis_version_tuple(conn: Connection) -> Tuple[int, int]:

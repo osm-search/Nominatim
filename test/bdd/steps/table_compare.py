@@ -7,13 +7,12 @@
 """
 Functions to facilitate accessing and comparing the content of DB tables.
 """
+import math
 import re
 import json
 
 import psycopg
 from psycopg import sql as pysql
-
-from steps.check_functions import Almost
 
 ID_REGEX = re.compile(r"(?P<typ>[NRW])(?P<oid>\d+)(:(?P<cls>\w+))?")
 
@@ -166,7 +165,7 @@ class DBRow:
         else:
             x, y = self.context.osm.grid_node(int(expected))
 
-        return Almost(float(x)) == self.db_row['cx'] and Almost(float(y)) == self.db_row['cy']
+        return math.isclose(float(x), self.db_row['cx']) and math.isclose(float(y), self.db_row['cy'])
 
     def _has_geometry(self, expected):
         geom = self.context.osm.parse_geometry(expected)

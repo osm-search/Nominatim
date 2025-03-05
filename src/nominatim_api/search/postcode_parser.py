@@ -55,32 +55,49 @@ class PostcodeParser:
             [start node id, end node id, postcode token]
         """
         nodes = query.nodes
-        outcodes = set()
+        outcodes: Set[Tuple[int, int, str]] = set()
 
         for i in range(query.num_token_slots()):
-            if nodes[i].btype in '<,: ' and nodes[i + 1].btype != '`':
-                word = nodes[i + 1].term_normalized + nodes[i + 1].btype
-                if word[-1] in ' -' and nodes[i + 2].btype != '`':
-                    word += nodes[i + 2].term_normalized + nodes[i + 2].btype
-                    if word[-1] in ' -' and nodes[i + 3].btype != '`':
-                        word += nodes[i + 3].term_normalized + nodes[i + 3].btype
+            if nodes[i].btype in '<,: ' and nodes[i + 1].btype != '`' \
+                    and (i == 0 or nodes[i - 1].ptype != qmod.PHRASE_POSTCODE):
+                if nodes[i].ptype == qmod.PHRASE_ANY:
+                    word = nodes[i + 1].term_normalized + nodes[i + 1].btype
+                    if word[-1] in ' -' and nodes[i + 2].btype != '`' \
+                            and nodes[i + 1].ptype == qmod.PHRASE_ANY:
+                        word += nodes[i + 2].term_normalized + nodes[i + 2].btype
+                        if word[-1] in ' -' and nodes[i + 3].btype != '`' \
+                                and nodes[i + 2].ptype == qmod.PHRASE_ANY:
+                            word += nodes[i + 3].term_normalized + nodes[i + 3].btype
 
-                # Use global pattern to check for presence of any postcode.
-                m = self.global_pattern.fullmatch(word)
-                if m:
-                    # If there was a match, check against each pattern separately
-                    # because multiple patterns might be machting at the end.
-                    cc = m.group('cc')
-                    pc_word = m.group('pc')
-                    cc_spaces = len(m.group('space') or '')
-                    for pattern, info in self.local_patterns:
-                        lm = pattern.match(pc_word)
-                        if lm:
-                            trange = (i, i + cc_spaces + sum(c in ' ,-:>' for c in lm.group(0)))
-                            for out, out_ccs in info:
-                                if cc is None or cc in out_ccs:
-                                    if out:
-                                        outcodes.add((*trange, lm.expand(out).upper()))
-                                    else:
-                                        outcodes.add((*trange, lm.group(0)[:-1].upper()))
+                    self._match_word(word, i, False, outcodes)
+                elif nodes[i].ptype == qmod.PHRASE_POSTCODE:
+                    word = nodes[i + 1].term_normalized + nodes[i + 1].btype
+                    for j in range(i + 1, query.num_token_slots()):
+                        if nodes[j].ptype != qmod.PHRASE_POSTCODE:
+                            break
+                        word += nodes[j + 1].term_normalized + nodes[j + 1].btype
+
+                    self._match_word(word, i, True, outcodes)
+
         return outcodes
+
+    def _match_word(self, word: str, pos: int, fullmatch: bool,
+                    outcodes: Set[Tuple[int, int, str]]) -> None:
+        # Use global pattern to check for presence of any postcode.
+        m = self.global_pattern.fullmatch(word)
+        if m:
+            # If there was a match, check against each pattern separately
+            # because multiple patterns might be machting at the end.
+            cc = m.group('cc')
+            pc_word = m.group('pc')
+            cc_spaces = len(m.group('space') or '')
+            for pattern, info in self.local_patterns:
+                lm = pattern.fullmatch(pc_word) if fullmatch else pattern.match(pc_word)
+                if lm:
+                    trange = (pos, pos + cc_spaces + sum(c in ' ,-:>' for c in lm.group(0)))
+                    for out, out_ccs in info:
+                        if cc is None or cc in out_ccs:
+                            if out:
+                                outcodes.add((*trange, lm.expand(out).upper()))
+                            else:
+                                outcodes.add((*trange, lm.group(0)[:-1].upper()))

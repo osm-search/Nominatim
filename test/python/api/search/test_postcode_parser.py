@@ -14,7 +14,7 @@ from itertools import zip_longest
 import pytest
 
 from nominatim_api.search.postcode_parser import PostcodeParser
-from nominatim_api.search.query import QueryStruct, PHRASE_ANY
+from nominatim_api.search.query import QueryStruct, PHRASE_ANY, PHRASE_POSTCODE, PHRASE_STREET
 
 @pytest.fixture
 def pc_config(project_env):
@@ -131,3 +131,24 @@ def test_postcode_with_non_matching_country_prefix(pc_config):
 
     assert not parser.parse(mk_query('ky12233'))
 
+def test_postcode_inside_postcode_phrase(pc_config):
+    parser = PostcodeParser(pc_config)
+
+    query = QueryStruct([])
+    query.nodes[-1].ptype = PHRASE_STREET
+    query.add_node(',', PHRASE_STREET, 0.1, '12345', '12345')
+    query.add_node(',', PHRASE_POSTCODE, 0.1, 'xz', 'xz')
+    query.add_node('>', PHRASE_POSTCODE, 0.1, '4444', '4444')
+
+    assert parser.parse(query) == {(2, 3, '4444')}
+
+
+def test_partial_postcode_in_postcode_phrase(pc_config):
+    parser = PostcodeParser(pc_config)
+
+    query = QueryStruct([])
+    query.nodes[-1].ptype = PHRASE_POSTCODE
+    query.add_node(' ', PHRASE_POSTCODE, 0.1, '2224', '2224')
+    query.add_node('>', PHRASE_POSTCODE, 0.1, '12345', '12345')
+
+    assert not parser.parse(query)

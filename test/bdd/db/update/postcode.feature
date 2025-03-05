@@ -2,7 +2,7 @@
 Feature: Update of postcode
     Tests for updating of data related to postcodes
 
-    Scenario: A new postcode appears in the postcode and word table
+    Scenario: A new postcode appears in the postcode table
         Given the places
            | osm | class | type  | addr+postcode | addr+housenumber | geometry |
            | N34 | place | house | 01982         | 111              |country:de |
@@ -18,9 +18,8 @@ Feature: Update of postcode
            | country | postcode | geometry |
            | de      | 01982    | country:de |
            | ch      | 4567     | country:ch |
-        And there are word tokens for postcodes 01982,4567
 
-     Scenario: When the last postcode is deleted, it is deleted from postcode and word
+     Scenario: When the last postcode is deleted, it is deleted from postcode
         Given the places
            | osm | class | type  | addr+postcode | addr+housenumber | geometry |
            | N34 | place | house | 01982         | 111              |country:de |
@@ -31,10 +30,8 @@ Feature: Update of postcode
         Then location_postcode contains exactly
            | country | postcode | geometry |
            | ch      | 4567     | country:ch |
-        And there are word tokens for postcodes 4567
-        And there are no word tokens for postcodes 01982
 
-     Scenario: A postcode is not deleted from postcode and word when it exist in another country
+     Scenario: A postcode is not deleted from postcode when it exist in another country
         Given the places
            | osm | class | type  | addr+postcode | addr+housenumber | geometry |
            | N34 | place | house | 01982         | 111              |country:de |
@@ -45,7 +42,6 @@ Feature: Update of postcode
         Then location_postcode contains exactly
            | country | postcode | geometry |
            | fr      | 01982    | country:fr |
-        And there are word tokens for postcodes 01982
 
      Scenario: Updating a postcode is reflected in postcode table
         Given the places
@@ -59,7 +55,6 @@ Feature: Update of postcode
         Then location_postcode contains exactly
            | country | postcode | geometry |
            | de      | 20453    | country:de |
-        And there are word tokens for postcodes 20453
 
      Scenario: When changing from a postcode type, the entry appears in placex
         When importing
@@ -80,7 +75,6 @@ Feature: Update of postcode
         Then location_postcode contains exactly
            | country | postcode | geometry |
            | de      | 20453    | country:de |
-        And there are word tokens for postcodes 20453
 
      Scenario: When changing to a postcode type, the entry disappears from placex
         When importing
@@ -101,7 +95,6 @@ Feature: Update of postcode
         Then location_postcode contains exactly
            | country | postcode | geometry |
            | de      | 01982    | country:de |
-        And there are word tokens for postcodes 01982
 
     Scenario: When a parent is deleted, the postcode gets a new parent
         Given the grid with origin DE

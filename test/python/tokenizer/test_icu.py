@@ -265,37 +265,13 @@ class TestPostcodes:
                                                       'address': {'postcode': postcode}}))
 
 
-    def test_update_postcodes_from_db_empty(self, table_factory, word_table):
-        table_factory('location_postcode', 'country_code TEXT, postcode TEXT',
-                      content=(('de', '12345'), ('se', '132 34'),
-                               ('bm', 'AB23'), ('fr', '12345')))
-
-        self.analyzer.update_postcodes_from_db()
-
-        assert word_table.count() == 5
-        assert word_table.get_postcodes() == {'12345', '132 34@132 34', 'AB 23@AB 23'}
-
-
-    def test_update_postcodes_from_db_ambigious(self, table_factory, word_table):
-        table_factory('location_postcode', 'country_code TEXT, postcode TEXT',
-                      content=(('in', '123456'), ('sg', '123456')))
-
-        self.analyzer.update_postcodes_from_db()
-
-        assert word_table.count() == 3
-        assert word_table.get_postcodes() == {'123456', '123456@123 456'}
-
-
-    def test_update_postcodes_from_db_add_and_remove(self, table_factory, word_table):
-        table_factory('location_postcode', 'country_code TEXT, postcode TEXT',
-                      content=(('ch', '1234'), ('bm', 'BC 45'), ('bm', 'XX45')))
+    def test_update_postcodes_deleted(self, word_table):
         word_table.add_postcode(' 1234', '1234')
         word_table.add_postcode(' 5678', '5678')
 
         self.analyzer.update_postcodes_from_db()
 
-        assert word_table.count() == 5
-        assert word_table.get_postcodes() == {'1234', 'BC 45@BC 45', 'XX 45@XX 45'}
+        assert word_table.count() == 0
 
 
     def test_process_place_postcode_simple(self, word_table):
@@ -303,15 +279,11 @@ class TestPostcodes:
 
         assert info['postcode'] == '12345'
 
-        assert word_table.get_postcodes() == {'12345', }
-
 
     def test_process_place_postcode_with_space(self, word_table):
         info = self.process_postcode('in', '123 567')
 
         assert info['postcode'] == '123567'
-
-        assert word_table.get_postcodes() == {'123567@123 567', }
 
 
 
@@ -477,9 +449,9 @@ class TestPlaceAddress:
 
     @pytest.mark.parametrize('pcode', ['12345', 'AB 123', '34-345'])
     def test_process_place_postcode(self, word_table, pcode):
-        self.process_address(postcode=pcode)
+        info = self.process_address(postcode=pcode)
 
-        assert word_table.get_postcodes() == {pcode, }
+        assert info['postcode'] == pcode
 
 
     @pytest.mark.parametrize('hnr', ['123a', '1', '101'])

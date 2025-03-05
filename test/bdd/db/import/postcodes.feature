@@ -170,7 +170,7 @@ Feature: Import of postcodes
             | object | postcode |
             | W93    | 11200    |
 
-    Scenario: Postcodes are added to the postcode and word table
+    Scenario: Postcodes are added to the postcode
         Given the places
            | osm | class | type  | addr+postcode | addr+housenumber | geometry |
            | N34 | place | house | 01982         | 111              |country:de |
@@ -178,7 +178,6 @@ Feature: Import of postcodes
         Then location_postcode contains exactly
            | country | postcode | geometry |
            | de      | 01982    | country:de |
-        And there are word tokens for postcodes 01982
 
 
     @Fail
@@ -195,7 +194,7 @@ Feature: Import of postcodes
          | E45 2    | gb      | 23          | 5 |
          | Y45      | gb      | 21          | 5 |
 
-    Scenario: Postcodes outside all countries are not added to the postcode and word table
+    Scenario: Postcodes outside all countries are not added to the postcode table
         Given the places
             | osm | class | type  | addr+postcode | addr+housenumber | addr+place  | geometry  |
             | N34 | place | house | 01982         | 111              | Null Island | 0 0.00001 |
@@ -205,7 +204,6 @@ Feature: Import of postcodes
         When importing
         Then location_postcode contains exactly
             | country | postcode | geometry |
-        And there are no word tokens for postcodes 01982
         When sending search query "111, 01982 Null Island"
         Then results contain
             | osm | display_name |

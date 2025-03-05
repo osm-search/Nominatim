@@ -21,6 +21,9 @@ def mktoken(tid: int):
     return MyToken(penalty=3.0, token=tid, count=1, addr_count=1,
                    lookup_word='foo')
 
+@pytest.fixture
+def qnode():
+    return query.QueryNode(query.BREAK_PHRASE, query.PHRASE_ANY, 0.0 ,'', '')
 
 @pytest.mark.parametrize('ptype,ttype', [(query.PHRASE_ANY, 'W'),
                                          (query.PHRASE_AMENITY, 'Q'),
@@ -37,27 +40,24 @@ def test_phrase_incompatible(ptype):
     assert not query._phrase_compatible_with(ptype, query.TOKEN_PARTIAL, True)
 
 
-def test_query_node_empty():
-    qn = query.QueryNode(query.BREAK_PHRASE, query.PHRASE_ANY)
-
-    assert not qn.has_tokens(3, query.TOKEN_PARTIAL)
-    assert qn.get_tokens(3, query.TOKEN_WORD) is None
+def test_query_node_empty(qnode):
+    assert not qnode.has_tokens(3, query.TOKEN_PARTIAL)
+    assert qnode.get_tokens(3, query.TOKEN_WORD) is None
 
 
-def test_query_node_with_content():
-    qn = query.QueryNode(query.BREAK_PHRASE, query.PHRASE_ANY)
-    qn.starting.append(query.TokenList(2, query.TOKEN_PARTIAL, [mktoken(100), mktoken(101)]))
-    qn.starting.append(query.TokenList(2, query.TOKEN_WORD, [mktoken(1000)]))
+def test_query_node_with_content(qnode):
+    qnode.starting.append(query.TokenList(2, query.TOKEN_PARTIAL, [mktoken(100), mktoken(101)]))
+    qnode.starting.append(query.TokenList(2, query.TOKEN_WORD, [mktoken(1000)]))
 
-    assert not qn.has_tokens(3, query.TOKEN_PARTIAL)
-    assert not qn.has_tokens(2, query.TOKEN_COUNTRY)
-    assert qn.has_tokens(2, query.TOKEN_PARTIAL)
-    assert qn.has_tokens(2, query.TOKEN_WORD)
+    assert not qnode.has_tokens(3, query.TOKEN_PARTIAL)
+    assert not qnode.has_tokens(2, query.TOKEN_COUNTRY)
+    assert qnode.has_tokens(2, query.TOKEN_PARTIAL)
+    assert qnode.has_tokens(2, query.TOKEN_WORD)
 
-    assert qn.get_tokens(3, query.TOKEN_PARTIAL) is None
-    assert qn.get_tokens(2, query.TOKEN_COUNTRY) is None
-    assert len(qn.get_tokens(2, query.TOKEN_PARTIAL)) == 2
-    assert len(qn.get_tokens(2, query.TOKEN_WORD)) == 1
+    assert qnode.get_tokens(3, query.TOKEN_PARTIAL) is None
+    assert qnode.get_tokens(2, query.TOKEN_COUNTRY) is None
+    assert len(qnode.get_tokens(2, query.TOKEN_PARTIAL)) == 2
+    assert len(qnode.get_tokens(2, query.TOKEN_WORD)) == 1
 
 
 def test_query_struct_empty():

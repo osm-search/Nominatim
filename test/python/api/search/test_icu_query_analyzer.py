@@ -102,12 +102,11 @@ async def test_splitting_in_transliteration(conn):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize('term,order', [('23456', ['P', 'H', 'W', 'w']),
-                                        ('3', ['H', 'P', 'W', 'w'])
+                                        ('3', ['H', 'W', 'w'])
                                        ])
 async def test_penalty_postcodes_and_housenumbers(conn, term, order):
     ana = await tok.create_query_analyzer(conn)
 
-    await add_word(conn, 1, term, 'P', None)
     await add_word(conn, 2, term, 'H', term)
     await add_word(conn, 3, term, 'w', term)
     await add_word(conn, 4, term, 'W', term)
@@ -179,8 +178,10 @@ async def test_add_unknown_housenumbers(conn):
     assert query.nodes[1].starting[0].ttype == qmod.TOKEN_HOUSENUMBER
     assert len(query.nodes[1].starting[0].tokens) == 1
     assert query.nodes[1].starting[0].tokens[0].token == 1
-    assert not query.nodes[2].starting
-    assert not query.nodes[3].starting
+    assert query.nodes[2].has_tokens(3, qmod.TOKEN_POSTCODE)
+    assert not query.nodes[2].has_tokens(3, qmod.TOKEN_HOUSENUMBER)
+    assert not query.nodes[2].has_tokens(4, qmod.TOKEN_HOUSENUMBER)
+    assert not query.nodes[3].has_tokens(4, qmod.TOKEN_HOUSENUMBER)
 
 
 @pytest.mark.asyncio

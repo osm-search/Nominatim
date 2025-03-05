@@ -3,9 +3,8 @@
 Feature: Searches with postcodes
     Various searches involving postcodes
 
-    @Fail
     Scenario: US 5+4 ZIP codes are shortened to 5 ZIP codes if not found
-        When sending json search query "36067 1111, us" with address
+        When sending json search query "36067-1111, us" with address
         Then result addresses contain
             | postcode |
             | 36067    |

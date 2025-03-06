@@ -11,7 +11,7 @@ import re
 import json
 import xml.etree.ElementTree as ET
 
-from check_functions import Almost, OsmType, Field, check_for_attributes
+from check_functions import OsmType, Field, check_for_attributes
 
 
 class GenericResponse:

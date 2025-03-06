@@ -11,17 +11,6 @@ import json
 import math
 import re
 
-class Almost:
-    """ Compares a float value with a certain jitter.
-    """
-    def __init__(self, value, offset=0.00001):
-        self.value = value
-        self.offset = offset
-
-    def __eq__(self, other):
-        return abs(other - self.value) < self.offset
-
-
 OSM_TYPE = {'N' : 'node', 'W' : 'way', 'R' : 'relation',
             'n' : 'node', 'w' : 'way', 'r' : 'relation',
             'node' : 'n', 'way' : 'w', 'relation' : 'r'}

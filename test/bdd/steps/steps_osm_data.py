@@ -41,8 +41,7 @@ def write_opl_file(opl, grid):
             if line.startswith('n') and line.find(' x') < 0:
                 coord = grid.grid_node(int(line[1:].split(' ')[0]))
                 if coord is None:
-                    coord = (random.random() * 360 - 180,
-                             random.random() * 180 - 90)
+                    coord = (random.uniform(-180, 180), random.uniform(-90, 90))
                 line += " x%f y%f" % coord
             fd.write(line.encode('utf-8'))
             fd.write(b'\n')

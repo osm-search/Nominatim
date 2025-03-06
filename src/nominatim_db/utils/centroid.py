@@ -30,8 +30,8 @@ class PointsCentroid:
         if self.count == 0:
             raise ValueError("No points available for centroid.")
 
-        return (float(self.sum_x/self.count)/10000000,
-                float(self.sum_y/self.count)/10000000)
+        return (self.sum_x / self.count / 10_000_000,
+                self.sum_y / self.count / 10_000_000)
 
     def __len__(self) -> int:
         return self.count
@@ -40,8 +40,8 @@ class PointsCentroid:
         if isinstance(other, Collection) and len(other) == 2:
             if all(isinstance(p, (float, int)) for p in other):
                 x, y = other
-                self.sum_x += int(x * 10000000)
-                self.sum_y += int(y * 10000000)
+                self.sum_x += int(x * 10_000_000)
+                self.sum_y += int(y * 10_000_000)
                 self.count += 1
                 return self
 

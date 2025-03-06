@@ -50,8 +50,8 @@ class ProgressLogger:
         places_per_sec = self.done_places / done_time
         eta = (self.total_places - self.done_places) / places_per_sec
 
-        LOG.warning("Done %d in %d @ %.3f per second - %s ETA (seconds): %.2f",
-                    self.done_places, int(done_time),
+        LOG.warning("Done %d in %.0f @ %.3f per second - %s ETA (seconds): %.2f",
+                    self.done_places, done_time,
                     places_per_sec, self.name, eta)
 
         self.next_info += int(places_per_sec) * self.log_interval
@@ -68,8 +68,8 @@ class ProgressLogger:
             diff_seconds = (rank_end_time - self.rank_start_time).total_seconds()
             places_per_sec = self.done_places / diff_seconds
 
-        LOG.warning("Done %d/%d in %d @ %.3f per second - FINISHED %s\n",
-                    self.done_places, self.total_places, int(diff_seconds),
+        LOG.warning("Done %d/%d in %.0f @ %.3f per second - FINISHED %s\n",
+                    self.done_places, self.total_places, diff_seconds,
                     places_per_sec, self.name)
 
         return self.done_places

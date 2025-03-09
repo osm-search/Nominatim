@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2022 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Functions to facilitate accessing and comparing the content of DB tables.
@@ -15,6 +15,7 @@ import psycopg
 from psycopg import sql as pysql
 
 ID_REGEX = re.compile(r"(?P<typ>[NRW])(?P<oid>\d+)(:(?P<cls>\w+))?")
+
 
 class NominatimID:
     """ Splits a unique identifier for places into its components.
@@ -146,10 +147,10 @@ class DBRow:
         return str(actual) == expected
 
     def _compare_place_id(self, actual, expected):
-       if expected == '0':
+        if expected == '0':
             return actual == 0
 
-       with self.context.db.cursor() as cur:
+        with self.context.db.cursor() as cur:
             return NominatimID(expected).get_place_id(cur) == actual
 
     def _has_centroid(self, expected):
@@ -165,13 +166,15 @@ class DBRow:
         else:
             x, y = self.context.osm.grid_node(int(expected))
 
-        return math.isclose(float(x), self.db_row['cx']) and math.isclose(float(y), self.db_row['cy'])
+        return math.isclose(float(x), self.db_row['cx']) \
+            and math.isclose(float(y), self.db_row['cy'])
 
     def _has_geometry(self, expected):
         geom = self.context.osm.parse_geometry(expected)
         with self.context.db.cursor(row_factory=psycopg.rows.tuple_row) as cur:
-            cur.execute(pysql.SQL("""SELECT ST_Equals(ST_SnapToGrid({}, 0.00001, 0.00001),
-                                   ST_SnapToGrid(ST_SetSRID({}::geometry, 4326), 0.00001, 0.00001))""")
+            cur.execute(pysql.SQL("""
+                SELECT ST_Equals(ST_SnapToGrid({}, 0.00001, 0.00001),
+                ST_SnapToGrid(ST_SetSRID({}::geometry, 4326), 0.00001, 0.00001))""")
                              .format(pysql.SQL(geom),
                                      pysql.Literal(self.db_row['geomtxt'])))
             return cur.fetchone()[0]
@@ -186,7 +189,8 @@ class DBRow:
         else:
             msg += " No such column."
 
-        return msg + "\nFull DB row: {}".format(json.dumps(dict(self.db_row), indent=4, default=str))
+        return msg + "\nFull DB row: {}".format(json.dumps(dict(self.db_row),
+                                                indent=4, default=str))
 
     def _get_actual(self, name):
         if '+' in name:

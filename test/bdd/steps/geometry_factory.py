@@ -2,12 +2,10 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2022 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
-from pathlib import Path
-import os
-
 from steps.geometry_alias import ALIASES
+
 
 class GeometryFactory:
     """ Provides functions to create geometries from coordinates and data grids.
@@ -47,7 +45,6 @@ class GeometryFactory:
 
         return "ST_SetSRID('{}'::geometry, 4326)".format(out)
 
-
     def mk_wkt_point(self, point):
         """ Parse a point description.
             The point may either consist of 'x y' coordinates or a number
@@ -65,14 +62,12 @@ class GeometryFactory:
         assert pt is not None, "Scenario error: Point '{}' not found in grid".format(geom)
         return "{} {}".format(*pt)
 
-
     def mk_wkt_points(self, geom):
         """ Parse a list of points.
             The list must be a comma-separated list of points. Points
             in coordinate and grid format may be mixed.
         """
         return ','.join([self.mk_wkt_point(x) for x in geom.split(',')])
-
 
     def set_grid(self, lines, grid_step, origin=(0.0, 0.0)):
         """ Replace the grid with one from the given lines.
@@ -86,7 +81,6 @@ class GeometryFactory:
                     self.grid[int(pt_id)] = (x, y)
                 x += grid_step
             y += grid_step
-
 
     def grid_node(self, nodeid):
         """ Get the coordinates for the given grid node.

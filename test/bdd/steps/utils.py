@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2022 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Various smaller helps for step execution.
@@ -11,6 +11,7 @@ import logging
 import subprocess
 
 LOG = logging.getLogger(__name__)
+
 
 def run_script(cmd, **kwargs):
     """ Run the given command, check that it is successful and output

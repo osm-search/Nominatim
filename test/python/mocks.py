@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Custom mocks for testing.
@@ -11,8 +11,6 @@ import itertools
 
 from nominatim_db.db import properties
 
-# This must always point to the mock word table for the default tokenizer.
-from mock_icu_word_table import MockIcuWordTable as MockWordTable
 
 class MockPlacexTable:
     """ A placex table for testing.
@@ -58,7 +56,8 @@ class MockPlacexTable:
                                                type, name, admin_level, address,
                                                housenumber, rank_search,
                                                extratags, geometry, country_code)
-                            VALUES(nextval('seq_place'), %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+                            VALUES(nextval('seq_place'), %s, %s, %s, %s, %s, %s,
+                                   %s, %s, %s, %s, %s, %s)""",
                         (osm_type, osm_id or next(self.idseq), cls, typ, names,
                          admin_level, address, housenumber, rank_search,
                          extratags, 'SRID=4326;' + geom,
@@ -72,12 +71,10 @@ class MockPropertyTable:
     def __init__(self, conn):
         self.conn = conn
 
-
     def set(self, name, value):
         """ Set a property in the table to the given value.
         """
         properties.set_property(self.conn, name, value)
-
 
     def get(self, name):
         """ Set a property in the table to the given value.

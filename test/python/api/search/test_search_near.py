@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for running the near searcher.
@@ -12,8 +12,8 @@ import pytest
 import nominatim_api as napi
 from nominatim_api.types import SearchDetails
 from nominatim_api.search.db_searches import NearSearch, PlaceSearch
-from nominatim_api.search.db_search_fields import WeightedStrings, WeightedCategories,\
-                                                  FieldLookup, FieldRanking, RankedTokens
+from nominatim_api.search.db_search_fields import WeightedStrings, WeightedCategories, \
+                                                  FieldLookup
 from nominatim_api.search.db_search_lookups import LookupAll
 
 
@@ -80,7 +80,6 @@ class TestNearSearch:
         apiobj.add_search_name(101, names=[56], country_code='mx',
                                centroid=(-10.3, 56.9))
 
-
     def test_near_in_placex(self, apiobj, frontend):
         apiobj.add_placex(place_id=22, class_='amenity', type='bank',
                           centroid=(5.6001, 4.2994))
@@ -90,7 +89,6 @@ class TestNearSearch:
         results = run_search(apiobj, frontend, 0.1, [('amenity', 'bank')])
 
         assert [r.place_id for r in results] == [22]
-
 
     def test_multiple_types_near_in_placex(self, apiobj, frontend):
         apiobj.add_placex(place_id=22, class_='amenity', type='bank',
@@ -105,7 +103,6 @@ class TestNearSearch:
 
         assert [r.place_id for r in results] == [22, 23]
 
-
     def test_near_in_classtype(self, apiobj, frontend):
         apiobj.add_placex(place_id=22, class_='amenity', type='bank',
                           centroid=(5.6, 4.34))
@@ -117,7 +114,6 @@ class TestNearSearch:
         results = run_search(apiobj, frontend, 0.1, [('amenity', 'bank')])
 
         assert [r.place_id for r in results] == [22]
-
 
     @pytest.mark.parametrize('cc,rid', [('us', 22), ('mx', 23)])
     def test_restrict_by_country(self, apiobj, frontend, cc, rid):
@@ -138,7 +134,6 @@ class TestNearSearch:
 
         assert [r.place_id for r in results] == [rid]
 
-
     @pytest.mark.parametrize('excluded,rid', [(22, 122), (122, 22)])
     def test_exclude_place_by_id(self, apiobj, frontend, excluded, rid):
         apiobj.add_placex(place_id=22, class_='amenity', type='bank',
@@ -148,12 +143,10 @@ class TestNearSearch:
                           centroid=(5.6001, 4.2994),
                           country_code='us')
 
-
         results = run_search(apiobj, frontend, 0.1, [('amenity', 'bank')],
                              details=SearchDetails(excluded=[excluded]))
 
         assert [r.place_id for r in results] == [rid]
-
 
     @pytest.mark.parametrize('layer,rids', [(napi.DataLayer.POI, [22]),
                                             (napi.DataLayer.MANMADE, [])])

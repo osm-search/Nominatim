@@ -2,20 +2,20 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for the deletable v1 API call.
 """
 import json
 import datetime as dt
-from pathlib import Path
 
 import pytest
 
-from fake_adaptor import FakeAdaptor, FakeError, FakeResponse
+from fake_adaptor import FakeAdaptor
 
 import nominatim_api.v1.server_glue as glue
+
 
 class TestPolygonsEndPoint:
 
@@ -35,13 +35,12 @@ class TestPolygonsEndPoint:
                                     errormessage text,
                                     prevgeometry geometry(Geometry,4326),
                                     newgeometry geometry(Geometry,4326)""",
-                    content=[(345, 'N', 'boundary', 'administrative',
-                              {'name': 'Foo'}, 'xx', self.recent,
-                              'some text', None, None),
-                             (781, 'R', 'landuse', 'wood',
-                              None, 'ds', self.now,
-                              'Area reduced by lots', None, None)])
-
+                      content=[(345, 'N', 'boundary', 'administrative',
+                               {'name': 'Foo'}, 'xx', self.recent,
+                               'some text', None, None),
+                               (781, 'R', 'landuse', 'wood',
+                                None, 'ds', self.now,
+                                'Area reduced by lots', None, None)])
 
     @pytest.mark.asyncio
     async def test_polygons_simple(self, api):
@@ -63,7 +62,6 @@ class TestPolygonsEndPoint:
                             'errormessage': 'Area reduced by lots',
                             'updated': self.now.isoformat(sep=' ', timespec='seconds')}]
 
-
     @pytest.mark.asyncio
     async def test_polygons_days(self, api):
         a = FakeAdaptor()
@@ -74,7 +72,6 @@ class TestPolygonsEndPoint:
 
         assert [r['osm_id'] for r in results] == [781]
 
-
     @pytest.mark.asyncio
     async def test_polygons_class(self, api):
         a = FakeAdaptor()
@@ -84,8 +81,6 @@ class TestPolygonsEndPoint:
         results = json.loads(resp.output)
 
         assert [r['osm_id'] for r in results] == [781]
-
-
 
     @pytest.mark.asyncio
     async def test_polygons_reduced(self, api):

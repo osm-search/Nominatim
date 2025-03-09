@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for formatting results for the V1 API.
@@ -22,6 +22,7 @@ STATUS_FORMATS = {'text', 'json'}
 
 # StatusResult
 
+
 def test_status_format_list():
     assert set(v1_format.list_formats(napi.StatusResult)) == STATUS_FORMATS
 
@@ -36,11 +37,13 @@ def test_status_unsupported():
 
 
 def test_status_format_text():
-    assert v1_format.format_result(napi.StatusResult(0, 'message here'), 'text', {}) == 'OK'
+    assert v1_format.format_result(napi.StatusResult(0, 'message here'), 'text', {}) \
+        == 'OK'
 
 
-def test_status_format_text():
-    assert v1_format.format_result(napi.StatusResult(500, 'message here'), 'text', {}) == 'ERROR: message here'
+def test_status_format_error_text():
+    assert v1_format.format_result(napi.StatusResult(500, 'message here'), 'text', {}) \
+        == 'ERROR: message here'
 
 
 def test_status_format_json_minimal():
@@ -48,8 +51,9 @@ def test_status_format_json_minimal():
 
     result = v1_format.format_result(status, 'json', {})
 
-    assert result == \
-           f'{{"status":700,"message":"Bad format.","software_version":"{napi.__version__}"}}'
+    assert json.loads(result) == {'status': 700,
+                                  'message': 'Bad format.',
+                                  'software_version': napi.__version__}
 
 
 def test_status_format_json_full():
@@ -59,8 +63,11 @@ def test_status_format_json_full():
 
     result = v1_format.format_result(status, 'json', {})
 
-    assert result == \
-           f'{{"status":0,"message":"OK","data_updated":"2010-02-07T20:20:03+00:00","software_version":"{napi.__version__}","database_version":"5.6"}}'
+    assert json.loads(result) == {'status': 0,
+                                  'message': 'OK',
+                                  'data_updated': '2010-02-07T20:20:03+00:00',
+                                  'software_version': napi.__version__,
+                                  'database_version': '5.6'}
 
 
 # DetailedResult
@@ -86,7 +93,7 @@ def test_search_details_minimal():
             'extratags': {},
             'centroid': {'type': 'Point', 'coordinates': [1.0, 2.0]},
             'geometry': {'type': 'Point', 'coordinates': [1.0, 2.0]},
-           }
+            }
 
 
 def test_search_details_full():
@@ -110,7 +117,7 @@ def test_search_details_full():
                   rank_search=28,
                   importance=0.0443,
                   country_code='ll',
-                  indexed_date = import_date
+                  indexed_date=import_date
                   )
     search.localize(napi.Locales())
 
@@ -140,7 +147,7 @@ def test_search_details_full():
             'isarea': False,
             'centroid': {'type': 'Point', 'coordinates': [56.947, -87.44]},
             'geometry': {'type': 'Point', 'coordinates': [56.947, -87.44]},
-           }
+            }
 
 
 @pytest.mark.parametrize('gtype,isarea', [('ST_Point', False),
@@ -149,9 +156,9 @@ def test_search_details_full():
                                           ('ST_MultiPolygon', True)])
 def test_search_details_no_geometry(gtype, isarea):
     search = napi.DetailedResult(napi.SourceTable.PLACEX,
-                               ('place', 'thing'),
-                               napi.Point(1.0, 2.0),
-                               geometry={'type': gtype})
+                                 ('place', 'thing'),
+                                 napi.Point(1.0, 2.0),
+                                 geometry={'type': gtype})
 
     result = v1_format.format_result(search, 'json', {})
     js = json.loads(result)
@@ -161,16 +168,17 @@ def test_search_details_no_geometry(gtype, isarea):
 
 
 def test_search_details_with_geometry():
-    search = napi.DetailedResult(napi.SourceTable.PLACEX,
-                                 ('place', 'thing'),
-                                 napi.Point(1.0, 2.0),
-                                 geometry={'geojson': '{"type":"Point","coordinates":[56.947,-87.44]}'})
+    search = napi.DetailedResult(
+        napi.SourceTable.PLACEX,
+        ('place', 'thing'),
+        napi.Point(1.0, 2.0),
+        geometry={'geojson': '{"type":"Point","coordinates":[56.947,-87.44]}'})
 
     result = v1_format.format_result(search, 'json', {})
     js = json.loads(result)
 
     assert js['geometry'] == {'type': 'Point', 'coordinates': [56.947, -87.44]}
-    assert js['isarea'] == False
+    assert js['isarea'] is False
 
 
 def test_search_details_with_icon_available():
@@ -226,7 +234,7 @@ def test_search_details_with_address_minimal():
 @pytest.mark.parametrize('field,outfield', [('address_rows', 'address'),
                                             ('linked_rows', 'linked_places'),
                                             ('parented_rows', 'hierarchy')
-                                           ])
+                                            ])
 def test_search_details_with_further_infos(field, outfield):
     search = napi.DetailedResult(napi.SourceTable.PLACEX,
                                  ('place', 'thing'),
@@ -249,50 +257,49 @@ def test_search_details_with_further_infos(field, outfield):
     js = json.loads(result)
 
     assert js[outfield] == [{'localname': 'Trespass',
-                              'place_id': 3498,
-                              'osm_id': 442,
-                              'osm_type': 'R',
-                              'place_type': 'spec',
-                              'class': 'bnd',
-                              'type': 'note',
-                              'admin_level': 4,
-                              'rank_address': 10,
-                              'distance': 0.034,
-                              'isaddress': True}]
+                             'place_id': 3498,
+                             'osm_id': 442,
+                             'osm_type': 'R',
+                             'place_type': 'spec',
+                             'class': 'bnd',
+                             'type': 'note',
+                             'admin_level': 4,
+                             'rank_address': 10,
+                             'distance': 0.034,
+                             'isaddress': True}]
 
 
 def test_search_details_grouped_hierarchy():
     search = napi.DetailedResult(napi.SourceTable.PLACEX,
                                  ('place', 'thing'),
                                  napi.Point(1.0, 2.0),
-                                 parented_rows =
-                                     [napi.AddressLine(place_id=3498,
-                                             osm_object=('R', 442),
-                                             category=('bnd', 'note'),
-                                             names={'name': 'Trespass'},
-                                             extratags={'access': 'no',
-                                                        'place_type': 'spec'},
-                                             admin_level=4,
-                                             fromarea=True,
-                                             isaddress=True,
-                                             rank_address=10,
-                                             distance=0.034)
-                                     ])
+                                 parented_rows=[napi.AddressLine(
+                                    place_id=3498,
+                                    osm_object=('R', 442),
+                                    category=('bnd', 'note'),
+                                    names={'name': 'Trespass'},
+                                    extratags={'access': 'no',
+                                               'place_type': 'spec'},
+                                    admin_level=4,
+                                    fromarea=True,
+                                    isaddress=True,
+                                    rank_address=10,
+                                    distance=0.034)])
 
     result = v1_format.format_result(search, 'json', {'group_hierarchy': True})
     js = json.loads(result)
 
     assert js['hierarchy'] == {'note': [{'localname': 'Trespass',
-                              'place_id': 3498,
-                              'osm_id': 442,
-                              'osm_type': 'R',
-                              'place_type': 'spec',
-                              'class': 'bnd',
-                              'type': 'note',
-                              'admin_level': 4,
-                              'rank_address': 10,
-                              'distance': 0.034,
-                              'isaddress': True}]}
+                                         'place_id': 3498,
+                                         'osm_id': 442,
+                                         'osm_type': 'R',
+                                         'place_type': 'spec',
+                                         'class': 'bnd',
+                                         'type': 'note',
+                                         'admin_level': 4,
+                                         'rank_address': 10,
+                                         'distance': 0.034,
+                                         'isaddress': True}]}
 
 
 def test_search_details_keywords_name():
@@ -307,7 +314,7 @@ def test_search_details_keywords_name():
     js = json.loads(result)
 
     assert js['keywords'] == {'name': [{'id': 23, 'token': 'foo'},
-                                      {'id': 24, 'token': 'foo'}],
+                                       {'id': 24, 'token': 'foo'}],
                               'address': []}
 
 
@@ -323,6 +330,5 @@ def test_search_details_keywords_address():
     js = json.loads(result)
 
     assert js['keywords'] == {'address': [{'id': 23, 'token': 'foo'},
-                                      {'id': 24, 'token': 'foo'}],
+                                          {'id': 24, 'token': 'foo'}],
                               'name': []}
-

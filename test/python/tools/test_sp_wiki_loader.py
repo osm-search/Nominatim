@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
     Tests for methods of the SPWikiLoader class.
@@ -36,22 +36,22 @@ def test_generate_phrases(sp_wiki_loader):
     """
     phrases = list(sp_wiki_loader.generate_phrases())
 
-    assert set((p.p_label, p.p_class, p.p_type, p.p_operator) for p in phrases) ==\
-              {('Zip Line', 'aerialway', 'zip_line', '-'),
-               ('Zip Lines', 'aerialway', 'zip_line', '-'),
-               ('Zip Line in', 'aerialway', 'zip_line', 'in'),
-               ('Zip Lines in', 'aerialway', 'zip_line', 'in'),
-               ('Zip Line near', 'aerialway', 'zip_line', 'near'),
-               ('Animal shelter', 'amenity', 'animal_shelter', '-'),
-               ('Animal shelters', 'amenity', 'animal_shelter', '-'),
-               ('Animal shelter in', 'amenity', 'animal_shelter', 'in'),
-               ('Animal shelters in', 'amenity', 'animal_shelter', 'in'),
-               ('Animal shelter near', 'amenity', 'animal_shelter', 'near'),
-               ('Animal shelters near', 'amenity', 'animal_shelter', 'near'),
-               ('Drinking Water near', 'amenity', 'drinking_water', 'near'),
-               ('Water', 'amenity', 'drinking_water', '-'),
-               ('Water in', 'amenity', 'drinking_water', 'in'),
-               ('Water near', 'amenity', 'drinking_water', 'near'),
-               ('Embassy', 'amenity', 'embassy', '-'),
-               ('Embassys', 'amenity', 'embassy', '-'),
-               ('Embassies', 'amenity', 'embassy', '-')}
+    assert set((p.p_label, p.p_class, p.p_type, p.p_operator) for p in phrases) == \
+        {('Zip Line', 'aerialway', 'zip_line', '-'),
+         ('Zip Lines', 'aerialway', 'zip_line', '-'),
+         ('Zip Line in', 'aerialway', 'zip_line', 'in'),
+         ('Zip Lines in', 'aerialway', 'zip_line', 'in'),
+         ('Zip Line near', 'aerialway', 'zip_line', 'near'),
+         ('Animal shelter', 'amenity', 'animal_shelter', '-'),
+         ('Animal shelters', 'amenity', 'animal_shelter', '-'),
+         ('Animal shelter in', 'amenity', 'animal_shelter', 'in'),
+         ('Animal shelters in', 'amenity', 'animal_shelter', 'in'),
+         ('Animal shelter near', 'amenity', 'animal_shelter', 'near'),
+         ('Animal shelters near', 'amenity', 'animal_shelter', 'near'),
+         ('Drinking Water near', 'amenity', 'drinking_water', 'near'),
+         ('Water', 'amenity', 'drinking_water', '-'),
+         ('Water in', 'amenity', 'drinking_water', 'in'),
+         ('Water near', 'amenity', 'drinking_water', 'near'),
+         ('Embassy', 'amenity', 'embassy', '-'),
+         ('Embassys', 'amenity', 'embassy', '-'),
+         ('Embassies', 'amenity', 'embassy', '-')}

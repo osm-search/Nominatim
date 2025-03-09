@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for specialised connection and cursor classes.
@@ -11,6 +11,7 @@ import pytest
 import psycopg
 
 import nominatim_db.db.connection as nc
+
 
 @pytest.fixture
 def db(dsn):
@@ -35,6 +36,7 @@ def test_has_column(db, table_factory, name, result):
     table_factory('stuff', 'tram TEXT')
 
     assert nc.table_has_column(db, 'stuff', name) == result
+
 
 def test_connection_index_exists(db, table_factory, temp_db_cursor):
     assert not nc.index_exists(db, 'some_index')
@@ -75,6 +77,7 @@ def test_drop_many_tables(db, table_factory):
 def test_drop_table_non_existing_force(db):
     with pytest.raises(psycopg.ProgrammingError, match='.*does not exist.*'):
         nc.drop_tables(db, 'dfkjgjriogjigjgjrdghehtre', if_exists=False)
+
 
 def test_connection_server_version_tuple(db):
     ver = nc.server_version_tuple(db)

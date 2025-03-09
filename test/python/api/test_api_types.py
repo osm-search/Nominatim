@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for loading of parameter dataclasses.
@@ -11,6 +11,7 @@ import pytest
 
 from nominatim_api.errors import UsageError
 import nominatim_api.types as typ
+
 
 def test_no_params_defaults():
     params = typ.LookupDetails.from_kwargs({})
@@ -24,7 +25,7 @@ def test_no_params_defaults():
                                  ('geometry_simplification', 'NaN')])
 def test_bad_format_reverse(k, v):
     with pytest.raises(UsageError):
-        params = typ.ReverseDetails.from_kwargs({k: v})
+        typ.ReverseDetails.from_kwargs({k: v})
 
 
 @pytest.mark.parametrize('rin,rout', [(-23, 0), (0, 0), (1, 1),

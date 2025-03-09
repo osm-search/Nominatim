@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for tokenized query data structures.
@@ -10,6 +10,7 @@ Tests for tokenized query data structures.
 import pytest
 
 from nominatim_api.search import query
+
 
 class MyToken(query.Token):
 
@@ -21,9 +22,11 @@ def mktoken(tid: int):
     return MyToken(penalty=3.0, token=tid, count=1, addr_count=1,
                    lookup_word='foo')
 
+
 @pytest.fixture
 def qnode():
-    return query.QueryNode(query.BREAK_PHRASE, query.PHRASE_ANY, 0.0 ,'', '')
+    return query.QueryNode(query.BREAK_PHRASE, query.PHRASE_ANY, 0.0, '', '')
+
 
 @pytest.mark.parametrize('ptype,ttype', [(query.PHRASE_ANY, 'W'),
                                          (query.PHRASE_AMENITY, 'Q'),
@@ -132,4 +135,3 @@ def test_query_struct_amenity_two_words():
     assert len(q.get_tokens(query.TokenRange(1, 2), query.TOKEN_PARTIAL)) == 1
     assert len(q.get_tokens(query.TokenRange(1, 2), query.TOKEN_NEAR_ITEM)) == 0
     assert len(q.get_tokens(query.TokenRange(1, 2), query.TOKEN_QUALIFIER)) == 1
-

@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for functions to add additional data to the database.
@@ -12,6 +12,7 @@ from pathlib import Path
 import pytest
 
 from nominatim_db.tools import add_osm_data
+
 
 class CaptureGetUrl:
 
@@ -28,6 +29,7 @@ class CaptureGetUrl:
 def setup_delete_postprocessing(temp_db_cursor):
     temp_db_cursor.execute("""CREATE OR REPLACE FUNCTION flush_deleted_places()
                               RETURNS INTEGER AS $$ SELECT 1 $$ LANGUAGE SQL""")
+
 
 def test_import_osm_file_simple(dsn, table_factory, osm2pgsql_options, capfd):
 

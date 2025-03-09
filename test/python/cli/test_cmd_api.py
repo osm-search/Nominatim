@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for API access commands of command-line interface wrapper.
@@ -10,8 +10,8 @@ Tests for API access commands of command-line interface wrapper.
 import json
 import pytest
 
-import nominatim_db.clicmd.api
 import nominatim_api as napi
+
 
 @pytest.mark.parametrize('call', ['search', 'reverse', 'lookup', 'details', 'status'])
 def test_list_format(cli_call, call):
@@ -30,12 +30,10 @@ class TestCliStatusCall:
         monkeypatch.setattr(napi.NominatimAPI, 'status',
                             lambda self: napi.StatusResult(200, 'OK'))
 
-
     def test_status_simple(self, cli_call, tmp_path):
         result = cli_call('status', '--project-dir', str(tmp_path))
 
         assert result == 0
-
 
     def test_status_json_format(self, cli_call, tmp_path, capsys):
         result = cli_call('status', '--project-dir', str(tmp_path),
@@ -60,7 +58,6 @@ class TestCliDetailsCall:
                                         ('--way', '1'),
                                         ('--relation', '1'),
                                         ('--place_id', '10001')])
-
     def test_details_json_format(self, cli_call, tmp_path, capsys, params):
         result = cli_call('details', '--project-dir', str(tmp_path), *params)
 
@@ -75,14 +72,13 @@ class TestCliReverseCall:
     def setup_reverse_mock(self, monkeypatch):
         result = napi.ReverseResult(napi.SourceTable.PLACEX, ('place', 'thing'),
                                     napi.Point(1.0, -3.0),
-                                    names={'name':'Name', 'name:fr': 'Nom'},
-                                    extratags={'extra':'Extra'},
+                                    names={'name': 'Name', 'name:fr': 'Nom'},
+                                    extratags={'extra': 'Extra'},
                                     locale_name='Name',
                                     display_name='Name')
 
         monkeypatch.setattr(napi.NominatimAPI, 'reverse',
                             lambda *args, **kwargs: result)
-
 
     def test_reverse_simple(self, cli_call, tmp_path, capsys):
         result = cli_call('reverse', '--project-dir', str(tmp_path),
@@ -96,7 +92,6 @@ class TestCliReverseCall:
         assert 'extratags' not in out
         assert 'namedetails' not in out
 
-
     @pytest.mark.parametrize('param,field', [('--addressdetails', 'address'),
                                              ('--extratags', 'extratags'),
                                              ('--namedetails', 'namedetails')])
@@ -108,7 +103,6 @@ class TestCliReverseCall:
 
         out = json.loads(capsys.readouterr().out)
         assert field in out
-
 
     def test_reverse_format(self, cli_call, tmp_path, capsys):
         result = cli_call('reverse', '--project-dir', str(tmp_path),
@@ -125,11 +119,11 @@ class TestCliLookupCall:
     @pytest.fixture(autouse=True)
     def setup_lookup_mock(self, monkeypatch):
         result = napi.SearchResult(napi.SourceTable.PLACEX, ('place', 'thing'),
-                                    napi.Point(1.0, -3.0),
-                                    names={'name':'Name', 'name:fr': 'Nom'},
-                                    extratags={'extra':'Extra'},
-                                    locale_name='Name',
-                                    display_name='Name')
+                                   napi.Point(1.0, -3.0),
+                                   names={'name': 'Name', 'name:fr': 'Nom'},
+                                   extratags={'extra': 'Extra'},
+                                   locale_name='Name',
+                                   display_name='Name')
 
         monkeypatch.setattr(napi.NominatimAPI, 'lookup',
                             lambda *args, **kwargs: napi.SearchResults([result]))
@@ -150,18 +144,17 @@ class TestCliLookupCall:
 
 @pytest.mark.parametrize('endpoint, params', [('search', ('--query', 'Berlin')),
                                               ('search_address', ('--city', 'Berlin'))
-                                             ])
+                                              ])
 def test_search(cli_call, tmp_path, capsys, monkeypatch, endpoint, params):
     result = napi.SearchResult(napi.SourceTable.PLACEX, ('place', 'thing'),
                                napi.Point(1.0, -3.0),
-                               names={'name':'Name', 'name:fr': 'Nom'},
-                               extratags={'extra':'Extra'},
+                               names={'name': 'Name', 'name:fr': 'Nom'},
+                               extratags={'extra': 'Extra'},
                                locale_name='Name',
                                display_name='Name')
 
     monkeypatch.setattr(napi.NominatimAPI, endpoint,
                         lambda *args, **kwargs: napi.SearchResults([result]))
-
 
     result = cli_call('search', '--project-dir', str(tmp_path), *params)
 

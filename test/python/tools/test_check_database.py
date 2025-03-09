@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for database integrity checks.
@@ -11,6 +11,7 @@ import pytest
 
 from nominatim_db.tools import check_database as chkdb
 import nominatim_db.version
+
 
 def test_check_database_unknown_db(def_config, monkeypatch):
     monkeypatch.setenv('NOMINATIM_DATABASE_DSN', 'pgsql:dbname=fjgkhughwgh2423gsags')
@@ -34,6 +35,7 @@ def test_check_database_version_good(property_table, temp_db_conn, def_config):
     property_table.set('database_version',
                        str(nominatim_db.version.NOMINATIM_VERSION))
     assert chkdb.check_database_version(temp_db_conn, def_config) == chkdb.CheckState.OK
+
 
 def test_check_database_version_bad(property_table, temp_db_conn, def_config):
     property_table.set('database_version', '3.9.9-9')

@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for details API call.
@@ -13,23 +13,24 @@ import pytest
 
 import nominatim_api as napi
 
+
 @pytest.mark.parametrize('idobj', (napi.PlaceID(332), napi.OsmID('W', 4),
                                    napi.OsmID('W', 4, 'highway')))
 def test_lookup_in_placex(apiobj, frontend, idobj):
     import_date = dt.datetime(2022, 12, 7, 14, 14, 46, 0)
     apiobj.add_placex(place_id=332, osm_type='W', osm_id=4,
-                     class_='highway', type='residential',
-                     name={'name': 'Road'}, address={'city': 'Barrow'},
-                     extratags={'surface': 'paved'},
-                     parent_place_id=34, linked_place_id=55,
-                     admin_level=15, country_code='gb',
-                     housenumber='4',
-                     postcode='34425', wikipedia='en:Faa',
-                     rank_search=27, rank_address=26,
-                     importance=0.01,
-                     centroid=(23, 34),
-                     indexed_date=import_date,
-                     geometry='LINESTRING(23 34, 23.1 34, 23.1 34.1, 23 34)')
+                      class_='highway', type='residential',
+                      name={'name': 'Road'}, address={'city': 'Barrow'},
+                      extratags={'surface': 'paved'},
+                      parent_place_id=34, linked_place_id=55,
+                      admin_level=15, country_code='gb',
+                      housenumber='4',
+                      postcode='34425', wikipedia='en:Faa',
+                      rank_search=27, rank_address=26,
+                      importance=0.01,
+                      centroid=(23, 34),
+                      indexed_date=import_date,
+                      geometry='LINESTRING(23 34, 23.1 34, 23.1 34.1, 23 34)')
 
     api = frontend(apiobj, options={'details'})
     result = api.details(idobj)
@@ -73,12 +74,12 @@ def test_lookup_in_placex(apiobj, frontend, idobj):
 def test_lookup_in_placex_minimal_info(apiobj, frontend):
     import_date = dt.datetime(2022, 12, 7, 14, 14, 46, 0)
     apiobj.add_placex(place_id=332, osm_type='W', osm_id=4,
-                     class_='highway', type='residential',
-                     admin_level=15,
-                     rank_search=27, rank_address=26,
-                     centroid=(23, 34),
-                     indexed_date=import_date,
-                     geometry='LINESTRING(23 34, 23.1 34, 23.1 34.1, 23 34)')
+                      class_='highway', type='residential',
+                      admin_level=15,
+                      rank_search=27, rank_address=26,
+                      centroid=(23, 34),
+                      indexed_date=import_date,
+                      geometry='LINESTRING(23 34, 23.1 34, 23.1 34.1, 23 34)')
 
     api = frontend(apiobj, options={'details'})
     result = api.details(napi.PlaceID(332))
@@ -131,9 +132,9 @@ def test_lookup_in_placex_with_geometry(apiobj, frontend):
 
 def test_lookup_placex_with_address_details(apiobj, frontend):
     apiobj.add_placex(place_id=332, osm_type='W', osm_id=4,
-                     class_='highway', type='residential',  name='Street',
-                     country_code='pl',
-                     rank_search=27, rank_address=26)
+                      class_='highway', type='residential',  name='Street',
+                      country_code='pl',
+                      rank_search=27, rank_address=26)
     apiobj.add_address_placex(332, fromarea=False, isaddress=False,
                               distance=0.0034,
                               place_id=1000, osm_type='N', osm_id=3333,
@@ -178,9 +179,9 @@ def test_lookup_placex_with_address_details(apiobj, frontend):
 
 def test_lookup_place_with_linked_places_none_existing(apiobj, frontend):
     apiobj.add_placex(place_id=332, osm_type='W', osm_id=4,
-                     class_='highway', type='residential',  name='Street',
-                     country_code='pl', linked_place_id=45,
-                     rank_search=27, rank_address=26)
+                      class_='highway', type='residential',  name='Street',
+                      country_code='pl', linked_place_id=45,
+                      rank_search=27, rank_address=26)
 
     api = frontend(apiobj, options={'details'})
     result = api.details(napi.PlaceID(332), linked_places=True)
@@ -190,17 +191,17 @@ def test_lookup_place_with_linked_places_none_existing(apiobj, frontend):
 
 def test_lookup_place_with_linked_places_existing(apiobj, frontend):
     apiobj.add_placex(place_id=332, osm_type='W', osm_id=4,
-                     class_='highway', type='residential',  name='Street',
-                     country_code='pl', linked_place_id=45,
-                     rank_search=27, rank_address=26)
+                      class_='highway', type='residential',  name='Street',
+                      country_code='pl', linked_place_id=45,
+                      rank_search=27, rank_address=26)
     apiobj.add_placex(place_id=1001, osm_type='W', osm_id=5,
-                     class_='highway', type='residential',  name='Street',
-                     country_code='pl', linked_place_id=332,
-                     rank_search=27, rank_address=26)
+                      class_='highway', type='residential',  name='Street',
+                      country_code='pl', linked_place_id=332,
+                      rank_search=27, rank_address=26)
     apiobj.add_placex(place_id=1002, osm_type='W', osm_id=6,
-                     class_='highway', type='residential',  name='Street',
-                     country_code='pl', linked_place_id=332,
-                     rank_search=27, rank_address=26)
+                      class_='highway', type='residential',  name='Street',
+                      country_code='pl', linked_place_id=332,
+                      rank_search=27, rank_address=26)
 
     api = frontend(apiobj, options={'details'})
     result = api.details(napi.PlaceID(332), linked_places=True)
@@ -221,9 +222,9 @@ def test_lookup_place_with_linked_places_existing(apiobj, frontend):
 
 def test_lookup_place_with_parented_places_not_existing(apiobj, frontend):
     apiobj.add_placex(place_id=332, osm_type='W', osm_id=4,
-                     class_='highway', type='residential',  name='Street',
-                     country_code='pl', parent_place_id=45,
-                     rank_search=27, rank_address=26)
+                      class_='highway', type='residential',  name='Street',
+                      country_code='pl', parent_place_id=45,
+                      rank_search=27, rank_address=26)
 
     api = frontend(apiobj, options={'details'})
     result = api.details(napi.PlaceID(332), parented_places=True)
@@ -233,17 +234,17 @@ def test_lookup_place_with_parented_places_not_existing(apiobj, frontend):
 
 def test_lookup_place_with_parented_places_existing(apiobj, frontend):
     apiobj.add_placex(place_id=332, osm_type='W', osm_id=4,
-                     class_='highway', type='residential',  name='Street',
-                     country_code='pl', parent_place_id=45,
-                     rank_search=27, rank_address=26)
+                      class_='highway', type='residential',  name='Street',
+                      country_code='pl', parent_place_id=45,
+                      rank_search=27, rank_address=26)
     apiobj.add_placex(place_id=1001, osm_type='N', osm_id=5,
-                     class_='place', type='house', housenumber='23',
-                     country_code='pl', parent_place_id=332,
-                     rank_search=30, rank_address=30)
+                      class_='place', type='house', housenumber='23',
+                      country_code='pl', parent_place_id=332,
+                      rank_search=30, rank_address=30)
     apiobj.add_placex(place_id=1002, osm_type='W', osm_id=6,
-                     class_='highway', type='residential',  name='Street',
-                     country_code='pl', parent_place_id=332,
-                     rank_search=27, rank_address=26)
+                      class_='highway', type='residential',  name='Street',
+                      country_code='pl', parent_place_id=332,
+                      rank_search=27, rank_address=26)
 
     api = frontend(apiobj, options={'details'})
     result = api.details(napi.PlaceID(332), parented_places=True)
@@ -332,9 +333,9 @@ def test_lookup_osmline_with_address_details(apiobj, frontend):
                        startnumber=2, endnumber=4, step=1,
                        parent_place_id=332)
     apiobj.add_placex(place_id=332, osm_type='W', osm_id=4,
-                     class_='highway', type='residential',  name='Street',
-                     country_code='pl',
-                     rank_search=27, rank_address=26)
+                      class_='highway', type='residential',  name='Street',
+                      country_code='pl',
+                      rank_search=27, rank_address=26)
     apiobj.add_address_placex(332, fromarea=False, isaddress=False,
                               distance=0.0034,
                               place_id=1000, osm_type='N', osm_id=3333,
@@ -432,9 +433,9 @@ def test_lookup_tiger_with_address_details(apiobj, frontend):
                      startnumber=2, endnumber=4, step=1,
                      parent_place_id=332)
     apiobj.add_placex(place_id=332, osm_type='W', osm_id=4,
-                     class_='highway', type='residential',  name='Street',
-                     country_code='us',
-                     rank_search=27, rank_address=26)
+                      class_='highway', type='residential',  name='Street',
+                      country_code='us',
+                      rank_search=27, rank_address=26)
     apiobj.add_address_placex(332, fromarea=False, isaddress=False,
                               distance=0.0034,
                               place_id=1000, osm_type='N', osm_id=3333,
@@ -571,6 +572,7 @@ def test_lookup_postcode_with_address_details(apiobj, frontend):
                                 rank_address=4, distance=0.0)
            ]
 
+
 @pytest.mark.parametrize('objid', [napi.PlaceID(1736),
                                    napi.OsmID('W', 55),
                                    napi.OsmID('N', 55, 'amenity')])
@@ -583,8 +585,8 @@ def test_lookup_missing_object(apiobj, frontend, objid):
 
 
 @pytest.mark.parametrize('gtype', (napi.GeometryFormat.KML,
-                                    napi.GeometryFormat.SVG,
-                                    napi.GeometryFormat.TEXT))
+                                   napi.GeometryFormat.SVG,
+                                   napi.GeometryFormat.TEXT))
 def test_lookup_unsupported_geometry(apiobj, frontend, gtype):
     apiobj.add_placex(place_id=332)
 

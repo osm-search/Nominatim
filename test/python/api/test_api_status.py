@@ -2,17 +2,16 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for the status API call.
 """
 import datetime as dt
-import pytest
 
-from nominatim_db.version import NominatimVersion
 from nominatim_api.version import NOMINATIM_API_VERSION
 import nominatim_api as napi
+
 
 def test_status_no_extra_info(apiobj, frontend):
     api = frontend(apiobj)

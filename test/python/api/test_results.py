@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for result datatype helper functions.
@@ -11,15 +11,14 @@ import struct
 from binascii import hexlify
 
 import pytest
-import pytest_asyncio
-import sqlalchemy as sa
-
 
 from nominatim_api import SourceTable, DetailedResult, Point
 import nominatim_api.results as nresults
 
+
 def mkpoint(x, y):
     return hexlify(struct.pack("=biidd", 1, 0x20000001, 4326, x, y)).decode('utf-8')
+
 
 class FakeRow:
     def __init__(self, **kwargs):
@@ -38,6 +37,7 @@ def test_minimal_detailed_result():
     assert res.lon == 23.1
     assert res.lat == 0.5
     assert res.calculated_importance() == pytest.approx(0.00001)
+
 
 def test_detailed_result_custom_importance():
     res = DetailedResult(SourceTable.PLACEX,

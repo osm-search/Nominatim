@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for formatting reverse results for the V1 API.
@@ -19,6 +19,7 @@ from nominatim_api.v1.format import dispatch as v1_format
 import nominatim_api as napi
 
 FORMATS = ['json', 'jsonv2', 'geojson', 'geocodejson', 'xml']
+
 
 @pytest.mark.parametrize('fmt', FORMATS)
 def test_format_reverse_minimal(fmt):
@@ -104,8 +105,7 @@ def test_format_reverse_with_address(fmt):
     reverse.localize(napi.Locales())
 
     raw = v1_format.format_result(napi.ReverseResults([reverse]), fmt,
-                                 {'addressdetails': True})
-
+                                  {'addressdetails': True})
 
     if fmt == 'xml':
         root = ET.fromstring(raw)
@@ -168,7 +168,7 @@ def test_format_reverse_geocodejson_special_parts():
     reverse.localize(napi.Locales())
 
     raw = v1_format.format_result(napi.ReverseResults([reverse]), 'geocodejson',
-                                 {'addressdetails': True})
+                                  {'addressdetails': True})
 
     props = json.loads(raw)['features'][0]['properties']['geocoding']
     assert props['housenumber'] == '1'
@@ -184,8 +184,7 @@ def test_format_reverse_with_address_none(fmt):
                                  address_rows=napi.AddressLines())
 
     raw = v1_format.format_result(napi.ReverseResults([reverse]), fmt,
-                                 {'addressdetails': True})
-
+                                  {'addressdetails': True})
 
     if fmt == 'xml':
         root = ET.fromstring(raw)
@@ -211,10 +210,10 @@ def test_format_reverse_with_extratags(fmt):
     reverse = napi.ReverseResult(napi.SourceTable.PLACEX,
                                  ('place', 'thing'),
                                  napi.Point(1.0, 2.0),
-                                 extratags={'one': 'A', 'two':'B'})
+                                 extratags={'one': 'A', 'two': 'B'})
 
     raw = v1_format.format_result(napi.ReverseResults([reverse]), fmt,
-                                 {'extratags': True})
+                                  {'extratags': True})
 
     if fmt == 'xml':
         root = ET.fromstring(raw)
@@ -226,7 +225,7 @@ def test_format_reverse_with_extratags(fmt):
         else:
             extra = result['extratags']
 
-        assert extra == {'one': 'A', 'two':'B'}
+        assert extra == {'one': 'A', 'two': 'B'}
 
 
 @pytest.mark.parametrize('fmt', ['json', 'jsonv2', 'geojson', 'xml'])
@@ -236,7 +235,7 @@ def test_format_reverse_with_extratags_none(fmt):
                                  napi.Point(1.0, 2.0))
 
     raw = v1_format.format_result(napi.ReverseResults([reverse]), fmt,
-                                 {'extratags': True})
+                                  {'extratags': True})
 
     if fmt == 'xml':
         root = ET.fromstring(raw)
@@ -256,10 +255,10 @@ def test_format_reverse_with_namedetails_with_name(fmt):
     reverse = napi.ReverseResult(napi.SourceTable.PLACEX,
                                  ('place', 'thing'),
                                  napi.Point(1.0, 2.0),
-                                 names={'name': 'A', 'ref':'1'})
+                                 names={'name': 'A', 'ref': '1'})
 
     raw = v1_format.format_result(napi.ReverseResults([reverse]), fmt,
-                                 {'namedetails': True})
+                                  {'namedetails': True})
 
     if fmt == 'xml':
         root = ET.fromstring(raw)
@@ -271,7 +270,7 @@ def test_format_reverse_with_namedetails_with_name(fmt):
         else:
             extra = result['namedetails']
 
-        assert extra == {'name': 'A', 'ref':'1'}
+        assert extra == {'name': 'A', 'ref': '1'}
 
 
 @pytest.mark.parametrize('fmt', ['json', 'jsonv2', 'geojson', 'xml'])
@@ -281,7 +280,7 @@ def test_format_reverse_with_namedetails_without_name(fmt):
                                  napi.Point(1.0, 2.0))
 
     raw = v1_format.format_result(napi.ReverseResults([reverse]), fmt,
-                                 {'namedetails': True})
+                                  {'namedetails': True})
 
     if fmt == 'xml':
         root = ET.fromstring(raw)
@@ -303,7 +302,7 @@ def test_search_details_with_icon_available(fmt):
                                  napi.Point(1.0, 2.0))
 
     result = v1_format.format_result(napi.ReverseResults([reverse]), fmt,
-                                    {'icon_base_url': 'foo'})
+                                     {'icon_base_url': 'foo'})
 
     js = json.loads(result)
 
@@ -317,7 +316,6 @@ def test_search_details_with_icon_not_available(fmt):
                                  napi.Point(1.0, 2.0))
 
     result = v1_format.format_result(napi.ReverseResults([reverse]), fmt,
-                                    {'icon_base_url': 'foo'})
+                                     {'icon_base_url': 'foo'})
 
     assert 'icon' not in json.loads(result)
-

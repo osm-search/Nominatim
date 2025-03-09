@@ -2,12 +2,11 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for enhanced connection class for API functions.
 """
-from pathlib import Path
 import pytest
 
 import sqlalchemy as sa
@@ -76,7 +75,7 @@ async def test_get_db_property_existing(api):
 
 
 @pytest.mark.asyncio
-async def test_get_db_property_existing(api):
+async def test_get_db_property_bad_name(api):
     async with api.begin() as conn:
         with pytest.raises(ValueError):
             await conn.get_db_property('dfkgjd.rijg')

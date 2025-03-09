@@ -6,3 +6,5 @@ extend-ignore =
     E711
 per-file-ignores =
     __init__.py: F401
+    test/python/utils/test_json_writer.py: E131
+    test/python/conftest.py: E402

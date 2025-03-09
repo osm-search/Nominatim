@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for the Python web frameworks adaptor, v1 API.
@@ -121,14 +121,12 @@ class TestAdaptorRaiseError:
 
         return excinfo.value
 
-
     def test_without_content_set(self):
         err = self.run_raise_error('TEST', 404)
 
         assert self.adaptor.content_type == 'text/plain; charset=utf-8'
         assert err.msg == 'ERROR 404: TEST'
         assert err.status == 404
-
 
     def test_json(self):
         self.adaptor.content_type = 'application/json; charset=utf-8'
@@ -138,7 +136,6 @@ class TestAdaptorRaiseError:
         content = json.loads(err.msg)['error']
         assert content['code'] == 501
         assert content['message'] == 'TEST'
-
 
     def test_xml(self):
         self.adaptor.content_type = 'text/xml; charset=utf-8'
@@ -235,7 +232,6 @@ class TestStatusEndpoint:
 
         monkeypatch.setattr(napi.NominatimAPIAsync, 'status', _status)
 
-
     @pytest.mark.asyncio
     async def test_status_without_params(self):
         a = FakeAdaptor()
@@ -246,7 +242,6 @@ class TestStatusEndpoint:
         assert isinstance(resp, FakeResponse)
         assert resp.status == 200
         assert resp.content_type == 'text/plain; charset=utf-8'
-
 
     @pytest.mark.asyncio
     async def test_status_with_error(self):
@@ -259,7 +254,6 @@ class TestStatusEndpoint:
         assert resp.status == 500
         assert resp.content_type == 'text/plain; charset=utf-8'
 
-
     @pytest.mark.asyncio
     async def test_status_json_with_error(self):
         a = FakeAdaptor(params={'format': 'json'})
@@ -270,7 +264,6 @@ class TestStatusEndpoint:
         assert isinstance(resp, FakeResponse)
         assert resp.status == 200
         assert resp.content_type == 'application/json; charset=utf-8'
-
 
     @pytest.mark.asyncio
     async def test_status_bad_format(self):
@@ -298,14 +291,12 @@ class TestDetailsEndpoint:
 
         monkeypatch.setattr(napi.NominatimAPIAsync, 'details', _lookup)
 
-
     @pytest.mark.asyncio
     async def test_details_no_params(self):
         a = FakeAdaptor()
 
         with pytest.raises(FakeError, match='^400 -- .*Missing'):
             await glue.details_endpoint(napi.NominatimAPIAsync(), a)
-
 
     @pytest.mark.asyncio
     async def test_details_by_place_id(self):
@@ -314,7 +305,6 @@ class TestDetailsEndpoint:
         await glue.details_endpoint(napi.NominatimAPIAsync(), a)
 
         assert self.lookup_args[0].place_id == 4573
-
 
     @pytest.mark.asyncio
     async def test_details_by_osm_id(self):
@@ -326,7 +316,6 @@ class TestDetailsEndpoint:
         assert self.lookup_args[0].osm_id == 45
         assert self.lookup_args[0].osm_class is None
 
-
     @pytest.mark.asyncio
     async def test_details_with_debugging(self):
         a = FakeAdaptor(params={'osmtype': 'N', 'osmid': '45', 'debug': '1'})
@@ -336,7 +325,6 @@ class TestDetailsEndpoint:
 
         assert resp.content_type == 'text/html; charset=utf-8'
         assert content.tag == 'html'
-
 
     @pytest.mark.asyncio
     async def test_details_no_result(self):
@@ -353,13 +341,13 @@ class TestReverseEndPoint:
     @pytest.fixture(autouse=True)
     def patch_reverse_func(self, monkeypatch):
         self.result = napi.ReverseResult(napi.SourceTable.PLACEX,
-                                          ('place', 'thing'),
-                                          napi.Point(1.0, 2.0))
+                                         ('place', 'thing'),
+                                         napi.Point(1.0, 2.0))
+
         async def _reverse(*args, **kwargs):
             return self.result
 
         monkeypatch.setattr(napi.NominatimAPIAsync, 'reverse', _reverse)
-
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('params', [{}, {'lat': '3.4'}, {'lon': '6.7'}])
@@ -371,19 +359,6 @@ class TestReverseEndPoint:
         with pytest.raises(FakeError, match='^400 -- (?s:.*)missing'):
             await glue.reverse_endpoint(napi.NominatimAPIAsync(), a)
 
-
-    @pytest.mark.asyncio
-    @pytest.mark.parametrize('params', [{'lat': '45.6', 'lon': '4563'}])
-    async def test_reverse_success(self, params):
-        a = FakeAdaptor()
-        a.params = params
-        a.params['format'] = 'json'
-
-        res = await glue.reverse_endpoint(napi.NominatimAPIAsync(), a)
-
-        assert res == ''
-
-
     @pytest.mark.asyncio
     async def test_reverse_success(self):
         a = FakeAdaptor()
@@ -391,7 +366,6 @@ class TestReverseEndPoint:
         a.params['lon'] = '6.8'
 
         assert await glue.reverse_endpoint(napi.NominatimAPIAsync(), a)
-
 
     @pytest.mark.asyncio
     async def test_reverse_from_search(self):
@@ -413,11 +387,11 @@ class TestLookupEndpoint:
         self.results = [napi.SearchResult(napi.SourceTable.PLACEX,
                                           ('place', 'thing'),
                                           napi.Point(1.0, 2.0))]
+
         async def _lookup(*args, **kwargs):
             return napi.SearchResults(self.results)
 
         monkeypatch.setattr(napi.NominatimAPIAsync, 'lookup', _lookup)
-
 
     @pytest.mark.asyncio
     async def test_lookup_no_params(self):
@@ -427,7 +401,6 @@ class TestLookupEndpoint:
         res = await glue.lookup_endpoint(napi.NominatimAPIAsync(), a)
 
         assert res.output == '[]'
-
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('param', ['w', 'bad', ''])
@@ -440,7 +413,6 @@ class TestLookupEndpoint:
 
         assert len(json.loads(res.output)) == 1
 
-
     @pytest.mark.asyncio
     @pytest.mark.parametrize('param', ['p234234', '4563'])
     async def test_lookup_bad_osm_type(self, param):
@@ -451,7 +423,6 @@ class TestLookupEndpoint:
         res = await glue.lookup_endpoint(napi.NominatimAPIAsync(), a)
 
         assert len(json.loads(res.output)) == 1
-
 
     @pytest.mark.asyncio
     async def test_lookup_working(self):
@@ -473,11 +444,11 @@ class TestSearchEndPointSearch:
         self.results = [napi.SearchResult(napi.SourceTable.PLACEX,
                                           ('place', 'thing'),
                                           napi.Point(1.0, 2.0))]
+
         async def _search(*args, **kwargs):
             return napi.SearchResults(self.results)
 
         monkeypatch.setattr(napi.NominatimAPIAsync, 'search', _search)
-
 
     @pytest.mark.asyncio
     async def test_search_free_text(self):
@@ -487,7 +458,6 @@ class TestSearchEndPointSearch:
         res = await glue.search_endpoint(napi.NominatimAPIAsync(), a)
 
         assert len(json.loads(res.output)) == 1
-
 
     @pytest.mark.asyncio
     async def test_search_free_text_xml(self):
@@ -500,7 +470,6 @@ class TestSearchEndPointSearch:
         assert res.status == 200
         assert res.output.index('something') > 0
 
-
     @pytest.mark.asyncio
     async def test_search_free_and_structured(self):
         a = FakeAdaptor()
@@ -508,8 +477,7 @@ class TestSearchEndPointSearch:
         a.params['city'] = 'ignored'
 
         with pytest.raises(FakeError, match='^400 -- .*cannot be used together'):
-            res = await glue.search_endpoint(napi.NominatimAPIAsync(), a)
-
+            await glue.search_endpoint(napi.NominatimAPIAsync(), a)
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('dedupe,numres', [(True, 1), (False, 2)])
@@ -532,11 +500,11 @@ class TestSearchEndPointSearchAddress:
         self.results = [napi.SearchResult(napi.SourceTable.PLACEX,
                                           ('place', 'thing'),
                                           napi.Point(1.0, 2.0))]
+
         async def _search(*args, **kwargs):
             return napi.SearchResults(self.results)
 
         monkeypatch.setattr(napi.NominatimAPIAsync, 'search_address', _search)
-
 
     @pytest.mark.asyncio
     async def test_search_structured(self):
@@ -555,11 +523,11 @@ class TestSearchEndPointSearchCategory:
         self.results = [napi.SearchResult(napi.SourceTable.PLACEX,
                                           ('place', 'thing'),
                                           napi.Point(1.0, 2.0))]
+
         async def _search(*args, **kwargs):
             return napi.SearchResults(self.results)
 
         monkeypatch.setattr(napi.NominatimAPIAsync, 'search_category', _search)
-
 
     @pytest.mark.asyncio
     async def test_search_category(self):

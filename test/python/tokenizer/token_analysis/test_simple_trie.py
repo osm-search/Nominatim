@@ -10,6 +10,7 @@ Tests for simplified trie structure.
 
 from nominatim_db.tokenizer.token_analysis.simple_trie import SimpleTrie
 
+
 def test_single_item_trie():
     t = SimpleTrie([('foob', 42)])
 
@@ -17,6 +18,7 @@ def test_single_item_trie():
     assert t.longest_prefix('afoobar', start=1) == (42, 5)
     assert t.longest_prefix('foob') == (42, 4)
     assert t.longest_prefix('123foofoo', 3) == (None, 3)
+
 
 def test_complex_item_tree():
     t = SimpleTrie([('a', 1),

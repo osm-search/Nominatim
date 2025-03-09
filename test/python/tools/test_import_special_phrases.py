@@ -2,20 +2,17 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
     Tests for import special phrases methods
     of the class SPImporter.
 """
-from shutil import copyfile
 import pytest
 from nominatim_db.tools.special_phrases.sp_importer import SPImporter
 from nominatim_db.tools.special_phrases.sp_wiki_loader import SPWikiLoader
 from nominatim_db.tools.special_phrases.special_phrase import SpecialPhrase
-from nominatim_db.errors import UsageError
 
-from cursor import CursorForTesting
 
 @pytest.fixture
 def sp_importer(temp_db_conn, def_config, monkeypatch):
@@ -53,6 +50,7 @@ def test_fetch_existing_place_classtype_tables(sp_importer, table_factory):
     contained_table = sp_importer.table_phrases_to_delete.pop()
     assert contained_table == 'place_classtype_testclasstypetable'
 
+
 def test_check_sanity_class(sp_importer):
     """
         Check for _check_sanity() method.
@@ -64,6 +62,7 @@ def test_check_sanity_class(sp_importer):
     assert not sp_importer._check_sanity(SpecialPhrase('en', 'class', '', ''))
 
     assert sp_importer._check_sanity(SpecialPhrase('en', 'class', 'type', ''))
+
 
 def test_load_white_and_black_lists(sp_importer):
     """
@@ -93,6 +92,7 @@ def test_create_place_classtype_indexes(temp_db_with_extensions,
 
     assert check_placeid_and_centroid_indexes(temp_db_cursor, phrase_class, phrase_type)
 
+
 def test_create_place_classtype_table(temp_db_conn, temp_db_cursor, placex_table, sp_importer):
     """
         Test that _create_place_classtype_table() create
@@ -104,6 +104,7 @@ def test_create_place_classtype_table(temp_db_conn, temp_db_cursor, placex_table
     temp_db_conn.commit()
 
     assert check_table_exist(temp_db_cursor, phrase_class, phrase_type)
+
 
 def test_grant_access_to_web_user(temp_db_conn, temp_db_cursor, table_factory,
                                   def_config, sp_importer):
@@ -120,7 +121,9 @@ def test_grant_access_to_web_user(temp_db_conn, temp_db_cursor, table_factory,
     sp_importer._grant_access_to_webuser(phrase_class, phrase_type)
     temp_db_conn.commit()
 
-    assert check_grant_access(temp_db_cursor, def_config.DATABASE_WEBUSER, phrase_class, phrase_type)
+    assert check_grant_access(temp_db_cursor, def_config.DATABASE_WEBUSER,
+                              phrase_class, phrase_type)
+
 
 def test_create_place_classtype_table_and_indexes(
         temp_db_cursor, def_config, placex_table,
@@ -140,6 +143,7 @@ def test_create_place_classtype_table_and_indexes(
         assert check_table_exist(temp_db_cursor, pair[0], pair[1])
         assert check_placeid_and_centroid_indexes(temp_db_cursor, pair[0], pair[1])
         assert check_grant_access(temp_db_cursor, def_config.DATABASE_WEBUSER, pair[0], pair[1])
+
 
 def test_remove_non_existent_tables_from_db(sp_importer, default_phrases,
                                             temp_db_conn, temp_db_cursor):
@@ -168,7 +172,7 @@ def test_remove_non_existent_tables_from_db(sp_importer, default_phrases,
     temp_db_conn.commit()
 
     assert temp_db_cursor.row_set(query_tables) \
-                 == {('place_classtype_testclasstypetable_to_keep', )}
+        == {('place_classtype_testclasstypetable_to_keep', )}
 
 
 @pytest.mark.parametrize("should_replace", [(True), (False)])
@@ -182,8 +186,8 @@ def test_import_phrases(monkeypatch, temp_db_cursor, def_config, sp_importer,
         It should also update the database well by deleting or preserving existing entries
         of the database.
     """
-    #Add some data to the database before execution in order to test
-    #what is deleted and what is preserved.
+    # Add some data to the database before execution in order to test
+    # what is deleted and what is preserved.
     table_factory('place_classtype_amenity_animal_shelter')
     table_factory('place_classtype_wrongclass_wrongtype')
 
@@ -209,6 +213,7 @@ def test_import_phrases(monkeypatch, temp_db_cursor, def_config, sp_importer,
     if should_replace:
         assert not temp_db_cursor.table_exists('place_classtype_wrongclass_wrongtype')
 
+
 def check_table_exist(temp_db_cursor, phrase_class, phrase_type):
     """
         Verify that the place_classtype table exists for the given
@@ -230,6 +235,7 @@ def check_grant_access(temp_db_cursor, user, phrase_class, phrase_type):
             AND grantee='{}'
             AND privilege_type='SELECT'""".format(table_name, user))
     return temp_db_cursor.fetchone()
+
 
 def check_placeid_and_centroid_indexes(temp_db_cursor, phrase_class, phrase_type):
     """

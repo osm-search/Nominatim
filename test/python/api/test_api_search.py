@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for search API calls.
@@ -10,16 +10,12 @@ Tests for search API calls.
 These tests make sure that all Python code is correct and executable.
 Functional tests can be found in the BDD test suite.
 """
-import json
-
 import pytest
 
-import sqlalchemy as sa
-
-import nominatim_api as napi
 import nominatim_api.logging as loglib
 
 API_OPTIONS = {'search'}
+
 
 @pytest.fixture(autouse=True)
 def setup_icu_tokenizer(apiobj):
@@ -28,8 +24,9 @@ def setup_icu_tokenizer(apiobj):
     apiobj.add_data('properties',
                     [{'property': 'tokenizer', 'value': 'icu'},
                      {'property': 'tokenizer_import_normalisation', 'value': ':: lower();'},
-                     {'property': 'tokenizer_import_transliteration', 'value': "'1' > '/1/'; 'ä' > 'ä '"},
-                    ])
+                     {'property': 'tokenizer_import_transliteration',
+                      'value': "'1' > '/1/'; 'ä' > 'ä '"},
+                     ])
 
 
 def test_search_no_content(apiobj, frontend):
@@ -64,7 +61,7 @@ def test_search_with_debug(apiobj, frontend, logtype):
 
     api = frontend(apiobj, options=API_OPTIONS)
     loglib.set_log_output(logtype)
-    results = api.search('TEST')
+    api.search('TEST')
 
     assert loglib.get_and_disable()
 

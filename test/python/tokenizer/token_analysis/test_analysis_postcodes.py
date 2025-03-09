@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for special postcode analysis and variant generation.
@@ -13,7 +13,6 @@ from icu import Transliterator
 
 import nominatim_db.tokenizer.token_analysis.postcodes as module
 from nominatim_db.data.place_name import PlaceName
-from nominatim_db.errors import UsageError
 
 DEFAULT_NORMALIZATION = """ :: NFD ();
                             '🜳' > ' ';
@@ -27,9 +26,10 @@ DEFAULT_TRANSLITERATION = """ ::  Latin ();
                               '🜵' > ' ';
                           """
 
+
 @pytest.fixture
 def analyser():
-    rules = { 'analyzer': 'postcodes'}
+    rules = {'analyzer': 'postcodes'}
     config = module.configure(rules, DEFAULT_NORMALIZATION)
 
     trans = Transliterator.createFromRules("test_trans", DEFAULT_TRANSLITERATION)

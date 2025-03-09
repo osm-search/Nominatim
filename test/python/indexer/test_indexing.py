@@ -2,17 +2,18 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for running the indexing.
 """
 import itertools
 import pytest
-import pytest_asyncio
+import pytest_asyncio  # noqa
 
 from nominatim_db.indexer import indexer
 from nominatim_db.tokenizer import factory
+
 
 class IndexerTestDB:
 
@@ -231,6 +232,7 @@ async def test_index_partial_with_30(test_db, threads, test_tokenizer):
     assert test_db.scalar("""
                     SELECT count(*) FROM placex
                       WHERE indexed_status = 0 AND rank_address between 1 and 27""") == 0
+
 
 @pytest.mark.parametrize("threads", [1, 15])
 @pytest.mark.asyncio

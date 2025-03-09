@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tokenizer for testing.
@@ -10,10 +10,12 @@ Tokenizer for testing.
 from nominatim_db.data.place_info import PlaceInfo
 from nominatim_db.config import Configuration
 
+
 def create(dsn, data_dir):
     """ Create a new instance of the tokenizer provided by this module.
     """
     return DummyTokenizer(dsn, data_dir)
+
 
 class DummyTokenizer:
 
@@ -23,22 +25,18 @@ class DummyTokenizer:
         self.init_state = None
         self.analyser_cache = {}
 
-
     def init_new_db(self, *args, **kwargs):
         assert self.init_state is None
         self.init_state = "new"
-
 
     def init_from_project(self, config):
         assert isinstance(config, Configuration)
         assert self.init_state is None
         self.init_state = "loaded"
 
-
     @staticmethod
     def finalize_import(_):
         pass
-
 
     def name_analyzer(self):
         return DummyNameAnalyzer(self.analyser_cache)
@@ -52,11 +50,9 @@ class DummyNameAnalyzer:
     def __exit__(self, exc_type, exc_value, traceback):
         self.close()
 
-
     def __init__(self, cache):
         self.analyser_cache = cache
         cache['countries'] = []
-
 
     def close(self):
         pass

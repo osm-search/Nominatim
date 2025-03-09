@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for running the generic place searcher.
@@ -14,11 +14,12 @@ import pytest
 import nominatim_api as napi
 from nominatim_api.types import SearchDetails
 from nominatim_api.search.db_searches import PlaceSearch
-from nominatim_api.search.db_search_fields import WeightedStrings, WeightedCategories,\
+from nominatim_api.search.db_search_fields import WeightedStrings, WeightedCategories, \
                                                   FieldLookup, FieldRanking, RankedTokens
 from nominatim_api.search.db_search_lookups import LookupAll, LookupAny, Restrict
 
 APIOPTIONS = ['search']
+
 
 def run_search(apiobj, frontend, global_penalty, lookup, ranking, count=2,
                hnrs=[], pcs=[], ccodes=[], quals=[],
@@ -55,29 +56,27 @@ class TestNameOnlySearches:
     def fill_database(self, apiobj):
         apiobj.add_placex(place_id=100, country_code='us',
                           centroid=(5.6, 4.3))
-        apiobj.add_search_name(100, names=[1,2,10,11], country_code='us',
+        apiobj.add_search_name(100, names=[1, 2, 10, 11], country_code='us',
                                centroid=(5.6, 4.3))
         apiobj.add_placex(place_id=101, country_code='mx',
                           centroid=(-10.3, 56.9))
-        apiobj.add_search_name(101, names=[1,2,20,21], country_code='mx',
+        apiobj.add_search_name(101, names=[1, 2, 20, 21], country_code='mx',
                                centroid=(-10.3, 56.9))
-
 
     @pytest.mark.parametrize('lookup_type', [LookupAll, Restrict])
     @pytest.mark.parametrize('rank,res', [([10], [100, 101]),
                                           ([20], [101, 100])])
     def test_lookup_all_match(self, apiobj, frontend, lookup_type, rank, res):
-        lookup = FieldLookup('name_vector', [1,2], lookup_type)
+        lookup = FieldLookup('name_vector', [1, 2], lookup_type)
         ranking = FieldRanking('name_vector', 0.4, [RankedTokens(0.0, rank)])
 
         results = run_search(apiobj, frontend, 0.1, [lookup], [ranking])
 
         assert [r.place_id for r in results] == res
 
-
     @pytest.mark.parametrize('lookup_type', [LookupAll, Restrict])
     def test_lookup_all_partial_match(self, apiobj, frontend, lookup_type):
-        lookup = FieldLookup('name_vector', [1,20], lookup_type)
+        lookup = FieldLookup('name_vector', [1, 20], lookup_type)
         ranking = FieldRanking('name_vector', 0.4, [RankedTokens(0.0, [21])])
 
         results = run_search(apiobj, frontend, 0.1, [lookup], [ranking])
@@ -88,13 +87,12 @@ class TestNameOnlySearches:
     @pytest.mark.parametrize('rank,res', [([10], [100, 101]),
                                           ([20], [101, 100])])
     def test_lookup_any_match(self, apiobj, frontend, rank, res):
-        lookup = FieldLookup('name_vector', [11,21], LookupAny)
+        lookup = FieldLookup('name_vector', [11, 21], LookupAny)
         ranking = FieldRanking('name_vector', 0.4, [RankedTokens(0.0, rank)])
 
         results = run_search(apiobj, frontend, 0.1, [lookup], [ranking])
 
         assert [r.place_id for r in results] == res
-
 
     def test_lookup_any_partial_match(self, apiobj, frontend):
         lookup = FieldLookup('name_vector', [20], LookupAll)
@@ -105,26 +103,23 @@ class TestNameOnlySearches:
         assert len(results) == 1
         assert results[0].place_id == 101
 
-
     @pytest.mark.parametrize('cc,res', [('us', 100), ('mx', 101)])
     def test_lookup_restrict_country(self, apiobj, frontend, cc, res):
-        lookup = FieldLookup('name_vector', [1,2], LookupAll)
+        lookup = FieldLookup('name_vector', [1, 2], LookupAll)
         ranking = FieldRanking('name_vector', 0.4, [RankedTokens(0.0, [10])])
 
         results = run_search(apiobj, frontend, 0.1, [lookup], [ranking], ccodes=[cc])
 
         assert [r.place_id for r in results] == [res]
 
-
     def test_lookup_restrict_placeid(self, apiobj, frontend):
-        lookup = FieldLookup('name_vector', [1,2], LookupAll)
+        lookup = FieldLookup('name_vector', [1, 2], LookupAll)
         ranking = FieldRanking('name_vector', 0.4, [RankedTokens(0.0, [10])])
 
         results = run_search(apiobj, frontend, 0.1, [lookup], [ranking],
                              details=SearchDetails(excluded=[101]))
 
         assert [r.place_id for r in results] == [100]
-
 
     @pytest.mark.parametrize('geom', [napi.GeometryFormat.GEOJSON,
                                       napi.GeometryFormat.KML,
@@ -138,7 +133,6 @@ class TestNameOnlySearches:
                              details=SearchDetails(geometry_output=geom))
 
         assert geom.name.lower() in results[0].geometry
-
 
     @pytest.mark.parametrize('factor,npoints', [(0.0, 3), (1.0, 2)])
     def test_return_simplified_geometry(self, apiobj, frontend, factor, npoints):
@@ -162,7 +156,6 @@ class TestNameOnlySearches:
         assert result.place_id == 333
         assert len(geom['coordinates']) == npoints
 
-
     @pytest.mark.parametrize('viewbox', ['5.0,4.0,6.0,5.0', '5.7,4.0,6.0,5.0'])
     @pytest.mark.parametrize('wcount,rids', [(2, [100, 101]), (20000, [100])])
     def test_prefer_viewbox(self, apiobj, frontend, viewbox, wcount, rids):
@@ -177,17 +170,15 @@ class TestNameOnlySearches:
                              details=SearchDetails.from_kwargs({'viewbox': viewbox}))
         assert [r.place_id for r in results] == rids
 
-
     @pytest.mark.parametrize('viewbox', ['5.0,4.0,6.0,5.0', '5.55,4.27,5.62,4.31'])
     def test_force_viewbox(self, apiobj, frontend, viewbox):
         lookup = FieldLookup('name_vector', [1, 2], LookupAll)
 
-        details=SearchDetails.from_kwargs({'viewbox': viewbox,
-                                           'bounded_viewbox': True})
+        details = SearchDetails.from_kwargs({'viewbox': viewbox,
+                                             'bounded_viewbox': True})
 
         results = run_search(apiobj, frontend, 0.1, [lookup], [], details=details)
         assert [r.place_id for r in results] == [100]
-
 
     def test_prefer_near(self, apiobj, frontend):
         lookup = FieldLookup('name_vector', [1, 2], LookupAll)
@@ -202,13 +193,12 @@ class TestNameOnlySearches:
         results.sort(key=lambda r: -r.importance)
         assert [r.place_id for r in results] == [100, 101]
 
-
     @pytest.mark.parametrize('radius', [0.09, 0.11])
     def test_force_near(self, apiobj, frontend, radius):
         lookup = FieldLookup('name_vector', [1, 2], LookupAll)
 
-        details=SearchDetails.from_kwargs({'near': '5.6,4.3',
-                                           'near_radius': radius})
+        details = SearchDetails.from_kwargs({'near': '5.6,4.3',
+                                             'near_radius': radius})
 
         results = run_search(apiobj, frontend, 0.1, [lookup], [], details=details)
 
@@ -228,7 +218,7 @@ class TestStreetWithHousenumber:
         apiobj.add_placex(place_id=1000, class_='highway', type='residential',
                           rank_search=26, rank_address=26,
                           country_code='es')
-        apiobj.add_search_name(1000, names=[1,2,10,11],
+        apiobj.add_search_name(1000, names=[1, 2, 10, 11],
                                search_rank=26, address_rank=26,
                                country_code='es')
         apiobj.add_placex(place_id=91, class_='place', type='house',
@@ -243,26 +233,24 @@ class TestStreetWithHousenumber:
         apiobj.add_placex(place_id=2000, class_='highway', type='residential',
                           rank_search=26, rank_address=26,
                           country_code='pt')
-        apiobj.add_search_name(2000, names=[1,2,20,21],
+        apiobj.add_search_name(2000, names=[1, 2, 20, 21],
                                search_rank=26, address_rank=26,
                                country_code='pt')
-
 
     @pytest.mark.parametrize('hnr,res', [('20', [91, 1]), ('20 a', [1]),
                                          ('21', [2]), ('22', [2, 92]),
                                          ('24', [93]), ('25', [])])
     def test_lookup_by_single_housenumber(self, apiobj, frontend, hnr, res):
-        lookup = FieldLookup('name_vector', [1,2], LookupAll)
+        lookup = FieldLookup('name_vector', [1, 2], LookupAll)
         ranking = FieldRanking('name_vector', 0.3, [RankedTokens(0.0, [10])])
 
         results = run_search(apiobj, frontend, 0.1, [lookup], [ranking], hnrs=[hnr])
 
         assert [r.place_id for r in results] == res + [1000, 2000]
 
-
     @pytest.mark.parametrize('cc,res', [('es', [2, 1000]), ('pt', [92, 2000])])
     def test_lookup_with_country_restriction(self, apiobj, frontend, cc, res):
-        lookup = FieldLookup('name_vector', [1,2], LookupAll)
+        lookup = FieldLookup('name_vector', [1, 2], LookupAll)
         ranking = FieldRanking('name_vector', 0.3, [RankedTokens(0.0, [10])])
 
         results = run_search(apiobj, frontend, 0.1, [lookup], [ranking], hnrs=['22'],
@@ -270,9 +258,8 @@ class TestStreetWithHousenumber:
 
         assert [r.place_id for r in results] == res
 
-
     def test_lookup_exclude_housenumber_placeid(self, apiobj, frontend):
-        lookup = FieldLookup('name_vector', [1,2], LookupAll)
+        lookup = FieldLookup('name_vector', [1, 2], LookupAll)
         ranking = FieldRanking('name_vector', 0.3, [RankedTokens(0.0, [10])])
 
         results = run_search(apiobj, frontend, 0.1, [lookup], [ranking], hnrs=['22'],
@@ -280,9 +267,8 @@ class TestStreetWithHousenumber:
 
         assert [r.place_id for r in results] == [2, 1000, 2000]
 
-
     def test_lookup_exclude_street_placeid(self, apiobj, frontend):
-        lookup = FieldLookup('name_vector', [1,2], LookupAll)
+        lookup = FieldLookup('name_vector', [1, 2], LookupAll)
         ranking = FieldRanking('name_vector', 0.3, [RankedTokens(0.0, [10])])
 
         results = run_search(apiobj, frontend, 0.1, [lookup], [ranking], hnrs=['22'],
@@ -290,9 +276,8 @@ class TestStreetWithHousenumber:
 
         assert [r.place_id for r in results] == [2, 92, 2000]
 
-
     def test_lookup_only_house_qualifier(self, apiobj, frontend):
-        lookup = FieldLookup('name_vector', [1,2], LookupAll)
+        lookup = FieldLookup('name_vector', [1, 2], LookupAll)
         ranking = FieldRanking('name_vector', 0.3, [RankedTokens(0.0, [10])])
 
         results = run_search(apiobj, frontend, 0.1, [lookup], [ranking], hnrs=['22'],
@@ -300,9 +285,8 @@ class TestStreetWithHousenumber:
 
         assert [r.place_id for r in results] == [2, 92]
 
-
     def test_lookup_only_street_qualifier(self, apiobj, frontend):
-        lookup = FieldLookup('name_vector', [1,2], LookupAll)
+        lookup = FieldLookup('name_vector', [1, 2], LookupAll)
         ranking = FieldRanking('name_vector', 0.3, [RankedTokens(0.0, [10])])
 
         results = run_search(apiobj, frontend, 0.1, [lookup], [ranking], hnrs=['22'],
@@ -310,17 +294,15 @@ class TestStreetWithHousenumber:
 
         assert [r.place_id for r in results] == [1000, 2000]
 
-
     @pytest.mark.parametrize('rank,found', [(26, True), (27, False), (30, False)])
     def test_lookup_min_rank(self, apiobj, frontend, rank, found):
-        lookup = FieldLookup('name_vector', [1,2], LookupAll)
+        lookup = FieldLookup('name_vector', [1, 2], LookupAll)
         ranking = FieldRanking('name_vector', 0.3, [RankedTokens(0.0, [10])])
 
         results = run_search(apiobj, frontend, 0.1, [lookup], [ranking], hnrs=['22'],
                              details=SearchDetails(min_rank=rank))
 
         assert [r.place_id for r in results] == ([2, 92, 1000, 2000] if found else [2, 92])
-
 
     @pytest.mark.parametrize('geom', [napi.GeometryFormat.GEOJSON,
                                       napi.GeometryFormat.KML,
@@ -343,7 +325,7 @@ def test_very_large_housenumber(apiobj, frontend):
     apiobj.add_placex(place_id=2000, class_='highway', type='residential',
                       rank_search=26, rank_address=26,
                       country_code='pt')
-    apiobj.add_search_name(2000, names=[1,2],
+    apiobj.add_search_name(2000, names=[1, 2],
                            search_rank=26, address_rank=26,
                            country_code='pt')
 
@@ -405,7 +387,6 @@ class TestInterpolations:
                            centroid=(10.0, 10.00001),
                            geometry='LINESTRING(9.995 10.00001, 10.005 10.00001)')
 
-
     @pytest.mark.parametrize('hnr,res', [('21', [992]), ('22', []), ('23', [991])])
     def test_lookup_housenumber(self, apiobj, frontend, hnr, res):
         lookup = FieldLookup('name_vector', [111], LookupAll)
@@ -413,7 +394,6 @@ class TestInterpolations:
         results = run_search(apiobj, frontend, 0.1, [lookup], [], hnrs=[hnr])
 
         assert [r.place_id for r in results] == res + [990]
-
 
     @pytest.mark.parametrize('geom', [napi.GeometryFormat.GEOJSON,
                                       napi.GeometryFormat.KML,
@@ -427,7 +407,6 @@ class TestInterpolations:
 
         assert results[0].place_id == 992
         assert geom.name.lower() in results[0].geometry
-
 
 
 class TestTiger:
@@ -453,7 +432,6 @@ class TestTiger:
                          centroid=(10.0, 10.00001),
                          geometry='LINESTRING(9.995 10.00001, 10.005 10.00001)')
 
-
     @pytest.mark.parametrize('hnr,res', [('21', [992]), ('22', []), ('23', [991])])
     def test_lookup_housenumber(self, apiobj, frontend, hnr, res):
         lookup = FieldLookup('name_vector', [111], LookupAll)
@@ -461,7 +439,6 @@ class TestTiger:
         results = run_search(apiobj, frontend, 0.1, [lookup], [], hnrs=[hnr])
 
         assert [r.place_id for r in results] == res + [990]
-
 
     @pytest.mark.parametrize('geom', [napi.GeometryFormat.GEOJSON,
                                       napi.GeometryFormat.KML,
@@ -513,15 +490,15 @@ class TestLayersRank30:
                                importance=0.0005,
                                address_rank=0, search_rank=30)
 
-
-    @pytest.mark.parametrize('layer,res', [(napi.DataLayer.ADDRESS, [223]),
-                                           (napi.DataLayer.POI, [224]),
-                                           (napi.DataLayer.ADDRESS | napi.DataLayer.POI, [223, 224]),
-                                           (napi.DataLayer.MANMADE, [225]),
-                                           (napi.DataLayer.RAILWAY, [226]),
-                                           (napi.DataLayer.NATURAL, [227]),
-                                           (napi.DataLayer.MANMADE | napi.DataLayer.NATURAL, [225, 227]),
-                                           (napi.DataLayer.MANMADE | napi.DataLayer.RAILWAY, [225, 226])])
+    @pytest.mark.parametrize('layer,res',
+                             [(napi.DataLayer.ADDRESS, [223]),
+                              (napi.DataLayer.POI, [224]),
+                              (napi.DataLayer.ADDRESS | napi.DataLayer.POI, [223, 224]),
+                              (napi.DataLayer.MANMADE, [225]),
+                              (napi.DataLayer.RAILWAY, [226]),
+                              (napi.DataLayer.NATURAL, [227]),
+                              (napi.DataLayer.MANMADE | napi.DataLayer.NATURAL, [225, 227]),
+                              (napi.DataLayer.MANMADE | napi.DataLayer.RAILWAY, [225, 226])])
     def test_layers_rank30(self, apiobj, frontend, layer, res):
         lookup = FieldLookup('name_vector', [34], LookupAny)
 

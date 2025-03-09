@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for freeze functions (removing unused database parts).
@@ -26,6 +26,7 @@ NOMINATIM_DROP_TABLES = [
     'wikipedia_article', 'wikipedia_redirect'
 ]
 
+
 def test_drop_tables(temp_db_conn, temp_db_cursor, table_factory):
     for table in NOMINATIM_RUNTIME_TABLES + NOMINATIM_DROP_TABLES:
         table_factory(table)
@@ -41,6 +42,7 @@ def test_drop_tables(temp_db_conn, temp_db_cursor, table_factory):
         assert not temp_db_cursor.table_exists(table)
 
     assert freeze.is_frozen(temp_db_conn)
+
 
 def test_drop_flatnode_file_no_file():
     freeze.drop_flatnode_file(None)

@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for maintenance and analysis functions.
@@ -13,6 +13,7 @@ from nominatim_db.errors import UsageError
 from nominatim_db.tools import admin
 from nominatim_db.tokenizer import factory
 from nominatim_db.db.sql_preprocessor import SQLPreprocessor
+
 
 @pytest.fixture(autouse=True)
 def create_placex_table(project_env, tokenizer_mock, temp_db_cursor, placex_table):
@@ -76,7 +77,8 @@ def test_analyse_indexing_with_osm_id(project_env, temp_db_cursor):
 class TestAdminCleanDeleted:
 
     @pytest.fixture(autouse=True)
-    def setup_polygon_delete(self, project_env, table_factory, place_table, osmline_table, temp_db_cursor, temp_db_conn, def_config, src_dir):
+    def setup_polygon_delete(self, project_env, table_factory, place_table,
+                             osmline_table, temp_db_cursor, temp_db_conn, def_config, src_dir):
         """ Set up place_force_delete function and related tables
         """
         self.project_env = project_env
@@ -87,12 +89,14 @@ class TestAdminCleanDeleted:
                       class TEXT NOT NULL,
                       type TEXT NOT NULL""",
                       ((100, 'N', 'boundary', 'administrative'),
-                      (145, 'N', 'boundary', 'administrative'),
-                      (175, 'R', 'landcover', 'grass')))
-        temp_db_cursor.execute("""INSERT INTO placex (place_id, osm_id, osm_type, class, type, indexed_date, indexed_status)
-                              VALUES(1, 100, 'N', 'boundary', 'administrative', current_date - INTERVAL '1 month', 1),
-                               (2, 145, 'N', 'boundary', 'administrative', current_date - INTERVAL '3 month', 1),
-                               (3, 175, 'R', 'landcover', 'grass', current_date - INTERVAL '3 months', 1)""")
+                       (145, 'N', 'boundary', 'administrative'),
+                       (175, 'R', 'landcover', 'grass')))
+        temp_db_cursor.execute("""
+            INSERT INTO placex (place_id, osm_id, osm_type, class, type,
+                                indexed_date, indexed_status)
+            VALUES(1, 100, 'N', 'boundary', 'administrative', current_date - INTERVAL '1 month', 1),
+                  (2, 145, 'N', 'boundary', 'administrative', current_date - INTERVAL '3 month', 1),
+                  (3, 175, 'R', 'landcover', 'grass', current_date - INTERVAL '3 months', 1)""")
         # set up tables and triggers for utils function
         table_factory('place_to_be_deleted',
                       """osm_id BIGINT,
@@ -116,33 +120,42 @@ class TestAdminCleanDeleted:
         sqlproc = SQLPreprocessor(temp_db_conn, def_config)
         sqlproc.run_sql_file(temp_db_conn, 'functions/utils.sql')
         def_config.lib_dir.sql = orig_sql
-        
 
     def test_admin_clean_deleted_no_records(self):
         admin.clean_deleted_relations(self.project_env, age='1 year')
-        assert self.temp_db_cursor.row_set('SELECT osm_id, osm_type, class, type, indexed_status FROM placex') == {(100, 'N', 'boundary', 'administrative', 1),
-                                                                                                                   (145, 'N', 'boundary', 'administrative', 1),
-                                                                                                                   (175, 'R', 'landcover', 'grass', 1)}
-        assert self.temp_db_cursor.table_rows('import_polygon_delete') == 3
 
+        rowset = self.temp_db_cursor.row_set(
+            'SELECT osm_id, osm_type, class, type, indexed_status FROM placex')
+
+        assert rowset == {(100, 'N', 'boundary', 'administrative', 1),
+                          (145, 'N', 'boundary', 'administrative', 1),
+                          (175, 'R', 'landcover', 'grass', 1)}
+        assert self.temp_db_cursor.table_rows('import_polygon_delete') == 3
 
     @pytest.mark.parametrize('test_age', ['T week', '1 welk', 'P1E'])
     def test_admin_clean_deleted_bad_age(self, test_age):
         with pytest.raises(UsageError):
-            admin.clean_deleted_relations(self.project_env, age = test_age)
-
+            admin.clean_deleted_relations(self.project_env, age=test_age)
 
     def test_admin_clean_deleted_partial(self):
-        admin.clean_deleted_relations(self.project_env, age = '2 months')
-        assert self.temp_db_cursor.row_set('SELECT osm_id, osm_type, class, type, indexed_status FROM placex') == {(100, 'N', 'boundary', 'administrative', 1),
-                                                                                                                   (145, 'N', 'boundary', 'administrative', 100),
-                                                                                                                   (175, 'R', 'landcover', 'grass', 100)}
+        admin.clean_deleted_relations(self.project_env, age='2 months')
+
+        rowset = self.temp_db_cursor.row_set(
+            'SELECT osm_id, osm_type, class, type, indexed_status FROM placex')
+
+        assert rowset == {(100, 'N', 'boundary', 'administrative', 1),
+                          (145, 'N', 'boundary', 'administrative', 100),
+                          (175, 'R', 'landcover', 'grass', 100)}
         assert self.temp_db_cursor.table_rows('import_polygon_delete') == 1
 
     @pytest.mark.parametrize('test_age', ['1 week', 'P3D', '5 hours'])
     def test_admin_clean_deleted(self, test_age):
-        admin.clean_deleted_relations(self.project_env, age = test_age)
-        assert self.temp_db_cursor.row_set('SELECT osm_id, osm_type, class, type, indexed_status FROM placex') == {(100, 'N', 'boundary', 'administrative', 100),
-                                                                                                                   (145, 'N', 'boundary', 'administrative', 100),
-                                                                                                                   (175, 'R', 'landcover', 'grass', 100)}
+        admin.clean_deleted_relations(self.project_env, age=test_age)
+
+        rowset = self.temp_db_cursor.row_set(
+            'SELECT osm_id, osm_type, class, type, indexed_status FROM placex')
+
+        assert rowset == {(100, 'N', 'boundary', 'administrative', 100),
+                          (145, 'N', 'boundary', 'administrative', 100),
+                          (175, 'R', 'landcover', 'grass', 100)}
         assert self.temp_db_cursor.table_rows('import_polygon_delete') == 0

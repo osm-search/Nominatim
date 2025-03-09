@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for running the postcode searcher.
@@ -14,6 +14,7 @@ from nominatim_api.types import SearchDetails
 from nominatim_api.search.db_searches import PostcodeSearch
 from nominatim_api.search.db_search_fields import WeightedStrings, FieldLookup, \
                                                   FieldRanking, RankedTokens
+
 
 def run_search(apiobj, frontend, global_penalty, pcs, pc_penalties=None,
                ccodes=[], lookup=[], ranking=[], details=SearchDetails()):
@@ -85,25 +86,23 @@ class TestPostcodeSearchWithAddress:
         apiobj.add_placex(place_id=1000, class_='place', type='village',
                           rank_search=22, rank_address=22,
                           country_code='ch')
-        apiobj.add_search_name(1000, names=[1,2,10,11],
+        apiobj.add_search_name(1000, names=[1, 2, 10, 11],
                                search_rank=22, address_rank=22,
                                country_code='ch')
         apiobj.add_placex(place_id=2000, class_='place', type='village',
                           rank_search=22, rank_address=22,
                           country_code='pl')
-        apiobj.add_search_name(2000, names=[1,2,20,21],
+        apiobj.add_search_name(2000, names=[1, 2, 20, 21],
                                search_rank=22, address_rank=22,
                                country_code='pl')
 
-
     def test_lookup_both(self, apiobj, frontend):
-        lookup = FieldLookup('name_vector', [1,2], 'restrict')
+        lookup = FieldLookup('name_vector', [1, 2], 'restrict')
         ranking = FieldRanking('name_vector', 0.3, [RankedTokens(0.0, [10])])
 
         results = run_search(apiobj, frontend, 0.1, ['12345'], lookup=[lookup], ranking=[ranking])
 
         assert [r.place_id for r in results] == [100, 101]
-
 
     def test_restrict_by_name(self, apiobj, frontend):
         lookup = FieldLookup('name_vector', [10], 'restrict')
@@ -112,11 +111,10 @@ class TestPostcodeSearchWithAddress:
 
         assert [r.place_id for r in results] == [100]
 
-
     @pytest.mark.parametrize('coord,place_id', [((16.5, 5), 100),
                                                 ((-45.1, 7.004), 101)])
     def test_lookup_near(self, apiobj, frontend, coord, place_id):
-        lookup = FieldLookup('name_vector', [1,2], 'restrict')
+        lookup = FieldLookup('name_vector', [1, 2], 'restrict')
         ranking = FieldRanking('name_vector', 0.3, [RankedTokens(0.0, [10])])
 
         results = run_search(apiobj, frontend, 0.1, ['12345'],
@@ -125,7 +123,6 @@ class TestPostcodeSearchWithAddress:
                                                    near_radius=0.6))
 
         assert [r.place_id for r in results] == [place_id]
-
 
     @pytest.mark.parametrize('geom', [napi.GeometryFormat.GEOJSON,
                                       napi.GeometryFormat.KML,
@@ -138,25 +135,22 @@ class TestPostcodeSearchWithAddress:
         assert results
         assert all(geom.name.lower() in r.geometry for r in results)
 
-
-    @pytest.mark.parametrize('viewbox, rids', [('-46,6,-44,8', [101,100]),
-                                               ('16,4,18,6', [100,101])])
+    @pytest.mark.parametrize('viewbox, rids', [('-46,6,-44,8', [101, 100]),
+                                               ('16,4,18,6', [100, 101])])
     def test_prefer_viewbox(self, apiobj, frontend, viewbox, rids):
         results = run_search(apiobj, frontend, 0.1, ['12345'],
                              details=SearchDetails.from_kwargs({'viewbox': viewbox}))
 
         assert [r.place_id for r in results] == rids
 
-
     @pytest.mark.parametrize('viewbox, rid', [('-46,6,-44,8', 101),
-                                               ('16,4,18,6', 100)])
+                                              ('16,4,18,6', 100)])
     def test_restrict_to_viewbox(self, apiobj, frontend, viewbox, rid):
         results = run_search(apiobj, frontend, 0.1, ['12345'],
                              details=SearchDetails.from_kwargs({'viewbox': viewbox,
                                                                 'bounded_viewbox': True}))
 
         assert [r.place_id for r in results] == [rid]
-
 
     @pytest.mark.parametrize('coord,rids', [((17.05, 5), [100, 101]),
                                             ((-45, 7.1), [101, 100])])
@@ -165,7 +159,6 @@ class TestPostcodeSearchWithAddress:
                              details=SearchDetails(near=napi.Point(*coord)))
 
         assert [r.place_id for r in results] == rids
-
 
     @pytest.mark.parametrize('pid,rid', [(100, 101), (101, 100)])
     def test_exclude(self, apiobj, frontend, pid, rid):

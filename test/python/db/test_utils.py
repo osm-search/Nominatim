@@ -2,17 +2,16 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for DB utility functions in db.utils
 """
-import json
-
 import pytest
 
 import nominatim_db.db.utils as db_utils
 from nominatim_db.errors import UsageError
+
 
 def test_execute_file_success(dsn, temp_db_cursor, tmp_path):
     tmpfile = tmp_path / 'test.sql'
@@ -21,6 +20,7 @@ def test_execute_file_success(dsn, temp_db_cursor, tmp_path):
     db_utils.execute_file(dsn, tmpfile)
 
     assert temp_db_cursor.row_set('SELECT * FROM test') == {(56, )}
+
 
 def test_execute_file_bad_file(dsn, tmp_path):
     with pytest.raises(FileNotFoundError):

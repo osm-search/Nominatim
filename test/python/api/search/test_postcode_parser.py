@@ -16,6 +16,7 @@ import pytest
 from nominatim_api.search.postcode_parser import PostcodeParser
 from nominatim_api.search.query import QueryStruct, PHRASE_ANY, PHRASE_POSTCODE, PHRASE_STREET
 
+
 @pytest.fixture
 def pc_config(project_env):
     country_file = project_env.project_dir / 'country_settings.yaml'
@@ -55,6 +56,7 @@ ky:
 
     return project_env
 
+
 def mk_query(inp):
     query = QueryStruct([])
     phrase_split = re.split(r"([ ,:'-])", inp)
@@ -80,12 +82,12 @@ def test_simple_postcode(pc_config, query, pos):
 
     assert result == {(pos, pos + 1, '45325'), (pos, pos + 1, '453 25')}
 
+
 def test_contained_postcode(pc_config):
     parser = PostcodeParser(pc_config)
 
     assert parser.parse(mk_query('12345 dx')) == {(0, 1, '12345'), (0, 1, '123 45'),
                                                   (0, 2, '12345 DX')}
-
 
 
 @pytest.mark.parametrize('query,frm,to', [('345987', 0, 1), ('345 987', 0, 2),
@@ -97,6 +99,7 @@ def test_postcode_with_space(pc_config, query, frm, to):
     result = parser.parse(mk_query(query))
 
     assert result == {(frm, to, '345987')}
+
 
 def test_overlapping_postcode(pc_config):
     parser = PostcodeParser(pc_config)
@@ -130,6 +133,7 @@ def test_postcode_with_non_matching_country_prefix(pc_config):
     parser = PostcodeParser(pc_config)
 
     assert not parser.parse(mk_query('ky12233'))
+
 
 def test_postcode_inside_postcode_phrase(pc_config):
     parser = PostcodeParser(pc_config)

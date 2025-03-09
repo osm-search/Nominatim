@@ -12,7 +12,10 @@ import csv
 
 import pytest
 
-from nominatim_db.tools.refresh import import_wikipedia_articles, recompute_importance, create_functions
+from nominatim_db.tools.refresh import (import_wikipedia_articles,
+                                        recompute_importance,
+                                        create_functions)
+
 
 @pytest.fixture
 def wiki_csv(tmp_path, sql_preprocessor):
@@ -25,7 +28,7 @@ def wiki_csv(tmp_path, sql_preprocessor):
             for lang, title, importance, wd in data:
                 writer.writerow({'language': lang, 'type': 'a',
                                  'title': title, 'importance': str(importance),
-                                 'wikidata_id' : wd})
+                                 'wikidata_id': wd})
         return tmp_path
 
     return _import

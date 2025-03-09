@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for warm-up CLI function.
@@ -10,6 +10,7 @@ Tests for warm-up CLI function.
 import pytest
 
 import nominatim_db.cli
+
 
 @pytest.fixture(autouse=True)
 def setup_database_with_context(apiobj, table_factory):
@@ -21,8 +22,9 @@ def setup_database_with_context(apiobj, table_factory):
     apiobj.add_data('properties',
                     [{'property': 'tokenizer', 'value': 'icu'},
                      {'property': 'tokenizer_import_normalisation', 'value': ':: lower();'},
-                     {'property': 'tokenizer_import_transliteration', 'value': "'1' > '/1/'; 'ä' > 'ä '"},
-                    ])
+                     {'property': 'tokenizer_import_transliteration',
+                      'value': "'1' > '/1/'; 'ä' > 'ä '"}
+                     ])
 
 
 @pytest.mark.parametrize('args', [['--search-only'], ['--reverse-only']])

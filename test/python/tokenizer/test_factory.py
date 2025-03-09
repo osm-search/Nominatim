@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for creating new tokenizers.
@@ -27,7 +27,6 @@ class TestFactory:
     def init_env(self, project_env, property_table, tokenizer_mock):
         self.config = project_env
 
-
     def test_setup_dummy_tokenizer(self, temp_db_conn):
         tokenizer = factory.create_tokenizer(self.config)
 
@@ -37,7 +36,6 @@ class TestFactory:
 
         assert properties.get_property(temp_db_conn, 'tokenizer') == 'dummy'
 
-
     def test_setup_tokenizer_dir_exists(self):
         (self.config.project_dir / 'tokenizer').mkdir()
 
@@ -46,13 +44,11 @@ class TestFactory:
         assert isinstance(tokenizer, DummyTokenizer)
         assert tokenizer.init_state == "new"
 
-
     def test_setup_tokenizer_dir_failure(self):
         (self.config.project_dir / 'tokenizer').write_text("foo")
 
         with pytest.raises(UsageError):
             factory.create_tokenizer(self.config)
-
 
     def test_load_tokenizer(self):
         factory.create_tokenizer(self.config)
@@ -62,7 +58,6 @@ class TestFactory:
         assert isinstance(tokenizer, DummyTokenizer)
         assert tokenizer.init_state == "loaded"
 
-
     def test_load_repopulate_tokenizer_dir(self):
         factory.create_tokenizer(self.config)
 
@@ -70,7 +65,6 @@ class TestFactory:
 
         factory.get_tokenizer_for_db(self.config)
         assert (self.config.project_dir / 'tokenizer').exists()
-
 
     def test_load_missing_property(self, temp_db_cursor):
         factory.create_tokenizer(self.config)

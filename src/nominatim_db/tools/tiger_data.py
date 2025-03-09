@@ -108,8 +108,7 @@ async def add_tiger_data(data_dir: str, config: Configuration, threads: int,
 
         async with QueryPool(dsn, place_threads, autocommit=True) as pool:
             with tokenizer.name_analyzer() as analyzer:
-                lines = 0
-                for row in tar:
+                for lineno, row in enumerate(tar, 1):
                     try:
                         address = dict(street=row['street'], postcode=row['postcode'])
                         args = ('SRID=4326;' + row['geometry'],
@@ -124,10 +123,8 @@ async def add_tiger_data(data_dir: str, config: Configuration, threads: int,
                                                     %s::INT, %s::TEXT, %s::JSONB, %s::TEXT)""",
                         args)
 
-                    lines += 1
-                    if lines == 1000:
+                    if not lineno % 1000:
                         print('.', end='', flush=True)
-                    lines = 0
 
         print('', flush=True)
 

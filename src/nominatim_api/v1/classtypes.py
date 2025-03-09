@@ -25,8 +25,8 @@ def get_label_tag(category: Tuple[str, str], extratags: Optional[Mapping[str, st
     elif rank < 26 and extratags and 'linked_place' in extratags:
         label = extratags['linked_place']
     elif category == ('boundary', 'administrative'):
-        label = ADMIN_LABELS.get((country or '', int(rank/2)))\
-                or ADMIN_LABELS.get(('', int(rank/2)))\
+        label = ADMIN_LABELS.get((country or '', rank // 2))\
+                or ADMIN_LABELS.get(('', rank // 2))\
                 or 'Administrative'
     elif category[1] == 'postal_code':
         label = 'postcode'

@@ -227,7 +227,7 @@ class SearchBuilder:
 
         # To catch remaining results, lookup by name and address
         # We only do this if there is a reasonable number of results expected.
-        exp_count = exp_count / (2**len(addr_tokens)) if addr_tokens else exp_count
+        exp_count /= 2**len(addr_tokens)
         if exp_count < 10000 and addr_count < 20000:
             penalty += 0.35 * max(1 if name_fulls else 0.1,
                                   5 - len(name_partials) - len(addr_tokens))

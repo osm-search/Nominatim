@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for the sanitizer that normalizes postcodes.
@@ -13,12 +13,13 @@ from nominatim_db.tokenizer.place_sanitizer import PlaceSanitizer
 from nominatim_db.data.place_info import PlaceInfo
 from nominatim_db.data import country_info
 
+
 @pytest.fixture
 def sanitize(def_config, request):
     country_info.setup_country_config(def_config)
     sanitizer_args = {'step': 'clean-postcodes'}
     for mark in request.node.iter_markers(name="sanitizer_params"):
-        sanitizer_args.update({k.replace('_', '-') : v for k,v in mark.kwargs.items()})
+        sanitizer_args.update({k.replace('_', '-'): v for k, v in mark.kwargs.items()})
 
     def _run(country=None, **kwargs):
         pi = {'address': kwargs}

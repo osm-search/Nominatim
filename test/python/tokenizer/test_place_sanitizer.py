@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for execution of the sanitztion step.
@@ -50,13 +50,13 @@ def test_placeinfo_has_attr():
 def test_sanitizer_default(def_config):
     san = sanitizer.PlaceSanitizer([{'step': 'split-name-list'}], def_config)
 
-    name, address =  san.process_names(PlaceInfo({'name': {'name:de:de': '1;2;3'},
-                                                  'address': {'street': 'Bald'}}))
+    name, address = san.process_names(PlaceInfo({'name': {'name:de:de': '1;2;3'},
+                                                 'address': {'street': 'Bald'}}))
 
     assert len(name) == 3
     assert all(isinstance(n, sanitizer.PlaceName) for n in name)
-    assert all(n.kind == 'name'  for n in name)
-    assert all(n.suffix == 'de:de'  for n in name)
+    assert all(n.kind == 'name' for n in name)
+    assert all(n.suffix == 'de:de' for n in name)
 
     assert len(address) == 1
     assert all(isinstance(n, sanitizer.PlaceName) for n in address)
@@ -66,7 +66,7 @@ def test_sanitizer_default(def_config):
 def test_sanitizer_empty_list(def_config, rules):
     san = sanitizer.PlaceSanitizer(rules, def_config)
 
-    name, address =  san.process_names(PlaceInfo({'name': {'name:de:de': '1;2;3'}}))
+    name, address = san.process_names(PlaceInfo({'name': {'name:de:de': '1;2;3'}}))
 
     assert len(name) == 1
     assert all(isinstance(n, sanitizer.PlaceName) for n in name)
@@ -74,4 +74,4 @@ def test_sanitizer_empty_list(def_config, rules):
 
 def test_sanitizer_missing_step_definition(def_config):
     with pytest.raises(UsageError):
-        san = sanitizer.PlaceSanitizer([{'id': 'split-name-list'}], def_config)
+        sanitizer.PlaceSanitizer([{'id': 'split-name-list'}], def_config)

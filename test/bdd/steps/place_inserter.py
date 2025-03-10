@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2022 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Helper classes for filling the place table.
@@ -10,12 +10,13 @@ Helper classes for filling the place table.
 import random
 import string
 
+
 class PlaceColumn:
     """ Helper class to collect contents from a behave table row and
         insert it into the place table.
     """
     def __init__(self, context):
-        self.columns = {'admin_level' : 15}
+        self.columns = {'admin_level': 15}
         self.context = context
         self.geometry = None
 
@@ -98,7 +99,7 @@ class PlaceColumn:
         """ Issue a delete for the given OSM object.
         """
         cursor.execute('DELETE FROM place WHERE osm_type = %s and osm_id = %s',
-                       (self.columns['osm_type'] , self.columns['osm_id']))
+                       (self.columns['osm_type'], self.columns['osm_id']))
 
     def db_insert(self, cursor):
         """ Insert the collected data into the database.

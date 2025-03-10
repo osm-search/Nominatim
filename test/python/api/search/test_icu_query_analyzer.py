@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for query analyzer for ICU tokenizer.
@@ -16,7 +16,8 @@ import nominatim_api.search.query as qmod
 import nominatim_api.search.icu_tokenizer as tok
 from nominatim_api.logging import set_log_output, get_and_disable
 
-async def add_word(conn, word_id, word_token, wtype, word, info = None):
+
+async def add_word(conn, word_id, word_token, wtype, word, info=None):
     t = conn.t.meta.tables['word']
     await conn.execute(t.insert(), {'word_id': word_id,
                                     'word_token': word_token,
@@ -27,6 +28,7 @@ async def add_word(conn, word_id, word_token, wtype, word, info = None):
 
 def make_phrase(query):
     return [Phrase(qmod.PHRASE_ANY, s) for s in query.split(',')]
+
 
 @pytest_asyncio.fixture
 async def conn(table_factory):
@@ -102,8 +104,7 @@ async def test_splitting_in_transliteration(conn):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize('term,order', [('23456', ['P', 'H', 'W', 'w']),
-                                        ('3', ['H', 'W', 'w'])
-                                       ])
+                                        ('3', ['H', 'W', 'w'])])
 async def test_penalty_postcodes_and_housenumbers(conn, term, order):
     ana = await tok.create_query_analyzer(conn)
 
@@ -119,6 +120,7 @@ async def test_penalty_postcodes_and_housenumbers(conn, term, order):
     torder.sort()
 
     assert [t[1] for t in torder] == order
+
 
 @pytest.mark.asyncio
 async def test_category_words_only_at_beginning(conn):

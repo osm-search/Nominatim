@@ -2,15 +2,16 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for SQL preprocessing.
 """
 import pytest
-import pytest_asyncio
+import pytest_asyncio  # noqa
 
 from nominatim_db.db.sql_preprocessor import SQLPreprocessor
+
 
 @pytest.fixture
 def sql_factory(tmp_path):
@@ -25,6 +26,7 @@ def sql_factory(tmp_path):
         return 'test.sql'
 
     return _mk_sql
+
 
 @pytest.mark.parametrize("expr,ret", [
     ("'a'", 'a'),
@@ -61,8 +63,7 @@ def test_load_file_with_params(sql_preprocessor, sql_factory, temp_db_conn, temp
 async def test_load_parallel_file(dsn, sql_preprocessor, tmp_path, temp_db_cursor):
     (tmp_path / 'test.sql').write_text("""
         CREATE TABLE foo (a TEXT);
-        CREATE TABLE foo2(a TEXT);""" + 
-        "\n---\nCREATE TABLE bar (b INT);")
+        CREATE TABLE foo2(a TEXT);""" + "\n---\nCREATE TABLE bar (b INT);")
 
     await sql_preprocessor.run_parallel_sql_file(dsn, 'test.sql', num_threads=4)
 

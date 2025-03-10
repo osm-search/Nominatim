@@ -14,6 +14,7 @@ from nominatim_db.tools.replication import run_osm2pgsql_updates
 
 from geometry_alias import ALIASES
 
+
 def get_osm2pgsql_options(nominatim_env, fname, append):
     return dict(import_file=fname,
                 osm2pgsql='osm2pgsql',
@@ -25,8 +26,7 @@ def get_osm2pgsql_options(nominatim_env, fname, append):
                 flatnode_file='',
                 tablespaces=dict(slim_data='', slim_index='',
                                  main_data='', main_index=''),
-                append=append
-               )
+                append=append)
 
 
 def write_opl_file(opl, grid):
@@ -47,6 +47,7 @@ def write_opl_file(opl, grid):
             fd.write(b'\n')
 
         return fd.name
+
 
 @given('the lua style file')
 def lua_style_file(context):
@@ -90,7 +91,7 @@ def define_node_grid(context, grid_step, origin):
 @when(u'loading osm data')
 def load_osm_file(context):
     """
-    Load the given data into a freshly created test data using osm2pgsql.
+    Load the given data into a freshly created test database using osm2pgsql.
     No further indexing is done.
 
     The data is expected as attached text in OPL format.
@@ -102,13 +103,14 @@ def load_osm_file(context):
     finally:
         os.remove(fname)
 
-    ### reintroduce the triggers/indexes we've lost by having osm2pgsql set up place again
+    # reintroduce the triggers/indexes we've lost by having osm2pgsql set up place again
     cur = context.db.cursor()
     cur.execute("""CREATE TRIGGER place_before_delete BEFORE DELETE ON place
                     FOR EACH ROW EXECUTE PROCEDURE place_delete()""")
     cur.execute("""CREATE TRIGGER place_before_insert BEFORE INSERT ON place
                    FOR EACH ROW EXECUTE PROCEDURE place_insert()""")
-    cur.execute("""CREATE UNIQUE INDEX idx_place_osm_unique on place using btree(osm_id,osm_type,class,type)""")
+    cur.execute("""CREATE UNIQUE INDEX idx_place_osm_unique ON place
+                   USING btree(osm_id,osm_type,class,type)""")
     context.db.commit()
 
 
@@ -131,6 +133,7 @@ def update_from_osm_file(context):
                               get_osm2pgsql_options(context.nominatim, fname, append=True))
     finally:
         os.remove(fname)
+
 
 @when('indexing')
 def index_database(context):

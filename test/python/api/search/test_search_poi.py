@@ -2,14 +2,13 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for running the POI searcher.
 """
 import pytest
 
-import nominatim_api as napi
 from nominatim_api.types import SearchDetails
 from nominatim_api.search.db_searches import PoiSearch
 from nominatim_api.search.db_search_fields import WeightedStrings, WeightedCategories
@@ -84,13 +83,11 @@ class TestPoiSearchWithRestrictions:
         else:
             self.args = {'near': '34.3, 56.100021', 'near_radius': 0.001}
 
-
     def test_unrestricted(self, apiobj, frontend):
         results = run_search(apiobj, frontend, 0.1, [('highway', 'bus_stop')], [0.5],
                              details=SearchDetails.from_kwargs(self.args))
 
         assert [r.place_id for r in results] == [1, 2]
-
 
     def test_restict_country(self, apiobj, frontend):
         results = run_search(apiobj, frontend, 0.1, [('highway', 'bus_stop')], [0.5],
@@ -98,7 +95,6 @@ class TestPoiSearchWithRestrictions:
                              details=SearchDetails.from_kwargs(self.args))
 
         assert [r.place_id for r in results] == [2]
-
 
     def test_restrict_by_viewbox(self, apiobj, frontend):
         args = {'bounded_viewbox': True, 'viewbox': '34.299,56.0,34.3001,56.10001'}

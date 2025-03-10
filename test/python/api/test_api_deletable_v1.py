@@ -2,19 +2,19 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for the deletable v1 API call.
 """
 import json
-from pathlib import Path
 
 import pytest
 
-from fake_adaptor import FakeAdaptor, FakeError, FakeResponse
+from fake_adaptor import FakeAdaptor
 
 import nominatim_api.v1.server_glue as glue
+
 
 class TestDeletableEndPoint:
 
@@ -25,14 +25,13 @@ class TestDeletableEndPoint:
                       content=[(345, 'N', 'boundary', 'administrative'),
                                (781, 'R', 'landuse', 'wood'),
                                (781, 'R', 'landcover', 'grass')])
-        table_factory('placex',
-                      definition="""place_id bigint, osm_id bigint, osm_type char(1),
-                                    class text, type text, name HSTORE, country_code char(2)""",
-                      content=[(1, 345, 'N', 'boundary', 'administrative', {'old_name': 'Former'}, 'ab'),
-                               (2, 781, 'R', 'landuse', 'wood', {'name': 'Wood'}, 'cd'),
-                               (3, 781, 'R', 'landcover', 'grass', None, 'cd')])
-
-
+        table_factory(
+            'placex',
+            definition="""place_id bigint, osm_id bigint, osm_type char(1),
+                          class text, type text, name HSTORE, country_code char(2)""",
+            content=[(1, 345, 'N', 'boundary', 'administrative', {'old_name': 'Former'}, 'ab'),
+                     (2, 781, 'R', 'landuse', 'wood', {'name': 'Wood'}, 'cd'),
+                     (3, 781, 'R', 'landcover', 'grass', None, 'cd')])
 
     @pytest.mark.asyncio
     async def test_deletable(self, api):

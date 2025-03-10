@@ -2,10 +2,9 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 from pathlib import Path
-import importlib
 import tempfile
 
 import psycopg
@@ -13,10 +12,9 @@ from psycopg import sql as pysql
 
 from nominatim_db import cli
 from nominatim_db.config import Configuration
-from nominatim_db.db.connection import Connection, register_hstore, execute_scalar
-from nominatim_db.tools import refresh
+from nominatim_db.db.connection import register_hstore, execute_scalar
 from nominatim_db.tokenizer import factory as tokenizer_factory
-from steps.utils import run_script
+
 
 class NominatimEnvironment:
     """ Collects all functions for the execution of Nominatim functions.
@@ -62,7 +60,6 @@ class NominatimEnvironment:
             dbargs['password'] = self.db_pass
         return psycopg.connect(**dbargs)
 
-
     def write_nominatim_config(self, dbname):
         """ Set up a custom test configuration that connects to the given
             database. This sets up the environment variables so that they can
@@ -101,7 +98,6 @@ class NominatimEnvironment:
 
         self.website_dir = tempfile.TemporaryDirectory()
 
-
     def get_test_config(self):
         cfg = Configuration(Path(self.website_dir.name), environ=self.test_env)
         return cfg
@@ -122,14 +118,13 @@ class NominatimEnvironment:
 
         return dsn
 
-
     def db_drop_database(self, name):
         """ Drop the database with the given name.
         """
         with self.connect_database('postgres') as conn:
             conn.autocommit = True
             conn.execute(pysql.SQL('DROP DATABASE IF EXISTS')
-                         +  pysql.Identifier(name))
+                         + pysql.Identifier(name))
 
     def setup_template_db(self):
         """ Setup a template database that already contains common test data.
@@ -153,12 +148,11 @@ class NominatimEnvironment:
                                                  '--osm2pgsql-cache', '1',
                                                  '--ignore-errors',
                                                  '--offline', '--index-noanalyse')
-            except:
+            except:  # noqa: E722
                 self.db_drop_database(self.template_db)
                 raise
 
         self.run_nominatim('refresh', '--functions')
-
 
     def setup_api_db(self):
         """ Setup a test against the API test database.
@@ -184,12 +178,11 @@ class NominatimEnvironment:
 
                     csv_path = str(testdata / 'full_en_phrases_test.csv')
                     self.run_nominatim('special-phrases', '--import-from-csv', csv_path)
-                except:
+                except:  # noqa: E722
                     self.db_drop_database(self.api_test_db)
                     raise
 
         tokenizer_factory.get_tokenizer_for_db(self.get_test_config())
-
 
     def setup_unknown_db(self):
         """ Setup a test against a non-existing database.
@@ -213,7 +206,7 @@ class NominatimEnvironment:
         with self.connect_database(self.template_db) as conn:
             conn.autocommit = True
             conn.execute(pysql.SQL('DROP DATABASE IF EXISTS')
-                                   + pysql.Identifier(self.test_db))
+                         + pysql.Identifier(self.test_db))
             conn.execute(pysql.SQL('CREATE DATABASE {} TEMPLATE = {}').format(
                            pysql.Identifier(self.test_db),
                            pysql.Identifier(self.template_db)))
@@ -250,7 +243,6 @@ class NominatimEnvironment:
 
         return False
 
-
     def reindex_placex(self, db):
         """ Run the indexing step until all data in the placex has
             been processed. Indexing during updates can produce more data
@@ -258,7 +250,6 @@ class NominatimEnvironment:
             to be run multiple times.
         """
         self.run_nominatim('index')
-
 
     def run_nominatim(self, *cmdline):
         """ Run the nominatim command-line tool via the library.
@@ -269,7 +260,6 @@ class NominatimEnvironment:
         cli.nominatim(osm2pgsql_path=None,
                       cli_args=cmdline,
                       environ=self.test_env)
-
 
     def copy_from_place(self, db):
         """ Copy data from place to the placex and location_property_osmline
@@ -293,7 +283,6 @@ class NominatimEnvironment:
                                     and osm_type='W'
                                     and ST_GeometryType(geometry) = 'ST_LineString'""")
 
-
     def create_api_request_func_starlette(self):
         import nominatim_api.server.starlette.server
         from asgi_lifespan import LifespanManager
@@ -311,7 +300,6 @@ class NominatimEnvironment:
 
         return _request
 
-
     def create_api_request_func_falcon(self):
         import nominatim_api.server.falcon.server
         import falcon.testing
@@ -326,6 +314,3 @@ class NominatimEnvironment:
             return response.text, response.status_code
 
         return _request
-
-
-

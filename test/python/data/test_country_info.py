@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for function that handle country properties.
@@ -11,6 +11,7 @@ from textwrap import dedent
 import pytest
 
 from nominatim_db.data import country_info
+
 
 @pytest.fixture
 def loaded_country(def_config):
@@ -115,8 +116,8 @@ def test_setup_country_config_languages_not_loaded(env_with_country_config):
     info = country_info._CountryInfo()
     info.load(config)
     assert dict(info.items()) == {'de': {'partition': 3,
-                                  'languages': [],
-                                  'names': {'name': 'Deutschland'}}}
+                                         'languages': [],
+                                         'names': {'name': 'Deutschland'}}}
 
 
 def test_setup_country_config_name_not_loaded(env_with_country_config):
@@ -132,8 +133,7 @@ def test_setup_country_config_name_not_loaded(env_with_country_config):
 
     assert dict(info.items()) == {'de': {'partition': 3,
                                          'languages': ['de'],
-                                         'names': {}
-                                 }}
+                                         'names': {}}}
 
 
 def test_setup_country_config_names_not_loaded(env_with_country_config):
@@ -148,8 +148,7 @@ def test_setup_country_config_names_not_loaded(env_with_country_config):
 
     assert dict(info.items()) == {'de': {'partition': 3,
                                          'languages': ['de'],
-                                         'names': {}
-                                 }}
+                                         'names': {}}}
 
 
 def test_setup_country_config_special_character(env_with_country_config):
@@ -157,8 +156,8 @@ def test_setup_country_config_special_character(env_with_country_config):
                                      bq:
                                          partition: 250
                                          languages: nl
-                                         names: 
-                                             name: 
+                                         names:
+                                             name:
                                                  default: "\\N"
                                      """)
 
@@ -167,5 +166,4 @@ def test_setup_country_config_special_character(env_with_country_config):
 
     assert dict(info.items()) == {'bq': {'partition': 250,
                                          'languages': ['nl'],
-                                         'names': {'name': '\x85'}
-                                 }}
+                                         'names': {'name': '\x85'}}}

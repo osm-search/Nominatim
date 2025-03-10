@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Test for loading dotenv configuration.
@@ -13,6 +13,7 @@ import pytest
 from nominatim_db.config import Configuration, flatten_config_list
 from nominatim_db.errors import UsageError
 
+
 @pytest.fixture
 def make_config():
     """ Create a configuration object from the given project directory.
@@ -21,6 +22,7 @@ def make_config():
         return Configuration(project_dir)
 
     return _mk_config
+
 
 @pytest.fixture
 def make_config_path(tmp_path):
@@ -108,7 +110,7 @@ def test_get_libpq_dsn_convert_php(make_config, monkeypatch):
 
 @pytest.mark.parametrize("val,expect", [('foo bar', "'foo bar'"),
                                         ("xy'z", "xy\\'z"),
-                                       ])
+                                        ])
 def test_get_libpq_dsn_convert_php_special_chars(make_config, monkeypatch, val, expect):
     config = make_config()
 
@@ -136,6 +138,7 @@ def test_get_bool(make_config, monkeypatch, value, result):
     monkeypatch.setenv('NOMINATIM_FOOBAR', value)
 
     assert config.get_bool('FOOBAR') == result
+
 
 def test_get_bool_empty(make_config):
     config = make_config()
@@ -303,7 +306,7 @@ def test_load_subconf_env_absolute_not_found(make_config_path, monkeypatch, tmp_
     (config.config_dir / 'test.yaml').write_text('cow: muh\ncat: miau\n')
 
     with pytest.raises(UsageError, match='Config file not found.'):
-        rules = config.load_sub_configuration('test.yaml', config='MY_CONFIG')
+        config.load_sub_configuration('test.yaml', config='MY_CONFIG')
 
 
 @pytest.mark.parametrize("location", ['project_dir', 'config_dir'])
@@ -326,7 +329,7 @@ def test_load_subconf_env_relative_not_found(make_config_path, monkeypatch):
     (config.config_dir / 'test.yaml').write_text('cow: muh\ncat: miau\n')
 
     with pytest.raises(UsageError, match='Config file not found.'):
-        rules = config.load_sub_configuration('test.yaml', config='MY_CONFIG')
+        config.load_sub_configuration('test.yaml', config='MY_CONFIG')
 
 
 def test_load_subconf_json(make_config_path):
@@ -337,6 +340,7 @@ def test_load_subconf_json(make_config_path):
     rules = config.load_sub_configuration('test.json')
 
     assert rules == dict(cow='muh', cat='miau')
+
 
 def test_load_subconf_not_found(make_config_path):
     config = make_config_path()
@@ -371,7 +375,7 @@ def test_load_subconf_include_relative(make_config_path, tmp_path, location):
     config = make_config_path()
 
     testfile = config.config_dir / 'test.yaml'
-    testfile.write_text(f'base: !include inc.yaml\n')
+    testfile.write_text('base: !include inc.yaml\n')
     (getattr(config, location) / 'inc.yaml').write_text('first: 1\nsecond: 2\n')
 
     rules = config.load_sub_configuration('test.yaml')
@@ -383,28 +387,28 @@ def test_load_subconf_include_bad_format(make_config_path):
     config = make_config_path()
 
     testfile = config.config_dir / 'test.yaml'
-    testfile.write_text(f'base: !include inc.txt\n')
+    testfile.write_text('base: !include inc.txt\n')
     (config.config_dir / 'inc.txt').write_text('first: 1\nsecond: 2\n')
 
     with pytest.raises(UsageError, match='Cannot handle config file format.'):
-        rules = config.load_sub_configuration('test.yaml')
+        config.load_sub_configuration('test.yaml')
 
 
 def test_load_subconf_include_not_found(make_config_path):
     config = make_config_path()
 
     testfile = config.config_dir / 'test.yaml'
-    testfile.write_text(f'base: !include inc.txt\n')
+    testfile.write_text('base: !include inc.txt\n')
 
     with pytest.raises(UsageError, match='Config file not found.'):
-        rules = config.load_sub_configuration('test.yaml')
+        config.load_sub_configuration('test.yaml')
 
 
 def test_load_subconf_include_recursive(make_config_path):
     config = make_config_path()
 
     testfile = config.config_dir / 'test.yaml'
-    testfile.write_text(f'base: !include inc.yaml\n')
+    testfile.write_text('base: !include inc.yaml\n')
     (config.config_dir / 'inc.yaml').write_text('- !include more.yaml\n- upper\n')
     (config.config_dir / 'more.yaml').write_text('- the end\n')
 
@@ -435,6 +439,6 @@ def test_flatten_config_list_nested():
         [[2, 3], [45, [56, 78], 66]],
         'end'
     ]
+
     assert flatten_config_list(content) == \
-               [34, {'first': '1st', 'second': '2nd'}, {},
-                2, 3, 45, 56, 78, 66, 'end']
+        [34, {'first': '1st', 'second': '2nd'}, {}, 2, 3, 45, 56, 78, 66, 'end']

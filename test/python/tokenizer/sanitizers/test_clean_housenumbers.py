@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for the sanitizer that normalizes housenumbers.
@@ -12,11 +12,12 @@ import pytest
 from nominatim_db.tokenizer.place_sanitizer import PlaceSanitizer
 from nominatim_db.data.place_info import PlaceInfo
 
+
 @pytest.fixture
 def sanitize(request, def_config):
     sanitizer_args = {'step': 'clean-housenumbers'}
     for mark in request.node.iter_markers(name="sanitizer_params"):
-        sanitizer_args.update({k.replace('_', '-') : v for k,v in mark.kwargs.items()})
+        sanitizer_args.update({k.replace('_', '-'): v for k, v in mark.kwargs.items()})
 
     def _run(**kwargs):
         place = PlaceInfo({'address': kwargs})

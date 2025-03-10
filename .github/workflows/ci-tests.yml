@@ -100,7 +100,7 @@ jobs:
               run: ./venv/bin/pip install -U flake8
 
             - name: Python linting
-              run: ../venv/bin/python -m flake8 src
+              run: ../venv/bin/python -m flake8 src test/python test/bdd
               working-directory: Nominatim
 
             - name: Install mypy and typechecking info

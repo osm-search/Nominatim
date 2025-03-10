@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Test for various refresh functions.
@@ -12,7 +12,7 @@ from pathlib import Path
 import pytest
 
 from nominatim_db.tools import refresh
-from nominatim_db.db.connection import postgis_version_tuple
+
 
 def test_refresh_import_wikipedia_not_existing(dsn):
     assert refresh.import_wikipedia_articles(dsn, Path('.')) == 1
@@ -20,6 +20,7 @@ def test_refresh_import_wikipedia_not_existing(dsn):
 
 def test_refresh_import_secondary_importance_non_existing(dsn):
     assert refresh.import_secondary_importance(dsn, Path('.')) == 1
+
 
 def test_refresh_import_secondary_importance_testdb(dsn, src_dir, temp_db_conn, temp_db_cursor):
     temp_db_cursor.execute('CREATE EXTENSION postgis')

@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Test functions for adapting results to the user's locale.
@@ -11,34 +11,36 @@ import pytest
 
 from nominatim_api import Locales
 
-def test_display_name_empty_names():
-    l = Locales(['en', 'de'])
 
-    assert l.display_name(None) == ''
-    assert l.display_name({}) == ''
+def test_display_name_empty_names():
+    loc = Locales(['en', 'de'])
+
+    assert loc.display_name(None) == ''
+    assert loc.display_name({}) == ''
+
 
 def test_display_name_none_localized():
-    l = Locales()
+    loc = Locales()
 
-    assert l.display_name({}) == ''
-    assert l.display_name({'name:de': 'DE', 'name': 'ALL'}) == 'ALL'
-    assert l.display_name({'ref': '34', 'name:de': 'DE'}) == '34'
+    assert loc.display_name({}) == ''
+    assert loc.display_name({'name:de': 'DE', 'name': 'ALL'}) == 'ALL'
+    assert loc.display_name({'ref': '34', 'name:de': 'DE'}) == '34'
 
 
 def test_display_name_localized():
-    l = Locales(['en', 'de'])
+    loc = Locales(['en', 'de'])
 
-    assert l.display_name({}) == ''
-    assert l.display_name({'name:de': 'DE', 'name': 'ALL'}) == 'DE'
-    assert l.display_name({'ref': '34', 'name:de': 'DE'}) == 'DE'
+    assert loc.display_name({}) == ''
+    assert loc.display_name({'name:de': 'DE', 'name': 'ALL'}) == 'DE'
+    assert loc.display_name({'ref': '34', 'name:de': 'DE'}) == 'DE'
 
 
 def test_display_name_preference():
-    l = Locales(['en', 'de'])
+    loc = Locales(['en', 'de'])
 
-    assert l.display_name({}) == ''
-    assert l.display_name({'name:de': 'DE', 'name:en': 'EN'}) == 'EN'
-    assert l.display_name({'official_name:en': 'EN', 'name:de': 'DE'}) == 'DE'
+    assert loc.display_name({}) == ''
+    assert loc.display_name({'name:de': 'DE', 'name:en': 'EN'}) == 'EN'
+    assert loc.display_name({'official_name:en': 'EN', 'name:de': 'DE'}) == 'DE'
 
 
 @pytest.mark.parametrize('langstr,langlist',

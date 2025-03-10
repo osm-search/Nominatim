@@ -18,6 +18,7 @@ import nominatim_db.tools.replication
 import nominatim_db.tools.refresh
 from nominatim_db.db import status
 
+
 @pytest.fixture
 def tokenizer_mock(monkeypatch):
     class DummyTokenizer:
@@ -38,7 +39,6 @@ def tokenizer_mock(monkeypatch):
                         lambda *args: tok)
 
     return tok
-
 
 
 @pytest.fixture
@@ -62,15 +62,13 @@ class TestCliReplication:
     def setup_cli_call(self, cli_call, temp_db):
         self.call_nominatim = lambda *args: cli_call('replication', *args)
 
-
     @pytest.fixture(autouse=True)
     def setup_update_function(self, monkeypatch):
         def _mock_updates(states):
             monkeypatch.setattr(nominatim_db.tools.replication, 'update',
-                            lambda *args, **kwargs: states.pop())
+                                lambda *args, **kwargs: states.pop())
 
         self.update_states = _mock_updates
-
 
     @pytest.mark.parametrize("params,func", [
                              (('--init',), 'init_replication'),
@@ -88,19 +86,16 @@ class TestCliReplication:
         if params == ('--init',):
             assert umock.called == 1
 
-
     def test_replication_update_bad_interval(self, monkeypatch):
         monkeypatch.setenv('NOMINATIM_REPLICATION_UPDATE_INTERVAL', 'xx')
 
         assert self.call_nominatim() == 1
-
 
     def test_replication_update_bad_interval_for_geofabrik(self, monkeypatch):
         monkeypatch.setenv('NOMINATIM_REPLICATION_URL',
                            'https://download.geofabrik.de/europe/italy-updates')
 
         assert self.call_nominatim() == 1
-
 
     def test_replication_update_continuous_no_index(self):
         assert self.call_nominatim('--no-index') == 1
@@ -110,13 +105,11 @@ class TestCliReplication:
 
         assert str(update_mock.last_args[1]['osm2pgsql']).endswith('OSM2PGSQL NOT AVAILABLE')
 
-
     def test_replication_update_custom_osm2pgsql(self, monkeypatch, update_mock):
         monkeypatch.setenv('NOMINATIM_OSM2PGSQL_BINARY', '/secret/osm2pgsql')
         assert self.call_nominatim('--once', '--no-index') == 0
 
         assert str(update_mock.last_args[1]['osm2pgsql']) == '/secret/osm2pgsql'
-
 
     @pytest.mark.parametrize("update_interval", [60, 3600])
     def test_replication_catchup(self, placex_table, monkeypatch, index_mock, update_interval):
@@ -125,12 +118,10 @@ class TestCliReplication:
 
         assert self.call_nominatim('--catch-up') == 0
 
-
     def test_replication_update_custom_threads(self, update_mock):
         assert self.call_nominatim('--once', '--no-index', '--threads', '4') == 0
 
         assert update_mock.last_args[1]['threads'] == 4
-
 
     def test_replication_update_continuous(self, index_mock):
         self.update_states([nominatim_db.tools.replication.UpdateState.UP_TO_DATE,
@@ -140,7 +131,6 @@ class TestCliReplication:
             self.call_nominatim()
 
         assert index_mock.called == 2
-
 
     def test_replication_update_continuous_no_change(self, mock_func_factory,
                                                      index_mock):

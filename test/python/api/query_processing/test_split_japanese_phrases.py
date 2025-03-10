@@ -7,15 +7,12 @@
 """
 Tests for japanese phrase splitting.
 """
-from pathlib import Path
-
 import pytest
-
-from icu import Transliterator
 
 import nominatim_api.search.query as qmod
 from nominatim_api.query_preprocessing.config import QueryConfig
 from nominatim_api.query_preprocessing import split_japanese_phrases
+
 
 def run_preprocessor_on(query):
     proc = split_japanese_phrases.create(QueryConfig().set_normalizer(None))

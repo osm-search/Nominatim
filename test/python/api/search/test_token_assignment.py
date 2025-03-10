@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Test for creation of token assignments from tokenized queries.
@@ -11,7 +11,10 @@ import pytest
 
 from nominatim_api.search.query import QueryStruct, Phrase, TokenRange, Token
 import nominatim_api.search.query as qmod
-from nominatim_api.search.token_assignment import yield_token_assignments, TokenAssignment, PENALTY_TOKENCHANGE
+from nominatim_api.search.token_assignment import (yield_token_assignments,
+                                                   TokenAssignment,
+                                                   PENALTY_TOKENCHANGE)
+
 
 class MyToken(Token):
     def get_category(self):
@@ -102,8 +105,7 @@ def test_multiple_simple_words(btype):
                       TokenAssignment(penalty=penalty, name=TokenRange(1, 3),
                                       address=[TokenRange(0, 1)]),
                       TokenAssignment(penalty=penalty, name=TokenRange(2, 3),
-                                      address=[TokenRange(0, 2)])
-                     )
+                                      address=[TokenRange(0, 2)]))
 
 
 def test_multiple_words_respect_phrase_break():
@@ -155,6 +157,7 @@ def test_housenumber_and_postcode():
                                       housenumber=TokenRange(1, 2),
                                       address=[TokenRange(0, 1), TokenRange(2, 3)],
                                       postcode=TokenRange(3, 4)))
+
 
 def test_postcode_and_housenumber():
     q = make_query((qmod.BREAK_START, qmod.PHRASE_ANY, [(1, qmod.TOKEN_PARTIAL)]),
@@ -211,11 +214,11 @@ def test_housenumber_many_phrases():
     check_assignments(yield_token_assignments(q),
                       TokenAssignment(penalty=0.1,
                                       name=TokenRange(4, 5),
-                                      housenumber=TokenRange(3, 4),\
+                                      housenumber=TokenRange(3, 4),
                                       address=[TokenRange(0, 1), TokenRange(1, 2),
                                                TokenRange(2, 3)]),
                       TokenAssignment(penalty=0.1,
-                                      housenumber=TokenRange(3, 4),\
+                                      housenumber=TokenRange(3, 4),
                                       address=[TokenRange(0, 1), TokenRange(1, 2),
                                                TokenRange(2, 3), TokenRange(4, 5)]))
 
@@ -299,7 +302,6 @@ def test_qualifier_at_beginning():
                    (qmod.BREAK_WORD, qmod.PHRASE_ANY, [(2, qmod.TOKEN_PARTIAL)]),
                    (qmod.BREAK_WORD, qmod.PHRASE_ANY, [(3, qmod.TOKEN_PARTIAL)]))
 
-
     check_assignments(yield_token_assignments(q),
                       TokenAssignment(penalty=0.1, name=TokenRange(1, 3),
                                       qualifier=TokenRange(0, 1)),
@@ -314,7 +316,6 @@ def test_qualifier_after_name():
                    (qmod.BREAK_WORD, qmod.PHRASE_ANY, [(3, qmod.TOKEN_QUALIFIER)]),
                    (qmod.BREAK_WORD, qmod.PHRASE_ANY, [(4, qmod.TOKEN_PARTIAL)]),
                    (qmod.BREAK_WORD, qmod.PHRASE_ANY, [(5, qmod.TOKEN_PARTIAL)]))
-
 
     check_assignments(yield_token_assignments(q),
                       TokenAssignment(penalty=0.2, name=TokenRange(0, 2),
@@ -349,4 +350,3 @@ def test_qualifier_in_middle_of_phrase():
                    (qmod.BREAK_PHRASE, qmod.PHRASE_ANY, [(5, qmod.TOKEN_PARTIAL)]))
 
     check_assignments(yield_token_assignments(q))
-

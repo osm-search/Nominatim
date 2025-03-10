@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for import command of the command-line interface wrapper.
@@ -24,14 +24,11 @@ class TestCliImportWithDb:
         self.call_nominatim = cli_call
         self.tokenizer_mock = cli_tokenizer_mock
 
-
     def test_import_missing_file(self):
         assert self.call_nominatim('import', '--osm-file', 'sfsafegwedgw.reh.erh') == 1
 
-
     def test_import_bad_file(self):
         assert self.call_nominatim('import', '--osm-file', '.') == 1
-
 
     @pytest.mark.parametrize('with_updates', [True, False])
     def test_import_full(self, mock_func_factory, async_mock_func_factory,
@@ -62,7 +59,6 @@ class TestCliImportWithDb:
 
         cf_mock = mock_func_factory(nominatim_db.tools.refresh, 'create_functions')
 
-
         assert self.call_nominatim(*params) == 0
         assert self.tokenizer_mock.finalize_import_called
 
@@ -70,7 +66,6 @@ class TestCliImportWithDb:
 
         for mock in mocks:
             assert mock.called == 1, "Mock '{}' not called".format(mock.func_name)
-
 
     def test_import_continue_load_data(self, mock_func_factory, async_mock_func_factory):
         mocks = [
@@ -89,7 +84,6 @@ class TestCliImportWithDb:
         for mock in mocks:
             assert mock.called == 1, "Mock '{}' not called".format(mock.func_name)
 
-
     def test_import_continue_indexing(self, mock_func_factory, async_mock_func_factory,
                                       placex_table, temp_db_conn):
         mocks = [
@@ -106,7 +100,6 @@ class TestCliImportWithDb:
 
         # Calling it again still works for the index
         assert self.call_nominatim('import', '--continue', 'indexing') == 0
-
 
     def test_import_continue_postprocess(self, mock_func_factory, async_mock_func_factory):
         mocks = [

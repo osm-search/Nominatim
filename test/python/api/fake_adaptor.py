@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Provides dummy implementations of ASGIAdaptor for testing.
@@ -13,6 +13,7 @@ import nominatim_api.v1.server_glue as glue
 from nominatim_api.v1.format import dispatch as formatting
 from nominatim_api.config import Configuration
 
+
 class FakeError(BaseException):
 
     def __init__(self, msg, status):
@@ -22,7 +23,9 @@ class FakeError(BaseException):
     def __str__(self):
         return f'{self.status} -- {self.msg}'
 
+
 FakeResponse = namedtuple('FakeResponse', ['status', 'output', 'content_type'])
+
 
 class FakeAdaptor(glue.ASGIAdaptor):
 
@@ -31,22 +34,17 @@ class FakeAdaptor(glue.ASGIAdaptor):
         self.headers = headers or {}
         self._config = config or Configuration(None)
 
-
     def get(self, name, default=None):
         return self.params.get(name, default)
-
 
     def get_header(self, name, default=None):
         return self.headers.get(name, default)
 
-
     def error(self, msg, status=400):
         return FakeError(msg, status)
 
-
     def create_response(self, status, output, num_results):
         return FakeResponse(status, output, self.content_type)
-
 
     def base_uri(self):
         return 'http://test'
@@ -56,5 +54,3 @@ class FakeAdaptor(glue.ASGIAdaptor):
 
     def formatting(self):
         return formatting
-
-

@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for functions to import a new database.
@@ -10,12 +10,13 @@ Tests for functions to import a new database.
 from pathlib import Path
 
 import pytest
-import pytest_asyncio
+import pytest_asyncio  # noqa
 import psycopg
 from psycopg import sql as pysql
 
 from nominatim_db.tools import database_import
 from nominatim_db.errors import UsageError
+
 
 class TestDatabaseSetup:
     DBNAME = 'test_nominatim_python_unittest'
@@ -31,17 +32,14 @@ class TestDatabaseSetup:
             with conn.cursor() as cur:
                 cur.execute(f'DROP DATABASE IF EXISTS {self.DBNAME}')
 
-
     @pytest.fixture
     def cursor(self):
         with psycopg.connect(dbname=self.DBNAME) as conn:
             with conn.cursor() as cur:
                 yield cur
 
-
     def conn(self):
         return psycopg.connect(dbname=self.DBNAME)
-
 
     def test_setup_skeleton(self):
         database_import.setup_database_skeleton(f'dbname={self.DBNAME}')
@@ -51,24 +49,20 @@ class TestDatabaseSetup:
             with conn.cursor() as cur:
                 cur.execute('CREATE TABLE t (h HSTORE, geom GEOMETRY(Geometry, 4326))')
 
-
     def test_unsupported_pg_version(self, monkeypatch):
         monkeypatch.setattr(database_import, 'POSTGRESQL_REQUIRED_VERSION', (100, 4))
 
         with pytest.raises(UsageError, match='PostgreSQL server is too old.'):
             database_import.setup_database_skeleton(f'dbname={self.DBNAME}')
 
-
     def test_create_db_explicit_ro_user(self):
         database_import.setup_database_skeleton(f'dbname={self.DBNAME}',
                                                 rouser='postgres')
-
 
     def test_create_db_missing_ro_user(self):
         with pytest.raises(UsageError, match='Missing read-only user.'):
             database_import.setup_database_skeleton(f'dbname={self.DBNAME}',
                                                     rouser='sdfwkjkjgdugu2;jgsafkljas;')
-
 
     def test_setup_extensions_old_postgis(self, monkeypatch):
         monkeypatch.setattr(database_import, 'POSTGIS_REQUIRED_VERSION', (50, 50))
@@ -173,7 +167,7 @@ def test_truncate_database_tables(temp_db_conn, temp_db_cursor, table_factory, w
 @pytest.mark.parametrize("threads", (1, 5))
 @pytest.mark.asyncio
 async def test_load_data(dsn, place_row, placex_table, osmline_table,
-                   temp_db_cursor, threads):
+                         temp_db_cursor, threads):
     for func in ('precompute_words', 'getorcreate_housenumber_id', 'make_standard_name'):
         temp_db_cursor.execute(pysql.SQL("""CREATE FUNCTION {} (src TEXT)
                                             RETURNS TEXT AS $$ SELECT 'a'::TEXT $$ LANGUAGE SQL
@@ -198,10 +192,8 @@ class TestSetupSQL:
 
         self.config = def_config
 
-
     def write_sql(self, fname, content):
         (self.config.lib_dir.sql / fname).write_text(content)
-
 
     @pytest.mark.parametrize("reverse", [True, False])
     def test_create_tables(self, temp_db_conn, temp_db_cursor, reverse):
@@ -213,7 +205,6 @@ class TestSetupSQL:
 
         temp_db_cursor.scalar('SELECT test()') == reverse
 
-
     def test_create_table_triggers(self, temp_db_conn, temp_db_cursor):
         self.write_sql('table-triggers.sql',
                        """CREATE FUNCTION test() RETURNS TEXT
@@ -223,7 +214,6 @@ class TestSetupSQL:
 
         temp_db_cursor.scalar('SELECT test()') == 'a'
 
-
     def test_create_partition_tables(self, temp_db_conn, temp_db_cursor):
         self.write_sql('partition-tables.src.sql',
                        """CREATE FUNCTION test() RETURNS TEXT
@@ -232,7 +222,6 @@ class TestSetupSQL:
         database_import.create_partition_tables(temp_db_conn, self.config)
 
         temp_db_cursor.scalar('SELECT test()') == 'b'
-
 
     @pytest.mark.parametrize("drop", [True, False])
     @pytest.mark.asyncio

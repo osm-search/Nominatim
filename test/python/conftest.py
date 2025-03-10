@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 import itertools
 import sys
@@ -69,6 +69,7 @@ def temp_db_with_extensions(temp_db):
 
     return temp_db
 
+
 @pytest.fixture
 def temp_db_conn(temp_db):
     """ Connection to the test database.
@@ -100,8 +101,9 @@ def table_factory(temp_db_conn):
             if content:
                 sql = pysql.SQL("INSERT INTO {} VALUES ({})")\
                            .format(pysql.Identifier(name),
-                                   pysql.SQL(',').join([pysql.Placeholder() for _ in range(len(content[0]))]))
-                cur.executemany(sql , content)
+                                   pysql.SQL(',').join([pysql.Placeholder()
+                                                        for _ in range(len(content[0]))]))
+                cur.executemany(sql, content)
 
     return mk_table
 
@@ -177,6 +179,7 @@ def place_row(place_table, temp_db_cursor):
                                 geom or 'SRID=4326;POINT(0 0)'))
 
     return _insert
+
 
 @pytest.fixture
 def placex_table(temp_db_with_extensions, temp_db_conn):

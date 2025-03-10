@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for migration functions
@@ -11,8 +11,8 @@ import pytest
 
 from nominatim_db.tools import migration
 from nominatim_db.errors import UsageError
-from nominatim_db.db.connection import server_version_tuple
 import nominatim_db.version
+
 
 class DummyTokenizer:
 
@@ -49,6 +49,7 @@ def test_run_single_migration(temp_db_with_extensions, def_config, temp_db_curso
                        str(nominatim_db.version.NominatimVersion(*oldversion)))
 
     done = {'old': False, 'new': False}
+
     def _migration(**_):
         """ Dummy migration"""
         done['new'] = True
@@ -69,7 +70,7 @@ def test_run_single_migration(temp_db_with_extensions, def_config, temp_db_curso
     assert property_table.get('database_version') == str(nominatim_db.version.NOMINATIM_VERSION)
 
 
-###### Tests for specific migrations
+# Tests for specific migrations
 #
 # Each migration should come with two tests:
 #  1. Test that migration from old to new state works as expected.

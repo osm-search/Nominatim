@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for the streaming JSON writer.
@@ -12,6 +12,7 @@ import json
 import pytest
 
 from nominatim_api.utils.json_writer import JsonWriter
+
 
 @pytest.mark.parametrize("inval,outstr", [(None, 'null'),
                                           (True, 'true'), (False, 'false'),
@@ -71,6 +72,7 @@ def test_object_single_entry():
     assert writer() == '{"something":5}'
     json.loads(writer())
 
+
 def test_object_many_values():
     writer = JsonWriter()\
                 .start_object()\
@@ -82,6 +84,7 @@ def test_object_many_values():
     assert writer() == '{"foo":null,"bar":{},"baz":"b\\taz"}'
     json.loads(writer())
 
+
 def test_object_many_values_without_none():
     writer = JsonWriter()\
                 .start_object()\
@@ -89,7 +92,7 @@ def test_object_many_values_without_none():
                     .keyval_not_none('bar', None)\
                     .keyval_not_none('baz', '')\
                     .keyval_not_none('eve', False,
-                                     transform = lambda v: 'yes' if v else 'no')\
+                                     transform=lambda v: 'yes' if v else 'no')\
                 .end_object()
 
     assert writer() == '{"foo":0,"baz":"","eve":"no"}'

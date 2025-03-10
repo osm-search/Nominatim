@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for functions to maintain the artificial postcode table.
@@ -14,6 +14,7 @@ import pytest
 from nominatim_db.tools import postcodes
 from nominatim_db.data import country_info
 import dummy_tokenizer
+
 
 class MockPostcodeTable:
     """ A location_postcode table for testing.
@@ -35,7 +36,7 @@ class MockPostcodeTable:
                            RETURNS TEXT AS $$ BEGIN RETURN postcode; END; $$ LANGUAGE plpgsql;
 
                            CREATE OR REPLACE FUNCTION get_country_code(place geometry)
-                           RETURNS TEXT AS $$ BEGIN 
+                           RETURNS TEXT AS $$ BEGIN
                            RETURN null;
                            END; $$ LANGUAGE plpgsql;
                         """)
@@ -50,7 +51,6 @@ class MockPostcodeTable:
                                    ST_SetSRID(ST_MakePoint(%s, %s), 4326))""",
                         (country, postcode, x, y))
         self.conn.commit()
-
 
     @property
     def row_set(self):
@@ -180,7 +180,7 @@ def test_postcodes_extern(dsn, postcode_table, tmp_path,
                                       ('xx', 'CD 4511', -10, -5)}
 
 
-def test_postcodes_extern_bad_column(dsn, postcode_table, tmp_path, 
+def test_postcodes_extern_bad_column(dsn, postcode_table, tmp_path,
                                      insert_implicit_postcode, tokenizer):
     insert_implicit_postcode(1, 'xx', 'POINT(10 12)', dict(postcode='AB 4511'))
 
@@ -204,6 +204,7 @@ def test_postcodes_extern_bad_number(dsn, insert_implicit_postcode,
     assert postcode_table.row_set == {('xx', 'AB 4511', 10, 12),
                                       ('xx', 'CD 4511', -10, -5)}
 
+
 def test_can_compute(dsn, table_factory):
     assert not postcodes.can_compute(dsn)
     table_factory('place')
@@ -211,10 +212,10 @@ def test_can_compute(dsn, table_factory):
 
 
 def test_no_placex_entry(dsn, tmp_path, temp_db_cursor, place_row, postcode_table, tokenizer):
-    #Rewrite the get_country_code function to verify its execution.
+    # Rewrite the get_country_code function to verify its execution.
     temp_db_cursor.execute("""
         CREATE OR REPLACE FUNCTION get_country_code(place geometry)
-        RETURNS TEXT AS $$ BEGIN 
+        RETURNS TEXT AS $$ BEGIN
         RETURN 'yy';
         END; $$ LANGUAGE plpgsql;
     """)
@@ -224,11 +225,12 @@ def test_no_placex_entry(dsn, tmp_path, temp_db_cursor, place_row, postcode_tabl
     assert postcode_table.row_set == {('yy', 'AB 4511', 10, 12)}
 
 
-def test_discard_badly_formatted_postcodes(dsn, tmp_path, temp_db_cursor, place_row, postcode_table, tokenizer):
-    #Rewrite the get_country_code function to verify its execution.
+def test_discard_badly_formatted_postcodes(dsn, tmp_path, temp_db_cursor, place_row,
+                                           postcode_table, tokenizer):
+    # Rewrite the get_country_code function to verify its execution.
     temp_db_cursor.execute("""
         CREATE OR REPLACE FUNCTION get_country_code(place geometry)
-        RETURNS TEXT AS $$ BEGIN 
+        RETURNS TEXT AS $$ BEGIN
         RETURN 'fr';
         END; $$ LANGUAGE plpgsql;
     """)

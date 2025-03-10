@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2023 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Classes wrapping HTTP responses from the Nominatim API.
@@ -45,7 +45,6 @@ class GenericResponse:
             else:
                 self.result = [self.result]
 
-
     def _parse_geojson(self):
         self._parse_json()
         if self.result:
@@ -76,7 +75,6 @@ class GenericResponse:
                         new['__' + k] = v
                 self.result.append(new)
 
-
     def _parse_geocodejson(self):
         self._parse_geojson()
         if self.result:
@@ -86,7 +84,6 @@ class GenericResponse:
                 check_for_attributes(r['geocoding'], 'geojson', 'absent')
                 inner = r.pop('geocoding')
                 r.update(inner)
-
 
     def assert_address_field(self, idx, field, value):
         """ Check that result rows`idx` has a field `field` with value `value`
@@ -102,7 +99,6 @@ class GenericResponse:
 
             address = self.result[idx]['address']
             self.check_row_field(idx, field, value, base=address)
-
 
     def match_row(self, row, context=None, field=None):
         """ Match the result fields against the given behave table row.
@@ -139,7 +135,6 @@ class GenericResponse:
                 else:
                     self.check_row_field(i, name, Field(value), base=subdict)
 
-
     def check_row(self, idx, check, msg):
         """ Assert for the condition 'check' and print 'msg' on fail together
             with the contents of the failing result.
@@ -153,7 +148,6 @@ class GenericResponse:
                        + json.dumps(self.row, indent=4, ensure_ascii=False)
 
         assert check, _RowError(self.result[idx])
-
 
     def check_row_field(self, idx, field, expected, base=None):
         """ Check field 'field' of result 'idx' for the expected value
@@ -170,7 +164,6 @@ class GenericResponse:
 
         self.check_row(idx, expected == value,
                        f"\nBad value for field '{field}'. Expected: {expected}, got: {value}")
-
 
 
 class SearchResponse(GenericResponse):
@@ -240,7 +233,8 @@ class ReverseResponse(GenericResponse):
                 assert 'namedetails' not in self.result[0], "More than one namedetails in result"
                 self.result[0]['namedetails'] = {}
                 for tag in child:
-                    assert len(tag) == 0, f"Namedetails element '{tag.attrib['desc']}' has subelements"
+                    assert len(tag) == 0, \
+                        f"Namedetails element '{tag.attrib['desc']}' has subelements"
                     self.result[0]['namedetails'][tag.attrib['desc']] = tag.text
             elif child.tag == 'geokml':
                 assert 'geokml' not in self.result[0], "More than one geokml in result"

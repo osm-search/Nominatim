@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for centroid computation.
@@ -11,6 +11,7 @@ import pytest
 
 from nominatim_db.utils.centroid import PointsCentroid
 
+
 def test_empty_set():
     c = PointsCentroid()
 
@@ -18,7 +19,7 @@ def test_empty_set():
         c.centroid()
 
 
-@pytest.mark.parametrize("centroid", [(0,0), (-1, 3), [0.0000032, 88.4938]])
+@pytest.mark.parametrize("centroid", [(0, 0), (-1, 3), [0.0000032, 88.4938]])
 def test_one_point_centroid(centroid):
     c = PointsCentroid()
 

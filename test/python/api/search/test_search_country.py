@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for running the country searcher.
@@ -48,6 +48,7 @@ def test_find_from_placex(apiobj, frontend):
     assert results[0].place_id == 55
     assert results[0].accuracy == 0.8
 
+
 def test_find_from_fallback_countries(apiobj, frontend):
     apiobj.add_country('ro', 'POLYGON((0 0, 0 1, 1 1, 1 0, 0 0))')
     apiobj.add_country_name('ro', {'name': 'România'})
@@ -87,7 +88,6 @@ class TestCountryParameters:
         apiobj.add_country('ro', 'POLYGON((0 0, 0 1, 1 1, 1 0, 0 0))')
         apiobj.add_country_name('ro', {'name': 'România'})
 
-
     @pytest.mark.parametrize('geom', [napi.GeometryFormat.GEOJSON,
                                       napi.GeometryFormat.KML,
                                       napi.GeometryFormat.SVG,
@@ -100,14 +100,12 @@ class TestCountryParameters:
         assert len(results) == 1
         assert geom.name.lower() in results[0].geometry
 
-
     @pytest.mark.parametrize('pid,rids', [(76, [55]), (55, [])])
     def test_exclude_place_id(self, apiobj, frontend, pid, rids):
         results = run_search(apiobj, frontend, 0.5, ['yw', 'ro'],
                              details=SearchDetails(excluded=[pid]))
 
         assert [r.place_id for r in results] == rids
-
 
     @pytest.mark.parametrize('viewbox,rids', [((9, 9, 11, 11), [55]),
                                               ((-10, -10, -3, -3), [])])
@@ -118,9 +116,8 @@ class TestCountryParameters:
 
         assert [r.place_id for r in results] == rids
 
-
     @pytest.mark.parametrize('viewbox,numres', [((0, 0, 1, 1), 1),
-                                              ((-10, -10, -3, -3), 0)])
+                                                ((-10, -10, -3, -3), 0)])
     def test_bounded_viewbox_in_fallback(self, apiobj, frontend, viewbox, numres):
         results = run_search(apiobj, frontend, 0.5, ['ro'],
                              details=SearchDetails.from_kwargs({'viewbox': viewbox,

@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for export CLI function.
@@ -11,12 +11,13 @@ import pytest
 
 import nominatim_db.cli
 
+
 @pytest.fixture
 def run_export(tmp_path, capsys):
     def _exec(args):
+        cli_args = ['export', '--project-dir', str(tmp_path)] + args
         assert 0 == nominatim_db.cli.nominatim(osm2pgsql_path='OSM2PGSQL NOT AVAILABLE',
-                                               cli_args=['export', '--project-dir', str(tmp_path)]
-                                                        + args)
+                                               cli_args=cli_args)
         return capsys.readouterr().out.split('\r\n')
 
     return _exec
@@ -25,9 +26,9 @@ def run_export(tmp_path, capsys):
 @pytest.fixture(autouse=True)
 def setup_database_with_context(apiobj):
     apiobj.add_placex(place_id=332, osm_type='W', osm_id=4,
-                     class_='highway', type='residential',  name='Street',
-                     country_code='pl', postcode='55674',
-                     rank_search=27, rank_address=26)
+                      class_='highway', type='residential',  name='Street',
+                      country_code='pl', postcode='55674',
+                      rank_search=27, rank_address=26)
     apiobj.add_address_placex(332, fromarea=False, isaddress=False,
                               distance=0.0034,
                               place_id=1000, osm_type='N', osm_id=3333,

@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for reverse API call.
@@ -17,6 +17,7 @@ import pytest
 import nominatim_api as napi
 
 API_OPTIONS = {'reverse'}
+
 
 def test_reverse_rank_30(apiobj, frontend):
     apiobj.add_placex(place_id=223, class_='place', type='house',
@@ -35,7 +36,7 @@ def test_reverse_rank_30(apiobj, frontend):
 def test_reverse_street(apiobj, frontend, country):
     apiobj.add_placex(place_id=990, class_='highway', type='service',
                       rank_search=27, rank_address=27,
-                      name = {'name': 'My Street'},
+                      name={'name': 'My Street'},
                       centroid=(10.0, 10.0),
                       country_code=country,
                       geometry='LINESTRING(9.995 10, 10.005 10)')
@@ -57,16 +58,17 @@ def test_reverse_ignore_unindexed(apiobj, frontend):
     assert result is None
 
 
-@pytest.mark.parametrize('y,layer,place_id', [(0.7, napi.DataLayer.ADDRESS, 223),
-                                              (0.70001, napi.DataLayer.POI, 224),
-                                              (0.7, napi.DataLayer.ADDRESS | napi.DataLayer.POI, 224),
-                                              (0.70001, napi.DataLayer.ADDRESS | napi.DataLayer.POI, 223),
-                                              (0.7, napi.DataLayer.MANMADE, 225),
-                                              (0.7, napi.DataLayer.RAILWAY, 226),
-                                              (0.7, napi.DataLayer.NATURAL, 227),
-                                              (0.70003, napi.DataLayer.MANMADE | napi.DataLayer.RAILWAY, 225),
-                                              (0.70003, napi.DataLayer.MANMADE | napi.DataLayer.NATURAL, 225),
-                                              (5, napi.DataLayer.ADDRESS, 229)])
+@pytest.mark.parametrize('y,layer,place_id',
+                         [(0.7, napi.DataLayer.ADDRESS, 223),
+                          (0.70001, napi.DataLayer.POI, 224),
+                          (0.7, napi.DataLayer.ADDRESS | napi.DataLayer.POI, 224),
+                          (0.70001, napi.DataLayer.ADDRESS | napi.DataLayer.POI, 223),
+                          (0.7, napi.DataLayer.MANMADE, 225),
+                          (0.7, napi.DataLayer.RAILWAY, 226),
+                          (0.7, napi.DataLayer.NATURAL, 227),
+                          (0.70003, napi.DataLayer.MANMADE | napi.DataLayer.RAILWAY, 225),
+                          (0.70003, napi.DataLayer.MANMADE | napi.DataLayer.NATURAL, 225),
+                          (5, napi.DataLayer.ADDRESS, 229)])
 def test_reverse_rank_30_layers(apiobj, frontend, y, layer, place_id):
     apiobj.add_placex(place_id=223, osm_type='N', class_='place', type='house',
                       housenumber='1',
@@ -108,14 +110,14 @@ def test_reverse_poi_layer_with_no_pois(apiobj, frontend):
 
     api = frontend(apiobj, options=API_OPTIONS)
     assert api.reverse((1.3, 0.70001), max_rank=29,
-                              layers=napi.DataLayer.POI) is None
+                       layers=napi.DataLayer.POI) is None
 
 
 @pytest.mark.parametrize('with_geom', [True, False])
 def test_reverse_housenumber_on_street(apiobj, frontend, with_geom):
     apiobj.add_placex(place_id=990, class_='highway', type='service',
                       rank_search=27, rank_address=27,
-                      name = {'name': 'My Street'},
+                      name={'name': 'My Street'},
                       centroid=(10.0, 10.0),
                       geometry='LINESTRING(9.995 10, 10.005 10)')
     apiobj.add_placex(place_id=991, class_='place', type='house',
@@ -125,7 +127,7 @@ def test_reverse_housenumber_on_street(apiobj, frontend, with_geom):
                       centroid=(10.0, 10.00001))
     apiobj.add_placex(place_id=1990, class_='highway', type='service',
                       rank_search=27, rank_address=27,
-                      name = {'name': 'Other Street'},
+                      name={'name': 'Other Street'},
                       centroid=(10.0, 1.0),
                       geometry='LINESTRING(9.995 1, 10.005 1)')
     apiobj.add_placex(place_id=1991, class_='place', type='house',
@@ -147,7 +149,7 @@ def test_reverse_housenumber_on_street(apiobj, frontend, with_geom):
 def test_reverse_housenumber_interpolation(apiobj, frontend, with_geom):
     apiobj.add_placex(place_id=990, class_='highway', type='service',
                       rank_search=27, rank_address=27,
-                      name = {'name': 'My Street'},
+                      name={'name': 'My Street'},
                       centroid=(10.0, 10.0),
                       geometry='LINESTRING(9.995 10, 10.005 10)')
     apiobj.add_placex(place_id=991, class_='place', type='house',
@@ -162,7 +164,7 @@ def test_reverse_housenumber_interpolation(apiobj, frontend, with_geom):
                        geometry='LINESTRING(9.995 10.00001, 10.005 10.00001)')
     apiobj.add_placex(place_id=1990, class_='highway', type='service',
                       rank_search=27, rank_address=27,
-                      name = {'name': 'Other Street'},
+                      name={'name': 'Other Street'},
                       centroid=(10.0, 20.0),
                       geometry='LINESTRING(9.995 20, 10.005 20)')
     apiobj.add_osmline(place_id=1992,
@@ -181,7 +183,7 @@ def test_reverse_housenumber_interpolation(apiobj, frontend, with_geom):
 def test_reverse_housenumber_point_interpolation(apiobj, frontend):
     apiobj.add_placex(place_id=990, class_='highway', type='service',
                       rank_search=27, rank_address=27,
-                      name = {'name': 'My Street'},
+                      name={'name': 'My Street'},
                       centroid=(10.0, 10.0),
                       geometry='LINESTRING(9.995 10, 10.005 10)')
     apiobj.add_osmline(place_id=992,
@@ -199,7 +201,7 @@ def test_reverse_housenumber_point_interpolation(apiobj, frontend):
 def test_reverse_tiger_number(apiobj, frontend):
     apiobj.add_placex(place_id=990, class_='highway', type='service',
                       rank_search=27, rank_address=27,
-                      name = {'name': 'My Street'},
+                      name={'name': 'My Street'},
                       centroid=(10.0, 10.0),
                       country_code='us',
                       geometry='LINESTRING(9.995 10, 10.005 10)')
@@ -217,7 +219,7 @@ def test_reverse_tiger_number(apiobj, frontend):
 def test_reverse_point_tiger(apiobj, frontend):
     apiobj.add_placex(place_id=990, class_='highway', type='service',
                       rank_search=27, rank_address=27,
-                      name = {'name': 'My Street'},
+                      name={'name': 'My Street'},
                       centroid=(10.0, 10.0),
                       country_code='us',
                       geometry='LINESTRING(9.995 10, 10.005 10)')
@@ -393,14 +395,15 @@ def test_reverse_interpolation_geometry(apiobj, frontend):
                        geometry='LINESTRING(9.995 10.00001, 10.005 10.00001)')
 
     api = frontend(apiobj, options=API_OPTIONS)
-    assert api.reverse((10.0, 10.0), geometry_output=napi.GeometryFormat.TEXT)\
-                     .geometry['text'] == 'POINT(10 10.00001)'
+    result = api.reverse((10.0, 10.0), geometry_output=napi.GeometryFormat.TEXT)
+
+    assert result.geometry['text'] == 'POINT(10 10.00001)'
 
 
 def test_reverse_tiger_geometry(apiobj, frontend):
     apiobj.add_placex(place_id=990, class_='highway', type='service',
                       rank_search=27, rank_address=27,
-                      name = {'name': 'My Street'},
+                      name={'name': 'My Street'},
                       centroid=(10.0, 10.0),
                       country_code='us',
                       geometry='LINESTRING(9.995 10, 10.005 10)')
@@ -411,7 +414,7 @@ def test_reverse_tiger_geometry(apiobj, frontend):
                      geometry='LINESTRING(9.995 10.00001, 10.005 10.00001)')
     apiobj.add_placex(place_id=1000, class_='highway', type='service',
                       rank_search=27, rank_address=27,
-                      name = {'name': 'My Street'},
+                      name={'name': 'My Street'},
                       centroid=(11.0, 11.0),
                       country_code='us',
                       geometry='LINESTRING(10.995 11, 11.005 11)')
@@ -426,8 +429,9 @@ def test_reverse_tiger_geometry(apiobj, frontend):
     params = {'geometry_output': napi.GeometryFormat.GEOJSON}
 
     output = api.reverse((10.0, 10.0), **params)
-    assert json.loads(output.geometry['geojson']) == {'coordinates': [10, 10.00001], 'type': 'Point'}
+    assert json.loads(output.geometry['geojson']) \
+        == {'coordinates': [10, 10.00001], 'type': 'Point'}
 
     output = api.reverse((11.0, 11.0), **params)
-    assert json.loads(output.geometry['geojson']) == {'coordinates': [11, 11.00001], 'type': 'Point'}
-
+    assert json.loads(output.geometry['geojson']) \
+        == {'coordinates': [11, 11.00001], 'type': 'Point'}

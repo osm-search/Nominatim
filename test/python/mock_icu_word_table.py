@@ -2,13 +2,14 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Legacy word table for testing with functions to prefil and test contents
 of the table.
 """
 from nominatim_db.db.connection import execute_scalar
+
 
 class MockIcuWordTable:
     """ A word table for testing using legacy word table structure.
@@ -31,7 +32,6 @@ class MockIcuWordTable:
                         (word_id, word or word_token, word))
         self.conn.commit()
 
-
     def add_special(self, word_token, word, cls, typ, oper):
         with self.conn.cursor() as cur:
             cur.execute("""INSERT INTO word (word_token, type, word, info)
@@ -42,7 +42,6 @@ class MockIcuWordTable:
                         """, (word_token, word, cls, typ, oper))
         self.conn.commit()
 
-
     def add_country(self, country_code, word_token):
         with self.conn.cursor() as cur:
             cur.execute("""INSERT INTO word (word_token, type, word)
@@ -50,14 +49,12 @@ class MockIcuWordTable:
                         (word_token, country_code))
         self.conn.commit()
 
-
     def add_postcode(self, word_token, postcode):
         with self.conn.cursor() as cur:
             cur.execute("""INSERT INTO word (word_token, type, word)
                               VALUES (%s, 'P', %s)
                         """, (word_token, postcode))
         self.conn.commit()
-
 
     def add_housenumber(self, word_id, word_tokens, word=None):
         with self.conn.cursor() as cur:
@@ -71,23 +68,20 @@ class MockIcuWordTable:
                     word = word_tokens[0]
                 for token in word_tokens:
                     cur.execute("""INSERT INTO word (word_id, word_token, type, word, info)
-                                      VALUES (%s, %s, 'H', %s, jsonb_build_object('lookup', %s::text))
+                                      VALUES (%s, %s, 'H', %s,
+                                              jsonb_build_object('lookup', %s::text))
                                 """, (word_id, token, word, word_tokens[0]))
 
         self.conn.commit()
 
-
     def count(self):
         return execute_scalar(self.conn, "SELECT count(*) FROM word")
-
 
     def count_special(self):
         return execute_scalar(self.conn, "SELECT count(*) FROM word WHERE type = 'S'")
 
-
     def count_housenumbers(self):
         return execute_scalar(self.conn, "SELECT count(*) FROM word WHERE type = 'H'")
-
 
     def get_special(self):
         with self.conn.cursor() as cur:
@@ -97,7 +91,6 @@ class MockIcuWordTable:
             assert len(result) == cur.rowcount, "Word table has duplicates."
             return result
 
-
     def get_country(self):
         with self.conn.cursor() as cur:
             cur.execute("SELECT word, word_token FROM word WHERE type = 'C'")
@@ -105,15 +98,12 @@ class MockIcuWordTable:
             assert len(result) == cur.rowcount, "Word table has duplicates."
             return result
 
-
     def get_postcodes(self):
         with self.conn.cursor() as cur:
             cur.execute("SELECT word FROM word WHERE type = 'P'")
             return set((row[0] for row in cur))
 
-
     def get_partial_words(self):
         with self.conn.cursor() as cur:
             cur.execute("SELECT word_token, info FROM word WHERE type ='w'")
             return set(((row[0], row[1]['count']) for row in cur))
-

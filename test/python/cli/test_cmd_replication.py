@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2023 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for replication command of command-line interface wrapper.
@@ -100,7 +100,8 @@ class TestCliReplication:
     def test_replication_update_continuous_no_index(self):
         assert self.call_nominatim('--no-index') == 1
 
-    def test_replication_update_once_no_index(self, update_mock):
+    def test_replication_update_once_no_index(self, update_mock, monkeypatch):
+        monkeypatch.setenv('NOMINATIM_OSM2PGSQL_BINARY', 'OSM2PGSQL NOT AVAILABLE')
         assert self.call_nominatim('--once', '--no-index') == 0
 
         assert str(update_mock.last_args[1]['osm2pgsql']).endswith('OSM2PGSQL NOT AVAILABLE')

@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Nominatim configuration accessor.
@@ -73,7 +73,6 @@ class Configuration:
             self.project_dir = None
 
         class _LibDirs:
-            osm2pgsql: Path
             sql = paths.SQLLIB_DIR
             lua = paths.LUALIB_DIR
             data = paths.DATA_DIR

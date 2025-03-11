@@ -3,7 +3,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Helper script for development to run nominatim from the source directory.
@@ -15,4 +15,4 @@ sys.path.insert(1, str((Path(__file__) / '..' / 'src').resolve()))
 
 from nominatim_db import cli
 
-exit(cli.nominatim(module_dir=None, osm2pgsql_path=None))
+exit(cli.nominatim())

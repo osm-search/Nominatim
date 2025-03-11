@@ -257,8 +257,7 @@ class NominatimEnvironment:
         if self.website_dir is not None:
             cmdline = list(cmdline) + ['--project-dir', self.website_dir.name]
 
-        cli.nominatim(osm2pgsql_path=None,
-                      cli_args=cmdline,
+        cli.nominatim(cli_args=cmdline,
                       environ=self.test_env)
 
     def copy_from_place(self, db):

@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Helper functions for executing external programs.
@@ -85,7 +85,7 @@ def _mk_tablespace_options(ttype: str, options: Mapping[str, Any]) -> List[str]:
 
 
 def _find_osm2pgsql_cmd(cmdline: Optional[str]) -> str:
-    if cmdline is not None:
+    if cmdline:
         return cmdline
 
     in_path = shutil.which('osm2pgsql')

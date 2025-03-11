@@ -2,16 +2,15 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Command-line interface to the Nominatim functions for import, update,
 database administration and querying.
 """
-from typing import Optional, Any
+from typing import Optional, List, Mapping
 import importlib
 import logging
-import os
 import sys
 import argparse
 import asyncio
@@ -81,13 +80,14 @@ class CommandlineParser:
         parser.set_defaults(command=cmd)
         cmd.add_args(parser)
 
-    def run(self, **kwargs: Any) -> int:
+    def run(self, cli_args: Optional[List[str]],
+            environ: Optional[Mapping[str, str]]) -> int:
         """ Parse the command line arguments of the program and execute the
             appropriate subcommand.
         """
         args = NominatimArgs()
         try:
-            self.parser.parse_args(args=kwargs.get('cli_args'), namespace=args)
+            self.parser.parse_args(args=cli_args, namespace=args)
         except SystemExit:
             return 1
 
@@ -101,23 +101,19 @@ class CommandlineParser:
 
         args.project_dir = Path(args.project_dir).resolve()
 
-        if 'cli_args' not in kwargs:
+        if cli_args is None:
             logging.basicConfig(stream=sys.stderr,
                                 format='%(asctime)s: %(message)s',
                                 datefmt='%Y-%m-%d %H:%M:%S',
                                 level=max(4 - args.verbose, 1) * 10)
 
-        args.config = Configuration(args.project_dir,
-                                    environ=kwargs.get('environ', os.environ))
-        args.config.set_libdirs(osm2pgsql=kwargs['osm2pgsql_path'])
+        args.config = Configuration(args.project_dir, environ=environ)
 
         log = logging.getLogger()
         log.warning('Using project directory: %s', str(args.project_dir))
 
         try:
-            ret = args.command.run(args)
-
-            return ret
+            return args.command.run(args)
         except UsageError as exception:
             if log.isEnabledFor(logging.DEBUG):
                 raise  # use Python's exception printing
@@ -233,9 +229,16 @@ def get_set_parser() -> CommandlineParser:
     return parser
 
 
-def nominatim(**kwargs: Any) -> int:
+def nominatim(cli_args: Optional[List[str]] = None,
+              environ: Optional[Mapping[str, str]] = None) -> int:
     """\
     Command-line tools for importing, updating, administrating and
     querying the Nominatim database.
+
+    'cli_args' is a list of parameters for the command to run. If not given,
+    sys.args will be used.
+
+    'environ' is the dictionary of environment variables containing the
+    Nominatim configuration. When None, the os.environ is inherited.
     """
-    return get_set_parser().run(**kwargs)
+    return get_set_parser().run(cli_args=cli_args, environ=environ)

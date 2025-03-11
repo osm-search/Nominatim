@@ -29,6 +29,5 @@ def setup_database_with_context(apiobj, table_factory):
 
 @pytest.mark.parametrize('args', [['--search-only'], ['--reverse-only']])
 def test_warm_all(tmp_path, args):
-    assert 0 == nominatim_db.cli.nominatim(osm2pgsql_path='OSM2PGSQL NOT AVAILABLE',
-                                           cli_args=['admin', '--project-dir', str(tmp_path),
+    assert 0 == nominatim_db.cli.nominatim(cli_args=['admin', '--project-dir', str(tmp_path),
                                                      '--warm'] + args)

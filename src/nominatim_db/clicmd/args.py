@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Provides custom functions over command-line arguments.
@@ -186,7 +186,7 @@ class NominatimArgs:
             from the command line arguments. The resulting dict can be
             further customized and then used in `run_osm2pgsql()`.
         """
-        return dict(osm2pgsql=self.config.OSM2PGSQL_BINARY or self.config.lib_dir.osm2pgsql,
+        return dict(osm2pgsql=self.config.OSM2PGSQL_BINARY,
                     osm2pgsql_cache=self.osm2pgsql_cache or default_cache,
                     osm2pgsql_style=self.config.get_import_style_file(),
                     osm2pgsql_style_path=self.config.lib_dir.lua,

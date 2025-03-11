@@ -16,8 +16,7 @@ import nominatim_db.cli
 def run_export(tmp_path, capsys):
     def _exec(args):
         cli_args = ['export', '--project-dir', str(tmp_path)] + args
-        assert 0 == nominatim_db.cli.nominatim(osm2pgsql_path='OSM2PGSQL NOT AVAILABLE',
-                                               cli_args=cli_args)
+        assert 0 == nominatim_db.cli.nominatim(cli_args=cli_args)
         return capsys.readouterr().out.split('\r\n')
 
     return _exec

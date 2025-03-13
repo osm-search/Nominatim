@@ -65,7 +65,7 @@ BEGIN
   RETURN NULL;
 END;
 $$
-LANGUAGE plpgsql IMMUTABLE;
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
 
 {% else %}
 
@@ -78,7 +78,7 @@ SELECT convert_from(CAST(E'\\x' || array_to_string(ARRAY(
     FROM regexp_matches($1, '%[0-9a-f][0-9a-f]|.', 'gi') AS r(m)
 ), '') AS bytea), 'UTF8');
 $$ 
-LANGUAGE SQL IMMUTABLE STRICT;
+LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
 
 
 CREATE OR REPLACE FUNCTION catch_decode_url_part(p varchar)
@@ -91,7 +91,7 @@ EXCEPTION
   WHEN others THEN return null;
 END;
 $$
-LANGUAGE plpgsql IMMUTABLE STRICT;
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 
 CREATE OR REPLACE FUNCTION get_wikipedia_match(extratags HSTORE, country_code varchar(2))
@@ -139,7 +139,7 @@ BEGIN
   RETURN NULL;
 END;
 $$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql STABLE PARALLEL SAFE;
 
 {% endif %}
 
@@ -203,5 +203,5 @@ BEGIN
   RETURN result;
 END;
 $$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql PARALLEL SAFE;
 

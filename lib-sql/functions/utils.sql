@@ -24,7 +24,7 @@ BEGIN
   RETURN ST_PointOnSurface(place);
 END;
 $$
-LANGUAGE plpgsql IMMUTABLE;
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
 
 
 CREATE OR REPLACE FUNCTION geometry_sector(partition INTEGER, place GEOMETRY)
@@ -34,7 +34,7 @@ BEGIN
   RETURN (partition*1000000) + (500-ST_X(place)::INTEGER)*1000 + (500-ST_Y(place)::INTEGER);
 END;
 $$
-LANGUAGE plpgsql IMMUTABLE;
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
 
 
 
@@ -60,7 +60,7 @@ BEGIN
   RETURN r;
 END;
 $$
-LANGUAGE plpgsql IMMUTABLE;
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
 
 -- Return the node members with a given label from a relation member list
 -- as a set.
@@ -88,7 +88,7 @@ BEGIN
   RETURN;
 END;
 $$
-LANGUAGE plpgsql IMMUTABLE;
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
 
 
 CREATE OR REPLACE FUNCTION get_rel_node_members(members JSONB, memberLabels TEXT[])
@@ -107,7 +107,7 @@ BEGIN
   RETURN;
 END;
 $$
-LANGUAGE plpgsql IMMUTABLE;
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
 
 
 -- Copy 'name' to or from the default language.
@@ -136,7 +136,7 @@ BEGIN
   END IF;
 END;
 $$
-LANGUAGE plpgsql IMMUTABLE;
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
 
 
 -- Find the nearest artificial postcode for the given geometry.
@@ -172,7 +172,7 @@ BEGIN
     RETURN outcode;
 END;
 $$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql STABLE PARALLEL SAFE;
 
 
 CREATE OR REPLACE FUNCTION get_country_code(place geometry)
@@ -233,7 +233,7 @@ BEGIN
   RETURN NULL;
 END;
 $$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql STABLE PARALLEL SAFE;
 
 
 CREATE OR REPLACE FUNCTION get_country_language_code(search_country_code VARCHAR(2))
@@ -251,7 +251,7 @@ BEGIN
   RETURN NULL;
 END;
 $$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql STABLE PARALLEL SAFE;
 
 
 CREATE OR REPLACE FUNCTION get_partition(in_country_code VARCHAR(10))
@@ -268,7 +268,7 @@ BEGIN
   RETURN 0;
 END;
 $$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql STABLE PARALLEL SAFE;
 
 
 -- Find the parent of an address with addr:street/addr:place tag.
@@ -299,7 +299,7 @@ BEGIN
   RETURN parent_place_id;
 END;
 $$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql STABLE PARALLEL SAFE;
 
 
 CREATE OR REPLACE FUNCTION delete_location(OLD_place_id BIGINT)
@@ -337,7 +337,7 @@ BEGIN
                      ST_Project(geom::geography, radius, 3.9269908)::geometry));
 END;
 $$
-LANGUAGE plpgsql IMMUTABLE;
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
 
 
 CREATE OR REPLACE FUNCTION add_location(place_id BIGINT, country_code varchar(2),
@@ -455,7 +455,7 @@ BEGIN
   RETURN;
 END;
 $$
-LANGUAGE plpgsql IMMUTABLE;
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
 
 
 CREATE OR REPLACE FUNCTION split_geometry(geometry GEOMETRY)
@@ -483,7 +483,7 @@ BEGIN
   RETURN;
 END;
 $$
-LANGUAGE plpgsql IMMUTABLE;
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION simplify_large_polygons(geometry GEOMETRY)
   RETURNS GEOMETRY
@@ -497,7 +497,7 @@ BEGIN
   RETURN geometry;
 END;
 $$
-LANGUAGE plpgsql IMMUTABLE;
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
 
 
 CREATE OR REPLACE FUNCTION place_force_delete(placeid BIGINT)

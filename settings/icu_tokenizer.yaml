@@ -6,7 +6,7 @@ query-preprocessing:
           replace: ''
         - pattern: \b(?:(?:[A-Fa-f0-9]{1,4}:){1,7}|:)(?:[A-Fa-f0-9]{1,4})?\b # Filter for IPv6 addresses
           replace: ''
-        - pattern: https?://[^\s/$.?#].[^\s]* # Filter URLs starting with http or https
+        - pattern: https?://[^\s]* # Filter URLs starting with http or https
           replace: ''
     - step: normalize
 normalization:

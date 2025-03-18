@@ -84,8 +84,8 @@ def format_base_json(results: Union[ReverseResults, SearchResults],
 
         _write_osm_id(out, result.osm_object)
 
-        out.keyval('lat', f"{result.centroid.lat}")\
-           .keyval('lon', f"{result.centroid.lon}")\
+        out.key('lat').float(result.centroid.lat, 7).next()\
+           .key('lon').float(result.centroid.lon, 7).next()\
            .keyval(class_label, result.category[0])\
            .keyval('type', result.category[1])\
            .keyval('place_rank', result.rank_search)\
@@ -114,10 +114,10 @@ def format_base_json(results: Union[ReverseResults, SearchResults],
 
         bbox = cl.bbox_from_result(result)
         out.key('boundingbox').start_array()\
-           .value(f"{bbox.minlat:0.7f}").next()\
-           .value(f"{bbox.maxlat:0.7f}").next()\
-           .value(f"{bbox.minlon:0.7f}").next()\
-           .value(f"{bbox.maxlon:0.7f}").next()\
+           .float(bbox.minlat, 7).next()\
+           .float(bbox.maxlat, 7).next()\
+           .float(bbox.minlon, 7).next()\
+           .float(bbox.maxlon, 7).next()\
            .end_array().next()
 
         if result.geometry:

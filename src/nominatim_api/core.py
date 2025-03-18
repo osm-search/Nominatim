@@ -304,7 +304,7 @@ class NominatimAPIAsync:
             else:
                 details.restrict_min_max_rank(4, 4)
 
-            if 'layers' not in params:
+            if details.layers is None:
                 details.layers = ntyp.DataLayer.ADDRESS
                 if amenity:
                     details.layers |= ntyp.DataLayer.POI

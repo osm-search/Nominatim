@@ -27,7 +27,8 @@ lint:
 	flake8 src test/python test/bdd
 
 bdd:
-	cd test/bdd; behave -DREMOVE_TEMPLATE=1
+	pytest test/bdd
+	cd test/bdd; behave -DREMOVE_TEMPLATE=1 db osm2pgsql
 
 # Documentation
 

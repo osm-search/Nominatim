@@ -29,7 +29,7 @@ BEGIN
   RETURN 0.02;
 END;
 $$
-LANGUAGE plpgsql IMMUTABLE;
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
 
 
 -- Return an approximate update radius according to the search rank.
@@ -60,7 +60,7 @@ BEGIN
   RETURN 0;
 END;
 $$
-LANGUAGE plpgsql IMMUTABLE;
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
 
 -- Compute a base address rank from the extent of the given geometry.
 --
@@ -107,7 +107,7 @@ BEGIN
    RETURN 23;
 END;
 $$
-LANGUAGE plpgsql IMMUTABLE;
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
 
 
 -- Guess a ranking for postcodes from country and postcode format.
@@ -167,7 +167,7 @@ BEGIN
 
 END;
 $$
-LANGUAGE plpgsql IMMUTABLE;
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
 
 
 -- Get standard search and address rank for an object.
@@ -236,7 +236,7 @@ BEGIN
   END IF;
 END;
 $$
-LANGUAGE plpgsql IMMUTABLE;
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION get_addr_tag_rank(key TEXT, country TEXT,
                                              OUT from_rank SMALLINT,
@@ -283,7 +283,7 @@ BEGIN
   END LOOP;
 END;
 $$
-LANGUAGE plpgsql IMMUTABLE;
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
 
 
 CREATE OR REPLACE FUNCTION weigh_search(search_vector INT[],
@@ -304,4 +304,4 @@ BEGIN
   RETURN def_weight;
 END;
 $$
-LANGUAGE plpgsql IMMUTABLE;
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;

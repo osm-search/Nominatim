@@ -109,7 +109,7 @@ BEGIN
   RETURN result;
 END;
 $$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql STABLE PARALLEL SAFE;
 
 
 CREATE OR REPLACE FUNCTION find_associated_street(poi_osm_type CHAR(1),
@@ -200,7 +200,7 @@ BEGIN
   RETURN result;
 END;
 $$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql STABLE PARALLEL SAFE;
 
 
 -- Find the parent road of a POI.
@@ -286,7 +286,7 @@ BEGIN
   RETURN parent_place_id;
 END;
 $$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql STABLE PARALLEL SAFE;
 
 -- Try to find a linked place for the given object.
 CREATE OR REPLACE FUNCTION find_linked_place(bnd placex)
@@ -404,7 +404,7 @@ BEGIN
   RETURN NULL;
 END;
 $$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql STABLE PARALLEL SAFE;
 
 
 CREATE OR REPLACE FUNCTION create_poi_search_terms(obj_place_id BIGINT,

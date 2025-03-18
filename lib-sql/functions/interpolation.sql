@@ -34,7 +34,7 @@ BEGIN
   RETURN in_address;
 END;
 $$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql STABLE PARALLEL SAFE;
 
 
 
@@ -70,7 +70,7 @@ BEGIN
   RETURN parent_place_id;
 END;
 $$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql STABLE PARALLEL SAFE;
 
 
 CREATE OR REPLACE FUNCTION reinsert_interpolation(way_id BIGINT, addr HSTORE,

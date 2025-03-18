@@ -269,10 +269,10 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
         """
         for i, node, tlist in query.iter_token_lists():
             if tlist.ttype == qmod.TOKEN_POSTCODE:
+                tlen = len(cast(ICUToken, tlist.tokens[0]).word_token)
                 for repl in node.starting:
                     if repl.end == tlist.end and repl.ttype != qmod.TOKEN_POSTCODE \
-                       and (repl.ttype != qmod.TOKEN_HOUSENUMBER
-                            or len(tlist.tokens[0].lookup_word) > 4):
+                       and (repl.ttype != qmod.TOKEN_HOUSENUMBER or tlen > 4):
                         repl.add_penalty(0.39)
             elif (tlist.ttype == qmod.TOKEN_HOUSENUMBER
                   and len(tlist.tokens[0].lookup_word) <= 3):

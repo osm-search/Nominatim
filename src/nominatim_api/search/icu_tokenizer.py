@@ -193,10 +193,12 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
 
         self.add_extra_tokens(query)
         for start, end, pc in self.postcode_parser.parse(query):
+            term = ' '.join(n.term_lookup for n in query.nodes[start + 1:end + 1])
             query.add_token(qmod.TokenRange(start, end),
                             qmod.TOKEN_POSTCODE,
                             ICUToken(penalty=0.1, token=0, count=1, addr_count=1,
-                                     lookup_word=pc, word_token=pc, info=None))
+                                     lookup_word=pc, word_token=term,
+                                     info=None))
         self.rerank_tokens(query)
 
         log().table_dump('Word tokens', _dump_word_tokens(query))

@@ -271,6 +271,7 @@ class _TokenSequence:
                 penalty = self.penalty
             else:
                 penalty = self.penalty + 0.1
+            penalty += 0.1 * max(0, len(base.address) - 1)
             yield dataclasses.replace(base, penalty=penalty)
 
     def _get_assignments_address_forward(self, base: TokenAssignment,

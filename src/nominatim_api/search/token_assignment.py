@@ -269,10 +269,9 @@ class _TokenSequence:
             # <address>,<postcode> should give preference to address search
             if base.postcode.start == 0:
                 penalty = self.penalty
-                self.direction = -1  # name searches are only possible backwards
             else:
                 penalty = self.penalty + 0.1
-                self.direction = 1  # name searches are only possible forwards
+            penalty += 0.1 * max(0, len(base.address) - 1)
             yield dataclasses.replace(base, penalty=penalty)
 
     def _get_assignments_address_forward(self, base: TokenAssignment,
@@ -281,6 +280,11 @@ class _TokenSequence:
             left-to-right reading.
         """
         first = base.address[0]
+
+        # The postcode must come after the name.
+        if base.postcode and base.postcode < first:
+            log().var_dump('skip forward', (base.postcode, first))
+            return
 
         log().comment('first word = name')
         yield dataclasses.replace(base, penalty=self.penalty,
@@ -317,7 +321,12 @@ class _TokenSequence:
         """
         last = base.address[-1]
 
-        if self.direction == -1 or len(base.address) > 1:
+        # The postcode must come before the name for backward direction.
+        if base.postcode and base.postcode > last:
+            log().var_dump('skip backward', (base.postcode, last))
+            return
+
+        if self.direction == -1 or len(base.address) > 1 or base.postcode:
             log().comment('last word = name')
             yield dataclasses.replace(base, penalty=self.penalty,
                                       name=last, address=base.address[:-1])

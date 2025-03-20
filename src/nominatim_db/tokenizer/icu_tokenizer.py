@@ -121,10 +121,10 @@ class ICUTokenizer(AbstractTokenizer):
                            SELECT unnest(nameaddress_vector) as id, count(*)
                                  FROM search_name GROUP BY id)
                   SELECT coalesce(a.id, w.id) as id,
-                         (CASE WHEN w.count is null THEN '{}'::JSONB
+                         (CASE WHEN w.count is null or w.count <= 1 THEN '{}'::JSONB
                               ELSE jsonb_build_object('count', w.count) END
                           ||
-                          CASE WHEN a.count is null THEN '{}'::JSONB
+                          CASE WHEN a.count is null or a.count <= 1 THEN '{}'::JSONB
                               ELSE jsonb_build_object('addr_count', a.count) END) as info
                   FROM word_freq w FULL JOIN addr_freq a ON a.id = w.id;
                   """)
@@ -134,9 +134,10 @@ class ICUTokenizer(AbstractTokenizer):
                 drop_tables(conn, 'tmp_word')
                 cur.execute("""CREATE TABLE tmp_word AS
                                 SELECT word_id, word_token, type, word,
-                                       (CASE WHEN wf.info is null THEN word.info
-                                        ELSE coalesce(word.info, '{}'::jsonb) || wf.info
-                                        END) as info
+                                       coalesce(word.info, '{}'::jsonb)
+                                       - 'count' - 'addr_count' ||
+                                       coalesce(wf.info, '{}'::jsonb)
+                                       as info
                                 FROM word LEFT JOIN word_frequencies wf
                                      ON word.word_id = wf.id
                             """)

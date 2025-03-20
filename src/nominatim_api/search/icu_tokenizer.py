@@ -193,10 +193,12 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
 
         self.add_extra_tokens(query)
         for start, end, pc in self.postcode_parser.parse(query):
+            term = ' '.join(n.term_lookup for n in query.nodes[start + 1:end + 1])
             query.add_token(qmod.TokenRange(start, end),
                             qmod.TOKEN_POSTCODE,
                             ICUToken(penalty=0.1, token=0, count=1, addr_count=1,
-                                     lookup_word=pc, word_token=pc, info=None))
+                                     lookup_word=pc, word_token=term,
+                                     info=None))
         self.rerank_tokens(query)
 
         log().table_dump('Word tokens', _dump_word_tokens(query))
@@ -267,10 +269,10 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
         """
         for i, node, tlist in query.iter_token_lists():
             if tlist.ttype == qmod.TOKEN_POSTCODE:
+                tlen = len(cast(ICUToken, tlist.tokens[0]).word_token)
                 for repl in node.starting:
                     if repl.end == tlist.end and repl.ttype != qmod.TOKEN_POSTCODE \
-                       and (repl.ttype != qmod.TOKEN_HOUSENUMBER
-                            or len(tlist.tokens[0].lookup_word) > 4):
+                       and (repl.ttype != qmod.TOKEN_HOUSENUMBER or tlen > 4):
                         repl.add_penalty(0.39)
             elif (tlist.ttype == qmod.TOKEN_HOUSENUMBER
                   and len(tlist.tokens[0].lookup_word) <= 3):

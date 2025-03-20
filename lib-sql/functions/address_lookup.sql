@@ -47,7 +47,7 @@ BEGIN
   RETURN trim((avals(name))[array_length(avals(name), 1)]);
 END;
 $$
-LANGUAGE plpgsql IMMUTABLE;
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
 
 
 --housenumber only needed for tiger data
@@ -84,7 +84,7 @@ BEGIN
   RETURN array_to_string(result,', ');
 END;
 $$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql STABLE PARALLEL SAFE;
 
 DROP TYPE IF EXISTS addressdata_place;
 CREATE TYPE addressdata_place AS (
@@ -331,4 +331,4 @@ BEGIN
   RETURN;
 END;
 $$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql STABLE PARALLEL SAFE;

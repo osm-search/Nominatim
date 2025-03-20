@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Common json type for different dialects.
@@ -24,6 +24,6 @@ class Json(sa.types.TypeDecorator[Any]):
 
     def load_dialect_impl(self, dialect: SaDialect) -> sa.types.TypeEngine[Any]:
         if dialect.name == 'postgresql':
-            return JSONB(none_as_null=True)  # type: ignore[no-untyped-call]
+            return JSONB(none_as_null=True)
 
         return sqlite_json(none_as_null=True)

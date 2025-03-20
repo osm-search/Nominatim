@@ -216,6 +216,14 @@
       }
   }
 },
+{ "countries" : ["sa"],
+  "tags" : {
+      "place" : {
+          "province" : 12,
+          "municipality" : 18
+      }
+  }
+},
 { "countries" : ["sk"],
   "tags" : {
       "boundary" : {

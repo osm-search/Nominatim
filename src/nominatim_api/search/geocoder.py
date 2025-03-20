@@ -238,7 +238,7 @@ def _dump_searches(searches: List[AbstractSearch], query: QueryStruct,
         if not lk:
             return ''
 
-        return f"{lk.lookup_type}({lk.column}{tk(lk.tokens)})"
+        return f"{lk.lookup_type.__name__}({lk.column}{tk(lk.tokens)})"
 
     def fmt_cstr(c: Any) -> str:
         if not c:

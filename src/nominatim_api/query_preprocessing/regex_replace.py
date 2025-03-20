@@ -20,24 +20,25 @@ class _GenericPreprocessing:
     def __init__(self, config: QueryConfig) -> None:
         self.config = config
 
+        match_patterns = self.config.get('replacements', 'Key not found')
+        self.compiled_patterns = [
+            (re.compile(item['pattern']), item['replace']) for item in match_patterns
+            ]
+
     def split_phrase(self, phrase: Phrase) -> Phrase:
         """
         This function performs replacements on the given text using regex patterns.
         """
-
-        if phrase.text is None:
-            return phrase
-
-        match_patterns = self.config.get('replacements', 'Key not found')
-        for item in match_patterns:
-            phrase.text = re.sub(item['pattern'], item['replace'], phrase.text)
+        for item in self.compiled_patterns:
+            phrase.text = item[0].sub(item[1], phrase.text)
 
         return phrase
 
     def __call__(self, phrases: List[Phrase]) -> List[Phrase]:
         """Apply regex replacements to the given addresses.
         """
-        return [self.split_phrase(p) for p in phrases]
+        result = [p for p in map(self.split_phrase, phrases) if p.text.strip()]
+        return result if result else []
 
 
 def create(config: QueryConfig) -> QueryProcessingFunc:

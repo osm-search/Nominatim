@@ -1,13 +1,5 @@
 query-preprocessing:
     - step: split_japanese_phrases
-    - step: regex_replace
-      replacements:
-        - pattern: \b(?:25[0-5]|2[0-4][0-9]|1?[0-9]{1,2})(?:\.(?:25[0-5]|2[0-4][0-9]|1?[0-9]{1,2})){3}\b # Filter for IPv4 addresses
-          replace: ''
-        - pattern: \b(?:(?:[A-Fa-f0-9]{1,4}:){1,7}|:)(?:[A-Fa-f0-9]{1,4})?\b # Filter for IPv6 addresses
-          replace: ''
-        - pattern: https?://[^\s]* # Filter URLs starting with http or https
-          replace: ''
     - step: normalize
 normalization:
     - ":: lower ()"

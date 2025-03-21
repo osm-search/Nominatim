@@ -6,25 +6,19 @@
     -  Air Force Base -> AFB
     -  Air National Guard Base -> ANGB
     -  Airport -> Aprt
-    -  Alley -> Al
-    -  Alley -> All
-    -  Alley -> Ally
-    -  Alley -> Aly
+    -  Alley -> Al,All,Ally,Aly
     -  Alleyway -> Alwy
     -  Amble -> Ambl
     -  Anex -> Anx
     -  Apartments -> Apts
-    -  Approach -> Apch
-    -  Approach -> App
+    -  Approach -> Apch,App
     -  Arcade -> Arc
     -  Arterial -> Artl
     -  Artery -> Arty
-    -  Avenue -> Av
-    -  Avenue -> Ave
+    -  Avenue -> Av,Ave
     -  Back -> Bk
     -  Banan -> Ba
-    -  Basin -> Basn
-    -  Basin -> Bsn
+    -  Basin -> Basn,Bsn
     -  Bayou -> Byu
     -  Beach -> Bch
     -  Bend -> Bnd
@@ -33,71 +27,51 @@
     -  Bluffs -> Blfs
     -  Boardwalk -> Bwlk
     -  Bottom -> Btm
-    -  Boulevard -> Blvd
-    -  Boulevard -> Bvd
+    -  Boulevard -> Blvd,Bvd
     -  Boundary -> Bdy
     -  Bowl -> Bl
     -  Brace -> Br
     -  Brae -> Br
     -  Branch -> Br
     -  Break -> Brk
-    -  Bridge -> Bdge
-    -  Bridge -> Br
-    -  Bridge -> Brdg
-    -  Bridge -> Brg
-    -  Bridge -> Bri
-    -  Broadway -> Bdwy
-    -  Broadway -> Bway
-    -  Broadway -> Bwy
+    -  Bridge -> Bdge,Br,Brdg,Brg,Bri
+    -  Broadway -> Bdwy,Bway,Bwy
     -  Brook -> Brk
     -  Brooks -> Brks
     -  Brow -> Brw
-    -  Buildings -> Bldgs
-    -  Buildings -> Bldngs
+    -  Buildings -> Bldgs,Bldngs
     -  Business -> Bus
     -  Burg -> Bg
     -  Burgs -> Bgs
-    -  Bypass -> Bps
-    -  Bypass -> Byp
-    -  Bypass -> Bypa
+    -  Bypass -> Bps,Byp,Bypa
     -  Byway -> Bywy
     -  Camp -> Cp
     -  Canyon -> Cyn
     -  Cape -> Cpe
     -  Caravan -> Cvn
-    -  Causeway -> Caus
-    -  Causeway -> Cswy
-    -  Causeway -> Cway
-    -  Center -> Cen
-    -  Center -> Ctr
+    -  Causeway -> Caus,Cswy,Cway
+    -  Center,Centre -> Cen,Ctr
     -  Centers -> Ctrs
     -  Central -> Ctrl
-    -  Centre -> Cen
-    -  Centre -> Ctr
     -  Centreway -> Cnwy
     -  Chase -> Ch
     -  Church -> Ch
     -  Circle -> Cir
     -  Circles -> Cirs
-    -  Circuit -> Cct
-    -  Circuit -> Ci
-    -  Circus -> Crc
-    -  Circus -> Crcs
+    -  Circuit -> Cct,Ci
+    -  Circus -> Crc,Crcs
     -  City -> Cty
     -  Cliff -> Clf
     -  Cliffs -> Clfs
     -  Close -> Cl
     -  Club -> Clb
-    -  Common -> Cmn
-    -  Common -> Comm
+    -  Common -> Cmn,Comm
     -  Commons -> Cmns
     -  Community -> Comm
     -  Concourse -> Cnc
     -  Concourse -> Con
     -  Copse -> Cps
-    -  Corner -> Cor
-    -  Corner -> Cnr
-    -  Corner -> Crn
+    -  Corner -> Cor,Cnr,Crn
     -  Corners -> Cors
     -  Corso -> Cso
     -  Cottages -> Cotts
@@ -105,36 +79,24 @@
     -  County Road -> CR
     -  County Route -> CR
     -  Course -> Crse
-    -  Court -> Crt
-    -  Court -> Ct
+    -  Court -> Crt,Ct
     -  Courts -> Cts
     -  Courtyard -> Cyd
     -  Courtyard -> Ctyd
-    -  Cove -> Ce
-    -  Cove -> Cov
-    -  Cove -> Cv
+    -  Cove -> Ce,Cov,Cv
     -  Coves -> Cvs
-    -  Creek -> Ck
-    -  Creek -> Cr
-    -  Creek -> Crk
+    -  Creek -> Ck,Cr,Crk
     -  Crescent -> Cr
     -  Crescent -> Cres
-    -  Crest -> Crst
-    -  Crest -> Cst
+    -  Crest -> Crst,Cst
     -  Croft -> Cft
-    -  Cross -> Cs
-    -  Cross -> Crss
-    -  Crossing -> Crsg
-    -  Crossing -> Csg
-    -  Crossing -> Xing
-    -  Crossroad -> Crd
-    -  Crossroad -> Xrd
+    -  Cross -> Cs,Crss
+    -  Crossing -> Crsg,Csg,Xing
+    -  Crossroad -> Crd,Xrd
     -  Crossroads -> Xrds
     -  Crossway -> Cowy
-    -  Cul-de-sac -> Cds
-    -  Cul-de-sac -> Csac
-    -  Curve -> Cve
-    -  Curve -> Curv
+    -  Cul-de-sac -> Cds,Csac
+    -  Curve -> Cve,Curv
     -  Cutting -> Cutt
     -  Dale -> Dle
     -  Dam -> Dm
@@ -143,14 +105,10 @@
     -  Divide -> Dv
     -  Down -> Dn
     -  Downs -> Dn
-    -  Drive -> Dr
-    -  Drive -> Drv
-    -  Drive -> Dv
+    -  Drive -> Dr,Drv,Dv
     -  Drives -> Drs
     -  Drive-In => Drive-In # prevent abbreviation here
-    -  Driveway -> Drwy
-    -  Driveway -> Dvwy
-    -  Driveway -> Dwy
+    -  Driveway -> Drwy,Dvwy,Dwy
     -  East -> E
     -  Edge -> Edg
     -  Elbow -> Elb
@@ -158,25 +116,18 @@
     -  Esplanade -> Esp
     -  Estate -> Est
     -  Estates -> Ests
-    -  Expressway -> Exp
-    -  Expressway -> Expy
-    -  Expressway -> Expwy
-    -  Expressway -> Xway
+    -  Expressway -> Exp,Expy,Expwy,Xway
     -  Extension -> Ex
     -  Extensions -> Exts
-    -  Fairway -> Fawy
-    -  Fairway -> Fy
+    -  Fairway -> Fawy,Fy
     -  Falls -> Fls
     -  Father -> Fr
-    -  Ferry -> Fy
-    -  Ferry -> Fry
-    -  Field -> Fd
-    -  Field -> Fld
+    -  Ferry -> Fy,Fry
+    -  Field -> Fd,Fld
     -  Fields -> Flds
     -  Fire Track -> Ftrk
     -  Firetrail -> Fit
-    -  Flat -> Fl
-    -  Flat -> Flt
+    -  Flat -> Fl,Flt
     -  Flats -> Flts
     -  Follow -> Folw
     -  Footway -> Ftwy
@@ -191,67 +142,47 @@
     -  Fork -> Frk
     -  Forks -> Frks
     -  Fort -> Ft
-    -  Freeway -> Frwy
-    -  Freeway -> Fwy
+    -  Freeway -> Frwy,Fwy
     -  Front -> Frnt
-    -  Frontage -> Fr
-    -  Frontage -> Frtg
+    -  Frontage -> Fr,Frtg
     -  Garden -> Gdn
-    -  Gardens -> Gdn
-    -  Gardens -> Gdns
-    -  Gate -> Ga
-    -  Gate -> Gte
-    -  Gates -> Ga
-    -  Gates -> Gte
-    -  Gateway -> Gwy
-    -  Gateway -> Gtwy
+    -  Gardens -> Gdn,Gdns
+    -  Gate,Gates -> Ga,Gte
+    -  Gateway -> Gwy,Gtwy
     -  George -> Geo
-    -  Glade -> Gl
-    -  Glade -> Gld
-    -  Glade -> Glde
+    -  Glade -> Gl,Gld,Glde
     -  Glen -> Gln
     -  Glens -> Glns
     -  Grange -> Gra
-    -  Green -> Gn
-    -  Green -> Grn
+    -  Green -> Gn,Grn
     -  Greens -> Grns
     -  Ground -> Grnd
-    -  Grove -> Gr
-    -  Grove -> Gro
-    -  Grove -> Grv
+    -  Grove -> Gr,Gro,Grv
     -  Groves -> Grvs
     -  Grovet -> Gr
     -  Gully -> Gly
-    -  Harbor -> Hbr
+    -  Harbor -> Hbr,Harbour
     -  Harbors -> Hbrs
-    -  Harbour -> Hbr
+    -  Harbour -> Hbr,Harbor
     -  Haven -> Hvn
     -  Head -> Hd
     -  Heads -> Hd
-    -  Heights -> Hgts
-    -  Heights -> Ht
-    -  Heights -> Hts
+    -  Heights -> Hgts,Ht,Hts
     -  High School -> HS
-    -  Highroad -> Hird
-    -  Highroad -> Hrd
+    -  Highroad -> Hird,Hrd
     -  Highway -> Hwy
     -  Hill -> Hl
-    -  Hills -> Hl
-    -  Hills -> Hls
+    -  Hills -> Hl,Hls
     -  Hollow -> Holw
     -  Hospital -> Hosp
-    -  House -> Ho
-    -  House -> Hse
+    -  House -> Ho,Hse
     -  Industrial -> Ind
     -  Inlet -> Inlt
     -  Interchange -> Intg
     -  International -> Intl
-    -  Island -> I
-    -  Island -> Is
+    -  Island -> I,Is
     -  Islands -> Iss
-    -  Junction -> Jct
-    -  Junction -> Jctn
-    -  Junction -> Jnc
+    -  Junction -> Jct,Jctn,Jnc
     -  Junctions -> Jcts
     -  Junior -> Jr
     -  Key -> Ky
@@ -260,40 +191,31 @@
     -  Knolls -> Knls
     -  Lagoon -> Lgn
     -  Lake -> Lk
-    -  Lakes -> L
-    -  Lakes -> Lks
-    -  Landing -> Ldg
-    -  Landing -> Lndg
-    -  Lane -> La
-    -  Lane -> Ln
+    -  Lakes -> L,Lks
+    -  Landing -> Ldg,Lndg
+    -  Lane -> La,Ln
     -  Laneway -> Lnwy
     -  Light -> Lgt
     -  Lights -> Lgts
     -  Line -> Ln
     -  Link -> Lk
-    -  Little -> Lit
-    -  Little -> Lt
+    -  Little -> Lit,Lt
     -  Loaf -> Lf
     -  Lock -> Lck
     -  Locks -> Lcks
     -  Lodge -> Ldg
     -  Lookout -> Lkt
     -  Loop -> Lp
-    -  Lower -> Low
-    -  Lower -> Lr
-    -  Lower -> Lwr
+    -  Lower -> Low,Lr,Lwr
     -  Mall -> Ml
     -  Manor -> Mnr
     -  Manors -> Mnrs
     -  Mansions -> Mans
     -  Market -> Mkt
     -  Meadow -> Mdw
-    -  Meadows -> Mdw
-    -  Meadows -> Mdws
+    -  Meadows -> Mdw,Mdws
     -  Mead -> Md
-    -  Meander -> Mdr
-    -  Meander -> Mndr
-    -  Meander -> Mr
+    -  Meander -> Mdr,Mndr,Mr
     -  Medical -> Med
     -  Memorial -> Mem
     -  Mews -> Mw
@@ -304,8 +226,7 @@
     -  Mill -> Ml
     -  Mills -> Mls
     -  Mission -> Msn
-    -  Motorway -> Mtwy
-    -  Motorway -> Mwy
+    -  Motorway -> Mtwy,Mwy
     -  Mount -> Mt
     -  Mountain -> Mtn
     -  Mountains -> Mtn
@@ -321,50 +242,37 @@
     -  Northeast -> NE
     -  Northwest -> NW
     -  Orchard -> Orch
-    -  Outlook -> Out
-    -  Outlook -> Otlk
+    -  Outlook -> Out,Otlk
     -  Overpass -> Opas
     -  Parade -> Pde
     -  Paradise -> Pdse
     -  Park -> Pk
     -  Parklands -> Pkld
-    -  Parkway -> Pkwy
-    -  Parkway -> Pky
-    -  Parkway -> Pwy
+    -  Parkway -> Pkwy,Pky,Pwy
     -  Parkways -> Pkwy
     -  Pass -> Ps
     -  Passage -> Psge
-    -  Pathway -> Phwy
-    -  Pathway -> Pway
-    -  Pathway -> Pwy
+    -  Pathway -> Phwy,Pway,Pwy
     -  Piazza -> Piaz
     -  Pike -> Pk
     -  Pine -> Pne
     -  Pines -> Pnes
     -  Place -> Pl
-    -  Plain -> Pl
-    -  Plain -> Pln
-    -  Plains -> Pl
-    -  Plains -> Plns
+    -  Plain -> Pl,Pln
+    -  Plains -> Pl,Plns
     -  Plateau -> Plat
-    -  Plaza -> Pl
-    -  Plaza -> Plz
-    -  Plaza -> Plza
+    -  Plaza -> Pl,Plz,Plza
     -  Pocket -> Pkt
-    -  Point -> Pnt
-    -  Point -> Pt
+    -  Point -> Pnt,Pt
     -  Points -> Pts
-    -  Port -> Prt
-    -  Port -> Pt
+    -  Port -> Prt,Pt
     -  Ports -> Prts
     -  Post Office -> PO
     -  Prairie -> Pr
     -  Precinct -> Pct
-    -  Promenade -> Prm
-    -  Promenade -> Prom
+    -  Promenade -> Prm,Prom
     -  Quadrangle -> Qdgl
-    -  Quadrant -> Qdrt
-    -  Quadrant -> Qd
+    -  Quadrant -> Qdrt,Qd
     -  Quay -> Qy
     -  Quays -> Qy
     -  Quays -> Qys
@@ -372,8 +280,7 @@
     -  Ramble -> Ra
     -  Ramble -> Rmbl
     -  Ranch -> Rnch
-    -  Range -> Rge
-    -  Range -> Rnge
+    -  Range -> Rge,Rnge
     -  Rapid -> Rpd
     -  Rapids -> Rpds
     -  Reach -> Rch
@@ -381,37 +288,30 @@
     -  Reserve -> Res
     -  Reservoir -> Res
     -  Rest -> Rst
-    -  Retreat -> Rt
-    -  Retreat -> Rtt
+    -  Retreat -> Rt,Rtt
     -  Return -> Rtn
-    -  Ridge -> Rdg
-    -  Ridge -> Rdge
+    -  Ridge -> Rdg,Rdge
     -  Ridges -> Rdgs
     -  Ridgeway -> Rgwy
     -  Right of Way -> Rowy
     -  Rise -> Ri
-    -  River -> R
-    -  River -> Riv
-    -  River -> Rvr
+    -  River -> R,Riv,Rvr
     -  Riverway -> Rvwy
     -  Riviera -> Rvra
     -  Road -> Rd
     -  Roads -> Rds
     -  Roadside -> Rdsd
-    -  Roadway -> Rdwy
-    -  Roadway -> Rdy
+    -  Roadway -> Rdwy,Rdy
     -  Rocks -> Rks
     -  Ronde -> Rnde
     -  Rosebowl -> Rsbl
     -  Rotary -> Rty
     -  Round -> Rnd
-    -  Route -> Rt
-    -  Route -> Rte
+    -  Route -> Rt,Rte
     -  Saint -> St
     -  Saints -> SS
     -  Senior -> Sr
-    -  Serviceway -> Swy
-    -  Serviceway -> Svwy
+    -  Serviceway -> Swy,Svwy
     -  Shoal -> Shl
     -  Shore -> Shr
     -  Shores -> Shrs
@@ -421,8 +321,7 @@
     -  Skyway -> Skwy
     -  Slope -> Slpe
     -  Sound -> Snd
-    -  South -> S
-    -  South -> Sth
+    -  South -> S,Sth
     -  Southeast -> SE
     -  Southwest -> SW
     -  Spring -> Spg
@@ -431,13 +330,10 @@
     -  Square -> Sq
     -  Squares -> Sqs
     -  Stairway -> Strwy
-    -  State Highway -> SH
-    -  State Highway -> SHwy
+    -  State Highway -> SH,SHwy
     -  State Route -> SR
-    -  Station -> Sta
-    -  Station -> Stn
-    -  Strand -> Sd
-    -  Strand -> Stra
+    -  Station -> Sta,Stn
+    -  Strand -> Sd,Stra
     -  Stravenue -> Stra
     -  Stream -> Strm
     -  Street -> St
@@ -447,61 +343,43 @@
     -  Summit -> Smt
     -  Tarn -> Tn
     -  Terminal -> Term
-    -  Terrace -> Tce
-    -  Terrace -> Ter
-    -  Terrace -> Terr
-    -  Thoroughfare -> Thfr
-    -  Thoroughfare -> Thor
+    -  Terrace -> Tce,Ter,Terr
+    -  Thoroughfare -> Thfr,Thor
     -  Throughway -> Trwy
-    -  Tollway -> Tlwy
-    -  Tollway -> Twy
+    -  Tollway -> Tlwy,Twy
     -  Towers -> Twrs
     -  Township -> Twp
     -  Trace -> Trce
-    -  Track -> Tr
-    -  Track -> Trak
-    -  Track -> Trk
+    -  Track -> Tr,Trak,Trk
     -  Trafficway -> Trfy
     -  Trail -> Trl
     -  Trailer -> Trlr
     -  Triangle -> Tri
     -  Trunkway -> Tkwy
-    -  Tunnel -> Tun
-    -  Tunnel -> Tunl
-    -  Turn -> Tn
-    -  Turn -> Trn
-    -  Turnpike -> Tpk
-    -  Turnpike -> Tpke
-    -  Underpass -> Upas
-    -  Underpass -> Ups
+    -  Tunnel -> Tun,Tunl
+    -  Turn -> Tn,Trn
+    -  Turnpike -> Tpk,Tpke
+    -  Underpass -> Upas,Ups
     -  Union -> Un
     -  Unions -> Uns
-    -  University -> Uni
-    -  University -> Univ
+    -  University -> Uni,Univ
     -  Upper -> Up
     -  Upper -> Upr
     -  Vale -> Va
     -  Valley -> Vly
     -  Valley -> Vy
     -  Valleys -> Vlys
-    -  Viaduct -> Vdct
-    -  Viaduct -> Via
-    -  Viaduct -> Viad
+    -  Viaduct -> Vdct,Via,Viad
     -  View -> Vw
     -  Views -> Vws
-    -  Village -> Vill
-    -  Village -> Vlg
+    -  Village -> Vill,Vlg
     -  Villages -> Vlgs
     -  Villas -> Vlls
     -  Ville -> Vl
-    -  Vista -> Vis
-    -  Vista -> Vst
-    -  Vista -> Vsta
-    -  Walk -> Wk
-    -  Walk -> Wlk
+    -  Vista -> Vis,Vst,Vsta
+    -  Walk -> Wk,Wlk
     -  Walks -> Walk
-    -  Walkway -> Wkwy
-    -  Walkway -> Wky
+    -  Walkway -> Wkwy,Wky
     -  Waters -> Wtr
     -  Way -> Wy
     -  Well -> Wl

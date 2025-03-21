@@ -7,7 +7,7 @@
 """
 Common data types and protocols for analysers.
 """
-from typing import Mapping, List, Any
+from typing import Mapping, List, Any, Union, Tuple
 
 from ...typing import Protocol
 from ...data.place_name import PlaceName
@@ -33,7 +33,7 @@ class Analyzer(Protocol):
                     for example because the character set in use does not match.
         """
 
-    def compute_variants(self, canonical_id: str) -> List[str]:
+    def compute_variants(self, canonical_id: str) -> Union[List[str], Tuple[List[str], List[str]]]:
         """ Compute the transliterated spelling variants for the given
             canonical ID.
 

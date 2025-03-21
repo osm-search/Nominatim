@@ -7,7 +7,7 @@
 """
 Generic processor for names that creates abbreviation variants.
 """
-from typing import Mapping, Dict, Any, Iterable, Iterator, Optional, List, cast
+from typing import Mapping, Dict, Any, Iterable, Optional, List, cast, Tuple
 import itertools
 
 from ...errors import UsageError
@@ -78,7 +78,7 @@ class GenericTokenAnalysis:
         """
         return cast(str, self.norm.transliterate(name.name)).strip()
 
-    def compute_variants(self, norm_name: str) -> List[str]:
+    def compute_variants(self, norm_name: str) -> Tuple[List[str], List[str]]:
         """ Compute the spelling variants for the given normalized name
             and transliterate the result.
         """
@@ -87,18 +87,20 @@ class GenericTokenAnalysis:
         for mutation in self.mutations:
             variants = mutation.generate(variants)
 
-        return [name for name in self._transliterate_unique_list(norm_name, variants) if name]
-
-    def _transliterate_unique_list(self, norm_name: str,
-                                   iterable: Iterable[str]) -> Iterator[Optional[str]]:
-        seen = set()
+        varset = set(map(str.strip, variants))
         if self.variant_only:
-            seen.add(norm_name)
+            varset.discard(norm_name)
 
-        for variant in map(str.strip, iterable):
-            if variant not in seen:
-                seen.add(variant)
-                yield self.to_ascii.transliterate(variant).strip()
+        trans = []
+        norm = []
+
+        for var in varset:
+            t = self.to_ascii.transliterate(var).strip()
+            if t:
+                trans.append(t)
+                norm.append(var)
+
+        return trans, norm
 
     def _generate_word_variants(self, norm_name: str) -> Iterable[str]:
         baseform = '^ ' + norm_name + ' ^'

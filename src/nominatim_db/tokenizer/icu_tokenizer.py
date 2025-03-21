@@ -585,10 +585,14 @@ class ICUNameAnalyzer(AbstractAnalyzer):
             if word_id:
                 result = self._cache.housenumbers.get(word_id, result)
                 if result[0] is None:
-                    variants = analyzer.compute_variants(word_id)
+                    varout = analyzer.compute_variants(word_id)
+                    if isinstance(varout, tuple):
+                        variants = varout[0]
+                    else:
+                        variants = varout
                     if variants:
                         hid = execute_scalar(self.conn, "SELECT create_analyzed_hnr_id(%s, %s)",
-                                             (word_id, list(variants)))
+                                             (word_id, variants))
                         result = hid, variants[0]
                         self._cache.housenumbers[word_id] = result
 
@@ -633,13 +637,17 @@ class ICUNameAnalyzer(AbstractAnalyzer):
 
             full, part = self._cache.names.get(token_id, (None, None))
             if full is None:
-                variants = analyzer.compute_variants(word_id)
+                varset = analyzer.compute_variants(word_id)
+                if isinstance(varset, tuple):
+                    variants, lookups = varset
+                else:
+                    variants, lookups = varset, None
                 if not variants:
                     continue
 
                 with self.conn.cursor() as cur:
-                    cur.execute("SELECT * FROM getorcreate_full_word(%s, %s)",
-                                (token_id, variants))
+                    cur.execute("SELECT * FROM getorcreate_full_word(%s, %s, %s)",
+                                (token_id, variants, lookups))
                     full, part = cast(Tuple[int, List[int]], cur.fetchone())
 
                 self._cache.names[token_id] = (full, part)

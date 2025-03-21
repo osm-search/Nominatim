@@ -34,7 +34,7 @@
     -  Brae -> Br
     -  Branch -> Br
     -  Break -> Brk
-    -  Bridge -> Bdge,Br,Brdg,Brg,Bri
+    -  Bridge$ -> Bdge,Br,Brdg,Brg,Bri
     -  Broadway -> Bdwy,Bway,Bwy
     -  Brook -> Brk
     -  Brooks -> Brks
@@ -83,9 +83,9 @@
     -  Courts -> Cts
     -  Courtyard -> Cyd
     -  Courtyard -> Ctyd
-    -  Cove -> Ce,Cov,Cv
+    -  Cove$ -> Ce,Cov,Cv
     -  Coves -> Cvs
-    -  Creek -> Ck,Cr,Crk
+    -  Creek$ -> Ck,Cr,Crk
     -  Crescent -> Cr
     -  Crescent -> Cres
     -  Crest -> Crst,Cst
@@ -150,14 +150,14 @@
     -  Gate,Gates -> Ga,Gte
     -  Gateway -> Gwy,Gtwy
     -  George -> Geo
-    -  Glade -> Gl,Gld,Glde
+    -  Glade$ -> Gl,Gld,Glde
     -  Glen -> Gln
     -  Glens -> Glns
     -  Grange -> Gra
     -  Green -> Gn,Grn
     -  Greens -> Grns
     -  Ground -> Grnd
-    -  Grove -> Gr,Gro,Grv
+    -  Grove$ -> Gr,Gro,Grv
     -  Groves -> Grvs
     -  Grovet -> Gr
     -  Gully -> Gly
@@ -229,8 +229,7 @@
     -  Motorway -> Mtwy,Mwy
     -  Mount -> Mt
     -  Mountain -> Mtn
-    -  Mountains -> Mtn
-    -  Mountains -> Mtns
+    -  Mountains$ -> Mtn,Mtns
     -  Municipal -> Mun
     -  Museum -> Mus
     -  National Park -> NP
@@ -295,7 +294,8 @@
     -  Ridgeway -> Rgwy
     -  Right of Way -> Rowy
     -  Rise -> Ri
-    -  River -> R,Riv,Rvr
+    -  ^River -> R,Riv,Rvr
+    -  River$ -> R,Riv,Rvr
     -  Riverway -> Rvwy
     -  Riviera -> Rvra
     -  Road -> Rd
@@ -369,7 +369,7 @@
     -  Valley -> Vly
     -  Valley -> Vy
     -  Valleys -> Vlys
-    -  Viaduct -> Vdct,Via,Viad
+    -  Viaduct$ -> Vdct,Via,Viad
     -  View -> Vw
     -  Views -> Vws
     -  Village -> Vill,Vlg

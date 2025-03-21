@@ -34,14 +34,14 @@ class PostcodeParser:
         unique_patterns: Dict[str, Dict[str, List[str]]] = {}
         for cc, data in cdata.items():
             if data.get('postcode'):
-                pat = data['postcode']['pattern'].replace('d', '[0-9]').replace('l', '[a-z]')
+                pat = data['postcode']['pattern'].replace('d', '[0-9]').replace('l', '[A-Z]')
                 out = data['postcode'].get('output')
                 if pat not in unique_patterns:
                     unique_patterns[pat] = defaultdict(list)
-                unique_patterns[pat][out].append(cc)
+                unique_patterns[pat][out].append(cc.upper())
 
         self.global_pattern = re.compile(
-                '(?:(?P<cc>[a-z][a-z])(?P<space>[ -]?))?(?P<pc>(?:(?:'
+                '(?:(?P<cc>[A-Z][A-Z])(?P<space>[ -]?))?(?P<pc>(?:(?:'
                 + ')|(?:'.join(unique_patterns) + '))[:, >].*)')
 
         self.local_patterns = [(re.compile(f"{pat}[:, >]"), list(info.items()))
@@ -57,25 +57,26 @@ class PostcodeParser:
         nodes = query.nodes
         outcodes: Set[Tuple[int, int, str]] = set()
 
+        terms = [n.term_normalized.upper() + n.btype for n in nodes]
         for i in range(query.num_token_slots()):
             if nodes[i].btype in '<,: ' and nodes[i + 1].btype != '`' \
                     and (i == 0 or nodes[i - 1].ptype != qmod.PHRASE_POSTCODE):
                 if nodes[i].ptype == qmod.PHRASE_ANY:
-                    word = nodes[i + 1].term_normalized + nodes[i + 1].btype
+                    word = terms[i + 1]
                     if word[-1] in ' -' and nodes[i + 2].btype != '`' \
                             and nodes[i + 1].ptype == qmod.PHRASE_ANY:
-                        word += nodes[i + 2].term_normalized + nodes[i + 2].btype
+                        word += terms[i + 2]
                         if word[-1] in ' -' and nodes[i + 3].btype != '`' \
                                 and nodes[i + 2].ptype == qmod.PHRASE_ANY:
-                            word += nodes[i + 3].term_normalized + nodes[i + 3].btype
+                            word += terms[i + 3]
 
                     self._match_word(word, i, False, outcodes)
                 elif nodes[i].ptype == qmod.PHRASE_POSTCODE:
-                    word = nodes[i + 1].term_normalized + nodes[i + 1].btype
+                    word = terms[i + 1]
                     for j in range(i + 1, query.num_token_slots()):
                         if nodes[j].ptype != qmod.PHRASE_POSTCODE:
                             break
-                        word += nodes[j + 1].term_normalized + nodes[j + 1].btype
+                        word += terms[j + 1]
 
                     self._match_word(word, i, True, outcodes)
 
@@ -98,6 +99,6 @@ class PostcodeParser:
                     for out, out_ccs in info:
                         if cc is None or cc in out_ccs:
                             if out:
-                                outcodes.add((*trange, lm.expand(out).upper()))
+                                outcodes.add((*trange, lm.expand(out)))
                             else:
-                                outcodes.add((*trange, lm.group(0)[:-1].upper()))
+                                outcodes.add((*trange, lm.group(0)[:-1]))

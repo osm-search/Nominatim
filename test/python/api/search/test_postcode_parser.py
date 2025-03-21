@@ -52,6 +52,12 @@ ky:
   postcode:
     pattern: "(d)-(dddd)"
     output: KY\1-\2
+
+gb:
+  postcode:
+    pattern: "(l?ld[A-Z0-9]?) ?(dll)"
+    output: \1 \2
+
     """)
 
     return project_env
@@ -81,6 +87,13 @@ def test_simple_postcode(pc_config, query, pos):
     result = parser.parse(mk_query(query))
 
     assert result == {(pos, pos + 1, '45325'), (pos, pos + 1, '453 25')}
+
+
+@pytest.mark.parametrize('query', ['EC1R 3HF', 'ec1r 3hf'])
+def test_postcode_matching_case_insensitive(pc_config, query):
+    parser = PostcodeParser(pc_config)
+
+    assert parser.parse(mk_query(query)) == {(0, 2, 'EC1R 3HF')}
 
 
 def test_contained_postcode(pc_config):

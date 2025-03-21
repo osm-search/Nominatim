@@ -230,19 +230,20 @@ def test_update_statistics(word_table, table_factory, temp_db_cursor,
                            tokenizer_factory, test_config):
     word_table.add_full_word(1000, 'hello')
     word_table.add_full_word(1001, 'bye')
+    word_table.add_full_word(1002, 'town')
     table_factory('search_name',
                   'place_id BIGINT, name_vector INT[], nameaddress_vector INT[]',
-                  [(12, [1000], [1001])])
+                  [(12, [1000], [1001]), (13, [1001], [1002]), (14, [1000, 1001], [1002])])
     tok = tokenizer_factory()
 
     tok.update_statistics(test_config)
 
-    assert temp_db_cursor.scalar("""SELECT count(*) FROM word
-                                    WHERE type = 'W' and word_id = 1000 and
-                                          (info->>'count')::int > 0""") == 1
-    assert temp_db_cursor.scalar("""SELECT count(*) FROM word
-                                    WHERE type = 'W' and word_id = 1001 and
-                                          (info->>'addr_count')::int > 0""") == 1
+    assert temp_db_cursor.row_set("""SELECT word_id,
+                                            (info->>'count')::int,
+                                            (info->>'addr_count')::int
+                                     FROM word
+                                     WHERE type = 'W'""") == \
+        {(1000, 2, None), (1001, 2, None), (1002, None, 2)}
 
 
 def test_normalize_postcode(analyzer):

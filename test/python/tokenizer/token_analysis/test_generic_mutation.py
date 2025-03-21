@@ -40,7 +40,7 @@ class TestMutationNoVariants:
 
     def variants(self, name):
         norm = Transliterator.createFromRules("test_norm", DEFAULT_NORMALIZATION)
-        return set(self.analysis.compute_variants(norm.transliterate(name).strip()))
+        return set(self.analysis.compute_variants(norm.transliterate(name).strip())[0])
 
     @pytest.mark.parametrize('pattern', ('(capture)', ['a list']))
     def test_bad_pattern(self, pattern):

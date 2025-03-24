@@ -28,21 +28,24 @@ def run_preprocessor_on(query):
 
 
 @pytest.mark.parametrize('inp,outp', [
-    ('45.67.89.101', ''),
-    ('198.51.100.23', ''),
-    ('203.0.113.255', ''),
-    ('http://www.openstreetmap.org', ''),
-    ('https://www.openstreetmap.org/edit', ''),
-    ('http://osm.org', ''),
-    ('https://www.openstreetmap.org/user/abc', ''),
-    ('https://tile.openstreetmap.org/12/2048/2048.png', ''),
-    ('Check the map at https://www.openstreetmap.org', 'Check the map at '),
-    ('Use 203.0.113.255 for routing', 'Use  for routing'),
-    ('Find maps at https://osm.org and http://openstreetmap.org', 'Find maps at  and '),
+    (['45.67.89.101'], []),
+    (['198.51.100.23'], []),
+    (['203.0.113.255'], []),
+    (['http://www.openstreetmap.org'], []),
+    (['https://www.openstreetmap.org/edit'], []),
+    (['http://osm.org'], []),
+    (['https://www.openstreetmap.org/user/abc'], []),
+    (['https://tile.openstreetmap.org/12/2048/2048.png'], []),
+    (['Check the map at https://www.openstreetmap.org'], ['Check the map at ']),
+    (['Use 203.0.113.255 for routing'], ['Use  for routing']),
+    (['Find maps at https://osm.org and http://openstreetmap.org'], ['Find maps at  and ']),
+    (['203.0.113.255', 'Some Address'], ['Some Address']),
+    (['https://osm.org', 'Another Place'], ['Another Place']),
 ])
 def test_split_phrases(inp, outp):
-    query = [qmod.Phrase(qmod.PHRASE_ANY, inp)]
+    query = [qmod.Phrase(qmod.PHRASE_ANY, text) for text in inp]
 
     out = run_preprocessor_on(query)
+    expected_out = [qmod.Phrase(qmod.PHRASE_ANY, text) for text in outp]
 
-    assert out == [qmod.Phrase(qmod.PHRASE_ANY, outp)]
+    assert out == expected_out, f"Expected {expected_out}, but got {out}"

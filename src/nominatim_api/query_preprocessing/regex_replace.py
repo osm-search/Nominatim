@@ -37,7 +37,8 @@ class _GenericPreprocessing:
     def __call__(self, phrases: List[Phrase]) -> List[Phrase]:
         """Apply regex replacements to the given addresses.
         """
-        return [p for p in map(self.split_phrase, phrases) if p]
+        result = [p for p in map(self.split_phrase, phrases) if p.text.strip()]
+        return result if result else []
 
 
 def create(config: QueryConfig) -> QueryProcessingFunc:

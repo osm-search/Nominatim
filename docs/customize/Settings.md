@@ -602,6 +602,41 @@ results gathered so far.
 Note that under high load you may observe that users receive different results
 than usual without seeing an error. This may cause some confusion.
 
+#### NOMINATIM_OUTPUT_NAMES
+
+| Summary            |                                                     |
+| --------------     | --------------------------------------------------- |
+| **Description:**   | Specifies order of name tags |
+| **Format:**        | string: comma-separated list of tag names |
+| **Default:**       | name:XX,name,brand,official_name:XX,short_name:XX,official_name,short_name,ref |
+
+Specifies the order in which different name tags are used.
+The values in this list determine the preferred order of name variants,
+including language-specific names (in OSM: the name tag with and without any language suffix).
+
+Comma-separated list, where :XX stands for language suffix
+(e.g. name:en) and no :XX stands for general tags (e.g. name).
+
+See also [NOMINATIM_DEFAULT_LANGUAGE](#nominatim_default_language).
+
+!!! note
+    If NOMINATIM_OUTPUT_NAMES = `name:XX,name ,short_name:XX, short_name` the search follows
+
+        ```
+        'name', '_place_name', 'short_name', '_place_short_name'
+        ```
+
+    if we have no preferred language order for showing search results.
+
+    For languages ['en', 'es'] the search follows
+
+        ```
+        'name:en', '_place_name:en', 'name:es', '_place_name:es',
+        'name', '_place_name',
+        'short_name:en', '_place_short_name:en', 'short_name:es', '_place_short_name:es',
+        'short_name', '_place_short_name'
+        ```
+
 ### Logging Settings
 
 #### NOMINATIM_LOG_DB

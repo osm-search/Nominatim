@@ -173,7 +173,7 @@ class Geometry(types.UserDefinedType):  # type: ignore[type-arg]
     def __init__(self, subtype: str = 'Geometry'):
         self.subtype = subtype
 
-    def get_col_spec(self) -> str:
+    def get_col_spec(self, **_: Any) -> str:
         return f'GEOMETRY({self.subtype}, 4326)'
 
     def bind_processor(self, dialect: 'sa.Dialect') -> Callable[[Any], str]:

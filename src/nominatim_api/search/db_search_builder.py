@@ -214,13 +214,13 @@ class SearchBuilder:
             yield penalty, exp_count, dbf.lookup_by_names(list(name_partials.keys()), addr_tokens)
             return
 
-        addr_count = min(t.addr_count for t in addr_partials) if addr_partials else 30000
+        addr_count = min(t.addr_count for t in addr_partials) if addr_partials else 50000
         # Partial term to frequent. Try looking up by rare full names first.
         name_fulls = self.query.get_tokens(name, qmod.TOKEN_WORD)
         if name_fulls:
             fulls_count = sum(t.count for t in name_fulls)
 
-            if fulls_count < 50000 or addr_count < 30000:
+            if fulls_count < 50000 or addr_count < 50000:
                 yield penalty, fulls_count / (2**len(addr_tokens)), \
                     self.get_full_name_ranking(name_fulls, addr_partials,
                                                fulls_count > 30000 / max(1, len(addr_tokens)))

@@ -208,7 +208,7 @@ class SearchBuilder:
         addr_partials = [t for r in address for t in self.query.get_partials_list(r)]
         addr_tokens = list({t.token for t in addr_partials})
 
-        exp_count = min(t.count for t in name_partials.values()) / (2**(len(name_partials) - 1))
+        exp_count = min(t.count for t in name_partials.values()) / (3**(len(name_partials) - 1))
 
         if (len(name_partials) > 3 or exp_count < 8000):
             yield penalty, exp_count, dbf.lookup_by_names(list(name_partials.keys()), addr_tokens)

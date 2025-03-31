@@ -28,10 +28,8 @@ class CursorForTesting(psycopg.Cursor):
             Fails when the SQL command returns duplicate rows.
         """
         self.execute(sql, params)
-
         result = set((tuple(row) for row in self))
-        assert len(result) == self.rowcount
-
+        assert len(result) == self.rowcount,"Duplicate rows detected"
         return result
 
     def table_exists(self, table):

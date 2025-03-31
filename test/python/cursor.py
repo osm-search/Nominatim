@@ -8,7 +8,7 @@
 Specialised psycopg cursor with shortcut functions useful for testing.
 """
 import psycopg
-
+from psycopg import sql
 
 class CursorForTesting(psycopg.Cursor):
     """ Extension to the DictCursor class that provides execution
@@ -20,7 +20,7 @@ class CursorForTesting(psycopg.Cursor):
             Raises an assertion when not exactly one row is returned.
         """
         self.execute(sql, params)
-        assert self.rowcount == 1
+        assert self.rowcount == 1, 'Expected exactly one row, got {}'.format(self.rowcount)
         return self.fetchone()[0]
 
     def row_set(self, sql, params=None):
@@ -49,10 +49,13 @@ class CursorForTesting(psycopg.Cursor):
                           (table, index))
         return num == 1
 
-    def table_rows(self, table, where=None):
+    def table_rows(self, table, where=None,where_params=None):
         """ Return the number of rows in the given table.
         """
         if where is None:
-            return self.scalar('SELECT count(*) FROM ' + table)
-
-        return self.scalar('SELECT count(*) FROM {} WHERE {}'.format(table, where))
+            query = sql.SQL("SELECT count(*) FROM {}").format(sql.Identifier(table))
+            return self.scalar(query)
+        
+        query = sql.SQL("SELECT count(*) FROM {} WHERE {}").format(
+            sql.Identifier(table), sql.SQL(where))
+        return self.scalar(query, where_params)

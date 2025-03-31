@@ -67,8 +67,9 @@ Here is an example configuration file:
 
 ``` yaml
 query-preprocessing:
+    - step: split_japanese_phrases
     - step: regex_replace
-    replacements:
+      replacements:
         - pattern: https?://[^\s]* # Filter URLs starting with http or https
           replace: ''
     - step: normalize
@@ -110,6 +111,8 @@ The following is a list of preprocessors that are shipped with Nominatim.
         members: False
         heading_level: 6
         docstring_section_style: spacy
+
+##### regex-replace
 
 ::: nominatim_api.query_preprocessing.regex_replace
     options:

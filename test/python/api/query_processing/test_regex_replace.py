@@ -46,6 +46,4 @@ def test_split_phrases(inp, outp):
     query = [qmod.Phrase(qmod.PHRASE_ANY, text) for text in inp]
 
     out = run_preprocessor_on(query)
-    expected_out = [qmod.Phrase(qmod.PHRASE_ANY, text) for text in outp]
-
-    assert out == expected_out, f"Expected {expected_out}, but got {out}"
+    assert out == [qmod.Phrase(qmod.PHRASE_ANY, text) for text in outp]

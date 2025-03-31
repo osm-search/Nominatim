@@ -128,16 +128,14 @@ DECLARE
   partial_terms TEXT[] = '{}'::TEXT[];
   term TEXT;
   term_id INTEGER;
-  term_count INTEGER;
 BEGIN
   SELECT min(word_id) INTO full_token
     FROM word WHERE word = norm_term and type = 'W';
 
   IF full_token IS NULL THEN
     full_token := nextval('seq_word');
-    INSERT INTO word (word_id, word_token, type, word, info)
-      SELECT full_token, lookup_term, 'W', norm_term,
-             json_build_object('count', 0)
+    INSERT INTO word (word_id, word_token, type, word)
+      SELECT full_token, lookup_term, 'W', norm_term
         FROM unnest(lookup_terms) as lookup_term;
   END IF;
 
@@ -150,14 +148,67 @@ BEGIN
 
   partial_tokens := '{}'::INT[];
   FOR term IN SELECT unnest(partial_terms) LOOP
-    SELECT min(word_id), max(info->>'count') INTO term_id, term_count
+    SELECT min(word_id) INTO term_id
       FROM word WHERE word_token = term and type = 'w';
 
     IF term_id IS NULL THEN
       term_id := nextval('seq_word');
-      term_count := 0;
-      INSERT INTO word (word_id, word_token, type, info)
-        VALUES (term_id, term, 'w', json_build_object('count', term_count));
+      INSERT INTO word (word_id, word_token, type)
+        VALUES (term_id, term, 'w');
+    END IF;
+
+    partial_tokens := array_merge(partial_tokens, ARRAY[term_id]);
+  END LOOP;
+END;
+$$
+LANGUAGE plpgsql;
+
+
+CREATE OR REPLACE FUNCTION getorcreate_full_word(norm_term TEXT,
+                                                 lookup_terms TEXT[],
+                                                 lookup_norm_terms TEXT[],
+                                                 OUT full_token INT,
+                                                 OUT partial_tokens INT[])
+  AS $$
+DECLARE
+  partial_terms TEXT[] = '{}'::TEXT[];
+  term TEXT;
+  term_id INTEGER;
+BEGIN
+  SELECT min(word_id) INTO full_token
+    FROM word WHERE word = norm_term and type = 'W';
+
+  IF full_token IS NULL THEN
+    full_token := nextval('seq_word');
+    IF lookup_norm_terms IS NULL THEN
+      INSERT INTO word (word_id, word_token, type, word)
+        SELECT full_token, lookup_term, 'W', norm_term
+          FROM unnest(lookup_terms) as lookup_term;
+    ELSE
+      INSERT INTO word (word_id, word_token, type, word, info)
+        SELECT full_token, t.lookup, 'W', norm_term,
+               CASE WHEN norm_term = t.norm THEN null
+               ELSE json_build_object('lookup', t.norm) END
+          FROM unnest(lookup_terms, lookup_norm_terms) as t(lookup, norm);
+    END IF;
+  END IF;
+
+  FOR term IN SELECT unnest(string_to_array(unnest(lookup_terms), ' ')) LOOP
+    term := trim(term);
+    IF NOT (ARRAY[term] <@ partial_terms) THEN
+      partial_terms := partial_terms || term;
+    END IF;
+  END LOOP;
+
+  partial_tokens := '{}'::INT[];
+  FOR term IN SELECT unnest(partial_terms) LOOP
+    SELECT min(word_id) INTO term_id
+      FROM word WHERE word_token = term and type = 'w';
+
+    IF term_id IS NULL THEN
+      term_id := nextval('seq_word');
+      INSERT INTO word (word_id, word_token, type)
+        VALUES (term_id, term, 'w');
     END IF;
 
     partial_tokens := array_merge(partial_tokens, ARRAY[term_id]);

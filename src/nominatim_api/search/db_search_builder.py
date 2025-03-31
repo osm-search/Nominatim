@@ -264,16 +264,9 @@ class SearchBuilder:
             address lookups will use the index, when the occurrences are not
             too many.
         """
-        # At this point drop unindexed partials from the address.
-        # This might yield wrong results, nothing we can do about that.
         if use_lookup:
             addr_restrict_tokens = []
-            addr_lookup_tokens = []
-            for t in addr_partials:
-                if t.addr_count > 20000:
-                    addr_restrict_tokens.append(t.token)
-                else:
-                    addr_lookup_tokens.append(t.token)
+            addr_lookup_tokens = [t.token for t in addr_partials]
         else:
             addr_restrict_tokens = [t.token for t in addr_partials]
             addr_lookup_tokens = []

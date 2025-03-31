@@ -11,18 +11,24 @@ import sys
 import json
 from pathlib import Path
 
-import pytest
-from pytest_bdd.parsers import re as step_parse
-from pytest_bdd import when, then
-
-from utils.api_runner import APIRunner
-from utils.api_result import APIResult
-from utils.checks import ResultAttr, COMPARATOR_TERMS
-
 # always test against the source
 SRC_DIR = (Path(__file__) / '..' / '..' / '..').resolve()
 sys.path.insert(0, str(SRC_DIR / 'src'))
 
+import pytest
+from pytest_bdd.parsers import re as step_parse
+from pytest_bdd import given, when, then
+
+pytest.register_assert_rewrite('utils')
+
+from utils.api_runner import APIRunner
+from utils.api_result import APIResult
+from utils.checks import ResultAttr, COMPARATOR_TERMS
+from utils.geometry_alias import ALIASES
+from utils.grid import Grid
+from utils.db import DBManager
+
+from nominatim_db.config import Configuration
 
 def _strlist(inp):
     return [s.strip() for s in inp.split(',')]
@@ -58,6 +64,35 @@ def datatable():
     """ Default fixture for datatables, so that their presence can be optional.
     """
     return None
+
+
+@pytest.fixture
+def node_grid():
+    """ Default fixture for node grids. Nothing set.
+    """
+    return Grid([[]], None, None)
+
+
+@pytest.fixture(scope='session')
+def template_db(pytestconfig):
+    """ Create a template database containing the extensions and base data
+        needed by Nominatim. Using the template instead of doing the full
+        setup can speed up the tests.
+
+        The template database will only be created if it does not exist yet
+        or a purge has been explicitly requested.
+    """
+    dbm = DBManager(purge=pytestconfig.option.NOMINATIM_PURGE)
+
+    template_db = pytestconfig.getini('nominatim_template_db')
+
+    template_config = Configuration(
+        None, environ={'NOMINATIM_DATABASE_DSN': f"pgsql:dbname={template_db}"})
+
+    dbm.setup_template_db(template_config)
+
+    return template_db
+
 
 
 @when(step_parse(r'reverse geocoding (?P<lat>[\d.-]*),(?P<lon>[\d.-]*)'),
@@ -223,3 +258,23 @@ def check_specific_result_for_fields(nominatim_result, datatable, num, field):
 
     for k, v in pairs:
         assert ResultAttr(nominatim_result.result[num], prefix + k) == v
+
+
+@given(step_parse(r'the (?P<step>[0-9.]+ )?grid(?: with origin (?P<origin>.*))?'),
+       target_fixture='node_grid')
+def set_node_grid(datatable, step, origin):
+    if step is not None:
+        step = float(step)
+
+    if origin:
+        if ',' in origin:
+            coords = origin.split(',')
+            if len(coords) != 2:
+                raise RuntimeError('Grid origin expects origin with x,y coordinates.')
+            origin = list(map(float, coords))
+        elif origin in ALIASES:
+            origin = ALIASES[origin]
+        else:
+            raise RuntimeError('Grid origin must be either coordinate or alias.')
+
+    return Grid(datatable, step, origin)

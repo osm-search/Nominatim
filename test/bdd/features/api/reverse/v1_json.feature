@@ -136,8 +136,8 @@ Feature: Json output for Reverse API
         Then a HTTP 200 is returned
         And the result is valid json
         And the result contains
-          | geotext!fm |
-          | LINESTRING\(9.5039353 47.0657546, ?9.5040437 47.0657781, ?9.5040808 47.065787, ?9.5054298 47.0661407\) |
+          | geotext!wkt |
+          | 9.5039353 47.0657546, 9.5040437 47.0657781, 9.5040808 47.065787, 9.5054298 47.0661407 |
 
        Examples:
           | format |

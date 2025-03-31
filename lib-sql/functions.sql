@@ -8,7 +8,6 @@
 {% include('functions/utils.sql') %}
 {% include('functions/ranking.sql') %}
 {% include('functions/importance.sql') %}
-{% include('functions/address_lookup.sql') %}
 {% include('functions/interpolation.sql') %}
 
 {% if 'place' in db.tables %}

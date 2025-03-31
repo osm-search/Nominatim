@@ -208,19 +208,19 @@ class SearchBuilder:
         addr_partials = [t for r in address for t in self.query.get_partials_list(r)]
         addr_tokens = list({t.token for t in addr_partials})
 
-        exp_count = min(t.count for t in name_partials.values()) / (2**(len(name_partials) - 1))
+        exp_count = min(t.count for t in name_partials.values()) / (3**(len(name_partials) - 1))
 
         if (len(name_partials) > 3 or exp_count < 8000):
             yield penalty, exp_count, dbf.lookup_by_names(list(name_partials.keys()), addr_tokens)
             return
 
-        addr_count = min(t.addr_count for t in addr_partials) if addr_partials else 30000
+        addr_count = min(t.addr_count for t in addr_partials) if addr_partials else 50000
         # Partial term to frequent. Try looking up by rare full names first.
         name_fulls = self.query.get_tokens(name, qmod.TOKEN_WORD)
         if name_fulls:
             fulls_count = sum(t.count for t in name_fulls)
 
-            if fulls_count < 50000 or addr_count < 30000:
+            if fulls_count < 50000 or addr_count < 50000:
                 yield penalty, fulls_count / (2**len(addr_tokens)), \
                     self.get_full_name_ranking(name_fulls, addr_partials,
                                                fulls_count > 30000 / max(1, len(addr_tokens)))
@@ -264,16 +264,9 @@ class SearchBuilder:
             address lookups will use the index, when the occurrences are not
             too many.
         """
-        # At this point drop unindexed partials from the address.
-        # This might yield wrong results, nothing we can do about that.
         if use_lookup:
             addr_restrict_tokens = []
-            addr_lookup_tokens = []
-            for t in addr_partials:
-                if t.addr_count > 20000:
-                    addr_restrict_tokens.append(t.token)
-                else:
-                    addr_lookup_tokens.append(t.token)
+            addr_lookup_tokens = [t.token for t in addr_partials]
         else:
             addr_restrict_tokens = [t.token for t in addr_partials]
             addr_lookup_tokens = []

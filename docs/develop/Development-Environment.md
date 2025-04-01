@@ -69,9 +69,9 @@ To set up the virtual environment with all necessary packages run:
 ```sh
 virtualenv ~/nominatim-dev-venv
 ~/nominatim-dev-venv/bin/pip install\
-    psutil psycopg[binary] PyICU SQLAlchemy \
+    psutil 'psycopg[binary]' PyICU SQLAlchemy \
     python-dotenv jinja2 pyYAML behave \
-    mkdocs mkdocstrings mkdocs-gen-files pytest pytest-asyncio flake8 \
+    mkdocs 'mkdocstrings[python]' mkdocs-gen-files pytest pytest-asyncio flake8 \
     types-jinja2 types-markupsafe types-psutil types-psycopg2 \
     types-pygments types-pyyaml types-requests types-ujson \
     types-urllib3 typing-extensions unicorn falcon starlette \

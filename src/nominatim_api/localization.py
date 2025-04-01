@@ -8,6 +8,7 @@
 Helper functions for localizing names of results.
 """
 from typing import Mapping, List, Optional
+from .config import Configuration
 
 import re
 
@@ -20,14 +21,18 @@ class Locales:
     """
 
     def __init__(self, langs: Optional[List[str]] = None):
+        self.config = Configuration(None)
         self.languages = langs or []
         self.name_tags: List[str] = []
 
-        # Build the list of supported tags. It is currently hard-coded.
-        self._add_lang_tags('name')
-        self._add_tags('name', 'brand')
-        self._add_lang_tags('official_name', 'short_name')
-        self._add_tags('official_name', 'short_name', 'ref')
+        parts = self.config.OUTPUT_NAMES.split(',')
+
+        for part in parts:
+            part = part.strip()
+            if part.endswith(":XX"):
+                self._add_lang_tags(part[:-3])
+            else:
+                self._add_tags(part)
 
     def __bool__(self) -> bool:
         return len(self.languages) > 0

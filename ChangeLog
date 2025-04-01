@@ -1,3 +1,22 @@
+5.1.0
+ * replace datrie with simple internal trie implementation
+ * add pattern-based postcode parser for queries,
+   postcodes no longer need to be present in OSM to be found
+ * take variants into account when computing token similarity
+ * add extratags output to geocodejson format
+ * fix default layer setting used for structured queries
+ * update abbreviation lists for Russian and English
+   (thanks @shoorick, @IvanShift, @mhsrn21)
+ * fix variant generation for Norwegian
+ * fix normalization around space-like characters
+ * improve postcode search and handling of postcodes in queries
+ * reorganise internal query structure and get rid of slow enums
+ * enable code linting for tests
+ * various code moderinsations in test code (thanks @eumiro)
+ * remove setting osm2pgsql location via config.lib_dir
+ * make SQL functions parallel save as far as possible (thanks @otbutz)
+ * various fixes and improvements to documentation (thanks @TuringVerified)
+
 5.0.0
  * increase required versions for PostgreSQL (12+), PostGIS (3.0+)
  * remove installation via cmake and debundle osm2pgsql

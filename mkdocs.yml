@@ -1,4 +1,4 @@
-site_name: Nominatim Manual
+site_name: Nominatim 5.1.0 Manual
 theme:
   font: false
   name: material

@@ -113,3 +113,5 @@ Checklist for releases:
   * run `nominatim --version` to confirm correct version
 * [ ] tag new release and add a release on github.com
 * [ ] build pip packages and upload to pypi
+  * `make build`
+  * `twine upload dist/*`

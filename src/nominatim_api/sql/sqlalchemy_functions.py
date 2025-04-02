@@ -122,15 +122,18 @@ class IsAddressPoint(sa.sql.functions.GenericFunction[Any]):
 
     def __init__(self, table: sa.Table) -> None:
         super().__init__(table.c.rank_address,
-                         table.c.housenumber, table.c.name)
+                         table.c.housenumber, table.c.name, table.c.address)
 
 
 @compiles(IsAddressPoint)
 def default_is_address_point(element: IsAddressPoint,
                              compiler: 'sa.Compiled', **kw: Any) -> str:
-    rank, hnr, name = list(element.clauses)
-    return "(%s = 30 AND (%s IS NOT NULL OR %s ? 'addr:housename'))" % (
+    rank, hnr, name, address = list(element.clauses)
+    return "(%s = 30 AND (%s IS NULL OR NOT %s ? '_inherited')" \
+           " AND (%s IS NOT NULL OR %s ? 'addr:housename'))" % (
                 compiler.process(rank, **kw),
+                compiler.process(address, **kw),
+                compiler.process(address, **kw),
                 compiler.process(hnr, **kw),
                 compiler.process(name, **kw))
 
@@ -138,9 +141,11 @@ def default_is_address_point(element: IsAddressPoint,
 @compiles(IsAddressPoint, 'sqlite')
 def sqlite_is_address_point(element: IsAddressPoint,
                             compiler: 'sa.Compiled', **kw: Any) -> str:
-    rank, hnr, name = list(element.clauses)
-    return "(%s = 30 AND coalesce(%s, json_extract(%s, '$.addr:housename')) IS NOT NULL)" % (
+    rank, hnr, name, address = list(element.clauses)
+    return "(%s = 30 AND json_extract(%s, '$._inherited') IS NULL" \
+           " AND coalesce(%s, json_extract(%s, '$.addr:housename')) IS NOT NULL)" % (
                 compiler.process(rank, **kw),
+                compiler.process(address, **kw),
                 compiler.process(hnr, **kw),
                 compiler.process(name, **kw))
 

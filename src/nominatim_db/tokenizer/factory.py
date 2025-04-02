@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Functions for creating a tokenizer or initialising the right one for an
@@ -52,19 +52,10 @@ def create_tokenizer(config: Configuration, init_db: bool = True,
     if module_name is None:
         module_name = config.TOKENIZER
 
-    # Create the directory for the tokenizer data
-    assert config.project_dir is not None
-    basedir = config.project_dir / 'tokenizer'
-    if not basedir.exists():
-        basedir.mkdir()
-    elif not basedir.is_dir():
-        LOG.fatal("Tokenizer directory '%s' cannot be created.", basedir)
-        raise UsageError("Tokenizer setup failed.")
-
     # Import and initialize the tokenizer.
     tokenizer_module = _import_tokenizer(module_name)
 
-    tokenizer = tokenizer_module.create(config.get_libpq_dsn(), basedir)
+    tokenizer = tokenizer_module.create(config.get_libpq_dsn())
     tokenizer.init_new_db(config, init_db=init_db)
 
     with connect(config.get_libpq_dsn()) as conn:
@@ -80,10 +71,6 @@ def get_tokenizer_for_db(config: Configuration) -> AbstractTokenizer:
         and initialises it.
     """
     assert config.project_dir is not None
-    basedir = config.project_dir / 'tokenizer'
-    if not basedir.is_dir():
-        # Directory will be repopulated by tokenizer below.
-        basedir.mkdir()
 
     with connect(config.get_libpq_dsn()) as conn:
         name = properties.get_property(conn, 'tokenizer')
@@ -94,7 +81,7 @@ def get_tokenizer_for_db(config: Configuration) -> AbstractTokenizer:
 
     tokenizer_module = _import_tokenizer(name)
 
-    tokenizer = tokenizer_module.create(config.get_libpq_dsn(), basedir)
+    tokenizer = tokenizer_module.create(config.get_libpq_dsn())
     tokenizer.init_from_project(config)
 
     return tokenizer

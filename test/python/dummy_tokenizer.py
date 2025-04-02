@@ -11,17 +11,16 @@ from nominatim_db.data.place_info import PlaceInfo
 from nominatim_db.config import Configuration
 
 
-def create(dsn, data_dir):
+def create(dsn):
     """ Create a new instance of the tokenizer provided by this module.
     """
-    return DummyTokenizer(dsn, data_dir)
+    return DummyTokenizer(dsn)
 
 
 class DummyTokenizer:
 
-    def __init__(self, dsn, data_dir):
+    def __init__(self, dsn):
         self.dsn = dsn
-        self.data_dir = data_dir
         self.init_state = None
         self.analyser_cache = {}
 

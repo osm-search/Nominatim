@@ -63,7 +63,7 @@ class MockPostcodeTable:
 
 @pytest.fixture
 def tokenizer():
-    return dummy_tokenizer.DummyTokenizer(None, None)
+    return dummy_tokenizer.DummyTokenizer(None)
 
 
 @pytest.fixture

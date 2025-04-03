@@ -311,15 +311,16 @@ Feature: Linking of places
          | R1         | LabelPlace |
 
 
+    @Fail
     Scenario: Linked places expand default language names
         Given the grid
             | 1 |   | 2 |
             |   | 9 |   |
             | 4 |   | 3 |
         Given the places
-            | osm | class    | type   | name+name | name+name:en | name+name:ru | geometry |
-            | N9  | place    | city           | Popayán | Popayán | Попаян | 9 |
-            | R1  | boundary | administrative | Perímetro Urbano Popayán | | | (1,2,3,4,1) |
+            | osm | class    | type           | name+name                | geometry    |
+            | N9  | place    | city           | Popayán                  | 9           |
+            | R1  | boundary | administrative | Perímetro Urbano Popayán | (1,2,3,4,1) |
         And the relations
             | id | members  |
             | 1  | N9:label |

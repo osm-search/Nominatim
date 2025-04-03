@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Abstract class definitions for tokenizers. These base classes are here
@@ -10,7 +10,6 @@ mainly for documentation purposes.
 """
 from abc import ABC, abstractmethod
 from typing import List, Tuple, Dict, Any, Optional, Iterable
-from pathlib import Path
 
 from ..typing import Protocol
 from ..config import Configuration
@@ -232,6 +231,6 @@ class TokenizerModule(Protocol):
         own tokenizer.
     """
 
-    def create(self, dsn: str, data_dir: Path) -> AbstractTokenizer:
+    def create(self, dsn: str) -> AbstractTokenizer:
         """ Factory for new tokenizers.
         """

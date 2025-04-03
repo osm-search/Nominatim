@@ -32,23 +32,8 @@ class TestFactory:
 
         assert isinstance(tokenizer, DummyTokenizer)
         assert tokenizer.init_state == "new"
-        assert (self.config.project_dir / 'tokenizer').is_dir()
 
         assert properties.get_property(temp_db_conn, 'tokenizer') == 'dummy'
-
-    def test_setup_tokenizer_dir_exists(self):
-        (self.config.project_dir / 'tokenizer').mkdir()
-
-        tokenizer = factory.create_tokenizer(self.config)
-
-        assert isinstance(tokenizer, DummyTokenizer)
-        assert tokenizer.init_state == "new"
-
-    def test_setup_tokenizer_dir_failure(self):
-        (self.config.project_dir / 'tokenizer').write_text("foo")
-
-        with pytest.raises(UsageError):
-            factory.create_tokenizer(self.config)
 
     def test_load_tokenizer(self):
         factory.create_tokenizer(self.config)
@@ -64,7 +49,6 @@ class TestFactory:
         self.config.project_dir = self.config.project_dir
 
         factory.get_tokenizer_for_db(self.config)
-        assert (self.config.project_dir / 'tokenizer').exists()
 
     def test_load_missing_property(self, temp_db_cursor):
         factory.create_tokenizer(self.config)

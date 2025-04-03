@@ -39,12 +39,9 @@ def test_config(project_env, tmp_path):
 
 
 @pytest.fixture
-def tokenizer_factory(dsn, tmp_path, property_table,
-                      sql_preprocessor, place_table, word_table):
-    (tmp_path / 'tokenizer').mkdir()
-
+def tokenizer_factory(dsn, property_table, sql_preprocessor, place_table, word_table):
     def _maker():
-        return icu_tokenizer.create(dsn, tmp_path / 'tokenizer')
+        return icu_tokenizer.create(dsn)
 
     return _maker
 

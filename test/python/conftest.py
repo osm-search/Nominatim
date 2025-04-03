@@ -234,6 +234,6 @@ def tokenizer_mock(monkeypatch, property_table):
     property_table.set('tokenizer', 'dummy')
 
     def _create_tokenizer():
-        return dummy_tokenizer.DummyTokenizer(None, None)
+        return dummy_tokenizer.DummyTokenizer(None)
 
     return _create_tokenizer

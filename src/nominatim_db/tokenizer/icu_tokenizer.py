@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tokenizer implementing normalisation as used before Nominatim 4 but using
@@ -12,7 +12,6 @@ from typing import Optional, Sequence, List, Tuple, Mapping, Any, cast, \
                    Dict, Set, Iterable
 import itertools
 import logging
-from pathlib import Path
 
 from psycopg.types.json import Jsonb
 from psycopg import sql as pysql
@@ -38,10 +37,10 @@ WORD_TYPES = (('country_names', 'C'),
               ('housenumbers', 'H'))
 
 
-def create(dsn: str, data_dir: Path) -> 'ICUTokenizer':
+def create(dsn: str) -> 'ICUTokenizer':
     """ Create a new instance of the tokenizer provided by this module.
     """
-    return ICUTokenizer(dsn, data_dir)
+    return ICUTokenizer(dsn)
 
 
 class ICUTokenizer(AbstractTokenizer):
@@ -50,9 +49,8 @@ class ICUTokenizer(AbstractTokenizer):
         normalization routines in Nominatim 3.
     """
 
-    def __init__(self, dsn: str, data_dir: Path) -> None:
+    def __init__(self, dsn: str) -> None:
         self.dsn = dsn
-        self.data_dir = data_dir
         self.loader: Optional[ICURuleLoader] = None
 
     def init_new_db(self, config: Configuration, init_db: bool = True) -> None:

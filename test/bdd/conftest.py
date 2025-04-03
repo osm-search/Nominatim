@@ -11,6 +11,8 @@ import sys
 import json
 from pathlib import Path
 
+import psycopg
+
 # always test against the source
 SRC_DIR = (Path(__file__) / '..' / '..' / '..').resolve()
 sys.path.insert(0, str(SRC_DIR / 'src'))
@@ -23,12 +25,13 @@ pytest.register_assert_rewrite('utils')
 
 from utils.api_runner import APIRunner
 from utils.api_result import APIResult
-from utils.checks import ResultAttr, COMPARATOR_TERMS
+from utils.checks import ResultAttr, COMPARATOR_TERMS, check_table_content, check_table_has_lines
 from utils.geometry_alias import ALIASES
 from utils.grid import Grid
 from utils.db import DBManager
 
 from nominatim_db.config import Configuration
+from nominatim_db import cli
 
 
 def _strlist(inp):
@@ -93,6 +96,38 @@ def template_db(pytestconfig):
     dbm.setup_template_db(template_config)
 
     return template_db
+
+
+@pytest.fixture
+def def_config(pytestconfig):
+    dbname = pytestconfig.getini('nominatim_test_db')
+
+    return Configuration(None,
+                         environ={'NOMINATIM_DATABASE_DSN': f"pgsql:dbname={dbname}"})
+
+
+@pytest.fixture
+def db(template_db, pytestconfig):
+    """ Set up an empty database for use with osm2pgsql.
+    """
+    dbm = DBManager(purge=pytestconfig.option.NOMINATIM_PURGE)
+
+    dbname = pytestconfig.getini('nominatim_test_db')
+
+    dbm.create_db_from_template(dbname, template_db)
+
+    yield dbname
+
+    if not pytestconfig.option.NOMINATIM_KEEP_DB:
+        dbm.drop_db(dbname)
+
+
+@pytest.fixture
+def db_conn(def_config):
+    with psycopg.connect(def_config.get_libpq_dsn()) as conn:
+        info = psycopg.types.TypeInfo.fetch(conn, "hstore")
+        psycopg.types.hstore.register_hstore(info, conn)
+        yield conn
 
 
 @when(step_parse(r'reverse geocoding (?P<lat>[\d.-]*),(?P<lon>[\d.-]*)'),
@@ -278,3 +313,22 @@ def set_node_grid(datatable, step, origin):
             raise RuntimeError('Grid origin must be either coordinate or alias.')
 
     return Grid(datatable, step, origin)
+
+
+@when('indexing')
+def do_index(def_config):
+    """ Run Nominatim's indexing step.
+    """
+    cli.nominatim(['index'], def_config.environ)
+
+
+@then(step_parse(r'(?P<table>\w+) contains(?P<exact> exactly)?'))
+def check_place_content(db_conn, datatable, node_grid, table, exact):
+    check_table_content(db_conn, table, datatable, grid=node_grid, exact=bool(exact))
+
+
+@then(step_parse('(?P<table>placex?) has no entry for '
+                 r'(?P<osm_type>[NRW])(?P<osm_id>\d+)(?::(?P<osm_class>\S+))?'),
+      converters={'osm_id': int})
+def check_place_missing_lines(db_conn, table, osm_type, osm_id, osm_class):
+    check_table_has_lines(db_conn, table, osm_type, osm_id, osm_class)

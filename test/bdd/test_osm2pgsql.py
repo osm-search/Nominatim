@@ -10,52 +10,13 @@ Collector for BDD osm2pgsql import style tests.
 import asyncio
 import random
 
-import psycopg
-
 import pytest
-from pytest_bdd.parsers import re as step_parse
-from pytest_bdd import scenarios, when, given, then
+from pytest_bdd import scenarios, when, given
 
 from nominatim_db import cli
-from nominatim_db.config import Configuration
 from nominatim_db.tools.exec_utils import run_osm2pgsql
 from nominatim_db.tools.database_import import load_data, create_table_triggers
 from nominatim_db.tools.replication import run_osm2pgsql_updates
-
-from utils.db import DBManager
-from utils.checks import check_table_content, check_table_has_lines
-
-
-@pytest.fixture
-def def_config(pytestconfig):
-    dbname = pytestconfig.getini('nominatim_test_db')
-
-    return Configuration(None,
-                         environ={'NOMINATIM_DATABASE_DSN': f"pgsql:dbname={dbname}"})
-
-
-@pytest.fixture
-def db(template_db, pytestconfig):
-    """ Set up an empty database for use with osm2pgsql.
-    """
-    dbm = DBManager(purge=pytestconfig.option.NOMINATIM_PURGE)
-
-    dbname = pytestconfig.getini('nominatim_test_db')
-
-    dbm.create_db_from_template(dbname, template_db)
-
-    yield dbname
-
-    if not pytestconfig.option.NOMINATIM_KEEP_DB:
-        dbm.drop_db(dbname)
-
-
-@pytest.fixture
-def db_conn(def_config):
-    with psycopg.connect(def_config.get_libpq_dsn()) as conn:
-        info = psycopg.types.TypeInfo.fetch(conn, "hstore")
-        psycopg.types.hstore.register_hstore(info, conn)
-        yield conn
 
 
 @pytest.fixture
@@ -128,25 +89,6 @@ def update_from_osm_file(db_conn, def_config, osm2pgsql_options, opl_writer, doc
 
     osm2pgsql_options['import_file'] = opl_writer(docstring.replace(r'//', r'/'))
     run_osm2pgsql_updates(db_conn, osm2pgsql_options)
-
-
-@when('indexing')
-def do_index(def_config):
-    """ Run Nominatim's indexing step.
-    """
-    cli.nominatim(['index'], def_config.environ)
-
-
-@then(step_parse(r'(?P<table>\w+) contains(?P<exact> exactly)?'))
-def check_place_content(db_conn, datatable, node_grid, table, exact):
-    check_table_content(db_conn, table, datatable, grid=node_grid, exact=bool(exact))
-
-
-@then(step_parse('(?P<table>placex?) has no entry for '
-                 r'(?P<osm_type>[NRW])(?P<osm_id>\d+)(?::(?P<osm_class>\S+))?'),
-      converters={'osm_id': int})
-def check_place_missing_lines(db_conn, table, osm_type, osm_id, osm_class):
-    check_table_has_lines(db_conn, table, osm_type, osm_id, osm_class)
 
 
 scenarios('features/osm2pgsql')

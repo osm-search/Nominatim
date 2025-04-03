@@ -10,7 +10,6 @@ Helper functions to compare expected values.
 import json
 import re
 import math
-import itertools
 
 from psycopg import sql as pysql
 from psycopg.rows import dict_row, tuple_row
@@ -152,18 +151,16 @@ class ResultAttr:
             ccode = geom[8:].upper()
             assert ccode in ALIASES, f"Geometry error: unknown country {ccode}"
             return m[1] == 'POINT' and \
-                   all(math.isclose(p1, p2) for p1, p2 in
-                       zip(converted[0], ALIASES[ccode]))
+                all(math.isclose(p1, p2) for p1, p2 in zip(converted[0], ALIASES[ccode]))
 
         if ',' not in expected:
             return m[1] == 'POINT' and \
-                   all(math.isclose(p1, p2) for p1, p2 in
-                       zip(converted[0], self.get_point(expected)))
+                all(math.isclose(p1, p2) for p1, p2 in zip(converted[0], self.get_point(expected)))
 
         if '(' not in expected:
             return m[1] == 'LINESTRING' and \
-                   all(math.isclose(p1[0], p2[0]) and math.isclose(p1[1], p2[1]) for p1, p2 in
-                       zip(converted, (self.get_point(p) for p in expected.split(','))))
+                all(math.isclose(p1[0], p2[0]) and math.isclose(p1[1], p2[1]) for p1, p2 in
+                    zip(converted, (self.get_point(p) for p in expected.split(','))))
 
         if m[1] != 'POLYGON':
             return False

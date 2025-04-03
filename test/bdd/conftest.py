@@ -30,6 +30,7 @@ from utils.db import DBManager
 
 from nominatim_db.config import Configuration
 
+
 def _strlist(inp):
     return [s.strip() for s in inp.split(',')]
 
@@ -92,7 +93,6 @@ def template_db(pytestconfig):
     dbm.setup_template_db(template_config)
 
     return template_db
-
 
 
 @when(step_parse(r'reverse geocoding (?P<lat>[\d.-]*),(?P<lon>[\d.-]*)'),

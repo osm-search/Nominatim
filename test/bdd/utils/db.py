@@ -18,6 +18,7 @@ from nominatim_db.tools.refresh import create_functions, load_address_levels_fro
 from nominatim_db.tools.exec_utils import run_osm2pgsql
 from nominatim_db.tokenizer import factory as tokenizer_factory
 
+
 class DBManager:
 
     def __init__(self, purge=False):
@@ -98,4 +99,3 @@ class DBManager:
             asyncio.run(create_search_indices(conn, config))
 
         tokenizer_factory.create_tokenizer(config)
-

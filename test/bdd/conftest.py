@@ -123,7 +123,7 @@ def db(template_db, pytestconfig):
 
 
 @pytest.fixture
-def db_conn(def_config):
+def db_conn(db, def_config):
     with psycopg.connect(def_config.get_libpq_dsn()) as conn:
         info = psycopg.types.TypeInfo.fetch(conn, "hstore")
         psycopg.types.hstore.register_hstore(info, conn)
@@ -313,22 +313,3 @@ def set_node_grid(datatable, step, origin):
             raise RuntimeError('Grid origin must be either coordinate or alias.')
 
     return Grid(datatable, step, origin)
-
-
-@when('indexing')
-def do_index(def_config):
-    """ Run Nominatim's indexing step.
-    """
-    cli.nominatim(['index'], def_config.environ)
-
-
-@then(step_parse(r'(?P<table>\w+) contains(?P<exact> exactly)?'))
-def check_place_content(db_conn, datatable, node_grid, table, exact):
-    check_table_content(db_conn, table, datatable, grid=node_grid, exact=bool(exact))
-
-
-@then(step_parse('(?P<table>placex?) has no entry for '
-                 r'(?P<osm_type>[NRW])(?P<osm_id>\d+)(?::(?P<osm_class>\S+))?'),
-      converters={'osm_id': int})
-def check_place_missing_lines(db_conn, table, osm_type, osm_id, osm_class):
-    check_table_has_lines(db_conn, table, osm_type, osm_id, osm_class)

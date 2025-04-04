@@ -91,4 +91,23 @@ def update_from_osm_file(db_conn, def_config, osm2pgsql_options, opl_writer, doc
     run_osm2pgsql_updates(db_conn, osm2pgsql_options)
 
 
+@when('indexing')
+def do_index(def_config):
+    """ Run Nominatim's indexing step.
+    """
+    cli.nominatim(['index'], def_config.environ)
+
+
+@then(step_parse(r'(?P<table>\w+) contains(?P<exact> exactly)?'))
+def check_place_content(db_conn, datatable, node_grid, table, exact):
+    check_table_content(db_conn, table, datatable, grid=node_grid, exact=bool(exact))
+
+
+@then(step_parse('(?P<table>placex?) has no entry for '
+                 r'(?P<osm_type>[NRW])(?P<osm_id>\d+)(?::(?P<osm_class>\S+))?'),
+      converters={'osm_id': int})
+def check_place_missing_lines(db_conn, table, osm_type, osm_id, osm_class):
+    check_table_has_lines(db_conn, table, osm_type, osm_id, osm_class)
+
+
 scenarios('features/osm2pgsql')

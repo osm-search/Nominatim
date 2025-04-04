@@ -32,3 +32,15 @@ class Grid:
         """ Get the coordinates for the given grid node.
         """
         return self.grid.get(nodeid)
+
+    def parse_point(self, value):
+        """ Get the coordinates for either a grid node or a full coordinate.
+        """
+        value = value.strip()
+        if ' ' in value:
+            return [int(v) for v in value.split(' ', 1)]
+
+        return self.grid.get(value)
+
+    def parse_line(self, value):
+        return [self.parse_point(p) for p in value.split(',')]

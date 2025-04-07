@@ -27,18 +27,25 @@ can be found at nominatim.org as well.
 
 A quick summary of the necessary steps:
 
-1. Create a Python virtualenv and install the packages:
+
+1. Clone this git repository and download the country grid
+
+        git clone https://github.com/osm-search/Nominatim.git
+        wget -O Nominatim/data/country_osm_grid.sql.gz https://nominatim.org/data/country_grid.sql.gz
+
+2. Create a Python virtualenv and install the packages:
 
         python3 -m venv nominatim-venv
         ./nominatim-venv/bin/pip install packaging/nominatim-{api,db}
 
-2. Create a project directory, get OSM data and import:
+3. Create a project directory, get OSM data and import:
 
         mkdir nominatim-project
         cd nominatim-project
-        ../nominatim-venv/bin/nominatim import --osm-file <your planet file>
+        ../nominatim-venv/bin/nominatim import --osm-file <your planet file> 2>&1 | tee setup.log
 
-3. Start the webserver:
+
+4. Start the webserver:
 
         ./nominatim-venv/bin/pip install uvicorn falcon
         ../nominatim-venv/bin/nominatim serve

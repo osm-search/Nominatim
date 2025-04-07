@@ -75,3 +75,28 @@ used in the search, use the [OSM Forum](https://community.openstreetmap.org/).
 For questions, community help and discussions around the software and
 your own installation of Nominatim, use the
 [Github discussions forum](https://github.com/osm-search/Nominatim/discussions).
+
+
+## 🆕 Transliteration Fallback (Japanese Support)
+
+This patch introduces a transliteration fallback to improve search for Japanese place names. It uses a Python script (`transliteration.py`) with the `pykakasi` library to convert Japanese Kanji/Kana into Romaji.
+
+### How It Works
+
+- If a search query using Kanji (e.g., `仙台`) fails, the input is transliterated (e.g., to `Sendai`).
+- Nominatim retries the search with the transliterated version.
+
+### Usage
+
+Install the required Python library:
+
+pip install pykakasi
+Run the script:
+python transliteration.py 仙台
+
+# Output: sendai
+
+Author
+Harshita Manocha (GitHub: harshitam21)
+
+

@@ -16,7 +16,7 @@
 from typing import Iterable, Tuple, Mapping, Sequence, Optional, Set
 import logging
 import re
-
+import json 
 from psycopg.sql import Identifier, SQL
 
 from ...typing import Protocol
@@ -65,6 +65,52 @@ class SPImporter():
         # special phrases class/type on the wiki.
         self.table_phrases_to_delete: Set[str] = set()
 
+    def get_classtype_pairs_style(self) ->  Set[Tuple[str, str]]:
+        """
+            Returns list of allowed special phrases from the the style file, 
+            restricting to a list of combinations of classes and types 
+            which have a 'main' property
+
+            Note: This requirement was from 2021 and I am a bit unsure if it is still relevant
+        """
+        style_file = self.config.get_import_style_file() # this gives the path, so i will import it as a json
+        with open(style_file, 'r') as file:
+            style_data = json.loads(f'[{file.read()}]')
+
+        style_combinations = set()
+        for _map in style_data: # following ../settings/import-extratags.style
+            classes = _map.get("keys", [])
+            values = _map.get("values", {})
+
+            for _type, properties in values.items():
+                if "main" in properties and _type: # make sure the tag is not an empty string. since type is the value of the main tag
+                    for _class in classes:
+                        style_combinations.add((_class, _type)) 
+
+        return style_combinations
+    
+    def get_classtype_pairs(self) ->  Set[Tuple[str, str]]:
+        """
+            Returns list of allowed special phrases from the database, 
+            restricting to a list of combinations of classes and types 
+            whic occur more than 100 times
+        """
+        db_combinations = set() 
+        query = """
+        SELECT class AS CLS, type AS typ
+        FROM placex
+        GROUP BY class, type
+        HAVING COUNT(*) > 100
+        """
+
+        with self.db_connection.cursor() as db_cursor:
+            db_cursor.execute(SQL(query))   
+            for row in db_cursor.fetchall():
+                db_combinations.add((row[0], row[1]))
+
+        return  db_combinations
+
+    
     def import_phrases(self, tokenizer: AbstractTokenizer, should_replace: bool) -> None:
         """
             Iterate through all SpecialPhrases extracted from the
@@ -85,9 +131,11 @@ class SPImporter():
             if result:
                 class_type_pairs.add(result)
 
-        self._create_classtype_table_and_indexes(class_type_pairs)
+        self._create_classtype_table_and_indexes(class_type_pairs) 
         if should_replace:
             self._remove_non_existent_tables_from_db()
+
+        
         self.db_connection.commit()
 
         with tokenizer.name_analyzer() as analyzer:
@@ -177,10 +225,17 @@ class SPImporter():
         with self.db_connection.cursor() as db_cursor:
             db_cursor.execute("CREATE INDEX idx_placex_classtype ON placex (class, type)")
 
+        allowed_special_phrases = self.get_classtype_pairs()
+
         for pair in class_type_pairs:
             phrase_class = pair[0]
             phrase_type = pair[1]
 
+            if (phrase_class, phrase_type) not in allowed_special_phrases:
+                LOG.warning("Skipping phrase %s=%s: not in allowed special phrases",
+                            phrase_class, phrase_type)
+                continue
+            
             table_name = _classtype_table(phrase_class, phrase_type)
 
             if table_name in self.table_phrases_to_delete:
@@ -212,8 +267,8 @@ class SPImporter():
             if doesn't exit.
         """
         table_name = _classtype_table(phrase_class, phrase_type)
-        with self.db_connection.cursor() as cur:
-            cur.execute(SQL("""CREATE TABLE IF NOT EXISTS {} {} AS
+        with self.db_connection.cursor() as db_cursor:
+            db_cursor.execute(SQL("""CREATE TABLE IF NOT EXISTS {} {} AS
                                  SELECT place_id AS place_id,
                                         st_centroid(geometry) AS centroid
                                  FROM placex
@@ -266,3 +321,4 @@ class SPImporter():
         drop_tables(self.db_connection, *self.table_phrases_to_delete)
         for _ in self.table_phrases_to_delete:
             self.statistics_handler.notify_one_table_deleted()
+

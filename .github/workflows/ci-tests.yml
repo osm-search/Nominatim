@@ -68,19 +68,30 @@ jobs:
               with:
                   dependencies: ${{ matrix.dependencies }}
 
+            - uses: actions/cache@v4
+              with:
+                  path: |
+                     /usr/local/bin/osm2pgsql
+                  key: osm2pgsql-bin-22-1
+              if: matrix.ubuntu == '22'
+
             - name: Compile osm2pgsql
               run: |
-                  sudo apt-get install -y -qq libboost-system-dev libboost-filesystem-dev libexpat1-dev zlib1g-dev libbz2-dev libpq-dev libproj-dev libicu-dev liblua${LUA_VERSION}-dev lua-dkjson nlohmann-json3-dev 
-                  mkdir osm2pgsql-build
-                  cd osm2pgsql-build
-                  git clone https://github.com/osm2pgsql-dev/osm2pgsql
-                  mkdir build
-                  cd build
-                  cmake ../osm2pgsql
-                  make
-                  sudo make install
-                  cd ../..
-                  rm -rf osm2pgsql-build
+                  if [ ! -f /usr/local/bin/osm2pgsql ]; then
+                      sudo apt-get install -y -qq libboost-system-dev libboost-filesystem-dev libexpat1-dev zlib1g-dev libbz2-dev libpq-dev libproj-dev libicu-dev liblua${LUA_VERSION}-dev lua-dkjson nlohmann-json3-dev 
+                      mkdir osm2pgsql-build
+                      cd osm2pgsql-build
+                      git clone https://github.com/osm2pgsql-dev/osm2pgsql
+                      mkdir build
+                      cd build
+                      cmake ../osm2pgsql
+                      make
+                      sudo make install
+                      cd ../..
+                      rm -rf osm2pgsql-build
+                  else
+                      sudo apt-get install -y -qq libexpat1 liblua${LUA_VERSION}
+                  fi
               if: matrix.ubuntu == '22'
               env:
                   LUA_VERSION: ${{ matrix.lua }}

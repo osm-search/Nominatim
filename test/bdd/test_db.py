@@ -11,7 +11,6 @@ These tests check the Nominatim import chain after the osm2pgsql import.
 """
 import asyncio
 import re
-from pathlib import Path
 
 import psycopg
 
@@ -130,7 +129,7 @@ def do_import(db_conn, def_config):
     create_table_triggers(db_conn, def_config)
     asyncio.run(load_data(def_config.get_libpq_dsn(), 1))
     tokenizer = tokenizer_factory.get_tokenizer_for_db(def_config)
-    update_postcodes(def_config.get_libpq_dsn(), Path('/xxxx'), tokenizer)
+    update_postcodes(def_config.get_libpq_dsn(), None, tokenizer)
     cli.nominatim(['index', '-q'], def_config.environ)
 
     return _collect_place_ids(db_conn)

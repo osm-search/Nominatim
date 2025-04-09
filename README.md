@@ -29,6 +29,7 @@ A quick summary of the necessary steps:
 
 
 1. Clone this git repository and download the country grid
+
       git clone https://github.com/osm-search/Nominatim.git
       wget -O Nominatim/data/country_osm_grid.sql.gz https://nominatim.org/data/country_grid.sql.gz
 

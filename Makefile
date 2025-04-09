@@ -27,8 +27,7 @@ lint:
 	flake8 src test/python test/bdd
 
 bdd:
-	pytest test/bdd
-	cd test/bdd; behave -DREMOVE_TEMPLATE=1 db osm2pgsql
+	pytest test/bdd --nominatim-purge
 
 # Documentation
 

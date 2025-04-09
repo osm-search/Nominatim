@@ -38,7 +38,7 @@ class Grid:
         """
         value = value.strip()
         if ' ' in value:
-            return [int(v) for v in value.split(' ', 1)]
+            return [float(v) for v in value.split(' ', 1)]
 
         return self.grid.get(value)
 

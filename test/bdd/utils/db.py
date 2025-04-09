@@ -13,7 +13,7 @@ from psycopg import sql as pysql
 
 from nominatim_db.tools.database_import import setup_database_skeleton, create_tables, \
                                                create_partition_tables, create_search_indices
-from nominatim_db.data.country_info import setup_country_tables
+from nominatim_db.data.country_info import setup_country_tables, create_country_names
 from nominatim_db.tools.refresh import create_functions, load_address_levels_from_config
 from nominatim_db.tools.exec_utils import run_osm2pgsql
 from nominatim_db.tokenizer import factory as tokenizer_factory
@@ -98,4 +98,5 @@ class DBManager:
             create_functions(conn, config, enable_diff_updates=False)
             asyncio.run(create_search_indices(conn, config))
 
-        tokenizer_factory.create_tokenizer(config)
+            tokenizer = tokenizer_factory.create_tokenizer(config)
+            create_country_names(conn, tokenizer)

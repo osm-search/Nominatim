@@ -11,12 +11,15 @@ import asyncio
 import random
 
 import pytest
-from pytest_bdd import scenarios, when, given
+from pytest_bdd import scenarios, when, then, given
+from pytest_bdd.parsers import re as step_parse
 
 from nominatim_db import cli
 from nominatim_db.tools.exec_utils import run_osm2pgsql
 from nominatim_db.tools.database_import import load_data, create_table_triggers
 from nominatim_db.tools.replication import run_osm2pgsql_updates
+
+from utils.checks import check_table_content
 
 
 @pytest.fixture
@@ -101,13 +104,6 @@ def do_index(def_config):
 @then(step_parse(r'(?P<table>\w+) contains(?P<exact> exactly)?'))
 def check_place_content(db_conn, datatable, node_grid, table, exact):
     check_table_content(db_conn, table, datatable, grid=node_grid, exact=bool(exact))
-
-
-@then(step_parse('(?P<table>placex?) has no entry for '
-                 r'(?P<osm_type>[NRW])(?P<osm_id>\d+)(?::(?P<osm_class>\S+))?'),
-      converters={'osm_id': int})
-def check_place_missing_lines(db_conn, table, osm_type, osm_id, osm_class):
-    check_table_has_lines(db_conn, table, osm_type, osm_id, osm_class)
 
 
 scenarios('features/osm2pgsql')

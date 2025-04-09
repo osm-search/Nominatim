@@ -12,6 +12,7 @@ import json
 from pathlib import Path
 
 import psycopg
+from psycopg import sql as pysql
 
 # always test against the source
 SRC_DIR = (Path(__file__) / '..' / '..' / '..').resolve()
@@ -25,13 +26,13 @@ pytest.register_assert_rewrite('utils')
 
 from utils.api_runner import APIRunner
 from utils.api_result import APIResult
-from utils.checks import ResultAttr, COMPARATOR_TERMS, check_table_content, check_table_has_lines
+from utils.checks import ResultAttr, COMPARATOR_TERMS
 from utils.geometry_alias import ALIASES
 from utils.grid import Grid
 from utils.db import DBManager
 
 from nominatim_db.config import Configuration
-from nominatim_db import cli
+from nominatim_db.data.country_info import setup_country_config
 
 
 def _strlist(inp):
@@ -75,6 +76,11 @@ def node_grid():
     """ Default fixture for node grids. Nothing set.
     """
     return Grid([[]], None, None)
+
+
+@pytest.fixture(scope='session', autouse=True)
+def setup_country_info():
+    setup_country_config(Configuration(None))
 
 
 @pytest.fixture(scope='session')
@@ -147,6 +153,28 @@ def reverse_geocode_via_api(test_config_env, pytestconfig, datatable, lat, lon):
     return result
 
 
+@when(step_parse(r'reverse geocoding at node (?P<node>[\d]+)'),
+      target_fixture='nominatim_result')
+def reverse_geocode_via_api_and_grid(test_config_env, pytestconfig, node_grid, datatable, node):
+    coords = node_grid.get(node)
+    if coords is None:
+        raise ValueError('Unknown node id')
+    runner = APIRunner(test_config_env, pytestconfig.option.NOMINATIM_API_ENGINE)
+    api_response = runner.run_step('reverse',
+                                   {'lat': coords[1], 'lon': coords[0]},
+                                   datatable, 'jsonv2', {})
+
+    assert api_response.status == 200
+    assert api_response.headers['content-type'] == 'application/json; charset=utf-8'
+
+    result = APIResult('json', 'reverse', api_response.body)
+    assert result.is_simple()
+
+    result.result['centroid'] = f"POINT({result.result['lon']:.7f} {result.result['lat']:.7f})"
+
+    return result
+
+
 @when(step_parse(r'geocoding(?: "(?P<query>.*)")?'),
       target_fixture='nominatim_result')
 def forward_geocode_via_api(test_config_env, pytestconfig, datatable, query):
@@ -163,6 +191,9 @@ def forward_geocode_via_api(test_config_env, pytestconfig, datatable, query):
 
     result = APIResult('json', 'search', api_response.body)
     assert not result.is_simple()
+
+    for res in result.result:
+        res['centroid'] = f"POINT({res['lon']:.7f} {res['lat']:.7f})"
 
     return result
 
@@ -194,7 +225,7 @@ def check_metadata_for_field_presence(nominatim_result, attributes):
 
 
 @then(step_parse(r'the result contains(?: in field (?P<field>\S+))?'))
-def check_result_for_fields(nominatim_result, datatable, field):
+def check_result_for_fields(nominatim_result, datatable, node_grid, field):
     assert nominatim_result.is_simple()
 
     if datatable[0] == ['param', 'value']:
@@ -205,7 +236,7 @@ def check_result_for_fields(nominatim_result, datatable, field):
     prefix = field + '+' if field else ''
 
     for k, v in pairs:
-        assert ResultAttr(nominatim_result.result, prefix + k) == v
+        assert ResultAttr(nominatim_result.result, prefix + k, grid=node_grid) == v
 
 
 @then(step_parse('the result has attributes (?P<attributes>.*)'),
@@ -248,6 +279,7 @@ def check_result_list_match(nominatim_result, datatable, exact):
       converters={'attributes': _strlist})
 def check_all_results_for_field_presence(nominatim_result, attributes):
     assert not nominatim_result.is_simple()
+    assert len(nominatim_result) > 0
     for res in nominatim_result.result:
         assert all(a in res for a in attributes), \
             f"Missing one of the attributes '{attributes}' in\n{_pretty_json(res)}"
@@ -257,14 +289,16 @@ def check_all_results_for_field_presence(nominatim_result, attributes):
       converters={'attributes': _strlist})
 def check_all_result_for_field_absence(nominatim_result, attributes):
     assert not nominatim_result.is_simple()
+    assert len(nominatim_result) > 0
     for res in nominatim_result.result:
         assert all(a not in res for a in attributes), \
             f"Unexpectedly have one of the attributes '{attributes}' in\n{_pretty_json(res)}"
 
 
 @then(step_parse(r'all results contain(?: in field (?P<field>\S+))?'))
-def check_all_results_contain(nominatim_result, datatable, field):
+def check_all_results_contain(nominatim_result, datatable, node_grid, field):
     assert not nominatim_result.is_simple()
+    assert len(nominatim_result) > 0
 
     if datatable[0] == ['param', 'value']:
         pairs = datatable[1:]
@@ -275,14 +309,14 @@ def check_all_results_contain(nominatim_result, datatable, field):
 
     for k, v in pairs:
         for r in nominatim_result.result:
-            assert ResultAttr(r, prefix + k) == v
+            assert ResultAttr(r, prefix + k, grid=node_grid) == v
 
 
 @then(step_parse(r'result (?P<num>\d+) contains(?: in field (?P<field>\S+))?'),
       converters={'num': int})
 def check_specific_result_for_fields(nominatim_result, datatable, num, field):
     assert not nominatim_result.is_simple()
-    assert len(nominatim_result) >= num + 1
+    assert len(nominatim_result) > num
 
     if datatable[0] == ['param', 'value']:
         pairs = datatable[1:]
@@ -313,3 +347,18 @@ def set_node_grid(datatable, step, origin):
             raise RuntimeError('Grid origin must be either coordinate or alias.')
 
     return Grid(datatable, step, origin)
+
+
+@then(step_parse('(?P<table>placex?) has no entry for '
+                 r'(?P<osm_type>[NRW])(?P<osm_id>\d+)(?::(?P<osm_class>\S+))?'),
+      converters={'osm_id': int})
+def check_place_missing_lines(db_conn, table, osm_type, osm_id, osm_class):
+    sql = pysql.SQL("""SELECT count(*) FROM {}
+                       WHERE osm_type = %s and osm_id = %s""").format(pysql.Identifier(table))
+    params = [osm_type, int(osm_id)]
+    if osm_class:
+        sql += pysql.SQL(' AND class = %s')
+        params.append(osm_class)
+
+    with db_conn.cursor() as cur:
+        assert cur.execute(sql, params).fetchone()[0] == 0

@@ -85,9 +85,6 @@ jobs:
               env:
                   LUA_VERSION: ${{ matrix.lua }}
 
-            - name: Install test prerequisites
-              run: ./venv/bin/pip install behave==1.2.6
-
             - name: Install test prerequisites (apt)
               run: sudo apt-get install -y -qq python3-pytest python3-pytest-asyncio uvicorn python3-falcon python3-aiosqlite python3-pyosmium
               if: matrix.dependencies == 'apt'
@@ -95,6 +92,9 @@ jobs:
             - name: Install test prerequisites (pip)
               run: ./venv/bin/pip install pytest-asyncio falcon starlette asgi_lifespan aiosqlite osmium uvicorn
               if: matrix.dependencies == 'pip'
+
+            - name: Install test prerequisites
+              run: ./venv/bin/pip install pytest-bdd
 
             - name: Install latest flake8
               run: ./venv/bin/pip install -U flake8
@@ -118,8 +118,8 @@ jobs:
 
             - name: BDD tests
               run: |
-                  ../../../venv/bin/python -m behave -DREMOVE_TEMPLATE=1 --format=progress3
-              working-directory: Nominatim/test/bdd
+                  ../venv/bin/python -m pytest test/bdd --nominatim-purge
+              working-directory: Nominatim
 
     install:
         runs-on: ubuntu-latest

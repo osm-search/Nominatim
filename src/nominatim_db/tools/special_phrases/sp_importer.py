@@ -138,7 +138,7 @@ class SPImporter():
             if result:
                 class_type_pairs.add(result)
 
-        self._create_classtype_table_and_indexes(class_type_pairs) # from the issue, this said to filter this after, which doesnt make sense
+        self._create_classtype_table_and_indexes(class_type_pairs) 
         if should_replace:
             self._remove_non_existent_tables_from_db()
 

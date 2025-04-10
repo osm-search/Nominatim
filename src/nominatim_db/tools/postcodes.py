@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Functions for importing, updating and otherwise maintaining the table
@@ -64,11 +64,15 @@ class _PostcodeCollector:
             if normalized:
                 self.collected[normalized] += (x, y)
 
-    def commit(self, conn: Connection, analyzer: AbstractAnalyzer, project_dir: Path) -> None:
-        """ Update postcodes for the country from the postcodes selected so far
-            as well as any externally supplied postcodes.
+    def commit(self, conn: Connection, analyzer: AbstractAnalyzer,
+               project_dir: Optional[Path]) -> None:
+        """ Update postcodes for the country from the postcodes selected so far.
+
+            When 'project_dir' is set, then any postcode files found in this
+            directory are taken into account as well.
         """
-        self._update_from_external(analyzer, project_dir)
+        if project_dir is not None:
+            self._update_from_external(analyzer, project_dir)
         to_add, to_delete, to_update = self._compute_changes(conn)
 
         LOG.info("Processing country '%s' (%s added, %s deleted, %s updated).",
@@ -170,7 +174,7 @@ class _PostcodeCollector:
         return None
 
 
-def update_postcodes(dsn: str, project_dir: Path, tokenizer: AbstractTokenizer) -> None:
+def update_postcodes(dsn: str, project_dir: Optional[Path], tokenizer: AbstractTokenizer) -> None:
     """ Update the table of artificial postcodes.
 
         Computes artificial postcode centroids from the placex table,

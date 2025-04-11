@@ -82,7 +82,7 @@ def test_query_struct_with_tokens():
     assert q.get_tokens(query.TokenRange(0, 2), query.TOKEN_WORD) == []
     assert len(q.get_tokens(query.TokenRange(1, 2), query.TOKEN_WORD)) == 2
 
-    partials = q.get_partials_list(query.TokenRange(0, 2))
+    partials = list(q.iter_partials(query.TokenRange(0, 2)))
 
     assert len(partials) == 2
     assert [t.token for t in partials] == [1, 2]

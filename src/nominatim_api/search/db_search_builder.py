@@ -146,7 +146,7 @@ class SearchBuilder:
             if address:
                 sdata.lookups = [dbf.FieldLookup('nameaddress_vector',
                                                  [t.token for r in address
-                                                  for t in self.query.get_partials_list(r)],
+                                                  for t in self.query.iter_partials(r)],
                                                  lookups.Restrict)]
             yield dbs.PostcodeSearch(penalty, sdata)
 
@@ -159,7 +159,7 @@ class SearchBuilder:
         expected_count = sum(t.count for t in hnrs)
 
         partials = {t.token: t.addr_count for trange in address
-                    for t in self.query.get_partials_list(trange)}
+                    for t in self.query.iter_partials(trange)}
 
         if not partials:
             # can happen when none of the partials is indexed
@@ -203,9 +203,9 @@ class SearchBuilder:
             are and tries to find a lookup that optimizes index use.
         """
         penalty = 0.0  # extra penalty
-        name_partials = {t.token: t for t in self.query.get_partials_list(name)}
+        name_partials = {t.token: t for t in self.query.iter_partials(name)}
 
-        addr_partials = [t for r in address for t in self.query.get_partials_list(r)]
+        addr_partials = [t for r in address for t in self.query.iter_partials(r)]
         addr_tokens = list({t.token for t in addr_partials})
 
         exp_count = min(t.count for t in name_partials.values()) / (3**(len(name_partials) - 1))
@@ -282,8 +282,7 @@ class SearchBuilder:
         ranks = [dbf.RankedTokens(t.penalty, [t.token]) for t in name_fulls]
         ranks.sort(key=lambda r: r.penalty)
         # Fallback, sum of penalty for partials
-        name_partials = self.query.get_partials_list(trange)
-        default = sum(t.penalty for t in name_partials) + 0.2
+        default = sum(t.penalty for t in self.query.iter_partials(trange)) + 0.2
         return dbf.FieldRanking(db_field, default, ranks)
 
     def get_addr_ranking(self, trange: qmod.TokenRange) -> dbf.FieldRanking:
@@ -320,8 +319,7 @@ class SearchBuilder:
                         if len(ranks) >= 10:
                             # Too many variants, bail out and only add
                             # Worst-case Fallback: sum of penalty of partials
-                            name_partials = self.query.get_partials_list(trange)
-                            default = sum(t.penalty for t in name_partials) + 0.2
+                            default = sum(t.penalty for t in self.query.iter_partials(trange)) + 0.2
                             ranks.append(dbf.RankedTokens(rank.penalty + default, []))
                             # Bail out of outer loop
                             todo.clear()

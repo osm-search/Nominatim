@@ -301,10 +301,11 @@ class QueryStruct:
         assert ttype != TOKEN_PARTIAL
         return self.nodes[trange.start].get_tokens(trange.end, ttype) or []
 
-    def get_partials_list(self, trange: TokenRange) -> List[Token]:
-        """ Create a list of partial tokens between the given nodes.
+    def iter_partials(self, trange: TokenRange) -> Iterator[Token]:
+        """ Iterate over the partial tokens between the given nodes.
+            Missing partials are ignored.
         """
-        return list(filter(None, (self.nodes[i].partial for i in range(trange.start, trange.end))))
+        return (n.partial for n in self.nodes[trange.start:trange.end] if n.partial is not None)
 
     def iter_token_lists(self) -> Iterator[Tuple[int, QueryNode, TokenList]]:
         """ Iterator over all token lists except partial tokens in the query.

@@ -65,7 +65,7 @@ class SPImporter():
         # special phrases class/type on the wiki.
         self.table_phrases_to_delete: Set[str] = set()
 
-    def get_sp_style(self) ->  Set[Tuple[str, str]]:
+    def get_classtype_pairs_style(self) ->  Set[Tuple[str, str]]:
         """
             Returns list of allowed special phrases from the the style file, 
             restricting to a list of combinations of classes and types 
@@ -89,7 +89,7 @@ class SPImporter():
 
         return style_combinations
     
-    def get_sp_db(self) ->  Set[Tuple[str, str]]:
+    def get_classtype_pairs(self) ->  Set[Tuple[str, str]]:
         """
             Returns list of allowed special phrases from the database, 
             restricting to a list of combinations of classes and types 
@@ -110,13 +110,6 @@ class SPImporter():
 
         return  db_combinations
 
-    def get_classtype_pairs(self) -> Set[Tuple[str, str]]:
-        """
-            Gets list of allowed class type pairs from intersection of style sheet 
-            phrases that are marked with the main tag and database special phases
-            that occur more than 100 times
-        """
-        return self.get_sp_style() & self.get_sp_db()
     
     def import_phrases(self, tokenizer: AbstractTokenizer, should_replace: bool) -> None:
         """

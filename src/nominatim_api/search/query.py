@@ -354,16 +354,18 @@ class QueryStruct:
 
         words: Dict[str, List[TokenRange]] = defaultdict(list)
 
-        for first in range(start, endpos - 1):
-            word = self.nodes[first + 1].term_lookup
+        for first, first_node in enumerate(self.nodes[start + 1:endpos], start):
+            word = first_node.term_lookup
             penalty = base_penalty
             words[word].append(TokenRange(first, first + 1, penalty=penalty))
-            if self.nodes[first + 1].btype != BREAK_PHRASE:
-                for last in range(first + 2, min(first + 20, endpos)):
-                    word = ' '.join((word, self.nodes[last].term_lookup))
-                    penalty += self.nodes[last - 1].penalty
+            if first_node.btype != BREAK_PHRASE:
+                penalty += first_node.penalty
+                max_last = min(first + 20, endpos)
+                for last, last_node in enumerate(self.nodes[first + 2:max_last], first + 2):
+                    word = ' '.join((word, last_node.term_lookup))
                     words[word].append(TokenRange(first, last, penalty=penalty))
-                    if self.nodes[last].btype == BREAK_PHRASE:
+                    if last_node.btype == BREAK_PHRASE:
                         break
+                    penalty += last_node.penalty
 
         return words

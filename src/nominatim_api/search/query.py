@@ -183,10 +183,10 @@ class QueryNode:
     """ Penalty for the break at this node.
     """
     term_lookup: str
-    """ Transliterated term following this node.
+    """ Transliterated term ending at this node.
     """
     term_normalized: str
-    """ Normalised form of term following this node.
+    """ Normalised form of term ending at this node.
         When the token resulted from a split during transliteration,
         then this string contains the complete source term.
     """
@@ -307,12 +307,18 @@ class QueryStruct:
         """
         return (n.partial for n in self.nodes[trange.start:trange.end] if n.partial is not None)
 
-    def iter_token_lists(self) -> Iterator[Tuple[int, QueryNode, TokenList]]:
-        """ Iterator over all token lists except partial tokens in the query.
+    def iter_tokens_by_edge(self) -> Iterator[Tuple[int, int, Dict[TokenType, List[Token]]]]:
+        """ Iterator over all tokens except partial ones grouped by edge.
+
+            Returns the start and end node indexes and a dictionary
+            of list of tokens by token type.
         """
         for i, node in enumerate(self.nodes):
+            by_end: Dict[int, Dict[TokenType, List[Token]]] = defaultdict(dict)
             for tlist in node.starting:
-                yield i, node, tlist
+                by_end[tlist.end][tlist.ttype] = tlist.tokens
+            for end, endlist in by_end.items():
+                yield i, end, endlist
 
     def find_lookup_word_by_id(self, token: int) -> str:
         """ Find the first token with the given token ID and return

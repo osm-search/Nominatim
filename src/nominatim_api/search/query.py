@@ -13,6 +13,10 @@ from collections import defaultdict
 import dataclasses
 
 
+LINFAC = [i * (sum(si * si for si in range(i)) - (i - 1) * i * (i - 1) / 4)
+          for i in range(50)]
+
+
 BreakType = str
 """ Type of break between tokens.
 """
@@ -201,6 +205,15 @@ class QueryNode:
         types of tokens spanning over the gap.
     """
 
+    def name_address_ratio(self) -> float:
+        """ Return the propability that the partial token belonging to
+            this node forms part of a name (as opposed of part of the address).
+        """
+        if self.partial is None:
+            return 0.5
+
+        return self.partial.count / (self.partial.count + self.partial.addr_count)
+
     def adjust_break(self, btype: BreakType, penalty: float) -> None:
         """ Change the break type and penalty for this node.
         """
@@ -242,12 +255,20 @@ class QueryStruct:
         need to be direct neighbours. Thus the query is represented as a
         directed acyclic graph.
 
+        A query also has a direction penalty 'dir_penalty'. This describes
+        the likelyhood if the query should be read from left-to-right or
+        vice versa. A negative 'dir_penalty' should be read as a penalty on
+        right-to-left reading, while a positive value represents a penalty
+        for left-to-right reading. The default value is 0, which is equivalent
+        to having no information about the reading.
+
         When created, a query contains a single node: the start of the
         query. Further nodes can be added by appending to 'nodes'.
     """
 
     def __init__(self, source: List[Phrase]) -> None:
         self.source = source
+        self.dir_penalty = 0.0
         self.nodes: List[QueryNode] = \
             [QueryNode(BREAK_START, source[0].ptype if source else PHRASE_ANY,
                        0.0, '', '')]
@@ -290,6 +311,21 @@ class QueryStruct:
                     snode.starting.append(TokenList(trange.end, ttype, [token]))
                 else:
                     tlist.append(token)
+
+    def compute_direction_penalty(self) -> None:
+        """ Recompute the direction probability from the partial tokens
+            of each node.
+        """
+        n = len(self.nodes) - 1
+        if n == 1 or n >= 50:
+            self.dir_penalty = 0
+        elif n == 2:
+            self.dir_penalty = (self.nodes[1].name_address_ratio()
+                                - self.nodes[0].name_address_ratio()) / 3
+        else:
+            ratios = [n.name_address_ratio() for n in self.nodes[:-1]]
+            self.dir_penalty = (n * sum(i * r for i, r in enumerate(ratios))
+                                - sum(ratios) * n * (n - 1) / 2) / LINFAC[n]
 
     def get_tokens(self, trange: TokenRange, ttype: TokenType) -> List[Token]:
         """ Get the list of tokens of a given type, spanning the given

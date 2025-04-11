@@ -110,9 +110,9 @@ class SPImporter():
 
         return  db_combinations
 
-    def get_sp(self) -> Set[Tuple[str, str]]:
+    def get_classtype_pairs(self) -> Set[Tuple[str, str]]:
         """
-            Gets list of allowed special phrases from intersection of style sheet 
+            Gets list of allowed class type pairs from intersection of style sheet 
             phrases that are marked with the main tag and database special phases
             that occur more than 100 times
         """
@@ -232,7 +232,7 @@ class SPImporter():
         with self.db_connection.cursor() as db_cursor:
             db_cursor.execute("CREATE INDEX idx_placex_classtype ON placex (class, type)")
 
-        allowed_special_phrases = self.get_sp()
+        allowed_special_phrases = self.get_classtype_pairs()
 
         for pair in class_type_pairs:
             phrase_class = pair[0]

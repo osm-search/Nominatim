@@ -316,14 +316,14 @@ class SearchBuilder:
                                                   rank.with_token(t, chgpenalty)))
                     elif tlist.end == trange.end:
                         ranks.extend(rank.with_token(t, 0.0) for t in tlist.tokens)
-                        if len(ranks) >= 10:
-                            # Too many variants, bail out and only add
-                            # Worst-case Fallback: sum of penalty of partials
-                            default = sum(t.penalty for t in self.query.iter_partials(trange)) + 0.2
-                            ranks.append(dbf.RankedTokens(rank.penalty + default, []))
-                            # Bail out of outer loop
-                            todo.clear()
-                            break
+
+            if len(ranks) >= 10:
+                # Too many variants, bail out and only add
+                # Worst-case Fallback: sum of penalty of partials
+                default = sum(t.penalty for t in self.query.iter_partials(trange)) + 0.2
+                ranks.append(dbf.RankedTokens(rank.penalty + default, []))
+                # Bail out of outer loop
+                break
 
         ranks.sort(key=lambda r: len(r.tokens))
         default = ranks[0].penalty + 0.3

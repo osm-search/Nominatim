@@ -97,7 +97,7 @@ class SPImporter():
         """
         db_combinations = set() 
         query = """
-        SELECT class, type
+        SELECT class AS CLS, type AS typ
         FROM placex
         GROUP BY class, type
         HAVING COUNT(*) > 100

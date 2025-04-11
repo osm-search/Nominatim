@@ -409,11 +409,22 @@ def yield_token_assignments(query: qmod.QueryStruct) -> Iterator[TokenAssignment
         node = query.nodes[state.end_pos]
 
         for tlist in node.starting:
-            newstate = state.advance(tlist.ttype, tlist.end, node.btype)
-            if newstate is not None:
-                if newstate.end_pos == query.num_token_slots():
-                    if newstate.recheck_sequence():
-                        log().var_dump('Assignment', newstate)
-                        yield from newstate.get_assignments(query)
-                elif not newstate.is_final():
-                    todo.append(newstate)
+            yield from _append_state_to_todo(
+                query, todo,
+                state.advance(tlist.ttype, tlist.end, node.btype))
+
+        if node.partial is not None:
+            yield from _append_state_to_todo(
+                query, todo,
+                state.advance(qmod.TOKEN_PARTIAL, state.end_pos + 1, node.btype))
+
+
+def _append_state_to_todo(query: qmod.QueryStruct, todo: List[_TokenSequence],
+                          newstate: Optional[_TokenSequence]) -> Iterator[TokenAssignment]:
+    if newstate is not None:
+        if newstate.end_pos == query.num_token_slots():
+            if newstate.recheck_sequence():
+                log().var_dump('Assignment', newstate)
+                yield from newstate.get_assignments(query)
+        elif not newstate.is_final():
+            todo.append(newstate)

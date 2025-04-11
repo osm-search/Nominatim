@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Implementation of query analysis for the ICU tokenizer.
@@ -280,7 +280,7 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
                     for repl in node.starting:
                         if repl.end == tlist.end and repl.ttype != qmod.TOKEN_HOUSENUMBER:
                             repl.add_penalty(0.5 - tlist.tokens[0].penalty)
-            elif tlist.ttype not in (qmod.TOKEN_COUNTRY, qmod.TOKEN_PARTIAL):
+            elif tlist.ttype != qmod.TOKEN_COUNTRY:
                 norm = ' '.join(n.term_normalized for n in query.nodes[i + 1:tlist.end + 1]
                                 if n.btype != qmod.BREAK_TOKEN)
                 if not norm:
@@ -293,6 +293,10 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
 def _dump_word_tokens(query: qmod.QueryStruct) -> Iterator[List[Any]]:
     yield ['type', 'from', 'to', 'token', 'word_token', 'lookup_word', 'penalty', 'count', 'info']
     for i, node in enumerate(query.nodes):
+        if node.partial is not None:
+            t = cast(ICUToken, node.partial)
+            yield [qmod.TOKEN_PARTIAL, str(i), str(i + 1), t.token,
+                   t.word_token, t.lookup_word, t.penalty, t.count, t.info]
         for tlist in node.starting:
             for token in tlist.tokens:
                 t = cast(ICUToken, token)

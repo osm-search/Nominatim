@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Conversion from token assignment to an abstract DB search.
@@ -296,26 +296,27 @@ class SearchBuilder:
 
         while todo:
             neglen, pos, rank = heapq.heappop(todo)
+            # partial node
+            partial = self.query.nodes[pos].partial
+            if partial is not None:
+                if pos + 1 < trange.end:
+                    penalty = rank.penalty + partial.penalty \
+                              + PENALTY_WORDCHANGE[self.query.nodes[pos + 1].btype]
+                    heapq.heappush(todo, (neglen - 1, pos + 1,
+                                   dbf.RankedTokens(penalty, rank.tokens)))
+                else:
+                    ranks.append(dbf.RankedTokens(rank.penalty + partial.penalty,
+                                                  rank.tokens))
+            # full words
             for tlist in self.query.nodes[pos].starting:
-                if tlist.ttype in (qmod.TOKEN_PARTIAL, qmod.TOKEN_WORD):
+                if tlist.ttype == qmod.TOKEN_WORD:
                     if tlist.end < trange.end:
                         chgpenalty = PENALTY_WORDCHANGE[self.query.nodes[tlist.end].btype]
-                        if tlist.ttype == qmod.TOKEN_PARTIAL:
-                            penalty = rank.penalty + chgpenalty \
-                                      + max(t.penalty for t in tlist.tokens)
+                        for t in tlist.tokens:
                             heapq.heappush(todo, (neglen - 1, tlist.end,
-                                                  dbf.RankedTokens(penalty, rank.tokens)))
-                        else:
-                            for t in tlist.tokens:
-                                heapq.heappush(todo, (neglen - 1, tlist.end,
-                                                      rank.with_token(t, chgpenalty)))
+                                                  rank.with_token(t, chgpenalty)))
                     elif tlist.end == trange.end:
-                        if tlist.ttype == qmod.TOKEN_PARTIAL:
-                            ranks.append(dbf.RankedTokens(rank.penalty
-                                                          + max(t.penalty for t in tlist.tokens),
-                                                          rank.tokens))
-                        else:
-                            ranks.extend(rank.with_token(t, 0.0) for t in tlist.tokens)
+                        ranks.extend(rank.with_token(t, 0.0) for t in tlist.tokens)
                         if len(ranks) >= 10:
                             # Too many variants, bail out and only add
                             # Worst-case Fallback: sum of penalty of partials

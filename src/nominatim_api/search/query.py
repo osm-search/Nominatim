@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Datastructures for a tokenized query.
@@ -192,6 +192,14 @@ class QueryNode:
     """
 
     starting: List[TokenList] = dataclasses.field(default_factory=list)
+    """ List of all full tokens starting at this node.
+    """
+    partial: Optional[Token] = None
+    """ Base token going to the next node.
+        May be None when the query has parts for which no words are known.
+        Note that the query may still be parsable when there are other
+        types of tokens spanning over the gap.
+    """
 
     def adjust_break(self, btype: BreakType, penalty: float) -> None:
         """ Change the break type and penalty for this node.
@@ -269,33 +277,37 @@ class QueryStruct:
             be added to, then the token is silently dropped.
         """
         snode = self.nodes[trange.start]
-        full_phrase = snode.btype in (BREAK_START, BREAK_PHRASE)\
-            and self.nodes[trange.end].btype in (BREAK_PHRASE, BREAK_END)
-        if _phrase_compatible_with(snode.ptype, ttype, full_phrase):
-            tlist = snode.get_tokens(trange.end, ttype)
-            if tlist is None:
-                snode.starting.append(TokenList(trange.end, ttype, [token]))
-            else:
-                tlist.append(token)
+        if ttype == TOKEN_PARTIAL:
+            assert snode.partial is None
+            if _phrase_compatible_with(snode.ptype, TOKEN_PARTIAL, False):
+                snode.partial = token
+        else:
+            full_phrase = snode.btype in (BREAK_START, BREAK_PHRASE)\
+                and self.nodes[trange.end].btype in (BREAK_PHRASE, BREAK_END)
+            if _phrase_compatible_with(snode.ptype, ttype, full_phrase):
+                tlist = snode.get_tokens(trange.end, ttype)
+                if tlist is None:
+                    snode.starting.append(TokenList(trange.end, ttype, [token]))
+                else:
+                    tlist.append(token)
 
     def get_tokens(self, trange: TokenRange, ttype: TokenType) -> List[Token]:
         """ Get the list of tokens of a given type, spanning the given
             nodes. The nodes must exist. If no tokens exist, an
             empty list is returned.
+
+            Cannot be used to get the partial token.
         """
+        assert ttype != TOKEN_PARTIAL
         return self.nodes[trange.start].get_tokens(trange.end, ttype) or []
 
     def get_partials_list(self, trange: TokenRange) -> List[Token]:
         """ Create a list of partial tokens between the given nodes.
-            The list is composed of the first token of type PARTIAL
-            going to the subsequent node. Such PARTIAL tokens are
-            assumed to exist.
         """
-        return [next(iter(self.get_tokens(TokenRange(i, i+1), TOKEN_PARTIAL)))
-                for i in range(trange.start, trange.end)]
+        return list(filter(None, (self.nodes[i].partial for i in range(trange.start, trange.end))))
 
     def iter_token_lists(self) -> Iterator[Tuple[int, QueryNode, TokenList]]:
-        """ Iterator over all token lists in the query.
+        """ Iterator over all token lists except partial tokens in the query.
         """
         for i, node in enumerate(self.nodes):
             for tlist in node.starting:
@@ -308,6 +320,8 @@ class QueryStruct:
             debugging.
         """
         for node in self.nodes:
+            if node.partial is not None and node.partial.token == token:
+                return f"[P]{node.partial.lookup_word}"
             for tlist in node.starting:
                 for t in tlist.tokens:
                     if t.token == token:

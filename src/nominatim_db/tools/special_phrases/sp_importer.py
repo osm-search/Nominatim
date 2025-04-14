@@ -93,7 +93,7 @@ class SPImporter():
         """
             Returns list of allowed special phrases from the database,
             restricting to a list of combinations of classes and types
-            whic occur more than 100 times
+            which occur more than 100 times
         """
         db_combinations = set()
         query = """

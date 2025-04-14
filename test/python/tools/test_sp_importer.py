@@ -54,7 +54,7 @@ def test_get_classtype_pair_data(placex_table, temp_db_conn):
     config = Config()
     importer = SPImporter(config=config, conn=temp_db_conn, sp_loader=None)
 
-    result = importer.get_classtype_pairs()
+    result = importer.get_classtype_pairs(min=100)
 
     expected = {
         ("highway", "motorway"),
@@ -80,7 +80,7 @@ def test_get_classtype_pair_data_more(placex_table, temp_db_conn):
     config = Config()
     importer = SPImporter(config=config, conn=temp_db_conn, sp_loader=None)
 
-    result = importer.get_classtype_pairs()
+    result = importer.get_classtype_pairs(min=100)
 
     expected = {
         ("amenity", "prison"),
@@ -88,3 +88,32 @@ def test_get_classtype_pair_data_more(placex_table, temp_db_conn):
     }
 
     assert result == expected, f"Expected {expected}, got {result}"
+
+
+def test_get_classtype_pair_data_default(placex_table, temp_db_conn):
+    class Config:
+        def load_sub_configuration(self, *_):
+            return {'blackList': {}, 'whiteList': {}}
+        
+    for _ in range(1):
+        placex_table.add(cls='emergency', typ='firehydrant')
+
+    for _ in range(199):
+        placex_table.add(cls='amenity', typ='prison') 
+
+    for _ in range(3478):
+        placex_table.add(cls='tourism', typ='hotel')
+
+    config = Config()
+    importer = SPImporter(config=config, conn=temp_db_conn, sp_loader=None)
+
+    result = importer.get_classtype_pairs()
+
+    expected = {
+        ("amenity", "prison"),
+        ("tourism", "hotel"),
+        ("emergency", "firehydrant")
+    }
+
+    assert result == expected, f"Expected {expected}, got {result}"
+

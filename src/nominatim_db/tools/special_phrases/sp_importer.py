@@ -16,7 +16,6 @@
 from typing import Iterable, Tuple, Mapping, Sequence, Optional, Set
 import logging
 import re
-import json
 from psycopg.sql import Identifier, SQL
 
 from ...typing import Protocol
@@ -64,30 +63,6 @@ class SPImporter():
         # This set will contain all existing place_classtype tables which doesn't match any
         # special phrases class/type on the wiki.
         self.table_phrases_to_delete: Set[str] = set()
-
-    def get_classtype_pairs_style(self) -> Set[Tuple[str, str]]:
-        """
-            Returns list of allowed special phrases from the the style file,
-            restricting to a list of combinations of classes and types
-            which have a 'main' property
-
-            Note: This requirement was from 2021 and I am a bit unsure if it is still relevant
-        """
-        style_file = self.config.get_import_style_file()  # import style file as json
-        with open(style_file, 'r') as file:
-            style_data = json.loads(f'[{file.read()}]')
-
-        style_combinations = set()
-        for _map in style_data:  # following ../settings/import-extratags.style
-            classes = _map.get("keys", [])
-            values = _map.get("values", {})
-
-            for _type, properties in values.items():
-                if "main" in properties and _type:  # make sure the tag is a non-empty string
-                    for _class in classes:
-                        style_combinations.add((_class, _type))  # type is the value of the main tag
-
-        return style_combinations
 
     def get_classtype_pairs(self) -> Set[Tuple[str, str]]:
         """

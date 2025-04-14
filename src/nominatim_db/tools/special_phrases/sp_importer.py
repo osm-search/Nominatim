@@ -64,23 +64,25 @@ class SPImporter():
         # special phrases class/type on the wiki.
         self.table_phrases_to_delete: Set[str] = set()
 
-    def get_classtype_pairs(self) -> Set[Tuple[str, str]]:
+    def get_classtype_pairs(self, min: int = 0) -> Set[Tuple[str, str]]:
         """
             Returns list of allowed special phrases from the database,
             restricting to a list of combinations of classes and types
-            which occur more than 100 times
+            which occur more than a specified amount of times.
+
+            Default value for this, if not specified, is at least once.
         """
         db_combinations = set()
-        query = """
+        query = f"""
         SELECT class AS CLS, type AS typ
         FROM placex
         GROUP BY class, type
-        HAVING COUNT(*) > 100
+        HAVING COUNT(*) > {min}
         """
 
         with self.db_connection.cursor() as db_cursor:
             db_cursor.execute(SQL(query))
-            for row in db_cursor.fetchall():
+            for row in db_cursor:
                 db_combinations.add((row[0], row[1]))
 
         return db_combinations

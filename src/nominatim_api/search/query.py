@@ -12,7 +12,14 @@ from abc import ABC, abstractmethod
 from collections import defaultdict
 import dataclasses
 
-
+# Precomputed denominator for the computation of the linear regression slope
+# used to determine the query direction.
+# The x value for the regression computation will be the position of the
+# token in the query. Thus we know the x values will be [0, query length).
+# As the denominator only depends on the x values, we can pre-compute here
+# the denominatior to use for a given query length.
+# Note that query length of two or less is special cased and will not use
+# the values from this array. Thus it is not a problem that they are 0.
 LINFAC = [i * (sum(si * si for si in range(i)) - (i - 1) * i * (i - 1) / 4)
           for i in range(50)]
 

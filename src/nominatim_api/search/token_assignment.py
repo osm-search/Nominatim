@@ -286,8 +286,12 @@ class _TokenSequence:
             log().var_dump('skip forward', (base.postcode, first))
             return
 
+        penalty = self.penalty
+        if self.direction == 1 and query.dir_penalty > 0:
+            penalty += query.dir_penalty
+
         log().comment('first word = name')
-        yield dataclasses.replace(base, penalty=self.penalty,
+        yield dataclasses.replace(base, penalty=penalty,
                                   name=first, address=base.address[1:])
 
         # To paraphrase:
@@ -300,13 +304,14 @@ class _TokenSequence:
            or (query.nodes[first.start].ptype != qmod.PHRASE_ANY):
             return
 
-        penalty = self.penalty
-
         # Penalty for:
         #  * <name>, <street>, <housenumber> , ...
         #  * queries that are comma-separated
         if (base.housenumber and base.housenumber > first) or len(query.source) > 1:
             penalty += 0.25
+
+        if self.direction == 0 and query.dir_penalty > 0:
+            penalty += query.dir_penalty
 
         for i in range(first.start + 1, first.end):
             name, addr = first.split(i)
@@ -326,9 +331,13 @@ class _TokenSequence:
             log().var_dump('skip backward', (base.postcode, last))
             return
 
+        penalty = self.penalty
+        if self.direction == -1 and query.dir_penalty < 0:
+            penalty -= query.dir_penalty
+
         if self.direction == -1 or len(base.address) > 1 or base.postcode:
             log().comment('last word = name')
-            yield dataclasses.replace(base, penalty=self.penalty,
+            yield dataclasses.replace(base, penalty=penalty,
                                       name=last, address=base.address[:-1])
 
         # To paraphrase:
@@ -341,11 +350,13 @@ class _TokenSequence:
            or (query.nodes[last.start].ptype != qmod.PHRASE_ANY):
             return
 
-        penalty = self.penalty
         if base.housenumber and base.housenumber < last:
             penalty += 0.4
         if len(query.source) > 1:
             penalty += 0.25
+
+        if self.direction == 0 and query.dir_penalty < 0:
+            penalty -= query.dir_penalty
 
         for i in range(last.start + 1, last.end):
             addr, name = last.split(i)
@@ -379,11 +390,11 @@ class _TokenSequence:
             if base.postcode and base.postcode.start == 0:
                 self.penalty += 0.1
 
-            # Right-to-left reading of the address
+            # Left-to-right reading of the address
             if self.direction != -1:
                 yield from self._get_assignments_address_forward(base, query)
 
-            # Left-to-right reading of the address
+            # Right-to-left reading of the address
             if self.direction != 1:
                 yield from self._get_assignments_address_backward(base, query)
 
@@ -409,11 +420,22 @@ def yield_token_assignments(query: qmod.QueryStruct) -> Iterator[TokenAssignment
         node = query.nodes[state.end_pos]
 
         for tlist in node.starting:
-            newstate = state.advance(tlist.ttype, tlist.end, node.btype)
-            if newstate is not None:
-                if newstate.end_pos == query.num_token_slots():
-                    if newstate.recheck_sequence():
-                        log().var_dump('Assignment', newstate)
-                        yield from newstate.get_assignments(query)
-                elif not newstate.is_final():
-                    todo.append(newstate)
+            yield from _append_state_to_todo(
+                query, todo,
+                state.advance(tlist.ttype, tlist.end, node.btype))
+
+        if node.partial is not None:
+            yield from _append_state_to_todo(
+                query, todo,
+                state.advance(qmod.TOKEN_PARTIAL, state.end_pos + 1, node.btype))
+
+
+def _append_state_to_todo(query: qmod.QueryStruct, todo: List[_TokenSequence],
+                          newstate: Optional[_TokenSequence]) -> Iterator[TokenAssignment]:
+    if newstate is not None:
+        if newstate.end_pos == query.num_token_slots():
+            if newstate.recheck_sequence():
+                log().var_dump('Assignment', newstate)
+                yield from newstate.get_assignments(query)
+        elif not newstate.is_final():
+            todo.append(newstate)

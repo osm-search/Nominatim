@@ -69,8 +69,8 @@ async def test_single_phrase_with_unknown_terms(conn):
     assert query.source[0].text == 'foo bar'
 
     assert query.num_token_slots() == 2
-    assert len(query.nodes[0].starting) == 1
-    assert not query.nodes[1].starting
+    assert query.nodes[0].partial.token == 1
+    assert query.nodes[1].partial is None
 
 
 @pytest.mark.asyncio
@@ -103,8 +103,8 @@ async def test_splitting_in_transliteration(conn):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize('term,order', [('23456', ['P', 'H', 'W', 'w']),
-                                        ('3', ['H', 'W', 'w'])])
+@pytest.mark.parametrize('term,order', [('23456', ['P', 'H', 'W']),
+                                        ('3', ['H', 'W'])])
 async def test_penalty_postcodes_and_housenumbers(conn, term, order):
     ana = await tok.create_query_analyzer(conn)
 

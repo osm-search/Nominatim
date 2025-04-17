@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Implementation of query analysis for the ICU tokenizer.
@@ -267,32 +267,47 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
     def rerank_tokens(self, query: qmod.QueryStruct) -> None:
         """ Add penalties to tokens that depend on presence of other token.
         """
-        for i, node, tlist in query.iter_token_lists():
-            if tlist.ttype == qmod.TOKEN_POSTCODE:
-                tlen = len(cast(ICUToken, tlist.tokens[0]).word_token)
-                for repl in node.starting:
-                    if repl.end == tlist.end and repl.ttype != qmod.TOKEN_POSTCODE \
-                       and (repl.ttype != qmod.TOKEN_HOUSENUMBER or tlen > 4):
-                        repl.add_penalty(0.39)
-            elif (tlist.ttype == qmod.TOKEN_HOUSENUMBER
-                  and len(tlist.tokens[0].lookup_word) <= 3):
-                if any(c.isdigit() for c in tlist.tokens[0].lookup_word):
-                    for repl in node.starting:
-                        if repl.end == tlist.end and repl.ttype != qmod.TOKEN_HOUSENUMBER:
-                            repl.add_penalty(0.5 - tlist.tokens[0].penalty)
-            elif tlist.ttype not in (qmod.TOKEN_COUNTRY, qmod.TOKEN_PARTIAL):
-                norm = ' '.join(n.term_normalized for n in query.nodes[i + 1:tlist.end + 1]
-                                if n.btype != qmod.BREAK_TOKEN)
-                if not norm:
-                    # Can happen when the token only covers a partial term
-                    norm = query.nodes[i + 1].term_normalized
-                for token in tlist.tokens:
-                    cast(ICUToken, token).rematch(norm)
+        for start, end, tlist in query.iter_tokens_by_edge():
+            if len(tlist) > 1:
+                # If it looks like a Postcode, give preference.
+                if qmod.TOKEN_POSTCODE in tlist:
+                    for ttype, tokens in tlist.items():
+                        if ttype != qmod.TOKEN_POSTCODE and \
+                               (ttype != qmod.TOKEN_HOUSENUMBER or
+                                start + 1 > end or
+                                len(query.nodes[end].term_lookup) > 4):
+                            for token in tokens:
+                                token.penalty += 0.39
+
+                # If it looks like a simple housenumber, prefer that.
+                if qmod.TOKEN_HOUSENUMBER in tlist:
+                    hnr_lookup = tlist[qmod.TOKEN_HOUSENUMBER][0].lookup_word
+                    if len(hnr_lookup) <= 3 and any(c.isdigit() for c in hnr_lookup):
+                        penalty = 0.5 - tlist[qmod.TOKEN_HOUSENUMBER][0].penalty
+                        for ttype, tokens in tlist.items():
+                            if ttype != qmod.TOKEN_HOUSENUMBER:
+                                for token in tokens:
+                                    token.penalty += penalty
+
+            # rerank tokens against the normalized form
+            norm = ' '.join(n.term_normalized for n in query.nodes[start + 1:end + 1]
+                            if n.btype != qmod.BREAK_TOKEN)
+            if not norm:
+                # Can happen when the token only covers a partial term
+                norm = query.nodes[start + 1].term_normalized
+            for ttype, tokens in tlist.items():
+                if ttype != qmod.TOKEN_COUNTRY:
+                    for token in tokens:
+                        cast(ICUToken, token).rematch(norm)
 
 
 def _dump_word_tokens(query: qmod.QueryStruct) -> Iterator[List[Any]]:
     yield ['type', 'from', 'to', 'token', 'word_token', 'lookup_word', 'penalty', 'count', 'info']
     for i, node in enumerate(query.nodes):
+        if node.partial is not None:
+            t = cast(ICUToken, node.partial)
+            yield [qmod.TOKEN_PARTIAL, str(i), str(i + 1), t.token,
+                   t.word_token, t.lookup_word, t.penalty, t.count, t.info]
         for tlist in node.starting:
             for token in tlist.tokens:
                 t = cast(ICUToken, token)

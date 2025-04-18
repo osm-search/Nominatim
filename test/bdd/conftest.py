@@ -150,6 +150,10 @@ def reverse_geocode_via_api(test_config_env, pytestconfig, datatable, lat, lon):
     result = APIResult('json', 'reverse', api_response.body)
     assert result.is_simple()
 
+    assert isinstance(result.result['lat'], str)
+    assert isinstance(result.result['lon'], str)
+    result.result['centroid'] = f"POINT({result.result['lon']} {result.result['lat']})"
+
     return result
 
 
@@ -159,20 +163,8 @@ def reverse_geocode_via_api_and_grid(test_config_env, pytestconfig, node_grid, d
     coords = node_grid.get(node)
     if coords is None:
         raise ValueError('Unknown node id')
-    runner = APIRunner(test_config_env, pytestconfig.option.NOMINATIM_API_ENGINE)
-    api_response = runner.run_step('reverse',
-                                   {'lat': coords[1], 'lon': coords[0]},
-                                   datatable, 'jsonv2', {})
 
-    assert api_response.status == 200
-    assert api_response.headers['content-type'] == 'application/json; charset=utf-8'
-
-    result = APIResult('json', 'reverse', api_response.body)
-    assert result.is_simple()
-
-    result.result['centroid'] = f"POINT({result.result['lon']:.7f} {result.result['lat']:.7f})"
-
-    return result
+    return reverse_geocode_via_api(test_config_env, pytestconfig, datatable, coords[1], coords[0])
 
 
 @when(step_parse(r'geocoding(?: "(?P<query>.*)")?'),
@@ -193,7 +185,9 @@ def forward_geocode_via_api(test_config_env, pytestconfig, datatable, query):
     assert not result.is_simple()
 
     for res in result.result:
-        res['centroid'] = f"POINT({res['lon']:.7f} {res['lat']:.7f})"
+        assert isinstance(res['lat'], str)
+        assert isinstance(res['lon'], str)
+        res['centroid'] = f"POINT({res['lon']} {res['lat']})"
 
     return result
 

@@ -82,7 +82,7 @@ class SPImporter():
 
         with self.db_connection.cursor() as db_cursor:
             db_cursor.execute(SQL(query))
-            for row in db_cursor.fetchall():
+            for row in db_cursor:
                 db_combinations.add((row[0], row[1]))
 
         return db_combinations

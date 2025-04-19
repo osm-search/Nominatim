@@ -26,6 +26,13 @@ class PlaceName:
         which token analysis module will be used to finalize the treatment of
         names.
     """
+    # Mapping of countries to their default languages
+    COUNTRY_LANGUAGES = {
+        "CO": "es",  # Colombia
+        "US": "en",  # United States
+        "FR": "fr",  # France
+        # Add more countries as necessary
+    }
 
     def __init__(self, name: str, kind: str, suffix: Optional[str]):
         self.name = name
@@ -72,3 +79,12 @@ class PlaceName:
         """ Check if the given attribute is set.
         """
         return key in self.attr
+
+    def add_default_language(self, country_code: str) -> None:
+        """
+        Add the default language for the given country code
+        to the '_place_name' attribute if it is not already set.
+        """
+        default_language = self.COUNTRY_LANGUAGES.get(country_code)
+        if default_language and not self.has_attr(f"_place_name:{default_language}"):
+            self.set_attr(f"_place_name:{default_language}", self.name)

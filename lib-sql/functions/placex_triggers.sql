@@ -64,6 +64,24 @@ BEGIN
     END IF;
   END IF;
 
+
+  -- Short-cut out for linked places. Note that this must happen after the
+  -- address rank has been recomputed. The linking might nullify a shift in
+  -- address rank.
+  IF NEW.linked_place_id IS NOT NULL THEN
+    -- Fetch the default language for the country
+    default_language := get_country_default_language(NEW.country_code);
+
+    -- Add default language name if not present
+    IF default_language IS NOT NULL AND NOT NEW.name ? ('_place_name:' || default_language) THEN
+      NEW.name := NEW.name || hstore('_place_name:' || default_language, NEW.name->'name');
+    END IF;
+
+    NEW.token_info := NULL;
+    {% if debug %}RAISE WARNING 'place already linked to %', OLD.linked_place_id;{% endif %}
+    RETURN NEW;
+  END IF;
+
   -- remove internal and derived names
   result.address := result.address - '_unlisted_place'::TEXT;
   SELECT hstore(array_agg(key), array_agg(value)) INTO result.name

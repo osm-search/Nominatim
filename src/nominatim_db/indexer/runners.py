@@ -108,6 +108,24 @@ class BoundaryRunner(AbstractPlacexRunner):
                    ORDER BY placex.partition, placex.admin_level
                 """).format(pysql.Literal(self.rank)))
 
+    def index_places_params(self, place: DictRow) -> Sequence[Any]:
+        """
+        Add logic to inherit default language names in the indexing process.
+        """
+        # Infer the default language for the country
+        default_language = PlaceName.COUNTRY_LANGUAGES.get(place['country_code'])
+
+        # If a linked place exists, inherit the default language name
+        if place['linked_place_id'] and default_language:
+            existing_name = place['name']
+            if not existing_name.get(f"_place_name:{default_language}"):
+                place['name'][f"_place_name:{default_language}"] = existing_name
+
+        return (place['place_id'],
+                place['name'],
+                place['address'],
+                place['linked_place_id'],
+                _analyze_place(place, self.analyzer))
 
 class InterpolationRunner:
     """ Returns SQL commands for indexing the address interpolation table

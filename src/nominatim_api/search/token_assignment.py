@@ -287,7 +287,7 @@ class _TokenSequence:
             return
 
         penalty = self.penalty
-        if self.direction == 1 and query.dir_penalty > 0:
+        if not base.country and self.direction == 1 and query.dir_penalty > 0:
             penalty += query.dir_penalty
 
         log().comment('first word = name')
@@ -332,7 +332,7 @@ class _TokenSequence:
             return
 
         penalty = self.penalty
-        if self.direction == -1 and query.dir_penalty < 0:
+        if not base.country and self.direction == -1 and query.dir_penalty < 0:
             penalty -= query.dir_penalty
 
         if self.direction == -1 or len(base.address) > 1 or base.postcode:

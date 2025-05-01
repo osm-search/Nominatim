@@ -139,7 +139,7 @@ def test_create_place_classtype_table_and_indexes(
         placex_table.add(cls=pair[0], typ=pair[1])   # adding to db
     sp_importer._create_classtype_table_and_indexes(pairs)
     temp_db_conn.commit()
-    
+
     for pair in pairs:
         assert check_table_exist(temp_db_cursor, pair[0], pair[1])
         assert check_placeid_and_centroid_indexes(temp_db_cursor, pair[0], pair[1])
@@ -199,8 +199,8 @@ def test_import_phrases(monkeypatch, temp_db_cursor, def_config, sp_importer,
     type_test = 'zip_line'
 
     tokenizer = tokenizer_mock()
-    placex_table.add(cls=class_test, typ=type_test)  # ensuring in database for special phrase filtering 
-    placex_table.add(cls='amenity', typ='animal_shelter')  # ensuring in database for special phrase filtering 
+    placex_table.add(cls=class_test, typ=type_test)  # in db for special phrase filtering
+    placex_table.add(cls='amenity', typ='animal_shelter')  # in db for special phrase filtering
     sp_importer.import_phrases(tokenizer, should_replace)
 
     assert len(tokenizer.analyser_cache['special_phrases']) == 18
@@ -254,14 +254,15 @@ def check_placeid_and_centroid_indexes(temp_db_cursor, phrase_class, phrase_type
         temp_db_cursor.index_exists(table_name, index_prefix + 'place_id')
     )
 
+
 @pytest.mark.parametrize("should_replace", [(True), (False)])
-def test_import_phrases_special_phrase_filtering(monkeypatch, temp_db_cursor, def_config, sp_importer,
-                        placex_table, tokenizer_mock,
-                        xml_wiki_content, should_replace):
+def test_import_phrases_special_phrase_filtering(monkeypatch, temp_db_cursor, def_config,
+                                                 sp_importer, placex_table, tokenizer_mock,
+                                                 xml_wiki_content, should_replace):
 
     monkeypatch.setattr('nominatim_db.tools.special_phrases.sp_wiki_loader._get_wiki_content',
                         lambda lang: xml_wiki_content)
-    
+
     class_test = 'aerialway'
     type_test = 'zip_line'
 
@@ -273,6 +274,7 @@ def test_import_phrases_special_phrase_filtering(monkeypatch, temp_db_cursor, de
     assert check_table_exist(temp_db_cursor, class_test, type_test)
     assert check_placeid_and_centroid_indexes(temp_db_cursor, class_test, type_test)
     assert check_grant_access(temp_db_cursor, def_config.DATABASE_WEBUSER, class_test, type_test)
+
 
 def test_get_classtype_pairs_directly(placex_table, temp_db_conn, sp_importer):
     for _ in range(101):

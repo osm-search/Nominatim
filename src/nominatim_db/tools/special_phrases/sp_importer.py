@@ -190,6 +190,8 @@ class SPImporter():
         """
             Create table place_classtype for each given pair.
             Also create indexes on place_id and centroid.
+            Added min as minimum number in database as optional,
+            to not break existing logic and dependencies.
         """
         LOG.warning('Create tables and indexes...')
 

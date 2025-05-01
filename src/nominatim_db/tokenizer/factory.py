@@ -70,8 +70,6 @@ def get_tokenizer_for_db(config: Configuration) -> AbstractTokenizer:
         The function looks up the appropriate tokenizer in the database
         and initialises it.
     """
-    assert config.project_dir is not None
-
     with connect(config.get_libpq_dsn()) as conn:
         name = properties.get_property(conn, 'tokenizer')
 

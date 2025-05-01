@@ -43,53 +43,53 @@ The name of the pytest binary depends on your installation.
 ## BDD Functional Tests (`test/bdd`)
 
 Functional tests are written as BDD instructions. For more information on
-the philosophy of BDD testing, see the
-[Behave manual](http://pythonhosted.org/behave/philosophy.html).
-
-The following explanation assume that the reader is familiar with the BDD
-notations of features, scenarios and steps.
-
-All possible steps can be found in the `steps` directory and should ideally
-be documented.
+the philosophy of BDD testing, read the Wikipedia article on
+[Behaviour-driven development](https://en.wikipedia.org/wiki/Behavior-driven_development).
 
 ### General Usage
 
 To run the functional tests, do
 
-    cd test/bdd
-    behave
+    pytest test/bdd
 
-The tests can be configured with a set of environment variables (`behave -D key=val`):
+The BDD tests create databases for the tests. You can set name of the databases
+through configuration variables in your `pytest.ini`:
 
- * `TEMPLATE_DB` - name of template database used as a skeleton for
-                   the test databases (db tests)
- * `TEST_DB` - name of test database (db tests)
- * `API_TEST_DB` - name of the database containing the API test data (api tests)
- * `API_TEST_FILE` - OSM file to be imported into the API test database (api tests)
- * `API_ENGINE` - webframe to use for running search queries, same values as
-                  `nominatim serve --engine` parameter
- * `DB_HOST` - (optional) hostname of database host
- * `DB_PORT` - (optional) port of database on host
- * `DB_USER` - (optional) username of database login
- * `DB_PASS` - (optional) password for database login
- * `REMOVE_TEMPLATE` - if true, the template and API database will not be reused
-                       during the next run. Reusing the base templates speeds
-                       up tests considerably but might lead to outdated errors
-                       for some changes in the database layout.
- * `KEEP_TEST_DB` - if true, the test database will not be dropped after a test
-                    is finished. Should only be used if one single scenario is
-                    run, otherwise the result is undefined.
+ * `nominatim_test_db` defines the name of the temporary database created for
+    a single test (default: `test_nominatim`)
+ * `nominatim_api_test_db` defines the name of the database containing
+    the API test data, see also below (default: `test_api_nominatim`)
+ * `nominatim_template_db` defines the name of the template database used
+    for creating the temporary test databases. It contains some static setup
+    which usually doesn't change between imports of OSM data
+    (default: `test_template_nominatim`)
 
-Logging can be defined through command line parameters of behave itself. Check
-out `behave --help` for details. Also have a look at the 'work-in-progress'
-feature of behave which comes in handy when writing new tests.
+To change other connection parameters for the PostgreSQL database, use
+the [libpq enivronment variables](https://www.postgresql.org/docs/current/libpq-envars.html).
+Never set a password through these variables. Use a
+[password file](https://www.postgresql.org/docs/current/libpq-pgpass.html) instead.
+
+The API test database and the template database are only created once and then
+left untouched. This is usually what you want because it speeds up subsequent
+runs of BDD tests. If you do change code that has an influence on the content
+of these databases, you can run pytest with the `--nominatim-purge` parameter
+and the databases will be dropped and recreated from scratch.
+
+When running the BDD tests with make (using `make tests` or `make bdd`), then
+the databases will always be purged.
+
+The temporary test database is usually dropped directly after the test, so
+it does not take up unnecessary space. If you want to keep the database around,
+for example while debugging a specific BDD test, use the parameter
+`--nominatim-keep-db`.
+
 
 ### API Tests (`test/bdd/api`)
 
 These tests are meant to test the different API endpoints and their parameters.
 They require to import several datasets into a test database. This is normally
 done automatically during setup of the test. The API test database is then
-kept around and reused in subsequent runs of behave. Use `behave -DREMOVE_TEMPLATE`
+kept around and reused in subsequent runs of behave. Use `--nominatim-purge`
 to force a reimport of the database.
 
 The official test dataset is saved in the file `test/testdb/apidb-test-data.pbf`
@@ -109,12 +109,12 @@ test the correctness of osm2pgsql. Each test will write some data into the `plac
 table (and optionally the `planet_osm_*` tables if required) and then run
 Nominatim's processing functions on that.
 
-These tests need to create their own test databases. By default they will be
-called `test_template_nominatim` and `test_nominatim`. Names can be changed with
-the environment variables `TEMPLATE_DB` and `TEST_DB`. The user running the tests
-needs superuser rights for postgres.
+These tests use the template database and create temporary test databases for
+each test.
 
 ### Import Tests (`test/bdd/osm2pgsql`)
 
-These tests check that data is imported correctly into the place table. They
-use the same template database as the DB Creation tests, so the same remarks apply.
+These tests check that data is imported correctly into the place table.
+
+These tests also use the template database and create temporary test databases
+for each test.

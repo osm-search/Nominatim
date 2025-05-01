@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Public interface to the search code.
@@ -50,6 +50,9 @@ class ForwardGeocoder:
             self.query_analyzer = await make_query_analyzer(self.conn)
 
         query = await self.query_analyzer.analyze_query(phrases)
+        query.compute_direction_penalty()
+        log().var_dump('Query direction penalty',
+                       lambda: f"[{'LR' if query.dir_penalty < 0 else 'RL'}] {query.dir_penalty}")
 
         searches: List[AbstractSearch] = []
         if query.num_token_slots() > 0:

@@ -25,15 +25,15 @@ following packages should get you started:
 
 ## Prerequisites for testing and documentation
 
-The Nominatim test suite consists of behavioural tests (using behave) and
+The Nominatim test suite consists of behavioural tests (using pytest-bdd) and
 unit tests (using pytest). It has the following additional requirements:
 
-* [behave test framework](https://behave.readthedocs.io) >= 1.2.6
 * [flake8](https://flake8.pycqa.org/en/stable/) (CI always runs the latest version from pip)
 * [mypy](http://mypy-lang.org/) (plus typing information for external libs)
 * [Python Typing Extensions](https://github.com/python/typing_extensions) (for Python < 3.9)
 * [pytest](https://pytest.org)
 * [pytest-asyncio](https://pytest-asyncio.readthedocs.io)
+* [pytest-bdd](https://pytest-bdd.readthedocs.io)
 
 For testing the Python search frontend, you need to install extra dependencies
 depending on your choice of webserver framework:
@@ -48,9 +48,6 @@ The documentation is built with mkdocs:
 * [mkdocs-material](https://squidfunk.github.io/mkdocs-material/)
 * [mkdocs-gen-files](https://oprypin.github.io/mkdocs-gen-files/)
 
-Please be aware that tests always run against the globally installed
-osm2pgsql, so you need to have this set up. If you want to test against
-the vendored version of osm2pgsql, you need to set the PATH accordingly.
 
 ### Installing prerequisites on Ubuntu/Debian
 
@@ -70,8 +67,9 @@ To set up the virtual environment with all necessary packages run:
 virtualenv ~/nominatim-dev-venv
 ~/nominatim-dev-venv/bin/pip install\
     psutil 'psycopg[binary]' PyICU SQLAlchemy \
-    python-dotenv jinja2 pyYAML behave \
-    mkdocs 'mkdocstrings[python]' mkdocs-gen-files pytest pytest-asyncio flake8 \
+    python-dotenv jinja2 pyYAML \
+    mkdocs 'mkdocstrings[python]' mkdocs-gen-files \
+    pytest pytest-asyncio pytest-bdd flake8 \
     types-jinja2 types-markupsafe types-psutil types-psycopg2 \
     types-pygments types-pyyaml types-requests types-ujson \
     types-urllib3 typing-extensions unicorn falcon starlette \

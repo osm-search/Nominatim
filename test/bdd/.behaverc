@@ -1,3 +1,0 @@
-[behave]
-show_skipped=False
-default_tags=~@Fail

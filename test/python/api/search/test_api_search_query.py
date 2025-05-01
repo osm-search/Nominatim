@@ -44,7 +44,6 @@ def test_phrase_incompatible(ptype):
 
 
 def test_query_node_empty(qnode):
-    assert not qnode.has_tokens(3, query.TOKEN_PARTIAL)
     assert qnode.get_tokens(3, query.TOKEN_WORD) is None
 
 
@@ -57,7 +56,6 @@ def test_query_node_with_content(qnode):
     assert qnode.has_tokens(2, query.TOKEN_PARTIAL)
     assert qnode.has_tokens(2, query.TOKEN_WORD)
 
-    assert qnode.get_tokens(3, query.TOKEN_PARTIAL) is None
     assert qnode.get_tokens(2, query.TOKEN_COUNTRY) is None
     assert len(qnode.get_tokens(2, query.TOKEN_PARTIAL)) == 2
     assert len(qnode.get_tokens(2, query.TOKEN_WORD)) == 1
@@ -84,7 +82,7 @@ def test_query_struct_with_tokens():
     assert q.get_tokens(query.TokenRange(0, 2), query.TOKEN_WORD) == []
     assert len(q.get_tokens(query.TokenRange(1, 2), query.TOKEN_WORD)) == 2
 
-    partials = q.get_partials_list(query.TokenRange(0, 2))
+    partials = list(q.iter_partials(query.TokenRange(0, 2)))
 
     assert len(partials) == 2
     assert [t.token for t in partials] == [1, 2]
@@ -101,7 +99,6 @@ def test_query_struct_incompatible_token():
     q.add_token(query.TokenRange(0, 1), query.TOKEN_PARTIAL, mktoken(1))
     q.add_token(query.TokenRange(1, 2), query.TOKEN_COUNTRY, mktoken(100))
 
-    assert q.get_tokens(query.TokenRange(0, 1), query.TOKEN_PARTIAL) == []
     assert len(q.get_tokens(query.TokenRange(1, 2), query.TOKEN_COUNTRY)) == 1
 
 
@@ -113,7 +110,7 @@ def test_query_struct_amenity_single_word():
     q.add_token(query.TokenRange(0, 1), query.TOKEN_NEAR_ITEM, mktoken(2))
     q.add_token(query.TokenRange(0, 1), query.TOKEN_QUALIFIER, mktoken(3))
 
-    assert len(q.get_tokens(query.TokenRange(0, 1), query.TOKEN_PARTIAL)) == 1
+    assert q.nodes[0].partial.token == 1
     assert len(q.get_tokens(query.TokenRange(0, 1), query.TOKEN_NEAR_ITEM)) == 1
     assert len(q.get_tokens(query.TokenRange(0, 1), query.TOKEN_QUALIFIER)) == 0
 
@@ -128,10 +125,10 @@ def test_query_struct_amenity_two_words():
         q.add_token(query.TokenRange(*trange), query.TOKEN_NEAR_ITEM, mktoken(2))
         q.add_token(query.TokenRange(*trange), query.TOKEN_QUALIFIER, mktoken(3))
 
-    assert len(q.get_tokens(query.TokenRange(0, 1), query.TOKEN_PARTIAL)) == 1
+    assert q.nodes[0].partial.token == 1
     assert len(q.get_tokens(query.TokenRange(0, 1), query.TOKEN_NEAR_ITEM)) == 0
     assert len(q.get_tokens(query.TokenRange(0, 1), query.TOKEN_QUALIFIER)) == 1
 
-    assert len(q.get_tokens(query.TokenRange(1, 2), query.TOKEN_PARTIAL)) == 1
+    assert q.nodes[1].partial.token == 1
     assert len(q.get_tokens(query.TokenRange(1, 2), query.TOKEN_NEAR_ITEM)) == 0
     assert len(q.get_tokens(query.TokenRange(1, 2), query.TOKEN_QUALIFIER)) == 1

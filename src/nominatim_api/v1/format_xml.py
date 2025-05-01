@@ -90,7 +90,7 @@ def format_base_xml(results: Union[ReverseResults, SearchResults],
         result will be output, otherwise a list.
     """
     root = ET.Element(xml_root_tag)
-    root.set('timestamp', dt.datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S +00:00'))
+    root.set('timestamp', dt.datetime.now(dt.timezone.utc).strftime('%a, %d %b %Y %H:%M:%S +00:00'))
     root.set('attribution', cl.OSM_ATTRIBUTION)
     for k, v in xml_extra_info.items():
         root.set(k, v)

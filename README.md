@@ -30,8 +30,8 @@ A quick summary of the necessary steps:
 
 1. Clone this git repository and download the country grid
 
-      git clone https://github.com/osm-search/Nominatim.git
-      wget -O Nominatim/data/country_osm_grid.sql.gz https://nominatim.org/data/country_grid.sql.gz
+        git clone https://github.com/osm-search/Nominatim.git
+        wget -O Nominatim/data/country_osm_grid.sql.gz https://nominatim.org/data/country_grid.sql.gz
 
 2. Create a Python virtualenv and install the packages:
 
@@ -42,8 +42,7 @@ A quick summary of the necessary steps:
 
         mkdir nominatim-project
         cd nominatim-project
-        ../nominatim-venv/bin/nominatim import --osm-file <your planet file>
-        <!-- Alternative command with logging: ../nominatim-venv/bin/nominatim import --osm-file <your planet file> 2>&1 | tee setup.log -->
+        ../nominatim-venv/bin/nominatim import --osm-file <your planet file> 2>&1 | tee setup.log -->
 
 
 4. Start the webserver:

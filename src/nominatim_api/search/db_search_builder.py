@@ -220,7 +220,7 @@ class SearchBuilder:
         if name_fulls:
             fulls_count = sum(t.count for t in name_fulls)
 
-            if fulls_count < 50000 or addr_count < 50000:
+            if fulls_count < 80000 or addr_count < 50000:
                 yield penalty, fulls_count / (2**len(addr_tokens)), \
                     self.get_full_name_ranking(name_fulls, addr_partials,
                                                fulls_count > 30000 / max(1, len(addr_tokens)))

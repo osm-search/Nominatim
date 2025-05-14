@@ -127,7 +127,7 @@ def test_grant_access_to_web_user(temp_db_conn, temp_db_cursor, table_factory,
 
 def test_create_place_classtype_table_and_indexes(
         temp_db_cursor, def_config, placex_table,
-        sp_importer, temp_db_conn):
+        sp_importer, temp_db_conn, monkeypatch):
     """
         Test that _create_place_classtype_table_and_indexes()
         create the right place_classtype tables and place_id indexes
@@ -135,7 +135,8 @@ def test_create_place_classtype_table_and_indexes(
         for the given set of pairs.
     """
     pairs = set([('class1', 'type1'), ('class2', 'type2')])
-
+    for pair in pairs:
+        placex_table.add(cls=pair[0], typ=pair[1])   # adding to db
     sp_importer._create_classtype_table_and_indexes(pairs)
     temp_db_conn.commit()
 
@@ -194,13 +195,15 @@ def test_import_phrases(monkeypatch, temp_db_cursor, def_config, sp_importer,
     monkeypatch.setattr('nominatim_db.tools.special_phrases.sp_wiki_loader._get_wiki_content',
                         lambda lang: xml_wiki_content)
 
+    class_test = 'aerialway'
+    type_test = 'zip_line'
+
     tokenizer = tokenizer_mock()
+    placex_table.add(cls=class_test, typ=type_test)  # in db for special phrase filtering
+    placex_table.add(cls='amenity', typ='animal_shelter')  # in db for special phrase filtering
     sp_importer.import_phrases(tokenizer, should_replace)
 
     assert len(tokenizer.analyser_cache['special_phrases']) == 18
-
-    class_test = 'aerialway'
-    type_test = 'zip_line'
 
     assert check_table_exist(temp_db_cursor, class_test, type_test)
     assert check_placeid_and_centroid_indexes(temp_db_cursor, class_test, type_test)
@@ -250,3 +253,38 @@ def check_placeid_and_centroid_indexes(temp_db_cursor, phrase_class, phrase_type
         and
         temp_db_cursor.index_exists(table_name, index_prefix + 'place_id')
     )
+
+
+@pytest.mark.parametrize("should_replace", [(True), (False)])
+def test_import_phrases_special_phrase_filtering(monkeypatch, temp_db_cursor, def_config,
+                                                 sp_importer, placex_table, tokenizer_mock,
+                                                 xml_wiki_content, should_replace):
+
+    monkeypatch.setattr('nominatim_db.tools.special_phrases.sp_wiki_loader._get_wiki_content',
+                        lambda lang: xml_wiki_content)
+
+    class_test = 'aerialway'
+    type_test = 'zip_line'
+
+    placex_table.add(cls=class_test, typ=type_test)  # add to the database to make valid
+    tokenizer = tokenizer_mock()
+    sp_importer.import_phrases(tokenizer, should_replace)
+
+    assert ('Zip Line', 'aerialway', 'zip_line', '-') in sp_importer.word_phrases
+    assert check_table_exist(temp_db_cursor, class_test, type_test)
+    assert check_placeid_and_centroid_indexes(temp_db_cursor, class_test, type_test)
+    assert check_grant_access(temp_db_cursor, def_config.DATABASE_WEBUSER, class_test, type_test)
+
+
+def test_get_classtype_pairs_directly(placex_table, temp_db_conn, sp_importer):
+    for _ in range(101):
+        placex_table.add(cls='highway', typ='residential')
+    for _ in range(99):
+        placex_table.add(cls='amenity', typ='toilet')
+
+    temp_db_conn.commit()
+
+    result = sp_importer.get_classtype_pairs(100)
+    print("RESULT:", result)
+    assert ('highway', 'residential') in result
+    assert ('amenity', 'toilet') not in result

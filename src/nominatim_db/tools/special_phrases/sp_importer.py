@@ -16,7 +16,6 @@
 from typing import Iterable, Tuple, Mapping, Sequence, Optional, Set
 import logging
 import re
-
 from psycopg.sql import Identifier, SQL
 
 from ...typing import Protocol
@@ -65,6 +64,29 @@ class SPImporter():
         # special phrases class/type on the wiki.
         self.table_phrases_to_delete: Set[str] = set()
 
+    def get_classtype_pairs(self, min: int = 0) -> Set[Tuple[str, str]]:
+        """
+            Returns list of allowed special phrases from the database,
+            restricting to a list of combinations of classes and types
+            which occur more than a specified amount of times.
+
+            Default value for this, if not specified, is at least once.
+        """
+        db_combinations = set()
+        query = f"""
+        SELECT class AS CLS, type AS typ
+        FROM placex
+        GROUP BY class, type
+        HAVING COUNT(*) > {min}
+        """
+
+        with self.db_connection.cursor() as db_cursor:
+            db_cursor.execute(SQL(query))
+            for row in db_cursor:
+                db_combinations.add((row[0], row[1]))
+
+        return db_combinations
+
     def import_phrases(self, tokenizer: AbstractTokenizer, should_replace: bool) -> None:
         """
             Iterate through all SpecialPhrases extracted from the
@@ -88,6 +110,7 @@ class SPImporter():
         self._create_classtype_table_and_indexes(class_type_pairs)
         if should_replace:
             self._remove_non_existent_tables_from_db()
+
         self.db_connection.commit()
 
         with tokenizer.name_analyzer() as analyzer:
@@ -177,9 +200,16 @@ class SPImporter():
         with self.db_connection.cursor() as db_cursor:
             db_cursor.execute("CREATE INDEX idx_placex_classtype ON placex (class, type)")
 
+        allowed_special_phrases = self.get_classtype_pairs()
+
         for pair in class_type_pairs:
             phrase_class = pair[0]
             phrase_type = pair[1]
+
+            if (phrase_class, phrase_type) not in allowed_special_phrases:
+                LOG.warning("Skipping phrase %s=%s: not in allowed special phrases",
+                            phrase_class, phrase_type)
+                continue
 
             table_name = _classtype_table(phrase_class, phrase_type)
 

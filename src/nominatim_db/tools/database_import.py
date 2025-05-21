@@ -127,7 +127,7 @@ def import_osm_data(osm_files: Union[Path, Sequence[Path]],
                 fsize += os.stat(str(fname)).st_size
         else:
             fsize = os.stat(str(osm_files)).st_size
-        options['osm2pgsql_cache'] = int(min((mem.available + mem.cached) * 0.75,
+        options['osm2pgsql_cache'] = int(min((mem.available + getattr(mem, 'cached', 0)) * 0.75,
                                              fsize * 2) / 1024 / 1024) + 1
 
     run_osm2pgsql(options)

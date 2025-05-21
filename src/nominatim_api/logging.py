@@ -342,7 +342,8 @@ HTML_HEADER: str = """<!DOCTYPE html>
   <title>Nominatim - Debug</title>
   <style>
 """ + \
-    (HtmlFormatter(nobackground=True).get_style_defs('.highlight') if CODE_HIGHLIGHT else '') + \
+    (HtmlFormatter(nobackground=True).get_style_defs('.highlight')  # type: ignore[no-untyped-call]
+     if CODE_HIGHLIGHT else '') + \
     """
     h2 { font-size: x-large }
 

@@ -192,7 +192,7 @@ def apiobj(temp_db_with_extensions, temp_db_conn, monkeypatch):
 
 
 @pytest.fixture(params=['postgres_db', 'sqlite_db'])
-def frontend(request, event_loop, tmp_path):
+def frontend(request, tmp_path):
     testapis = []
     if request.param == 'sqlite_db':
         db = str(tmp_path / 'test_nominatim_python_unittest.sqlite')
@@ -215,7 +215,7 @@ def frontend(request, event_loop, tmp_path):
 
             apiobj.async_to_sync(_do_sql())
 
-            event_loop.run_until_complete(convert_sqlite.convert(None, db, options))
+            apiobj.async_to_sync(convert_sqlite.convert(None, db, options))
             outapi = napi.NominatimAPI(environ={'NOMINATIM_DATABASE_DSN': f"sqlite:dbname={db}",
                                                 'NOMINATIM_USE_US_TIGER_DATA': 'yes'})
             testapis.append(outapi)

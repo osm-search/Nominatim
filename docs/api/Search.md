@@ -212,7 +212,7 @@ other layers.
 The featureType allows to have a more fine-grained selection for places
 from the address layer. Results can be restricted to places that make up
 the 'state', 'country' or 'city' part of an address. A featureType of
-settlement selects any human inhabited feature from 'state' down to
+`settlement` selects any human inhabited feature from 'state' down to
 'neighbourhood'.
 
 When featureType is set, then results are automatically restricted

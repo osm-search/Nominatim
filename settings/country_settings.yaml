@@ -944,7 +944,7 @@ kp:
 # South Korea (대한민국)
 kr:
     partition: 49
-    languages: ko, en
+    languages: ko
     names: !include country-names/kr.yaml
     postcode:
       pattern: "ddddd"

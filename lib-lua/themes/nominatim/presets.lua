@@ -196,6 +196,7 @@ module.MAIN_TAGS_POIS = function (group)
                    trail_blaze = 'never'},
     junction = {'fallback',
                 no = group},
+    landuse = {cemetery = 'always'},
     leisure = {'always',
                nature_reserve = 'fallback',
                swimming_pool = 'named',

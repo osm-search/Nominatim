@@ -87,7 +87,7 @@ class SPImporter():
 
         return db_combinations
 
-    def import_phrases(self, tokenizer: AbstractTokenizer, should_replace: bool) -> None:
+    def import_phrases(self, tokenizer: AbstractTokenizer, should_replace: bool, min: int) -> None:
         """
             Iterate through all SpecialPhrases extracted from the
             loader and import them into the database.
@@ -107,7 +107,7 @@ class SPImporter():
             if result:
                 class_type_pairs.add(result)
 
-        self._create_classtype_table_and_indexes(class_type_pairs)
+        self._create_classtype_table_and_indexes(class_type_pairs, min)
         if should_replace:
             self._remove_non_existent_tables_from_db()
 
@@ -186,7 +186,8 @@ class SPImporter():
         return (phrase.p_class, phrase.p_type)
 
     def _create_classtype_table_and_indexes(self,
-                                            class_type_pairs: Iterable[Tuple[str, str]]) -> None:
+                                            class_type_pairs: Iterable[Tuple[str, str]],
+                                            min: int) -> None:
         """
             Create table place_classtype for each given pair.
             Also create indexes on place_id and centroid.
@@ -200,7 +201,7 @@ class SPImporter():
         with self.db_connection.cursor() as db_cursor:
             db_cursor.execute("CREATE INDEX idx_placex_classtype ON placex (class, type)")
 
-        allowed_special_phrases = self.get_classtype_pairs()
+        allowed_special_phrases = self.get_classtype_pairs(min)
 
         for pair in class_type_pairs:
             phrase_class = pair[0]

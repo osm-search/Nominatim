@@ -338,7 +338,7 @@ class ICUNameAnalyzer(AbstractAnalyzer):
         """
         return cast(str, self.token_analysis.normalizer.transliterate(name)).strip()
 
-    def get_word_token_info(self, words: Sequence[str]) -> List[Tuple[str, str, int]]:
+    def get_word_token_info(self, words: Sequence[str]) -> List[Tuple[str, str, Optional[int]]]:
         """ Return token information for the given list of words.
             If a word starts with # it is assumed to be a full name
             otherwise is a partial name.
@@ -362,11 +362,11 @@ class ICUNameAnalyzer(AbstractAnalyzer):
             cur.execute("""SELECT word_token, word_id
                             FROM word WHERE word_token = ANY(%s) and type = 'W'
                         """, (list(full_tokens.values()),))
-            full_ids = {r[0]: r[1] for r in cur}
+            full_ids = {r[0]: cast(int, r[1]) for r in cur}
             cur.execute("""SELECT word_token, word_id
                             FROM word WHERE word_token = ANY(%s) and type = 'w'""",
                         (list(partial_tokens.values()),))
-            part_ids = {r[0]: r[1] for r in cur}
+            part_ids = {r[0]: cast(int, r[1]) for r in cur}
 
         return [(k, v, full_ids.get(v, None)) for k, v in full_tokens.items()] \
             + [(k, v, part_ids.get(v, None)) for k, v in partial_tokens.items()]

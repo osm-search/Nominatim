@@ -37,7 +37,7 @@ class AbstractAnalyzer(ABC):
         """
 
     @abstractmethod
-    def get_word_token_info(self, words: List[str]) -> List[Tuple[str, str, int]]:
+    def get_word_token_info(self, words: List[str]) -> List[Tuple[str, str, Optional[int]]]:
         """ Return token information for the given list of words.
 
             The function is used for testing and debugging only

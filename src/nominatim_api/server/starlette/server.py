@@ -143,7 +143,7 @@ def get_application(project_dir: Path,
 
     log_file = config.LOG_FILE
     if log_file:
-        middleware.append(Middleware(FileLoggingMiddleware, file_name=log_file))
+        middleware.append(Middleware(FileLoggingMiddleware, file_name=log_file))  # type: ignore
 
     exceptions: Dict[Any, Callable[[Request, Exception], Awaitable[Response]]] = {
         TimeoutError: timeout_error,

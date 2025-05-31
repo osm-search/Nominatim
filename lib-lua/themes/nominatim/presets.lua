@@ -332,7 +332,7 @@ module.NAME_TAGS.core = {main = {'name', 'name:*',
                         }
 module.NAME_TAGS.address = {house = {'addr:housename'}}
 module.NAME_TAGS.poi = group_merge({main = {'brand'},
-                                    extra = {'iata', 'icao'}},
+                                    extra = {'iata', 'icao', 'faa'}},
                                    module.NAME_TAGS.core)
 
 -- Address tagging

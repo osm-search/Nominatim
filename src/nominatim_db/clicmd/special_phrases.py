@@ -58,6 +58,8 @@ class ImportSpecialPhrases:
                            help='Import special phrases from a CSV file')
         group.add_argument('--no-replace', action='store_true',
                            help='Keep the old phrases and only add the new ones')
+        group.add_argument('--min', type=int, default=0,
+                           help='Restrict special phrases by minimum occurance')
 
     def run(self, args: NominatimArgs) -> int:
 
@@ -82,7 +84,9 @@ class ImportSpecialPhrases:
 
         tokenizer = tokenizer_factory.get_tokenizer_for_db(args.config)
         should_replace = not args.no_replace
+        min = args.min
+
         with connect(args.config.get_libpq_dsn()) as db_connection:
             SPImporter(
                 args.config, db_connection, loader
-            ).import_phrases(tokenizer, should_replace)
+            ).import_phrases(tokenizer, should_replace, min)

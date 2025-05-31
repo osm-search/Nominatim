@@ -68,16 +68,17 @@ class SPImporter():
         """
             Returns list of allowed special phrases from the database,
             restricting to a list of combinations of classes and types
-            which occur more than a specified amount of times.
+            which occur equal to or more than a specified amount of times.
 
-            Default value for this, if not specified, is at least once.
+            Default value for this is 0, which allows everything in database.
         """
         db_combinations = set()
+
         query = f"""
         SELECT class AS CLS, type AS typ
         FROM placex
         GROUP BY class, type
-        HAVING COUNT(*) > {min}
+        HAVING COUNT(*) >= {min}
         """
 
         with self.db_connection.cursor() as db_cursor:
@@ -207,7 +208,8 @@ class SPImporter():
             phrase_class = pair[0]
             phrase_type = pair[1]
 
-            if (phrase_class, phrase_type) not in allowed_special_phrases:
+            # Will only filter if min is not 0
+            if min and (phrase_class, phrase_type) not in allowed_special_phrases:
                 LOG.warning("Skipping phrase %s=%s: not in allowed special phrases",
                             phrase_class, phrase_type)
                 continue

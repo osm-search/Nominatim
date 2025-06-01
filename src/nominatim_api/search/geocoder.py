@@ -210,9 +210,10 @@ class ForwardGeocoder:
             results = self.pre_filter_results(results)
             await add_result_details(self.conn, results, self.params)
             log().result_dump('Preliminary Results', ((r.accuracy, r) for r in results))
-            self.rerank_by_query(query, results)
-            log().result_dump('Results after reranking', ((r.accuracy, r) for r in results))
-            results = self.sort_and_cut_results(results)
+            if len(results) > 1:
+                self.rerank_by_query(query, results)
+                log().result_dump('Results after reranking', ((r.accuracy, r) for r in results))
+                results = self.sort_and_cut_results(results)
             log().result_dump('Final Results', ((r.accuracy, r) for r in results))
 
         return results

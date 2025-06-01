@@ -118,17 +118,20 @@ class ForwardGeocoder:
         """ Remove badly matching results, sort by ranking and
             limit to the configured number of results.
         """
-        if results:
-            results.sort(key=lambda r: (r.ranking, 0 if r.bbox is None else -r.bbox.area))
-            min_rank = results[0].rank_search
-            min_ranking = results[0].ranking
-            results = SearchResults(r for r in results
-                                    if (r.ranking + 0.03 * (r.rank_search - min_rank)
-                                        < min_ranking + 0.5))
+        results.sort(key=lambda r: (r.ranking, 0 if r.bbox is None else -r.bbox.area))
 
-            results = SearchResults(results[:self.limit])
+        final = SearchResults()
+        min_rank = results[0].rank_search
+        min_ranking = results[0].ranking
 
-        return results
+        for r in results:
+            if r.ranking + 0.03 * (r.rank_search - min_rank) < min_ranking + 0.5:
+                final.append(r)
+                min_rank = min(r.rank_search, min_rank)
+            if len(final) == self.limit:
+                break
+
+        return final
 
     def rerank_by_query(self, query: QueryStruct, results: SearchResults) -> None:
         """ Adjust the accuracy of the localized result according to how well

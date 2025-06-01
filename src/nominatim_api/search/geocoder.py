@@ -153,11 +153,10 @@ class ForwardGeocoder:
             if not words:
                 continue
             for qword in qwords:
-                wdist = max(difflib.SequenceMatcher(a=qword, b=w).quick_ratio() for w in words)
-                if wdist < 0.5:
-                    distance += len(qword)
-                else:
-                    distance += (1.0 - wdist) * len(qword)
+                # only add distance penalty if there is no perfect match
+                if qword not in words:
+                    wdist = max(difflib.SequenceMatcher(a=qword, b=w).quick_ratio() for w in words)
+                    distance += len(qword) if wdist < 0.4 else 1
             # Compensate for the fact that country names do not get a
             # match penalty yet by the tokenizer.
             # Temporary hack that needs to be removed!

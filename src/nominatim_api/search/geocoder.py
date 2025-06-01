@@ -162,7 +162,7 @@ class ForwardGeocoder:
             # Temporary hack that needs to be removed!
             if result.rank_address == 4:
                 distance *= 2
-            result.accuracy += distance * 0.4 / sum(len(w) for w in qwords)
+            result.accuracy += distance * 0.3 / sum(len(w) for w in qwords)
 
     async def lookup_pois(self, categories: List[Tuple[str, str]],
                           phrases: List[Phrase]) -> SearchResults:

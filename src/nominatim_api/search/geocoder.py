@@ -118,17 +118,20 @@ class ForwardGeocoder:
         """ Remove badly matching results, sort by ranking and
             limit to the configured number of results.
         """
-        if results:
-            results.sort(key=lambda r: (r.ranking, 0 if r.bbox is None else -r.bbox.area))
-            min_rank = results[0].rank_search
-            min_ranking = results[0].ranking
-            results = SearchResults(r for r in results
-                                    if (r.ranking + 0.03 * (r.rank_search - min_rank)
-                                        < min_ranking + 0.5))
+        results.sort(key=lambda r: (r.ranking, 0 if r.bbox is None else -r.bbox.area))
 
-            results = SearchResults(results[:self.limit])
+        final = SearchResults()
+        min_rank = results[0].rank_search
+        min_ranking = results[0].ranking
 
-        return results
+        for r in results:
+            if r.ranking + 0.03 * (r.rank_search - min_rank) < min_ranking + 0.5:
+                final.append(r)
+                min_rank = min(r.rank_search, min_rank)
+            if len(final) == self.limit:
+                break
+
+        return final
 
     def rerank_by_query(self, query: QueryStruct, results: SearchResults) -> None:
         """ Adjust the accuracy of the localized result according to how well
@@ -153,17 +156,16 @@ class ForwardGeocoder:
             if not words:
                 continue
             for qword in qwords:
-                wdist = max(difflib.SequenceMatcher(a=qword, b=w).quick_ratio() for w in words)
-                if wdist < 0.5:
-                    distance += len(qword)
-                else:
-                    distance += (1.0 - wdist) * len(qword)
+                # only add distance penalty if there is no perfect match
+                if qword not in words:
+                    wdist = max(difflib.SequenceMatcher(a=qword, b=w).quick_ratio() for w in words)
+                    distance += len(qword) if wdist < 0.4 else 1
             # Compensate for the fact that country names do not get a
             # match penalty yet by the tokenizer.
             # Temporary hack that needs to be removed!
             if result.rank_address == 4:
                 distance *= 2
-            result.accuracy += distance * 0.4 / sum(len(w) for w in qwords)
+            result.accuracy += distance * 0.3 / sum(len(w) for w in qwords)
 
     async def lookup_pois(self, categories: List[Tuple[str, str]],
                           phrases: List[Phrase]) -> SearchResults:
@@ -211,9 +213,10 @@ class ForwardGeocoder:
             results = self.pre_filter_results(results)
             await add_result_details(self.conn, results, self.params)
             log().result_dump('Preliminary Results', ((r.accuracy, r) for r in results))
-            self.rerank_by_query(query, results)
-            log().result_dump('Results after reranking', ((r.accuracy, r) for r in results))
-            results = self.sort_and_cut_results(results)
+            if len(results) > 1:
+                self.rerank_by_query(query, results)
+                log().result_dump('Results after reranking', ((r.accuracy, r) for r in results))
+                results = self.sort_and_cut_results(results)
             log().result_dump('Final Results', ((r.accuracy, r) for r in results))
 
         return results

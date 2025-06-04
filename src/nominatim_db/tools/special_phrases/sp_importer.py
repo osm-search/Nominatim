@@ -88,7 +88,8 @@ class SPImporter():
 
         return db_combinations
 
-    def import_phrases(self, tokenizer: AbstractTokenizer, should_replace: bool, min: int) -> None:
+    def import_phrases(self, tokenizer: AbstractTokenizer, should_replace: bool,
+                       min: int = 0) -> None:
         """
             Iterate through all SpecialPhrases extracted from the
             loader and import them into the database.
@@ -188,7 +189,7 @@ class SPImporter():
 
     def _create_classtype_table_and_indexes(self,
                                             class_type_pairs: Iterable[Tuple[str, str]],
-                                            min: int) -> None:
+                                            min: int = 0) -> None:
         """
             Create table place_classtype for each given pair.
             Also create indexes on place_id and centroid.

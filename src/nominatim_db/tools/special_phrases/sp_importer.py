@@ -203,7 +203,8 @@ class SPImporter():
         with self.db_connection.cursor() as db_cursor:
             db_cursor.execute("CREATE INDEX idx_placex_classtype ON placex (class, type)")
 
-        allowed_special_phrases = self.get_classtype_pairs(min)
+        if min:
+            allowed_special_phrases = self.get_classtype_pairs(min)
 
         for pair in class_type_pairs:
             phrase_class = pair[0]

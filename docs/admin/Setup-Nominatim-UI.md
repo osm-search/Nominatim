@@ -89,13 +89,6 @@ calls:
 # Need to add a rewrite so that the rewrite rules below catch it correctly.
 rewrite ^/$ /search;
 
-location @php {
-    # fastcgi stuff..
-    if ($forward_to_ui) {
-        rewrite ^(/[^/]*) https://yourserver.com/ui$1.html redirect;
-    }
-}
-
 location ~ [^/]\.php(/|$) {
     # fastcgi stuff..
     if ($forward_to_ui) {

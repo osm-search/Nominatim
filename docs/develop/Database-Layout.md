@@ -3,8 +3,7 @@
 ### Import tables
 
 OSM data is initially imported using [osm2pgsql](https://osm2pgsql.org).
-Nominatim uses its own data output style 'gazetteer', which differs from the
-output style created for map rendering.
+Nominatim uses a custom flex style to create the initial import tables.
 
 The import process creates the following tables:
 
@@ -14,7 +13,7 @@ The `planet_osm_*` tables are the usual backing tables for OSM data. Note
 that Nominatim uses them to look up special relations and to find nodes on
 ways.
 
-The gazetteer style produces a single table `place` as output with the following
+The osm2pgsql import produces a single table `place` as output with the following
 columns:
 
  * `osm_type` - kind of OSM object (**N** - node, **W** - way, **R** - relation)

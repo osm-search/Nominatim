@@ -9,7 +9,7 @@ the address computation and the search frontend.
 The __data import__ stage reads the raw OSM data and extracts all information
 that is useful for geocoding. This part is done by osm2pgsql, the same tool
 that can also be used to import a rendering database. It uses the special
-gazetteer output plugin in `osm2pgsql/src/output-gazetter.[ch]pp`. The result of
+flex output style defined in the directory `/lib-lua`. The result of
 the import can be found in the database table `place`.
 
 The __address computation__ or __indexing__ stage takes the data from `place`

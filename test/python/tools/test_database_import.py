@@ -83,7 +83,7 @@ def test_import_osm_data_simple(table_factory, osm2pgsql_options, capfd):
     captured = capfd.readouterr()
 
     assert '--create' in captured.out
-    assert '--output gazetteer' in captured.out
+    assert '--output flex' in captured.out
     assert f'--style {osm2pgsql_options["osm2pgsql_style"]}' in captured.out
     assert f'--number-processes {osm2pgsql_options["threads"]}' in captured.out
     assert f'--cache {osm2pgsql_options["osm2pgsql_cache"]}' in captured.out

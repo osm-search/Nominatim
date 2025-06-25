@@ -50,7 +50,7 @@ def run_osm2pgsql(options: Mapping[str, Any]) -> None:
                 env[f"NOMINATIM_TABLESPACE_PLACE_{flavour.upper()}"] = \
                     options['tablespaces'][f"main_{flavour}"]
     else:
-        cmd.extend(('--output', 'gazetteer', '--hstore', '--latlon'))
+        cmd.extend(('--output', 'gazetteer', '--hstore', '--latlong'))
         cmd.extend(_mk_tablespace_options('main', options))
 
     if options['flatnode_file']:

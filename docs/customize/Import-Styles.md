@@ -556,16 +556,6 @@ the Nominatim topic.
     ```
     Discarding country-level boundaries when running under themepark.
 
-## osm2pgsql gazetteer output
-
-Nominatim still allows you to configure the gazetteer output to remain
-backwards compatible with older imports. It will be automatically used
-when the style file name ends in `.style`. For documentation of the
-old import style, please refer to the documentation of older releases
-of Nominatim. Do not use the gazetteer output for new imports. There is no
-guarantee that new versions of Nominatim are fully compatible with the
-gazetteer output.
-
 ## Changing the style of existing databases
 
 There is usually no issue changing the style of a database that is already

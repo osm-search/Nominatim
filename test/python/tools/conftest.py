@@ -26,7 +26,8 @@ fi
 
     return dict(osm2pgsql=str(osm2pgsql_exec),
                 osm2pgsql_cache=10,
-                osm2pgsql_style='style.file',
+                osm2pgsql_style='style.lua',
+                osm2pgsql_style_path=tmp_path,
                 threads=1,
                 dsn='dbname=' + temp_db,
                 flatnode_file='',

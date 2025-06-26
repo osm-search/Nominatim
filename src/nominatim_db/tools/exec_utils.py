@@ -37,21 +37,17 @@ def run_osm2pgsql(options: Mapping[str, Any]) -> None:
            '--style', str(options['osm2pgsql_style'])
            ]
 
-    if str(options['osm2pgsql_style']).endswith('.lua'):
-        env['LUA_PATH'] = ';'.join((str(options['osm2pgsql_style_path'] / '?.lua'),
-                                    os.environ.get('LUA_PATH', ';')))
-        env['THEMEPARK_PATH'] = str(options['osm2pgsql_style_path'] / 'themes')
-        if 'THEMEPARK_PATH' in os.environ:
-            env['THEMEPARK_PATH'] += ':' + os.environ['THEMEPARK_PATH']
-        cmd.extend(('--output', 'flex'))
+    env['LUA_PATH'] = ';'.join((str(options['osm2pgsql_style_path'] / '?.lua'),
+                                os.environ.get('LUA_PATH', ';')))
+    env['THEMEPARK_PATH'] = str(options['osm2pgsql_style_path'] / 'themes')
+    if 'THEMEPARK_PATH' in os.environ:
+        env['THEMEPARK_PATH'] += ':' + os.environ['THEMEPARK_PATH']
+    cmd.extend(('--output', 'flex'))
 
-        for flavour in ('data', 'index'):
-            if options['tablespaces'][f"main_{flavour}"]:
-                env[f"NOMINATIM_TABLESPACE_PLACE_{flavour.upper()}"] = \
-                    options['tablespaces'][f"main_{flavour}"]
-    else:
-        cmd.extend(('--output', 'gazetteer', '--hstore', '--latlon'))
-        cmd.extend(_mk_tablespace_options('main', options))
+    for flavour in ('data', 'index'):
+        if options['tablespaces'][f"main_{flavour}"]:
+            env[f"NOMINATIM_TABLESPACE_PLACE_{flavour.upper()}"] = \
+                options['tablespaces'][f"main_{flavour}"]
 
     if options['flatnode_file']:
         cmd.extend(('--flat-nodes', options['flatnode_file']))

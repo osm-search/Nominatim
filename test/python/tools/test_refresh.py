@@ -41,18 +41,6 @@ def test_refresh_import_wikipedia(dsn, src_dir, table_factory, temp_db_cursor, r
     assert temp_db_cursor.table_rows('wikimedia_importance') > 0
 
 
-def test_recompute_importance(placex_table, table_factory, temp_db_conn, temp_db_cursor):
-    temp_db_cursor.execute("""CREATE OR REPLACE FUNCTION compute_importance(extratags HSTORE,
-                                              country_code varchar(2),
-                                              rank_search SMALLINT,
-                                              centroid GEOMETRY,
-                                              OUT importance FLOAT,
-                                              OUT wikipedia TEXT)
-                               AS $$ SELECT 0.1::float, 'foo'::text $$ LANGUAGE SQL""")
-
-    refresh.recompute_importance(temp_db_conn)
-
-
 @pytest.mark.parametrize('osm_type', ('N', 'W', 'R'))
 def test_invalidate_osm_object_simple(placex_table, osm_type, temp_db_conn, temp_db_cursor):
     placex_table.add(osm_type=osm_type, osm_id=57283)

@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2022 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for correctly assigning wikipedia pages to places.
@@ -37,7 +37,8 @@ def wiki_csv(tmp_path, sql_preprocessor):
 @pytest.mark.parametrize('extra', [{'wikipedia:en': 'Test'},
                                    {'wikipedia': 'en:Test'},
                                    {'wikidata': 'Q123'}])
-def test_wikipedia(dsn, temp_db_conn, temp_db_cursor, def_config, wiki_csv, placex_table, extra):
+def test_wikipedia(dsn, temp_db_conn, temp_db_cursor, table_factory,
+                   def_config, wiki_csv, placex_table, extra):
     import_wikipedia_articles(dsn, wiki_csv([('en', 'Test', 0.3, 'Q123')]))
     create_functions(temp_db_conn, def_config)
 
@@ -45,22 +46,34 @@ def test_wikipedia(dsn, temp_db_conn, temp_db_cursor, def_config, wiki_csv, plac
         'SELECT language, title, importance, wikidata FROM wikimedia_importance')
     assert content == set([('en', 'Test', 0.3, 'Q123')])
 
-    placex_table.add(osm_id=12, extratags=extra)
+    place_id = placex_table.add(osm_id=12, extratags=extra)
+    table_factory('search_name',
+                  'place_id BIGINT, importance FLOAT',
+                  [(place_id, 0.2)])
 
     recompute_importance(temp_db_conn)
 
     content = temp_db_cursor.row_set('SELECT wikipedia, importance FROM placex')
     assert content == set([('en:Test', 0.3)])
+    simp = temp_db_cursor.scalar('SELECT importance FROM search_name WHERE place_id = %s',
+                                 (place_id,))
+    assert simp == 0.3
 
 
 def test_wikipedia_no_match(dsn, temp_db_conn, temp_db_cursor, def_config, wiki_csv,
-                            placex_table):
+                            placex_table, table_factory):
     import_wikipedia_articles(dsn, wiki_csv([('de', 'Test', 0.3, 'Q123')]))
     create_functions(temp_db_conn, def_config)
 
-    placex_table.add(osm_id=12, extratags={'wikipedia': 'en:Test'}, rank_search=10)
+    place_id = placex_table.add(osm_id=12, extratags={'wikipedia': 'en:Test'}, rank_search=10)
+    table_factory('search_name',
+                  'place_id BIGINT, importance FLOAT',
+                  [(place_id, 0.2)])
 
     recompute_importance(temp_db_conn)
 
     content = temp_db_cursor.row_set('SELECT wikipedia, importance FROM placex')
     assert list(content) == [(None, pytest.approx(0.26667666))]
+    simp = temp_db_cursor.scalar('SELECT importance FROM search_name WHERE place_id = %s',
+                                 (place_id,))
+    assert simp == pytest.approx(0.26667666)

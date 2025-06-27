@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Functions for bringing auxiliary data in the database up-to-date.
@@ -211,6 +211,11 @@ def recompute_importance(conn: Connection) -> None:
              FROM placex d
              WHERE s.place_id = d.linked_place_id and d.wikipedia is not null
                    and (s.wikipedia is null or s.importance < d.importance);
+            """)
+        cur.execute("""
+            UPDATE search_name s SET importance = p.importance
+             FROM placex p
+             WHERE s.place_id = p.place_id AND s.importance != p.importance
             """)
 
         cur.execute('ALTER TABLE placex ENABLE TRIGGER ALL')

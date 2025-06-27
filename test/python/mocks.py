@@ -57,12 +57,15 @@ class MockPlacexTable:
                                                housenumber, rank_search,
                                                extratags, geometry, country_code)
                             VALUES(nextval('seq_place'), %s, %s, %s, %s, %s, %s,
-                                   %s, %s, %s, %s, %s, %s)""",
+                                   %s, %s, %s, %s, %s, %s)
+                            RETURNING place_id""",
                         (osm_type, osm_id or next(self.idseq), cls, typ, names,
                          admin_level, address, housenumber, rank_search,
                          extratags, 'SRID=4326;' + geom,
                          country))
+            place_id = cur.fetchone()[0]
         self.conn.commit()
+        return place_id
 
 
 class MockPropertyTable:

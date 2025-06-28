@@ -102,6 +102,8 @@ BEGIN
         END IF;
       END IF;
 
+      --  Add default language name from linked node
+      result.name := add_default_place_name(p.country_code, result.name);
       {% if debug %}RAISE WARNING 'Final names: %', result.name;{% endif %}
     END IF;
   END IF;

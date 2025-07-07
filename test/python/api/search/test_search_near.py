@@ -32,7 +32,7 @@ def run_search(apiobj, frontend, global_penalty, cat, cat_penalty=None, ccodes=[
     if ccodes is not None:
         details.countries = ccodes
 
-    place_search = PlaceSearch(0.0, PlaceSearchData(), 2)
+    place_search = PlaceSearch(0.0, PlaceSearchData(), 2, False)
 
     if cat_penalty is None:
         cat_penalty = [0.0] * len(cat)

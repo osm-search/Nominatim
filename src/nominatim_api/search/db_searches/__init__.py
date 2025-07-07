@@ -14,3 +14,4 @@ from .poi_search import PoiSearch as PoiSearch
 from .country_search import CountrySearch as CountrySearch
 from .postcode_search import PostcodeSearch as PostcodeSearch
 from .place_search import PlaceSearch as PlaceSearch
+from .address_search import AddressSearch as AddressSearch

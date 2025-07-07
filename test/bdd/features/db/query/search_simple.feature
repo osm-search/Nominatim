@@ -37,9 +37,7 @@ Feature: Searching of simple objects
         And geocoding "Wood Street 45"
         Then exactly 0 results are returned
         When geocoding "Red Way 34"
-        Then all results contain
-         | object |
-         | N20 |
+        Then exactly 0 results are returned
 
      Scenario: when the housenumber is missing the street is still returned
         Given the grid

@@ -230,7 +230,8 @@ class AddressSearch(base.AbstractSearch):
             tpc = conn.t.postcode
             pcs = self.postcodes.values
 
-            pc_near = sa.select(sa.func.min(tpc.c.geometry.ST_Distance(t.c.centroid)))\
+            pc_near = sa.select(sa.func.min(tpc.c.geometry.ST_Distance(t.c.centroid)
+                                            * (tpc.c.rank_search - 19)))\
                         .where(tpc.c.postcode.in_(pcs))\
                         .scalar_subquery()
             penalty += sa.case((t.c.postcode.in_(pcs), 0.0),

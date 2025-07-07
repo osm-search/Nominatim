@@ -296,11 +296,15 @@ class AddressSearch(base.AbstractSearch):
                            interpol_sql.label('interpol_hnr'),
                            tiger_sql.label('tiger_hnr')).subquery('unsort')
         sql = sa.select(unsort)\
-                .order_by(sa.case((unsort.c.placex_hnr != None, 1),
+                .order_by(unsort.c.accuracy +
+                          sa.case((unsort.c.placex_hnr != None, 0),
+                                  (unsort.c.interpol_hnr != None, 0),
+                                  (unsort.c.tiger_hnr != None, 0),
+                                  else_=1),
+                          sa.case((unsort.c.placex_hnr != None, 1),
                                   (unsort.c.interpol_hnr != None, 2),
                                   (unsort.c.tiger_hnr != None, 3),
-                                  else_=4),
-                          unsort.c.accuracy)
+                                  else_=4))
 
         sql = sql.limit(LIMIT_PARAM)
 

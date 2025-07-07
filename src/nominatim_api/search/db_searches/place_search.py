@@ -110,7 +110,9 @@ class PlaceSearch(base.AbstractSearch):
             sql = sql.where(sa.or_(t.c.address_rank <= MAX_RANK_PARAM,
                                    t.c.search_rank <= MAX_RANK_PARAM))
 
-        inner = sql.limit(10000).order_by(sa.desc(sa.text('importance'))).subquery()
+        inner = sql.limit(5000 if self.qualifiers else 1000)\
+                   .order_by(sa.desc(sa.text('importance')))\
+                   .subquery()
 
         sql = sa.select(inner.c.place_id, inner.c.search_rank, inner.c.address_rank,
                         inner.c.country_code, inner.c.centroid, inner.c.importance,

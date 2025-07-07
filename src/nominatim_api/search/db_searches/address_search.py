@@ -136,7 +136,8 @@ class AddressSearch(base.AbstractSearch):
     """
     SEARCH_PRIO = 1
 
-    def __init__(self, extra_penalty: float, sdata: SearchData, expected_count: int) -> None:
+    def __init__(self, extra_penalty: float, sdata: SearchData,
+                 expected_count: int, has_address_terms: bool) -> None:
         assert sdata.housenumbers
         super().__init__(sdata.penalty + extra_penalty)
         self.countries = sdata.countries
@@ -146,6 +147,7 @@ class AddressSearch(base.AbstractSearch):
         self.lookups = sdata.lookups
         self.rankings = sdata.rankings
         self.expected_count = expected_count
+        self.has_address_terms = has_address_terms
 
     def _inner_search_name_cte(self, conn: SearchConnection,
                                details: SearchDetails) -> 'sa.CTE':
@@ -173,8 +175,6 @@ class AddressSearch(base.AbstractSearch):
             sql = sql.where(t.c.country_code.in_(self.countries.values))
 
         if self.postcodes:
-            # if a postcode is given, don't search for state or country level objects
-            sql = sql.where(t.c.address_rank > 9)
             if self.expected_count > 10000:
                 # Many results expected. Restrict by postcode.
                 tpc = conn.t.postcode
@@ -197,7 +197,12 @@ class AddressSearch(base.AbstractSearch):
                 sql = sql.where(t.c.centroid
                                  .ST_Distance(NEAR_PARAM) < NEAR_RADIUS_PARAM)
 
-        sql = sql.where(t.c.address_rank.between(16, 30))
+        if self.has_address_terms:
+            sql = sql.where(t.c.address_rank.between(16, 30))
+        else:
+            # If no further address terms are given, then the base street must
+            # be in the name. No search for named POIs with the given house number.
+            sql = sql.where(t.c.address_rank.between(16, 27))
 
         inner = sql.limit(10000).order_by(sa.desc(sa.text('importance'))).subquery()
 
@@ -248,9 +253,12 @@ class AddressSearch(base.AbstractSearch):
                  .order_by(sa.text('accuracy'))
 
         hnr_list = '|'.join(self.housenumbers.values)
-        inner = sql.where(sa.or_(tsearch.c.address_rank < 30,
-                                 sa.func.RegexpWord(hnr_list, t.c.housenumber)))\
-                   .subquery()
+
+        if self.has_address_terms:
+            sql = sql.where(sa.or_(tsearch.c.address_rank < 30,
+                                   sa.func.RegexpWord(hnr_list, t.c.housenumber)))
+
+        inner = sql.subquery()
 
         # Housenumbers from placex
         thnr = conn.t.placex.alias('hnr')

@@ -35,7 +35,8 @@ class PlaceSearch(base.AbstractSearch):
     """
     SEARCH_PRIO = 1
 
-    def __init__(self, extra_penalty: float, sdata: SearchData, expected_count: int) -> None:
+    def __init__(self, extra_penalty: float, sdata: SearchData,
+                 expected_count: int, has_address_terms: bool) -> None:
         assert not sdata.housenumbers
         super().__init__(sdata.penalty + extra_penalty)
         self.countries = sdata.countries
@@ -44,6 +45,7 @@ class PlaceSearch(base.AbstractSearch):
         self.lookups = sdata.lookups
         self.rankings = sdata.rankings
         self.expected_count = expected_count
+        self.has_address_terms = has_address_terms
 
     def _inner_search_name_cte(self, conn: SearchConnection,
                                details: SearchDetails) -> 'sa.CTE':
@@ -148,14 +150,19 @@ class PlaceSearch(base.AbstractSearch):
         penalty: SaExpression = tsearch.c.penalty
 
         if self.postcodes:
-            tpc = conn.t.postcode
-            pcs = self.postcodes.values
+            if self.has_address_terms:
+                tpc = conn.t.postcode
+                pcs = self.postcodes.values
 
-            pc_near = sa.select(sa.func.min(tpc.c.geometry.ST_Distance(t.c.centroid)))\
-                        .where(tpc.c.postcode.in_(pcs))\
-                        .scalar_subquery()
-            penalty += sa.case((t.c.postcode.in_(pcs), 0.0),
-                               else_=sa.func.coalesce(pc_near, cast(SaColumn, 2.0)))
+                pc_near = sa.select(sa.func.min(tpc.c.geometry.ST_Distance(t.c.centroid)))\
+                            .where(tpc.c.postcode.in_(pcs))\
+                            .scalar_subquery()
+                penalty += sa.case((t.c.postcode.in_(pcs), 0.0),
+                                   else_=sa.func.coalesce(pc_near, cast(SaColumn, 2.0)))
+            else:
+                # High penalty if the postcode is not an exact match.
+                # The postcode search needs to get priority here.
+                penalty += sa.case((t.c.postcode.in_(self.postcodes.values), 0.0), else_=1.0)
 
         if details.viewbox is not None and not details.bounded_viewbox:
             penalty += sa.case((t.c.geometry.intersects(VIEWBOX_PARAM, use_index=False), 0.0),

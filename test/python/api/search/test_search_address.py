@@ -20,7 +20,7 @@ APIOPTIONS = ['search']
 
 
 def run_search(apiobj, frontend, global_penalty, lookup, ranking, count=2,
-               hnrs=[], pcs=[], ccodes=[], quals=[],
+               hnrs=[], pcs=[], ccodes=[], quals=[], has_address=False,
                details=SearchDetails()):
     class MySearchData:
         penalty = global_penalty
@@ -31,7 +31,7 @@ def run_search(apiobj, frontend, global_penalty, lookup, ranking, count=2,
         lookups = lookup
         rankings = ranking
 
-    search = AddressSearch(0.0, MySearchData(), count)
+    search = AddressSearch(0.0, MySearchData(), count, has_address)
 
     if frontend is None:
         api = apiobj

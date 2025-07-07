@@ -180,7 +180,7 @@ class SearchBuilder:
                 dbf.FieldLookup('nameaddress_vector', addr_fulls, lookups.LookupAny))
 
         sdata.housenumbers = dbf.WeightedStrings([], [])
-        yield dbs.PlaceSearch(0.05, sdata, expected_count)
+        yield dbs.PlaceSearch(0.05, sdata, expected_count, True)
 
     def build_name_search(self, sdata: dbf.SearchData,
                           name: qmod.TokenRange, address: List[qmod.TokenRange],
@@ -195,9 +195,9 @@ class SearchBuilder:
             for penalty, count, lookup in self.yield_lookups(name, address):
                 sdata.lookups = lookup
                 if sdata.housenumbers:
-                    yield dbs.AddressSearch(penalty + name_penalty, sdata, count)
+                    yield dbs.AddressSearch(penalty + name_penalty, sdata, count, bool(address))
                 else:
-                    yield dbs.PlaceSearch(penalty + name_penalty, sdata, count)
+                    yield dbs.PlaceSearch(penalty + name_penalty, sdata, count, bool(address))
 
     def yield_lookups(self, name: qmod.TokenRange, address: List[qmod.TokenRange]
                       ) -> Iterator[Tuple[float, int, List[dbf.FieldLookup]]]:

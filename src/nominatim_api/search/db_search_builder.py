@@ -194,7 +194,10 @@ class SearchBuilder:
                 sdata.rankings.append(ranking)
             for penalty, count, lookup in self.yield_lookups(name, address):
                 sdata.lookups = lookup
-                yield dbs.PlaceSearch(penalty + name_penalty, sdata, count)
+                if sdata.housenumbers:
+                    yield dbs.AddressSearch(penalty + name_penalty, sdata, count)
+                else:
+                    yield dbs.PlaceSearch(penalty + name_penalty, sdata, count)
 
     def yield_lookups(self, name: qmod.TokenRange, address: List[qmod.TokenRange]
                       ) -> Iterator[Tuple[float, int, List[dbf.FieldLookup]]]:

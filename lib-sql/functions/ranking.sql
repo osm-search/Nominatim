@@ -88,6 +88,10 @@ BEGIN
     area := area / 3;
   ELSIF country_code IN ('bo', 'ar', 'sd', 'mn', 'in', 'et', 'cd', 'mz', 'ly', 'cl', 'zm') THEN
     area := area / 2;
+  ELSIF country_code IN ('sg', 'ws', 'st', 'kn') THEN
+    area := area * 5;
+  ELSIF country_code IN ('dm', 'mt', 'lc', 'gg', 'sc', 'nr') THEN
+    area := area * 20;
   END IF;
 
   IF area > 1 THEN

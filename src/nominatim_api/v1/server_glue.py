@@ -374,14 +374,17 @@ async def deletable_endpoint(api: NominatimAPIAsync, params: ASGIAdaptor) -> Any
     """
     fmt = parse_format(params, RawDataList, 'json')
 
+    results = RawDataList()
     async with api.begin() as conn:
-        sql = sa.text(""" SELECT p.place_id, country_code,
-                                 name->'name' as name, i.*
-                          FROM placex p, import_polygon_delete i
-                          WHERE p.osm_id = i.osm_id AND p.osm_type = i.osm_type
-                                AND p.class = i.class AND p.type = i.type
-                      """)
-        results = RawDataList(r._asdict() for r in await conn.execute(sql))
+        for osm_type in ('N', 'W', 'R'):
+            sql = sa.text(""" SELECT p.place_id, country_code,
+                                     name->'name' as name, i.*
+                              FROM placex p, import_polygon_delete i
+                              WHERE i.osm_type = :osm_type
+                                    AND p.osm_id = i.osm_id AND p.osm_type = :osm_type
+                                    AND p.class = i.class AND p.type = i.type
+                          """)
+            results.extend(r._asdict() for r in await conn.execute(sql, {'osm_type': osm_type}))
 
     return build_response(params, params.formatting().format_result(results, fmt, {}))
 

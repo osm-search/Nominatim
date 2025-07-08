@@ -638,8 +638,10 @@ BEGIN
 
     -- Add it to the list of search terms
     {% if not db.reverse_only %}
-      nameaddress_vector := array_merge(nameaddress_vector,
-                                        location.keywords::integer[]);
+      IF location.rank_address != 11 AND location.rank_address != 5 THEN
+          nameaddress_vector := array_merge(nameaddress_vector,
+                                            location.keywords::integer[]);
+      END IF;
     {% endif %}
 
     INSERT INTO place_addressline (place_id, address_place_id, fromarea,

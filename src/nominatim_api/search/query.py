@@ -191,7 +191,9 @@ class QueryNode:
     ptype: PhraseType
 
     penalty: float
-    """ Penalty for the break at this node.
+    """ Penalty for having a word break at this position. The penalty
+        may be negative, when a word break is more likely than continuing
+        the word after the node.
     """
     term_lookup: str
     """ Transliterated term ending at this node.
@@ -220,12 +222,6 @@ class QueryNode:
             return 0.5
 
         return self.partial.count / (self.partial.count + self.partial.addr_count)
-
-    def adjust_break(self, btype: BreakType, penalty: float) -> None:
-        """ Change the break type and penalty for this node.
-        """
-        self.btype = btype
-        self.penalty = penalty
 
     def has_tokens(self, end: int, *ttypes: TokenType) -> bool:
         """ Check if there are tokens of the given types ending at the
@@ -277,8 +273,7 @@ class QueryStruct:
         self.source = source
         self.dir_penalty = 0.0
         self.nodes: List[QueryNode] = \
-            [QueryNode(BREAK_START, source[0].ptype if source else PHRASE_ANY,
-                       0.0, '', '')]
+            [QueryNode(BREAK_START, source[0].ptype if source else PHRASE_ANY)]
 
     def num_token_slots(self) -> int:
         """ Return the length of the query in vertice steps.
@@ -286,13 +281,12 @@ class QueryStruct:
         return len(self.nodes) - 1
 
     def add_node(self, btype: BreakType, ptype: PhraseType,
-                 break_penalty: float = 0.0,
                  term_lookup: str = '', term_normalized: str = '') -> None:
         """ Append a new break node with the given break type.
             The phrase type denotes the type for any tokens starting
             at the node.
         """
-        self.nodes.append(QueryNode(btype, ptype, break_penalty, term_lookup, term_normalized))
+        self.nodes.append(QueryNode(btype, ptype, 0.0, term_lookup, term_normalized))
 
     def add_token(self, trange: TokenRange, ttype: TokenType, token: Token) -> None:
         """ Add a token to the query. 'start' and 'end' are the indexes of the
@@ -386,17 +380,14 @@ class QueryStruct:
         """
         return ''.join(''.join((n.term_lookup, n.btype)) for n in self.nodes)
 
-    def extract_words(self, base_penalty: float = 0.0,
-                      start: int = 0,
+    def extract_words(self, start: int = 0,
                       endpos: Optional[int] = None) -> Dict[str, List[TokenRange]]:
         """ Add all combinations of words that can be formed from the terms
             between the given start and endnode. The terms are joined with
             spaces for each break. Words can never go across a BREAK_PHRASE.
 
             The functions returns a dictionary of possible words with their
-            position within the query and a penalty. The penalty is computed
-            from the base_penalty plus the penalty for each node the word
-            crosses.
+            position within the query.
         """
         if endpos is None:
             endpos = len(self.nodes)
@@ -405,16 +396,13 @@ class QueryStruct:
 
         for first, first_node in enumerate(self.nodes[start + 1:endpos], start):
             word = first_node.term_lookup
-            penalty = base_penalty
-            words[word].append(TokenRange(first, first + 1, penalty=penalty))
+            words[word].append(TokenRange(first, first + 1))
             if first_node.btype != BREAK_PHRASE:
-                penalty += first_node.penalty
                 max_last = min(first + 20, endpos)
                 for last, last_node in enumerate(self.nodes[first + 2:max_last], first + 2):
                     word = ' '.join((word, last_node.term_lookup))
-                    words[word].append(TokenRange(first, last, penalty=penalty))
+                    words[word].append(TokenRange(first, last))
                     if last_node.btype == BREAK_PHRASE:
                         break
-                    penalty += last_node.penalty
 
         return words

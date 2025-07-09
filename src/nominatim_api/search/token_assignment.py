@@ -23,16 +23,6 @@ class TypedRange:
     trange: qmod.TokenRange
 
 
-PENALTY_TOKENCHANGE = {
-    qmod.BREAK_START: 0.0,
-    qmod.BREAK_END: 0.0,
-    qmod.BREAK_PHRASE: 0.0,
-    qmod.BREAK_SOFT_PHRASE: 0.0,
-    qmod.BREAK_WORD: 0.1,
-    qmod.BREAK_PART: 0.2,
-    qmod.BREAK_TOKEN: 0.4
-}
-
 TypedRangeSeq = List[TypedRange]
 
 

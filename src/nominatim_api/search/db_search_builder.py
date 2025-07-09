@@ -301,14 +301,14 @@ class SearchBuilder:
         ranks: List[dbf.RankedTokens] = []
 
         while todo:
-            neglen, pos, rank = heapq.heappop(todo)
+            _, pos, rank = heapq.heappop(todo)
             # partial node
             partial = self.query.nodes[pos].partial
             if partial is not None:
                 if pos + 1 < trange.end:
                     penalty = rank.penalty + partial.penalty \
                               + self.query.nodes[pos + 1].word_break_penalty
-                    heapq.heappush(todo, (neglen - 1, pos + 1,
+                    heapq.heappush(todo, (-(pos + 1), pos + 1,
                                    dbf.RankedTokens(penalty, rank.tokens)))
                 else:
                     ranks.append(dbf.RankedTokens(rank.penalty + partial.penalty,
@@ -321,7 +321,7 @@ class SearchBuilder:
                                      + self.query.get_in_word_penalty(
                                             qmod.TokenRange(pos, tlist.end))
                         for t in tlist.tokens:
-                            heapq.heappush(todo, (neglen - 1, tlist.end,
+                            heapq.heappush(todo, (-tlist.end, tlist.end,
                                                   rank.with_token(t, chgpenalty)))
                     elif tlist.end == trange.end:
                         ranks.extend(rank.with_token(t, 0.0) for t in tlist.tokens)

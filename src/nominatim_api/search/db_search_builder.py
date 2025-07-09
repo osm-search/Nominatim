@@ -287,7 +287,7 @@ class SearchBuilder:
                  for t in name_fulls]
         ranks.sort(key=lambda r: r.penalty)
         # Fallback, sum of penalty for partials
-        default = sum(t.penalty for t in self.query.iter_partials(trange))
+        default = sum(t.penalty for t in self.query.iter_partials(trange)) + 0.2
         default += sum(n.word_break_penalty
                        for n in self.query.nodes[trange.start + 1:trange.end])
         return dbf.FieldRanking(db_field, default, ranks)
@@ -329,7 +329,7 @@ class SearchBuilder:
             if len(ranks) >= 10:
                 # Too many variants, bail out and only add
                 # Worst-case Fallback: sum of penalty of partials
-                default = sum(t.penalty for t in self.query.iter_partials(trange))
+                default = sum(t.penalty for t in self.query.iter_partials(trange)) + 0.2
                 default += sum(n.word_break_penalty
                                for n in self.query.nodes[trange.start + 1:trange.end])
                 ranks.append(dbf.RankedTokens(rank.penalty + default, []))

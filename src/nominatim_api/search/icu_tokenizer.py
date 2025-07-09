@@ -42,7 +42,7 @@ PENALTY_BREAK = {
      qmod.BREAK_END: -0.5,
      qmod.BREAK_PHRASE: -0.5,
      qmod.BREAK_SOFT_PHRASE: -0.5,
-     qmod.BREAK_WORD: 0.0,
+     qmod.BREAK_WORD: 0.1,
      qmod.BREAK_PART: 0.2,
      qmod.BREAK_TOKEN: 0.4
 }

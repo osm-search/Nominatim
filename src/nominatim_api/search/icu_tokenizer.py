@@ -47,6 +47,7 @@ PENALTY_BREAK = {
      qmod.BREAK_TOKEN: 0.4
 }
 
+
 @dataclasses.dataclass
 class ICUToken(qmod.Token):
     """ Specialised token for ICU tokenizer.
@@ -232,9 +233,7 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
                 if trans:
                     for term in trans.split(' '):
                         if term:
-                            query.add_node(qmod.BREAK_TOKEN, phrase.ptype,
-                                           PENALTY_IN_TOKEN_BREAK[qmod.BREAK_TOKEN],
-                                           term, word)
+                            query.add_node(qmod.BREAK_TOKEN, phrase.ptype, term, word)
                     query.nodes[-1].btype = breakchar
 
         query.nodes[-1].btype = qmod.BREAK_END

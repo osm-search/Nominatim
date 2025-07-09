@@ -182,7 +182,7 @@ class _TokenSequence:
         return None
 
     def advance(self, ttype: qmod.TokenType, end_pos: int,
-                btype: qmod.BreakType) -> Optional['_TokenSequence']:
+                force_break: bool, break_penalty: float) -> Optional['_TokenSequence']:
         """ Return a new token sequence state with the given token type
             extended.
         """
@@ -195,7 +195,7 @@ class _TokenSequence:
             new_penalty = 0.0
         else:
             last = self.seq[-1]
-            if btype != qmod.BREAK_PHRASE and last.ttype == ttype:
+            if not force_break and last.ttype == ttype:
                 # extend the existing range
                 newseq = self.seq[:-1] + [TypedRange(ttype, last.trange.replace_end(end_pos))]
                 new_penalty = 0.0
@@ -203,7 +203,7 @@ class _TokenSequence:
                 # start a new range
                 newseq = list(self.seq) + [TypedRange(ttype,
                                                       qmod.TokenRange(last.trange.end, end_pos))]
-                new_penalty = PENALTY_TOKENCHANGE[btype]
+                new_penalty = break_penalty
 
         return _TokenSequence(newseq, newdir, self.penalty + new_penalty)
 
@@ -307,7 +307,7 @@ class _TokenSequence:
             name, addr = first.split(i)
             log().comment(f'split first word = name ({i - first.start})')
             yield dataclasses.replace(base, name=name, address=[addr] + base.address[1:],
-                                      penalty=penalty + PENALTY_TOKENCHANGE[query.nodes[i].btype])
+                                      penalty=penalty + query.nodes[i].word_break_penalty)
 
     def _get_assignments_address_backward(self, base: TokenAssignment,
                                           query: qmod.QueryStruct) -> Iterator[TokenAssignment]:
@@ -352,7 +352,7 @@ class _TokenSequence:
             addr, name = last.split(i)
             log().comment(f'split last word = name ({i - last.start})')
             yield dataclasses.replace(base, name=name, address=base.address[:-1] + [addr],
-                                      penalty=penalty + PENALTY_TOKENCHANGE[query.nodes[i].btype])
+                                      penalty=penalty + query.nodes[i].word_break_penalty)
 
     def get_assignments(self, query: qmod.QueryStruct) -> Iterator[TokenAssignment]:
         """ Yield possible assignments for the current sequence.
@@ -412,12 +412,15 @@ def yield_token_assignments(query: qmod.QueryStruct) -> Iterator[TokenAssignment
         for tlist in node.starting:
             yield from _append_state_to_todo(
                 query, todo,
-                state.advance(tlist.ttype, tlist.end, node.btype))
+                state.advance(tlist.ttype, tlist.end,
+                              True, node.word_break_penalty))
 
         if node.partial is not None:
             yield from _append_state_to_todo(
                 query, todo,
-                state.advance(qmod.TOKEN_PARTIAL, state.end_pos + 1, node.btype))
+                state.advance(qmod.TOKEN_PARTIAL, state.end_pos + 1,
+                              node.btype == qmod.BREAK_PHRASE,
+                              node.word_break_penalty))
 
 
 def _append_state_to_todo(query: qmod.QueryStruct, todo: List[_TokenSequence],

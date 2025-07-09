@@ -282,10 +282,14 @@ class SearchBuilder:
         """ Create a ranking expression for a name term in the given range.
         """
         name_fulls = self.query.get_tokens(trange, qmod.TOKEN_WORD)
-        ranks = [dbf.RankedTokens(t.penalty, [t.token]) for t in name_fulls]
+        full_word_penalty = self.query.get_in_word_penalty(trange)
+        ranks = [dbf.RankedTokens(t.penalty + full_word_penalty, [t.token])
+                 for t in name_fulls]
         ranks.sort(key=lambda r: r.penalty)
         # Fallback, sum of penalty for partials
-        default = sum(t.penalty for t in self.query.iter_partials(trange)) + 0.2
+        default = sum(t.penalty for t in self.query.iter_partials(trange))
+        default += sum(n.word_break_penalty
+                       for n in self.query.nodes[trange.start + 1:trange.end])
         return dbf.FieldRanking(db_field, default, ranks)
 
     def get_addr_ranking(self, trange: qmod.TokenRange) -> dbf.FieldRanking:
@@ -303,7 +307,7 @@ class SearchBuilder:
             if partial is not None:
                 if pos + 1 < trange.end:
                     penalty = rank.penalty + partial.penalty \
-                              + PENALTY_WORDCHANGE[self.query.nodes[pos + 1].btype]
+                              + self.query.nodes[pos + 1].word_break_penalty
                     heapq.heappush(todo, (neglen - 1, pos + 1,
                                    dbf.RankedTokens(penalty, rank.tokens)))
                 else:
@@ -313,7 +317,9 @@ class SearchBuilder:
             for tlist in self.query.nodes[pos].starting:
                 if tlist.ttype == qmod.TOKEN_WORD:
                     if tlist.end < trange.end:
-                        chgpenalty = PENALTY_WORDCHANGE[self.query.nodes[tlist.end].btype]
+                        chgpenalty = self.query.nodes[tlist.end].word_break_penalty \
+                                     + self.query.get_in_word_penalty(
+                                            qmod.TokenRange(pos, tlist.end))
                         for t in tlist.tokens:
                             heapq.heappush(todo, (neglen - 1, tlist.end,
                                                   rank.with_token(t, chgpenalty)))
@@ -323,7 +329,9 @@ class SearchBuilder:
             if len(ranks) >= 10:
                 # Too many variants, bail out and only add
                 # Worst-case Fallback: sum of penalty of partials
-                default = sum(t.penalty for t in self.query.iter_partials(trange)) + 0.2
+                default = sum(t.penalty for t in self.query.iter_partials(trange))
+                default += sum(n.word_break_penalty
+                               for n in self.query.nodes[trange.start + 1:trange.end])
                 ranks.append(dbf.RankedTokens(rank.penalty + default, []))
                 # Bail out of outer loop
                 break
@@ -346,6 +354,7 @@ class SearchBuilder:
             if not tokens:
                 return None
             sdata.set_strings('countries', tokens)
+            sdata.penalty += self.query.get_in_word_penalty(assignment.country)
         elif self.details.countries:
             sdata.countries = dbf.WeightedStrings(self.details.countries,
                                                   [0.0] * len(self.details.countries))
@@ -353,29 +362,24 @@ class SearchBuilder:
             sdata.set_strings('housenumbers',
                               self.query.get_tokens(assignment.housenumber,
                                                     qmod.TOKEN_HOUSENUMBER))
+            sdata.penalty += self.query.get_in_word_penalty(assignment.housenumber)
         if assignment.postcode:
             sdata.set_strings('postcodes',
                               self.query.get_tokens(assignment.postcode,
                                                     qmod.TOKEN_POSTCODE))
+            sdata.penalty += self.query.get_in_word_penalty(assignment.postcode)
         if assignment.qualifier:
             tokens = self.get_qualifier_tokens(assignment.qualifier)
             if not tokens:
                 return None
             sdata.set_qualifiers(tokens)
+            sdata.penalty += self.query.get_in_word_penalty(assignment.qualifier)
         elif self.details.categories:
             sdata.qualifiers = dbf.WeightedCategories(self.details.categories,
                                                       [0.0] * len(self.details.categories))
 
         if assignment.address:
-            if not assignment.name and assignment.housenumber:
-                # housenumber search: the first item needs to be handled like
-                # a name in ranking or penalties are not comparable with
-                # normal searches.
-                sdata.set_ranking([self.get_name_ranking(assignment.address[0],
-                                                         db_field='nameaddress_vector')]
-                                  + [self.get_addr_ranking(r) for r in assignment.address[1:]])
-            else:
-                sdata.set_ranking([self.get_addr_ranking(r) for r in assignment.address])
+            sdata.set_ranking([self.get_addr_ranking(r) for r in assignment.address])
         else:
             sdata.rankings = []
 
@@ -421,14 +425,3 @@ class SearchBuilder:
             return dbf.WeightedCategories(list(tokens.keys()), list(tokens.values()))
 
         return None
-
-
-PENALTY_WORDCHANGE = {
-    qmod.BREAK_START: 0.0,
-    qmod.BREAK_END: 0.0,
-    qmod.BREAK_PHRASE: 0.0,
-    qmod.BREAK_SOFT_PHRASE: 0.0,
-    qmod.BREAK_WORD: 0.1,
-    qmod.BREAK_PART: 0.2,
-    qmod.BREAK_TOKEN: 0.4
-}

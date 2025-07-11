@@ -226,10 +226,10 @@ class SearchBuilder:
                                 ) -> Iterator[Tuple[float, int, List[dbf.FieldLookup]]]:
         """ Yield the best lookup for a name-only search.
         """
-        split = partials.get_num_lookup_tokens(30000, 10)
+        split = partials.get_num_lookup_tokens(30000, 6)
 
         if split > 0:
-            yield 0.0, partials.expected_for_all_search(10), \
+            yield 0.0, partials.expected_for_all_search(5), \
                   partials.split_lookup(split, 'name_vector')
         else:
             # lots of results expected: try lookup by full names first
@@ -240,7 +240,7 @@ class SearchBuilder:
                       dbf.lookup_by_any_name([t.token for t in name_fulls], [], [])
 
             # look the name up by its partials
-            exp_count = partials.expected_for_all_search(10)
+            exp_count = partials.expected_for_all_search(5)
             if exp_count < 50000:
                 yield 1.0, exp_count, \
                       [dbf.FieldLookup('name_vector', partials.get_tokens(), lookups.LookupAll)]

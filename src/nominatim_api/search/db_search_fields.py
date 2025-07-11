@@ -7,7 +7,7 @@
 """
 Data structures for more complex fields in abstract search descriptions.
 """
-from typing import List, Tuple, Iterator, Dict, Type
+from typing import List, Tuple, Iterator, Dict, Type, cast
 import dataclasses
 
 import sqlalchemy as sa
@@ -16,6 +16,66 @@ from ..typing import SaFromClause, SaColumn, SaExpression
 from ..utils.json_writer import JsonWriter
 from .query import Token
 from . import db_search_lookups as lookups
+
+
+class CountedTokenIDs:
+    """ A list of token IDs with their respective counts, sorted
+        from least frequent to most frequent.
+
+        If a token count is one, then statistics are likely to be unavaible
+        and a relatively high count is assumed instead.
+    """
+
+    def __init__(self, tokens: Iterator[Token], count_column: str = 'count'):
+        self.tokens = list({(cast(int, getattr(t, count_column)), t.token) for t in tokens})
+        self.tokens.sort(key=lambda t: t[0] if t[0] > 1 else 100000)
+
+    def __len__(self) -> int:
+        return len(self.tokens)
+
+    def get_num_lookup_tokens(self, limit: int, fac: int) -> int:
+        """ Suggest the number of tokens to be used for an index lookup.
+            The idea here is to use as few items as possible while making
+            sure the number of rows returned stays below 'limit' which
+            makes recheck of the returned rows more expensive than adding
+            another item for the index lookup. 'fac' is the factor by which
+            the limit is increased every time a lookup item is added.
+
+            If the list of tokens doesn't seem suitable at all for index
+            lookup, -1 is returned.
+        """
+        length = len(self.tokens)
+        min_count = self.tokens[0][0]
+        if min_count == 1:
+            return min(length, 3)  # no statistics available, use index
+
+        for i in range(min(length, 3)):
+            if min_count < limit:
+                return i + 1
+            limit = limit * fac
+
+        return -1
+
+    def min_count(self) -> int:
+        return self.tokens[0][0]
+
+    def expected_for_all_search(self, fac: int = 5) -> int:
+        return int(self.tokens[0][0] / (fac**(len(self.tokens) - 1)))
+
+    def get_tokens(self) -> List[int]:
+        return [t[1] for t in self.tokens]
+
+    def get_head_tokens(self, num_tokens: int) -> List[int]:
+        return [t[1] for t in self.tokens[:num_tokens]]
+
+    def get_tail_tokens(self, first: int) -> List[int]:
+        return [t[1] for t in self.tokens[first:]]
+
+    def split_lookup(self, split: int, column: str) -> 'List[FieldLookup]':
+        lookup = [FieldLookup(column, self.get_head_tokens(split), lookups.LookupAll)]
+        if split < len(self.tokens):
+            lookup.append(FieldLookup(column, self.get_tail_tokens(split), lookups.Restrict))
+        return lookup
 
 
 @dataclasses.dataclass

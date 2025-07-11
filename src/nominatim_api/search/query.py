@@ -134,7 +134,6 @@ class TokenRange:
     """
     start: int
     end: int
-    penalty: Optional[float] = None
 
     def __lt__(self, other: 'TokenRange') -> bool:
         return self.end <= other.start

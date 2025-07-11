@@ -12,8 +12,8 @@ import pytest
 from nominatim_api.search.query import QueryStruct, Phrase, TokenRange, Token
 import nominatim_api.search.query as qmod
 from nominatim_api.search.token_assignment import (yield_token_assignments,
-                                                   TokenAssignment,
-                                                   PENALTY_TOKENCHANGE)
+                                                   TokenAssignment)
+from nominatim_api.search.icu_tokenizer import PENALTY_BREAK
 
 
 class MyToken(Token):
@@ -28,6 +28,7 @@ def make_query(*args):
 
     for btype, ptype, _ in args[1:]:
         q.add_node(btype, ptype)
+        q.nodes[-1].penalty = PENALTY_BREAK[btype]
     q.add_node(qmod.BREAK_END, qmod.PHRASE_ANY)
 
     for start, t in enumerate(args):
@@ -94,7 +95,7 @@ def test_multiple_simple_words(btype):
                    (btype, qmod.PHRASE_ANY, [(2, qmod.TOKEN_PARTIAL)]),
                    (btype, qmod.PHRASE_ANY, [(3, qmod.TOKEN_PARTIAL)]))
 
-    penalty = PENALTY_TOKENCHANGE[btype]
+    penalty = PENALTY_BREAK[btype]
 
     check_assignments(yield_token_assignments(q),
                       TokenAssignment(name=TokenRange(0, 3)),

@@ -68,7 +68,7 @@ def mk_query(inp):
     phrase_split = re.split(r"([ ,:'-])", inp)
 
     for word, breakchar in zip_longest(*[iter(phrase_split)]*2, fillvalue='>'):
-        query.add_node(breakchar, PHRASE_ANY, 0.1, word, word)
+        query.add_node(breakchar, PHRASE_ANY, word, word)
 
     return query
 
@@ -153,9 +153,9 @@ def test_postcode_inside_postcode_phrase(pc_config):
 
     query = QueryStruct([])
     query.nodes[-1].ptype = PHRASE_STREET
-    query.add_node(',', PHRASE_STREET, 0.1, '12345', '12345')
-    query.add_node(',', PHRASE_POSTCODE, 0.1, 'xz', 'xz')
-    query.add_node('>', PHRASE_POSTCODE, 0.1, '4444', '4444')
+    query.add_node(',', PHRASE_STREET, '12345', '12345')
+    query.add_node(',', PHRASE_POSTCODE, 'xz', 'xz')
+    query.add_node('>', PHRASE_POSTCODE, '4444', '4444')
 
     assert parser.parse(query) == {(2, 3, '4444')}
 
@@ -165,7 +165,7 @@ def test_partial_postcode_in_postcode_phrase(pc_config):
 
     query = QueryStruct([])
     query.nodes[-1].ptype = PHRASE_POSTCODE
-    query.add_node(' ', PHRASE_POSTCODE, 0.1, '2224', '2224')
-    query.add_node('>', PHRASE_POSTCODE, 0.1, '12345', '12345')
+    query.add_node(' ', PHRASE_POSTCODE, '2224', '2224')
+    query.add_node('>', PHRASE_POSTCODE, '12345', '12345')
 
     assert not parser.parse(query)

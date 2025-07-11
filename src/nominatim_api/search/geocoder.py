@@ -83,7 +83,7 @@ class ForwardGeocoder:
         min_ranking = searches[0].penalty + 2.0
         prev_penalty = 0.0
         for i, search in enumerate(searches):
-            if search.penalty > prev_penalty and (search.penalty > min_ranking or i > 20):
+            if search.penalty > prev_penalty and (search.penalty > min_ranking or i > 15):
                 break
             log().table_dump(f"{i + 1}. Search", _dump_searches([search], query))
             log().var_dump('Params', self.params)

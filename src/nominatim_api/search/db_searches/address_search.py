@@ -175,8 +175,7 @@ class AddressSearch(base.AbstractSearch):
             sql = sql.where(t.c.country_code.in_(self.countries.values))
 
         if self.postcodes:
-            if self.expected_count > 10000:
-                # Many results expected. Restrict by postcode.
+            if not self.has_address_terms or self.expected_count > 10000:
                 tpc = conn.t.postcode
                 sql = sql.where(sa.select(tpc.c.postcode)
                                   .where(tpc.c.postcode.in_(self.postcodes.values))

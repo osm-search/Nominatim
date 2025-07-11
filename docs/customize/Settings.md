@@ -641,24 +641,6 @@ See also [NOMINATIM_DEFAULT_LANGUAGE](#nominatim_default_language).
 
 ### Logging Settings
 
-#### NOMINATIM_LOG_DB
-
-| Summary            |                                                     |
-| --------------     | --------------------------------------------------- |
-| **Description:**   | Log requests into the database |
-| **Format:**        | boolean |
-| **Default:**       | no |
-| **After Changes:** | run `nominatim refresh --website` |
-
-Enable logging requests into a database table with this setting. The logs
-can be found in the table `new_query_log`.
-
-When using this logging method, it is advisable to set up a job that
-regularly clears out old logging information. Nominatim will not do that
-on its own.
-
-Can be used as the same time as NOMINATIM_LOG_FILE.
-
 #### NOMINATIM_LOG_FILE
 
 | Summary            |                                                     |
@@ -681,8 +663,6 @@ Request time is the time when the request was started. The execution time is
 given in seconds and includes the entire time the query was queued and executed
 in the frontend.
 type contains the name of the endpoint used.
-
-Can be used as the same time as NOMINATIM_LOG_DB.
 
 #### NOMINATIM_DEBUG_SQL
 

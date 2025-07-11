@@ -21,6 +21,7 @@ Feature: Simple Tests
      | %#$@*&l;der#$! |
      | 234.23.14.5 |
      | aussenstelle universitat lichtenstein wachterhaus aussenstelle universitat lichtenstein wachterhaus aussenstelle universitat lichtenstein wachterhaus aussenstelle universitat lichtenstein wachterhaus |
+     | . |
 
     Scenario: Empty XML search
         When sending v1/search with format xml

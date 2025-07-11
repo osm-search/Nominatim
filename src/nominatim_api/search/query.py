@@ -331,7 +331,7 @@ class QueryStruct:
             of each node.
         """
         n = len(self.nodes) - 1
-        if n == 1 or n >= 50:
+        if n <= 1 or n >= 50:
             self.dir_penalty = 0
         elif n == 2:
             self.dir_penalty = (self.nodes[1].name_address_ratio()

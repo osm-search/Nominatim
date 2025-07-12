@@ -175,10 +175,11 @@ class AddressSearch(base.AbstractSearch):
             sql = sql.where(t.c.country_code.in_(self.countries.values))
 
         if self.postcodes:
-            if not self.has_address_terms or self.expected_count > 10000:
+            if self.expected_count > 10000:
                 tpc = conn.t.postcode
                 sql = sql.where(sa.select(tpc.c.postcode)
                                   .where(tpc.c.postcode.in_(self.postcodes.values))
+                                  .where(tpc.c.country_code == t.c.country_code)
                                   .where(t.c.centroid.within_distance(tpc.c.geometry, 0.4))
                                   .exists())
 

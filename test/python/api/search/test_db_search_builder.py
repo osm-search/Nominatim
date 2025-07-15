@@ -396,9 +396,9 @@ def make_counted_searches(name_part, name_full, address_part, address_full,
                 MyToken(0, 101, name_full, 1, 'name_full'))
     for i in range(num_address_parts):
         q.add_token(TokenRange(i + 1, i + 2), qmod.TOKEN_PARTIAL,
-                    MyToken(0.5, 2, address_part, 1, 'address_part'))
+                    MyToken(0.5, 2, 1, address_part, 'address_part'))
         q.add_token(TokenRange(i + 1, i + 2), qmod.TOKEN_WORD,
-                    MyToken(0, 102, address_full, 1, 'address_full'))
+                    MyToken(0, 102, 1, address_full, 'address_full'))
 
     builder = SearchBuilder(q, SearchDetails())
 
@@ -421,7 +421,7 @@ def test_infrequent_partials_in_name():
 
 
 def test_frequent_partials_in_name_and_address():
-    searches = make_counted_searches(9999, 1, 9999, 1)
+    searches = make_counted_searches(20001, 1, 20001, 1)
 
     assert len(searches) == 2
 
@@ -431,11 +431,11 @@ def test_frequent_partials_in_name_and_address():
     assert set((s.column, s.lookup_type.__name__) for s in searches[0].lookups) == \
         {('name_vector', 'LookupAny'), ('nameaddress_vector', 'Restrict')}
     assert set((s.column, s.lookup_type.__name__) for s in searches[1].lookups) == \
-        {('nameaddress_vector', 'LookupAll'), ('name_vector', 'LookupAll')}
+        {('nameaddress_vector', 'Restrict'), ('name_vector', 'LookupAll')}
 
 
 def test_too_frequent_partials_in_name_and_address():
-    searches = make_counted_searches(20000, 1, 10000, 1)
+    searches = make_counted_searches(50001, 1, 30001, 1)
 
     assert len(searches) == 1
 

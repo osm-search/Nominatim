@@ -176,10 +176,10 @@ class AddressSearch(base.AbstractSearch):
 
         if self.postcodes:
             if self.expected_count > 10000:
-                # Many results expected. Restrict by postcode.
                 tpc = conn.t.postcode
                 sql = sql.where(sa.select(tpc.c.postcode)
                                   .where(tpc.c.postcode.in_(self.postcodes.values))
+                                  .where(tpc.c.country_code == t.c.country_code)
                                   .where(t.c.centroid.within_distance(tpc.c.geometry, 0.4))
                                   .exists())
 
@@ -233,6 +233,7 @@ class AddressSearch(base.AbstractSearch):
             pc_near = sa.select(sa.func.min(tpc.c.geometry.ST_Distance(t.c.centroid)
                                             * (tpc.c.rank_search - 19)))\
                         .where(tpc.c.postcode.in_(pcs))\
+                        .where(tpc.c.country_code == t.c.country_code)\
                         .scalar_subquery()
             penalty += sa.case((t.c.postcode.in_(pcs), 0.0),
                                else_=sa.func.coalesce(pc_near, cast(SaColumn, 2.0)))

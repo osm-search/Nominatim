@@ -235,7 +235,7 @@ cause the search to return other, less accurate, matches (if possible).
 
 | Parameter | Value | Default |
 |-----------| ----- | ------- |
-| viewbox   | `<x1>,<y1>,<x2>,<y2>` | _unset_ |
+| viewbox   | `<x1>,<x2>,<y1>,<y2>` | _unset_ |
 
 Boost parameter which focuses the search on the given area.
 Any two corner points of the box are accepted as long as they make a proper

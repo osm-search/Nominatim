@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Functions for specialised logging with HTML output.
@@ -106,9 +106,6 @@ class BaseLogger:
                 except TypeError:
                     return sqlstr
 
-            # Fixes an odd issue with Python 3.7 where percentages are not
-            # quoted correctly.
-            sqlstr = re.sub(r'%(?!\()', '%%', sqlstr)
             sqlstr = re.sub(r'__\[POSTCOMPILE_([^]]*)\]', r'%(\1)s', sqlstr)
             return sqlstr % params
 

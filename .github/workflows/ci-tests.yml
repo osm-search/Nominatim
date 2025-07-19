@@ -119,7 +119,7 @@ jobs:
               if: matrix.dependencies == 'pip'
 
             - name: Python static typechecking
-              run: ../venv/bin/python -m mypy --strict --python-version 3.8 src
+              run: ../venv/bin/python -m mypy --strict --python-version 3.9 src
               working-directory: Nominatim
               if: matrix.dependencies == 'pip'
 

@@ -2,7 +2,7 @@
 name = "nominatim-api"
 description = "A tool for building a database of OpenStreetMap for geocoding and for searching the database. Search library."
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.9"
 license = 'GPL-3.0-or-later'
 maintainers = [
   { name = "Sarah Hoffmann", email = "lonvia@denofr.de" },

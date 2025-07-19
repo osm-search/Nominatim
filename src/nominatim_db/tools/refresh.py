@@ -7,7 +7,7 @@
 """
 Functions for bringing auxiliary data in the database up-to-date.
 """
-from typing import MutableSequence, Tuple, Any, Type, Mapping, Sequence, List, cast
+from typing import MutableSequence, Tuple, Any, Mapping, Sequence, List
 import csv
 import gzip
 import logging
@@ -220,26 +220,6 @@ def recompute_importance(conn: Connection) -> None:
 
         cur.execute('ALTER TABLE placex ENABLE TRIGGER ALL')
     conn.commit()
-
-
-def _quote_php_variable(var_type: Type[Any], config: Configuration,
-                        conf_name: str) -> str:
-    if var_type == bool:
-        return 'true' if config.get_bool(conf_name) else 'false'
-
-    if var_type == int:
-        return cast(str, getattr(config, conf_name))
-
-    if not getattr(config, conf_name):
-        return 'false'
-
-    if var_type == Path:
-        value = str(config.get_path(conf_name) or '')
-    else:
-        value = getattr(config, conf_name)
-
-    quoted = value.replace("'", "\\'")
-    return f"'{quoted}'"
 
 
 def invalidate_osm_object(osm_type: str, osm_id: int, conn: Connection,

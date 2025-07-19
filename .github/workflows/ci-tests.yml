@@ -44,11 +44,13 @@ jobs:
                       postgresql: 12
                       lua: '5.1'
                       dependencies: pip
+                      python: '3.9'
                     - flavour: ubuntu-24
                       ubuntu: 24
                       postgresql: 17
                       lua: '5.3'
                       dependencies: apt
+                      python: 'builtin'
 
         runs-on: ubuntu-${{ matrix.ubuntu }}.04
 
@@ -74,6 +76,12 @@ jobs:
                      /usr/local/bin/osm2pgsql
                   key: osm2pgsql-bin-22-1
               if: matrix.ubuntu == '22'
+
+            - name: Set up Python
+              uses: actions/setup-python@v5
+              with:
+                  python-version: ${{ matrix.python }}
+              if: matrix.python != 'builtin'
 
             - name: Compile osm2pgsql
               run: |

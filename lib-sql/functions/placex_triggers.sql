@@ -732,7 +732,7 @@ BEGIN
   IF NEW.rank_address between 2 and 27 THEN
     IF (ST_GeometryType(NEW.geometry) in ('ST_Polygon','ST_MultiPolygon') AND ST_IsValid(NEW.geometry)) THEN
       -- Performance: We just can't handle re-indexing for country level changes
-      IF (NEW.rank_address < 26 and st_area(NEW.geometry) < 1)
+      IF (NEW.rank_address < 26 and st_area(NEW.geometry) <= 2)
          OR (NEW.rank_address >= 26 and st_area(NEW.geometry) < 0.01)
       THEN
         -- mark items within the geometry for re-indexing

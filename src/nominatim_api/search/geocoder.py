@@ -22,6 +22,7 @@ from .db_search_builder import SearchBuilder, build_poi_search, wrap_near_search
 from .db_searches import AbstractSearch
 from .query_analyzer_factory import make_query_analyzer, AbstractQueryAnalyzer
 from .query import Phrase, QueryStruct
+from ..formatter import Formatter
 
 
 class ForwardGeocoder:
@@ -183,6 +184,7 @@ class ForwardGeocoder:
                 results = await self.execute_searches(query, searches)
                 results = self.pre_filter_results(results)
                 await add_result_details(self.conn, results, self.params)
+                await Formatter().localize_results(results, self.params.locales)
                 log().result_dump('Preliminary Results', ((r.accuracy, r) for r in results))
                 results = self.sort_and_cut_results(results)
             else:
@@ -191,6 +193,7 @@ class ForwardGeocoder:
             search = build_poi_search(categories, self.params.countries)
             results = await search.lookup(self.conn, self.params)
             await add_result_details(self.conn, results, self.params)
+            await Formatter().localize_results(results, self.params.locales)
 
         log().result_dump('Final Results', ((r.accuracy, r) for r in results))
 
@@ -212,6 +215,7 @@ class ForwardGeocoder:
             results = await self.execute_searches(query, searches[:50])
             results = self.pre_filter_results(results)
             await add_result_details(self.conn, results, self.params)
+            await Formatter().localize_results(results, self.params.locales)
             log().result_dump('Preliminary Results', ((r.accuracy, r) for r in results))
             if len(results) > 1:
                 self.rerank_by_query(query, results)

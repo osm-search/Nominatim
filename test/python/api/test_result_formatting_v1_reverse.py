@@ -17,6 +17,7 @@ import pytest
 
 from nominatim_api.v1.format import dispatch as v1_format
 import nominatim_api as napi
+from nominatim_api.formatter import Formatter
 
 FORMATS = ['json', 'jsonv2', 'geojson', 'geocodejson', 'xml']
 
@@ -73,9 +74,9 @@ def test_format_reverse_with_osm_id(fmt):
         assert props['osm_type'] == 'node'
         assert props['osm_id'] == 23
 
-
+@pytest.mark.asyncio
 @pytest.mark.parametrize('fmt', FORMATS)
-def test_format_reverse_with_address(fmt):
+async def test_format_reverse_with_address(fmt):
     reverse = napi.ReverseResult(napi.SourceTable.PLACEX,
                                  ('place', 'thing'),
                                  napi.Point(1.0, 2.0),
@@ -102,7 +103,7 @@ def test_format_reverse_with_address(fmt):
                                                     rank_address=10,
                                                     distance=0.0)
                                  ]))
-    reverse.localize(napi.Locales())
+    await Formatter().localize_results([reverse], napi.Locales)
 
     raw = v1_format.format_result(napi.ReverseResults([reverse]), fmt,
                                   {'addressdetails': True})
@@ -126,7 +127,8 @@ def test_format_reverse_with_address(fmt):
             assert 'address' in props
 
 
-def test_format_reverse_geocodejson_special_parts():
+@pytest.mark.asyncio
+async def test_format_reverse_geocodejson_special_parts():
     reverse = napi.ReverseResult(napi.SourceTable.PLACEX,
                                  ('place', 'house'),
                                  napi.Point(1.0, 2.0),
@@ -164,8 +166,7 @@ def test_format_reverse_geocodejson_special_parts():
                                                     rank_address=10,
                                                     distance=0.0)
                                  ]))
-
-    reverse.localize(napi.Locales())
+    await Formatter().localize_results([reverse], napi.Locales)
 
     raw = v1_format.format_result(napi.ReverseResults([reverse]), 'geocodejson',
                                   {'addressdetails': True})

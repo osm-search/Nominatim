@@ -48,7 +48,7 @@ class Locales:
                 self.name_tags.append(f"{tag}:{lang}")
                 self.name_tags.append(f"_place_{tag}:{lang}")
 
-    def display_name(self, names: Optional[Mapping[str, str]]) -> str:
+    def display_name(self, names: Optional[Mapping[str, str]] = None) -> str:
         """ Return the best matching name from a dictionary of names
             containing different name variants.
 

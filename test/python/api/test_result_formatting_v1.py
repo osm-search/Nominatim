@@ -16,6 +16,7 @@ import json
 import pytest
 
 from nominatim_api.v1.format import dispatch as v1_format
+from nominatim_api.formatter import Formatter 
 import nominatim_api as napi
 
 STATUS_FORMATS = {'text', 'json'}
@@ -96,7 +97,8 @@ def test_search_details_minimal():
             }
 
 
-def test_search_details_full():
+@pytest.mark.asyncio
+async def test_search_details_full():
     import_date = dt.datetime(2010, 2, 7, 20, 20, 3, 0, tzinfo=dt.timezone.utc)
     search = napi.DetailedResult(
                   source_table=napi.SourceTable.PLACEX,
@@ -119,7 +121,7 @@ def test_search_details_full():
                   country_code='ll',
                   indexed_date=import_date
                   )
-    search.localize(napi.Locales())
+    await Formatter().localize_results([search], napi.Locales())
 
     result = v1_format.format_result(search, 'json', {})
 

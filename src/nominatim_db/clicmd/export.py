@@ -151,9 +151,11 @@ async def dump_results(conn: napi.SearchConnection,
                        results: List[ReverseResult],
                        writer: 'csv.DictWriter[str]',
                        lang: Optional[str]) -> None:
-    locale = napi.Locales([lang] if lang else None)
     await add_result_details(conn, results,
-                             LookupDetails(address_details=True, locales=locale))
+                             LookupDetails(address_details=True))
+
+    locale = napi.Locales([lang] if lang else None)
+    locale.localize_results(results)
 
     for result in results:
         data = {'placeid': result.place_id,

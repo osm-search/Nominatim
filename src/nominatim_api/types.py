@@ -17,7 +17,6 @@ from struct import unpack
 from binascii import unhexlify
 
 from .errors import UsageError
-from .localization import Locales
 
 
 @dataclasses.dataclass
@@ -409,9 +408,6 @@ class LookupDetails:
     """ Simplification factor for a geometry in degrees WGS. A factor of
         0.0 means the original geometry is kept. The higher the value, the
         more the geometry gets simplified.
-    """
-    locales: Locales = Locales()
-    """ Preferred languages for localization of results.
     """
 
     @classmethod

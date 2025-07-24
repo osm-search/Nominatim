@@ -9,6 +9,7 @@ Helper functions for localizing names of results.
 """
 from typing import Mapping, List, Optional
 from .config import Configuration
+from .results import AddressLines, BaseResultT
 
 import re
 
@@ -96,3 +97,24 @@ class Locales:
                 languages.append(parts[0])
 
         return Locales(languages)
+
+    def localize(self, lines: AddressLines) -> None:
+        """ Sets the local name of address parts according to the chosen
+            locale.
+
+            Only address parts that are marked as isaddress are localized.
+
+            AddressLines should be modified in place.
+        """
+        for line in lines:
+            if line.isaddress and line.names:
+                line.local_name = self.display_name(line.names)
+
+    def localize_results(self, results: List[BaseResultT]) -> None:
+        """ Set the local name of results according to the chosen
+            locale.
+        """
+        for result in results:
+            result.locale_name = self.display_name(result.names)
+            if result.address_rows:
+                self.localize(result.address_rows)

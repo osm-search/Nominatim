@@ -119,7 +119,7 @@ def test_search_details_full():
                   country_code='ll',
                   indexed_date=import_date
                   )
-    search.localize(napi.Locales())
+    napi.Locales().localize_results([search])
 
     result = v1_format.format_result(search, 'json', {})
 

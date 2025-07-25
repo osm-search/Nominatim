@@ -133,28 +133,20 @@ class AddressLine:
     """
 
 
-class AddressLines():
+class AddressLines(list):
     """ A wrapper around a list of AddressLine objects.
 
         Using this class def as a type alias AddresssLines = List[AddressLine]
         definition does not allow napi.AddressLines() instantiation
     """
-    def __init__(self, lines: Optional[List[AddressLine]] = None):
-        self.lines = lines or []
+    def __init__(self, lines=None):
+        super().__init__(lines or [])
 
-    def append(self, line: AddressLine) -> None:
-        self.lines.append(line)
+    def append(self, line):
+        super().append(line)
 
-    def __iter__(self) -> Iterator[AddressLine]:
-        return iter(self.lines)
-
-    def __bool__(self) -> bool:
-        return bool(self.lines)  # this is for testing
-    
-    # I have no idea how to make this work with mypy --> ignoring for now
-    def sort(self, key: Optional[Callable[[AddressLine], Any]] = None,
-             reverse: bool = False) -> None:
-        self.lines.sort(key=key, reverse=reverse)  # type: ignore[arg-type]
+    def sort(self, key=None, reverse=False):
+        super().sort(key=key, reverse=reverse)
 
 
 @dataclasses.dataclass

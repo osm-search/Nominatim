@@ -7,7 +7,7 @@
 """
 Helper functions for localizing names of results.
 """
-from typing import Mapping, List, Optional
+from typing import Dict, List, Optional
 from .config import Configuration
 
 import re
@@ -48,7 +48,7 @@ class Locales:
                 self.name_tags.append(f"{tag}:{lang}")
                 self.name_tags.append(f"_place_{tag}:{lang}")
 
-    def display_name(self, names: Optional[Mapping[str, str]] = None) -> str:
+    def display_name(self, names: Optional[Dict[str, str]]) -> str:
         """ Return the best matching name from a dictionary of names
             containing different name variants.
 

@@ -545,8 +545,12 @@ def test_lookup_postcode_with_address_details(apiobj, frontend):
 
     api = frontend(apiobj, options={'details'})
     result = api.details(napi.PlaceID(9000), address_details=True)
-
-    assert result.address_rows == [
+    print("here")
+    print(result.address_rows)
+    for l in result.address_rows:
+        print(l)
+    print(type(result.address_rows))
+    expected = [
                napi.AddressLine(place_id=9000, osm_object=None,
                                 category=('place', 'postcode'),
                                 names={'ref': '34 425'}, extratags={},
@@ -571,6 +575,8 @@ def test_lookup_postcode_with_address_details(apiobj, frontend):
                                 admin_level=None, fromarea=True, isaddress=False,
                                 rank_address=4, distance=0.0)
            ]
+    print(type(expected))
+    assert result.address_rows == expected
 
 
 @pytest.mark.parametrize('objid', [napi.PlaceID(1736),

@@ -16,7 +16,7 @@ import json
 import pytest
 
 from nominatim_api.v1.format import dispatch as v1_format
-from nominatim_api.formatter import Formatter 
+from nominatim_api.formatter import Formatter
 import nominatim_api as napi
 
 STATUS_FORMATS = {'text', 'json'}
@@ -72,7 +72,6 @@ def test_status_format_json_full():
 
 
 # DetailedResult
-
 def test_search_details_minimal():
     search = napi.DetailedResult(napi.SourceTable.PLACEX,
                                  ('place', 'thing'),

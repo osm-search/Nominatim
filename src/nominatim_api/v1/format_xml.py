@@ -106,7 +106,7 @@ def format_base_xml(results: Union[ReverseResults, SearchResults],
             if icon:
                 place.set('icon', icon)
 
-        if options.get('addressdetails', False) and result.address_rows:
+        if options.get('addressdetails', False) and result.address_rows:            
             _write_xml_address(ET.SubElement(root, 'addressparts') if simple else place,
                                result.address_rows, result.country_code)
 

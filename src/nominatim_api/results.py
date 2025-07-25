@@ -11,7 +11,10 @@ Data classes are part of the public API while the functions are for
 internal use only. That's why they are implemented as free-standing functions
 instead of member functions.
 """
-from typing import Optional, Tuple, Dict, Sequence, TypeVar, Type, List, cast, Callable
+from typing import (
+    Optional, Tuple, Dict, Sequence, TypeVar, Type, List,
+    cast, Callable, Iterator, Any
+)
 import enum
 import dataclasses
 import datetime as dt
@@ -130,11 +133,11 @@ class AddressLine:
     """
 
 
-class AddressLines:
-    """ A wrapper around a list of AddressLine objects. 
-    
-        Using this as a type alias AddresssLines = List[AddressLine]
-        does not allow napi.AddressLines() instantiation
+class AddressLines():
+    """ A wrapper around a list of AddressLine objects.
+
+        Using this class def as a type alias AddresssLines = List[AddressLine]
+        definition does not allow napi.AddressLines() instantiation
     """
     def __init__(self, lines: Optional[List[AddressLine]] = None):
         self.lines = lines or []
@@ -142,14 +145,16 @@ class AddressLines:
     def append(self, line: AddressLine) -> None:
         self.lines.append(line)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[AddressLine]:
         return iter(self.lines)
 
-    def __len__(self):
-        return len(self.lines)
-
-    def __getitem__(self, index):
-        return self.lines[index]
+    def __bool__(self) -> bool:
+        return bool(self.lines)  # this is for testing
+    
+    # I have no idea how to make this work with mypy --> ignoring for now
+    def sort(self, key: Optional[Callable[[AddressLine], Any]] = None,
+             reverse: bool = False) -> None:
+        self.lines.sort(key=key, reverse=reverse)  # type: ignore[arg-type]
 
 
 @dataclasses.dataclass

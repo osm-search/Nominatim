@@ -36,17 +36,26 @@ local flex = require('flex-base')
 ### Using preset configurations
 
 If you want to start with one of the existing presets, then you can import
-its settings using the `import_topic()` function:
+its settings using the `load_topic()` function:
 
-```
+``` lua
 local flex = require('flex-base')
 
-flex.import_topic('streets')
+flex.load_topic('streets')
 ```
 
-The `import_topic` function takes an optional second configuration
+The `load_topic` function takes an optional second configuration
 parameter. The available options are explained in the
 [themepark section](#using-osm2pgsql-themepark).
+
+Available topics are: `admin`, `street`, `address`, `full`. These topic
+correspond to the [import styles](../admin/Import.md#filtering-imported-data)
+you can choose during import. To start with the 'extratags' style, use the
+`full` topic with the appropriate config parameter:
+
+``` lua
+flex.load_topic('full', {with_extratags = true})
+```
 
 !!! note
     You can also directly import the preset style files, e.g.

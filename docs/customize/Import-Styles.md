@@ -125,8 +125,10 @@ value without key, then this is used as default for values that are not listed.
 
 `set_main_tags()` will completely replace the current main tag configuration
 with the new configuration. `modify_main_tags()` will merge the new
-configuration with the existing one. Otherwise, the two functions do exactly
-the same.
+configuration with the existing one. Merging is done at value level.
+For example, when the current setting is `highway = {'always', primary = 'named'}`,
+then `set_main_tags{highway = 'delete'}` will result in a rule
+`highway = {'delete', primary = 'named'}`.
 
 !!! example
     ``` lua
@@ -143,9 +145,9 @@ the same.
     when it has a value of `administrative`. Objects with `highway` tags are
     always included with two exceptions: the troll tag `highway=no` is
     deleted on the spot. And when the value is `street_lamp` then the object
-    must have a name, too. Finally, if a `landuse` tag is present then
-    it will be used independently of the concrete value when neither boundary
-    nor highway tags were found and the object is named.
+    must also have a name, to be included. Finally, if a `landuse` tag is
+    present then it will be used independently of the concrete value when
+    neither boundary nor highway tags were found and the object is named.
 
 ##### Presets
 

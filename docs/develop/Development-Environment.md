@@ -92,7 +92,7 @@ but executes against the code in the source tree. For example:
 ```
 me@machine:~$ cd Nominatim
 me@machine:~Nominatim$ ./nominatim-cli.py --version
-Nominatim version 4.4.99-1
+Nominatim version 5.1.0-0
 ```
 
 Make sure you have activated the virtual environment holding all

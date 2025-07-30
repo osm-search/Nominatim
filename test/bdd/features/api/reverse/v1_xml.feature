@@ -70,7 +70,7 @@ Feature: XML output for Reverse API
           | way      | 1      | 30         | 30           |
         And the result contains
           | lon       | lat        | boundingbox |
-          | 9.5705468 | 47.1185454 | 47.1184954,47.1185954,9.5704968,9.5705968 |
+          | 9.5705467 | 47.1185454 | 47.1184954,47.1185954,9.5704967,9.5705967 |
         And the result contains
           | display_name |
           | 1019, Grosssteg, Sücka, Triesenberg, Oberland, 9497, Liechtenstein |

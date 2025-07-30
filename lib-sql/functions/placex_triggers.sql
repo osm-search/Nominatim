@@ -780,7 +780,7 @@ BEGIN
   SELECT count(*)>0 FROM pg_tables WHERE tablename = classtable and schemaname = current_schema() INTO result;
   IF result THEN
     EXECUTE 'INSERT INTO ' || classtable::regclass || ' (place_id, centroid) VALUES ($1,$2)' 
-    USING NEW.place_id, ST_Centroid(NEW.geometry);
+    USING NEW.place_id, NEW.centroid;
   END IF;
 
 {% endif %} -- not disable_diff_updates

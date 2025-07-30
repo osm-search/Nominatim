@@ -2,7 +2,7 @@
 --
 -- This file is part of Nominatim. (https://nominatim.org)
 --
--- Copyright (C) 2022 by the Nominatim developer community.
+-- Copyright (C) 2025 by the Nominatim developer community.
 -- For a full list of authors see the git log.
 
 -- Assorted helper functions for the triggers.
@@ -14,14 +14,14 @@ DECLARE
   geom_type TEXT;
 BEGIN
   geom_type := ST_GeometryType(place);
-  IF geom_type = ' ST_Point' THEN
+  IF geom_type = 'ST_Point' THEN
     RETURN place;
   END IF;
   IF geom_type = 'ST_LineString' THEN
-    RETURN ST_LineInterpolatePoint(place, 0.5);
+    RETURN ST_ReducePrecision(ST_LineInterpolatePoint(place, 0.5), 0.0000001);
   END IF;
 
-  RETURN ST_PointOnSurface(place);
+  RETURN ST_ReducePrecision(ST_PointOnSurface(place), 0.0000001);
 END;
 $$
 LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;

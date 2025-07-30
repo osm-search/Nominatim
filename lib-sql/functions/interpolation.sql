@@ -309,7 +309,7 @@ BEGIN
         IF NEW.startnumber IS NULL THEN
             NEW.startnumber := startnumber;
             NEW.endnumber := endnumber;
-            NEW.linegeo := sectiongeo;
+            NEW.linegeo := ST_ReducePrecision(sectiongeo, 0.0000001);
             NEW.postcode := postcode;
         ELSE
           INSERT INTO location_property_osmline
@@ -317,7 +317,8 @@ BEGIN
                   startnumber, endnumber, step,
                   address, postcode, country_code,
                   geometry_sector, indexed_status)
-          VALUES (sectiongeo, NEW.partition, NEW.osm_id, NEW.parent_place_id,
+          VALUES (ST_ReducePrecision(sectiongeo, 0.0000001),
+                  NEW.partition, NEW.osm_id, NEW.parent_place_id,
                   startnumber, endnumber, NEW.step,
                   NEW.address, postcode,
                   NEW.country_code, NEW.geometry_sector, 0);

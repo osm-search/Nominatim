@@ -104,7 +104,7 @@ Feature: Json output for Reverse API
           | way      | 1      |
         And the result contains
           | lon       | lat        | boundingbox!in_box |
-          | 9.5705468 | 47.1185454 | 47.118494, 47.118596, 9.570495, 9.570597 |
+          | 9.5705467 | 47.1185454 | 47.118494, 47.118596, 9.570495, 9.570597 |
         And the result contains
           | display_name |
           | 1019, Grosssteg, Sücka, Triesenberg, Oberland, 9497, Liechtenstein |

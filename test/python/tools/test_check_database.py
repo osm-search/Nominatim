@@ -31,6 +31,10 @@ def test_check_connection_bad(def_config):
     assert chkdb.check_connection(badconn, def_config) == chkdb.CheckState.FATAL
 
 
+def test_check_database_version_not_found(property_table, temp_db_conn, def_config):
+    assert chkdb.check_database_version(temp_db_conn, def_config) == chkdb.CheckState.FATAL
+
+
 def test_check_database_version_good(property_table, temp_db_conn, def_config):
     property_table.set('database_version',
                        str(nominatim_db.version.NOMINATIM_VERSION))

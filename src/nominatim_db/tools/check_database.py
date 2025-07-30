@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Collection of functions that check if the database is complete and functional.
@@ -163,11 +163,7 @@ def check_connection(conn: Any, config: Configuration) -> CheckResult:
              Database version ({db_version}) doesn't match Nominatim version ({nom_version})
 
              Hints:
-             * Are you connecting to the correct database?
-
              {instruction}
-
-             Check the Migration chapter of the Administration Guide.
 
              Project directory: {config.project_dir}
              Current setting of NOMINATIM_DATABASE_DSN: {config.DATABASE_DSN}
@@ -176,24 +172,25 @@ def check_database_version(conn: Connection, config: Configuration) -> CheckResu
     """ Checking database_version matches Nominatim software version
     """
 
-    if table_exists(conn, 'nominatim_properties'):
+    db_version_str = None
+    if not table_exists(conn, 'nominatim_properties'):
+        instruction = 'Are you connecting to the correct database?'
+    else:
         db_version_str = properties.get_property(conn, 'database_version')
-    else:
-        db_version_str = None
 
-    if db_version_str is not None:
-        db_version = parse_version(db_version_str)
+        if db_version_str is None:
+            instruction = 'Database version not found. Did the import finish?'
+        else:
+            db_version = parse_version(db_version_str)
 
-        if db_version == NOMINATIM_VERSION:
-            return CheckState.OK
+            if db_version == NOMINATIM_VERSION:
+                return CheckState.OK
 
-        instruction = (
-            'Run migrations: nominatim admin --migrate'
-            if db_version < NOMINATIM_VERSION
-            else 'You need to upgrade the Nominatim software.'
-        )
-    else:
-        instruction = ''
+            instruction = (
+                "Run migrations: 'nominatim admin --migrate'"
+                if db_version < NOMINATIM_VERSION
+                else 'You need to upgrade the Nominatim software.'
+            ) + ' Check the Migration chapter of the Administration Guide.'
 
     return CheckState.FATAL, dict(db_version=db_version_str,
                                   nom_version=NOMINATIM_VERSION,

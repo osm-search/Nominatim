@@ -76,7 +76,7 @@ def test_format_reverse_with_osm_id(fmt):
 
 
 @pytest.mark.parametrize('fmt', FORMATS)
-async def test_format_reverse_with_address(fmt):
+def test_format_reverse_with_address(fmt):
     reverse = napi.ReverseResult(napi.SourceTable.PLACEX,
                                  ('place', 'thing'),
                                  napi.Point(1.0, 2.0),
@@ -127,7 +127,7 @@ async def test_format_reverse_with_address(fmt):
             assert 'address' in props
 
 
-async def test_format_reverse_geocodejson_special_parts():
+def test_format_reverse_geocodejson_special_parts():
     reverse = napi.ReverseResult(napi.SourceTable.PLACEX,
                                  ('place', 'house'),
                                  napi.Point(1.0, 2.0),

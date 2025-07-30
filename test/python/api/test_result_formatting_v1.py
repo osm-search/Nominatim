@@ -96,7 +96,7 @@ def test_search_details_minimal():
             }
 
 
-async def test_search_details_full():
+def test_search_details_full():
     import_date = dt.datetime(2010, 2, 7, 20, 20, 3, 0, tzinfo=dt.timezone.utc)
     search = napi.DetailedResult(
                   source_table=napi.SourceTable.PLACEX,

@@ -446,9 +446,6 @@ async def add_result_details(conn: SearchConnection, results: List[BaseResultT],
             log().comment('Query keywords')
             for result in results:
                 await complete_keywords(conn, result)
-        #  Removing this for now as i want to explicitly do this in format
-        #  for result in results:
-        #     result.localize(details.locales)
 
 
 def _result_row_to_address_row(row: SaRow, isaddress: Optional[bool] = None) -> AddressLine:

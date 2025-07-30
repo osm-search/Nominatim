@@ -75,7 +75,6 @@ def test_format_reverse_with_osm_id(fmt):
         assert props['osm_id'] == 23
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize('fmt', FORMATS)
 async def test_format_reverse_with_address(fmt):
     reverse = napi.ReverseResult(napi.SourceTable.PLACEX,
@@ -105,7 +104,7 @@ async def test_format_reverse_with_address(fmt):
                                                     distance=0.0)
                                  ]))
 
-    await Formatter().localize_results([reverse], napi.Locales())
+    Formatter().localize_results([reverse], napi.Locales())
 
     raw = v1_format.format_result(napi.ReverseResults([reverse]), fmt,
                                   {'addressdetails': True})
@@ -128,7 +127,6 @@ async def test_format_reverse_with_address(fmt):
             assert 'address' in props
 
 
-@pytest.mark.asyncio
 async def test_format_reverse_geocodejson_special_parts():
     reverse = napi.ReverseResult(napi.SourceTable.PLACEX,
                                  ('place', 'house'),
@@ -167,7 +165,7 @@ async def test_format_reverse_geocodejson_special_parts():
                                                     rank_address=10,
                                                     distance=0.0)
                                  ]))
-    await Formatter().localize_results([reverse], napi.Locales())
+    Formatter().localize_results([reverse], napi.Locales())
 
     raw = v1_format.format_result(napi.ReverseResults([reverse]), 'geocodejson',
                                   {'addressdetails': True})

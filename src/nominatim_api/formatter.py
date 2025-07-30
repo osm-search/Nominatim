@@ -20,7 +20,7 @@ class Formatter:
         usage.
     """
 
-    async def localize(self, lines: AddressLines, locales: Locales) -> None:
+    def localize(self, lines: AddressLines, locales: Locales) -> None:
         """ Set the local name of address parts according to the chosen
             locale. Return the list of local names without duplicates.
 
@@ -32,11 +32,11 @@ class Formatter:
             if line.isaddress and line.names:
                 line.local_name = locales.display_name(line.names)
 
-    async def localize_results(self, results: List[BaseResultT], locales: Locales) -> None:
+    def localize_results(self, results: List[BaseResultT], locales: Locales) -> None:
         """ Set the local name of results according to the chosen
             locale. Return the list of local names without duplicates.
         """
         for result in results:
             result.locale_name = locales.display_name(result.names)
             if result.address_rows:
-                await self.localize(result.address_rows, locales)
+                self.localize(result.address_rows, locales)

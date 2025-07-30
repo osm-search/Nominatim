@@ -96,7 +96,6 @@ def test_search_details_minimal():
             }
 
 
-@pytest.mark.asyncio
 async def test_search_details_full():
     import_date = dt.datetime(2010, 2, 7, 20, 20, 3, 0, tzinfo=dt.timezone.utc)
     search = napi.DetailedResult(
@@ -120,7 +119,7 @@ async def test_search_details_full():
                   country_code='ll',
                   indexed_date=import_date
                   )
-    await Formatter().localize_results([search], napi.Locales())
+    Formatter().localize_results([search], napi.Locales())
 
     result = v1_format.format_result(search, 'json', {})
 

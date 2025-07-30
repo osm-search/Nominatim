@@ -19,8 +19,6 @@ from .connection import SearchConnection
 from . import results as nres
 from .logging import log
 from .types import AnyPoint, DataLayer, ReverseDetails, GeometryFormat, Bbox
-from .formatter import Formatter
-
 
 RowFunc = Callable[[Optional[SaRow], Type[nres.ReverseResult]], Optional[nres.ReverseResult]]
 
@@ -604,5 +602,4 @@ class ReverseGeocoder:
             if hasattr(row, 'bbox'):
                 result.bbox = Bbox.from_wkb(row.bbox)
             await nres.add_result_details(self.conn, [result], self.params)
-            await Formatter().localize_results([result], self.params.locales)
         return result

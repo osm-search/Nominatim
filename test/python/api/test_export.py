@@ -55,7 +55,6 @@ def test_export_output_type(run_export):
 
 def test_export_output_format(run_export):
     csv = run_export(['--output-format', 'placeid;street;nothing;postcode'])
-
     assert csv == ['placeid,street,nothing,postcode', '332,Street,,55674', '']
 
 

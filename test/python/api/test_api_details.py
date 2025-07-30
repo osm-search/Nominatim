@@ -12,6 +12,7 @@ import datetime as dt
 import pytest
 
 import nominatim_api as napi
+from nominatim_api.formatter import Formatter
 
 
 @pytest.mark.parametrize('idobj', (napi.PlaceID(332), napi.OsmID('W', 4),
@@ -34,6 +35,7 @@ def test_lookup_in_placex(apiobj, frontend, idobj):
 
     api = frontend(apiobj, options={'details'})
     result = api.details(idobj)
+    Formatter().localize_results([result], napi.Locales())
 
     assert result is not None
 
@@ -83,6 +85,7 @@ def test_lookup_in_placex_minimal_info(apiobj, frontend):
 
     api = frontend(apiobj, options={'details'})
     result = api.details(napi.PlaceID(332))
+    Formatter().localize_results([result], napi.Locales())
 
     assert result is not None
 
@@ -149,6 +152,7 @@ def test_lookup_placex_with_address_details(apiobj, frontend):
 
     api = frontend(apiobj, options={'details'})
     result = api.details(napi.PlaceID(332), address_details=True)
+    Formatter().localize_results([result], napi.Locales())
 
     assert result.address_rows == [
                napi.AddressLine(place_id=332, osm_object=('W', 4),
@@ -350,6 +354,7 @@ def test_lookup_osmline_with_address_details(apiobj, frontend):
 
     api = frontend(apiobj, options={'details'})
     result = api.details(napi.PlaceID(9000), address_details=True)
+    Formatter().localize_results([result], napi.Locales())
 
     assert result.address_rows == [
                napi.AddressLine(place_id=332, osm_object=('W', 4),
@@ -450,6 +455,7 @@ def test_lookup_tiger_with_address_details(apiobj, frontend):
 
     api = frontend(apiobj, options={'details'})
     result = api.details(napi.PlaceID(9000), address_details=True)
+    Formatter().localize_results([result], napi.Locales())
 
     assert result.address_rows == [
                napi.AddressLine(place_id=332, osm_object=('W', 4),
@@ -545,6 +551,8 @@ def test_lookup_postcode_with_address_details(apiobj, frontend):
 
     api = frontend(apiobj, options={'details'})
     result = api.details(napi.PlaceID(9000), address_details=True)
+    Formatter().localize_results([result], napi.Locales())
+
     assert result.address_rows == [
                napi.AddressLine(place_id=9000, osm_object=None,
                                 category=('place', 'postcode'),

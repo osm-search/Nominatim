@@ -15,7 +15,6 @@ import sqlalchemy as sa
 
 from .typing import SaColumn, SaRow, SaSelect
 from .connection import SearchConnection
-from .formatter import Formatter
 from .logging import log
 from . import types as ntyp
 from . import results as nres
@@ -164,7 +163,6 @@ async def get_detailed_place(conn: SearchConnection, place: ntyp.PlaceRef,
 
     if collector.result is not None:
         await nres.add_result_details(conn, [collector.result], details)
-        await Formatter().localize_results([collector.result], details.locales)
     return collector.result
 
 
@@ -183,7 +181,6 @@ async def get_places(conn: SearchConnection, places: Iterable[ntyp.PlaceRef],
 
     results = collector.get_results()
     await nres.add_result_details(conn, results, details)
-    await Formatter().localize_results(results, details.locales)
     return results
 
 

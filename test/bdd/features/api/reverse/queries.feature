@@ -78,3 +78,17 @@ Feature: Reverse geocoding
         Then the result contains in field address
          | house_number |
          | 7 |
+
+    Scenario: Reverse - inherited address is shown by default
+        When reverse geocoding 47.0629071,9.4879694
+        Then the result contains
+         | osm_type | category | display_name |
+         | node     | office   | foo.li, 64, Hampfländer, Mäls, Balzers, Oberland, 9496, Liechtenstein |
+
+    Scenario: Reverse - inherited address is not shown with address layer
+        When reverse geocoding 47.0629071,9.4879694
+         | layer |
+         | address |
+        Then the result contains
+         | osm_type | category | display_name |
+         | way      | building | 64, Hampfländer, Mäls, Balzers, Oberland, 9496, Liechtenstein |

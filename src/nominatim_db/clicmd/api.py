@@ -201,8 +201,6 @@ class APISearch:
 
                 if args.query:
                     results = api.search(args.query, **params)
-                    print(f"Query parameters: {params}")
-                    print(f"Query parameters: {params}")
                 else:
                     results = api.search_address(amenity=args.amenity,
                                                  street=args.street,

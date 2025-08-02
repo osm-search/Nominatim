@@ -36,6 +36,7 @@ from .results import (SourceTable as SourceTable,
                       SearchResult as SearchResult,
                       SearchResults as SearchResults)
 from .localization import (Locales as Locales)
+from .formatter import (Formatter as Formatter)
 from .result_formatting import (FormatDispatcher as FormatDispatcher,
                                 load_format_dispatcher as load_format_dispatcher)
 

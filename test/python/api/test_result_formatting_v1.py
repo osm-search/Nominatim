@@ -16,6 +16,7 @@ import json
 import pytest
 
 from nominatim_api.v1.format import dispatch as v1_format
+from nominatim_api.formatter import Formatter
 import nominatim_api as napi
 
 STATUS_FORMATS = {'text', 'json'}
@@ -71,7 +72,6 @@ def test_status_format_json_full():
 
 
 # DetailedResult
-
 def test_search_details_minimal():
     search = napi.DetailedResult(napi.SourceTable.PLACEX,
                                  ('place', 'thing'),
@@ -119,7 +119,7 @@ def test_search_details_full():
                   country_code='ll',
                   indexed_date=import_date
                   )
-    search.localize(napi.Locales())
+    Formatter().localize_results([search], napi.Locales())
 
     result = v1_format.format_result(search, 'json', {})
 

@@ -17,6 +17,7 @@ import pytest
 
 from nominatim_api.v1.format import dispatch as v1_format
 import nominatim_api as napi
+from nominatim_api.formatter import Formatter
 
 FORMATS = ['json', 'jsonv2', 'geojson', 'geocodejson', 'xml']
 
@@ -102,11 +103,11 @@ def test_format_reverse_with_address(fmt):
                                                     rank_address=10,
                                                     distance=0.0)
                                  ]))
-    reverse.localize(napi.Locales())
+
+    Formatter().localize_results([reverse], napi.Locales())
 
     raw = v1_format.format_result(napi.ReverseResults([reverse]), fmt,
                                   {'addressdetails': True})
-
     if fmt == 'xml':
         root = ET.fromstring(raw)
         assert root.find('addressparts').find('county').text == 'Hello'
@@ -164,8 +165,7 @@ def test_format_reverse_geocodejson_special_parts():
                                                     rank_address=10,
                                                     distance=0.0)
                                  ]))
-
-    reverse.localize(napi.Locales())
+    Formatter().localize_results([reverse], napi.Locales())
 
     raw = v1_format.format_result(napi.ReverseResults([reverse]), 'geocodejson',
                                   {'addressdetails': True})

@@ -17,6 +17,7 @@ import sys
 import nominatim_api as napi
 from nominatim_api.results import create_from_placex_row, ReverseResult, add_result_details
 from nominatim_api.types import LookupDetails
+from nominatim_api.formatter import Formatter
 
 import sqlalchemy as sa
 
@@ -124,6 +125,7 @@ async def export(args: NominatimArgs) -> int:
             results = []
             for row in await conn.execute(sql):
                 result = create_from_placex_row(row, ReverseResult)
+
                 if result is not None:
                     results.append(result)
 
@@ -158,6 +160,8 @@ async def dump_results(conn: napi.SearchConnection,
     for result in results:
         data = {'placeid': result.place_id,
                 'postcode': result.postcode}
+
+        Formatter().localize_results([result], napi.Locales())
 
         for line in (result.address_rows or []):
             if line.isaddress and line.local_name:

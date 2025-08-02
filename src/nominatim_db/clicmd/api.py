@@ -213,6 +213,9 @@ class APISearch:
         except napi.UsageError as ex:
             raise UsageError(ex) from ex
 
+        locales = _get_locales(args, api.config.DEFAULT_LANGUAGE)
+        napi.Formatter().localize_results(results, locales)
+
         if args.dedupe and len(results) > 1:
             results = deduplicate_results(results, args.limit)
 

@@ -20,7 +20,6 @@ from . import results as nres
 from .logging import log
 from .types import AnyPoint, DataLayer, ReverseDetails, GeometryFormat, Bbox
 
-
 RowFunc = Callable[[Optional[SaRow], Type[nres.ReverseResult]], Optional[nres.ReverseResult]]
 
 WKT_PARAM: SaBind = sa.bindparam('wkt', type_=Geometry)
@@ -603,5 +602,4 @@ class ReverseGeocoder:
             if hasattr(row, 'bbox'):
                 result.bbox = Bbox.from_wkb(row.bbox)
             await nres.add_result_details(self.conn, [result], self.params)
-
         return result

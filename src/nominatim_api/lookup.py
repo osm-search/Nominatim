@@ -163,7 +163,6 @@ async def get_detailed_place(conn: SearchConnection, place: ntyp.PlaceRef,
 
     if collector.result is not None:
         await nres.add_result_details(conn, [collector.result], details)
-
     return collector.result
 
 
@@ -182,7 +181,6 @@ async def get_places(conn: SearchConnection, places: Iterable[ntyp.PlaceRef],
 
     results = collector.get_results()
     await nres.add_result_details(conn, results, details)
-
     return results
 
 

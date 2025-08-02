@@ -11,7 +11,10 @@ Data classes are part of the public API while the functions are for
 internal use only. That's why they are implemented as free-standing functions
 instead of member functions.
 """
-from typing import Optional, Tuple, Dict, Sequence, TypeVar, Type, List, cast, Callable
+from typing import (
+    Optional, Tuple, Dict, Sequence, TypeVar, Type, List,
+    cast, Callable
+)
 import enum
 import dataclasses
 import datetime as dt
@@ -23,7 +26,6 @@ from .sql.sqlalchemy_types import Geometry
 from .types import Point, Bbox, LookupDetails
 from .connection import SearchConnection
 from .logging import log
-from .localization import Locales
 
 # This file defines complex result data classes.
 
@@ -132,25 +134,7 @@ class AddressLine:
 
 
 class AddressLines(List[AddressLine]):
-    """ Sequence of address lines order in descending order by their rank.
-    """
-
-    def localize(self, locales: Locales) -> List[str]:
-        """ Set the local name of address parts according to the chosen
-            locale. Return the list of local names without duplicates.
-
-            Only address parts that are marked as isaddress are localized
-            and returned.
-        """
-        label_parts: List[str] = []
-
-        for line in self:
-            if line.isaddress and line.names:
-                line.local_name = locales.display_name(line.names)
-                if not label_parts or label_parts[-1] != line.local_name:
-                    label_parts.append(line.local_name)
-
-        return label_parts
+    """ A wrapper around a list of AddressLine objects."""
 
 
 @dataclasses.dataclass
@@ -189,7 +173,6 @@ class BaseResult:
     admin_level: int = 15
 
     locale_name: Optional[str] = None
-    display_name: Optional[str] = None
 
     names: Optional[Dict[str, str]] = None
     address: Optional[Dict[str, str]] = None
@@ -225,22 +208,29 @@ class BaseResult:
         """
         return self.centroid[0]
 
+    @property
+    def display_name(self) -> Optional[str]:
+        """ Dynamically compute the display name for the result place
+            and, if available, its address information..
+        """
+        # No longer sets the locale name, want to do that explicitly in format.py
+        # using the formatter object
+        if self.address_rows:  # if this is true we need additional processing
+            label_parts: List[str] = []
+
+            for line in self.address_rows:  # assume locale_name is set by external formatter
+                if line.isaddress and line.names and line.local_name:  # checks if it is an address
+                    if not label_parts or label_parts[-1] != line.local_name:
+                        label_parts.append(line.local_name)
+            return ', '.join(label_parts)
+        return self.locale_name
+
     def calculated_importance(self) -> float:
         """ Get a valid importance value. This is either the stored importance
             of the value or an artificial value computed from the place's
             search rank.
         """
         return self.importance or (0.40001 - (self.rank_search/75.0))
-
-    def localize(self, locales: Locales) -> None:
-        """ Fill the locale_name and the display_name field for the
-            place and, if available, its address information.
-        """
-        self.locale_name = locales.display_name(self.names)
-        if self.address_rows:
-            self.display_name = ', '.join(self.address_rows.localize(locales))
-        else:
-            self.display_name = self.locale_name
 
 
 BaseResultT = TypeVar('BaseResultT', bound=BaseResult)
@@ -456,8 +446,6 @@ async def add_result_details(conn: SearchConnection, results: List[BaseResultT],
             log().comment('Query keywords')
             for result in results:
                 await complete_keywords(conn, result)
-        for result in results:
-            result.localize(details.locales)
 
 
 def _result_row_to_address_row(row: SaRow, isaddress: Optional[bool] = None) -> AddressLine:

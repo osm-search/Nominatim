@@ -343,14 +343,16 @@ async def search_endpoint(api: NominatimAPIAsync, params: ASGIAdaptor) -> Any:
     except UsageError as err:
         params.raise_error(str(err))
 
+    # want to potentially as a if details["localize"]
+    # i did add it and then i did something weird on git and now its gone:(
+    Formatter().localize_results(results,
+                                 Locales.from_accept_languages(get_accepted_languages(params)))
+
     if details['dedupe'] and len(results) > 1:
         results = helpers.deduplicate_results(results, max_results)
 
     if debug:
         return build_response(params, loglib.get_and_disable(), num_results=len(results))
-
-    Formatter().localize_results(results,
-                                 Locales.from_accept_languages(get_accepted_languages(params)))
 
     if fmt == 'xml':
         helpers.extend_query_parts(queryparts, details,

@@ -201,6 +201,8 @@ class APISearch:
 
                 if args.query:
                     results = api.search(args.query, **params)
+                    print(f"Query parameters: {params}")
+                    print(f"Query parameters: {params}")
                 else:
                     results = api.search_address(amenity=args.amenity,
                                                  street=args.street,
@@ -212,6 +214,9 @@ class APISearch:
                                                  **params)
         except napi.UsageError as ex:
             raise UsageError(ex) from ex
+
+        locales = _get_locales(args, api.config.DEFAULT_LANGUAGE)
+        napi.Formatter().localize_results(results, locales)
 
         if args.dedupe and len(results) > 1:
             results = deduplicate_results(results, args.limit)

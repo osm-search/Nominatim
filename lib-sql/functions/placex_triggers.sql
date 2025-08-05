@@ -667,6 +667,11 @@ DECLARE
 BEGIN
   {% if debug %}RAISE WARNING '% % % %',NEW.osm_type,NEW.osm_id,NEW.class,NEW.type;{% endif %}
 
+  IF NEW.class IN ('routing:entrance', 'entrance') THEN
+    -- We don't need entrance nodes in the placex table.
+    RETURN NULL;
+  END IF;
+
   NEW.place_id := nextval('seq_place');
   NEW.indexed_status := 1; --STATUS_NEW
 
@@ -873,6 +878,15 @@ BEGIN
 
   -- Compute a preliminary centroid.
   NEW.centroid := get_center_point(NEW.geometry);
+
+  -- Record the entrance node locations
+  IF NEW.osm_type = 'W' THEN
+    DELETE FROM place_entrance WHERE place_id = NEW.place_id;
+    INSERT INTO place_entrance (place_id, osm_node_id, type, geometry)
+      SELECT NEW.place_id, osm_id, type, geometry
+        FROM place
+        WHERE osm_id IN (SELECT unnest(nodes) FROM planet_osm_ways WHERE id=NEW.osm_id) AND class IN ('routing:entrance', 'entrance');
+  END IF;
 
     -- recalculate country and partition
   IF NEW.rank_search = 4 AND NEW.address is not NULL AND NEW.address ? 'country' THEN

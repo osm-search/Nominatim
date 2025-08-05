@@ -244,6 +244,23 @@ CREATE UNIQUE INDEX idx_postcode_id ON location_postcode USING BTREE (place_id) 
 CREATE INDEX idx_postcode_geometry ON location_postcode USING GIST (geometry) {{db.tablespace.address_index}};
 GRANT SELECT ON location_postcode TO "{{config.DATABASE_WEBUSER}}" ;
 
+-- Table to store location of entrance nodes
+DROP TABLE IF EXISTS place_entrance;
+CREATE TABLE place_entrance (
+  place_id BIGINT NOT NULL,
+  osm_node_id BIGINT NOT NULL,
+  type TEXT NOT NULL,
+  geometry GEOMETRY(Point, 4326) NOT NULL
+  );
+CREATE UNIQUE INDEX idx_place_entrance_id ON place_entrance USING BTREE (place_id, osm_node_id) {{db.tablespace.search_index}};
+GRANT SELECT ON place_entrance TO "{{config.DATABASE_WEBUSER}}" ;
+
+-- Create an index on the place table for lookups to populate the entrance
+-- table
+CREATE INDEX IF NOT EXISTS idx_place_entrance_lookup ON place
+  USING BTREE (osm_id)
+  WHERE class IN ('routing:entrance', 'entrance');
+
 DROP TABLE IF EXISTS import_polygon_error;
 CREATE TABLE import_polygon_error (
   osm_id BIGINT,

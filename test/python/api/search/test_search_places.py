@@ -156,9 +156,11 @@ class TestNameOnlySearches:
         assert result.place_id == 333
         assert len(geom['coordinates']) == npoints
 
-    @pytest.mark.parametrize('viewbox', ['5.0,4.0,6.0,5.0', '5.7,4.0,6.0,5.0'])
-    @pytest.mark.parametrize('wcount,rids', [(2, [100, 101]), (20000, [100])])
-    def test_prefer_viewbox(self, apiobj, frontend, viewbox, wcount, rids):
+    @pytest.mark.parametrize('viewbox,rids', [('5.0,4.0,6.0,5.0', [100]),
+                                              ('5.7,4.0,6.0,5.0', [100, 101]),
+                                              ('10.0,10.0,11.0,11.0', [101, 100])])
+    @pytest.mark.parametrize('wcount', [2, 50000])
+    def test_prefer_viewbox(self, apiobj, frontend, viewbox, rids, wcount):
         lookup = FieldLookup('name_vector', [1, 2], LookupAll)
         ranking = FieldRanking('name_vector', 0.2, [RankedTokens(0.0, [21])])
 

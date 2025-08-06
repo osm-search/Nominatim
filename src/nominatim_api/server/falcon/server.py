@@ -190,7 +190,7 @@ def get_application(project_dir: Path,
     """
     apimw = APIMiddleware(project_dir, environ)
 
-    middleware: List[object] = [apimw]
+    middleware: List[Any] = [apimw]
     log_file = apimw.config.LOG_FILE
     if log_file:
         middleware.append(FileLoggingMiddleware(log_file))

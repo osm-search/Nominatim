@@ -63,8 +63,7 @@ class PlaceSearch(base.AbstractSearch):
                         t.c.name_vector, t.c.nameaddress_vector,
                         sa.case((t.c.importance > 0, t.c.importance),
                                 else_=0.40001-(sa.cast(t.c.search_rank, sa.Float())/75))
-                          .label('importance'),
-                        penalty.label('penalty'))
+                          .label('importance'))
 
         for lookup in self.lookups:
             sql = sql.where(lookup.sql_condition(t))
@@ -88,10 +87,10 @@ class PlaceSearch(base.AbstractSearch):
                 sql = sql.where(t.c.centroid
                                    .intersects(VIEWBOX_PARAM,
                                                use_index=details.viewbox.area < 0.2))
-            elif not self.postcodes and self.expected_count >= 10000:
-                sql = sql.where(t.c.centroid
-                                   .intersects(VIEWBOX2_PARAM,
-                                               use_index=details.viewbox.area < 0.5))
+            else:
+                penalty += sa.case((t.c.centroid.intersects(VIEWBOX_PARAM, use_index=False), 0.0),
+                                   (t.c.centroid.intersects(VIEWBOX2_PARAM, use_index=False), 0.5),
+                                   else_=1.0)
 
         if details.near is not None and details.near_radius is not None:
             if details.near_radius < 0.1:
@@ -110,6 +109,8 @@ class PlaceSearch(base.AbstractSearch):
             sql = sql.where(sa.or_(t.c.address_rank <= MAX_RANK_PARAM,
                                    t.c.search_rank <= MAX_RANK_PARAM))
 
+        sql = sql.add_columns(penalty.label('penalty'))
+
         inner = sql.limit(5000 if self.qualifiers else 1000)\
                    .order_by(sa.desc(sa.text('importance')))\
                    .subquery()
@@ -121,8 +122,8 @@ class PlaceSearch(base.AbstractSearch):
         # If the query is not an address search or has a geographic preference,
         # preselect most important items to restrict the number of places
         # that need to be looked up in placex.
-        if (details.viewbox is None or details.bounded_viewbox)\
-           and (details.near is None or details.near_radius is not None)\
+        if (details.viewbox is None or not details.bounded_viewbox)\
+           and (details.near is None or details.near_radius is None)\
            and not self.qualifiers:
             sql = sql.add_columns(sa.func.first_value(inner.c.penalty - inner.c.importance)
                                     .over(order_by=inner.c.penalty - inner.c.importance)
@@ -165,11 +166,6 @@ class PlaceSearch(base.AbstractSearch):
                 # High penalty if the postcode is not an exact match.
                 # The postcode search needs to get priority here.
                 penalty += sa.case((t.c.postcode.in_(self.postcodes.values), 0.0), else_=1.0)
-
-        if details.viewbox is not None and not details.bounded_viewbox:
-            penalty += sa.case((t.c.geometry.intersects(VIEWBOX_PARAM, use_index=False), 0.0),
-                               (t.c.geometry.intersects(VIEWBOX2_PARAM, use_index=False), 0.5),
-                               else_=1.0)
 
         if details.near is not None:
             sql = sql.add_columns((-tsearch.c.centroid.ST_Distance(NEAR_PARAM))

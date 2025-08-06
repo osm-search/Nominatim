@@ -2,7 +2,7 @@
 --
 -- This file is part of Nominatim. (https://nominatim.org)
 --
--- Copyright (C) 2024 by the Nominatim developer community.
+-- Copyright (C) 2025 by the Nominatim developer community.
 -- For a full list of authors see the git log.
 
 -- Trigger functions for the placex table.
@@ -962,9 +962,8 @@ BEGIN
           WHERE class = 'place' and rank_address between 1 and 23
                 and prank.address_rank >= NEW.rank_address
                 and ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon') -- select right index
-                and geometry && NEW.geometry
-                and geometry ~ NEW.geometry -- needed because ST_Relate does not do bbox cover test
-                and ST_Relate(geometry, NEW.geometry, 'T*T***FF*') -- contains but not equal
+                and ST_Contains(geometry, NEW.geometry)
+                and not ST_Equals(geometry, NEW.geometry)
           ORDER BY prank.address_rank desc LIMIT 1
         LOOP
           NEW.rank_address := location.rank_address + 2;
@@ -985,9 +984,8 @@ BEGIN
                 and rank_address between 1 and 25 -- select right index
                 and ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon') -- select right index
                 and prank.address_rank >= NEW.rank_address
-                and geometry && NEW.geometry
-                and geometry ~ NEW.geometry -- needed because ST_Relate does not do bbox cover test
-                and ST_Relate(geometry, NEW.geometry, 'T*T***FF*') -- contains but not equal
+                and ST_Contains(geometry, NEW.geometry)
+                and not ST_Equals(geometry, NEW.geometry)
           ORDER BY prank.address_rank desc LIMIT 1
         LOOP
           NEW.rank_address := location.rank_address + 2;

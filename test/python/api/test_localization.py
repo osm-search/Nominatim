@@ -9,7 +9,7 @@ Test functions for adapting results to the user's locale.
 """
 import pytest
 
-from nominatim_api import Locales
+from nominatim_api.localization import Locales as Locales
 
 
 def test_display_name_empty_names():
@@ -25,6 +25,16 @@ def test_display_name_none_localized():
     assert loc.display_name({}) == ''
     assert loc.display_name({'name:de': 'DE', 'name': 'ALL'}) == 'ALL'
     assert loc.display_name({'ref': '34', 'name:de': 'DE'}) == '34'
+
+
+def test_display_name_with_locale():
+    loc = Locales(["de"])
+
+    assert loc.display_name({}) == ''
+    assert loc.display_name({'name:zh': 'ZH', 'name:de': 'DE'}) == 'DE'
+    assert loc.display_name({'name:de': 'DE', 'name': 'ALL'}) == 'DE'
+    assert loc.display_name_with_locale({'name:zh': 'ZH', 'name:de': 'DE'}) == ('DE', 'de')
+    assert loc.display_name_with_locale({'name:de': 'DE', 'ref': '34', 'name': 'A'}) == ('DE', "de")
 
 
 def test_output_names_none_localized():

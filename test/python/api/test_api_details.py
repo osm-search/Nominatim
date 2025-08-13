@@ -34,6 +34,7 @@ def test_lookup_in_placex(apiobj, frontend, idobj):
 
     api = frontend(apiobj, options={'details'})
     result = api.details(idobj)
+    napi.Locales().localize_results([result])
 
     assert result is not None
 
@@ -83,6 +84,7 @@ def test_lookup_in_placex_minimal_info(apiobj, frontend):
 
     api = frontend(apiobj, options={'details'})
     result = api.details(napi.PlaceID(332))
+    napi.Locales().localize_results([result])
 
     assert result is not None
 
@@ -149,6 +151,7 @@ def test_lookup_placex_with_address_details(apiobj, frontend):
 
     api = frontend(apiobj, options={'details'})
     result = api.details(napi.PlaceID(332), address_details=True)
+    napi.Locales().localize_results([result])
 
     assert result.address_rows == [
                napi.AddressLine(place_id=332, osm_object=('W', 4),
@@ -350,6 +353,7 @@ def test_lookup_osmline_with_address_details(apiobj, frontend):
 
     api = frontend(apiobj, options={'details'})
     result = api.details(napi.PlaceID(9000), address_details=True)
+    napi.Locales().localize_results([result])
 
     assert result.address_rows == [
                napi.AddressLine(place_id=332, osm_object=('W', 4),
@@ -450,6 +454,7 @@ def test_lookup_tiger_with_address_details(apiobj, frontend):
 
     api = frontend(apiobj, options={'details'})
     result = api.details(napi.PlaceID(9000), address_details=True)
+    napi.Locales().localize_results([result])
 
     assert result.address_rows == [
                napi.AddressLine(place_id=332, osm_object=('W', 4),
@@ -545,6 +550,7 @@ def test_lookup_postcode_with_address_details(apiobj, frontend):
 
     api = frontend(apiobj, options={'details'})
     result = api.details(napi.PlaceID(9000), address_details=True)
+    napi.Locales().localize_results([result])
 
     assert result.address_rows == [
                napi.AddressLine(place_id=9000, osm_object=None,

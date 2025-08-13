@@ -156,8 +156,6 @@ async def details_endpoint(api: NominatimAPIAsync, params: ASGIAdaptor) -> Any:
 
     debug = setup_debugging(params)
 
-    locales = Locales.from_accept_languages(get_accepted_languages(params))
-
     result = await api.details(place,
                                address_details=params.get_bool('addressdetails', False),
                                linked_places=params.get_bool('linkedplaces', True),
@@ -166,7 +164,6 @@ async def details_endpoint(api: NominatimAPIAsync, params: ASGIAdaptor) -> Any:
                                geometry_output=(GeometryFormat.GEOJSON
                                                 if params.get_bool('polygon_geojson', False)
                                                 else GeometryFormat.NONE),
-                               locales=locales
                                )
 
     if debug:
@@ -174,6 +171,9 @@ async def details_endpoint(api: NominatimAPIAsync, params: ASGIAdaptor) -> Any:
 
     if result is None:
         params.raise_error('No place with that OSM ID found.', status=404)
+
+    locales = Locales.from_accept_languages(get_accepted_languages(params))
+    locales.localize_results([result])
 
     output = params.formatting().format_result(
         result, fmt,
@@ -194,7 +194,6 @@ async def reverse_endpoint(api: NominatimAPIAsync, params: ASGIAdaptor) -> Any:
     details = parse_geometry_details(params, fmt)
     details['max_rank'] = helpers.zoom_to_rank(params.get_int('zoom', 18))
     details['layers'] = get_layers(params)
-    details['locales'] = Locales.from_accept_languages(get_accepted_languages(params))
 
     result = await api.reverse(coord, **details)
 
@@ -209,6 +208,10 @@ async def reverse_endpoint(api: NominatimAPIAsync, params: ASGIAdaptor) -> Any:
         query = urlencode(queryparts)
     else:
         query = ''
+
+    if result:
+        Locales.from_accept_languages(get_accepted_languages(params)).localize_results(
+            [result])
 
     fmt_options = {'query': query,
                    'extratags': params.get_bool('extratags', False),
@@ -227,7 +230,6 @@ async def lookup_endpoint(api: NominatimAPIAsync, params: ASGIAdaptor) -> Any:
     fmt = parse_format(params, SearchResults, 'xml')
     debug = setup_debugging(params)
     details = parse_geometry_details(params, fmt)
-    details['locales'] = Locales.from_accept_languages(get_accepted_languages(params))
 
     places = []
     for oid in (params.get('osm_ids') or '').split(','):
@@ -245,6 +247,8 @@ async def lookup_endpoint(api: NominatimAPIAsync, params: ASGIAdaptor) -> Any:
 
     if debug:
         return build_response(params, loglib.get_and_disable(), num_results=len(results))
+
+    Locales.from_accept_languages(get_accepted_languages(params)).localize_results(results)
 
     fmt_options = {'extratags': params.get_bool('extratags', False),
                    'namedetails': params.get_bool('namedetails', False),
@@ -310,8 +314,6 @@ async def search_endpoint(api: NominatimAPIAsync, params: ASGIAdaptor) -> Any:
     else:
         details['layers'] = get_layers(params)
 
-    details['locales'] = Locales.from_accept_languages(get_accepted_languages(params))
-
     # unstructured query parameters
     query = params.get('q', None)
     # structured query parameters
@@ -335,6 +337,8 @@ async def search_endpoint(api: NominatimAPIAsync, params: ASGIAdaptor) -> Any:
             results = await api.search_address(**details)
     except UsageError as err:
         params.raise_error(str(err))
+
+    Locales.from_accept_languages(get_accepted_languages(params)).localize_results(results)
 
     if details['dedupe'] and len(results) > 1:
         results = helpers.deduplicate_results(results, max_results)

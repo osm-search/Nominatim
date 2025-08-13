@@ -102,11 +102,10 @@ def test_format_reverse_with_address(fmt):
                                                     rank_address=10,
                                                     distance=0.0)
                                  ]))
-    reverse.localize(napi.Locales())
+    napi.Locales().localize_results([reverse])
 
     raw = v1_format.format_result(napi.ReverseResults([reverse]), fmt,
                                   {'addressdetails': True})
-
     if fmt == 'xml':
         root = ET.fromstring(raw)
         assert root.find('addressparts').find('county').text == 'Hello'
@@ -165,7 +164,7 @@ def test_format_reverse_geocodejson_special_parts():
                                                     distance=0.0)
                                  ]))
 
-    reverse.localize(napi.Locales())
+    napi.Locales().localize_results([reverse])
 
     raw = v1_format.format_result(napi.ReverseResults([reverse]), 'geocodejson',
                                   {'addressdetails': True})

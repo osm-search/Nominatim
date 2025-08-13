@@ -74,8 +74,7 @@ class TestCliReverseCall:
                                     napi.Point(1.0, -3.0),
                                     names={'name': 'Name', 'name:fr': 'Nom'},
                                     extratags={'extra': 'Extra'},
-                                    locale_name='Name',
-                                    display_name='Name')
+                                    locale_name='Name')
 
         monkeypatch.setattr(napi.NominatimAPI, 'reverse',
                             lambda *args, **kwargs: result)
@@ -122,8 +121,7 @@ class TestCliLookupCall:
                                    napi.Point(1.0, -3.0),
                                    names={'name': 'Name', 'name:fr': 'Nom'},
                                    extratags={'extra': 'Extra'},
-                                   locale_name='Name',
-                                   display_name='Name')
+                                   locale_name='Name')
 
         monkeypatch.setattr(napi.NominatimAPI, 'lookup',
                             lambda *args, **kwargs: napi.SearchResults([result]))
@@ -150,8 +148,7 @@ def test_search(cli_call, tmp_path, capsys, monkeypatch, endpoint, params):
                                napi.Point(1.0, -3.0),
                                names={'name': 'Name', 'name:fr': 'Nom'},
                                extratags={'extra': 'Extra'},
-                               locale_name='Name',
-                               display_name='Name')
+                               locale_name='Name')
 
     monkeypatch.setattr(napi.NominatimAPI, endpoint,
                         lambda *args, **kwargs: napi.SearchResults([result]))

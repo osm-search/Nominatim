@@ -196,7 +196,6 @@ class APISearch:
                                           'excluded': args.exclude_place_ids,
                                           'viewbox': args.viewbox,
                                           'bounded_viewbox': args.bounded,
-                                          'locales': _get_locales(args, api.config.DEFAULT_LANGUAGE)
                                           }
 
                 if args.query:
@@ -212,6 +211,9 @@ class APISearch:
                                                  **params)
         except napi.UsageError as ex:
             raise UsageError(ex) from ex
+
+        locales = _get_locales(args, api.config.DEFAULT_LANGUAGE)
+        locales.localize_results(results)
 
         if args.dedupe and len(results) > 1:
             results = deduplicate_results(results, args.limit)
@@ -277,10 +279,13 @@ class APIReverse:
                                      layers=layers,
                                      address_details=True,  # needed for display name
                                      geometry_output=_get_geometry_output(args),
-                                     geometry_simplification=args.polygon_threshold,
-                                     locales=_get_locales(args, api.config.DEFAULT_LANGUAGE))
+                                     geometry_simplification=args.polygon_threshold)
         except napi.UsageError as ex:
             raise UsageError(ex) from ex
+
+        if result is not None:
+            locales = _get_locales(args, api.config.DEFAULT_LANGUAGE)
+            locales.localize_results([result])
 
         if args.format == 'debug':
             print(loglib.get_and_disable())
@@ -339,10 +344,12 @@ class APILookup:
                 results = api.lookup(places,
                                      address_details=True,  # needed for display name
                                      geometry_output=_get_geometry_output(args),
-                                     geometry_simplification=args.polygon_threshold or 0.0,
-                                     locales=_get_locales(args, api.config.DEFAULT_LANGUAGE))
+                                     geometry_simplification=args.polygon_threshold or 0.0)
         except napi.UsageError as ex:
             raise UsageError(ex) from ex
+
+        locales = _get_locales(args, api.config.DEFAULT_LANGUAGE)
+        locales.localize_results(results)
 
         if args.format == 'debug':
             print(loglib.get_and_disable())
@@ -425,7 +432,6 @@ class APIDetails:
 
         try:
             with napi.NominatimAPI(args.project_dir) as api:
-                locales = _get_locales(args, api.config.DEFAULT_LANGUAGE)
                 result = api.details(place,
                                      address_details=args.addressdetails,
                                      linked_places=args.linkedplaces,
@@ -433,10 +439,13 @@ class APIDetails:
                                      keywords=args.keywords,
                                      geometry_output=(napi.GeometryFormat.GEOJSON
                                                       if args.polygon_geojson
-                                                      else napi.GeometryFormat.NONE),
-                                     locales=locales)
+                                                      else napi.GeometryFormat.NONE))
         except napi.UsageError as ex:
             raise UsageError(ex) from ex
+
+        if result is not None:
+            locales = _get_locales(args, api.config.DEFAULT_LANGUAGE)
+            locales.localize_results([result])
 
         if args.format == 'debug':
             print(loglib.get_and_disable())
@@ -444,8 +453,7 @@ class APIDetails:
 
         if result:
             _print_output(formatter, result, args.format or 'json',
-                          {'locales': locales,
-                           'group_hierarchy': args.group_hierarchy})
+                          {'group_hierarchy': args.group_hierarchy})
             return 0
 
         LOG.error("Object not found in database.")

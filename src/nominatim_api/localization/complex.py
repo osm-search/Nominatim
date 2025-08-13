@@ -181,21 +181,20 @@ class ComplexLocales(Locales):
         # Nothing? Return any of the other names as a default.
         return (next(iter(names.values())), "default")
 
-    def result_transliterate(self, results: List[BaseResultT], user_languages:
-                             List[str] = []) -> List[str]:
+    def result_transliterate(self, results: List[BaseResultT]) -> List[str]:
         """ High level transliteration result wrapper
 
             Prints out the transliterated results
             Returns output as list
         """
         output = []
-        print(f"results are {results}")
         for i, result in enumerate(results):
-            print(result)
-            address_parts = self.transliterate(result, user_languages)
-            print(f"{i + 1}. {', '.join(part.strip() for part in address_parts)}")
-            output.append(", ".join(part.strip() for part in address_parts))
-            print(", ".join(part.strip() for part in address_parts))
+            address_parts = self.transliterate(result, self.languages)
+            # print(address_parts)
+            # print(f"{i + 1}. {', '.join(part.strip() for part in address_parts)}")
+            # output.append(", ".join(part.strip() for part in address_parts))
+            # print(", ".join(part.strip() for part in address_parts))
+            output.append(address_parts)
         return output
 
     def _transliterate(self, line: AddressLine, locales: List[str], in_cantonese:
@@ -308,7 +307,6 @@ class ComplexLocales(Locales):
                         label_parts.append(line.local_name)
                     else:
                         label_parts.append(self._transliterate(line, user_languages))
-
         return ", ".join(part.strip() for part in label_parts)
 
     def localize(self, lines: AddressLines) -> None:

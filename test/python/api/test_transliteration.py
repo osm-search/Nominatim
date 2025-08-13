@@ -7,12 +7,9 @@
 """
 Tests for transliteration with the complex locales function
 """
-import asyncio
 import pytest
 
 from nominatim_api.localization.complex import ComplexLocales, load_lang_info
-from nominatim_api.localization.simple import SimpleLocales
-import nominatim_api as napi
 
 
 class MockResult:
@@ -79,7 +76,7 @@ mock_hospital_results = [
         MockAddressRow(
             local_name="中国",
             names={
-                "zh":"中国",
+                "zh": "中国",
                 "en": "China",
                 "fr": "Chine",
             },

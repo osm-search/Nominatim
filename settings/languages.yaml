@@ -1,0 +1,1118 @@
+# comprehensive list of iso languages taken from https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes
+# for now, when still workshopping, have both a latin field and a written field, subjet to renaming
+# worried about string identification taking longer than boolean check
+
+# Abkhazian (Cyrillic) -> Салам аҩыза
+ab: 
+    latin: false  
+    written: cyr
+
+
+# Afar -> Nagaale kataysaw
+aa: 
+    latin: true   
+    written: lat
+
+
+# Afrikaans -> hallo vriend
+af:
+    latin: true
+    written: lat
+
+
+# Akan -> hello adamfo
+ak: 
+    latin: true
+    written: lat
+
+
+# Albanian -> pershendetje mik
+sq: 
+    latin: true
+    written: lat
+
+
+# Amharic -> ሰላም ጓደኛ
+am:
+    latin: false
+    written: None
+
+
+# Arabic -> مرحبا صديق
+ar: 
+    latin: false
+    written: None
+
+
+# Aragonese -> not supported by google translate, spanish-esque
+an:
+    latin: true
+    written: lat
+
+
+# Armenian -> բարև ընկեր
+hy:
+    latin: false
+    written: None
+
+
+# Assamese -> নমস্কাৰ বন্ধু
+as:
+    latin: false
+    written: None
+
+
+# Avaric -> салам гьудул (Cyrillic?)
+av:
+    latin: false
+    written: cyr
+
+
+# Avestan -> not supported by google translate, iranian base
+ae:
+    latin: false
+    written: None
+
+
+# Aymara -> aruntt'asmawa amigo
+ay:
+    latin: true
+    written: lat
+
+
+# Azerbaijani -> salam dostum
+az:
+    latin: true
+    written: lat
+
+
+# Bambara -> bonjour terikɛ
+bm:
+    latin: true
+    written: lat
+
+
+# Bashkir (Cyrillic) -> һаумы дуҫ
+ba:
+    latin: false
+    written: cyr
+
+
+# Basque -> kaixo lagun
+eu:
+    latin: true
+    written: lat
+
+
+# Belarusian (Cyrillic) -> прывітанне сябар
+be:
+    latin: false
+    written: cyr
+
+
+ # Bengali -> হ্যালো বন্ধু
+bn: 
+    latin: false
+    written: None
+
+
+# Bislama -> not supported by google translate, english creole
+bi:
+    latin: true
+    written: lat
+
+
+# Bosnian -> zdravo prijatelju
+bs:  
+    latin: true
+    written: lat
+
+
+# Breton -> Demat mignon
+br:
+    latin: true
+    written: lat
+
+
+# Bulgarian (Cyrillic) -> здравей приятел
+bg:
+    latin: false
+    written: cyr
+
+
+# Burmese -> မင်္ဂလာပါ သူငယ်ချင်း
+my:
+    latin: false
+    written: None
+
+
+# Catalan -> hola amic
+ca:
+    latin: true
+    written: lat
+
+
+# Chamorro -> håfa amigu 
+ch:
+    latin: true
+    written: lat
+
+
+# Chechen (Cyrillic) -> салам маршал доттагӀ
+ce:
+    latin: false
+    written: cyr
+
+
+# Chichewa, Nyanja -> moni bwenzi
+ny: 
+    latin: true
+    written: lat
+
+
+# Chinese -> 朋友你好
+zh:
+    latin: false
+    written: None
+
+
+# Church Slavonic, Church Slavic (Cyrillic) 
+cu:
+    latin: false
+    written: cyr
+
+
+# Chuvash (Cyrillic) -> салам тусӑм
+cv: 
+    latin: false
+    written: cyr
+
+
+# Cornish -> not supported by google translate, english uk
+kw:   
+    latin: true
+    written: lat
+
+
+# Corsican -> salutu amicu
+co:  
+    latin: true
+    written: lat
+
+
+# Cree -> not supported by google translate, latin & aboriginal syllabics
+cr: 
+    latin: false  
+    written: None
+
+
+# Croatian -> zdravo prijatelju
+hr: 
+    latin: true
+    written: lat
+
+
+# Czech -> ahoj příteli
+cs:
+    latin: true
+    written: lat
+
+
+# Danish -> hej ven
+da: 
+    latin: true
+    written: lat
+
+
+# Divehi -> ހެލޯ ފްރެންޑް
+dv: 
+    latin: false  
+    written: None
+
+
+# Dutch -> hallo vriend
+nl:
+    latin: true
+    written: lat
+
+
+# Dzongkha -> ཧེ་ལོ་གྲོགས་པོ།
+dz:
+    latin: false
+    written: None
+
+
+# English -> hello friend
+en:   
+    latin: true
+    written: lat
+
+
+# Esperanto -> saluton amiko
+eo: 
+    latin: true
+    written: lat
+
+
+# Estonian -> tere sõber
+et:
+    latin: true
+    written: lat
+
+
+# Ewe -> hello xɔ̃nye
+ee:
+    latin: true
+    written: lat
+
+
+# Faroese -> hey vinur
+fo:
+    latin: true
+    written: lat
+
+
+# Fijian -> bula vinaka itokani
+fj:
+    latin: true
+    written: lat
+
+
+# Finnish -> hei ystävä
+fi: 
+    latin: true
+    written: lat
+
+
+# French -> bonjour mon ami
+fr: 
+    latin: true
+    written: lat
+
+
+# Western Frisian -> hallo freon
+fy:   
+    latin: true
+    written: lat
+
+
+# Fulah, Fulani -> on njaaraama musiɗɗo
+ff:    
+    latin: true
+    written: lat
+
+
+# Scottish Gaelic -> halò a charaid
+gd:
+    latin: true
+    written: lat
+
+
+# Galician -> ola amigo
+gl: 
+    latin: true
+    written: lat
+
+
+# Ganda -> mulamusizza mukwano gwange
+lg:
+    latin: true
+    written: lat
+
+
+# Georgian -> გამარჯობა მეგობარო
+ka: 
+    latin: false
+    written: None
+
+
+# German -> Hallo Freund
+de:
+    latin: true
+    written: lat
+
+
+# Greek -> γεια σου φιλε
+el:
+    latin: false
+    written: None
+
+
+# Greenlandic, Kalaallisut -> ilassi kammaga
+kl:
+    latin: true
+    written: lat
+
+
+# Guarani -> maitei angirũ
+gn:
+    latin: true
+    written: lat
+
+
+# Gujarati -> હેલો મિત્ર
+gu:
+    latin: false
+    written: None
+
+
+# Haitian Creole, Haitian ->
+ht: 
+    latin: true
+    written: lat
+
+
+# Hausa -> sannu abokina
+ha:
+    latin: true
+    written: lat
+
+
+# Hebrew -> שלום חבר
+he:
+    latin: false
+    written: None
+
+
+# Herero -> no google translate, but wikipedia says latin writing system
+hz:
+    latin: true
+    written: lat
+
+
+# Hindi -> हैलो दोस्त
+hi:
+    latin: false
+    written: None
+
+
+# Hiri Motu -> no google translate, but wikipedia says latin writing system
+ho:
+    latin: true
+    written: lat
+
+
+# Hungarian -> helló barátom
+hu:
+    latin: true
+    written: lat
+
+
+# Icelandic -> sæll vinur
+is:
+    latin: true
+    written: lat
+
+
+# Ido -> no google translate, but derivation of esperanto
+io:
+    latin: true
+    written: lat
+
+
+# Igbo -> ndewo enyi
+ig:
+    latin: true
+    written: lat
+
+
+# Indonesian -> halo teman
+id:
+    latin: true
+    written: lat
+
+
+# Interlingua -> no google translate, but wikipedia says latin writing system (auxilary language)
+ia:
+    latin: true
+    written: lat
+
+
+# Interlingue -> no google translate, but wikipedia says latin writing system (auxilary language)
+ie: 
+    latin: true
+    written: lat
+
+
+# Inuktitut -> no google translate, but wikipedia says nonlatin
+iu:
+    latin: false
+    written: None
+
+
+# Inupiaq -> no google translate, but wikipedia says latin writing
+ik:
+    latin: true
+    written: lat
+
+
+# Irish -> Dia duit a chara
+ga:
+    latin: true
+    written: lat
+
+
+# Italian -> ciao amico
+it:
+    latin: true
+    written: lat
+
+
+# Japanese -> こんにちは、友人
+ja:
+    latin: false
+    written: None
+
+
+# Javanese -> halo kanca
+jv:
+    latin: true
+    written: lat
+
+
+# Kannada -> ನಮಸ್ಕಾರ ಗೆಳೆಯ
+kn:
+    latin: false
+    written: None
+
+
+# Kanuri -> salam sawa
+kr:
+    latin: true
+    written: lat
+
+
+# Kashmiri -> no google translate, but wikipedia says nonlatin
+ks:
+    latin: false
+    written: None
+
+
+# Kazakh (Cyrillic) -> сәлем досым
+kk:
+    latin: false
+    written: cyr
+
+
+# Khmer -> សួស្តីមិត្ត
+km:
+    latin: false
+    written: None
+
+
+# Kikuyu -> no google translate, but wikipedia says latin
+ki:
+    latin: true
+    written: lat
+
+
+# Kinyarwanda -> muraho nshuti 
+rw:
+    latin: true
+    written: lat
+
+
+# Kyrgyz -> салам дос
+ky:
+    latin: false
+    written: cyr
+
+
+# Komi -> чолӧм ёрт, cyrillic?
+kv:
+    latin: false
+    written: None
+
+
+# Kongo -> mbote nduku
+kg:
+    latin: true
+    written: lat
+
+
+# Korean -> 안녕, 친구
+ko:
+    latin: false
+    written: None
+
+
+# Kuanyama -> dialect of Ovambo, wikipedia shows latin based excerpt
+kj:
+    latin: true
+    written: lat
+
+
+# Kurdish -> merheba heval
+ku:
+    latin: true
+    written: lat
+
+
+# Lao -> ສະບາຍດີເພື່ອນ
+lo: 
+    latin: false  
+    written: None
+
+
+# Latin -> salve amicus
+la:
+    latin: true
+    written: lat
+
+
+# Latvian -> sveiks draugs
+lv: 
+    latin: true
+    written: lat
+
+
+# Ligurian -> ciao amigo
+lj: 
+    latin: true
+    written: lat
+
+
+# Limburgish -> hallo vrund
+li:
+    latin: true
+    written: lat
+
+
+# Lingala -> mbote moninga
+ln:
+    latin: true
+    written: lat
+
+
+# Lithuanian -> labas drauge
+lt:
+    latin: true
+    written: lat
+
+
+# Luba-Katanga -> latin based, but only 22 letters
+lu:
+    latin: true
+    written: lat
+
+
+# Luxembourgish -> Moien Frënd
+lb:
+    latin: true
+    written: lat
+
+
+# Macedonian (Cyrillic) -> здраво пријателе
+mk:
+    latin: false
+    written: cyr
+
+
+# Malagasy -> salama namana
+mg: 
+    latin: true
+    written: lat
+
+
+# Malay -> salam kawan
+ms:
+    latin: true
+    written: lat
+
+
+# Malayalam -> ഹലോ സുഹൃത്തേ
+ml:
+    latin: false
+    written: None
+
+
+# Maltese -> hello habib
+mt:
+    latin: true
+    written: lat
+
+
+# Manx -> Halloo chaarjyn.
+gv:
+    latin: true
+    written: lat
+
+
+# Maori -> wikipedia says latin writing system
+mi:
+    latin: true
+    written: lat
+
+
+# Marathi -> नमस्कार मित्रा
+mr:
+    latin: false
+    written: None
+
+
+# Marshallese -> yokyokwe mōtta
+mh:
+    latin: true
+    written: lat
+
+
+# Mongolian -> сайн уу найзаа (Cyrillic?)
+mn:
+    latin: false
+    written: None
+
+
+# Nauru -> wikipedia says latin based
+na:
+    latin: true
+    written: lat
+
+
+# Navajo -> wikipedia says latin based, but some letters are accented
+nv:
+    latin: true
+    written: lat
+
+
+# North Ndebele -> wikipedia says latin based
+nd:
+    latin: true
+    written: lat
+
+
+# South Ndebele -> wikipedia says latin based
+nr:
+    latin: true
+    written: lat
+
+
+# Ndonga -> dialect of Ovambo, wikipedia shows latin based excerpt
+ng:
+    latin: true
+    written: lat
+
+
+# Nepali -> नमस्ते साथी
+ne:
+    latin: false
+    written: None
+
+
+# Norwegian -> hei venn
+no:
+    latin: true
+    written: lat
+
+
+# Norwegian Bokmål -> norwegian written form
+nb:
+    latin: true
+    written: lat
+
+
+# Norwegian Nynorsk -> norwegian written form
+nn:
+    latin: true
+    written: lat
+
+
+# Occitan -> bonjorn amic
+oc:
+    latin: true
+    written: lat
+
+
+# Ojibwa -> indigenous canadian language, toss up
+oj:
+    latin: false
+    written: None
+
+
+# Oriya, Odia -> ନମସ୍କାର ବନ୍ଧୁ
+or:
+    latin: false
+    written: None
+
+
+# Oromo -> akkam jirtu hiriyaa koo
+om:
+    latin: true
+    written: lat
+
+
+# Ossetian, Ossetic -> салам хæлар (Cyrillic?)
+os:
+    latin: false
+    written: None
+
+
+# Pali -> nonlatin, from wikipedia
+pi:
+    latin: false
+    written: None
+
+
+# Pashto -> سلام ملګری
+ps:
+    latin: false
+    written: None
+
+
+# Persian -> سلام دوست
+fa:
+    latin: false
+    written: None
+
+
+# Polish -> cześć przyjacielu
+pl:
+    latin: true
+    written: lat
+
+
+# Portuguese -> olá amigo
+pt: 
+    latin: true
+    written: lat
+
+
+# Punjabi -> ਹੈਲੋ ਦੋਸਤ
+pa:
+    latin: false
+    written: None
+
+
+# Quechua -> hola amigo
+qu:
+    latin: true
+    written: lat
+
+
+# Romanian -> salut prietene
+ro:
+    latin: true
+    written: lat
+
+
+# Romansh -> yes, by wikipedia
+rm:
+    latin: true
+    written: lat
+
+
+# Rundi -> ndagusavye mugenzi
+rn:
+    latin: true
+    written: lat
+
+
+# Russian -> привет, друг
+ru:
+    latin: false
+    written: cyr
+
+
+# Northern Sami -> dearvvuođa ustit
+se:
+    latin: true
+    written: lat
+
+
+# Samoan -> talofa uo
+sm:
+    latin: true
+    written: lat
+
+
+# Sango -> bonjour kamarade
+sg:
+    latin: true
+    written: lat
+
+
+# Sanskrit -> नमस्कार मित्र
+sa:
+    latin: false
+    written: None
+
+
+# Sardinian -> romance language, as per wikipedia
+sc: 
+    latin: true
+    written: lat
+
+
+# Serbian -> здраво пријатељу (Cyrillic?)
+sr:
+    latin: false
+    written: cyr
+
+
+# Shona -> mhoro shamwari
+sn:
+    latin: true
+    written: lat
+
+
+# Sindhi -> هيلو دوست
+sd:
+    latin: false
+    written: None
+
+
+# Sinhala -> ආයුබෝවන් මිත්‍රයා
+si: 
+    latin: false
+    written: None
+
+
+# Slovak -> ahoj kamarát
+sk:
+    latin: true
+    written: lat
+
+
+# Slovenian -> zdravo prijatelj
+sl:
+    latin: true
+    written: lat
+
+
+# Somali -> hello saaxiib
+so:
+    latin: true
+    written: lat
+
+
+# Southern Sotho -> dumela motswalle
+st:
+    latin: true
+    written: lat
+
+
+# Spanish -> Hola amiga
+es:
+    latin: true
+    written: lat
+
+
+# Sundanese -> halo sobat
+su:
+    latin: true
+    written: lat
+
+
+# Swahili -> habari rafiki
+sw:
+    latin: true
+    written: lat
+
+
+# Swati -> sawubona mngani
+ss:
+    latin: true
+    written: lat
+
+
+# Swedish -> hej vän
+sv:
+    latin: true
+    written: lat
+
+
+# Tagalog, Filipino -> Tagalog
+tl:
+    latin: true
+    written: lat
+
+
+# Tahitian -> aroha e hoa
+ty: 
+    latin: true
+    written: lat
+
+
+# Tajik (Cyrillic) -> салом дустам
+tg:
+    latin: false
+    written: cyr
+
+
+# Tamil -> வணக்கம் நண்பரே
+ta:
+    latin: false
+    written: None
+
+
+# Tatar (Cyrillic) -> сәлам дус
+tt:
+    latin: false
+    written: cyr
+
+
+# Telugu -> హలో మిత్రమా
+te:
+    latin: false
+    written: None
+
+
+# Thai -> สวัสดีเพื่อน
+th:
+    latin: false
+    written: None
+
+
+# Tibetan -> ཀྱེ་གྲོགས་པོ།
+bo:
+    latin: false
+    written: None
+
+
+# Tigrinya -> ሰላም ዓርከይ
+ti: 
+    latin: false
+    written: None
+
+
+# Tonga -> Malo kaume'a
+to:
+    latin: true
+    written: lat
+
+
+# Tsonga -> hello munghana
+ts:
+    latin: true
+    written: lat
+
+
+# Tswana -> Dumela tsala
+tn:
+    latin: true
+    written: lat
+
+
+# Turkish -> merhaba arkadaşım
+tr:
+    latin: true
+    written: lat
+
+
+# Turkmen -> salam dost
+tk:
+    latin: true
+    written: lat
+
+
+# Twi (same as Akan?) -> hello adamfo
+tw:
+    latin: true
+    written: lat
+
+
+# Uyghur -> ياخشىمۇسىز دوست
+ug:
+    latin: false
+    written: None
+
+
+# Ukrainian -> привіт друже (Cyrillic)
+uk:
+    latin: false
+    written: cyr
+
+
+# Urdu -> ہیلو دوست
+ur:
+    latin: false
+    written: None
+
+
+# Uzbek -> salom do'stim
+uz:
+    latin: true
+    written: lat
+
+
+# Venda -> lumelisa khonani
+ve:
+    latin: true
+    written: lat
+
+
+# Vietnamese -> Chào bạn
+vi:
+    latin: true
+    written: lat
+
+
+# Venetian -> not supported by google translate, italian base
+vc:
+    latin: true
+    written: lat
+
+
+# Volapük -> not supported by google translate, latin base, "world speak"
+vo:
+    latin: true
+    written: lat
+
+
+# Walloon  -> not supported by google translate, french base
+wa:
+    latin: true
+    written: lat
+
+
+# Welsh -> helo ffrind
+cy:
+    latin: true
+    written: lat
+
+
+# Wolof -> Nanga def xarit
+wo:
+    latin: true
+    written: lat
+
+
+# Xhosa -> Molo mhlobo
+xh:
+    latin: true
+    written: lat
+
+
+# Sichuan Yi -> yi base, according to wikipedia
+ii:
+    latin: false
+    written: None
+
+
+# Yiddish -> העלא פרייַנד
+yi:
+    latin: false
+    written: None
+
+
+# Yoruba -> hello ore
+yo:
+    latin: true
+    written: lat
+
+
+# Zhuang -> tai language
+za:
+    latin: false
+    written: None
+
+
+# Zulu -> sawubona mngani
+zu:
+    latin: true
+    written: lat
+
+
+# Yue Chinese, used as Cantonese 你好朋友
+yue:
+    latin: false
+    written: None

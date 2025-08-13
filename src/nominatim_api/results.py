@@ -132,6 +132,11 @@ class AddressLine:
         [Localization](Result-Handling.md#localization) below.
     """
 
+    local_name_lang: Optional[str] = None
+    """ Place holder for language of this address part, computed
+        during localization
+    """
+
     @property
     def display_name(self) -> Optional[str]:
         """ Dynamically compute the display name for the Address Line component
@@ -185,6 +190,7 @@ class BaseResult:
     admin_level: int = 15
 
     locale_name: Optional[str] = None
+    region_lang: Optional[str] = None
 
     names: Optional[Dict[str, str]] = None
     address: Optional[Dict[str, str]] = None

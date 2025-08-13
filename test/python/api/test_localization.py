@@ -9,7 +9,7 @@ Test functions for adapting results to the user's locale.
 """
 import pytest
 
-from nominatim_api import Locales
+from nominatim_api.localization.simple import SimpleLocales as Locales
 
 
 def test_display_name_empty_names():

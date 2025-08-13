@@ -25,7 +25,7 @@ def test_transliterate():
     """ Base Transliteration Test """
     variable = 'school in dandong'
     results = asyncio.run(search(f"{variable}"))
-
+    print(results)
     # set locale name here first, will probably need to further integrate with display name
     SimpleLocales().localize_results(results)
 
@@ -145,7 +145,7 @@ def test_transliterate_region():
     test_header = "fr,en-GB;q=0.9,en-US;q=0.8,en;q=0.7"
 
     results = asyncio.run(search(f"{variable}"))
-    output = ComplexLocale(test_header).result_transliterate(results)[0]
+    output = ComplexLocales(test_header).result_transliterate(results)[0]
     assert output == (
         "Dan Dong Shi Zhong Yi Yuan, Jinshan Main Street, Zhanqian Subdistrict,"
         " Yuanbao, Zhenxing, 118000, Chine"
@@ -184,6 +184,5 @@ def test_load_languages():
     lang_data = load_lang_info()
     for language_code in lang_data:
         language = lang_data.get(language_code)
-        print(language_code)
         latin = (language['written'] == 'lat')
         assert latin == language['latin']

@@ -6,7 +6,7 @@
 # For a full list of authors see the git log.
 from typing import Optional, Mapping, Tuple, List
 from .base import Locales
-from ..results import AddressLine, BaseResultT
+from ..results import AddressLine, BaseResultT, AddressLines
 import yaml
 import os
 import re
@@ -38,7 +38,7 @@ class ComplexLocales(Locales):
             description separately. Badly formatted parts are then ignored.
 
             Using the additional normalization transliteration constraints,
-            then returns the larguage in its normalized form, as well as the regional 
+            then returns the larguage in its normalized form, as well as the regional
             dialect, if applicable.
 
             The regional dialect always takes precedence
@@ -49,7 +49,7 @@ class ComplexLocales(Locales):
         candidates = []
         for desc in langstr.split(','):
             m = re.fullmatch(r'\s*([a-z_-]+)(?:;\s*q\s*=\s*([01](?:\.\d+)?))?\s*',
-                                desc, flags=re.I)
+                             desc, flags=re.I)
             if m:
                 candidates.append((m[1], float(m[2] or 1.0)))
 
@@ -311,13 +311,13 @@ class ComplexLocales(Locales):
 
         return ", ".join(part.strip() for part in label_parts)
 
-    def localize(self, name: str, lang: str) -> str:
+    def localize(self, lines: AddressLines) -> None:
         """ Stand in localize """
-        return name
+        print(lines)
 
-    def localize_results(self, results: List[BaseResultT]) -> List[str]:
+    def localize_results(self, results: List[BaseResultT]) -> None:
         """ Stand in localize_results """
-        return [result.address_rows[0].local_name for result in results if result.address_rows]
+        print(result.address_rows[0].local_name for result in results if result.address_rows)
 
 
 def include_constructor(loader: yaml.SafeLoader, node:

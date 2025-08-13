@@ -4,7 +4,7 @@
 #
 # Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
-from typing import List, Optional, Mapping
+from typing import List
 from .base import Locales
 from ..results import AddressLines, BaseResultT
 
@@ -39,5 +39,5 @@ class SimpleLocales(Locales):
 
     @staticmethod
     def from_accept_languages(langstr: str) -> 'SimpleLocales':
-        languages = Locales.from_accept_languages(langstr)
+        languages = Locales.from_accept_languages(langstr).languages
         return SimpleLocales(languages)

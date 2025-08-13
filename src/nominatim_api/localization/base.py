@@ -70,7 +70,7 @@ class Locales(ABC):
         pass
 
     @staticmethod
-    def from_accept_languages(langstr: str) -> List[str]:
+    def from_accept_languages(langstr: str) -> 'Locales':
         """ Parse a language list in the format of HTTP accept-languages header.
 
             The function tries to be forgiving of format errors by first splitting
@@ -96,4 +96,5 @@ class Locales(ABC):
             if len(parts) > 1 and all(c[0] != parts[0] for c in candidates):
                 languages.append(parts[0])
 
-        return languages
+        from .simple import SimpleLocales
+        return SimpleLocales(languages)

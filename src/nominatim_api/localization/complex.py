@@ -4,7 +4,7 @@
 #
 # Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
-from typing import Optional, Mapping, Tuple, List
+from typing import Optional, List
 from .base import Locales
 from ..results import AddressLine, BaseResultT, AddressLines
 import yaml
@@ -160,26 +160,6 @@ class ComplexLocales(Locales):
         elif '-' not in lang:
             return [lang]
         return [lang.split('-')[0]]
-
-    def display_name_with_locale(self, names: Optional[Mapping[str, str]]) -> Tuple[str, str]:
-        """ Return the best matching name from a dictionary of names
-            containing different name variants, as well as an identifier
-            with regards to what language used
-
-            If 'names' is null or empty, an empty tuple is returned. If no
-            appropriate localization is found, the first name is returned with
-            the 'default' marker, where afterwards iso is used.
-        """
-        if not names:
-            return ("", "")
-
-        if len(names) > 1:
-            for tag in self.name_tags:
-                if tag in names:
-                    return (names[tag], tag.split(':', 1)[1])
-
-        # Nothing? Return any of the other names as a default.
-        return (next(iter(names.values())), "default")
 
     def result_transliterate(self, results: List[BaseResultT]) -> List[str]:
         """ High level transliteration result wrapper

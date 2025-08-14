@@ -401,6 +401,9 @@ class LookupDetails:
         for, i.e. all places for which it provides the address details.
         Only POI places can have parents.
     """
+    entrances: bool = False
+    """ Get detailed information about the tagged entrances for the result.
+    """
     keywords: bool = False
     """ Add information about the search terms used for this place.
     """
@@ -548,3 +551,27 @@ class SearchDetails(LookupDetails):
             true when layer restriction has been disabled completely.
         """
         return self.layers is None or bool(self.layers & layer)
+
+
+@dataclasses.dataclass
+class EntranceDetails:
+    """ Reference a place by its OSM ID and potentially the basic category.
+
+        The OSM ID may refer to places in the main table placex and OSM
+        interpolation lines.
+    """
+    osm_id: int
+    """ The OSM ID of the object.
+    """
+    type: str
+    """ The value of the OSM entrance tag (i.e. yes, main, secondary, etc.).
+    """
+    lat: float
+    """ The latitude of the entrance node.
+    """
+    lon: float
+    """ The longitude of the entrance node.
+    """
+    extratags: Dict[str, str]
+    """ The longitude of the entrance node.
+    """

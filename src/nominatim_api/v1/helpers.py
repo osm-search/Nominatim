@@ -72,6 +72,8 @@ def extend_query_parts(queryparts: Dict[str, Any], details: Dict[str, Any],
             queryparts['polygon_text'] = '1'
     if parsed.address_details:
         queryparts['addressdetails'] = '1'
+    if parsed.entrances:
+        queryparts['entrances'] = '1'
     if namedetails:
         queryparts['namedetails'] = '1'
     if extratags:

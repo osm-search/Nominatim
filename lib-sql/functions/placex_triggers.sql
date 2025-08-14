@@ -818,6 +818,8 @@ DECLARE
   nameaddress_vector INTEGER[];
   addr_nameaddress_vector INTEGER[];
 
+  entrances JSONB;
+
   linked_place BIGINT;
 
   linked_node_id BIGINT;
@@ -880,12 +882,17 @@ BEGIN
   NEW.centroid := get_center_point(NEW.geometry);
 
   -- Record the entrance node locations
-  IF NEW.osm_type = 'W' THEN
-    DELETE FROM place_entrance WHERE place_id = NEW.place_id;
-    INSERT INTO place_entrance (place_id, osm_node_id, type, geometry)
-      SELECT NEW.place_id, osm_id, type, geometry
+  IF NEW.osm_type = 'W' and (NEW.rank_search > 27 or NEW.class IN ('landuse', 'leisure')) THEN
+    SELECT jsonb_agg(jsonb_build_object('osm_id', osm_id, 'type', type, 'lat', ST_Y(geometry), 'lon', ST_X(geometry), 'extratags', extratags))
         FROM place
-        WHERE osm_id IN (SELECT unnest(nodes) FROM planet_osm_ways WHERE id=NEW.osm_id) AND class IN ('routing:entrance', 'entrance');
+        WHERE osm_id IN (SELECT unnest(nodes) FROM planet_osm_ways WHERE id=NEW.osm_id) AND class IN ('routing:entrance', 'entrance')
+        INTO entrances;
+    IF entrances IS NOT NULL THEN
+      INSERT INTO place_entrance (place_id, entrances)
+        SELECT NEW.place_id, entrances
+        ON CONFLICT (place_id) DO UPDATE
+          SET entrances = excluded.entrances;
+    END IF;
   END IF;
 
     -- recalculate country and partition

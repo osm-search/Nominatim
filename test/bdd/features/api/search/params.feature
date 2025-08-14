@@ -63,6 +63,20 @@ Feature: Search queries
           | geojson | geojson |
           | xml    | xml |
 
+    Scenario Outline: Search with entrances
+        When sending v1/search with format <format>
+          | q                            | entrances |
+          | Saint Joseph Catholic Church | 1 |
+        Then a HTTP 200 is returned
+        And the result is valid <outformat>
+
+        Examples:
+          | format | outformat |
+          | json   | json |
+          | jsonv2 | json |
+          | geojson | geojson |
+          | xml    | xml |
+
     Scenario: Coordinate search with addressdetails
         When geocoding "47.12400621,9.6047552"
           | accept-language |

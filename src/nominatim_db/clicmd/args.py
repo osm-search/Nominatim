@@ -142,6 +142,7 @@ class NominatimArgs:
     format: str
     list_formats: bool
     addressdetails: bool
+    entrances: bool
     extratags: bool
     namedetails: bool
     lang: Optional[str]

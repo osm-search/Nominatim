@@ -248,11 +248,10 @@ GRANT SELECT ON location_postcode TO "{{config.DATABASE_WEBUSER}}" ;
 DROP TABLE IF EXISTS place_entrance;
 CREATE TABLE place_entrance (
   place_id BIGINT NOT NULL,
-  osm_node_id BIGINT NOT NULL,
-  type TEXT NOT NULL,
-  geometry GEOMETRY(Point, 4326) NOT NULL
+  entrances JSONB NOT NULL
   );
-CREATE UNIQUE INDEX idx_place_entrance_id ON place_entrance USING BTREE (place_id, osm_node_id) {{db.tablespace.search_index}};
+CREATE UNIQUE INDEX idx_place_entrance_place_id ON place_entrance
+  USING BTREE (place_id) {{db.tablespace.search_index}};
 GRANT SELECT ON place_entrance TO "{{config.DATABASE_WEBUSER}}" ;
 
 -- Create an index on the place table for lookups to populate the entrance

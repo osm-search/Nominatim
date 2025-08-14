@@ -124,20 +124,19 @@ def create_place_entrance_table(conn: Connection, config: Configuration, **_: An
     """
     sqlp = SQLPreprocessor(conn, config)
     sqlp.run_string(conn, """
--- Table to store location of entrance nodes
-CREATE TABLE IF NOT EXISTS place_entrance (
-  place_id BIGINT NOT NULL,
-  osm_node_id BIGINT NOT NULL,
-  type TEXT NOT NULL,
-  geometry GEOMETRY(Point, 4326) NOT NULL
-  );
-CREATE UNIQUE INDEX IF NOT EXISTS idx_place_entrance_id
-  ON place_entrance USING BTREE (place_id, osm_node_id) {{db.tablespace.search_index}};
-GRANT SELECT ON place_entrance TO "{{config.DATABASE_WEBUSER}}" ;
+        -- Table to store location of entrance nodes
+        DROP TABLE IF EXISTS place_entrance;
+        CREATE TABLE place_entrance (
+          place_id BIGINT NOT NULL,
+          entrances JSONB NOT NULL
+          );
+        CREATE UNIQUE INDEX idx_place_entrance_place_id ON place_entrance
+          USING BTREE (place_id) {{db.tablespace.search_index}};
+        GRANT SELECT ON place_entrance TO "{{config.DATABASE_WEBUSER}}" ;
 
--- Create an index on the place table for lookups to populate the entrance
--- table
-CREATE INDEX IF NOT EXISTS idx_place_entrance_lookup ON place
-  USING BTREE (osm_id)
-  WHERE class IN ('routing:entrance', 'entrance');
-    """)
+        -- Create an index on the place table for lookups to populate the entrance
+        -- table
+        CREATE INDEX IF NOT EXISTS idx_place_entrance_lookup ON place
+          USING BTREE (osm_id)
+          WHERE class IN ('routing:entrance', 'entrance');
+          """)

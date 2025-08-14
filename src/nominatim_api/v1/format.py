@@ -196,6 +196,9 @@ def _format_details_json(result: DetailedResult, options: Mapping[str, Any]) -> 
         else:
             _add_address_rows(out, 'hierarchy', result.parented_rows, locales)
 
+    if result.entrances is not None:
+        out.keyval('entrances', result.entrances)
+
     out.end_object()
 
     return out()

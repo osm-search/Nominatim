@@ -30,6 +30,14 @@ Feature: Object details
         And the result is valid json
         And the result has attributes address
 
+    Scenario: Details with entrances
+        When sending v1/details
+          | osmtype | osmid     | entrances |
+          | W       | 429210603 | 1         |
+        Then a HTTP 200 is returned
+        And the result is valid json
+        And the result has attributes entrances
+
     Scenario: Details with linkedplaces
         When sending v1/details
           | osmtype | osmid  | linkedplaces |

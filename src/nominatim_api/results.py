@@ -23,7 +23,7 @@ import sqlalchemy as sa
 
 from .typing import SaSelect, SaRow
 from .sql.sqlalchemy_types import Geometry
-from .types import Point, Bbox, LookupDetails
+from .types import Point, Bbox, LookupDetails, EntranceDetails
 from .connection import SearchConnection
 from .logging import log
 
@@ -205,6 +205,8 @@ class BaseResult:
     parented_rows: Optional[AddressLines] = None
     name_keywords: Optional[WordInfos] = None
     address_keywords: Optional[WordInfos] = None
+
+    entrances: Optional[List[EntranceDetails]] = None
 
     geometry: Dict[str, str] = dataclasses.field(default_factory=dict)
 
@@ -466,6 +468,10 @@ async def add_result_details(conn: SearchConnection, results: List[BaseResultT],
             log().comment('Query parent places')
             for result in results:
                 await complete_parented_places(conn, result)
+        if details.entrances:
+            log().comment('Query entrances details')
+            for result in results:
+                await complete_entrances_details(conn, result)
         if details.keywords:
             log().comment('Query keywords')
             for result in results:
@@ -715,6 +721,19 @@ async def complete_linked_places(conn: SearchConnection, result: BaseResult) -> 
 
     for row in await conn.execute(sql):
         result.linked_rows.append(_result_row_to_address_row(row))
+
+
+async def complete_entrances_details(conn: SearchConnection, result: BaseResult) -> None:
+    """ Retrieve information about tagged entrances for this place.
+    """
+    if result.source_table != SourceTable.PLACEX:
+        return
+
+    t = conn.t.place_entrance
+    sql = sa.select(t.c.entrances).where(t.c.place_id == result.place_id)
+
+    for results in await conn.execute(sql):
+        result.entrances = [EntranceDetails(**r) for r in results[0]]
 
 
 async def complete_keywords(conn: SearchConnection, result: BaseResult) -> None:

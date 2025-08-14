@@ -8,6 +8,7 @@
 Helper functions for output of results in XML format.
 """
 from typing import Mapping, Any, Optional, Union
+import dataclasses
 import datetime as dt
 import xml.etree.ElementTree as ET
 
@@ -121,5 +122,11 @@ def format_base_xml(results: Union[ReverseResults, SearchResults],
             if result.names:
                 for k, v in result.names.items():
                     ET.SubElement(eroot, 'name', attrib={'desc': k}).text = v
+
+        if options.get('entrances', False):
+            eroot = ET.SubElement(root if simple else place, 'entrances')
+            if result.entrances:
+                for entrance_detail in result.entrances:
+                    ET.SubElement(eroot, 'entrance', attrib=dataclasses.asdict(entrance_detail))
 
     return '<?xml version="1.0" encoding="UTF-8" ?>\n' + ET.tostring(root, encoding='unicode')

@@ -158,6 +158,7 @@ async def details_endpoint(api: NominatimAPIAsync, params: ASGIAdaptor) -> Any:
 
     result = await api.details(place,
                                address_details=params.get_bool('addressdetails', False),
+                               entrances=params.get_bool('entrances', False),
                                linked_places=params.get_bool('linkedplaces', True),
                                parented_places=params.get_bool('hierarchy', False),
                                keywords=params.get_bool('keywords', False),
@@ -216,6 +217,7 @@ async def reverse_endpoint(api: NominatimAPIAsync, params: ASGIAdaptor) -> Any:
     fmt_options = {'query': query,
                    'extratags': params.get_bool('extratags', False),
                    'namedetails': params.get_bool('namedetails', False),
+                   'entrances': params.get_bool('entrances', False),
                    'addressdetails': params.get_bool('addressdetails', True)}
 
     output = params.formatting().format_result(ReverseResults([result] if result else []),
@@ -252,6 +254,7 @@ async def lookup_endpoint(api: NominatimAPIAsync, params: ASGIAdaptor) -> Any:
 
     fmt_options = {'extratags': params.get_bool('extratags', False),
                    'namedetails': params.get_bool('namedetails', False),
+                   'entrances': params.get_bool('entrances', False),
                    'addressdetails': params.get_bool('addressdetails', True)}
 
     output = params.formatting().format_result(results, fmt, fmt_options)
@@ -298,6 +301,7 @@ async def search_endpoint(api: NominatimAPIAsync, params: ASGIAdaptor) -> Any:
     details = parse_geometry_details(params, fmt)
 
     details['countries'] = params.get('countrycodes', None)
+    details['entrances'] = params.get_bool('entrances', False)
     details['excluded'] = params.get('exclude_place_ids', None)
     details['viewbox'] = params.get('viewbox', None) or params.get('viewboxlbrt', None)
     details['bounded_viewbox'] = params.get_bool('bounded', False)
@@ -363,6 +367,7 @@ async def search_endpoint(api: NominatimAPIAsync, params: ASGIAdaptor) -> Any:
                    'viewbox': queryparts.get('viewbox'),
                    'extratags': params.get_bool('extratags', False),
                    'namedetails': params.get_bool('namedetails', False),
+                   'entrances': params.get_bool('entrances', False),
                    'addressdetails': params.get_bool('addressdetails', False)}
 
     output = params.formatting().format_result(results, fmt, fmt_options)

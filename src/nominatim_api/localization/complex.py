@@ -189,9 +189,11 @@ class ComplexLocales(Locales):
         for locale in locales:
             # Need to replace to be a valid function
             _function = f"{locale.replace('-', '_')}_transliterate"
-            if _function in globals():
+            transliterate_function = getattr(self, _function, None)
+
+            if transliterate_function:
                 print(f"{locale} transliteration successful")
-                return str(globals()[_function](line))
+                return str(transliterate_function(line))
             elif self._latin(locale):
                 print("latin based language detected, latin transliteration occuring")
                 if not in_cantonese:

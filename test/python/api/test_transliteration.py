@@ -12,7 +12,7 @@ import pytest
 from nominatim_api.localization.complex import ComplexLocales, load_lang_info
 
 
-class MockResult:
+class MockResult:   # try and use address and result directly
     def __init__(self, address_rows):
         self.address_rows = address_rows
         self.country_code = 'cn'
@@ -86,15 +86,6 @@ mock_hospital_results = [
 ]
 
 
-@pytest.fixture
-def mock_search(monkeypatch):
-    """Fixture to mock the search function."""
-    async def mock_search_function(query):
-        return mock_hospital_results
-
-    monkeypatch.setattr("nominatim_api.NominatimAPIAsync.search", mock_search_function)
-
-
 @pytest.mark.parametrize("header,expected_output", [
     (None, "Dan Dong Shi Zhong Yi Yuan, Jin Shan Da Jie, Zhan Qian Jie Dao,"
      " Yuan Bao Qu, Zhen Xing Qu, 118000, Zhong Guo"),
@@ -102,7 +93,7 @@ def mock_search(monkeypatch):
     #  " Subdistrict, Yuanbao, Zhenxing, 118000, China"),
     ("zh-Hans", "丹东市中医院, 锦山大街, 站前街道, 元宝区, 振兴区, 118000, 中国")
 ])
-def test_transliterate_hospital(mock_search, header, expected_output):
+def test_transliterate_hospital(header, expected_output):
     """Parameterized test for transliteration of hospitals in Dandong."""
     results = mock_hospital_results
     if header:

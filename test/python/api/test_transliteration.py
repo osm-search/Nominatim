@@ -9,7 +9,7 @@ Tests for transliteration with the complex locales function
 """
 import pytest
 
-from nominatim_api.localization.complex import ComplexLocales, load_lang_info
+from nominatim_api.localization.transliterator import TransliterateLocales, load_lang_info
 
 
 class MockResult:   # try and use address and result directly
@@ -98,10 +98,10 @@ def test_transliterate_hospital(header, expected_output):
     """Parameterized test for transliteration of hospitals in Dandong."""
     results = mock_hospital_results
     if header:
-        langs = ComplexLocales().from_accept_languages(header).languages
-        output = ComplexLocales(langs).result_transliterate(results)[0]
+        langs = TransliterateLocales().from_accept_languages(header).languages
+        output = TransliterateLocales(langs).result_transliterate(results)[0]
     else:
-        output = ComplexLocales().result_transliterate(results)[0]
+        output = TransliterateLocales().result_transliterate(results)[0]
 
     assert output == expected_output
 

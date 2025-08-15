@@ -7,5 +7,5 @@
 """
 Module for localization
 """
-from .simple import (SimpleLocales as SimpleLocales)
-from .complex import (ComplexLocales as ComplexLocales, load_lang_info as load_lang_info)
+from .localizer import (Locales as Locales)
+from .transliterator import (TransliterateLocales as TransliterateLocales, load_lang_info as load_lang_info)

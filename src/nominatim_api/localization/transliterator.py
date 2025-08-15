@@ -5,7 +5,7 @@
 # Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 from typing import Optional, List
-from .base import Locales
+from .base import AbstractLocales
 from ..results import AddressLine, BaseResultT, AddressLines
 import yaml
 import os
@@ -15,7 +15,7 @@ from cantoroman import Cantonese  # type: ignore
 import opencc  # type: ignore
 
 
-class ComplexLocales(Locales):
+class TransliterateLocales(AbstractLocales):
     """ Complex Helper class for localization of names.
 
         It takes a list of language prefixes in their order of preferred
@@ -29,7 +29,7 @@ class ComplexLocales(Locales):
         self.lang_data = load_lang_info()
 
     @staticmethod
-    def from_accept_languages(langstr: str) -> 'ComplexLocales':
+    def from_accept_languages(langstr: str) -> 'TransliterateLocales':
         """ Create a localization object from a language list in the
             format of HTTP accept-languages header.
 
@@ -65,11 +65,11 @@ class ComplexLocales(Locales):
             if lid not in languages:
                 languages.append(lid)
 
-            normalized = ComplexLocales._normalize_lang(lid)
+            normalized = TransliterateLocales._normalize_lang(lid)
             for norm_lang in normalized:
                 if norm_lang not in languages:
                     languages.append(norm_lang)
-        return ComplexLocales(languages)
+        return TransliterateLocales(languages)
 
     def _get_languages(self, result: BaseResultT) -> List[str]:
         """ Given a result, returns the languages associated with the region

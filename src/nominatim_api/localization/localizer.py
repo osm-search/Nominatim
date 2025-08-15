@@ -6,11 +6,11 @@
 # For a full list of authors see the git log.
 from typing import List
 import re
-from .base import Locales
+from .base import AbstractLocales
 from ..results import AddressLines, BaseResultT
 
 
-class SimpleLocales(Locales):
+class Locales(AbstractLocales):
     """ Simple Helper class for localization of names.
 
         It takes a list of language prefixes in their order of preferred
@@ -39,7 +39,7 @@ class SimpleLocales(Locales):
                 self.localize(result.address_rows)
 
     @staticmethod
-    def from_accept_languages(langstr: str) -> 'SimpleLocales':
+    def from_accept_languages(langstr: str) -> 'Locales':
         """ Parse a language list in the format of HTTP accept-languages header.
 
             The function tries to be forgiving of format errors by first splitting
@@ -65,4 +65,4 @@ class SimpleLocales(Locales):
             if len(parts) > 1 and all(c[0] != parts[0] for c in candidates):
                 languages.append(parts[0])
 
-        return SimpleLocales(languages)
+        return Locales(languages)

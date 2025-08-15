@@ -10,7 +10,7 @@ from ..results import AddressLines, BaseResultT
 from ..config import Configuration
 
 
-class Locales(ABC):
+class AbstractLocales(ABC):
     """Interface for localization logic."""
     def __init__(self, langs: Optional[List[str]] = None):
         self.config = Configuration(None)
@@ -81,7 +81,7 @@ class Locales(ABC):
 
     @staticmethod
     @abstractmethod
-    def from_accept_languages(langstr: str) -> 'Locales':
+    def from_accept_languages(langstr: str) -> 'AbstractLocales':
         """ Parse a language list in the format of HTTP accept-languages header.
 
             The function tries to be forgiving of format errors by first splitting

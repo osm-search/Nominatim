@@ -121,7 +121,7 @@ def test_transliterate_hospital(header, expected_output):
 #     # set locale name here first, will probably need to further integrate with display name
 #     SimpleLocales().localize_results(results)
 
-#     output = ComplexLocales().result_transliterate(results)[0]
+#     output = TransliterateLocales().result_transliterate(results)[0]
 #     assert output == (
 #         "Dan Dong Shi Di Liu Zhong Xue, Qi Wei Lu, Zhan Qian Jie Dao, "
 #         "Dan Dong Shi, Zhen Xing Qu, 118000, Zhong Guo"
@@ -136,7 +136,7 @@ def test_transliterate_hospital(header, expected_output):
 #     """
 #     variable = 'school in dandong'
 #     results = asyncio.run(search(f"{variable}"))
-#     output = ComplexLocales(['en']).result_transliterate(results)[0]
+#     output = TransliterateLocales(['en']).result_transliterate(results)[0]
 #     assert output == (
 #         "Dan Dong Shi Di Liu Zhong Xue, Qi Wei Lu, Zhanqian Subdistrict, "
 #         "Dandong, Zhenxing, 118000, China"
@@ -150,7 +150,7 @@ def test_transliterate_hospital(header, expected_output):
 #     """
 #     variable = 'hospital in dandong'
 #     results = asyncio.run(search(f"{variable}"))
-#     output = ComplexLocales(['zh-Hans']).result_transliterate(results)[0]
+#     output = TransliterateLocales(['zh-Hans']).result_transliterate(results)[0]
 #     assert output == "丹东市中医院, 锦山大街, 站前街道, 元宝区, 振兴区, 118000, 中国"
 
 
@@ -166,7 +166,7 @@ def test_transliterate_hospital(header, expected_output):
 #     """
 #     variable = 'hospital in dandong'
 #     results = asyncio.run(search(f"{variable}"))
-#     output = ComplexLocales(['ps']).result_transliterate(results)[0]
+#     output = TransliterateLocales(['ps']).result_transliterate(results)[0]
 #     assert output == (
 #         "Dan Dong Shi Zhong Yi Yuan, Jin Shan Da Jie, Zhan Qian"
 #         " Jie Dao, Yuan Bao Qu, Zhen Xing Qu, 118000, چين"
@@ -185,7 +185,7 @@ def test_transliterate_hospital(header, expected_output):
 #     """
 #     variable = 'hospital in dandong'
 #     results = asyncio.run(search(f"{variable}"))
-#     output = ComplexLocales(['he']).result_transliterate(results)[0]
+#     output = TransliterateLocales(['he']).result_transliterate(results)[0]
 #     assert output == (
 #         "Dan Dong Shi Zhong Yi Yuan, Jin Shan Da Jie, Zhan Qian Jie Dao,"
 #         " Yuan Bao Qu, Zhen Xing Qu, 118000, סין"
@@ -204,7 +204,7 @@ def test_transliterate_hospital(header, expected_output):
 #     """
 #     variable = 'hospital in dandong'
 #     results = asyncio.run(search(f"{variable}"))
-#     output = ComplexLocales(['km']).result_transliterate(results)[0]
+#     output = TransliterateLocales(['km']).result_transliterate(results)[0]
 #     assert output == (
 #         "Dan Dong Shi Zhong Yi Yuan, Jin Shan Da Jie, Zhan Qian Jie Dao,"
 #         " Yuan Bao Qu, Zhen Xing Qu, 118000, ចិន"
@@ -218,7 +218,7 @@ def test_transliterate_hospital(header, expected_output):
 #     """
 #     variable = 'hospital in dandong'
 #     results = asyncio.run(search(f"{variable}"))
-#     output = ComplexLocales(['fr', 'en']).result_transliterate(results)[0]
+#     output = TransliterateLocales(['fr', 'en']).result_transliterate(results)[0]
 #     assert output == (
 #         "Dan Dong Shi Zhong Yi Yuan, Jinshan Main Street, Zhanqian Subdistrict,"
 #         " Yuanbao, Zhenxing, 118000, Chine"
@@ -237,7 +237,7 @@ def test_transliterate_hospital(header, expected_output):
 #     test_header = "fr,en-GB;q=0.9,en-US;q=0.8,en;q=0.7"
 
 #     results = asyncio.run(search(f"{variable}"))
-#     output = ComplexLocales(test_header).result_transliterate(results)[0]
+#     output = TransliterateLocales(test_header).result_transliterate(results)[0]
 #     assert output == (
 #         "Dan Dong Shi Zhong Yi Yuan, Jinshan Main Street, Zhanqian Subdistrict,"
 #         " Yuanbao, Zhenxing, 118000, Chine"
@@ -254,7 +254,7 @@ def test_transliterate_hospital(header, expected_output):
 #     test_header = "en-CA,en-GB;q=0.9,en-US;q=0.8,en;q=0.7"
 #     variable = 'school in dandong'
 #     results = asyncio.run(search(f"{variable}"))
-#     output = ComplexLocales(test_header).result_transliterate(results)[0]
+#     output = TransliterateLocales(test_header).result_transliterate(results)[0]
 #     assert output == (
 #         "Dan Dong Shi Di Liu Zhong Xue, Qi Wei Lu, Zhanqian Subdistrict,"
 #         " Dandong, Zhenxing, 118000, China"
@@ -268,7 +268,7 @@ def test_canto_transliterate():
         Cantonese
     """
     test_str = "梁國雄"
-    output = ComplexLocales().decode_canto(test_str)
+    output = TransliterateLocales().decode_canto(test_str)
     assert output == "Leung Gwok Hung"
 
 

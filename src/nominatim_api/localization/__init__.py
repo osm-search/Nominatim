@@ -8,4 +8,5 @@
 Module for localization
 """
 from .localizer import (Locales as Locales)
-from .transliterator import (TransliterateLocales as TransliterateLocales, load_lang_info as load_lang_info)
+from .transliterator import (TransliterateLocales as TransliterateLocales,
+                             load_lang_info as load_lang_info)

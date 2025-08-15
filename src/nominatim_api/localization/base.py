@@ -60,11 +60,11 @@ class Locales(ABC):
         """
         if not names:
             return ("", "")
-
         if len(names) > 1:
             for tag in self.name_tags:
                 if tag in names:
-                    return (names[tag], tag.split(':', 1)[1])
+                    _, _, lang = tag.partition(':')
+                    return (names[tag], lang or "default")
 
         # Nothing? Return any of the other names as a default.
         return (next(iter(names.values())), "default")

@@ -19,7 +19,10 @@ dependencies = [
     "pyYAML>=5.1",
     "SQLAlchemy>=1.4.31",
     "psycopg",
-    "PyICU"
+    "PyICU",
+    "cantonese-romanisation",
+    "unidecode",
+    "opencc"
 ]
 dynamic = ["version"]
 

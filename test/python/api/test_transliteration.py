@@ -79,6 +79,7 @@ mock_hospital_results = [
                 "zh": "中国",
                 "en": "China",
                 "fr": "Chine",
+                "he": "סין",
             },
             isaddress=True
         ),

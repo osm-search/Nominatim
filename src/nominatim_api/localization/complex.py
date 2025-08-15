@@ -10,8 +10,8 @@ from ..results import AddressLine, BaseResultT, AddressLines
 import yaml
 import os
 import re
-from cantoroman import Cantonese  # type: ignore
 from unidecode import unidecode
+from cantoroman import Cantonese  # type: ignore
 import opencc  # type: ignore
 
 

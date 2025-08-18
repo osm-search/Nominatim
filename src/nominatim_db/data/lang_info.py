@@ -48,6 +48,11 @@ def setup_lang_config(config: Configuration) -> None:
     _LANG_INFO.load(config)
 
 
+def get(lang: str) -> Dict[str, Any]:
+    """ Get language information for the language with the given language code. """
+    return _LANG_INFO._info.get(lang) or {}
+
+
 @overload
 def iterate() -> Iterable[Tuple[str, Dict[str, Any]]]:
     ...

@@ -60,6 +60,7 @@ class AbstractLocales(ABC):
         """
         if not names:
             return ("", "")
+
         if len(names) > 1:
             for tag in self.name_tags:
                 if tag in names:

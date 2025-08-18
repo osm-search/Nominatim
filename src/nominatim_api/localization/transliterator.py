@@ -7,8 +7,7 @@
 from typing import Optional, List
 from .base import AbstractLocales
 from ..results import AddressLine, BaseResultT, AddressLines
-import yaml
-import os
+from nominatim_db.data import country_info, lang_info
 import re
 from unidecode import unidecode
 from cantoroman import Cantonese  # type: ignore
@@ -25,8 +24,8 @@ class TransliterateLocales(AbstractLocales):
         super().__init__(langs)
 
         # yaml information for now
-        self.country_data = load_country_info()
-        self.lang_data = load_lang_info()
+        country_info.setup_country_config(self.config)
+        lang_info.setup_lang_config(self.config)
 
     @staticmethod
     def from_accept_languages(langstr: str) -> 'TransliterateLocales':
@@ -71,18 +70,6 @@ class TransliterateLocales(AbstractLocales):
                     languages.append(norm_lang)
         return TransliterateLocales(languages)
 
-    def _get_languages(self, result: BaseResultT) -> List[str]:
-        """ Given a result, returns the languages associated with the region
-
-            Special handling is needed for Macau and Hong Kong (not in yaml)
-        """
-        if not self.country_data:
-            self.country_data = load_country_info()
-        country = self.country_data.get(str(result.country_code).lower())
-        if country and 'languages' in country:
-            return [lang.strip() for lang in country['languages'].split(',')]
-        return []
-
     def _latin(self, language_code: str) -> bool:
         """ Using languages.yaml, returns if the
             given language is latin based or not.
@@ -95,13 +82,11 @@ class TransliterateLocales(AbstractLocales):
             Will only work on two-letter ISO 639 language codes
             with the exception of yue, which is also included
         """
-        if not self.lang_data:
-            self.lang_data = load_lang_info()
-
         # when we safeload a yaml file, what comes out?
         # we also dont need to load in yaml file now right?
-        # currently nominatim does not do so
-        language = self.lang_data.get(language_code)
+        # currently nominatim does not do so, it in config
+        # tried first pass, hopefully it works
+        language = lang_info.get(language_code)
         return bool(language and language.get('written') == 'lat')
 
     @staticmethod
@@ -168,12 +153,8 @@ class TransliterateLocales(AbstractLocales):
             Returns output as list
         """
         output = []
-        for i, result in enumerate(results):
-            address_parts = self.transliterate(result, self.languages)
-            # print(address_parts)
-            # print(f"{i + 1}. {', '.join(part.strip() for part in address_parts)}")
-            # output.append(", ".join(part.strip() for part in address_parts))
-            # print(", ".join(part.strip() for part in address_parts))
+        for _, result in enumerate(results):
+            address_parts = self.transliterate(result)
             output.append(address_parts)
         return output
 
@@ -244,7 +225,7 @@ class TransliterateLocales(AbstractLocales):
             return str(converter.convert(line.local_name))
         return unidecode(line.local_name) if line.local_name else ""
 
-    def transliterate(self, result: BaseResultT, user_languages: List[str]) -> str:
+    def transliterate(self, result: BaseResultT) -> str:
         """ Based on Nominatim Localize and ISO regions
             Assumes the user does not know the local language
 
@@ -261,9 +242,8 @@ class TransliterateLocales(AbstractLocales):
         if not result.address_rows:
             return ""
 
-        local_languages = self._get_languages(result)
-
-        if len(local_languages) == 1 and local_languages[0] in user_languages:
+        local_languages = country_info.get(str(result.country_code).lower())['languages']
+        if len(local_languages) == 1 and local_languages[0] in self.languages:
             iso = True
             result.region_lang = local_languages[0]  # can potentially do more with this
 
@@ -278,17 +258,13 @@ class TransliterateLocales(AbstractLocales):
                         self.display_name_with_locale(line.names)
                     )
 
-                    # print(line.names) # For test cases, to see what names are avaliable
-                    # dont use this function for Locales
-                    # want to replace this
-
                 # if not label_parts or label_parts[-1] != line.local_name:
                 if line.local_name and (not label_parts or label_parts[-1] != line.local_name):
-                    if iso or line.local_name_lang in user_languages:
+                    if iso or line.local_name_lang in self.languages:
                         print(f"no transliteration needed for {line.local_name}")
                         label_parts.append(line.local_name)
                     else:
-                        label_parts.append(self._transliterate(line, user_languages))
+                        label_parts.append(self._transliterate(line, self.languages))
         return ", ".join(part.strip() for part in label_parts)
 
     def localize(self, lines: AddressLines) -> None:
@@ -298,40 +274,3 @@ class TransliterateLocales(AbstractLocales):
     def localize_results(self, results: List[BaseResultT]) -> None:
         """ Stand in localize_results """
         print(result.address_rows[0].local_name for result in results if result.address_rows)
-
-
-def include_constructor(loader: yaml.SafeLoader, node:
-                        yaml.ScalarNode) -> dict[str, dict[str, str]]:
-    # Temporary file to get rid of !include error for yaml
-    file_path = loader.construct_scalar(node)
-    full_path = os.path.join(os.path.dirname(loader.name), file_path)
-    with open(full_path, 'r') as file:
-        return dict(yaml.safe_load(file))
-
-
-def load_country_info(yaml_path: Optional[str] = None) -> dict[str, dict[str, str]]:
-    """ Loads country_settings
-        Yaml files from Nominatim blob/master/settings/country_settings.yaml
-    """
-    yaml.SafeLoader.add_constructor('!include', include_constructor)
-
-    if yaml_path is None:
-        current_dir = os.path.dirname(__file__)
-        yaml_path = os.path.join(current_dir, "../../../", "settings/country_settings.yaml")
-    with open(yaml_path, 'r') as file:
-        yaml.SafeLoader.name = file.name  # Pass the file name to the loader
-        return dict(yaml.safe_load(file))
-
-
-def load_lang_info(yaml_path: Optional[str] = None) -> dict[str, dict[str, str]]:
-    """ Loads language information on writing system
-
-    Will only work on two-letter ISO 639 language codes
-    with the exception of yue, which is also included
-    """
-    if yaml_path is None:
-        current_dir = os.path.dirname(__file__)
-        yaml_path = os.path.join(current_dir, "../../../", "settings/languages.yaml")
-
-    with open(yaml_path, 'r') as file:
-        return dict(yaml.safe_load(file))

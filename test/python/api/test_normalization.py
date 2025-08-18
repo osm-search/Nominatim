@@ -27,7 +27,7 @@ def test_parsing_zh():
 
         Checks if the prototype can differentiate between Chinese Variants
     """
-    test_header = "TransliterateLocales;q=0.9,zh-cn;q=0.8,zh-Hans-CN;q=0.7"
+    test_header = "zh;q=0.9,zh-cn;q=0.8,zh-Hans-CN;q=0.7"
     output = TransliterateLocales().from_accept_languages(test_header).languages
     assert output == ['zh', 'zh-Hans', 'zh-Hant', 'yue', 'zh-cn', 'zh-Hans-CN']
 

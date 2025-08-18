@@ -68,6 +68,7 @@ class TransliterateLocales(AbstractLocales):
             for norm_lang in normalized:
                 if norm_lang not in languages:
                     languages.append(norm_lang)
+
         return TransliterateLocales(languages)
 
     def _latin(self, language_code: str) -> bool:

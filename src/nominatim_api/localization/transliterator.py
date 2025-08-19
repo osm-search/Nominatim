@@ -135,15 +135,12 @@ class TransliterateLocales(AbstractLocales):
         else:
             return unidecode(line.local_name) if line.local_name else ""
 
-    def transliterate(self, line: AddressLine, in_cantonese: bool = False) -> str:
+    def transliterate(self, line: AddressLine) -> str:
         """ Most granular transliteration component that performs raw transliteration
 
             Defaults to Latin
         """
-        # in_cantonese is a placeholder for now until we determine HK and Macau mapping
-
         for lang in self.languages:
-            # Need to replace to be a valid function
             _function = f"{lang.replace('-', '_')}_transliterate"
             transliterate_function = getattr(self, _function, None)
 
@@ -152,16 +149,10 @@ class TransliterateLocales(AbstractLocales):
                 return str(transliterate_function(line))
             elif self.is_latin(lang):
                 print("latin based language detected, latin transliteration occuring")
-                if not in_cantonese:
-                    return unidecode(line.local_name) if line.local_name else ""
-                else:
-                    return self.cantodecode(line.local_name) if line.local_name else ""
+                return self.latin_transliterate(line)
 
         print("defaulting to latin based transliteration")
-        if not in_cantonese:
-            return unidecode(line.local_name) if line.local_name else ""
-        else:
-            return self.cantodecode(line.local_name) if line.local_name else ""
+        return self.latin_transliterate(line)
 
     def localize(self, result: BaseResultT) -> None:
         """ Based on Nominatim Localize and ISO regions

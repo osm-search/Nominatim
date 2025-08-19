@@ -155,21 +155,16 @@ class TransliterateLocales(AbstractLocales):
         return self.latin_transliterate(line)
 
     def localize(self, result: BaseResultT) -> None:
-        """ Based on Nominatim Localize and ISO regions
-            Assumes the user does not know the local language
-
-        Set the local name of address parts according to the chosen
+        """ Sets the local name of address parts according to the chosen
             local, transliterating if not avaliable.
-            Return the list of local names without duplicates.
 
-            Only address parts that are marked as isaddress are localized
-            and returned.
+            Only address parts that are marked as isaddress are localized.
         """
         if not result.address_rows:
             return
 
         local_languages = country_info.get_lang(str(result.country_code))
-        # would want to put cantonese here
+        # would want to put cantonese here, i.e. use regions to detect
         if len(local_languages) == 1:
             result.region_lang = local_languages[0]
 
@@ -200,9 +195,6 @@ class TransliterateLocales(AbstractLocales):
             Using the additional normalization transliteration constraints,
             then returns the larguage in its normalized form, as well as the regional
             dialect, if applicable.
-
-            The regional dialect always takes precedence
-            Languages are returned in lowercase form
         """
         candidates = AbstractLocales.sort_languages(langstr)
 

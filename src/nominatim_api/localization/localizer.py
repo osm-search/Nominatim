@@ -20,8 +20,6 @@ class Locales(AbstractLocales):
             locale.
 
             Only address parts that are marked as isaddress are localized.
-
-            AddressLines should be modified in place.
         """
         if not result.address_rows:
             return

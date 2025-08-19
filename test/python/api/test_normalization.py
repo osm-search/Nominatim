@@ -7,7 +7,7 @@
 """
 Tests for language parsing with the complex locales function
 """
-from nominatim_api.localization.transliterator import TransliterateLocales
+from nominatim_api.localization import TransliterateLocales
 
 
 def test_parsing_en():

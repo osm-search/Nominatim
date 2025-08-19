@@ -22,7 +22,7 @@ from .format import RawDataList
 from ..types import DataLayer, GeometryFormat, PlaceRef, PlaceID, OsmID, Point
 from ..status import StatusResult
 from ..results import DetailedResult, ReverseResults, SearchResult, SearchResults
-from ..oldlocalization import Locales
+from ..localization import Locales
 from . import helpers
 from ..server import content_types as ct
 from ..server.asgi_adaptor import ASGIAdaptor, EndpointFunc

@@ -9,7 +9,7 @@ Tests for transliteration with the complex locales function
 """
 import pytest
 
-from nominatim_api.localization.transliterator import TransliterateLocales
+from nominatim_api.localization import TransliterateLocales
 from nominatim_api.config import Configuration
 from nominatim_db.data import lang_info
 

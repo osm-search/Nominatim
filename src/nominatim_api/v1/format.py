@@ -15,7 +15,7 @@ from ..utils.json_writer import JsonWriter
 from ..status import StatusResult
 from ..results import DetailedResult, ReverseResults, SearchResults, \
                       AddressLines, AddressLine
-from ..oldlocalization import Locales
+from ..localization import Locales
 from ..result_formatting import FormatDispatcher
 from .classtypes import ICONS
 from . import format_json, format_xml

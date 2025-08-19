@@ -155,13 +155,13 @@ class TransliterateLocales(AbstractLocales):
                 if not in_cantonese:
                     return unidecode(line.local_name) if line.local_name else ""
                 else:
-                    return self.decode_canto(line.local_name) if line.local_name else ""
+                    return self.cantodecode(line.local_name) if line.local_name else ""
 
         print("defaulting to latin based transliteration")
         if not in_cantonese:
             return unidecode(line.local_name) if line.local_name else ""
         else:
-            return self.decode_canto(line.local_name) if line.local_name else ""
+            return self.cantodecode(line.local_name) if line.local_name else ""
 
     def localize(self, result: BaseResultT) -> None:
         """ Based on Nominatim Localize and ISO regions
@@ -217,7 +217,6 @@ class TransliterateLocales(AbstractLocales):
 
         languages = []
         for lid, _ in candidates:
-            lid = lid
             if lid not in languages:
                 languages.append(lid)
 

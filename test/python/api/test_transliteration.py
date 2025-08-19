@@ -259,7 +259,7 @@ def test_canto_transliterate():
         Cantonese
     """
     test_str = "梁國雄"
-    output = TransliterateLocales().decode_canto(test_str)
+    output = TransliterateLocales().cantodecode(test_str)
     assert output == "Leung Gwok Hung"
 
 

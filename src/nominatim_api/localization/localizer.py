@@ -4,8 +4,6 @@
 #
 # Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
-from typing import List
-import re
 from .base import AbstractLocales
 from ..results import BaseResultT
 
@@ -32,14 +30,6 @@ class Locales(AbstractLocales):
             if line.isaddress and line.names:
                 line.local_name = self.display_name(line.names)
 
-    def localize_results(self, results: List[BaseResultT]) -> None:
-        """ Set the local name of results according to the chosen
-            locale.
-        """
-        for result in results:
-            result.locale_name = self.display_name(result.names)
-            self.localize(result)
-
     @staticmethod
     def from_accept_languages(langstr: str) -> 'Locales':
         """ Parse a language list in the format of HTTP accept-languages header.
@@ -48,15 +38,7 @@ class Locales(AbstractLocales):
             the string into comma-separated parts and then parsing each
             description separately. Badly formatted parts are then ignored.
         """
-        candidates = []
-        for desc in langstr.split(','):
-            m = re.fullmatch(r'\s*([a-z_-]+)(?:;\s*q\s*=\s*([01](?:\.\d+)?))?\s*',
-                             desc, flags=re.I)
-            if m:
-                candidates.append((m[1], float(m[2] or 1.0)))
-
-        # Sort the results by the weight of each language (preserving order).
-        candidates.sort(reverse=True, key=lambda e: e[1])
+        candidates = AbstractLocales.sort_languages(langstr)
 
         # If a language has a region variant, also add the language without
         # variant but only if it isn't already in the list to not mess up the weight.

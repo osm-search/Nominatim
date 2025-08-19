@@ -8,7 +8,6 @@ from typing import Optional, List
 from .base import AbstractLocales
 from ..results import AddressLine, BaseResultT
 from nominatim_db.data import country_info, lang_info
-import re
 from unidecode import unidecode
 from cantoroman import Cantonese  # type: ignore
 import opencc  # type: ignore
@@ -27,74 +26,23 @@ class TransliterateLocales(AbstractLocales):
         lang_info.setup_lang_config(self.config)
 
     @staticmethod
-    def from_accept_languages(langstr: str) -> 'TransliterateLocales':
-        """ Create a localization object from a language list in the
-            format of HTTP accept-languages header.
+    def is_latin(language_code: str) -> bool:
+        """ Returns if the given language is latin based on the information in languanges.yaml
 
-            The functions tries to be forgiving of format errors by first splitting
-            the string into comma-separated parts and then parsing each
-            description separately. Badly formatted parts are then ignored.
+            If the code does not exist in the yaml file, it will return false.
+            Due to normalization, the "prime" version of the code must also be in
+            known languages, so it will eventually execute
 
-            Using the additional normalization transliteration constraints,
-            then returns the larguage in its normalized form, as well as the regional
-            dialect, if applicable.
-
-            The regional dialect always takes precedence
-
-            Languages are returned in lowercase form
+            Will only work on two-letter ISO 639 language codes with the addition of yue
         """
-        # split string into languages
-        candidates = []
-        for desc in langstr.split(','):
-            m = re.fullmatch(r'\s*([a-z_-]+)(?:;\s*q\s*=\s*([01](?:\.\d+)?))?\s*',
-                             desc, flags=re.I)
-            if m:
-                candidates.append((m[1], float(m[2] or 1.0)))
-
-        # sort the results by the weight of each language (preserving order).
-        candidates.sort(reverse=True, key=lambda e: e[1])
-
-        # if a language has a region variant, ignore it
-        # we want base transliteration language only
-        languages = []
-        for lid, _ in candidates:
-            lid = lid
-
-            if lid not in languages:
-                languages.append(lid)
-
-            normalized = TransliterateLocales._normalize_lang(lid)
-            for norm_lang in normalized:
-                if norm_lang not in languages:
-                    languages.append(norm_lang)
-
-        return TransliterateLocales(languages)
-
-    def _latin(self, language_code: str) -> bool:
-        """ Using languages.yaml, returns if the
-            given language is latin based or not.
-
-            If the code does not exist in the yaml file, it
-            will return false. This works as, due to normalization,
-            we assume that the "prime" version of the code is also in
-            the user languages, so it will eventually execute
-
-            Will only work on two-letter ISO 639 language codes
-            with the exception of yue, which is also included
-        """
-        # when we safeload a yaml file, what comes out?
-        # we also dont need to load in yaml file now right?
-        # currently nominatim does not do so, it in config
-        # tried first pass, hopefully it works
         language = lang_info.get(language_code)
         return bool(language and language.get('written') == 'lat')
 
     @staticmethod
-    def decode_canto(line: str) -> str:
+    def cantodecode(line: str) -> str:
         """ Takes in a string in Cantonese and returns the Latin
             transliterated version.
-            Uses the cantoroman library, named as so to be homogenous
-            with unidecode
+            Uses the cantoroman library, named as so to be homogenous with unidecode
 
             For cases with multiple pronounciation, the first is always taken
         """
@@ -106,7 +54,7 @@ class TransliterateLocales(AbstractLocales):
         return cantonese_line.strip()
 
     @staticmethod
-    def _normalize_lang(lang: str) -> List[str]:
+    def normalize_dict(lang: str) -> List[str]:
         """ Mock idea for language mapping dictionary
 
             Hoping to standardize certain names, i.e.
@@ -126,7 +74,6 @@ class TransliterateLocales(AbstractLocales):
         # Potentially make this a global variable (or object field) to reduce compute
         # For zh-Latn-pinyin and zh-Latn, I did not include this as it is not a spoken language
         # and it would be in Latin anyways -> this could potentially be changed in the future
-        # For now, no dialect support
         lang_dict = {
             "zh": ["zh-Hans", "zh-Hant", "yue"],  # zh covers zh-Hans, zh-Hant, yue
             "zh-cn": ["zh-Hans"],  # only Simplfied
@@ -151,7 +98,7 @@ class TransliterateLocales(AbstractLocales):
         """ If in Traditional Chinese, convert to Simplified
             NOT TESTED, PROOF OF CONCEPT
 
-            Else switch to standard Latin default transliteration
+            Otherwise switch to standard Latin default transliteration
         """
         if line.local_name_lang == 'zh-hant':
             # t2s.json Traditional Chinese to Simplified Chinese 繁體到簡體
@@ -162,8 +109,7 @@ class TransliterateLocales(AbstractLocales):
     @staticmethod
     def zh_Hant_transliterate(line: AddressLine) -> str:
         """ If in Simplified Chinese, convert to Traditional
-
-            Else switch to standard Latin default transliteration
+            Otherwise switch to standard Latin default transliteration
         """
         if line.local_name_lang == 'zh-hans' or line.local_name_lang == 'zh-CN':
             # t2s.json Traditional Chinese to Simplified Chinese 繁體到簡體
@@ -174,8 +120,7 @@ class TransliterateLocales(AbstractLocales):
     @staticmethod
     def yue_transliterate(line: AddressLine) -> str:
         """ If in Simplified Chinese, convert to Traditional
-
-            Else switch to standard Latin default transliteration
+            Otherwise switch to standard Latin default transliteration
         """
         if line.local_name_lang == 'zh-hans' or line.local_name_lang == 'zh':
             # t2s.json Traditional Chinese to Simplified Chinese 繁體到簡體
@@ -183,23 +128,29 @@ class TransliterateLocales(AbstractLocales):
             return str(converter.convert(line.local_name))
         return unidecode(line.local_name) if line.local_name else ""
 
-    def transliterate(self, line: AddressLine, locales: List[str], in_cantonese:
-                      bool = False) -> str:
+    def latin_transliterate(self, line: AddressLine) -> str:
+        "Transliterates to latin, needs to take into account Han Re-Unification"
+        if line.local_name_lang == 'yue':
+            return self.cantodecode(line.local_name) if line.local_name else ""
+        else:
+            return unidecode(line.local_name) if line.local_name else ""
+
+    def transliterate(self, line: AddressLine, in_cantonese: bool = False) -> str:
         """ Most granular transliteration component that performs raw transliteration
 
             Defaults to Latin
         """
         # in_cantonese is a placeholder for now until we determine HK and Macau mapping
 
-        for locale in locales:
+        for lang in self.languages:
             # Need to replace to be a valid function
-            _function = f"{locale.replace('-', '_')}_transliterate"
+            _function = f"{lang.replace('-', '_')}_transliterate"
             transliterate_function = getattr(self, _function, None)
 
             if transliterate_function:
-                print(f"{locale} transliteration successful")
+                print(f"{lang} transliteration successful")
                 return str(transliterate_function(line))
-            elif self._latin(locale):
+            elif self.is_latin(lang):
                 print("latin based language detected, latin transliteration occuring")
                 if not in_cantonese:
                     return unidecode(line.local_name) if line.local_name else ""
@@ -216,7 +167,7 @@ class TransliterateLocales(AbstractLocales):
         """ Based on Nominatim Localize and ISO regions
             Assumes the user does not know the local language
 
-            Set the local name of address parts according to the chosen
+        Set the local name of address parts according to the chosen
             local, transliterating if not avaliable.
             Return the list of local names without duplicates.
 
@@ -226,7 +177,8 @@ class TransliterateLocales(AbstractLocales):
         if not result.address_rows:
             return
 
-        local_languages = country_info.get(str(result.country_code).lower())['languages']
+        local_languages = country_info.get_lang(str(result.country_code))
+        # would want to put cantonese here
         if len(local_languages) == 1:
             result.region_lang = local_languages[0]
 
@@ -236,21 +188,42 @@ class TransliterateLocales(AbstractLocales):
                     line.local_name_lang = result.region_lang
 
                 if line.local_name_lang not in self.languages:
-                    # new identifier, local_name_lang
                     line.local_name, line.local_name_lang = (
                         self.display_name_with_locale(line.names)
                     )
 
-                if line.local_name:
                     if line.local_name_lang in self.languages:
                         print(f"no transliteration needed for {line.local_name}")
                     else:
-                        line.local_name = self.transliterate(line, self.languages)
+                        line.local_name = self.transliterate(line).strip()
 
-    def localize_results(self, results: List[BaseResultT]) -> None:
-        """ Set the local name of results according to the chosen
-            locale.
+    @staticmethod
+    def from_accept_languages(langstr: str) -> 'TransliterateLocales':
+        """ Create a localization object from a language list in the
+            format of HTTP accept-languages header.
+
+            The functions tries to be forgiving of format errors by first splitting
+            the string into comma-separated parts and then parsing each
+            description separately. Badly formatted parts are then ignored.
+
+            Using the additional normalization transliteration constraints,
+            then returns the larguage in its normalized form, as well as the regional
+            dialect, if applicable.
+
+            The regional dialect always takes precedence
+            Languages are returned in lowercase form
         """
-        for result in results:
-            result.locale_name = self.display_name(result.names)
-            self.localize(result)
+        candidates = AbstractLocales.sort_languages(langstr)
+
+        languages = []
+        for lid, _ in candidates:
+            lid = lid
+            if lid not in languages:
+                languages.append(lid)
+
+            normalized = TransliterateLocales.normalize_dict(lid)
+            for norm_lang in normalized:
+                if norm_lang not in languages:
+                    languages.append(norm_lang)
+
+        return TransliterateLocales(languages)

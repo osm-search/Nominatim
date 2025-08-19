@@ -4,6 +4,7 @@
 #
 # Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
+import re
 from abc import ABC, abstractmethod
 from typing import Dict, Optional, List, Mapping, Tuple
 from ..results import BaseResultT
@@ -70,14 +71,15 @@ class AbstractLocales(ABC):
         # Nothing? Return any of the other names as a default.
         return (next(iter(names.values())), "default")
 
+    def localize_results(self, results: List[BaseResultT]) -> None:
+        """ Localize results according to the chosen locale. """
+        for result in results:
+            result.locale_name = self.display_name(result.names)
+            self.localize(result)
+
     @abstractmethod
     def localize(self, result: BaseResultT) -> None:
         """ Localize address parts according to the chosen locale. """
-        pass
-
-    @abstractmethod
-    def localize_results(self, results: List[BaseResultT]) -> None:
-        """ Localize results according to the chosen locale. """
         pass
 
     @staticmethod
@@ -90,3 +92,18 @@ class AbstractLocales(ABC):
             description separately. Badly formatted parts are then ignored.
         """
         pass
+
+    @staticmethod
+    def sort_languages(langstr: str) -> List[str]:
+        candidates = []
+        for desc in langstr.split(','):
+            m = re.fullmatch(r'\s*([a-z_-]+)(?:;\s*q\s*=\s*([01](?:\.\d+)?))?\s*',
+                            desc, flags=re.I)
+            if m:
+                candidates.append((m[1], float(m[2] or 1.0)))
+
+        # sort the results by the weight of each language (preserving order).
+        candidates.sort(reverse=True, key=lambda e: e[1])
+
+        return candidates
+

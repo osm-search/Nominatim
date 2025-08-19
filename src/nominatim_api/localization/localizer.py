@@ -7,7 +7,7 @@
 from typing import List
 import re
 from .base import AbstractLocales
-from ..results import AddressLines, BaseResultT
+from ..results import BaseResultT
 
 
 class Locales(AbstractLocales):
@@ -17,7 +17,7 @@ class Locales(AbstractLocales):
         usage.
     """
 
-    def localize(self, lines: AddressLines) -> None:
+    def localize(self, result: BaseResultT) -> None:
         """ Sets the local name of address parts according to the chosen
             locale.
 
@@ -25,7 +25,10 @@ class Locales(AbstractLocales):
 
             AddressLines should be modified in place.
         """
-        for line in lines:
+        if not result.address_rows:
+            return
+
+        for line in result.address_rows:
             if line.isaddress and line.names:
                 line.local_name = self.display_name(line.names)
 
@@ -35,8 +38,7 @@ class Locales(AbstractLocales):
         """
         for result in results:
             result.locale_name = self.display_name(result.names)
-            if result.address_rows:
-                self.localize(result.address_rows)
+            self.localize(result)
 
     @staticmethod
     def from_accept_languages(langstr: str) -> 'Locales':

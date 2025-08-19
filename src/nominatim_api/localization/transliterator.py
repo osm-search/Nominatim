@@ -6,7 +6,7 @@
 # For a full list of authors see the git log.
 from typing import Optional, List
 from .base import AbstractLocales
-from ..results import AddressLine, BaseResultT, AddressLines
+from ..results import AddressLine, BaseResultT
 from nominatim_db.data import country_info, lang_info
 import re
 from unidecode import unidecode
@@ -23,7 +23,6 @@ class TransliterateLocales(AbstractLocales):
     def __init__(self, langs: Optional[list[str]] = None):
         super().__init__(langs)
 
-        # yaml information for now
         country_info.setup_country_config(self.config)
         lang_info.setup_lang_config(self.config)
 
@@ -147,48 +146,6 @@ class TransliterateLocales(AbstractLocales):
             return [lang]
         return [lang.split('-')[0]]
 
-    def result_transliterate(self, results: List[BaseResultT]) -> List[str]:
-        """ High level transliteration result wrapper
-
-            Prints out the transliterated results
-            Returns output as list
-        """
-        output = []
-        for _, result in enumerate(results):
-            address_parts = self.transliterate(result)
-            output.append(address_parts)
-        return output
-
-    def _transliterate(self, line: AddressLine, locales: List[str], in_cantonese:
-                       bool = False) -> str:
-        """ Most granular transliteration component
-            Performs raw transliteration based on locales
-
-            Defaults to Latin
-        """
-        # in_cantonese is a placeholder for now until we determine HK and Macau mapping
-
-        for locale in locales:
-            # Need to replace to be a valid function
-            _function = f"{locale.replace('-', '_')}_transliterate"
-            transliterate_function = getattr(self, _function, None)
-
-            if transliterate_function:
-                print(f"{locale} transliteration successful")
-                return str(transliterate_function(line))
-            elif self._latin(locale):
-                print("latin based language detected, latin transliteration occuring")
-                if not in_cantonese:
-                    return unidecode(line.local_name) if line.local_name else ""
-                else:
-                    return self.decode_canto(line.local_name) if line.local_name else ""
-
-        print("defaulting to latin based transliteration")
-        if not in_cantonese:
-            return unidecode(line.local_name) if line.local_name else ""
-        else:
-            return self.decode_canto(line.local_name) if line.local_name else ""
-
     @staticmethod
     def zh_Hans_transliterate(line: AddressLine) -> str:
         """ If in Traditional Chinese, convert to Simplified
@@ -226,7 +183,36 @@ class TransliterateLocales(AbstractLocales):
             return str(converter.convert(line.local_name))
         return unidecode(line.local_name) if line.local_name else ""
 
-    def transliterate(self, result: BaseResultT) -> str:
+    def transliterate(self, line: AddressLine, locales: List[str], in_cantonese:
+                      bool = False) -> str:
+        """ Most granular transliteration component that performs raw transliteration
+
+            Defaults to Latin
+        """
+        # in_cantonese is a placeholder for now until we determine HK and Macau mapping
+
+        for locale in locales:
+            # Need to replace to be a valid function
+            _function = f"{locale.replace('-', '_')}_transliterate"
+            transliterate_function = getattr(self, _function, None)
+
+            if transliterate_function:
+                print(f"{locale} transliteration successful")
+                return str(transliterate_function(line))
+            elif self._latin(locale):
+                print("latin based language detected, latin transliteration occuring")
+                if not in_cantonese:
+                    return unidecode(line.local_name) if line.local_name else ""
+                else:
+                    return self.decode_canto(line.local_name) if line.local_name else ""
+
+        print("defaulting to latin based transliteration")
+        if not in_cantonese:
+            return unidecode(line.local_name) if line.local_name else ""
+        else:
+            return self.decode_canto(line.local_name) if line.local_name else ""
+
+    def localize(self, result: BaseResultT) -> None:
         """ Based on Nominatim Localize and ISO regions
             Assumes the user does not know the local language
 
@@ -237,41 +223,34 @@ class TransliterateLocales(AbstractLocales):
             Only address parts that are marked as isaddress are localized
             and returned.
         """
-        label_parts: List[str] = []
-        iso = False
-
         if not result.address_rows:
-            return ""
+            return
 
         local_languages = country_info.get(str(result.country_code).lower())['languages']
-        if len(local_languages) == 1 and local_languages[0] in self.languages:
-            iso = True
-            result.region_lang = local_languages[0]  # can potentially do more with this
+        if len(local_languages) == 1:
+            result.region_lang = local_languages[0]
 
         for line in result.address_rows:
             if line.isaddress and line.names:
                 if result.region_lang:
                     line.local_name_lang = result.region_lang
 
-                if not iso:
+                if line.local_name_lang not in self.languages:
                     # new identifier, local_name_lang
                     line.local_name, line.local_name_lang = (
                         self.display_name_with_locale(line.names)
                     )
 
-                # if not label_parts or label_parts[-1] != line.local_name:
-                if line.local_name and (not label_parts or label_parts[-1] != line.local_name):
-                    if iso or line.local_name_lang in self.languages:
+                if line.local_name:
+                    if line.local_name_lang in self.languages:
                         print(f"no transliteration needed for {line.local_name}")
-                        label_parts.append(line.local_name)
                     else:
-                        label_parts.append(self._transliterate(line, self.languages))
-        return ", ".join(part.strip() for part in label_parts)
-
-    def localize(self, lines: AddressLines) -> None:
-        """ Stand in localize """
-        print(lines)
+                        line.local_name = self.transliterate(line, self.languages)
 
     def localize_results(self, results: List[BaseResultT]) -> None:
-        """ Stand in localize_results """
-        print(result.address_rows[0].local_name for result in results if result.address_rows)
+        """ Set the local name of results according to the chosen
+            locale.
+        """
+        for result in results:
+            result.locale_name = self.display_name(result.names)
+            self.localize(result)

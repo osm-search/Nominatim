@@ -6,7 +6,7 @@
 # For a full list of authors see the git log.
 from abc import ABC, abstractmethod
 from typing import Dict, Optional, List, Mapping, Tuple
-from ..results import AddressLines, BaseResultT
+from ..results import BaseResultT
 from ..config import Configuration
 
 
@@ -71,7 +71,7 @@ class AbstractLocales(ABC):
         return (next(iter(names.values())), "default")
 
     @abstractmethod
-    def localize(self, lines: AddressLines) -> None:
+    def localize(self, result: BaseResultT) -> None:
         """ Localize address parts according to the chosen locale. """
         pass
 

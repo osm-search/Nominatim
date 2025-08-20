@@ -268,13 +268,17 @@ name out of it:
 'Brugges'
 ```
 
-The `address_row` field has a helper function to apply the function to all
-its members and save the result in the `local_name` field. It also returns
-all the localized names as a convenient simple list. This list can be used
-to create a human-readable output:
+The `address_row` field has a helper function to compute the display name for each Address Line
+component based on its `local_name` field. This is then utilized by the overall `result` object,
+which has a helper function to apply the function to all its ‘address_row’ members and saves
+the result in the `locale_name` field. 
+
+However, in order to set this `local_name` field in a preferred language, you must use the `Locale`
+object which contains the function `localize_results`, which explicitly sets each `local_name field`.
 
 ``` python
->>> address_parts = results[0].address_rows.localize(locale)
+>>> Locales().localize_results(results)
+>>> address_parts = results[0].address_rows
 >>> print(', '.join(address_parts))
 Bruges, Flandre-Occidentale, Flandre, Belgique
 ```

@@ -115,6 +115,9 @@ Preferred language order for showing search results. This may either be
 a simple comma-separated list of language codes or have the same format
 as the ["Accept-Language" HTTP header](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Accept-Language).
 
+In order to view results in your preferred language order, the function
+["localize-results"](https://github.com/osm-search/Nominatim/blob/master/src/nominatim_api/localization.py) must be explicitly called,
+which sets the local_name of the AddressRow to be in your preferred language
 
 ## Examples
 

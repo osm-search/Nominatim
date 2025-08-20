@@ -7,11 +7,12 @@
 """
 Helper functions for output of results in json formats.
 """
-from typing import Mapping, Any, Optional, Tuple, Union
+from typing import Mapping, Any, Optional, Tuple, Union, List
 
 from ..utils.json_writer import JsonWriter
 from ..results import AddressLines, ReverseResults, SearchResults
 from . import classtypes as cl
+from ..types import EntranceDetails
 
 
 def _write_osm_id(out: JsonWriter, osm_object: Optional[Tuple[str, int]]) -> None:
@@ -64,6 +65,28 @@ def _write_geocodejson_address(out: JsonWriter,
         out.keyval('country_code', country_code)
 
 
+def write_entrances(out: JsonWriter, entrances: Optional[List[EntranceDetails]]) -> None:
+    if entrances is None:
+        out.keyval('entrances', None)
+        return
+
+    out.key('entrances')\
+       .start_array()
+
+    for entrance in entrances:
+        out.start_object()\
+           .keyval('osm_id', entrance.osm_id)\
+           .keyval('type', entrance.type)\
+           .keyval('lat', f"{entrance.lat:0.7f}")\
+           .keyval('lon', f"{entrance.lon:0.7f}")
+
+        if entrance.extratags:
+            out.keyval('extratags', entrance.extratags)
+        out.end_object().next()
+
+    out.end_array().next()
+
+
 def format_base_json(results: Union[ReverseResults, SearchResults],
                      options: Mapping[str, Any], simple: bool,
                      class_label: str) -> str:
@@ -107,8 +130,8 @@ def format_base_json(results: Union[ReverseResults, SearchResults],
             _write_typed_address(out, result.address_rows, result.country_code)
             out.end_object().next()
 
-        if options.get('entrances', False) and result.entrances:
-            out.keyval('entrances', result.entrances)
+        if options.get('entrances', False):
+            write_entrances(out, result.entrances)
 
         if options.get('extratags', False):
             out.keyval('extratags', result.extratags)
@@ -184,7 +207,7 @@ def format_base_geojson(results: Union[ReverseResults, SearchResults],
             out.end_object().next()
 
         if options.get('entrances', False):
-            out.keyval('entrances', result.entrances)
+            write_entrances(out, result.entrances)
 
         if options.get('extratags', False):
             out.keyval('extratags', result.extratags)
@@ -258,7 +281,7 @@ def format_base_geocodejson(results: Union[ReverseResults, SearchResults],
             out.end_object().next()
 
         if options.get('entrances', False):
-            out.keyval('entrances', result.entrances)
+            write_entrances(out, result.entrances)
 
         if options.get('extratags', False):
             out.keyval('extra', result.extratags)

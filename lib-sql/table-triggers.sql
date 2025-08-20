@@ -24,6 +24,10 @@ CREATE TRIGGER place_before_delete BEFORE DELETE ON place
     FOR EACH ROW EXECUTE PROCEDURE place_delete();
 CREATE TRIGGER place_before_insert BEFORE INSERT ON place
     FOR EACH ROW EXECUTE PROCEDURE place_insert();
+CREATE TRIGGER place_after_insert AFTER INSERT ON place
+    FOR EACH ROW EXECUTE PROCEDURE place_after_insert();
+CREATE TRIGGER place_after_delete AFTER DELETE ON place
+    FOR EACH ROW EXECUTE PROCEDURE place_after_delete();
 
 CREATE TRIGGER location_postcode_before_update BEFORE UPDATE ON location_postcode
     FOR EACH ROW EXECUTE PROCEDURE postcode_update();

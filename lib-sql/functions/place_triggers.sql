@@ -365,3 +365,35 @@ BEGIN
   RETURN NULL;
 END;
 $$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION place_after_insert()
+  RETURNS TRIGGER
+  AS $$
+BEGIN
+  {% if debug %}
+    RAISE WARNING 'place_after_insert: % % % % %',NEW.osm_type,NEW.osm_id,NEW.class,NEW.type,st_area(NEW.geometry);
+  {% endif %}
+
+  IF NEW.class IN ('routing:entrance', 'entrance') THEN
+    PERFORM place_update_entrances_for_node(NEW.osm_id);
+  END IF;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION place_after_delete()
+  RETURNS TRIGGER
+  AS $$
+BEGIN
+  {% if debug %}
+    RAISE WARNING 'place_after_delete: % % % % %',OLD.osm_type,OLD.osm_id,OLD.class,OLD.type,st_area(OLD.geometry);
+  {% endif %}
+
+  IF OLD.class IN ('routing:entrance', 'entrance') THEN
+    PERFORM place_update_entrances_for_node(OLD.osm_id);
+  END IF;
+
+  RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;

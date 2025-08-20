@@ -8,13 +8,13 @@
 Helper functions for output of results in XML format.
 """
 from typing import Mapping, Any, Optional, Union
-import dataclasses
 import datetime as dt
 import xml.etree.ElementTree as ET
 
 from ..results import AddressLines, ReverseResult, ReverseResults, \
                       SearchResult, SearchResults
 from . import classtypes as cl
+from ..types import EntranceDetails
 
 
 def _write_xml_address(root: ET.Element, address: AddressLines,
@@ -83,6 +83,18 @@ def _create_base_entry(result: Union[ReverseResult, SearchResult],
     return place
 
 
+def _create_entrance(root: ET.Element, entrance: EntranceDetails) -> None:
+    entrance_node = ET.SubElement(root, 'entrance', attrib={
+        "osm_id": str(entrance.osm_id),
+        "type": entrance.type,
+        "lat": f"{entrance.lat:0.7f}",
+        "lon": f"{entrance.lon:0.7f}",
+        })
+    if entrance.extratags:
+        for k, v in entrance.extratags.items():
+            ET.SubElement(entrance_node, 'tag', attrib={'key': k, 'value': v})
+
+
 def format_base_xml(results: Union[ReverseResults, SearchResults],
                     options: Mapping[str, Any],
                     simple: bool, xml_root_tag: str,
@@ -126,7 +138,7 @@ def format_base_xml(results: Union[ReverseResults, SearchResults],
         if options.get('entrances', False):
             eroot = ET.SubElement(root if simple else place, 'entrances')
             if result.entrances:
-                for entrance_detail in result.entrances:
-                    ET.SubElement(eroot, 'entrance', attrib=dataclasses.asdict(entrance_detail))
+                for entrance in result.entrances:
+                    _create_entrance(eroot, entrance)
 
     return '<?xml version="1.0" encoding="UTF-8" ?>\n' + ET.tostring(root, encoding='unicode')

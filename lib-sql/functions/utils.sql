@@ -623,3 +623,46 @@ BEGIN
    RETURN NULL;
 END;
 $$ LANGUAGE plpgsql;
+
+
+CREATE OR REPLACE FUNCTION place_update_entrances_for_node(osmid BIGINT)
+  RETURNS INTEGER
+  AS $$
+DECLARE
+  entrance_way RECORD;
+BEGIN
+  FOR entrance_way IN
+    SELECT osm_id, place_id FROM planet_osm_ways JOIN placex ON placex.osm_id = planet_osm_ways.id WHERE osmid=ANY(nodes)
+  LOOP
+    PERFORM place_update_entrances(entrance_way.place_id, entrance_way.osm_id);
+  END LOOP;
+
+  RETURN NULL;
+END;
+$$
+LANGUAGE plpgsql;
+
+
+CREATE OR REPLACE FUNCTION place_update_entrances(placeid BIGINT, osmid BIGINT)
+  RETURNS INTEGER
+  AS $$
+DECLARE
+  entrances JSONB;
+BEGIN
+  SELECT jsonb_agg(jsonb_build_object('osm_id', osm_id, 'type', type, 'lat', ST_Y(geometry), 'lon', ST_X(geometry), 'extratags', extratags))
+      FROM place
+      WHERE osm_id IN (SELECT unnest(nodes) FROM planet_osm_ways WHERE id=osmid) AND class IN ('routing:entrance', 'entrance')
+      INTO entrances;
+  IF entrances IS NOT NULL THEN
+    INSERT INTO place_entrance (place_id, entrances)
+      SELECT placeid, entrances
+      ON CONFLICT (place_id) DO UPDATE
+        SET entrances = excluded.entrances;
+  ELSE
+    DELETE FROM place_entrance WHERE place_id=placeid;
+  END IF;
+
+  RETURN NULL;
+END;
+$$
+LANGUAGE plpgsql;

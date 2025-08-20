@@ -883,16 +883,7 @@ BEGIN
 
   -- Record the entrance node locations
   IF NEW.osm_type = 'W' and (NEW.rank_search > 27 or NEW.class IN ('landuse', 'leisure')) THEN
-    SELECT jsonb_agg(jsonb_build_object('osm_id', osm_id, 'type', type, 'lat', ST_Y(geometry), 'lon', ST_X(geometry), 'extratags', extratags))
-        FROM place
-        WHERE osm_id IN (SELECT unnest(nodes) FROM planet_osm_ways WHERE id=NEW.osm_id) AND class IN ('routing:entrance', 'entrance')
-        INTO entrances;
-    IF entrances IS NOT NULL THEN
-      INSERT INTO place_entrance (place_id, entrances)
-        SELECT NEW.place_id, entrances
-        ON CONFLICT (place_id) DO UPDATE
-          SET entrances = excluded.entrances;
-    END IF;
+    PERFORM place_update_entrances(NEW.place_id, NEW.osm_id);
   END IF;
 
     -- recalculate country and partition

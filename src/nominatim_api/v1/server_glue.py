@@ -180,7 +180,9 @@ async def details_endpoint(api: NominatimAPIAsync, params: ASGIAdaptor) -> Any:
         result, fmt,
         {'locales': locales,
          'group_hierarchy': params.get_bool('group_hierarchy', False),
-         'icon_base_url': params.config().MAPICON_URL})
+         'icon_base_url': params.config().MAPICON_URL,
+         'entrances': params.get_bool('entrances', False),
+         })
 
     return build_response(params, output, num_results=1)
 

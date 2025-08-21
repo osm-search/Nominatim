@@ -470,8 +470,7 @@ async def add_result_details(conn: SearchConnection, results: List[BaseResultT],
                 await complete_parented_places(conn, result)
         if details.entrances:
             log().comment('Query entrances details')
-            for result in results:
-                await complete_entrances_details(conn, result)
+            await complete_entrances_details(conn, results)
         if details.keywords:
             log().comment('Query keywords')
             for result in results:
@@ -723,17 +722,19 @@ async def complete_linked_places(conn: SearchConnection, result: BaseResult) -> 
         result.linked_rows.append(_result_row_to_address_row(row))
 
 
-async def complete_entrances_details(conn: SearchConnection, result: BaseResult) -> None:
+async def complete_entrances_details(conn: SearchConnection, results: List[BaseResultT]) -> None:
     """ Retrieve information about tagged entrances for this place.
     """
-    if result.source_table != SourceTable.PLACEX:
-        return
-
     t = conn.t.place_entrance
-    sql = sa.select(t.c.entrances).where(t.c.place_id == result.place_id)
+    place_ids = (r.place_id for r in results)
+    sql = sa.select(t.c.place_id, t.c.entrances).where(t.c.place_id.in_(place_ids))
 
-    for results in await conn.execute(sql):
-        result.entrances = [EntranceDetails(**r) for r in results[0]]
+    current_result = None
+    for place_id, entrances in await conn.execute(sql):
+        if current_result is None or place_id != current_result.place_id:
+            current_result = next((r for r in results if r.place_id == place_id), None)
+            assert current_result is not None
+        current_result.entrances = [EntranceDetails(**r) for r in entrances]
 
 
 async def complete_keywords(conn: SearchConnection, result: BaseResult) -> None:

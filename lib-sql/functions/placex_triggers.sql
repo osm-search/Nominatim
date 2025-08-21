@@ -818,8 +818,6 @@ DECLARE
   nameaddress_vector INTEGER[];
   addr_nameaddress_vector INTEGER[];
 
-  entrances JSONB;
-
   linked_place BIGINT;
 
   linked_node_id BIGINT;

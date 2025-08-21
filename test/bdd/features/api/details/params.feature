@@ -36,7 +36,9 @@ Feature: Object details
           | W       | 429210603 | 1         |
         Then a HTTP 200 is returned
         And the result is valid json
-        And the result has attributes entrances
+        And the result contains array field entrances where element 0 contains
+          | osm_id     | type | lat        | lon       |
+          | 6580031131 | yes  | 47.2489382 | 9.5284033 |
 
     Scenario: Details with linkedplaces
         When sending v1/details

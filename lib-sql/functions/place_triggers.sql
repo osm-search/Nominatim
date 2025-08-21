@@ -338,6 +338,11 @@ BEGIN
     END IF;
   END IF;
 
+  -- When an existing way is updated, recalculate entrances
+  IF existingplacex.osm_type = 'W' and (existingplacex.rank_search > 27 or existingplacex.class IN ('landuse', 'leisure')) THEN
+    PERFORM place_update_entrances(existingplacex.place_id, existingplacex.osm_id);
+  END IF;
+
   -- Abort the insertion (we modified the existing place instead)
   RETURN NULL;
 END;
@@ -361,38 +366,6 @@ BEGIN
 
   INSERT INTO place_to_be_deleted (osm_type, osm_id, class, type, deferred)
     VALUES(OLD.osm_type, OLD.osm_id, OLD.class, OLD.type, deferred);
-
-  RETURN NULL;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE OR REPLACE FUNCTION place_after_insert()
-  RETURNS TRIGGER
-  AS $$
-BEGIN
-  {% if debug %}
-    RAISE WARNING 'place_after_insert: % % % % %',NEW.osm_type,NEW.osm_id,NEW.class,NEW.type,st_area(NEW.geometry);
-  {% endif %}
-
-  IF NEW.class IN ('routing:entrance', 'entrance') THEN
-    PERFORM place_update_entrances_for_node(NEW.osm_id);
-  END IF;
-
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE OR REPLACE FUNCTION place_after_delete()
-  RETURNS TRIGGER
-  AS $$
-BEGIN
-  {% if debug %}
-    RAISE WARNING 'place_after_delete: % % % % %',OLD.osm_type,OLD.osm_id,OLD.class,OLD.type,st_area(OLD.geometry);
-  {% endif %}
-
-  IF OLD.class IN ('routing:entrance', 'entrance') THEN
-    PERFORM place_update_entrances_for_node(OLD.osm_id);
-  END IF;
 
   RETURN NULL;
 END;

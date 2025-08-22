@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 This sanitizer creates additional name variants for names that have
@@ -25,6 +25,8 @@ def create(_: SanitizerConfig) -> Callable[[ProcessInfo], None]:
         if obj.names:
             new_names = []
             for name in (n for n in obj.names if '(' in n.name):
+                if ')' in name.name and not name.name.endswith(')'):
+                    continue
                 new_name = name.name.split('(')[0].strip()
                 if new_name:
                     new_names.append(name.clone(name=new_name))

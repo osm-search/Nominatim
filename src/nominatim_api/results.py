@@ -190,7 +190,6 @@ class BaseResult:
     admin_level: int = 15
 
     locale_name: Optional[str] = None
-    region_lang: Optional[str] = None
 
     names: Optional[Dict[str, str]] = None
     address: Optional[Dict[str, str]] = None

@@ -7,7 +7,7 @@
 """
 Functions for importing and managing static country information.
 """
-from typing import Dict, Any, Iterable, Tuple, Optional, Container, List, overload
+from typing import Dict, Any, Iterable, Tuple, Optional, Container, overload
 from pathlib import Path
 
 from ..db import utils as db_utils
@@ -87,13 +87,6 @@ def setup_country_config(config: Configuration) -> None:
 def get(country: str) -> Dict[str, Any]:
     """ Get country information for the country with the given country code. """
     return _COUNTRY_INFO._info.get(country) or {}
-
-
-def get_lang(country: str) -> List[str]:
-    """ Get country languages for the country with the given country code."""
-    country_info = _COUNTRY_INFO._info.get(country.lower(), {})
-    languages = country_info.get('languages', [])
-    return languages if isinstance(languages, list) else []
 
 
 @overload

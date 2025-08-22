@@ -5,9 +5,10 @@
 # Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 from typing import Optional, List
+
+from ..data import lang_info, country_info
 from .base import AbstractLocales
 from ..results import AddressLine, BaseResultT
-from nominatim_db.data import country_info, lang_info
 from unidecode import unidecode
 from cantoroman import Cantonese  # type: ignore
 import opencc  # type: ignore
@@ -166,12 +167,12 @@ class TransliterateLocales(AbstractLocales):
         local_languages = country_info.get_lang(str(result.country_code))
         # would want to put cantonese here, i.e. use regions to detect
         if len(local_languages) == 1:
-            result.region_lang = local_languages[0]
+            region_lang = local_languages[0]
 
         for line in result.address_rows:
             if line.isaddress and line.names:
-                if result.region_lang:
-                    line.local_name_lang = result.region_lang
+                if region_lang:
+                    line.local_name_lang = region_lang
 
                 if line.local_name_lang not in self.languages:
                     line.local_name, line.local_name_lang = (

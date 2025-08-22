@@ -362,7 +362,7 @@ module.IGNORE_KEYS.metatags = {'note', 'note:*', 'source', 'source:*', '*source'
                                'tiger:cfcc', 'tiger:reviewed', 'nysgissam:*',
                                'NHD:*', 'nhd:*', 'gnis:*', 'geobase:*', 'yh:*',
                                'osak:*', 'naptan:*', 'CLC:*', 'import', 'it:fvg:*',
-                               'lacounty:*', 'ref:linz:*',
+                               'lacounty:*', 'ref:linz:*', 'survey:*',
                                'ref:bygningsnr', 'ref:ruian:*', 'building:ruian:type',
                                'type',
                                'is_in:postcode'}

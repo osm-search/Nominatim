@@ -723,18 +723,27 @@ async def complete_linked_places(conn: SearchConnection, result: BaseResult) -> 
 
 
 async def complete_entrances_details(conn: SearchConnection, results: List[BaseResultT]) -> None:
-    """ Retrieve information about tagged entrances for this place.
+    """ Retrieve information about tagged entrances for the given results.
     """
-    t = conn.t.place_entrance
-    place_ids = (r.place_id for r in results)
-    sql = sa.select(t.c.place_id, t.c.entrances).where(t.c.place_id.in_(place_ids))
+    place_ids = (r.place_id for r in results if r.source_table == SourceTable.PLACEX)
+
+    t = conn.t.placex_entrance
+    sql = sa.select(t.c.place_id, t.c.osm_id, t.c.type, t.c.location, t.c.extratags)\
+            .where(t.c.place_id.in_(place_ids))
 
     current_result = None
-    for place_id, entrances in await conn.execute(sql):
-        if current_result is None or place_id != current_result.place_id:
-            current_result = next((r for r in results if r.place_id == place_id), None)
+    for row in await conn.execute(sql):
+        if current_result is None or row.place_id != current_result.place_id:
+            current_result = next((r for r in results if r.place_id == row.place_id), None)
             assert current_result is not None
-        current_result.entrances = [EntranceDetails(**r) for r in entrances]
+        if current_result.entrances is None:
+            current_result.entrances = []
+        current_result.entrances.append(EntranceDetails(
+            osm_id=row.osm_id,
+            type=row.type,
+            location=Point.from_wkb(row.location),
+            extratags=row.extratags,
+            ))
 
 
 async def complete_keywords(conn: SearchConnection, result: BaseResult) -> None:

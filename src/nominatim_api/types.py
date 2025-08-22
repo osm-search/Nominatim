@@ -566,12 +566,9 @@ class EntranceDetails:
     type: str
     """ The value of the OSM entrance tag (i.e. yes, main, secondary, etc.).
     """
-    lat: float
-    """ The latitude of the entrance node.
-    """
-    lon: float
-    """ The longitude of the entrance node.
+    location: Point
+    """ The location of the entrance node.
     """
     extratags: Dict[str, str]
-    """ The longitude of the entrance node.
+    """ The other tags associated with the entrance node.
     """

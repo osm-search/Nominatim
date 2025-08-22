@@ -77,8 +77,8 @@ def write_entrances(out: JsonWriter, entrances: Optional[List[EntranceDetails]])
         out.start_object()\
            .keyval('osm_id', entrance.osm_id)\
            .keyval('type', entrance.type)\
-           .keyval('lat', f"{entrance.lat:0.7f}")\
-           .keyval('lon', f"{entrance.lon:0.7f}")
+           .keyval('lat', f"{entrance.location.lat:0.7f}")\
+           .keyval('lon', f"{entrance.location.lon:0.7f}")
 
         if entrance.extratags:
             out.keyval('extratags', entrance.extratags)

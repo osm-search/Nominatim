@@ -6,17 +6,18 @@ Feature: Entrance nodes are recorded
           | 1 | 2 |
           | 4 | 3 |
         Given the places
-          | osm  | class    | type  | geometry    | extratags           |
-          | W1   | building | yes   | (1,2,3,4,1) |                     |
-          | N10  | entrance | main  | 1           | 'wheelchair': 'yes' |
-          | N20  | entrance | yes   | 3           |                     |
+          | osm | class    | type  | geometry    | extratags           |
+          | W1  | building | yes   | (1,2,3,4,1) |                     |
+          | N1  | entrance | main  | 1           | 'wheelchair': 'yes' |
+          | N2  | entrance | yes   | 3           |                     |
         And the ways
-          | id | nodes       |
-          | 1  | 10,20,30,40 |
+          | id | nodes     |
+          | 1  | 1,2,3,4,1 |
         When importing
         Then placex contains exactly
          | object | place_id |
          | W1     | 1        |
-        Then place_entrance contains exactly
-         | place_id | entrances |
-         | 1        | [{'lat': 0, 'lon': 0, 'type': 'main', 'osm_id': 10, 'extratags': {'wheelchair': 'yes'}}, {'lat': 1e-05, 'lon': 1e-05, 'type': 'yes', 'osm_id': 20, 'extratags': {}}] |
+        Then placex_entrance contains exactly
+         | place_id | osm_id | type | location!wkt | extratags             |
+         | 1        | 1      | main | 1            | {'wheelchair': 'yes'} |
+         | 1        | 2      | yes  | 3            | {}                    |

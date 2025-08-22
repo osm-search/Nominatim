@@ -87,8 +87,8 @@ def _create_entrance(root: ET.Element, entrance: EntranceDetails) -> None:
     entrance_node = ET.SubElement(root, 'entrance', attrib={
         "osm_id": str(entrance.osm_id),
         "type": entrance.type,
-        "lat": f"{entrance.lat:0.7f}",
-        "lon": f"{entrance.lon:0.7f}",
+        "lat": f"{entrance.location.lat:0.7f}",
+        "lon": f"{entrance.location.lon:0.7f}",
         })
     if entrance.extratags:
         for k, v in entrance.extratags.items():

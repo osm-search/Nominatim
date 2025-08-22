@@ -629,19 +629,27 @@ CREATE OR REPLACE FUNCTION place_update_entrances(placeid BIGINT, osmid BIGINT)
   RETURNS INTEGER
   AS $$
 DECLARE
-  entrances JSONB;
+  entrance RECORD;
+  osm_ids BIGINT[];
 BEGIN
-  SELECT jsonb_agg(jsonb_build_object('osm_id', osm_id, 'type', type, 'lat', ST_Y(geometry), 'lon', ST_X(geometry), 'extratags', extratags))
+  osm_ids := '{}';
+  FOR entrance in SELECT osm_id, type, geometry, extratags
       FROM place
-      WHERE osm_id IN (SELECT unnest(nodes) FROM planet_osm_ways WHERE id=osmid) AND class IN ('routing:entrance', 'entrance')
-      INTO entrances;
-  IF entrances IS NOT NULL THEN
-    INSERT INTO place_entrance (place_id, entrances)
-      SELECT placeid, entrances
-      ON CONFLICT (place_id) DO UPDATE
-        SET entrances = excluded.entrances;
+      WHERE osm_type = 'N'
+        AND osm_id IN (SELECT unnest(nodes) FROM planet_osm_ways WHERE id=osmid)
+        AND class IN ('routing:entrance', 'entrance')
+  LOOP
+    osm_ids := array_append(osm_ids, entrance.osm_id);
+    INSERT INTO placex_entrance (place_id, osm_id, type, location, extratags)
+      VALUES (placeid, entrance.osm_id, entrance.type, entrance.geometry, entrance.extratags)
+      ON CONFLICT (place_id, osm_id) DO UPDATE
+        SET type = excluded.type, location = excluded.location, extratags = excluded.extratags;
+  END LOOP;
+
+  IF array_length(osm_ids, 1) > 0 THEN
+    DELETE FROM placex_entrance WHERE place_id=placeid AND NOT osm_id=ANY(osm_ids);
   ELSE
-    DELETE FROM place_entrance WHERE place_id=placeid;
+    DELETE FROM placex_entrance WHERE place_id=placeid;
   END IF;
 
   RETURN NULL;

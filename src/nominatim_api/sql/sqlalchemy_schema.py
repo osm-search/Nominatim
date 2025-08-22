@@ -128,7 +128,10 @@ class SearchTables:
             sa.Column('linegeo', Geometry),
             sa.Column('postcode', sa.Text))
 
-        self.place_entrance = sa.Table(
-            'place_entrance', meta,
+        self.placex_entrance = sa.Table(
+            'placex_entrance', meta,
             sa.Column('place_id', sa.BigInteger),
-            sa.Column('entrances', KeyValueStore))
+            sa.Column('osm_id', sa.BigInteger),
+            sa.Column('type', sa.Text),
+            sa.Column('location', Geometry, nullable=False),
+            sa.Column('extratags', KeyValueStore))

@@ -60,16 +60,16 @@ class AbstractLocales(ABC):
             the 'default' marker, where afterwards iso is used, using country of origin.
         """
         if not names:
-            return ("", "")
+            return ('', '')
 
         if len(names) > 1:
             for tag in self.name_tags:
                 if tag in names:
                     _, _, lang = tag.partition(':')
-                    return (names[tag], lang or "default")
+                    return (names[tag], lang or 'default')
 
         # Nothing? Return any of the other names as a default.
-        return (next(iter(names.values())), "default")
+        return (next(iter(names.values())), 'default')
 
     def localize_results(self, results: List[BaseResultT]) -> None:
         """ Localize results according to the chosen locale. """

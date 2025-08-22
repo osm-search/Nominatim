@@ -104,7 +104,7 @@ class TransliterateLocales(AbstractLocales):
             # t2s.json Traditional Chinese to Simplified Chinese 繁體到簡體
             converter = opencc.OpenCC('t2s.json')
             return str(converter.convert(line.local_name))
-        return unidecode(line.local_name) if line.local_name else ""
+        return unidecode(line.local_name) if line.local_name else ''
 
     @staticmethod
     def zh_Hant_transliterate(line: AddressLine) -> str:
@@ -114,8 +114,8 @@ class TransliterateLocales(AbstractLocales):
         if line.local_name_lang == 'zh-hans' or line.local_name_lang == 'zh-CN':
             # t2s.json Traditional Chinese to Simplified Chinese 繁體到簡體
             converter = opencc.OpenCC('s2t.json')
-            return str(converter.convert(line.local_name)) if line.local_name else ""
-        return unidecode(line.local_name) if line.local_name else ""
+            return str(converter.convert(line.local_name)) if line.local_name else ''
+        return unidecode(line.local_name) if line.local_name else ''
 
     @staticmethod
     def yue_transliterate(line: AddressLine) -> str:
@@ -126,14 +126,14 @@ class TransliterateLocales(AbstractLocales):
             # t2s.json Traditional Chinese to Simplified Chinese 繁體到簡體
             converter = opencc.OpenCC('s2t.json')
             return str(converter.convert(line.local_name))
-        return unidecode(line.local_name) if line.local_name else ""
+        return unidecode(line.local_name) if line.local_name else ''
 
     def latin_transliterate(self, line: AddressLine) -> str:
         "Transliterates to latin, needs to take into account Han Re-Unification"
         if line.local_name_lang == 'yue':
-            return self.cantodecode(line.local_name) if line.local_name else ""
+            return self.cantodecode(line.local_name) if line.local_name else ''
         else:
-            return unidecode(line.local_name) if line.local_name else ""
+            return unidecode(line.local_name) if line.local_name else ''
 
     def transliterate(self, line: AddressLine) -> str:
         """ Most granular transliteration component that performs raw transliteration

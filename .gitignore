@@ -11,4 +11,3 @@ dist
 
 .vagrant
 data/country_osm_grid.sql.gz
-data/*

@@ -19,12 +19,16 @@ dependencies = [
     "pyYAML>=5.1",
     "SQLAlchemy>=1.4.31",
     "psycopg",
-    "PyICU",
+    "PyICU"
+]
+dynamic = ["version"]
+
+[project.optional-dependencies]
+transliteration = [
     "cantonese-romanisation",
     "unidecode",
     "opencc"
 ]
-dynamic = ["version"]
 
 [project.urls]
 Homepage = "https://nominatim.org"

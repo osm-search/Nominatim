@@ -9,6 +9,8 @@ from typing import Optional, List
 from ..data import lang_info, country_info
 from .base import AbstractLocales
 from ..results import AddressLine, BaseResultT
+
+# optional dependencies
 from unidecode import unidecode
 from cantoroman import Cantonese  # type: ignore
 import opencc  # type: ignore

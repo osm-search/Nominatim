@@ -34,6 +34,8 @@ class TestStripBrace:
             == [('3', 'ref', None), ('Halle', 'name', None), ('Halle (Saale)', 'name', None)]
         assert self.run_sanitizer_on(name='ack ( bar') \
             == [('ack', 'name', None), ('ack ( bar', 'name', None)]
+        assert self.run_sanitizer_on(name='Berlin (Ost) Hauptbahnhof') \
+            == [('Berlin (Ost) Hauptbahnhof', 'name', None)]
 
     def test_only_braces(self):
         assert self.run_sanitizer_on(name='(maybe)') == [('(maybe)', 'name', None)]

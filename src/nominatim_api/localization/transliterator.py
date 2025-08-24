@@ -38,6 +38,24 @@ def chinesedecode(local_name: Optional[str], conversion: str) -> str:
     return str(converter.convert(local_name)) if local_name else ''
 
 
+def cantodecode(line: str) -> str:
+    """ Takes in a string in Cantonese and returns the Latin
+        transliterated version.
+        Uses the cantoroman library, named as so to be homogenous with unidecode
+
+        For cases with multiple pronounciation, the first is always taken
+    """
+    if Cantonese is None:
+        raise ImportError('The cantonese-romanisation library is'
+                          'required for Cantonese transliteration.')
+    cantonese = Cantonese()  # perhaps make into global variable later
+    cantonese_line = ""
+    for char in line:
+        cantonese_line += cantonese.getRoman(char)[0][0].capitalize()
+        cantonese_line += ' '
+    return cantonese_line.strip()
+
+
 class TransliterateLocales(AbstractLocales):
     """ Complex Helper class for localization of names.
 
@@ -61,24 +79,6 @@ class TransliterateLocales(AbstractLocales):
         """
         language = lang_info.get(language_code)
         return bool(language and language.get('written') == 'lat')
-
-    @staticmethod
-    def cantodecode(line: str) -> str:
-        """ Takes in a string in Cantonese and returns the Latin
-            transliterated version.
-            Uses the cantoroman library, named as so to be homogenous with unidecode
-
-            For cases with multiple pronounciation, the first is always taken
-        """
-        if Cantonese is None:
-            raise ImportError('The cantonese-romanisation library is'
-                              'required for Cantonese transliteration.')
-        cantonese = Cantonese()  # perhaps make into global variable later
-        cantonese_line = ""
-        for char in line:
-            cantonese_line += cantonese.getRoman(char)[0][0].capitalize()
-            cantonese_line += ' '
-        return cantonese_line.strip()
 
     @staticmethod
     def normalize_dict(lang: str) -> List[str]:

@@ -155,7 +155,7 @@ class TransliterateLocales(AbstractLocales):
     def latin_transliterate(self, line: AddressLine) -> str:
         "Transliterates to latin, needs to take into account Han Re-Unification"
         if line.local_name_lang == 'yue':
-            return self.cantodecode(line.local_name) if line.local_name else ''
+            return cantodecode(line.local_name) if line.local_name else ''
         else:
             return latindecode(line.local_name)
 

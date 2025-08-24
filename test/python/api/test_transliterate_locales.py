@@ -258,9 +258,10 @@ def test_canto_transliterate():
         Tests to see if transliteration can accurately convert to
         Cantonese
     """
-    test_str = "梁國雄"
-    output = TransliterateLocales().cantodecode(test_str)
-    assert output == "Leung Gwok Hung"
+    line = AddressLine(category=('place', 'city'), names={}, fromarea=True,
+                       isaddress=True, rank_address=30, distance=0.0, local_name_lang='yue',
+                       local_name='梁國雄')
+    assert TransliterateLocales().latin_transliterate(line) == "Leung Gwok Hung"
 
 
 def test_load_languages():

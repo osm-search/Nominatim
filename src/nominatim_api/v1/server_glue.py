@@ -8,7 +8,7 @@
 Generic part of the server implementation of the v1 API.
 Combine with the scaffolding provided for the various Python ASGI frameworks.
 """
-from typing import Optional, Any, Type, Dict, cast, Sequence, Tuple
+from typing import Optional, Any, Type, Dict, cast, Sequence, Tuple, List
 from functools import reduce
 import dataclasses
 from urllib.parse import urlencode
@@ -21,8 +21,8 @@ from ..core import NominatimAPIAsync
 from .format import RawDataList
 from ..types import DataLayer, GeometryFormat, PlaceRef, PlaceID, OsmID, Point
 from ..status import StatusResult
-from ..results import DetailedResult, ReverseResults, SearchResult, SearchResults
-from ..localization import Locales
+from ..results import DetailedResult, ReverseResults, SearchResult, SearchResults, BaseResultT
+from ..localization import Locales, TransliterateLocales  # now add switch for Transliterator
 from . import helpers
 from ..server import content_types as ct
 from ..server.asgi_adaptor import ASGIAdaptor, EndpointFunc
@@ -52,6 +52,9 @@ def get_accepted_languages(adaptor: ASGIAdaptor) -> str:
         or adaptor.get_header('accept-language')\
         or adaptor.config().DEFAULT_LANGUAGE
 
+def localize_results(results: List[BaseResultT], transliterate: bool) -> List[BaseResultT]:
+    if transliterate:
+        return results
 
 def setup_debugging(adaptor: ASGIAdaptor) -> bool:
     """ Set up collection of debug information if requested.
@@ -302,6 +305,7 @@ async def search_endpoint(api: NominatimAPIAsync, params: ASGIAdaptor) -> Any:
     details['viewbox'] = params.get('viewbox', None) or params.get('viewboxlbrt', None)
     details['bounded_viewbox'] = params.get_bool('bounded', False)
     details['dedupe'] = params.get_bool('dedupe', True)
+    details['transliterate'] = params.get_bool('transliterate', True)
 
     max_results = max(1, min(50, params.get_int('limit', 10)))
     details['max_results'] = (max_results + min(10, max_results)

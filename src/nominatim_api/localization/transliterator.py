@@ -4,16 +4,25 @@
 #
 # Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
-from typing import Optional, List
+from typing import Optional, List, Callable
 
 from ..data import lang_info, country_info
 from .base import AbstractLocales
 from ..results import AddressLine, BaseResultT
 
 # optional dependencies
-from unidecode import unidecode
-from cantoroman import Cantonese  # type: ignore
-import opencc  # type: ignore
+try:
+    from unidecode import unidecode
+except ImportError:
+    unidecode = None  # type: ignore
+try:
+    from cantoroman import Cantonese  # type: ignore
+except ImportError:
+    Cantonese = None
+try:
+    import opencc  # type: ignore
+except ImportError:
+    opencc = None
 
 
 class TransliterateLocales(AbstractLocales):
@@ -49,6 +58,8 @@ class TransliterateLocales(AbstractLocales):
 
             For cases with multiple pronounciation, the first is always taken
         """
+        if Cantonese is None:
+            raise ImportError('The cantonese-romanisation library is required for Cantonese transliteration.')
         cantonese = Cantonese()  # perhaps make into global variable later
         cantonese_line = ""
         for char in line:
@@ -136,6 +147,8 @@ class TransliterateLocales(AbstractLocales):
         if line.local_name_lang == 'yue':
             return self.cantodecode(line.local_name) if line.local_name else ''
         else:
+            if unidecode is None:
+                raise ImportError('The unidecode library is required for Latin transliteration.')
             return unidecode(line.local_name) if line.local_name else ''
 
     def transliterate(self, line: AddressLine) -> str:

@@ -4,7 +4,7 @@
 #
 # Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
-from typing import Optional, List, Callable
+from typing import Optional, List
 
 from ..data import lang_info, country_info
 from .base import AbstractLocales
@@ -25,6 +25,19 @@ except ImportError:
     opencc = None
 
 
+def latindecode(local_name: Optional[str]) -> str:
+    if unidecode is None:
+        raise ImportError('The unidecode library is required for Latin transliteration.')
+    return unidecode(local_name) if local_name else ''
+
+
+def chinesedecode(local_name: Optional[str], conversion: str) -> str:
+    if opencc is None:
+        raise ImportError('The opencc library is required for Latin transliteration.')
+    converter = opencc.OpenCC(conversion)
+    return str(converter.convert(local_name)) if local_name else ''
+
+
 class TransliterateLocales(AbstractLocales):
     """ Complex Helper class for localization of names.
 
@@ -33,7 +46,6 @@ class TransliterateLocales(AbstractLocales):
     """
     def __init__(self, langs: Optional[list[str]] = None):
         super().__init__(langs)
-
         country_info.setup_country_config(self.config)
         lang_info.setup_lang_config(self.config)
 
@@ -59,7 +71,8 @@ class TransliterateLocales(AbstractLocales):
             For cases with multiple pronounciation, the first is always taken
         """
         if Cantonese is None:
-            raise ImportError('The cantonese-romanisation library is required for Cantonese transliteration.')
+            raise ImportError('The cantonese-romanisation library is'
+                              'required for Cantonese transliteration.')
         cantonese = Cantonese()  # perhaps make into global variable later
         cantonese_line = ""
         for char in line:
@@ -116,9 +129,8 @@ class TransliterateLocales(AbstractLocales):
         """
         if line.local_name_lang == 'zh-hant':
             # t2s.json Traditional Chinese to Simplified Chinese 繁體到簡體
-            converter = opencc.OpenCC('t2s.json')
-            return str(converter.convert(line.local_name))
-        return unidecode(line.local_name) if line.local_name else ''
+            return chinesedecode(line.local_name, 't2s.json')
+        return latindecode(line.local_name)
 
     @staticmethod
     def zh_Hant_transliterate(line: AddressLine) -> str:
@@ -127,9 +139,8 @@ class TransliterateLocales(AbstractLocales):
         """
         if line.local_name_lang == 'zh-hans' or line.local_name_lang == 'zh-CN':
             # t2s.json Traditional Chinese to Simplified Chinese 繁體到簡體
-            converter = opencc.OpenCC('s2t.json')
-            return str(converter.convert(line.local_name)) if line.local_name else ''
-        return unidecode(line.local_name) if line.local_name else ''
+            return chinesedecode(line.local_name, 's2t.json')
+        return latindecode(line.local_name)
 
     @staticmethod
     def yue_transliterate(line: AddressLine) -> str:
@@ -138,18 +149,15 @@ class TransliterateLocales(AbstractLocales):
         """
         if line.local_name_lang == 'zh-hans' or line.local_name_lang == 'zh':
             # t2s.json Traditional Chinese to Simplified Chinese 繁體到簡體
-            converter = opencc.OpenCC('s2t.json')
-            return str(converter.convert(line.local_name))
-        return unidecode(line.local_name) if line.local_name else ''
+            return chinesedecode(line.local_name, 's2t.json')
+        return latindecode(line.local_name)
 
     def latin_transliterate(self, line: AddressLine) -> str:
         "Transliterates to latin, needs to take into account Han Re-Unification"
         if line.local_name_lang == 'yue':
             return self.cantodecode(line.local_name) if line.local_name else ''
         else:
-            if unidecode is None:
-                raise ImportError('The unidecode library is required for Latin transliteration.')
-            return unidecode(line.local_name) if line.local_name else ''
+            return latindecode(line.local_name)
 
     def transliterate(self, line: AddressLine) -> str:
         """ Most granular transliteration component that performs raw transliteration

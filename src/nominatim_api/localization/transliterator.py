@@ -6,9 +6,9 @@
 # For a full list of authors see the git log.
 from typing import Optional, List
 
-from ..data import lang_info, country_info
 from .base import AbstractLocales
 from ..results import AddressLine, BaseResultT
+from ..data import lang_info, country_info
 
 # optional dependencies
 try:

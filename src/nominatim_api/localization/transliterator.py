@@ -12,9 +12,9 @@ from ..data import lang_info, country_info
 
 # optional dependencies
 try:
-    from unidecode import unidecode  # type: ignore
+    from unidecode import unidecode
 except ImportError:
-    unidecode = None
+    unidecode = None  # type: ignore
 try:
     from cantoroman import Cantonese  # type: ignore
 except ImportError:

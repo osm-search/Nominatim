@@ -193,6 +193,7 @@ def hospital_result():
 ])
 def test_transliterate_hospital(header, expected_output):
     """Parameterized test for transliteration of hospitals in Dandong."""
+    pytest.importorskip("unidecode", reason="The 'unidecode' library is required for Latin transliteration.")
     results = [hospital_result()]
     if header:
         langs = TransliterateLocales().from_accept_languages(header).languages
@@ -258,6 +259,7 @@ def test_canto_transliterate():
         Tests to see if transliteration can accurately convert to
         Cantonese
     """
+    pytest.importorskip("cantoroman", reason="The 'cantonese-romanisation' library is required for Cantonese transliteration.")
     line = AddressLine(category=('place', 'city'), names={}, fromarea=True,
                        isaddress=True, rank_address=30, distance=0.0, local_name_lang='yue',
                        local_name='梁國雄')

@@ -105,7 +105,7 @@ jobs:
                   LUA_VERSION: ${{ matrix.lua }}
 
             - name: Install test prerequisites (apt)
-              run: sudo apt-get install -y -qq python3-pytest python3-pytest-asyncio uvicorn python3-falcon python3-aiosqlite python3-pyosmium python3-cantonese-romanisation python3-unidecode python3-opencc
+              run: sudo apt-get install -y -qq python3-pytest python3-pytest-asyncio uvicorn python3-falcon python3-aiosqlite python3-pyosmium python3-unidecode
               if: matrix.dependencies == 'apt'
 
             - name: Install test prerequisites (pip)

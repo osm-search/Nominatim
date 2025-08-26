@@ -12,7 +12,7 @@ from ..data import lang_info, country_info
 
 # optional dependencies
 try:
-    from unidecode import unidecode  # type: ignpre
+    from unidecode import unidecode  # type: ignore
 except ImportError:
     unidecode = None
 try:

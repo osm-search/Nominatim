@@ -111,7 +111,7 @@ jobs:
             - name: Install test prerequisites (pip)
               run: |
                 ./venv/bin/pip install pytest-asyncio falcon starlette asgi_lifespan aiosqlite osmium uvicorn
-                ./venv/bin/pip install .[transliteration]
+                ./venv/bin/pip install cantonese-romanisation unidecode opencc
               if: matrix.dependencies == 'pip'
 
             - name: Install test prerequisites

@@ -14,7 +14,7 @@ from ..data import lang_info, country_info
 try:
     from unidecode import unidecode
 except ImportError:
-    unidecode = None  # type: ignore
+    unidecode = None
 try:
     from cantoroman import Cantonese  # type: ignore
 except ImportError:

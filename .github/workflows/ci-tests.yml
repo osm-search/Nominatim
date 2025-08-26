@@ -109,7 +109,9 @@ jobs:
               if: matrix.dependencies == 'apt'
 
             - name: Install test prerequisites (pip)
-              run: ./venv/bin/pip install pytest-asyncio falcon starlette asgi_lifespan aiosqlite osmium uvicorn
+              run: |
+                ./venv/bin/pip install pytest-asyncio falcon starlette asgi_lifespan aiosqlite osmium uvicorn
+                ./venv/bin/pip install .[transliteration]
               if: matrix.dependencies == 'pip'
 
             - name: Install test prerequisites

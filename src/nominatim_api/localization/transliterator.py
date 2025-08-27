@@ -82,14 +82,9 @@ class TransliterateLocales(AbstractLocales):
 
     @staticmethod
     def normalize_dict(lang: str) -> List[str]:
-        """ Mock idea for language mapping dictionary
-
-            Hoping to standardize certain names, i.e.
-            zh and zh-cn will always map to zh-Hans
-            zh-tw will always map to zh-Hant
-
-            In the case of ambiguity, the largest number of
-            languages will be added
+        """ Language mapping dictionary to standardize certain names, i.e. zh and
+            zh-cn will always map to zh-Hanszh-tw will always map to zh-Hant.
+            In the case of ambiguity, the largest number of languages will be added.
 
             For all other languages, follow Nominatim precedent
             and just concatenate after the '-'
@@ -98,7 +93,6 @@ class TransliterateLocales(AbstractLocales):
             https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes
             with the exception of yue
         """
-        # Potentially make this a global variable (or object field) to reduce compute
         # For zh-Latn-pinyin and zh-Latn, I did not include this as it is not a spoken language
         # and it would be in Latin anyways -> this could potentially be changed in the future
         lang_dict = {
@@ -113,12 +107,21 @@ class TransliterateLocales(AbstractLocales):
             "zh-cmn-Hant": ["zh-Hant"]  # only Traditional, cmn means Mandarin
         }
 
-        if lang in lang_dict:
-            # Ordering nessecary due to zh edge case (no '-')
+        if lang in lang_dict:  # Ordering nessecary due to zh edge case (no '-')
             return lang_dict[lang]
         elif '-' not in lang:
             return [lang]
         return [lang.split('-')[0]]
+
+    @staticmethod
+    def set_lang(result: BaseResultT) -> str:
+        if result.country_code == 'cn' and result.address_rows:  # check for Hong Kong
+            for address_line in result.address_rows:
+                if address_line.category == ('place', 'state') and address_line.names.keys().__contains__('香港'):
+                    return 'yue'
+
+        local_languages = country_info.get_lang(str(result.country_code))
+        return str(local_languages[0]) if len(local_languages) == 1 else ''
 
     @staticmethod
     def zh_Hans_transliterate(line: AddressLine) -> str:
@@ -187,10 +190,7 @@ class TransliterateLocales(AbstractLocales):
         if not result.address_rows:
             return
 
-        local_languages = country_info.get_lang(str(result.country_code))
-        # would want to put cantonese here, i.e. use regions to detect
-        if len(local_languages) == 1:
-            region_lang = local_languages[0]
+        region_lang = self.set_lang(result)
 
         for line in result.address_rows:
             if line.isaddress and line.names:

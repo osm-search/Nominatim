@@ -131,7 +131,6 @@ class AddressLine:
     """ Place holder for localization of this address part. See
         [Localization](Result-Handling.md#localization) below.
     """
-
     local_name_lang: Optional[str] = None
     """ Place holder for language of this address part, computed
         during localization

@@ -55,7 +55,7 @@ def get_accepted_languages(adaptor: ASGIAdaptor) -> str:
 
 def localize_results(params: ASGIAdaptor, results: List[BaseResultT]) -> AbstractLocales:
     locales: AbstractLocales
-    transliterate = params.get_bool('transliterate', True)
+    transliterate = params.get_bool('transliterate', False)
 
     if transliterate:
         locales = TransliterateLocales.from_accept_languages(
@@ -314,7 +314,7 @@ async def search_endpoint(api: NominatimAPIAsync, params: ASGIAdaptor) -> Any:
     details['viewbox'] = params.get('viewbox', None) or params.get('viewboxlbrt', None)
     details['bounded_viewbox'] = params.get_bool('bounded', False)
     details['dedupe'] = params.get_bool('dedupe', True)
-    details['transliterate'] = params.get_bool('transliterate', True)
+    details['transliterate'] = params.get_bool('transliterate', False)
 
     max_results = max(1, min(50, params.get_int('limit', 10)))
     details['max_results'] = (max_results + min(10, max_results)

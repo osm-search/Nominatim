@@ -9,3 +9,4 @@ Module for localization
 """
 from .localizer import (Locales as Locales)
 from .transliterator import (TransliterateLocales as TransliterateLocales)
+from .base import (AbstractLocales as AbstractLocales)

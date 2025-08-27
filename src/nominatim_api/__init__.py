@@ -37,6 +37,8 @@ from .results import (SourceTable as SourceTable,
                       SearchResults as SearchResults)
 from .result_formatting import (FormatDispatcher as FormatDispatcher,
                                 load_format_dispatcher as load_format_dispatcher)
-from .localization import (Locales as Locales, TransliterateLocales as TransliterateLocales)
+from .localization import (Locales as Locales,
+                           TransliterateLocales as TransliterateLocales,
+                           AbstractLocales as AbstractLocales)
 from .data import (lang_info as lang_info, country_info as country_info)
 from .version import NOMINATIM_API_VERSION as __version__

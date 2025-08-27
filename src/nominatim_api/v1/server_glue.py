@@ -8,7 +8,7 @@
 Generic part of the server implementation of the v1 API.
 Combine with the scaffolding provided for the various Python ASGI frameworks.
 """
-from typing import Optional, Any, Type, Dict, cast, Sequence, Tuple
+from typing import Optional, Any, Type, Dict, cast, Sequence, Tuple, List
 from functools import reduce
 import dataclasses
 from urllib.parse import urlencode
@@ -21,8 +21,8 @@ from ..core import NominatimAPIAsync
 from .format import RawDataList
 from ..types import DataLayer, GeometryFormat, PlaceRef, PlaceID, OsmID, Point
 from ..status import StatusResult
-from ..results import DetailedResult, ReverseResults, SearchResult, SearchResults
-from ..localization import Locales
+from ..results import DetailedResult, ReverseResults, SearchResult, SearchResults, BaseResultT
+from ..localization import Locales, TransliterateLocales, AbstractLocales
 from . import helpers
 from ..server import content_types as ct
 from ..server.asgi_adaptor import ASGIAdaptor, EndpointFunc
@@ -51,6 +51,20 @@ def get_accepted_languages(adaptor: ASGIAdaptor) -> str:
     return adaptor.get('accept-language')\
         or adaptor.get_header('accept-language')\
         or adaptor.config().DEFAULT_LANGUAGE
+
+
+def localize_results(params: ASGIAdaptor, results: List[BaseResultT]) -> AbstractLocales:
+    locales: AbstractLocales
+    transliterate = params.get_bool('transliterate', True)
+
+    if transliterate:
+        locales = TransliterateLocales.from_accept_languages(
+            get_accepted_languages(params))
+    else:
+        locales = Locales.from_accept_languages(get_accepted_languages(params))
+
+    locales.localize_results(results)
+    return locales
 
 
 def setup_debugging(adaptor: ASGIAdaptor) -> bool:
@@ -172,8 +186,7 @@ async def details_endpoint(api: NominatimAPIAsync, params: ASGIAdaptor) -> Any:
     if result is None:
         params.raise_error('No place with that OSM ID found.', status=404)
 
-    locales = Locales.from_accept_languages(get_accepted_languages(params))
-    locales.localize_results([result])
+    locales = localize_results(params, [result])
 
     output = params.formatting().format_result(
         result, fmt,
@@ -210,8 +223,7 @@ async def reverse_endpoint(api: NominatimAPIAsync, params: ASGIAdaptor) -> Any:
         query = ''
 
     if result:
-        Locales.from_accept_languages(get_accepted_languages(params)).localize_results(
-            [result])
+        localize_results(params, [result])
 
     fmt_options = {'query': query,
                    'extratags': params.get_bool('extratags', False),
@@ -248,7 +260,7 @@ async def lookup_endpoint(api: NominatimAPIAsync, params: ASGIAdaptor) -> Any:
     if debug:
         return build_response(params, loglib.get_and_disable(), num_results=len(results))
 
-    Locales.from_accept_languages(get_accepted_languages(params)).localize_results(results)
+    localize_results(params, results)
 
     fmt_options = {'extratags': params.get_bool('extratags', False),
                    'namedetails': params.get_bool('namedetails', False),
@@ -302,6 +314,7 @@ async def search_endpoint(api: NominatimAPIAsync, params: ASGIAdaptor) -> Any:
     details['viewbox'] = params.get('viewbox', None) or params.get('viewboxlbrt', None)
     details['bounded_viewbox'] = params.get_bool('bounded', False)
     details['dedupe'] = params.get_bool('dedupe', True)
+    details['transliterate'] = params.get_bool('transliterate', True)
 
     max_results = max(1, min(50, params.get_int('limit', 10)))
     details['max_results'] = (max_results + min(10, max_results)
@@ -338,7 +351,7 @@ async def search_endpoint(api: NominatimAPIAsync, params: ASGIAdaptor) -> Any:
     except UsageError as err:
         params.raise_error(str(err))
 
-    Locales.from_accept_languages(get_accepted_languages(params)).localize_results(results)
+    localize_results(params, results)
 
     if details['dedupe'] and len(results) > 1:
         results = helpers.deduplicate_results(results, max_results)

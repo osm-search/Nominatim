@@ -117,7 +117,8 @@ class TransliterateLocales(AbstractLocales):
     def set_lang(result: BaseResultT) -> str:
         if result.country_code == 'cn' and result.address_rows:  # check for Hong Kong
             for address_line in result.address_rows:
-                if address_line.category == ('place', 'state') and address_line.names.keys().__contains__('香港'):
+                if address_line.category == ('place', 'state') and \
+                        '香港' in address_line.names.get('name', ''):
                     return 'yue'
 
         local_languages = country_info.get_lang(str(result.country_code))

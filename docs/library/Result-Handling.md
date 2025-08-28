@@ -49,7 +49,11 @@ its address.
 
 ## Localization
 
-Results are always returned with the full list of available names.
+Results are always returned with the full list of available names. However, the
+default `locale_name` must be explicitly set using the `localize` function within
+`Locales`. This parses through the full list of available names to find the one 
+most preferred by the user. Once this is set, the user can simply use the
+`display_name` field within a `Result` object to retrive the localized name.
 
 ### Locale
 

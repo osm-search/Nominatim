@@ -100,10 +100,12 @@ def test_postcodes_add_new(dsn, postcode_table, insert_implicit_postcode, tokeni
     assert postcode_table.row_set == {('xx', '9486', 10, 12), }
 
 
+@pytest.mark.parametrize('coords', [(99, 34), (10, 34), (99, 12),
+                                    (9, 34), (9, 11), (23, 11)])
 def test_postcodes_replace_coordinates(dsn, postcode_table, tmp_path,
-                                       insert_implicit_postcode, tokenizer):
+                                       insert_implicit_postcode, tokenizer, coords):
     insert_implicit_postcode(1, 'xx', 'POINT(10 12)', dict(postcode='AB 4511'))
-    postcode_table.add('xx', 'AB 4511', 99, 34)
+    postcode_table.add('xx', 'AB 4511', *coords)
 
     postcodes.update_postcodes(dsn, tmp_path, tokenizer)
 
@@ -113,11 +115,11 @@ def test_postcodes_replace_coordinates(dsn, postcode_table, tmp_path,
 def test_postcodes_replace_coordinates_close(dsn, postcode_table,
                                              insert_implicit_postcode, tokenizer):
     insert_implicit_postcode(1, 'xx', 'POINT(10 12)', dict(postcode='AB 4511'))
-    postcode_table.add('xx', 'AB 4511', 10, 11.99999)
+    postcode_table.add('xx', 'AB 4511', 10, 11.99999999)
 
     postcodes.update_postcodes(dsn, None, tokenizer)
 
-    assert postcode_table.row_set == {('xx', 'AB 4511', 10, 11.99999)}
+    assert postcode_table.row_set == {('xx', 'AB 4511', 10, 11.99999999)}
 
 
 def test_postcodes_remove(dsn, postcode_table,

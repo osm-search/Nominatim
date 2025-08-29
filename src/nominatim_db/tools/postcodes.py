@@ -119,7 +119,7 @@ class _PostcodeCollector:
                 pcobj = self.collected.pop(postcode, None)
                 if pcobj:
                     newx, newy = pcobj.centroid()
-                    if (x - newx) > 0.0000001 or (y - newy) > 0.0000001:
+                    if abs(x - newx) > 0.0000001 or abs(y - newy) > 0.0000001:
                         to_update.append((newx, newy, postcode))
                 else:
                     to_delete.append(postcode)

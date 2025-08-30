@@ -7,6 +7,7 @@
 """
 Helper functions to compare expected values.
 """
+import collections.abc
 import json
 import re
 import math
@@ -102,8 +103,13 @@ class ResultAttr:
             self.subobj = self.obj
             for sub in self.key.split('+'):
                 done += f"[{sub}]"
-                assert sub in self.subobj, \
-                    f"Missing attribute {done}. Full object:\n{_pretty(self.obj)}"
+                if isinstance(self.subobj, collections.abc.Sequence) and sub.isdigit():
+                    sub = int(sub)
+                    assert sub < len(self.subobj), \
+                        f"Out of bound index {done}. Full object:\n{_pretty(self.obj)}"
+                else:
+                    assert sub in self.subobj, \
+                        f"Missing attribute {done}. Full object:\n{_pretty(self.obj)}"
                 self.subobj = self.subobj[sub]
 
     def __eq__(self, other):

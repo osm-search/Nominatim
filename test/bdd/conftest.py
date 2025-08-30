@@ -247,6 +247,23 @@ def check_result_for_field_absence(nominatim_result, attributes):
     assert all(a not in nominatim_result.result for a in attributes)
 
 
+@then(step_parse(
+    r'the result contains array field (?P<field>\S+) where element (?P<num>\d+) contains'),
+      converters={'num': int})
+def check_result_array_field_for_attributes(nominatim_result, datatable, field, num):
+    assert nominatim_result.is_simple()
+
+    if datatable[0] == ['param', 'value']:
+        pairs = datatable[1:]
+    else:
+        pairs = zip(datatable[0], datatable[1])
+
+    prefix = f"{field}+{num}+"
+
+    for k, v in pairs:
+        assert ResultAttr(nominatim_result.result, prefix + k) == v
+
+
 @then(step_parse('the result set contains(?P<exact> exactly)?'))
 def check_result_list_match(nominatim_result, datatable, exact):
     assert not nominatim_result.is_simple()

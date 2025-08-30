@@ -15,6 +15,7 @@ from ..config import Configuration
 from ..db import properties
 from ..db.connection import connect, Connection, \
                             table_exists, register_hstore
+from ..db.sql_preprocessor import SQLPreprocessor
 from ..version import NominatimVersion, NOMINATIM_VERSION, parse_version
 from ..tokenizer import factory as tokenizer_factory
 from . import refresh
@@ -115,3 +116,30 @@ def create_postcode_parent_index(conn: Connection, **_: Any) -> None:
             cur.execute("""CREATE INDEX IF NOT EXISTS
                              idx_location_postcode_parent_place_id
                              ON location_postcode USING BTREE (parent_place_id)""")
+
+
+@_migration(5, 1, 99, 0)
+def create_placex_entrance_table(conn: Connection, config: Configuration, **_: Any) -> None:
+    """ Add the placex_entrance table to store entrance nodes
+    """
+    sqlp = SQLPreprocessor(conn, config)
+    sqlp.run_string(conn, """
+        -- Table to store location of entrance nodes
+        DROP TABLE IF EXISTS placex_entrance;
+        CREATE TABLE placex_entrance (
+          place_id BIGINT NOT NULL,
+          osm_id BIGINT NOT NULL,
+          type TEXT NOT NULL,
+          location GEOMETRY(Point, 4326) NOT NULL,
+          extratags HSTORE
+          );
+        CREATE UNIQUE INDEX idx_placex_entrance_place_id_osm_id ON placex_entrance
+          USING BTREE (place_id, osm_id) {{db.tablespace.search_index}};
+        GRANT SELECT ON placex_entrance TO "{{config.DATABASE_WEBUSER}}" ;
+
+        -- Create an index on the place table for lookups to populate the entrance
+        -- table
+        CREATE INDEX IF NOT EXISTS idx_placex_entrance_lookup ON place
+          USING BTREE (osm_id)
+          WHERE class IN ('routing:entrance', 'entrance');
+          """)

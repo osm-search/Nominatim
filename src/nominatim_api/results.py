@@ -23,7 +23,7 @@ import sqlalchemy as sa
 
 from .typing import SaSelect, SaRow
 from .sql.sqlalchemy_types import Geometry
-from .types import Point, Bbox, LookupDetails
+from .types import Point, Bbox, LookupDetails, EntranceDetails
 from .connection import SearchConnection
 from .logging import log
 
@@ -205,6 +205,8 @@ class BaseResult:
     parented_rows: Optional[AddressLines] = None
     name_keywords: Optional[WordInfos] = None
     address_keywords: Optional[WordInfos] = None
+
+    entrances: Optional[List[EntranceDetails]] = None
 
     geometry: Dict[str, str] = dataclasses.field(default_factory=dict)
 
@@ -466,6 +468,9 @@ async def add_result_details(conn: SearchConnection, results: List[BaseResultT],
             log().comment('Query parent places')
             for result in results:
                 await complete_parented_places(conn, result)
+        if details.entrances:
+            log().comment('Query entrances details')
+            await complete_entrances_details(conn, results)
         if details.keywords:
             log().comment('Query keywords')
             for result in results:
@@ -715,6 +720,30 @@ async def complete_linked_places(conn: SearchConnection, result: BaseResult) -> 
 
     for row in await conn.execute(sql):
         result.linked_rows.append(_result_row_to_address_row(row))
+
+
+async def complete_entrances_details(conn: SearchConnection, results: List[BaseResultT]) -> None:
+    """ Retrieve information about tagged entrances for the given results.
+    """
+    place_ids = (r.place_id for r in results if r.source_table == SourceTable.PLACEX)
+
+    t = conn.t.placex_entrance
+    sql = sa.select(t.c.place_id, t.c.osm_id, t.c.type, t.c.location, t.c.extratags)\
+            .where(t.c.place_id.in_(place_ids))
+
+    current_result = None
+    for row in await conn.execute(sql):
+        if current_result is None or row.place_id != current_result.place_id:
+            current_result = next((r for r in results if r.place_id == row.place_id), None)
+            assert current_result is not None
+        if current_result.entrances is None:
+            current_result.entrances = []
+        current_result.entrances.append(EntranceDetails(
+            osm_id=row.osm_id,
+            type=row.type,
+            location=Point.from_wkb(row.location),
+            extratags=row.extratags,
+            ))
 
 
 async def complete_keywords(conn: SearchConnection, result: BaseResult) -> None:

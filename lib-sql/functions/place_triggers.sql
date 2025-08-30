@@ -338,6 +338,11 @@ BEGIN
     END IF;
   END IF;
 
+  -- When an existing way is updated, recalculate entrances
+  IF existingplacex.osm_type = 'W' and (existingplacex.rank_search > 27 or existingplacex.class IN ('landuse', 'leisure')) THEN
+    PERFORM place_update_entrances(existingplacex.place_id, existingplacex.osm_id);
+  END IF;
+
   -- Abort the insertion (we modified the existing place instead)
   RETURN NULL;
 END;

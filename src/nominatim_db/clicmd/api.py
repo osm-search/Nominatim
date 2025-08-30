@@ -41,6 +41,7 @@ EXTRADATA_PARAMS = (
     ('addressdetails', 'Include a breakdown of the address into elements'),
     ('extratags', ("Include additional information if available "
                    "(e.g. wikipedia link, opening hours)")),
+    ('entrances', 'Include a list of tagged entrance nodes'),
     ('namedetails', 'Include a list of alternative names')
 )
 
@@ -196,6 +197,7 @@ class APISearch:
                                           'excluded': args.exclude_place_ids,
                                           'viewbox': args.viewbox,
                                           'bounded_viewbox': args.bounded,
+                                          'entrances': args.entrances,
                                           }
 
                 if args.query:
@@ -225,6 +227,7 @@ class APISearch:
         _print_output(formatter, results, args.format,
                       {'extratags': args.extratags,
                        'namedetails': args.namedetails,
+                       'entrances': args.entrances,
                        'addressdetails': args.addressdetails})
         return 0
 
@@ -295,6 +298,7 @@ class APIReverse:
             _print_output(formatter, napi.ReverseResults([result]), args.format,
                           {'extratags': args.extratags,
                            'namedetails': args.namedetails,
+                           'entrances': args.entrances,
                            'addressdetails': args.addressdetails})
 
             return 0
@@ -358,6 +362,7 @@ class APILookup:
         _print_output(formatter, results, args.format,
                       {'extratags': args.extratags,
                        'namedetails': args.namedetails,
+                       'entrances': args.entrances,
                        'addressdetails': args.addressdetails})
         return 0
 
@@ -395,6 +400,8 @@ class APIDetails:
                            help='Include a list of name keywords and address keywords')
         group.add_argument('--linkedplaces', action='store_true',
                            help='Include a details of places that are linked with this one')
+        group.add_argument('--entrances', action='store_true',
+                           help='Include a list of tagged entrance nodes')
         group.add_argument('--hierarchy', action='store_true',
                            help='Include details of places lower in the address hierarchy')
         group.add_argument('--group_hierarchy', action='store_true',
@@ -434,6 +441,7 @@ class APIDetails:
             with napi.NominatimAPI(args.project_dir) as api:
                 result = api.details(place,
                                      address_details=args.addressdetails,
+                                     entrances=args.entrances,
                                      linked_places=args.linkedplaces,
                                      parented_places=args.hierarchy,
                                      keywords=args.keywords,

@@ -60,6 +60,8 @@ The possible fields are:
  * `namedetails` - dictionary with full list of available names including ref etc.
  * `geojson`, `svg`, `geotext`, `geokml` - full geometry
    (only with the appropriate `polygon_*` parameter)
+ * `entrances` - array of objects representing tagged entrances for the object, or
+   null if none are found (only with `entrances=1`)
 
 ## JSONv2
 
@@ -87,6 +89,8 @@ The properties object has the following fields:
  * `extratags` - dictionary with additional useful tags like `website` or `maxspeed`
    (only with `extratags=1`)
  * `namedetails` - dictionary with full list of available names including ref etc.
+ * `entrances` - array of objects representing tagged entrances for the object, or
+   null if none are found (only with `entrances=1`)
 
 Use `polygon_geojson` to output the full geometry of the object instead
 of the centroid.
@@ -110,6 +114,8 @@ The following feature attributes are implemented:
  * `admin` - list of localised names of administrative boundaries (only with `addressdetails=1`)
  * `extra` - dictionary with additional useful tags like `website` or `maxspeed`
    (only with `extratags=1`)
+ * `entrances` - array of objects representing tagged entrances for the object, or
+   null if none are found (only with `entrances=1`)
 
 
 Use `polygon_geojson` to output the full geometry of the object instead
@@ -162,8 +168,8 @@ The place information can be found in the `result` element. The attributes of th
 The full address of the result can be found in the content of the
 `result` element as a comma-separated list.
 
-Additional information requested with `addressdetails=1`, `extratags=1` and
-`namedetails=1` can be found in extra elements.
+Additional information requested with `addressdetails=1`, `extratags=1`,
+`namedetails=1`, and `entrances=1` can be found in extra elements.
 
 ### Search and Lookup
 
@@ -224,9 +230,9 @@ be more than one. The attributes of that element contain:
 When `addressdetails=1` is requested, the localised address parts appear
 as subelements with the type of the address part.
 
-Additional information requested with `extratags=1` and `namedetails=1` can
-be found in extra elements as sub-element of `extratags` and `namedetails`
-respectively.
+Additional information requested with `extratags=1`, `namedetails=1`, and
+`entrances=1` can be found in extra elements as sub-element of `extratags`,
+`namedetails`, and `entrances` respectively.
 
 
 ## Notes on field values
@@ -300,6 +306,22 @@ with a designation label. Per default the following labels may appear:
    man_made, aerialway, boundary, amenity, aeroway, club, craft, leisure,
    office, mountain_pass, shop, tourism, bridge, tunnel, waterway
  * postcode
+
+They roughly correspond to the classification of the OpenStreetMap data
+according to either the `place` tag or the main key of the object.
+
+### entrances
+
+Entrance details in the xml and json formats return the latitude and longitude
+of the entrance, the osm node ID, the [type of
+entrance](https://wiki.openstreetmap.org/wiki/Key:entrance), and any extra tags
+associated with the entrance node.
+
+ * osm_id
+ * type
+ * lat
+ * lon
+ * extratags
 
 They roughly correspond to the classification of the OpenStreetMap data
 according to either the `place` tag or the main key of the object.

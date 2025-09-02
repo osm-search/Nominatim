@@ -105,6 +105,13 @@ grouped by type.
 
 Include geometry of result.
 
+| Parameter | Value | Default |
+|-----------| ----- | ------- |
+| entrances | 0 or 1 | 0 |
+
+When set to 1, include the tagged entrances in the result.
+
+
 ### Language of results
 
 | Parameter | Value | Default |

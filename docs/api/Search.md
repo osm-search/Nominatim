@@ -136,6 +136,12 @@ that is available in the database, e.g. wikipedia link, opening hours.
 When set to 1, include a full list of names for the result. These may include
 language variants, older names, references and brand.
 
+| Parameter | Value | Default |
+|-----------| ----- | ------- |
+| entrances | 0 or 1 | 0 |
+
+When set to 1, include the tagged entrances in the result.
+
 
 ### Language of results
 

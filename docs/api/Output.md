@@ -325,3 +325,62 @@ associated with the entrance node.
 
 They roughly correspond to the classification of the OpenStreetMap data
 according to either the `place` tag or the main key of the object.
+
+#### Example
+
+##### JSON
+
+[https://nominatim.openstreetmap.org/details?osmtype=W&osmid=32619803&entrances=1&format=json](https://nominatim.openstreetmap.org/details?osmtype=W&osmid=32619803&entrances=1&format=json)
+
+
+```json
+{
+  "place_id": 124325848,
+  "parent_place_id": 123936289,
+  "osm_type": "W",
+  "osm_id": 32619803,
+  "category": "shop",
+  "type": "supermarket",
+  "admin_level": 15,
+  "localname": "PENNY",
+  ...
+  "entrances": [
+    {
+      "osm_id": 1733488238,
+      "type": "yes",
+      "lat": "51.0466704",
+      "lon": "12.8077106",
+      "extratags": {
+        "foot": "yes"
+      }
+    },
+    {
+      "osm_id": 1733488256,
+      "type": "main",
+      "lat": "51.0467197",
+      "lon": "12.8078448",
+      "extratags": {
+        "foot": "yes"
+      }
+    },
+    {
+      "osm_id": 1733498087,
+      "type": "exit",
+      "lat": "51.0467081",
+      "lon": "12.8078131",
+      "extratags": {
+        "foot": "yes"
+      }
+    },
+    {
+      "osm_id": 7914950851,
+      "type": "service",
+      "lat": "51.0468487",
+      "lon": "12.8075876",
+      "extratags": {
+        "access": "delivery"
+      }
+    }
+  ]
+}
+```

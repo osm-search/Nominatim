@@ -62,6 +62,8 @@ class NominatimAPIAsync:
         self.config = Configuration(project_dir, environ)
         self.query_timeout = self.config.get_int('QUERY_TIMEOUT') \
             if self.config.QUERY_TIMEOUT else None
+        self.request_timeout = self.config.get_int('REQUEST_TIMEOUT') \
+            if self.config.REQUEST_TIMEOUT else None
         self.reverse_restrict_to_country_area = self.config.get_bool('SEARCH_WITHIN_COUNTRIES')
         self.server_version = 0
 
@@ -252,8 +254,7 @@ class NominatimAPIAsync:
         async with self.begin() as conn:
             conn.set_query_timeout(self.query_timeout)
             geocoder = nsearch.ForwardGeocoder(conn, ntyp.SearchDetails.from_kwargs(params),
-                                               self.config.get_int('REQUEST_TIMEOUT')
-                                               if self.config.REQUEST_TIMEOUT else None)
+                                               self.request_timeout)
             phrases = [nsearch.Phrase(nsearch.PHRASE_ANY, p.strip()) for p in query.split(',')]
             return await geocoder.lookup(phrases)
 
@@ -309,9 +310,7 @@ class NominatimAPIAsync:
                 if amenity:
                     details.layers |= ntyp.DataLayer.POI
 
-            geocoder = nsearch.ForwardGeocoder(conn, details,
-                                               self.config.get_int('REQUEST_TIMEOUT')
-                                               if self.config.REQUEST_TIMEOUT else None)
+            geocoder = nsearch.ForwardGeocoder(conn, details, self.request_timeout)
             return await geocoder.lookup(phrases)
 
     async def search_category(self, categories: List[Tuple[str, str]],
@@ -334,9 +333,7 @@ class NominatimAPIAsync:
                 if details.keywords:
                     await nsearch.make_query_analyzer(conn)
 
-            geocoder = nsearch.ForwardGeocoder(conn, details,
-                                               self.config.get_int('REQUEST_TIMEOUT')
-                                               if self.config.REQUEST_TIMEOUT else None)
+            geocoder = nsearch.ForwardGeocoder(conn, details, self.request_timeout)
             return await geocoder.lookup_pois(categories, phrases)
 
 

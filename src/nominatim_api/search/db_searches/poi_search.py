@@ -106,7 +106,6 @@ class PoiSearch(base.AbstractSearch):
         results = nres.SearchResults()
         for row in rows:
             result = nres.create_from_placex_row(row, nres.SearchResult)
-            assert result
             result.accuracy = self.penalty + self.qualifiers.get_penalty((row.class_, row.type))
             result.bbox = Bbox.from_wkb(row.bbox)
             results.append(result)

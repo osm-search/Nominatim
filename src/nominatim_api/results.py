@@ -310,15 +310,11 @@ def _filter_geometries(row: SaRow) -> Dict[str, str]:
             if k.startswith('geometry_')}
 
 
-def create_from_placex_row(row: Optional[SaRow],
-                           class_type: Type[BaseResultT]) -> Optional[BaseResultT]:
+def create_from_placex_row(row: SaRow, class_type: Type[BaseResultT]) -> BaseResultT:
     """ Construct a new result and add the data from the result row
         from the placex table. 'class_type' defines the type of result
         to return. Returns None if the row is None.
     """
-    if row is None:
-        return None
-
     return class_type(source_table=SourceTable.PLACEX,
                       place_id=row.place_id,
                       osm_object=(row.osm_type, row.osm_id),
@@ -340,8 +336,7 @@ def create_from_placex_row(row: Optional[SaRow],
                       geometry=_filter_geometries(row))
 
 
-def create_from_osmline_row(row: Optional[SaRow],
-                            class_type: Type[BaseResultT]) -> Optional[BaseResultT]:
+def create_from_osmline_row(row: SaRow, class_type: Type[BaseResultT]) -> BaseResultT:
     """ Construct a new result and add the data from the result row
         from the address interpolation table osmline. 'class_type' defines
         the type of result to return. Returns None if the row is None.
@@ -349,9 +344,6 @@ def create_from_osmline_row(row: Optional[SaRow],
         If the row contains a housenumber, then the housenumber is filled out.
         Otherwise the result contains the interpolation information in extratags.
     """
-    if row is None:
-        return None
-
     hnr = getattr(row, 'housenumber', None)
 
     res = class_type(source_table=SourceTable.OSMLINE,
@@ -375,10 +367,10 @@ def create_from_osmline_row(row: Optional[SaRow],
     return res
 
 
-def create_from_tiger_row(row: Optional[SaRow],
+def create_from_tiger_row(row: SaRow,
                           class_type: Type[BaseResultT],
                           osm_type: Optional[str] = None,
-                          osm_id: Optional[int] = None) -> Optional[BaseResultT]:
+                          osm_id: Optional[int] = None) -> BaseResultT:
     """ Construct a new result and add the data from the result row
         from the Tiger data interpolation table. 'class_type' defines
         the type of result to return. Returns None if the row is None.
@@ -386,9 +378,6 @@ def create_from_tiger_row(row: Optional[SaRow],
         If the row contains a housenumber, then the housenumber is filled out.
         Otherwise the result contains the interpolation information in extratags.
     """
-    if row is None:
-        return None
-
     hnr = getattr(row, 'housenumber', None)
 
     res = class_type(source_table=SourceTable.TIGER,
@@ -411,15 +400,11 @@ def create_from_tiger_row(row: Optional[SaRow],
     return res
 
 
-def create_from_postcode_row(row: Optional[SaRow],
-                             class_type: Type[BaseResultT]) -> Optional[BaseResultT]:
+def create_from_postcode_row(row: SaRow, class_type: Type[BaseResultT]) -> BaseResultT:
     """ Construct a new result and add the data from the result row
         from the postcode table. 'class_type' defines
         the type of result to return. Returns None if the row is None.
     """
-    if row is None:
-        return None
-
     return class_type(source_table=SourceTable.POSTCODE,
                       place_id=row.place_id,
                       parent_place_id=row.parent_place_id,
@@ -432,15 +417,11 @@ def create_from_postcode_row(row: Optional[SaRow],
                       geometry=_filter_geometries(row))
 
 
-def create_from_country_row(row: Optional[SaRow],
-                            class_type: Type[BaseResultT]) -> Optional[BaseResultT]:
+def create_from_country_row(row: SaRow, class_type: Type[BaseResultT]) -> BaseResultT:
     """ Construct a new result and add the data from the result row
         from the fallback country tables. 'class_type' defines
         the type of result to return. Returns None if the row is None.
     """
-    if row is None:
-        return None
-
     return class_type(source_table=SourceTable.COUNTRY,
                       category=('place', 'country'),
                       centroid=Point.from_wkb(row.centroid),

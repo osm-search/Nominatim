@@ -78,7 +78,6 @@ async def _get_placex_housenumbers(conn: SearchConnection,
 
     for row in await conn.execute(sql):
         result = nres.create_from_placex_row(row, nres.SearchResult)
-        assert result
         result.bbox = Bbox.from_wkb(row.bbox)
         yield result
 
@@ -102,9 +101,7 @@ async def _get_osmline(conn: SearchConnection, place_ids: List[int],
         sql = base.add_geometry_columns(sa.select(sub), sub.c.centroid, details)
 
     for row in await conn.execute(sql):
-        result = nres.create_from_osmline_row(row, nres.SearchResult)
-        assert result
-        yield result
+        yield nres.create_from_osmline_row(row, nres.SearchResult)
 
 
 async def _get_tiger(conn: SearchConnection, place_ids: List[int],
@@ -126,9 +123,7 @@ async def _get_tiger(conn: SearchConnection, place_ids: List[int],
         sql = base.add_geometry_columns(sa.select(sub), sub.c.centroid, details)
 
     for row in await conn.execute(sql):
-        result = nres.create_from_tiger_row(row, nres.SearchResult)
-        assert result
-        yield result
+        yield nres.create_from_tiger_row(row, nres.SearchResult)
 
 
 class AddressSearch(base.AbstractSearch):
@@ -325,7 +320,6 @@ class AddressSearch(base.AbstractSearch):
         results = nres.SearchResults()
         for row in await conn.execute(sql, bind_params):
             result = nres.create_from_placex_row(row, nres.SearchResult)
-            assert result
             result.bbox = Bbox.from_wkb(row.bbox)
             result.accuracy = row.accuracy
             if row.rank_address < 30:

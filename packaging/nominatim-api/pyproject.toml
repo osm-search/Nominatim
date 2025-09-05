@@ -15,6 +15,7 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
+    "async-timeout",
     "python-dotenv",
     "pyYAML>=5.1",
     "SQLAlchemy>=1.4.31",

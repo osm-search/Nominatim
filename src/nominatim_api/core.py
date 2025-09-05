@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Implementation of classes for API access via libraries.
@@ -13,6 +13,11 @@ import asyncio
 import sys
 import contextlib
 from pathlib import Path
+
+if sys.version_info >= (3, 11):
+    from asyncio import timeout_at
+else:
+    from async_timeout import timeout_at
 
 import sqlalchemy as sa
 import sqlalchemy.ext.asyncio as sa_asyncio
@@ -26,6 +31,7 @@ from .connection import SearchConnection
 from .status import get_status, StatusResult
 from .lookup import get_places, get_detailed_place
 from .reverse import ReverseGeocoder
+from .timeout import Timeout
 from . import search as nsearch
 from . import types as ntyp
 from .results import DetailedResult, ReverseResult, SearchResults
@@ -172,12 +178,15 @@ class NominatimAPIAsync:
         await self.close()
 
     @contextlib.asynccontextmanager
-    async def begin(self) -> AsyncIterator[SearchConnection]:
+    async def begin(self, abs_timeout: Optional[float] = None) -> AsyncIterator[SearchConnection]:
         """ Create a new connection with automatic transaction handling.
 
             This function may be used to get low-level access to the database.
             Refer to the documentation of SQLAlchemy for details how to use
             the connection object.
+
+            You may optionally give an absolute timeout until when to wait
+            for a connection to become available.
         """
         if self._engine is None:
             await self.setup_database()
@@ -185,14 +194,15 @@ class NominatimAPIAsync:
         assert self._engine is not None
         assert self._tables is not None
 
-        async with self._engine.begin() as conn:
+        async with timeout_at(abs_timeout), self._engine.begin() as conn:
             yield SearchConnection(conn, self._tables, self._property_cache, self.config)
 
     async def status(self) -> StatusResult:
         """ Return the status of the database.
         """
+        timeout = Timeout(self.request_timeout)
         try:
-            async with self.begin() as conn:
+            async with self.begin(abs_timeout=timeout.abs) as conn:
                 conn.set_query_timeout(self.query_timeout)
                 status = await get_status(conn)
         except (PGCORE_ERROR, sa.exc.OperationalError):
@@ -205,8 +215,9 @@ class NominatimAPIAsync:
 
             Returns None if there is no entry under the given ID.
         """
+        timeout = Timeout(self.request_timeout)
         details = ntyp.LookupDetails.from_kwargs(params)
-        async with self.begin() as conn:
+        async with self.begin(abs_timeout=timeout.abs) as conn:
             conn.set_query_timeout(self.query_timeout)
             if details.keywords:
                 await nsearch.make_query_analyzer(conn)
@@ -217,8 +228,9 @@ class NominatimAPIAsync:
 
             Returns a list of place information for all IDs that were found.
         """
+        timeout = Timeout(self.request_timeout)
         details = ntyp.LookupDetails.from_kwargs(params)
-        async with self.begin() as conn:
+        async with self.begin(abs_timeout=timeout.abs) as conn:
             conn.set_query_timeout(self.query_timeout)
             if details.keywords:
                 await nsearch.make_query_analyzer(conn)
@@ -235,8 +247,9 @@ class NominatimAPIAsync:
             # There are no results to be expected outside valid coordinates.
             return None
 
+        timeout = Timeout(self.request_timeout)
         details = ntyp.ReverseDetails.from_kwargs(params)
-        async with self.begin() as conn:
+        async with self.begin(abs_timeout=timeout.abs) as conn:
             conn.set_query_timeout(self.query_timeout)
             if details.keywords:
                 await nsearch.make_query_analyzer(conn)
@@ -251,10 +264,11 @@ class NominatimAPIAsync:
         if not query:
             raise UsageError('Nothing to search for.')
 
-        async with self.begin() as conn:
+        timeout = Timeout(self.request_timeout)
+        async with self.begin(abs_timeout=timeout.abs) as conn:
             conn.set_query_timeout(self.query_timeout)
             geocoder = nsearch.ForwardGeocoder(conn, ntyp.SearchDetails.from_kwargs(params),
-                                               self.request_timeout)
+                                               timeout)
             phrases = [nsearch.Phrase(nsearch.PHRASE_ANY, p.strip()) for p in query.split(',')]
             return await geocoder.lookup(phrases)
 
@@ -268,7 +282,8 @@ class NominatimAPIAsync:
                              **params: Any) -> SearchResults:
         """ Find an address using structured search.
         """
-        async with self.begin() as conn:
+        timeout = Timeout(self.request_timeout)
+        async with self.begin(abs_timeout=timeout.abs) as conn:
             conn.set_query_timeout(self.query_timeout)
             details = ntyp.SearchDetails.from_kwargs(params)
 
@@ -310,7 +325,7 @@ class NominatimAPIAsync:
                 if amenity:
                     details.layers |= ntyp.DataLayer.POI
 
-            geocoder = nsearch.ForwardGeocoder(conn, details, self.request_timeout)
+            geocoder = nsearch.ForwardGeocoder(conn, details, timeout)
             return await geocoder.lookup(phrases)
 
     async def search_category(self, categories: List[Tuple[str, str]],
@@ -323,8 +338,9 @@ class NominatimAPIAsync:
         if not categories:
             return SearchResults()
 
+        timeout = Timeout(self.request_timeout)
         details = ntyp.SearchDetails.from_kwargs(params)
-        async with self.begin() as conn:
+        async with self.begin(abs_timeout=timeout.abs) as conn:
             conn.set_query_timeout(self.query_timeout)
             if near_query:
                 phrases = [nsearch.Phrase(nsearch.PHRASE_ANY, p) for p in near_query.split(',')]
@@ -333,7 +349,7 @@ class NominatimAPIAsync:
                 if details.keywords:
                     await nsearch.make_query_analyzer(conn)
 
-            geocoder = nsearch.ForwardGeocoder(conn, details, self.request_timeout)
+            geocoder = nsearch.ForwardGeocoder(conn, details, timeout)
             return await geocoder.lookup_pois(categories, phrases)
 
 

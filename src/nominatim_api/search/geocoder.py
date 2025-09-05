@@ -10,12 +10,12 @@ Public interface to the search code.
 from typing import List, Any, Optional, Iterator, Tuple, Dict
 import itertools
 import re
-import datetime as dt
 import difflib
 
 from ..connection import SearchConnection
 from ..types import SearchDetails
 from ..results import SearchResult, SearchResults, add_result_details
+from ..timeout import Timeout
 from ..logging import log
 from .token_assignment import yield_token_assignments
 from .db_search_builder import SearchBuilder, build_poi_search, wrap_near_search
@@ -29,10 +29,10 @@ class ForwardGeocoder:
     """
 
     def __init__(self, conn: SearchConnection,
-                 params: SearchDetails, timeout: Optional[int]) -> None:
+                 params: SearchDetails, timeout: Timeout) -> None:
         self.conn = conn
         self.params = params
-        self.timeout = dt.timedelta(seconds=timeout or 1000000)
+        self.timeout = timeout
         self.query_analyzer: Optional[AbstractQueryAnalyzer] = None
 
     @property
@@ -78,8 +78,6 @@ class ForwardGeocoder:
         log().section('Execute database searches')
         results: Dict[Any, SearchResult] = {}
 
-        end_time = dt.datetime.now() + self.timeout
-
         min_ranking = searches[0].penalty + 2.0
         prev_penalty = 0.0
         for i, search in enumerate(searches):
@@ -99,7 +97,7 @@ class ForwardGeocoder:
                 min_ranking = min(min_ranking, result.accuracy * 1.2, 2.0)
             log().result_dump('Results', ((r.accuracy, r) for r in lookup_results))
             prev_penalty = search.penalty
-            if dt.datetime.now() >= end_time:
+            if self.timeout.is_elapsed():
                 break
 
         return SearchResults(results.values())

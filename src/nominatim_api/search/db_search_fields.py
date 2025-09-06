@@ -271,17 +271,6 @@ class SearchData:
                 self.penalty += ranking.default
 
 
-def lookup_by_names(name_tokens: List[int], addr_tokens: List[int]) -> List[FieldLookup]:
-    """ Create a lookup list where name tokens are looked up via index
-        and potential address tokens are used to restrict the search further.
-    """
-    lookup = [FieldLookup('name_vector', name_tokens, lookups.LookupAll)]
-    if addr_tokens:
-        lookup.append(FieldLookup('nameaddress_vector', addr_tokens, lookups.Restrict))
-
-    return lookup
-
-
 def lookup_by_any_name(name_tokens: List[int], addr_restrict_tokens: List[int],
                        addr_lookup_tokens: List[int]) -> List[FieldLookup]:
     """ Create a lookup list where name tokens are looked up via index
@@ -295,11 +284,3 @@ def lookup_by_any_name(name_tokens: List[int], addr_restrict_tokens: List[int],
         lookup.append(FieldLookup('nameaddress_vector', addr_lookup_tokens, lookups.LookupAll))
 
     return lookup
-
-
-def lookup_by_addr(name_tokens: List[int], addr_tokens: List[int]) -> List[FieldLookup]:
-    """ Create a lookup list where address tokens are looked up via index
-        and the name tokens are only used to restrict the search further.
-    """
-    return [FieldLookup('name_vector', name_tokens, lookups.Restrict),
-            FieldLookup('nameaddress_vector', addr_tokens, lookups.LookupAll)]

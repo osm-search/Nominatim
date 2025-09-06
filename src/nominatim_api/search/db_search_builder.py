@@ -295,46 +295,6 @@ class SearchBuilder:
 
                 yield penalty, exp_count, lookup
 
-    def get_name_address_ranking(self, name_tokens: List[int],
-                                 addr_partials: List[qmod.Token]) -> List[dbf.FieldLookup]:
-        """ Create a ranking expression looking up by name and address.
-        """
-        lookup = [dbf.FieldLookup('name_vector', name_tokens, lookups.LookupAll)]
-
-        addr_restrict_tokens = []
-        addr_lookup_tokens = []
-        for t in addr_partials:
-            if t.addr_count > 20000:
-                addr_restrict_tokens.append(t.token)
-            else:
-                addr_lookup_tokens.append(t.token)
-
-        if addr_restrict_tokens:
-            lookup.append(dbf.FieldLookup('nameaddress_vector',
-                                          addr_restrict_tokens, lookups.Restrict))
-        if addr_lookup_tokens:
-            lookup.append(dbf.FieldLookup('nameaddress_vector',
-                                          addr_lookup_tokens, lookups.LookupAll))
-
-        return lookup
-
-    def get_full_name_ranking(self, name_fulls: List[qmod.Token], addr_partials: List[qmod.Token],
-                              use_lookup: bool) -> List[dbf.FieldLookup]:
-        """ Create a ranking expression with full name terms and
-            additional address lookup. When 'use_lookup' is true, then
-            address lookups will use the index, when the occurrences are not
-            too many.
-        """
-        if use_lookup:
-            addr_restrict_tokens = []
-            addr_lookup_tokens = [t.token for t in addr_partials]
-        else:
-            addr_restrict_tokens = [t.token for t in addr_partials]
-            addr_lookup_tokens = []
-
-        return dbf.lookup_by_any_name([t.token for t in name_fulls],
-                                      addr_restrict_tokens, addr_lookup_tokens)
-
     def get_name_ranking(self, trange: qmod.TokenRange,
                          db_field: str = 'name_vector') -> dbf.FieldRanking:
         """ Create a ranking expression for a name term in the given range.

@@ -48,14 +48,6 @@ def test_detailed_result_custom_importance():
     assert res.calculated_importance() == 0.4563
 
 
-@pytest.mark.parametrize('func', (nresults.create_from_placex_row,
-                                  nresults.create_from_osmline_row,
-                                  nresults.create_from_tiger_row,
-                                  nresults.create_from_postcode_row))
-def test_create_row_none(func):
-    assert func(None, DetailedResult) is None
-
-
 @pytest.mark.parametrize('func', (nresults.create_from_osmline_row,
                                   nresults.create_from_tiger_row))
 def test_create_row_with_housenumber(func):

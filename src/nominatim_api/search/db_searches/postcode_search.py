@@ -121,7 +121,6 @@ class PostcodeSearch(base.AbstractSearch):
             else:
                 result = nres.create_from_postcode_row(row, nres.SearchResult)
 
-            assert result
             if result.place_id not in details.excluded:
                 result.accuracy = row.accuracy
                 results.append(result)

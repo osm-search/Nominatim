@@ -202,7 +202,6 @@ class PlaceSearch(base.AbstractSearch):
         results = nres.SearchResults()
         for row in await conn.execute(sql, bind_params):
             result = nres.create_from_placex_row(row, nres.SearchResult)
-            assert result
             result.bbox = Bbox.from_wkb(row.bbox)
             result.accuracy = row.accuracy
             results.append(result)

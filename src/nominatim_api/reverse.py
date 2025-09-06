@@ -21,7 +21,7 @@ from .logging import log
 from .types import AnyPoint, DataLayer, ReverseDetails, GeometryFormat, Bbox
 
 
-RowFunc = Callable[[Optional[SaRow], Type[nres.ReverseResult]], Optional[nres.ReverseResult]]
+RowFunc = Callable[[SaRow, Type[nres.ReverseResult]], nres.ReverseResult]
 
 WKT_PARAM: SaBind = sa.bindparam('wkt', type_=Geometry)
 MAX_RANK_PARAM: SaBind = sa.bindparam('max_rank')
@@ -596,12 +596,13 @@ class ReverseGeocoder:
             if row is None and self.layer_enabled(DataLayer.ADDRESS):
                 row, row_func = await self.lookup_country(ccodes)
 
+        if row is None:
+            return None
+
         result = row_func(row, nres.ReverseResult)
-        if result is not None:
-            assert row is not None
-            result.distance = getattr(row,  'distance', 0)
-            if hasattr(row, 'bbox'):
-                result.bbox = Bbox.from_wkb(row.bbox)
-            await nres.add_result_details(self.conn, [result], self.params)
+        result.distance = getattr(row,  'distance', 0)
+        if hasattr(row, 'bbox'):
+            result.bbox = Bbox.from_wkb(row.bbox)
+        await nres.add_result_details(self.conn, [result], self.params)
 
         return result

@@ -19,7 +19,7 @@ from .logging import log
 from . import types as ntyp
 from . import results as nres
 
-RowFunc = Callable[[Optional[SaRow], Type[nres.BaseResultT]], Optional[nres.BaseResultT]]
+RowFunc = Callable[[SaRow, Type[nres.BaseResultT]], nres.BaseResultT]
 
 GEOMETRY_TYPE_MAP = {
     'POINT': 'ST_Point',
@@ -74,7 +74,6 @@ class LookupCollector:
 
         for row in await conn.execute(sql):
             result = row_func(row, nres.SearchResult)
-            assert result is not None
             if hasattr(row, 'bbox'):
                 result.bbox = ntyp.Bbox.from_wkb(row.bbox)
 
@@ -116,7 +115,6 @@ class DetailedCollector:
 
         for row in await conn.execute(sql):
             self.result = row_func(row, nres.DetailedResult)
-            assert self.result is not None
             # add missing details
             if 'type' in self.result.geometry:
                 self.result.geometry['type'] = \

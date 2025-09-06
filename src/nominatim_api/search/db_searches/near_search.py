@@ -130,7 +130,6 @@ class NearSearch(base.AbstractSearch):
                        'countries': details.countries}
         for row in await conn.execute(sql, bind_params):
             result = nres.create_from_placex_row(row, nres.SearchResult)
-            assert result
             result.accuracy = self.penalty + penalty
             result.bbox = Bbox.from_wkb(row.bbox)
             results.append(result)

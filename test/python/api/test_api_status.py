@@ -7,7 +7,10 @@
 """
 Tests for the status API call.
 """
+import asyncio
 import datetime as dt
+
+import pytest
 
 from nominatim_api.version import NOMINATIM_API_VERSION
 import nominatim_api as napi
@@ -53,3 +56,29 @@ def test_status_database_not_found(monkeypatch):
     assert result.software_version == NOMINATIM_API_VERSION
     assert result.database_version is None
     assert result.data_updated is None
+
+
+@pytest.mark.asyncio
+async def test_status_connection_timeout_single_pool(status_table, property_table, monkeypatch):
+    monkeypatch.setenv('NOMINATIM_API_POOL_SIZE', '1')
+    monkeypatch.setenv('NOMINATIM_REQUEST_TIMEOUT', '1')
+
+    async with napi.NominatimAPIAsync() as api:
+        async with api.begin():
+            with pytest.raises((TimeoutError, asyncio.TimeoutError)):
+                await api.status()
+
+        await api.status()
+
+
+@pytest.mark.asyncio
+async def test_status_connection_timeout_multi_pool(status_table, property_table, monkeypatch):
+    monkeypatch.setenv('NOMINATIM_API_POOL_SIZE', '2')
+    monkeypatch.setenv('NOMINATIM_REQUEST_TIMEOUT', '1')
+
+    async with napi.NominatimAPIAsync() as api:
+        async with api.begin(), api.begin():
+            with pytest.raises((TimeoutError, asyncio.TimeoutError)):
+                await api.status()
+
+        await api.status()

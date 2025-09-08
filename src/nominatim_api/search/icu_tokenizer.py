@@ -173,7 +173,10 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
             return query
 
         self.split_query(query)
-        log().var_dump('Transliterated query', lambda: query.get_transliterated_query())
+        log().var_dump('Transliterated query',
+                       lambda: ''.join(f"{n.term_lookup}{n.btype}" for n in query.nodes)
+                               + ' / '
+                               + ''.join(f"{n.term_normalized}{n.btype}" for n in query.nodes))
         words = query.extract_words()
 
         for row in await self.lookup_in_db(list(words.keys())):
@@ -216,6 +219,34 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
         """
         return cast(str, self.normalizer.transliterate(text)).strip('-: ')
 
+    def split_transliteration(self, trans: str, word: str) -> list[tuple[str, str]]:
+        """ Split the given transliteration string into sub-words and
+            return them together with the original part of the word.
+        """
+        subwords = trans.split(' ')
+
+        if len(subwords) == 1:
+            return [(trans, word)]
+
+        tlist = []
+        titer = filter(None, subwords)
+        current_trans: Optional[str] = next(titer)
+        assert current_trans
+        current_word = ''
+        for letter in word:
+            current_word += letter
+            if self.transliterator.transliterate(current_word).rstrip() == current_trans:
+                tlist.append((current_trans, current_word))
+                current_trans = next(titer, None)
+                if current_trans is None:
+                    return tlist
+                current_word = ''
+
+        if current_word:
+            tlist.append((current_trans, current_word))
+
+        return tlist
+
     def split_query(self, query: qmod.QueryStruct) -> None:
         """ Transliterate the phrases and split them into tokens.
         """
@@ -229,11 +260,10 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
             for word, breakchar in zip_longest(*[iter(phrase_split)]*2, fillvalue=','):
                 if not word:
                     continue
-                trans = self.transliterator.transliterate(word)
-                if trans:
-                    for term in trans.split(' '):
+                if trans := self.transliterator.transliterate(word):
+                    for term, term_word in self.split_transliteration(trans, word):
                         if term:
-                            query.add_node(qmod.BREAK_TOKEN, phrase.ptype, term, word)
+                            query.add_node(qmod.BREAK_TOKEN, phrase.ptype, term, term_word)
                     query.nodes[-1].btype = breakchar
 
         query.nodes[-1].btype = qmod.BREAK_END
@@ -291,11 +321,8 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
                                     token.penalty += penalty
 
             # rerank tokens against the normalized form
-            norm = ' '.join(n.term_normalized for n in query.nodes[start + 1:end + 1]
-                            if n.btype != qmod.BREAK_TOKEN)
-            if not norm:
-                # Can happen when the token only covers a partial term
-                norm = query.nodes[start + 1].term_normalized
+            norm = ''.join(f"{n.term_normalized}{'' if n.btype == qmod.BREAK_TOKEN else ' '}"
+                           for n in query.nodes[start + 1:end + 1]).strip()
             for ttype, tokens in tlist.items():
                 if ttype != qmod.TOKEN_COUNTRY:
                     for token in tokens:

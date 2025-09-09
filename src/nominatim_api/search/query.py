@@ -199,8 +199,6 @@ class QueryNode:
     """
     term_normalized: str
     """ Normalised form of term ending at this node.
-        When the token resulted from a split during transliteration,
-        then this string contains the complete source term.
     """
 
     starting: List[TokenList] = dataclasses.field(default_factory=list)
@@ -391,14 +389,6 @@ class QueryStruct:
                     if t.token == token:
                         return f"[{tlist.ttype}]{t.lookup_word}"
         return 'None'
-
-    def get_transliterated_query(self) -> str:
-        """ Return a string representation of the transliterated query
-            with the character representation of the different break types.
-
-            For debugging purposes only.
-        """
-        return ''.join(''.join((n.term_lookup, n.btype)) for n in self.nodes)
 
     def extract_words(self, start: int = 0,
                       endpos: Optional[int] = None) -> Dict[str, List[TokenRange]]:

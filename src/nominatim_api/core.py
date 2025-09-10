@@ -458,6 +458,8 @@ class NominatimAPI:
                 Only POI places can have parents. (Default: False)
               keywords (bool): Add detailed information about the search terms
                 used for this place.
+              query_stats (QueryStatistics): When given collects statistics
+                about the query execution.
 
             Returns:
               source_table (enum): Data source of the place. See below for possible values.
@@ -540,6 +542,8 @@ class NominatimAPI:
                 Only POI places can have parents. (Default: False)
               keywords (bool): Add detailed information about the search terms
                 used for this place.
+              query_stats (QueryStatistics): When given collects statistics
+                about the query execution.
 
             Returns:
               source_table (enum): Data source of the place. See below for possible values.
@@ -620,6 +624,8 @@ class NominatimAPI:
                 Only POI places can have parents. (Default: False)
               keywords (bool): Add detailed information about the search terms
                 used for this place.
+              query_stats (QueryStatistics): When given collects statistics
+                about the query execution.
 
             Returns:
               source_table (enum): Data source of the place. See below for possible values.
@@ -719,6 +725,8 @@ class NominatimAPI:
                 Only POI places can have parents. (Default: False)
               keywords (bool): Add detailed information about the search terms
                 used for this place.
+              query_stats (QueryStatistics): When given collects statistics
+                about the query execution.
 
             Returns:
               source_table (enum): Data source of the place. See below for possible values.
@@ -835,6 +843,8 @@ class NominatimAPI:
                 Only POI places can have parents. (Default: False)
               keywords (bool): Add detailed information about the search terms
                 used for this place.
+              query_stats (QueryStatistics): When given collects statistics
+                about the query execution.
 
             Returns:
               source_table (enum): Data source of the place. See below for possible values.
@@ -942,6 +952,8 @@ class NominatimAPI:
                 Only POI places can have parents. (Default: False)
               keywords (bool): Add detailed information about the search terms
                 used for this place.
+              query_stats (QueryStatistics): When given collects statistics
+                about the query execution.
 
             Returns:
               source_table (enum): Data source of the place. See below for possible values.

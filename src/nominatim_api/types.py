@@ -340,18 +340,17 @@ class QueryStatistics(dict[str, Any]):
     """
 
     def __enter__(self) -> 'QueryStatistics':
-        self.log_time('start_function')
+        self.log_time('start')
         return self
 
     def __exit__(self, *_: Any) -> None:
-        self.log_time('end_function')
-        self['total_time'] = (self['end_function'] - self['start_function']) \
-            / dt.timedelta(microseconds=1)
+        self.log_time('end')
+        self['total_time'] = (self['end'] - self['start']).total_seconds()
         if 'start_query' in self:
-            self['wait_time'] = (self['start_query'] - self['start_function']) \
-                / dt.timedelta(microseconds=1)
+            self['wait_time'] = (self['start_query'] - self['start']).total_seconds()
         else:
-            self['wait_time'] = 0
+            self['wait_time'] = self['total_time']
+            self['start_query'] = self['end']
         self['query_time'] = self['total_time'] - self['wait_time']
 
     def __missing__(self, key: str) -> str:

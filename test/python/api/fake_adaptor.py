@@ -54,3 +54,6 @@ class FakeAdaptor(glue.ASGIAdaptor):
 
     def formatting(self):
         return formatting
+
+    def query_stats(self):
+        return None

@@ -2,20 +2,21 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Server implementation using the falcon webserver framework.
 """
-from typing import Optional, Mapping, Any, List
+from typing import Optional, Mapping, Any, List, cast
 from pathlib import Path
-import datetime as dt
 import asyncio
+import datetime as dt
 
 from falcon.asgi import App, Request, Response
 
 from ...config import Configuration
 from ...core import NominatimAPIAsync
+from ...types import QueryStatistics
 from ... import v1 as api_impl
 from ...result_formatting import FormatDispatcher, load_format_dispatcher
 from ... import logging as loglib
@@ -95,6 +96,9 @@ class ParamWrapper(ASGIAdaptor):
     def formatting(self) -> FormatDispatcher:
         return self._formatter
 
+    def query_stats(self) -> Optional[QueryStatistics]:
+        return cast(Optional[QueryStatistics], getattr(self.request.context, 'query_stats', None))
+
 
 class EndpointWrapper:
     """ Converter for server glue endpoint functions to Falcon request handlers.
@@ -124,7 +128,7 @@ class FileLoggingMiddleware:
     async def process_request(self, req: Request, _: Response) -> None:
         """ Callback before the request starts timing.
         """
-        req.context.start = dt.datetime.now(tz=dt.timezone.utc)
+        req.context.query_stats = QueryStatistics()
 
     async def process_response(self, req: Request, resp: Response,
                                resource: Optional[EndpointWrapper],
@@ -132,19 +136,23 @@ class FileLoggingMiddleware:
         """ Callback after requests writes to the logfile. It only
             writes logs for successful requests for search, reverse and lookup.
         """
-        if not req_succeeded or resource is None or resp.status != 200\
+        qs = req.context.query_stats
+
+        if not req_succeeded or 'start' not in qs\
+           or resource is None or resp.status != 200\
            or resource.name not in ('reverse', 'search', 'lookup', 'details'):
             return
 
-        finish = dt.datetime.now(tz=dt.timezone.utc)
-        duration = (finish - req.context.start).total_seconds()
-        params = req.scope['query_string'].decode('utf8')
-        start = req.context.start.replace(tzinfo=None)\
-                                 .isoformat(sep=' ', timespec='milliseconds')
+        qs['endpoint'] = resource.name
+        qs['query_string'] = req.scope['query_string'].decode('utf8')
+        qs['results_total'] = getattr(resp.context, 'num_results', 0)
+        for param in ('start', 'end', 'start_query'):
+            if isinstance(qs.get(param), dt.datetime):
+                qs[param] = qs[param].replace(tzinfo=None)\
+                                     .isoformat(sep=' ', timespec='milliseconds')
 
-        self.fd.write(f"[{start}] "
-                      f"{duration:.4f} {getattr(resp.context, 'num_results', 0)} "
-                      f'{resource.name} "{params}"\n')
+        self.fd.write(("[{start}] {total_time:.4f} {results_total} "
+                       '{endpoint} "{query_string}"\n').format_map(qs))
 
 
 class APIMiddleware:

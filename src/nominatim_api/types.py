@@ -373,6 +373,12 @@ class NoQueryStats:
     def __setitem__(self, key: str, value: Any) -> None:
         pass
 
+    def __getitem__(self, key: str) -> Any:
+        return None
+
+    def __contains__(self, key: str, default: Any = None) -> bool:
+        return False
+
     def log_time(self, key: str) -> None:
         pass
 

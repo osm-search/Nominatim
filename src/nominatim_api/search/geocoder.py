@@ -77,7 +77,9 @@ class ForwardGeocoder:
         """
         log().section('Execute database searches')
         results: Dict[Any, SearchResult] = {}
+        qs = self.params.query_stats
 
+        qs['search_min_penalty'] = round(searches[0].penalty, 2)
         min_ranking = searches[0].penalty + 2.0
         prev_penalty = 0.0
         for i, search in enumerate(searches):
@@ -93,6 +95,13 @@ class ForwardGeocoder:
                 if prevresult:
                     prevresult.accuracy = min(prevresult.accuracy, result.accuracy)
                 else:
+                    if not results:
+                        qs['search_first_result_round'] = i
+                    spenalty = round(search.penalty, 2)
+                    if 'search_min_result_penalty' not in qs or \
+                            spenalty < qs['search_min_result_penalty']:
+                        qs['search_min_result_penalty'] = spenalty
+                        qs['search_best_penalty_round'] = i
                     results[rhash] = result
                 min_ranking = min(min_ranking, result.accuracy * 1.2, 2.0)
             log().result_dump('Results', ((r.accuracy, r) for r in lookup_results))
@@ -100,6 +109,7 @@ class ForwardGeocoder:
             if self.timeout.is_elapsed():
                 break
 
+        qs['search_rounds'] = i
         return SearchResults(results.values())
 
     def pre_filter_results(self, results: SearchResults) -> SearchResults:

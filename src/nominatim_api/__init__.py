@@ -24,7 +24,8 @@ from .types import (PlaceID as PlaceID,
                     Point as Point,
                     Bbox as Bbox,
                     GeometryFormat as GeometryFormat,
-                    DataLayer as DataLayer)
+                    DataLayer as DataLayer,
+                    QueryStatistics as QueryStatistics)
 from .results import (SourceTable as SourceTable,
                       AddressLine as AddressLine,
                       AddressLines as AddressLines,

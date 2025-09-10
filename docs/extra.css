@@ -39,3 +39,9 @@ th {
   filter: grayscale(100%);
   font-size: 80%;
 }
+
+.simple-table table:not([class]) th,
+.simple-table table:not([class]) td {
+    padding: 2px 4px;
+    background: white;
+}

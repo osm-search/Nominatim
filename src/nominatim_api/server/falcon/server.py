@@ -122,7 +122,8 @@ class FileLoggingMiddleware:
     """ Middleware to log selected requests into a file.
     """
 
-    def __init__(self, file_name: str):
+    def __init__(self, file_name: str, logstr: str):
+        self.logstr = logstr + '\n'
         self.fd = open(file_name, 'a', buffering=1, encoding='utf8')
 
     async def process_request(self, req: Request, _: Response) -> None:
@@ -151,8 +152,7 @@ class FileLoggingMiddleware:
                 qs[param] = qs[param].replace(tzinfo=None)\
                                      .isoformat(sep=' ', timespec='milliseconds')
 
-        self.fd.write(("[{start}] {total_time:.4f} {results_total} "
-                       '{endpoint} "{query_string}"\n').format_map(qs))
+        self.fd.write(self.logstr.format_map(qs))
 
 
 class APIMiddleware:
@@ -201,7 +201,7 @@ def get_application(project_dir: Path,
     middleware: List[Any] = [apimw]
     log_file = apimw.config.LOG_FILE
     if log_file:
-        middleware.append(FileLoggingMiddleware(log_file))
+        middleware.append(FileLoggingMiddleware(log_file, apimw.config.LOG_FORMAT))
 
     app = App(cors_enable=apimw.config.get_bool('CORS_NOACCESSCONTROL'),
               middleware=middleware)

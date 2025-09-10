@@ -648,21 +648,39 @@ See also [NOMINATIM_DEFAULT_LANGUAGE](#nominatim_default_language).
 | **Description:**   | Log requests into a file |
 | **Format:**        | path |
 | **Default:**       | _empty_ (logging disabled) |
-| **After Changes:** | run `nominatim refresh --website` |
 
 Enable logging of requests into a file with this setting by setting the log
 file where to log to. A relative file name is assumed to be relative to
-the project directory.
+the project directory. The format of the log output can be set
+with NOMINATIM_LOG_FORMAT.
 
+#### NOMINATIM_LOG_FORMAT
 
-The entries in the log file have the following format:
+| Summary            |                                                     |
+| --------------     | --------------------------------------------------- |
+| **Description:**   | Log requests into a file |
+| **Format:**        | [Python String Format](https://docs.python.org/3/library/string.html#formatstrings) string |
+| **Default:**       | `[{start}] {total_time:.4f} {results_total} {endpoint} "{query_string}"` |
 
-    <request time> <execution time in s> <number of results> <type> "<query string>"
+Describes the content of a log line for a single request. The format
+must be readable by Python's format function. Nominatim provides a number
+of metrics than can be logged. The default set of metrics is the following:
 
-Request time is the time when the request was started. The execution time is
-given in seconds and includes the entire time the query was queued and executed
-in the frontend.
-type contains the name of the endpoint used.
+/// html | div.simple-table
+| name            | type   | Description |
+| --------------- | ------ | ------------|
+| start           | time   | Point in time when the request arrived. |
+| end             | time   | Point in time when the request was done. |
+| query_start     | time   | Point in time when processing started. |
+| total_time      | float  | Total time in seconds to handle the request. |
+| wait_time       | float  | Time in seconds the request waited for a database connection to be available. |
+| query_time      | float  | Total time in seconds to process the request once a connection was available. |
+| results_total   | int    | Number of results found. |
+| endpoint        | string | API endpoint used. |
+| query_string    | string | Raw query string received. |
+///
+
+Variables of type 'time' contain a UTC timestamp string in ISO format.
 
 #### NOMINATIM_DEBUG_SQL
 

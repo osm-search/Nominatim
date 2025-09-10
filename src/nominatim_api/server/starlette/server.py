@@ -87,9 +87,10 @@ class FileLoggingMiddleware(BaseHTTPMiddleware):
     """ Middleware to log selected requests into a file.
     """
 
-    def __init__(self, app: Starlette, file_name: str = ''):
+    def __init__(self, app: Starlette, file_name: str = '', logstr: str = ''):
         super().__init__(app)
         self.fd = open(file_name, 'a', buffering=1, encoding='utf8')
+        self.logstr = logstr + '\n'
 
     async def dispatch(self, request: Request,
                        call_next: RequestResponseEndpoint) -> Response:
@@ -114,8 +115,7 @@ class FileLoggingMiddleware(BaseHTTPMiddleware):
                 qs[param] = qs[param].replace(tzinfo=None)\
                                      .isoformat(sep=' ', timespec='milliseconds')
 
-        self.fd.write(("[{start}] {total_time:.4f} {results_total} "
-                       '{endpoint} "{query_string}"\n').format_map(qs))
+        self.fd.write(self.logstr.format_map(qs))
 
         return response
 
@@ -149,7 +149,8 @@ def get_application(project_dir: Path,
 
     log_file = config.LOG_FILE
     if log_file:
-        middleware.append(Middleware(FileLoggingMiddleware, file_name=log_file))  # type: ignore
+        middleware.append(Middleware(FileLoggingMiddleware, file_name=log_file,  # type: ignore
+                                     logstr=config.LOG_FORMAT))
 
     exceptions: Dict[Any, Callable[[Request, Exception], Awaitable[Response]]] = {
         TimeoutError: timeout_error,

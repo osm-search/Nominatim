@@ -67,6 +67,7 @@ markdown_extensions:
     - codehilite
     - admonition
     - pymdownx.superfences
+    - pymdownx.blocks.html
     - pymdownx.tabbed:
         alternate_style: true
     - def_list

@@ -217,11 +217,13 @@ class NominatimAPIAsync:
         """
         timeout = Timeout(self.request_timeout)
         details = ntyp.LookupDetails.from_kwargs(params)
-        async with self.begin(abs_timeout=timeout.abs) as conn:
-            conn.set_query_timeout(self.query_timeout)
-            if details.keywords:
-                await nsearch.make_query_analyzer(conn)
-            return await get_detailed_place(conn, place, details)
+        with details.query_stats as qs:
+            async with self.begin(abs_timeout=timeout.abs) as conn:
+                qs.log_time('start_query')
+                conn.set_query_timeout(self.query_timeout)
+                if details.keywords:
+                    await nsearch.make_query_analyzer(conn)
+                return await get_detailed_place(conn, place, details)
 
     async def lookup(self, places: Sequence[ntyp.PlaceRef], **params: Any) -> SearchResults:
         """ Get simple information about a list of places.
@@ -230,11 +232,13 @@ class NominatimAPIAsync:
         """
         timeout = Timeout(self.request_timeout)
         details = ntyp.LookupDetails.from_kwargs(params)
-        async with self.begin(abs_timeout=timeout.abs) as conn:
-            conn.set_query_timeout(self.query_timeout)
-            if details.keywords:
-                await nsearch.make_query_analyzer(conn)
-            return await get_places(conn, places, details)
+        with details.query_stats as qs:
+            async with self.begin(abs_timeout=timeout.abs) as conn:
+                qs.log_time('start_query')
+                conn.set_query_timeout(self.query_timeout)
+                if details.keywords:
+                    await nsearch.make_query_analyzer(conn)
+                return await get_places(conn, places, details)
 
     async def reverse(self, coord: ntyp.AnyPoint, **params: Any) -> Optional[ReverseResult]:
         """ Find a place by its coordinates. Also known as reverse geocoding.
@@ -249,28 +253,32 @@ class NominatimAPIAsync:
 
         timeout = Timeout(self.request_timeout)
         details = ntyp.ReverseDetails.from_kwargs(params)
-        async with self.begin(abs_timeout=timeout.abs) as conn:
-            conn.set_query_timeout(self.query_timeout)
-            if details.keywords:
-                await nsearch.make_query_analyzer(conn)
-            geocoder = ReverseGeocoder(conn, details,
-                                       self.reverse_restrict_to_country_area)
-            return await geocoder.lookup(coord)
+        with details.query_stats as qs:
+            async with self.begin(abs_timeout=timeout.abs) as conn:
+                qs.log_time('start_query')
+                conn.set_query_timeout(self.query_timeout)
+                if details.keywords:
+                    await nsearch.make_query_analyzer(conn)
+                geocoder = ReverseGeocoder(conn, details,
+                                           self.reverse_restrict_to_country_area)
+                return await geocoder.lookup(coord)
 
     async def search(self, query: str, **params: Any) -> SearchResults:
         """ Find a place by free-text search. Also known as forward geocoding.
         """
-        query = query.strip()
-        if not query:
-            raise UsageError('Nothing to search for.')
-
         timeout = Timeout(self.request_timeout)
-        async with self.begin(abs_timeout=timeout.abs) as conn:
-            conn.set_query_timeout(self.query_timeout)
-            geocoder = nsearch.ForwardGeocoder(conn, ntyp.SearchDetails.from_kwargs(params),
-                                               timeout)
-            phrases = [nsearch.Phrase(nsearch.PHRASE_ANY, p.strip()) for p in query.split(',')]
-            return await geocoder.lookup(phrases)
+        details = ntyp.SearchDetails.from_kwargs(params)
+        with details.query_stats as qs:
+            query = query.strip()
+            if not query:
+                raise UsageError('Nothing to search for.')
+
+            async with self.begin(abs_timeout=timeout.abs) as conn:
+                qs.log_time('start_query')
+                conn.set_query_timeout(self.query_timeout)
+                geocoder = nsearch.ForwardGeocoder(conn, details, timeout)
+                phrases = [nsearch.Phrase(nsearch.PHRASE_ANY, p.strip()) for p in query.split(',')]
+                return await geocoder.lookup(phrases)
 
     async def search_address(self, amenity: Optional[str] = None,
                              street: Optional[str] = None,
@@ -283,10 +291,8 @@ class NominatimAPIAsync:
         """ Find an address using structured search.
         """
         timeout = Timeout(self.request_timeout)
-        async with self.begin(abs_timeout=timeout.abs) as conn:
-            conn.set_query_timeout(self.query_timeout)
-            details = ntyp.SearchDetails.from_kwargs(params)
-
+        details = ntyp.SearchDetails.from_kwargs(params)
+        with details.query_stats as qs:
             phrases: List[nsearch.Phrase] = []
 
             if amenity:
@@ -325,6 +331,9 @@ class NominatimAPIAsync:
                 if amenity:
                     details.layers |= ntyp.DataLayer.POI
 
+        async with self.begin(abs_timeout=timeout.abs) as conn:
+            qs.log_time('start_query')
+            conn.set_query_timeout(self.query_timeout)
             geocoder = nsearch.ForwardGeocoder(conn, details, timeout)
             return await geocoder.lookup(phrases)
 
@@ -335,22 +344,24 @@ class NominatimAPIAsync:
             The near place may either be given as an unstructured search
             query in itself or as coordinates.
         """
-        if not categories:
-            return SearchResults()
-
         timeout = Timeout(self.request_timeout)
         details = ntyp.SearchDetails.from_kwargs(params)
-        async with self.begin(abs_timeout=timeout.abs) as conn:
-            conn.set_query_timeout(self.query_timeout)
-            if near_query:
-                phrases = [nsearch.Phrase(nsearch.PHRASE_ANY, p) for p in near_query.split(',')]
-            else:
-                phrases = []
-                if details.keywords:
-                    await nsearch.make_query_analyzer(conn)
+        with details.query_stats as qs:
+            if not categories:
+                return SearchResults()
 
-            geocoder = nsearch.ForwardGeocoder(conn, details, timeout)
-            return await geocoder.lookup_pois(categories, phrases)
+            async with self.begin(abs_timeout=timeout.abs) as conn:
+                qs.log_time('start_query')
+                conn.set_query_timeout(self.query_timeout)
+                if near_query:
+                    phrases = [nsearch.Phrase(nsearch.PHRASE_ANY, p) for p in near_query.split(',')]
+                else:
+                    phrases = []
+                    if details.keywords:
+                        await nsearch.make_query_analyzer(conn)
+
+                geocoder = nsearch.ForwardGeocoder(conn, details, timeout)
+                return await geocoder.lookup_pois(categories, phrases)
 
 
 class NominatimAPI:

@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Server implementation using the starlette webserver framework.
@@ -10,9 +10,9 @@ Server implementation using the starlette webserver framework.
 from typing import Any, Optional, Mapping, Callable, cast, Coroutine, Dict, \
                    Awaitable, AsyncIterator
 from pathlib import Path
-import datetime as dt
 import asyncio
 import contextlib
+import datetime as dt
 
 from starlette.applications import Starlette
 from starlette.routing import Route
@@ -25,6 +25,7 @@ from starlette.middleware.cors import CORSMiddleware
 
 from ...config import Configuration
 from ...core import NominatimAPIAsync
+from ...types import QueryStatistics
 from ... import v1 as api_impl
 from ...result_formatting import FormatDispatcher, load_format_dispatcher
 from ..asgi_adaptor import ASGIAdaptor, EndpointFunc
@@ -70,6 +71,9 @@ class ParamWrapper(ASGIAdaptor):
     def formatting(self) -> FormatDispatcher:
         return cast(FormatDispatcher, self.request.app.state.formatter)
 
+    def query_stats(self) -> Optional[QueryStatistics]:
+        return cast(Optional[QueryStatistics], getattr(self.request.state, 'query_stats', None))
+
 
 def _wrap_endpoint(func: EndpointFunc)\
         -> Callable[[Request], Coroutine[Any, Any, Response]]:
@@ -83,33 +87,35 @@ class FileLoggingMiddleware(BaseHTTPMiddleware):
     """ Middleware to log selected requests into a file.
     """
 
-    def __init__(self, app: Starlette, file_name: str = ''):
+    def __init__(self, app: Starlette, file_name: str = '', logstr: str = ''):
         super().__init__(app)
         self.fd = open(file_name, 'a', buffering=1, encoding='utf8')
+        self.logstr = logstr + '\n'
 
     async def dispatch(self, request: Request,
                        call_next: RequestResponseEndpoint) -> Response:
-        start = dt.datetime.now(tz=dt.timezone.utc)
+        qs = QueryStatistics()
+        request.state.query_stats = qs
         response = await call_next(request)
 
-        if response.status_code != 200:
+        if response.status_code != 200 or 'start' not in qs:
             return response
-
-        finish = dt.datetime.now(tz=dt.timezone.utc)
 
         for endpoint in ('reverse', 'search', 'lookup', 'details'):
             if request.url.path.startswith('/' + endpoint):
-                qtype = endpoint
+                qs['endpoint'] = endpoint
                 break
         else:
             return response
 
-        duration = (finish - start).total_seconds()
-        params = request.scope['query_string'].decode('utf8')
+        qs['query_string'] = request.scope['query_string'].decode('utf8')
+        qs['results_total'] = getattr(request.state, 'num_results', 0)
+        for param in ('start', 'end', 'start_query'):
+            if isinstance(qs.get(param), dt.datetime):
+                qs[param] = qs[param].replace(tzinfo=None)\
+                                     .isoformat(sep=' ', timespec='milliseconds')
 
-        self.fd.write(f"[{start.replace(tzinfo=None).isoformat(sep=' ', timespec='milliseconds')}] "
-                      f"{duration:.4f} {getattr(request.state, 'num_results', 0)} "
-                      f'{qtype} "{params}"\n')
+        self.fd.write(self.logstr.format_map(qs))
 
         return response
 
@@ -143,7 +149,8 @@ def get_application(project_dir: Path,
 
     log_file = config.LOG_FILE
     if log_file:
-        middleware.append(Middleware(FileLoggingMiddleware, file_name=log_file))  # type: ignore
+        middleware.append(Middleware(FileLoggingMiddleware, file_name=log_file,  # type: ignore
+                                     logstr=config.LOG_FORMAT))
 
     exceptions: Dict[Any, Callable[[Request, Exception], Awaitable[Response]]] = {
         TimeoutError: timeout_error,

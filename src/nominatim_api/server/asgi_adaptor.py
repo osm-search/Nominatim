@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Base abstraction for implementing based on different ASGI frameworks.
@@ -13,6 +13,7 @@ import math
 
 from ..config import Configuration
 from ..core import NominatimAPIAsync
+from ..types import QueryStatistics
 from ..result_formatting import FormatDispatcher
 from .content_types import CONTENT_TEXT
 
@@ -66,6 +67,12 @@ class ASGIAdaptor(abc.ABC):
     @abc.abstractmethod
     def formatting(self) -> FormatDispatcher:
         """ Return the formatting object to use.
+        """
+
+    @abc.abstractmethod
+    def query_stats(self) -> Optional[QueryStatistics]:
+        """ Return the object for saving query statistics or None if
+            no statistics are required.
         """
 
     def get_int(self, name: str, default: Optional[int] = None) -> int:

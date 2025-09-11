@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Complex datatypes used by the Nominatim API.
@@ -11,6 +11,7 @@ from typing import Optional, Union, Tuple, NamedTuple, TypeVar, Type, Dict, \
                    Any, List, Sequence
 from collections import abc
 import dataclasses
+import datetime as dt
 import enum
 import math
 from struct import unpack
@@ -334,6 +335,54 @@ class DataLayer(enum.Flag):
     """
 
 
+class QueryStatistics(dict[str, Any]):
+    """ A specialised dictionary for collecting query statistics.
+    """
+
+    def __enter__(self) -> 'QueryStatistics':
+        self.log_time('start')
+        return self
+
+    def __exit__(self, *_: Any) -> None:
+        self.log_time('end')
+        self['total_time'] = (self['end'] - self['start']).total_seconds()
+        if 'start_query' in self:
+            self['wait_time'] = (self['start_query'] - self['start']).total_seconds()
+        else:
+            self['wait_time'] = self['total_time']
+            self['start_query'] = self['end']
+        self['query_time'] = self['total_time'] - self['wait_time']
+
+    def __missing__(self, key: str) -> str:
+        return ''
+
+    def log_time(self, key: str) -> None:
+        self[key] = dt.datetime.now(tz=dt.timezone.utc)
+
+
+class NoQueryStats:
+    """ Null object to use, when no query statistics are requested.
+    """
+
+    def __enter__(self) -> 'NoQueryStats':
+        return self
+
+    def __exit__(self, *_: Any) -> None:
+        pass
+
+    def __setitem__(self, key: str, value: Any) -> None:
+        pass
+
+    def __getitem__(self, key: str) -> Any:
+        return None
+
+    def __contains__(self, key: str, default: Any = None) -> bool:
+        return False
+
+    def log_time(self, key: str) -> None:
+        pass
+
+
 def format_country(cc: Any) -> List[str]:
     """ Extract a list of country codes from the input which may be either
         a string or list of strings. Filters out all values that are not
@@ -411,6 +460,11 @@ class LookupDetails:
     """ Simplification factor for a geometry in degrees WGS. A factor of
         0.0 means the original geometry is kept. The higher the value, the
         more the geometry gets simplified.
+    """
+    query_stats: Union[QueryStatistics, NoQueryStats] = \
+        dataclasses.field(default_factory=NoQueryStats)
+    """ Optional QueryStatistics object collecting information about
+        runtime behaviour of the call.
     """
 
     @classmethod

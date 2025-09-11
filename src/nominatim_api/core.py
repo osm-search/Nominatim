@@ -331,11 +331,11 @@ class NominatimAPIAsync:
                 if amenity:
                     details.layers |= ntyp.DataLayer.POI
 
-        async with self.begin(abs_timeout=timeout.abs) as conn:
-            qs.log_time('start_query')
-            conn.set_query_timeout(self.query_timeout)
-            geocoder = nsearch.ForwardGeocoder(conn, details, timeout)
-            return await geocoder.lookup(phrases)
+            async with self.begin(abs_timeout=timeout.abs) as conn:
+                qs.log_time('start_query')
+                conn.set_query_timeout(self.query_timeout)
+                geocoder = nsearch.ForwardGeocoder(conn, details, timeout)
+                return await geocoder.lookup(phrases)
 
     async def search_category(self, categories: List[Tuple[str, str]],
                               near_query: Optional[str] = None,

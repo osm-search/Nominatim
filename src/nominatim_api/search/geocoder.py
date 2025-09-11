@@ -109,7 +109,7 @@ class ForwardGeocoder:
             if self.timeout.is_elapsed():
                 break
 
-        qs['search_rounds'] = i
+        qs['search_rounds'] = i + 1
         return SearchResults(results.values())
 
     def pre_filter_results(self, results: SearchResults) -> SearchResults:

@@ -1941,30 +1941,24 @@ aq:
     partition: 248
     languages: en
     names: !include country-names/aq.yaml
-    postcode: no
-
 
 # American Samoa (American Samoa)
 as:
     partition: 249
     languages: en,sm
     names: !include country-names/as.yaml
-    postcode: no
-
 
 # Aruba (Aruba)
 aw:
     partition: 250
     languages: nl,pap
     names: !include country-names/aw.yaml
-    postcode: no
 
 # Åland Islands (Åland)
 ax:
     partition: 251
     languages: sv, fi
     names: !include country-names/ax.yaml
-    postcode: no
 
 
 # St. Barthélemy (Saint-Barthélemy)
@@ -1972,7 +1966,7 @@ bl:
     partition: 252
     languages: fr
     names: !include country-names/bl.yaml
-    postcode: no
+
 
 # Caribbean Netherlands (Caribbean Netherlands)
 bq:
@@ -1994,7 +1988,8 @@ cc:
     partition: 255
     languages: en
     names: !include country-names/cc.yaml
-    postcode: no
+    postcode:
+      pattern: "dddd"
 
 
 # Curaçao (Curaçao)
@@ -2010,7 +2005,8 @@ cx:
     partition: 257
     languages: en
     names: !include country-names/cx.yaml
-    postcode: no
+    postcode:
+      pattern: "dddd"
 
 
 # French Guiana (Guyane française)
@@ -2018,7 +2014,8 @@ gf:
     partition: 258
     languages: fr
     names: !include country-names/gf.yaml
-    postcode: no
+    postcode:
+      pattern: "ddddd"
 
 
 # Guadeloupe (Guadeloupe)
@@ -2026,7 +2023,8 @@ gp:
     partition: 259
     languages: fr
     names: !include country-names/gp.yaml
-    postcode: no
+    postcode:
+      pattern: "ddddd"
 
 
 # Guam (Guam)
@@ -2034,7 +2032,8 @@ gu:
     partition: 260
     languages: en, ch
     names: !include country-names/gu.yaml
-    postcode: no
+    postcode:
+      pattern: "ddddd"
 
 
 # Hong Kong SAR China (中國香港特別行政區)
@@ -2042,7 +2041,6 @@ hk:
     partition: 261
     languages: zh,en
     names: !include country-names/hk.yaml
-    postcode: no
 
 
 # Heard & McDonald Islands (Heard & McDonald Islands)
@@ -2050,7 +2048,8 @@ hm:
     partition: 262
     languages: en
     names: !include country-names/hm.yaml
-    postcode: no
+    postcode:
+      pattern: "dddd"
 
 
 # St. Martin (Saint-Martin)
@@ -2058,7 +2057,8 @@ mf:
     partition: 263
     languages: fr
     names: !include country-names/mf.yaml
-    postcode: no
+    postcode:
+      pattern: "ddddd"
 
 
 # Macao SAR China (中國澳門特別行政區)
@@ -2066,7 +2066,6 @@ mo:
     partition: 264
     languages: zh,pt
     names: !include country-names/mo.yaml
-    postcode: no
 
 
 # Northern Mariana Islands (Northern Mariana Islands)
@@ -2074,7 +2073,9 @@ mp:
     partition: 265
     languages: ch
     names: !include country-names/mp.yaml
-    postcode: no
+    postcode:
+      pattern: "(ddddd)(?:-dddd)?"
+      output: \1
 
 
 # Martinique (Martinique)
@@ -2082,7 +2083,8 @@ mq:
     partition: 266
     languages: fr
     names: !include country-names/mq.yaml
-    postcode: no
+    postcode:
+      pattern: "ddddd"
 
 
 # New Caledonia (Nouvelle-Calédonie)
@@ -2090,7 +2092,8 @@ nc:
     partition: 267
     languages: fr
     names: !include country-names/nc.yaml
-    postcode: no
+    postcode:
+      pattern: "ddddd"
 
 
 # Norfolk Island (Norfolk Island)
@@ -2098,7 +2101,8 @@ nf:
     partition: 268
     languages: en,pih
     names: !include country-names/nf.yaml
-    postcode: no
+    postcode:
+      pattern: "dddd"
 
 
 # French Polynesia (Polynésie française)
@@ -2106,7 +2110,8 @@ pf:
     partition: 269
     languages: fr
     names: !include country-names/pf.yaml
-    postcode: no
+    postcode:
+      pattern: "ddddd"
 
 
 # St. Pierre & Miquelon (Saint-Pierre-et-Miquelon)
@@ -2114,7 +2119,6 @@ pm:
     partition: 270
     languages: fr
     names: !include country-names/pm.yaml
-    postcode: no
 
 
 # Puerto Rico (Puerto Rico)
@@ -2122,7 +2126,6 @@ pr:
     partition: 271
     languages: es, en
     names: !include country-names/pr.yaml
-    postcode: no
 
 
 # Réunion (La Réunion)
@@ -2130,7 +2133,8 @@ re:
     partition: 272
     languages: fr
     names: !include country-names/re.yaml
-    postcode: no
+    postcode:
+      pattern: "ddddd"
 
 
 # Svalbard & Jan Mayen (Svalbard og Jan Mayen)
@@ -2138,7 +2142,6 @@ sj:
     partition: 273
     languages: nb, nn, no
     names: !include country-names/sj.yaml
-    postcode: no
 
 
 # Sint Maarten (Sint Maarten)
@@ -2146,7 +2149,6 @@ sx:
     partition: 274
     languages: en, nl
     names: !include country-names/sx.yaml
-    postcode: no
 
 
 # French Southern Territories (Terres australes françaises)
@@ -2154,7 +2156,6 @@ tf:
     partition: 275
     languages: fr
     names: !include country-names/tf.yaml
-    postcode: no
 
 
 # U.S. Outlying Islands (U.S. Outlying Islands)
@@ -2162,7 +2163,6 @@ um:
     partition: 276
     languages: en
     names: !include country-names/um.yaml
-    postcode: no
 
 
 # U.S. Virgin Islands (U.S. Virgin Islands)
@@ -2170,7 +2170,6 @@ vi:
     partition: 277
     languages: en
     names: !include country-names/vi.yaml
-    postcode: no
 
 
 # Wallis & Futuna (Wallis-et-Futuna)
@@ -2178,7 +2177,6 @@ wf:
     partition: 278
     languages: fr
     names: !include country-names/wf.yaml
-    postcode: no
 
 
 # Mayotte (Mayotte)
@@ -2186,4 +2184,5 @@ yt:
     partition: 279
     languages: fr
     names: !include country-names/yt.yaml
-    postcode: no
+    postcode:
+      pattern: "ddddd"

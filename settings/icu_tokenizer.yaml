@@ -138,11 +138,6 @@ token-analysis:
       mode: variant-only
       variants:
           - !include icu-rules/variants-it.yaml
-    - id: ja
-      analyzer: generic
-      mode: variant-only
-      variants:
-          - !include icu-rules/variants-ja.yaml
     - id: mg
       analyzer: generic
       mode: variant-only

@@ -21,7 +21,7 @@
           "croft" : 20,
           "subdivision" : 22,
           "allotments" : 22,
-          "neighbourhood" : [20, 22],
+          "neighbourhood" : 24,
           "quarter" : [20, 22],
           "isolated_dwelling" : [22, 25],
           "farm" : [22, 25],
@@ -48,14 +48,14 @@
           "" : [25, 0]
       },
       "landuse" : {
-          "residential" : 22,
-          "farm" : 22,
-          "farmyard" : 22,
-          "industrial" : 22,
-          "commercial" : 22,
-          "allotments" : 22,
-          "retail" : 22,
-          "" : [22, 0]
+          "residential" : 24,
+          "farm" : 24,
+          "farmyard" : 24,
+          "industrial" : 24,
+          "commercial" : 24,
+          "allotments" : 24,
+          "retail" : 24,
+          "" : [24, 0]
       },
       "leisure" : {
           "park" : [24, 0]
@@ -234,6 +234,17 @@
           "administrative9" : 16,
           "administrative10" : 18,
           "administrative11" : 20
+      }
+  }
+},
+{ "countries" : ["jp"],
+  "tags" : {
+      "boundary" : {
+          "administrative7" : 16,
+          "administrative8" : 18,
+          "administrative9" : 20,
+          "administrative10" : 22,
+          "administrative11" : 24
       }
   }
 }

@@ -114,10 +114,10 @@ Feature: Rank assignment
 
     Scenario: Admin levels must not be larger than 25
         Given the named places
-          | osm | class    | type           | admin | extra+place   | geometry |
-          | R20 | boundary | administrative | 6     | neighbourhood | (0 0, 0 2, 2 2, 2 0, 0 0) |
-          | R21 | boundary | administrative | 7     |               | (0 0, 0 1, 1 1, 1 0, 0 0) |
-          | R22 | boundary | administrative | 8     |               | (0 0, 0 0.5, 0.5 0.5, 0.5 0, 0 0) |
+          | osm | class    | type           | admin | extra+place | geometry |
+          | R20 | boundary | administrative | 6     | quarter     | (0 0, 0 2, 2 2, 2 0, 0 0) |
+          | R21 | boundary | administrative | 7     |             | (0 0, 0 1, 1 1, 1 0, 0 0) |
+          | R22 | boundary | administrative | 8     |             | (0 0, 0 0.5, 0.5 0.5, 0.5 0, 0 0) |
         When importing
         Then placex contains
           | object | rank_search | rank_address |

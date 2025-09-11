@@ -135,9 +135,9 @@ Feature: Import into placex
           | object | rank_search | rank_address |
           | N2     | 30          | 30 |
           | W2     | 30          | 30 |
-          | W4     | 22          | 22 |
-          | R2     | 22          | 22 |
-          | R3     | 22          |  0 |
+          | W4     | 24          | 24 |
+          | R2     | 24          | 24 |
+          | R3     | 24          |  0 |
 
     Scenario: rank and inclusion of naturals
         Given the 0.4 grid

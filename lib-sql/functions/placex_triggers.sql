@@ -530,6 +530,7 @@ CREATE OR REPLACE FUNCTION insert_addresslines(obj_place_id BIGINT,
   AS $$
 DECLARE
   address_havelevel BOOLEAN[];
+  place_min_distance FLOAT[];
 
   location_isaddress BOOLEAN;
   current_boundary GEOMETRY := NULL;
@@ -545,6 +546,7 @@ BEGIN
   nameaddress_vector := '{}'::int[];
 
   address_havelevel := array_fill(false, ARRAY[maxrank]);
+  place_min_distance := array_fill(1.0, ARRAY[maxrank]);
 
   FOR location IN
     SELECT apl.*, key
@@ -575,6 +577,10 @@ BEGIN
         END IF;
       END IF;
 
+      IF location.isguess and location.distance < place_min_distance[location.rank_address] THEN
+        place_min_distance[location.rank_address] := location.distance;
+      END IF;
+
       INSERT INTO place_addressline (place_id, address_place_id, fromarea,
                                      isaddress, distance, cached_rank_address)
         VALUES (obj_place_id, location.place_id, not location.isguess,
@@ -601,6 +607,16 @@ BEGIN
 
     -- If this is the first item in the rank, then assume it is the address.
     location_isaddress := not address_havelevel[location.rank_address];
+
+    -- Ignore guessed places when they are too far away compared to similar closer ones.
+    IF location.isguess THEN
+      CONTINUE WHEN not location_isaddress
+                    AND location.distance > 2 * place_min_distance[location.rank_address];
+
+      IF location.distance < place_min_distance[location.rank_address] THEN
+        place_min_distance[location.rank_address] := location.distance;
+      END IF;
+    END IF;
 
     -- Further sanity checks to ensure that the address forms a sane hierarchy.
     IF location_isaddress THEN

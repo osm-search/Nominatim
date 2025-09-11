@@ -1973,14 +1973,12 @@ bq:
     partition: 253
     languages: nl, pap, en
     names: !include country-names/bq.yaml
-    postcode: no
 
 # Bouvet Island (Bouvetøya)
 bv:
     partition: 254
     languages: no
     names: !include country-names/bv.yaml
-    postcode: no
 
 
 # Cocos (Keeling) Islands (Kepulauan Cocos (Keeling))
@@ -1997,7 +1995,6 @@ cw:
     partition: 256
     languages: nl, pap, en
     names: !include country-names/cw.yaml
-    postcode: no
 
 
 # Christmas Island (Christmas Island)

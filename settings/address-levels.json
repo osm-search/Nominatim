@@ -21,8 +21,8 @@
           "croft" : 20,
           "subdivision" : 22,
           "allotments" : 22,
-          "neighbourhood" : [20, 22],
-          "quarter" : [20, 22],
+          "neighbourhood" : 22,
+          "quarter" : 22,
           "isolated_dwelling" : [22, 25],
           "farm" : [22, 25],
           "city_block" : 25,
@@ -234,6 +234,20 @@
           "administrative9" : 16,
           "administrative10" : 18,
           "administrative11" : 20
+      }
+  }
+},
+{ "countries" : ["jp"],
+  "tags" : {
+      "boundary" : {
+          "administrative7" : 16,
+          "administrative8" : 18,
+          "administrative9" : 20,
+          "administrative10" : 22,
+          "administrative11" : 24
+      },
+      "place" : {
+          "neighbourhood" : 24
       }
   }
 }

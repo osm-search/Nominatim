@@ -309,6 +309,9 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
                                 len(query.nodes[end].term_lookup) > 4):
                             for token in tokens:
                                 token.penalty += 0.39
+                        if (start + 1 == end):
+                            if partial := query.nodes[start].partial:
+                                partial.penalty += 0.39
 
                 # If it looks like a simple housenumber, prefer that.
                 if qmod.TOKEN_HOUSENUMBER in tlist:
@@ -319,6 +322,9 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
                             if ttype != qmod.TOKEN_HOUSENUMBER:
                                 for token in tokens:
                                     token.penalty += penalty
+                        if (start + 1 == end):
+                            if partial := query.nodes[start].partial:
+                                partial.penalty += penalty
 
             # rerank tokens against the normalized form
             norm = ''.join(f"{n.term_normalized}{'' if n.btype == qmod.BREAK_TOKEN else ' '}"

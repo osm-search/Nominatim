@@ -80,7 +80,7 @@ class ForwardGeocoder:
         qs = self.params.query_stats
 
         qs['search_min_penalty'] = round(searches[0].penalty, 2)
-        min_ranking = searches[0].penalty + 2.0
+        min_ranking = searches[0].penalty + 1.5
         prev_penalty = 0.0
         for i, search in enumerate(searches):
             if search.penalty > prev_penalty and (search.penalty > min_ranking or i > 15):
@@ -103,7 +103,9 @@ class ForwardGeocoder:
                         qs['search_min_result_penalty'] = spenalty
                         qs['search_best_penalty_round'] = i
                     results[rhash] = result
-                min_ranking = min(min_ranking, result.accuracy * 1.2, 2.0)
+                min_ranking = min(min_ranking,
+                                  search.penalty + 0.4,
+                                  result.accuracy + 0.1)
             log().result_dump('Results', ((r.accuracy, r) for r in lookup_results))
             prev_penalty = search.penalty
             if self.timeout.is_elapsed():

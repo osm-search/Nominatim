@@ -2,13 +2,13 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Wrapper around place information the indexer gets from the database and hands to
 the tokenizer.
 """
-from typing import Optional, Mapping, Any, Tuple
+from typing import Optional, Mapping, Any, Tuple, cast
 
 
 class PlaceInfo:
@@ -56,7 +56,7 @@ class PlaceInfo:
 
             [1]: ../customize/Ranking.md#address-rank
         """
-        return self._info.get('rank_address', 0)
+        return cast(int, self._info.get('rank_address', 0))
 
     @property
     def centroid(self) -> Optional[Tuple[float, float]]:

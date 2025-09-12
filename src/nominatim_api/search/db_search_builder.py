@@ -187,7 +187,7 @@ class SearchBuilder:
                     dbf.FieldLookup('nameaddress_vector', addr_fulls, lookups.LookupAny)]
 
         sdata.housenumbers = dbf.WeightedStrings([], [])
-        yield dbs.PlaceSearch(0.05, sdata, expected_count, True)
+        yield dbs.PlaceSearch(0.0, sdata, expected_count, True)
 
     def build_name_search(self, sdata: dbf.SearchData,
                           name: qmod.TokenRange, address: List[qmod.TokenRange],

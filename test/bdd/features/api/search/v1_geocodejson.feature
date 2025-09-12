@@ -23,8 +23,8 @@ Feature: Search API geocodejson output
 
     Scenario: Search geocodejson - Town street-level address with footway
         When sending v1/search with format geocodejson
-          | q                                    | addressdetails |
-          | burg gutenberg 6000 jahre geschichte | 1 |
+          | q                     | addressdetails |
+          | 6000 jahre geschichte | 1 |
         Then a HTTP 200 is returned
         And the result is valid geocodejson
         And all results contain

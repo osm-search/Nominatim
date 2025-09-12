@@ -187,7 +187,7 @@ class SearchBuilder:
                     dbf.FieldLookup('nameaddress_vector', addr_fulls, lookups.LookupAny)]
 
         sdata.housenumbers = dbf.WeightedStrings([], [])
-        yield dbs.PlaceSearch(0.05, sdata, expected_count, True)
+        yield dbs.PlaceSearch(0.0, sdata, expected_count, True)
 
     def build_name_search(self, sdata: dbf.SearchData,
                           name: qmod.TokenRange, address: List[qmod.TokenRange],
@@ -342,7 +342,10 @@ class SearchBuilder:
                             heapq.heappush(todo, (-tlist.end, tlist.end,
                                                   rank.with_token(t, chgpenalty)))
                     elif tlist.end == trange.end:
-                        ranks.extend(rank.with_token(t, 0.0) for t in tlist.tokens)
+                        chgpenalty = self.query.get_in_word_penalty(
+                                        qmod.TokenRange(pos, tlist.end))
+                        ranks.extend(rank.with_token(t, chgpenalty)
+                                     for t in tlist.tokens)
 
             if len(ranks) >= 10:
                 # Too many variants, bail out and only add

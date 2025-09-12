@@ -380,17 +380,23 @@ class _TokenSequence:
             if base.postcode and base.postcode.start == 0:
                 self.penalty += 0.1
 
+            min_penalty = self.penalty + 2.0
+
             # Left-to-right reading of the address
             if self.direction != -1:
-                yield from self._get_assignments_address_forward(base, query)
+                for result in self._get_assignments_address_forward(base, query):
+                    min_penalty = min(min_penalty, result.penalty)
+                    yield result
 
             # Right-to-left reading of the address
             if self.direction != 1:
-                yield from self._get_assignments_address_backward(base, query)
+                for result in self._get_assignments_address_backward(base, query):
+                    min_penalty = min(min_penalty, result.penalty)
+                    yield result
 
             # variant for special housenumber searches
             if base.housenumber and not base.qualifier:
-                yield dataclasses.replace(base, penalty=self.penalty)
+                yield dataclasses.replace(base, penalty=min_penalty + 0.1)
 
 
 def yield_token_assignments(query: qmod.QueryStruct) -> Iterator[TokenAssignment]:

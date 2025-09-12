@@ -127,7 +127,7 @@ def test_housenumber_and_street():
     check_assignments(yield_token_assignments(q),
                       TokenAssignment(name=TokenRange(1, 2),
                                       housenumber=TokenRange(0, 1)),
-                      TokenAssignment(address=[TokenRange(1, 2)],
+                      TokenAssignment(penalty=0.1, address=[TokenRange(1, 2)],
                                       housenumber=TokenRange(0, 1)))
 
 
@@ -138,7 +138,7 @@ def test_housenumber_and_street_backwards():
     check_assignments(yield_token_assignments(q),
                       TokenAssignment(name=TokenRange(0, 1),
                                       housenumber=TokenRange(1, 2)),
-                      TokenAssignment(address=[TokenRange(0, 1)],
+                      TokenAssignment(penalty=0.1, address=[TokenRange(0, 1)],
                                       housenumber=TokenRange(1, 2)))
 
 
@@ -154,7 +154,7 @@ def test_housenumber_and_postcode():
                                       housenumber=TokenRange(1, 2),
                                       address=[TokenRange(2, 3)],
                                       postcode=TokenRange(3, 4)),
-                      TokenAssignment(penalty=pytest.approx(0.3),
+                      TokenAssignment(penalty=pytest.approx(0.4),
                                       housenumber=TokenRange(1, 2),
                                       address=[TokenRange(0, 1), TokenRange(2, 3)],
                                       postcode=TokenRange(3, 4)))
@@ -172,7 +172,7 @@ def test_postcode_and_housenumber():
                                       housenumber=TokenRange(3, 4),
                                       address=[TokenRange(0, 1)],
                                       postcode=TokenRange(1, 2)),
-                      TokenAssignment(penalty=pytest.approx(0.3),
+                      TokenAssignment(penalty=pytest.approx(0.4),
                                       housenumber=TokenRange(3, 4),
                                       address=[TokenRange(0, 1), TokenRange(2, 3)],
                                       postcode=TokenRange(1, 2)))
@@ -218,7 +218,7 @@ def test_housenumber_many_phrases():
                                       housenumber=TokenRange(3, 4),
                                       address=[TokenRange(0, 1), TokenRange(1, 2),
                                                TokenRange(2, 3)]),
-                      TokenAssignment(penalty=0.1,
+                      TokenAssignment(penalty=0.2,
                                       housenumber=TokenRange(3, 4),
                                       address=[TokenRange(0, 1), TokenRange(1, 2),
                                                TokenRange(2, 3), TokenRange(4, 5)]))

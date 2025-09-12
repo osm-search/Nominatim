@@ -202,7 +202,7 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
             term = ' '.join(n.term_lookup for n in query.nodes[start + 1:end + 1])
             query.add_token(qmod.TokenRange(start, end),
                             qmod.TOKEN_POSTCODE,
-                            ICUToken(penalty=0.1, token=0, count=1, addr_count=1,
+                            ICUToken(penalty=0.0, token=0, count=1, addr_count=1,
                                      lookup_word=pc, word_token=term,
                                      info=None))
         self.rerank_tokens(query)
@@ -288,7 +288,7 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
             if need_hnr and is_full_token \
                     and len(node.term_normalized) <= 4 and node.term_normalized.isdigit():
                 query.add_token(qmod.TokenRange(i-1, i), qmod.TOKEN_HOUSENUMBER,
-                                ICUToken(penalty=0.5, token=0,
+                                ICUToken(penalty=0.2, token=0,
                                          count=1, addr_count=1,
                                          lookup_word=node.term_lookup,
                                          word_token=node.term_lookup, info=None))
@@ -309,6 +309,9 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
                                 len(query.nodes[end].term_lookup) > 4):
                             for token in tokens:
                                 token.penalty += 0.39
+                        if (start + 1 == end):
+                            if partial := query.nodes[start].partial:
+                                partial.penalty += 0.39
 
                 # If it looks like a simple housenumber, prefer that.
                 if qmod.TOKEN_HOUSENUMBER in tlist:
@@ -319,6 +322,9 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
                             if ttype != qmod.TOKEN_HOUSENUMBER:
                                 for token in tokens:
                                     token.penalty += penalty
+                        if (start + 1 == end):
+                            if partial := query.nodes[start].partial:
+                                partial.penalty += penalty
 
             # rerank tokens against the normalized form
             norm = ''.join(f"{n.term_normalized}{'' if n.btype == qmod.BREAK_TOKEN else ' '}"

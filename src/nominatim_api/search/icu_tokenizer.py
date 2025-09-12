@@ -288,7 +288,7 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
             if need_hnr and is_full_token \
                     and len(node.term_normalized) <= 4 and node.term_normalized.isdigit():
                 query.add_token(qmod.TokenRange(i-1, i), qmod.TOKEN_HOUSENUMBER,
-                                ICUToken(penalty=0.5, token=0,
+                                ICUToken(penalty=0.2, token=0,
                                          count=1, addr_count=1,
                                          lookup_word=node.term_lookup,
                                          word_token=node.term_lookup, info=None))

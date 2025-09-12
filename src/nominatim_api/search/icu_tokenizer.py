@@ -202,7 +202,7 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
             term = ' '.join(n.term_lookup for n in query.nodes[start + 1:end + 1])
             query.add_token(qmod.TokenRange(start, end),
                             qmod.TOKEN_POSTCODE,
-                            ICUToken(penalty=0.1, token=0, count=1, addr_count=1,
+                            ICUToken(penalty=0.0, token=0, count=1, addr_count=1,
                                      lookup_word=pc, word_token=term,
                                      info=None))
         self.rerank_tokens(query)

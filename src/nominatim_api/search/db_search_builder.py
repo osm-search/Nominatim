@@ -342,7 +342,10 @@ class SearchBuilder:
                             heapq.heappush(todo, (-tlist.end, tlist.end,
                                                   rank.with_token(t, chgpenalty)))
                     elif tlist.end == trange.end:
-                        ranks.extend(rank.with_token(t, 0.0) for t in tlist.tokens)
+                        chgpenalty = self.query.get_in_word_penalty(
+                                        qmod.TokenRange(pos, tlist.end))
+                        ranks.extend(rank.with_token(t, chgpenalty)
+                                     for t in tlist.tokens)
 
             if len(ranks) >= 10:
                 # Too many variants, bail out and only add

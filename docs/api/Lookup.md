@@ -49,7 +49,7 @@ Only has an effect for JSON output formats.
 
 | Parameter | Value | Default |
 |-----------| ----- | ------- |
-| addressdetails | 0 or 1 | 0 |
+| addressdetails | 0 or 1 | 1 |
 
 When set to 1, include a breakdown of the address into elements.
 The exact content of the address breakdown depends on the output format.

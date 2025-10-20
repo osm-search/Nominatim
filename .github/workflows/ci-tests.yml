@@ -47,7 +47,7 @@ jobs:
                       python: '3.9'
                     - flavour: ubuntu-24
                       ubuntu: 24
-                      postgresql: 17
+                      postgresql: 18
                       lua: '5.3'
                       dependencies: apt
                       python: 'builtin'
@@ -326,7 +326,7 @@ jobs:
 
           - uses: ./Nominatim/.github/actions/setup-postgresql
             with:
-                postgresql-version: 17
+                postgresql-version: 18
 
           - name: Install Python dependencies
             run: |

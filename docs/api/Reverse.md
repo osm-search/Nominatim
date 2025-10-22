@@ -152,7 +152,7 @@ In terms of address details the zoom levels are as follows:
 
 | Parameter | Value | Default |
 |-----------| ----- | ------- |
-| layer     | comma-separated list of: `address`, `poi`, `railway`, `natural`, `manmade` | _unset_ (no restriction) |
+| layer     | comma-separated list of: `address`, `poi`, `railway`, `natural`, `manmade` | `address,poi` |
 
 The layer filter allows to select places by themes.
 

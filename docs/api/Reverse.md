@@ -218,7 +218,7 @@ This overrides the specified machine readable format.
 
 ## Examples
 
-* [https://nominatim.openstreetmap.org/reverse?format=xml&lat=52.5487429714954&lon=-1.81602098644987&zoom=18&addressdetails=1](https://nominatim.openstreetmap.org/reverse?format=xml&lat=52.5487429714954&lon=-1.81602098644987&zoom=18&addressdetails=1)
+* [https://nominatim.openstreetmap.org/reverse?format=xml&lat=52.5487429714954&lon=-1.81602098644987&zoom=18&addressdetails=1&layer=address](https://nominatim.openstreetmap.org/reverse?format=xml&lat=52.5487429714954&lon=-1.81602098644987&zoom=18&addressdetails=1&layer=address)
 
 ```xml
   <reversegeocode timestamp="Fri, 06 Nov 09 16:33:54 +0000" querystring="...">
@@ -241,7 +241,7 @@ This overrides the specified machine readable format.
 
 ##### Example with `format=jsonv2`
 
-* [https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=-34.44076&lon=-58.70521](https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=-34.44076&lon=-58.70521)
+* [https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=-34.44076&lon=-58.70521&layer=address](https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=-34.44076&lon=-58.70521&layer=address)
 
 ```json
 {
@@ -273,7 +273,7 @@ This overrides the specified machine readable format.
 
 ##### Example with `format=geojson`
 
-* [https://nominatim.openstreetmap.org/reverse?format=geojson&lat=44.50155&lon=11.33989](https://nominatim.openstreetmap.org/reverse?format=geojson&lat=44.50155&lon=11.33989)
+* [https://nominatim.openstreetmap.org/reverse?format=geojson&lat=44.50155&lon=11.33989&layer=address](https://nominatim.openstreetmap.org/reverse?format=geojson&lat=44.50155&lon=11.33989&layer=address)
 
 ```json
 {
@@ -325,7 +325,7 @@ This overrides the specified machine readable format.
 
 ##### Example with `format=geocodejson`
 
-[https://nominatim.openstreetmap.org/reverse?format=geocodejson&lat=60.2299&lon=11.1663](https://nominatim.openstreetmap.org/reverse?format=geocodejson&lat=60.2299&lon=11.1663)
+[https://nominatim.openstreetmap.org/reverse?format=geocodejson&lat=60.2299&lon=11.1663&layer=address](https://nominatim.openstreetmap.org/reverse?format=geocodejson&lat=60.2299&lon=11.1663&layer=address)
 
 ```json
 {

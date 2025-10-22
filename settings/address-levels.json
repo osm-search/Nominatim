@@ -58,7 +58,10 @@
           "" : [24, 0]
       },
       "leisure" : {
-          "park" : [24, 0]
+          "park" : [24, 0],
+          "nature_reserve" : [24, 0],
+          "garden": [25, 0],
+          "common": [25, 0]
       },
       "natural" : {
           "peak" : [18, 0],

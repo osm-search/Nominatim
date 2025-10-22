@@ -204,6 +204,8 @@ module.MAIN_TAGS_POIS = function (group)
     leisure = {'always',
                nature_reserve = 'fallback',
                swimming_pool = 'named',
+               garden = 'named',
+               common = 'named',
                no = group},
     lock = {yes = lock_transform},
     man_made = {pier = 'always',

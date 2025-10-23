@@ -120,26 +120,39 @@ def create_postcode_parent_index(conn: Connection, **_: Any) -> None:
 
 @_migration(5, 1, 99, 0)
 def create_placex_entrance_table(conn: Connection, config: Configuration, **_: Any) -> None:
-    """ Add the placex_entrance table to store entrance nodes
+    """ Add the placex_entrance table to store linked-up entrance nodes
     """
-    sqlp = SQLPreprocessor(conn, config)
-    sqlp.run_string(conn, """
-        -- Table to store location of entrance nodes
-        DROP TABLE IF EXISTS placex_entrance;
-        CREATE TABLE placex_entrance (
-          place_id BIGINT NOT NULL,
-          osm_id BIGINT NOT NULL,
-          type TEXT NOT NULL,
-          location GEOMETRY(Point, 4326) NOT NULL,
-          extratags HSTORE
-          );
-        CREATE UNIQUE INDEX idx_placex_entrance_place_id_osm_id ON placex_entrance
-          USING BTREE (place_id, osm_id) {{db.tablespace.search_index}};
-        GRANT SELECT ON placex_entrance TO "{{config.DATABASE_WEBUSER}}" ;
+    if not table_exists(conn, 'placex_entrance'):
+        sqlp = SQLPreprocessor(conn, config)
+        sqlp.run_string(conn, """
+            -- Table to store location of entrance nodes
+            CREATE TABLE placex_entrance (
+              place_id BIGINT NOT NULL,
+              osm_id BIGINT NOT NULL,
+              type TEXT NOT NULL,
+              location GEOMETRY(Point, 4326) NOT NULL,
+              extratags HSTORE
+              );
+            CREATE UNIQUE INDEX idx_placex_entrance_place_id_osm_id ON placex_entrance
+              USING BTREE (place_id, osm_id) {{db.tablespace.search_index}};
+            GRANT SELECT ON placex_entrance TO "{{config.DATABASE_WEBUSER}}" ;
+              """)
 
-        -- Create an index on the place table for lookups to populate the entrance
-        -- table
-        CREATE INDEX IF NOT EXISTS idx_placex_entrance_lookup ON place
-          USING BTREE (osm_id)
-          WHERE class IN ('routing:entrance', 'entrance');
-          """)
+
+@_migration(5, 1, 99, 1)
+def create_place_entrance_table(conn: Connection, config: Configuration, **_: Any) -> None:
+    """ Add the place_entrance table to store incomming entrance nodes
+    """
+    if not table_exists(conn, 'place_entrance'):
+        with conn.cursor() as cur:
+            cur.execute("""
+            -- Table to store location of entrance nodes
+            CREATE TABLE place_entrance (
+              osm_id BIGINT NOT NULL,
+              type TEXT NOT NULL,
+              extratags HSTORE,
+              geometry GEOMETRY(Point, 4326) NOT NULL
+              );
+            CREATE UNIQUE INDEX place_entrance_osm_id_idx ON place_entrance
+              USING BTREE (osm_id);
+              """)

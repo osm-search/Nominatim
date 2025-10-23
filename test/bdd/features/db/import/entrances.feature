@@ -8,8 +8,10 @@ Feature: Entrance nodes are recorded
         Given the places
           | osm | class    | type  | geometry    | extratags           |
           | W1  | building | yes   | (1,2,3,4,1) |                     |
-          | N1  | entrance | main  | 1           | 'wheelchair': 'yes' |
-          | N2  | entrance | yes   | 3           |                     |
+        And the entrances
+          | osm | type  | geometry    | extratags           |
+          | N1  | main  | 1           | 'wheelchair': 'yes' |
+          | N2  | yes   | 3           |                     |
         And the ways
           | id | nodes     |
           | 1  | 1,2,3,4,1 |

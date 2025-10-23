@@ -84,6 +84,11 @@ def setup_country_config(config: Configuration) -> None:
     _COUNTRY_INFO.load(config)
 
 
+def get(country: str) -> Dict[str, Any]:
+    """ Get country information for the country with the given country code. """
+    return _COUNTRY_INFO._info.get(country) or {}
+
+
 @overload
 def iterate() -> Iterable[Tuple[str, Dict[str, Any]]]:
     ...

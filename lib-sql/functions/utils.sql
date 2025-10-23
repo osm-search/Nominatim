@@ -634,10 +634,8 @@ DECLARE
 BEGIN
   osm_ids := '{}';
   FOR entrance in SELECT osm_id, type, geometry, extratags
-      FROM place
-      WHERE osm_type = 'N'
-        AND osm_id IN (SELECT unnest(nodes) FROM planet_osm_ways WHERE id=osmid)
-        AND class IN ('routing:entrance', 'entrance')
+      FROM place_entrance
+      WHERE osm_id IN (SELECT unnest(nodes) FROM planet_osm_ways WHERE id=osmid)
   LOOP
     osm_ids := array_append(osm_ids, entrance.osm_id);
     INSERT INTO placex_entrance (place_id, osm_id, type, location, extratags)

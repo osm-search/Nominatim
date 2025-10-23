@@ -683,11 +683,6 @@ DECLARE
 BEGIN
   {% if debug %}RAISE WARNING '% % % %',NEW.osm_type,NEW.osm_id,NEW.class,NEW.type;{% endif %}
 
-  IF NEW.class IN ('routing:entrance', 'entrance') THEN
-    -- We don't need entrance nodes in the placex table.
-    RETURN NULL;
-  END IF;
-
   NEW.place_id := nextval('seq_place');
   NEW.indexed_status := 1; --STATUS_NEW
 

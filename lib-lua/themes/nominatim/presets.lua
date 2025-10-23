@@ -172,10 +172,6 @@ module.MAIN_TAGS_POIS = function (group)
                  no = group,
                  yes = group,
                  fire_hydrant = group},
-    entrance = {'always',
-                no = group},
-    ["routing:entrance"] = {exclude_when_key_present('entrance'),
-                            no = group},
     healthcare = {'fallback',
                   yes = group,
                   no = group},
@@ -386,3 +382,8 @@ module.EXTRATAGS = {}
 module.EXTRATAGS.required = {'wikipedia', 'wikipedia:*', 'wikidata', 'capital'}
 
 return module
+
+-- Defaults for the entrance table
+
+module.ENTRACE_TABLE.default = {main_tags = {'entrance', 'routing:entrance'},
+                                extra_exclude=module.IGNORE_KEYS.metatags}

@@ -18,7 +18,7 @@ Feature: Querying fo postcode variants
             | 10 |   |   |   | 11 |
         And the places
             | osm | class   | type | name     | addr+postcode | geometry |
-            | W1  | highway | path | De Weide | 3993 DX       | 10,11    |
+            | W1  | highway | path | De Weide | <postcode>    | 10,11    |
         When importing
         When geocoding "3993 DX"
         Then result 0 contains

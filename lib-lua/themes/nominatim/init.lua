@@ -953,7 +953,7 @@ function module.set_entrance_filter(data)
 
     ENTRANCE_FUNCTION = data and data.func
 
-    if data.main_tags ~= nil and next(data.main_tags) ~= nil then
+    if data ~= nil and data.main_tags ~= nil and next(data.main_tags) ~= nil then
         if data.extra_include ~= nil and next(data.extra_include) == nil then
             -- shortcut: no extra tags requested
             ENTRANCE_FUNCTION = function(o)

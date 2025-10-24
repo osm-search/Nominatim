@@ -381,9 +381,11 @@ module.EXTRATAGS = {}
 
 module.EXTRATAGS.required = {'wikipedia', 'wikipedia:*', 'wikidata', 'capital'}
 
-return module
-
 -- Defaults for the entrance table
 
+module.ENTRACE_TABLE = {}
+
 module.ENTRACE_TABLE.default = {main_tags = {'entrance', 'routing:entrance'},
-                                extra_exclude=module.IGNORE_KEYS.metatags}
+                                extra_exclude = module.IGNORE_KEYS.metatags}
+
+return module

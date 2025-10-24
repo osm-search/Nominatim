@@ -118,6 +118,17 @@ class PlaceColumn:
         else:
             self.columns[column] = {key: value}
 
+    def get_wkt(self):
+        if self.columns['osm_type'] == 'N' and self.geometry is None:
+            pt = self.grid.get(str(self.columns['osm_id'])) if self.grid else None
+            if pt is None:
+                pt = (random.uniform(-180, 180), random.uniform(-90, 90))
+
+            return "ST_SetSRID(ST_Point({}, {}), 4326)".format(*pt)
+
+        assert self.geometry is not None, "Geometry missing"
+        return self.geometry
+
     def db_delete(self, cursor):
         """ Issue a delete for the given OSM object.
         """
@@ -127,17 +138,8 @@ class PlaceColumn:
     def db_insert(self, cursor):
         """ Insert the collected data into the database.
         """
-        if self.columns['osm_type'] == 'N' and self.geometry is None:
-            pt = self.grid.get(str(self.columns['osm_id'])) if self.grid else None
-            if pt is None:
-                pt = (random.uniform(-180, 180), random.uniform(-90, 90))
-
-            self.geometry = "ST_SetSRID(ST_Point({}, {}), 4326)".format(*pt)
-        else:
-            assert self.geometry is not None, "Geometry missing"
-
         query = 'INSERT INTO place ({}, geometry) values({}, {})'.format(
             ','.join(self.columns.keys()),
             ','.join(['%s' for x in range(len(self.columns))]),
-            self.geometry)
+            self.get_wkt())
         cursor.execute(query, list(self.columns.values()))

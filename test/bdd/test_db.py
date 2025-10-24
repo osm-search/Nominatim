@@ -82,6 +82,21 @@ def import_places(db_conn, named, datatable, node_grid):
             PlaceColumn(node_grid).add_row(datatable[0], row, named is not None).db_insert(cur)
 
 
+@given(step_parse('the entrances'), target_fixture=None)
+def import_place_entrances(db_conn, datatable, node_grid):
+    """ Insert todo rows into the place_entrance table.
+    """
+    with db_conn.cursor() as cur:
+        for row in datatable[1:]:
+            data = PlaceColumn(node_grid).add_row(datatable[0], row, False)
+            assert data.columns['osm_type'] == 'N'
+
+            cur.execute("""INSERT INTO place_entrance (osm_id, type, extratags, geometry)
+                           VALUES (%s, %s, %s, {})""".format(data.get_wkt()),
+                        (data.columns['osm_id'], data.columns['type'],
+                         data.columns.get('extratags')))
+
+
 @given('the ways', target_fixture=None)
 def import_ways(db_conn, datatable):
     """ Import raw ways into the osm2pgsql way middle table.
@@ -151,6 +166,23 @@ def do_update(db_conn, update_config, node_grid, datatable):
     return _collect_place_ids(db_conn)
 
 
+@when('updating entrances', target_fixture=None)
+def update_place_entrances(db_conn, datatable, node_grid):
+    """ Insert todo rows into the place_entrance table.
+    """
+    with db_conn.cursor() as cur:
+        for row in datatable[1:]:
+            data = PlaceColumn(node_grid).add_row(datatable[0], row, False)
+            assert data.columns['osm_type'] == 'N'
+
+            cur.execute("DELETE FROM place_entrance WHERE osm_id = %s",
+                        (data.columns['osm_id'],))
+            cur.execute("""INSERT INTO place_entrance (osm_id, type, extratags, geometry)
+                           VALUES (%s, %s, %s, {})""".format(data.get_wkt()),
+                        (data.columns['osm_id'], data.columns['type'],
+                         data.columns.get('extratags')))
+
+
 @when('updating postcodes')
 def do_postcode_update(update_config):
     """ Recompute the postcode centroids.
@@ -168,6 +200,9 @@ def do_delete_place(db_conn, update_config, node_grid, otype, oid):
         cur.execute('DELETE FROM place WHERE osm_type = %s and osm_id = %s',
                     (otype, oid))
         cur.execute('SELECT flush_deleted_places()')
+        if otype == 'N':
+            cur.execute('DELETE FROM place_entrance WHERE osm_id = %s',
+                        (oid, ))
     db_conn.commit()
 
     cli.nominatim(['index', '-q'], update_config.environ)

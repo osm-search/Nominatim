@@ -68,10 +68,11 @@ When Nominatim processes an OSM object, it looks for four kinds of tags:
 The _main tags_ classify what kind of place the OSM object represents. One
 OSM object can have more than one main tag. In such case one database entry
 is created for each main tag. _Name tags_ represent searchable names of the
-place. _Address tags_ are used to compute the address hierarchy of the place.
+place. _Address tags_ are used to compute the address information of the place.
 Address tags are used for searching and for creating a display name of the place.
 _Extra tags_ are any tags that are not directly related to search but
-contain interesting additional information.
+contain interesting additional information. These are just saved in the database
+and may be returned with the result [on request](../api/Search.md#output-details).
 
 !!! danger
     Some tags in the extratags category are used by Nominatim to better
@@ -425,6 +426,56 @@ is added for extratags.
     are moved to the extratags list. Note that it is not possible to
     already delete the tiger tags with `set_prefilters()` because that
     would remove tiger:county before the address tags are processed.
+
+## Filling additional tables
+
+Most of the OSM objects are saved in the main `place` table for further
+processing. In addition to that, there are some smaller tables that save
+specialised information. The content of these tables can be customized as
+well.
+
+### Entrance table
+
+The table `place_entrance` saves information about OSM nodes that represent
+an entrance. This data is later mingled with buildings and other areas and
+can be returned [on request](../api/Search.md#output-details). The table
+saves the type of entrance as well as a set of custom extra tags.
+
+The function `set_entrance_filter()` can be used to customize the table's
+content.
+
+When called without any parameter, then filling the entrance table will be
+disabled. When called with a preset name, the appropriate preset will be
+applied.
+
+To create a custom configuration, call the function
+with a table with the following fields:
+
+* __main_tags__ is a list of tags that mark an entrance node. The value of the
+  first tag found in the list will be used as the entrance type.
+* __extra_include__ is an optional list of tags to be added to the extratags
+  for this entrance. When left out, all tags except for the ones defined
+  in 'main_tags' will be included. To disable saving of extra tags, set
+  this to the empty list.
+* __extra_exclude__ defines an optional list of tags to drop before including
+  the remaining tags as extratags. Note that the tags defined in 'main_tags'
+  will always be excluded, independently of this setting.
+
+To have even more fine-grained control over the output, you can also hand
+in a table with a single field `func` containing a callback for processing
+entrance information. The callback function receives a single parameter,
+the [osm2pgsql object](https://osm2pgsql.org/doc/manual.html#processing-callbacks).
+This object itself must not be modified. The callback should return either
+`nil` when the object is not an entrance. Or it returns a table with a
+mandatory `entrance` field containing a string with the type of entrance
+and an optional `extratags` field with a simple key-value table of extra
+information.
+
+##### Presets
+
+| Name     | Description |
+| :-----   | :---------- |
+| default  | Standard configuration used with `full` and `extratags` styles. |
 
 ## Customizing osm2pgsql callbacks
 

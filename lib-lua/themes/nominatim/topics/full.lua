@@ -30,3 +30,5 @@ else
     flex.ignore_keys('name')
     flex.ignore_keys('address')
 end
+
+flex.set_entrance_filter('default')

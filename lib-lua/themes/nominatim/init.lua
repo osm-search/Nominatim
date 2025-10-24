@@ -30,6 +30,7 @@ local ADDRESS_TAGS = {}
 local ADDRESS_FILTER = nil
 local EXTRATAGS_FILTER
 local POSTCODE_FALLBACK = true
+local ENTRANCE_FUNCTION = nil
 
 -- This file can also be directly require'd instead of running it under
 -- the themepark framework. In that case the first parameter is usually
@@ -40,37 +41,51 @@ if type(themepark) ~= 'table' then
     themepark = nil
 end
 
--- The single place table.
-local place_table_definition = {
-    name = "place",
-    ids = { type = 'any', id_column = 'osm_id', type_column = 'osm_type' },
-    columns = {
-        { column = 'class', type = 'text', not_null = true },
-        { column = 'type', type = 'text', not_null = true },
-        { column = 'admin_level', type = 'smallint' },
-        { column = 'name', type = 'hstore' },
-        { column = 'address', type = 'hstore' },
-        { column = 'extratags', type = 'hstore' },
-        { column = 'geometry', type = 'geometry', projection = 'WGS84', not_null = true },
+-- The place tables carry the raw OSM information.
+local table_definitions = {
+    place = {
+        ids = { type = 'any', id_column = 'osm_id', type_column = 'osm_type' },
+        columns = {
+            { column = 'class', type = 'text', not_null = true },
+            { column = 'type', type = 'text', not_null = true },
+            { column = 'admin_level', type = 'smallint' },
+            { column = 'name', type = 'hstore' },
+            { column = 'address', type = 'hstore' },
+            { column = 'extratags', type = 'hstore' },
+            { column = 'geometry', type = 'geometry', projection = 'WGS84', not_null = true },
+        },
+        indexes = {}
     },
-    data_tablespace = os.getenv("NOMINATIM_TABLESPACE_PLACE_DATA"),
-    index_tablespace = os.getenv("NOMINATIM_TABLESPACE_PLACE_INDEX"),
-    indexes = {}
+    place_entrance = {
+        ids = { type = 'node', id_column = 'osm_id' },
+        columns = {
+            { column = 'type', type = 'text', not_null = true },
+            { column = 'extratags', type = 'hstore' },
+            { column = 'geometry', type = 'geometry', projection = 'WGS84', not_null = true }
+        },
+        indexes = {}
+    }
 }
 
-local insert_row
+local insert_row = {}
 local script_path = debug.getinfo(1, "S").source:match("@?(.*/)")
 local PRESETS = loadfile(script_path .. 'presets.lua')()
 
-if themepark then
-    themepark:add_table(place_table_definition)
-    insert_row = function(columns)
-        themepark:insert('place', columns, {}, {})
-    end
-else
-    local place_table = osm2pgsql.define_table(place_table_definition)
-    insert_row = function(columns)
-        place_table:insert(columns)
+for table_name, table_definition in pairs(table_definitions) do
+    table_definition.name = table_name
+    table_definition.data_tablespace = os.getenv("NOMINATIM_TABLESPACE_PLACE_DATA")
+    table_definition.index_tablespace = os.getenv("NOMINATIM_TABLESPACE_PLACE_INDEX")
+
+    if themepark then
+        themepark:add_table(table_definition)
+        insert_row[table_name] = function(columns)
+            themepark:insert(table_name, columns, {}, {})
+        end
+    else
+        local place_table = osm2pgsql.define_table(table_definition)
+        insert_row[table_name] = function(columns)
+            place_table:insert(columns)
+        end
     end
 end
 
@@ -434,7 +449,7 @@ function Place:write_row(k, v)
         extratags = nil
     end
 
-    insert_row{
+    insert_row.place{
         class = k,
         type = v,
         admin_level = self.admin_level,
@@ -593,6 +608,16 @@ end
 
 -- Process functions for all data types
 function module.process_node(object)
+    if ENTRANCE_FUNCTION ~= nil then
+        local entrance_info = ENTRANCE_FUNCTION(object)
+        if entrance_info ~= nil then
+            insert_row.place_entrance{
+                type = entrance_info.entrance,
+                extratags = entrance_info.extratags,
+                geometry = object:as_point()
+            }
+        end
+    end
 
     local function geom_func(o)
         return o:as_point()
@@ -917,6 +942,94 @@ function module.set_relation_types(data)
     end
 end
 
+function module.set_entrance_filter(data)
+    if type(data) == 'string' then
+        local preset = data
+        data = PRESETS.ENTRACE_TABLE[data]
+        if data == nil then
+            error('Unknown preset for entrance table: ' .. preset)
+        end
+    end
+
+    ENTRANCE_FUNCTION = data and data.func
+
+    if data ~= nil and data.main_tags ~= nil and next(data.main_tags) ~= nil then
+        if data.extra_include ~= nil and next(data.extra_include) == nil then
+            -- shortcut: no extra tags requested
+            ENTRANCE_FUNCTION = function(o)
+                for _, v in ipairs(data.main_tags) do
+                    if o.tags[v] ~= nil then
+                        return {entrance = o.tags[v]}
+                    end
+                end
+                return nil
+            end
+        else
+            if data.extra_include ~= nil then
+                local tags = {}
+                for _, v in pairs(data.extra_include) do
+                    tags[v] = true
+                end
+                if data.extra_exclude ~= nil then
+                    for _, v in pairs(data.extra_exclude) do
+                        tags[v] = nil
+                    end
+                end
+                for _, v in pairs(data.main_tags) do
+                    tags[v] = nil
+                end
+
+                ENTRANCE_FUNCTION = function(o)
+                    for _, v in ipairs(data.main_tags) do
+                        if o.tags[v] ~= nil then
+                            local entrance = o.tags[v]
+                            local extra = {}
+                            for k, v in pairs(tags) do
+                                extra[k] = o.tags[k]
+                            end
+                            if next(extra) == nil then
+                                extra = nil
+                            end
+                            return {entrance = entrance, extratags = extra}
+                        end
+                    end
+
+                    return nil
+                end
+            else
+                local notags = {}
+                if data.extra_exclude ~= nil then
+                    for _, v in pairs(data.extra_exclude) do
+                        notags[v] = 1
+                    end
+                end
+                for _, v in pairs(data.main_tags) do
+                    notags[v] = 1
+                end
+
+                ENTRANCE_FUNCTION = function(o)
+                    for _, v in ipairs(data.main_tags) do
+                        if o.tags[v] ~= nil then
+                            local entrance = o.tags[v]
+                            local extra = {}
+                            for k, v in pairs(o.tags) do
+                                if notags[k] ~= 1 then
+                                    extra[k] = v
+                                end
+                            end
+                            if next(extra) == nil then
+                                extra = nil
+                            end
+                            return {entrance = entrance, extratags = extra}
+                        end
+                    end
+
+                    return nil
+                end
+            end
+        end
+    end
+end
 
 function module.get_taginfo()
     return {main = MAIN_KEYS, name = NAMES, address = ADDRESS_TAGS}

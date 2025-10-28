@@ -943,17 +943,22 @@ function module.set_relation_types(data)
 end
 
 function module.set_entrance_filter(data)
+    if data == nil or type(data) == 'function' then
+        ENTRANCE_FUNCTION = data
+        return nil
+    end
+
     if type(data) == 'string' then
         local preset = data
-        data = PRESETS.ENTRACE_TABLE[data]
+        data = PRESETS.ENTRANCE_TABLE[data]
         if data == nil then
             error('Unknown preset for entrance table: ' .. preset)
         end
     end
 
-    ENTRANCE_FUNCTION = data and data.func
+    ENTRANCE_FUNCTION = nil
 
-    if data ~= nil and data.main_tags ~= nil and next(data.main_tags) ~= nil then
+    if data.main_tags ~= nil and next(data.main_tags) ~= nil then
         if data.extra_include ~= nil and next(data.extra_include) == nil then
             -- shortcut: no extra tags requested
             ENTRANCE_FUNCTION = function(o)

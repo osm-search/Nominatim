@@ -375,11 +375,9 @@ module.IGNORE_KEYS.address = {'addr:street:*', 'addr:city:*', 'addr:district:*',
                               'addr:province:*', 'addr:subdistrict:*', 'addr:place:*',
                               'addr:TW:dataset'}
 
--- Extra tags (prefiltered away)
+-- INTERNAL: Required extra tags
 
-module.EXTRATAGS = {}
-
-module.EXTRATAGS.required = {'wikipedia', 'wikipedia:*', 'wikidata', 'capital'}
+module.EXTRATAGS = {keys = {'wikipedia', 'wikipedia:*', 'wikidata', 'capital'}}
 
 -- Defaults for the entrance table
 

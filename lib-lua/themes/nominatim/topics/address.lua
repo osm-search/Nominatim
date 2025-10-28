@@ -11,7 +11,6 @@ flex.set_address_tags('core')
 flex.modify_address_tags('houses')
 
 flex.ignore_keys('metatags')
-flex.add_for_extratags('required')
 
 if cfg.with_extratags then
     flex.set_unused_handling{delete_keys = {'tiger:*'}}

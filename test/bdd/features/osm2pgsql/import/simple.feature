@@ -40,3 +40,26 @@ Feature: Import of simple objects by osm2pgsql
         Then place contains exactly
           | object | class | type |
           | N1     | place | house |
+
+    Scenario Outline: Tags used by Nominatim internally are always imported
+        Given the lua style file
+            """
+            local flex = require('import-<style>')
+            """
+        When loading osm data
+            """
+            n1 Tboundary=administrative,place=city,name=Foo,wikipedia:de=Foo
+            n2 Tplace=hamlet,wikidata=Q1234321,name=Bar
+            """
+        Then place contains exactly
+           | object | class    | extratags!dict         |
+           | N1     | boundary | 'place': 'city', 'wikipedia:de': 'Foo' |
+           | N2     | place    | 'wikidata': 'Q1234321' |
+
+        Examples:
+           | style   |
+           | admin   |
+           | street  |
+           | address |
+           | full    |
+           | extratags |

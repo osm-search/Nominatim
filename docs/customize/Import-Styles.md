@@ -267,11 +267,7 @@ in turn take precedence over prefix matches.
 
 ##### Presets
 
-| Name     | Description |
-| :-----   | :---------- |
-| required | Tags that Nominatim will use for various computations when present in extratags. Automatically added. |
-
-In addition, all [presets from ignored tags](#presets_1) are accepted.
+Accepts all [presets from ignored tags](#presets_1).
 
 ### General pre-filtering
 

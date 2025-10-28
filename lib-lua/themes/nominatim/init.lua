@@ -29,6 +29,7 @@ local NAME_FILTER = nil
 local ADDRESS_TAGS = {}
 local ADDRESS_FILTER = nil
 local EXTRATAGS_FILTER
+local REQUIRED_EXTRATAGS_FILTER
 local POSTCODE_FALLBACK = true
 local ENTRANCE_FUNCTION = nil
 
@@ -164,24 +165,6 @@ local function address_fallback(place)
     end
     return place:clone{names=names}
 end
-
---------- Built-in extratags transformation functions ---------------
-
-local function default_extratags_filter(p, k)
-    -- Default handling is to copy over place tag for boundaries.
-    -- Nominatim needs this.
-    if k ~= 'boundary' or p.intags.place == nil then
-        return p.extratags
-    end
-
-    local extra = { place = p.intags.place }
-    for kin, vin in pairs(p.extratags) do
-        extra[kin] = vin
-    end
-
-    return extra
-end
-EXTRATAGS_FILTER = default_extratags_filter
 
 ----------------- other helper functions -----------------------------
 
@@ -444,10 +427,17 @@ function Place:write_row(k, v)
         return 0
     end
 
-    local extratags = EXTRATAGS_FILTER(self, k, v)
-    if not (extratags and next(extratags)) then
-        extratags = nil
-    end
+     local extra = EXTRATAGS_FILTER(self, k, v) or {}
+
+     for tk, tv in pairs(self.object.tags) do
+         if REQUIRED_EXTRATAGS_FILTER(tk, tv) and extra[tk] == nil then
+             extra[tk] = tv
+         end
+     end
+
+     if extra and next(extra) == nil then
+         extra = nil
+     end
 
     insert_row.place{
         class = k,
@@ -455,7 +445,7 @@ function Place:write_row(k, v)
         admin_level = self.admin_level,
         name = next(self.names) and self.names,
         address = next(self.address) and self.address,
-        extratags = extratags,
+        extratags = extra,
         geometry = self.geometry
     }
 
@@ -712,6 +702,15 @@ function module.process_tags(o)
     end
 end
 
+--------- Extratags post-processing functions ---------------
+
+local function default_extratags_filter(p, k)
+    return p.extratags
+end
+
+EXTRATAGS_FILTER = default_extratags_filter
+REQUIRED_EXTRATAGS_FILTER = module.tag_match(PRESETS.EXTRATAGS)
+
 --------- Convenience functions for simple style configuration -----------------
 
 function module.set_prefilters(data)
@@ -742,7 +741,7 @@ end
 function module.add_for_extratags(data)
     if type(data) == 'string' then
         local preset = data
-        data = PRESETS.EXTRATAGS[data] or PRESETS.IGNORE_KEYS[data]
+        data = PRESETS.IGNORE_KEYS[data]
         if data == nil then
             error('Unknown preset for extratags: ' .. preset)
         end

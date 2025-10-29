@@ -17,6 +17,18 @@ breaking changes. **Please read them before running the migration.**
     and migrate to 4.3 first. Then you can migrate to the current
     version. It is strongly recommended to do a reimport instead.
 
+## 5.1.0 -> 5.2.0
+
+### Lua import style: required extratags removed
+
+Tags that are required by Nominatim as extratags are now always included
+independent of what is defined in the style. The line
+
+    flex.add_for_extratags('required')
+
+is no longer required in custom styles and will throw an error. Simply
+remove the line from your style.
+
 ## 4.5.0 -> 5.0.0
 
 ### PHP frontend removed

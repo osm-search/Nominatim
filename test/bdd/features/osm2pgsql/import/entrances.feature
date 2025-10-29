@@ -109,9 +109,9 @@ Feature: Import of entrance objects by osm2pgsql
         Given the lua style file
             """
             local flex = require('import-full')
-            flex.set_entrance_filter{func = function(object)
+            flex.set_entrance_filter(function(object)
                 return {entrance='always', extratags = {ref = '1'}}
-            end}
+            end)
             """
         When loading osm data
           """

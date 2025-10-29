@@ -76,8 +76,8 @@ and may be returned with the result [on request](../api/Search.md#output-details
 
 !!! danger
     Some tags in the extratags category are used by Nominatim to better
-    classify the place. You want to make sure these are always present
-    in custom styles.
+    classify the place. These tags will always be added, independent of
+    any settings in the style.
 
 Configuring the style means deciding which key and/or key/value is used
 in which category.
@@ -267,11 +267,7 @@ in turn take precedence over prefix matches.
 
 ##### Presets
 
-| Name     | Description |
-| :-----   | :---------- |
-| required | Tags that Nominatim will use for various computations when present in extratags. Always include these. |
-
-In addition, all [presets from ignored tags](#presets_1) are accepted.
+Accepts all [presets from ignored tags](#presets_1).
 
 ### General pre-filtering
 
@@ -462,9 +458,9 @@ with a table with the following fields:
   will always be excluded, independently of this setting.
 
 To have even more fine-grained control over the output, you can also hand
-in a table with a single field `func` containing a callback for processing
-entrance information. The callback function receives a single parameter,
-the [osm2pgsql object](https://osm2pgsql.org/doc/manual.html#processing-callbacks).
+in a callback for processing entrance information. The callback function
+receives a single parameter, the
+[osm2pgsql object](https://osm2pgsql.org/doc/manual.html#processing-callbacks).
 This object itself must not be modified. The callback should return either
 `nil` when the object is not an entrance. Or it returns a table with a
 mandatory `entrance` field containing a string with the type of entrance

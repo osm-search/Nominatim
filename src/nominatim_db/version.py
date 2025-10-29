@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Version information for Nominatim.
@@ -55,7 +55,7 @@ def parse_version(version: str) -> NominatimVersion:
     return NominatimVersion(*[int(x) for x in parts[:2] + parts[2].split('-')])
 
 
-NOMINATIM_VERSION = parse_version('5.1.99-1')
+NOMINATIM_VERSION = parse_version('5.2.0-0')
 
 POSTGRESQL_REQUIRED_VERSION = (12, 0)
 POSTGIS_REQUIRED_VERSION = (3, 0)

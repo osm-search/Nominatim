@@ -9,11 +9,11 @@ versions.
 
 | Version | End of support for security updates |
 | ------- | ----------------------------------- |
+| 5.2.x   | 2027-10-29                          |
 | 5.1.x   | 2027-04-01                          |
 | 5.0.x   | 2027-02-06                          |
 | 4.5.x   | 2026-09-12                          |
 | 4.4.x   | 2026-03-07                          |
-| 4.3.x   | 2025-09-07                          |
 
 ## Reporting a Vulnerability
 
@@ -32,8 +32,7 @@ description of the nature and severity of the issue. **
 Patches for identified security issues are applied to all affected versions and
 new minor versions are released. At the same time we release a statement at
 the [Nominatim blog](https://nominatim.org/blog/) describing the nature of the
-incident. Announcements will also be published at the
-[geocoding mailinglist](https://lists.openstreetmap.org/listinfo/geocoding).
+incident.
 
 ## List of Previous Incidents
 

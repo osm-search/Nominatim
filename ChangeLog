@@ -1,3 +1,39 @@
+5.2.0
+ * increase minimum required Python to 3.9
+ * index and output entrances of buildings and areas (thanks @emlove)
+ * name tags used for creating display names are now configurable
+   (thanks @astridx)
+ * new pattern-replacement query preprocessor (thanks @TuringVerified)
+ * special phrases can now be filtered by presence of tags (thanks @anqixxx)
+ * lua import style now always includes tags required by Nominatim
+ * improved query time reporting and logging
+ * improve word matching for languages with no word boundaries
+ * POIs with addresses inherited from surrounding building are no
+   longer returned in the address layer
+ * avoid creating a directory for the tokenizer when not needed
+ * replace behave with pytest-bdd for BDD testing
+ * refactoring and performance improvements to query parsing
+ * various smaller updates to styles
+ * remove English as default language for South Korea
+ * remove Japanese word variants
+ * updated country names for Norwegians (thanks @Johannes-Andersen)
+ * remove support for deprecated osm2pgsql gazetteer style
+ * fix updating of importances (also needs to update search_name table)
+ * fix query for deletable endpoint to use index again
+ * fix reindexing of contained places when a boundary is deleted and reinstated
+ * fix difference computation error when updating postcodes
+ * bracket handling sanitizer no longer strips bracket terms in the middle of
+   name
+ * reduce precision of stored coordinates to 7-digits everywhere
+ * avoid ST_Relate as it seems buggy on some systems
+ * remove setting for logging queries in DB, no longer functional
+ * postcode updates no longer require a project directory (needed for tests)
+ * refactor locale handling code (thanks @anqixxx)
+ * code updates for newer Python (thanks @emmanuel-ferdman)
+ * better test coverage (thanks @asharmalik19)
+ * various fixes and improvements to documentation
+   (thanks @anqixxx, @dave-meyer, @hasandiwan)
+
 5.1.0
  * replace datrie with simple internal trie implementation
  * add pattern-based postcode parser for queries,

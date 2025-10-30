@@ -29,6 +29,9 @@ class CountryPostcodeMatcher:
         self.norm_pattern = re.compile(f'\\s*(?:{country_code.upper()}[ -]?)?({pc_pattern})\\s*')
         self.pattern = re.compile(pc_pattern)
 
+        # We want to exclude 0000, 00-000, 000 00 etc
+        self.zero_pattern = re.compile(r'^[0\- ]+$')
+
         self.output = config.get('output', r'\g<0>')
 
     def match(self, postcode: str) -> Optional[Match[str]]:
@@ -40,7 +43,10 @@ class CountryPostcodeMatcher:
         normalized = self.norm_pattern.fullmatch(postcode.upper())
 
         if normalized:
-            return self.pattern.fullmatch(normalized.group(1))
+            match = self.pattern.fullmatch(normalized.group(1))
+            if match and self.zero_pattern.match(match.string):
+                return None
+            return match
 
         return None
 

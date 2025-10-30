@@ -15,7 +15,7 @@ import re
 import psycopg
 
 import pytest
-from pytest_bdd import scenarios, when, then, given
+from pytest_bdd import when, then, given
 from pytest_bdd.parsers import re as step_parse
 
 from utils.place_inserter import PlaceColumn
@@ -276,4 +276,4 @@ def then_check_interpolation_table_negative(db_conn, oid):
         assert cur.fetchone()[0] == 0
 
 
-scenarios('features/db')
+PYTEST_BDD_SCENARIOS = ['features/db']

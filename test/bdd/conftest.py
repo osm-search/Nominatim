@@ -377,8 +377,9 @@ def check_place_missing_lines(db_conn, table, osm_type, osm_id, osm_class):
         assert cur.execute(sql, params).fetchone()[0] == 0
 
 
-def pytest_pycollect_makemodule(module_path, parent):
-    return BddTestCollector.from_parent(parent, path=module_path)
+if pytest.version_tuple >= (8, 0, 0):
+    def pytest_pycollect_makemodule(module_path, parent):
+        return BddTestCollector.from_parent(parent, path=module_path)
 
 
 class BddTestCollector(pytest.Module):

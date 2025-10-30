@@ -276,4 +276,8 @@ def then_check_interpolation_table_negative(db_conn, oid):
         assert cur.fetchone()[0] == 0
 
 
-PYTEST_BDD_SCENARIOS = ['features/db']
+if pytest.version_tuple >= (8, 0, 0):
+    PYTEST_BDD_SCENARIOS = ['features/db']
+else:
+    from pytest_bdd import scenarios
+    scenarios('features/db')

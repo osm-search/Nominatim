@@ -237,3 +237,9 @@ def test_postcode_default_pattern_pass(sanitize, postcode):
 @pytest.mark.sanitizer_params(convert_to_address=False, default_pattern='[A-Z0-9- ]{3,12}')
 def test_postcode_default_pattern_fail(sanitize, postcode):
     assert sanitize(country='an', postcode=postcode) == []
+
+
+@pytest.mark.parametrize("postcode", ('00000', '00-000', 'PL-00000', 'PL 00-000'))
+@pytest.mark.sanitizer_params(convert_to_address=False)
+def test_postcode_zeros(sanitize, postcode):
+    assert sanitize(country='pl', postcode=postcode) == []

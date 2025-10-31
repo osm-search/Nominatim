@@ -52,6 +52,15 @@ To run the functional tests, do
 
     pytest test/bdd
 
+You can run a single feature file using expression matching:
+
+    pytest test/bdd -k osm2pgsql/import/entrances.feature
+
+This even works for running single tests by adding the line number of the
+scenario header like that:
+
+    pytest test/bdd -k 'osm2pgsql/import/entrances.feature and L4'
+
 The BDD tests create databases for the tests. You can set name of the databases
 through configuration variables in your `pytest.ini`:
 

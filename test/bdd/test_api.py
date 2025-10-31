@@ -15,7 +15,7 @@ import xml.etree.ElementTree as ET
 
 import pytest
 from pytest_bdd.parsers import re as step_parse
-from pytest_bdd import scenarios, when, given, then
+from pytest_bdd import when, given, then
 
 from nominatim_db import cli
 from nominatim_db.config import Configuration
@@ -150,4 +150,8 @@ def parse_api_json_response(api_response, fmt, num):
     return result
 
 
-scenarios('features/api')
+if pytest.version_tuple >= (8, 0, 0):
+    PYTEST_BDD_SCENARIOS = ['features/api']
+else:
+    from pytest_bdd import scenarios
+    scenarios('features/api')

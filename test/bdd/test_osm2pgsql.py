@@ -11,7 +11,7 @@ import asyncio
 import random
 
 import pytest
-from pytest_bdd import scenarios, when, then, given
+from pytest_bdd import when, then, given
 from pytest_bdd.parsers import re as step_parse
 
 from nominatim_db import cli
@@ -106,4 +106,8 @@ def check_place_content(db_conn, datatable, node_grid, table, exact):
     check_table_content(db_conn, table, datatable, grid=node_grid, exact=bool(exact))
 
 
-scenarios('features/osm2pgsql')
+if pytest.version_tuple >= (8, 0, 0):
+    PYTEST_BDD_SCENARIOS = ['features/osm2pgsql']
+else:
+    from pytest_bdd import scenarios
+    scenarios('features/osm2pgsql')

@@ -9,6 +9,7 @@ Fixtures for BDD test steps
 """
 import sys
 import json
+import re
 from pathlib import Path
 
 import psycopg
@@ -20,7 +21,8 @@ sys.path.insert(0, str(SRC_DIR / 'src'))
 
 import pytest
 from pytest_bdd.parsers import re as step_parse
-from pytest_bdd import given, when, then
+from pytest_bdd import given, when, then, scenario
+from pytest_bdd.feature import get_features
 
 pytest.register_assert_rewrite('utils')
 
@@ -373,3 +375,57 @@ def check_place_missing_lines(db_conn, table, osm_type, osm_id, osm_class):
 
     with db_conn.cursor() as cur:
         assert cur.execute(sql, params).fetchone()[0] == 0
+
+
+if pytest.version_tuple >= (8, 0, 0):
+    def pytest_pycollect_makemodule(module_path, parent):
+        return BddTestCollector.from_parent(parent, path=module_path)
+
+
+class BddTestCollector(pytest.Module):
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def collect(self):
+        for item in super().collect():
+            yield item
+
+        if hasattr(self.obj, 'PYTEST_BDD_SCENARIOS'):
+            for path in self.obj.PYTEST_BDD_SCENARIOS:
+                for feature in get_features([str(Path(self.path.parent, path).resolve())]):
+                    yield FeatureFile.from_parent(self,
+                                                  name=str(Path(path, feature.rel_filename)),
+                                                  path=Path(feature.filename),
+                                                  feature=feature)
+
+
+# borrowed from pytest-bdd: src/pytest_bdd/scenario.py
+def make_python_name(string: str) -> str:
+    """Make python attribute name out of a given string."""
+    string = re.sub(r"\W", "", string.replace(" ", "_"))
+    return re.sub(r"^\d+_*", "", string).lower()
+
+
+class FeatureFile(pytest.File):
+    class obj:
+        pass
+
+    def __init__(self, feature, **kwargs):
+        self.feature = feature
+        super().__init__(**kwargs)
+
+    def collect(self):
+        for sname, sobject in self.feature.scenarios.items():
+            class_name = f"L{sobject.line_number}"
+            test_name = "test_" + make_python_name(sname)
+
+            @scenario(self.feature.filename, sname)
+            def _test():
+                pass
+
+            tclass = type(class_name, (),
+                          {test_name: staticmethod(_test)})
+            setattr(self.obj, class_name, tclass)
+
+            yield pytest.Class.from_parent(self, name=class_name, obj=tclass)

@@ -161,7 +161,7 @@ class APIMiddleware:
 
     def __init__(self, project_dir: Path, environ: Optional[Mapping[str, str]]) -> None:
         self.api = NominatimAPIAsync(project_dir, environ)
-        self.app: Optional[App] = None
+        self.app: Optional[App[Request, Response]] = None
 
     @property
     def config(self) -> Configuration:
@@ -169,7 +169,7 @@ class APIMiddleware:
         """
         return self.api.config
 
-    def set_app(self, app: App) -> None:
+    def set_app(self, app: App[Request, Response]) -> None:
         """ Set the Falcon application this middleware is connected to.
         """
         self.app = app
@@ -193,7 +193,7 @@ class APIMiddleware:
 
 
 def get_application(project_dir: Path,
-                    environ: Optional[Mapping[str, str]] = None) -> App:
+                    environ: Optional[Mapping[str, str]] = None) -> App[Request, Response]:
     """ Create a Nominatim Falcon ASGI application.
     """
     apimw = APIMiddleware(project_dir, environ)
@@ -215,7 +215,7 @@ def get_application(project_dir: Path,
     return app
 
 
-def run_wsgi() -> App:
+def run_wsgi() -> App[Request, Response]:
     """ Entry point for uvicorn.
 
         Make sure uvicorn is run from the project directory.

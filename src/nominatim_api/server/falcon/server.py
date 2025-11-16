@@ -7,6 +7,8 @@
 """
 Server implementation using the falcon webserver framework.
 """
+from __future__ import annotations
+
 from typing import Optional, Mapping, Any, List, cast
 from pathlib import Path
 import asyncio

@@ -891,7 +891,7 @@ BEGIN
   NEW.centroid := get_center_point(NEW.geometry);
 
   -- Record the entrance node locations
-  IF NEW.osm_type = 'W' and (NEW.rank_search > 27 or NEW.class IN ('landuse', 'leisure')) THEN
+  IF NEW.osm_type = 'W' and (NEW.rank_search > 27 or NEW.class IN ('landuse', 'leisure', 'boundary')) THEN
     PERFORM place_update_entrances(NEW.place_id, NEW.osm_id);
   END IF;
 

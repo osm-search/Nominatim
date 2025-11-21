@@ -24,6 +24,13 @@ dependencies = [
 ]
 dynamic = ["version"]
 
+[project.optional-dependencies]
+transliteration = [
+    "cantonese-romanisation",
+    "unidecode",
+    "opencc"
+]
+
 [project.urls]
 Homepage = "https://nominatim.org"
 Documentation = "https://nominatim.org/release-docs/latest/"

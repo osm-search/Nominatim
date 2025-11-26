@@ -341,6 +341,22 @@ BEGIN
     END IF;
   END IF;
 
+  IF bnd.extratags ? 'wikidata' THEN
+    FOR linked_placex IN
+      SELECT * FROM placex
+      WHERE placex.class = 'place' AND placex.osm_type = 'N'
+        AND placex.extratags ? 'wikidata' -- needed to select right index
+        AND placex.extratags->'wikidata' = bnd.extratags->'wikidata'
+        AND (placex.linked_place_id is null or placex.linked_place_id = bnd.place_id)
+        AND placex.rank_search < 26
+        AND _st_covers(bnd.geometry, placex.geometry)
+      ORDER BY lower(name->'name') = bnd_name desc
+    LOOP
+      {% if debug %}RAISE WARNING 'Found wikidata-matching place node %', linked_placex.osm_id;{% endif %}
+      RETURN linked_placex;
+    END LOOP;
+  END IF;
+
   -- If extratags has a place tag, look for linked nodes by their place type.
   -- Area and node still have to have the same name.
   IF bnd.extratags ? 'place' and bnd.extratags->'place' != 'postcode'
@@ -357,22 +373,6 @@ BEGIN
         AND ST_Covers(bnd.geometry, placex.geometry)
     LOOP
       {% if debug %}RAISE WARNING 'Found type-matching place node %', linked_placex.osm_id;{% endif %}
-      RETURN linked_placex;
-    END LOOP;
-  END IF;
-
-  IF bnd.extratags ? 'wikidata' THEN
-    FOR linked_placex IN
-      SELECT * FROM placex
-      WHERE placex.class = 'place' AND placex.osm_type = 'N'
-        AND placex.extratags ? 'wikidata' -- needed to select right index
-        AND placex.extratags->'wikidata' = bnd.extratags->'wikidata'
-        AND (placex.linked_place_id is null or placex.linked_place_id = bnd.place_id)
-        AND placex.rank_search < 26
-        AND _st_covers(bnd.geometry, placex.geometry)
-      ORDER BY lower(name->'name') = bnd_name desc
-    LOOP
-      {% if debug %}RAISE WARNING 'Found wikidata-matching place node %', linked_placex.osm_id;{% endif %}
       RETURN linked_placex;
     END LOOP;
   END IF;

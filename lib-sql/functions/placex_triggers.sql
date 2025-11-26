@@ -874,7 +874,7 @@ BEGIN
   -- Remove linkage, if we have computed a different new linkee.
   UPDATE placex SET linked_place_id = null, indexed_status = 2
     WHERE linked_place_id = NEW.place_id
-          and (linked_place is null or linked_place_id != linked_place);
+          and (linked_place is null or place_id != linked_place);
   -- update not necessary for osmline, cause linked_place_id does not exist
 
   -- Postcodes are just here to compute the centroids. They are not searchable

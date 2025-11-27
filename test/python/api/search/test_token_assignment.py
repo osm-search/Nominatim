@@ -20,6 +20,9 @@ class MyToken(Token):
     def get_category(self):
         return 'this', 'that'
 
+    def get_country(self):
+        return 'cc'
+
 
 def make_query(*args):
     q = QueryStruct([Phrase(args[0][1], '')])

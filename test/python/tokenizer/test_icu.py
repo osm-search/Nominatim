@@ -405,7 +405,7 @@ class TestPlaceNames:
         info = self.analyzer.process_place(place)
 
         self.expect_name_terms(info, '#norge', 'norge')
-        assert word_table.get_country() == {('no', 'NORGE')}
+        assert word_table.get_country() == {('no', 'NORGE', 'Norge')}
 
 
 class TestPlaceAddress:

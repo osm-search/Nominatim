@@ -99,7 +99,7 @@ def test_address_simple_places(apiobj, frontend, atype, address, search):
 
 
 def test_address_country(apiobj, frontend):
-    apiobj.add_word_table([(None, 'ro', 'C', 'ro', None)])
+    apiobj.add_word_table([(None, 'ro', 'C', 'ro', {'cc': 'ro'})])
     apiobj.add_country('ro', 'POLYGON((0 0, 0 1, 1 1, 1 0, 0 0))')
     apiobj.add_country_name('ro', {'name': 'România'})
 

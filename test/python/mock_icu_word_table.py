@@ -10,6 +10,8 @@ of the table.
 """
 from nominatim_db.db.connection import execute_scalar
 
+from psycopg.types.json import Jsonb
+
 
 class MockIcuWordTable:
     """ A word table for testing using legacy word table structure.
@@ -42,11 +44,11 @@ class MockIcuWordTable:
                         """, (word_token, word, cls, typ, oper))
         self.conn.commit()
 
-    def add_country(self, country_code, word_token):
+    def add_country(self, country_code, word_token, lookup):
         with self.conn.cursor() as cur:
-            cur.execute("""INSERT INTO word (word_token, type, word)
-                           VALUES(%s, 'C', %s)""",
-                        (word_token, country_code))
+            cur.execute("""INSERT INTO word (word_token, type, word, info)
+                           VALUES(%s, 'C', %s, %s)""",
+                        (word_token, lookup, Jsonb({'cc': country_code})))
         self.conn.commit()
 
     def add_postcode(self, word_token, postcode):
@@ -93,7 +95,7 @@ class MockIcuWordTable:
 
     def get_country(self):
         with self.conn.cursor() as cur:
-            cur.execute("SELECT word, word_token FROM word WHERE type = 'C'")
+            cur.execute("SELECT info->>'cc', word_token, word FROM word WHERE type = 'C'")
             result = set((tuple(row) for row in cur))
             assert len(result) == cur.rowcount, "Word table has duplicates."
             return result

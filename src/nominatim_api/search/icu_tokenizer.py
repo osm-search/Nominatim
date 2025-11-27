@@ -59,12 +59,16 @@ class ICUToken(qmod.Token):
         assert self.info
         return self.info.get('class', ''), self.info.get('type', '')
 
-    def rematch(self, norm: str) -> None:
+    def get_country(self) -> str:
+        assert self.info
+        return cast(str, self.info.get('cc', ''))
+
+    def match_penalty(self, norm: str) -> float:
         """ Check how well the token matches the given normalized string
             and add a penalty, if necessary.
         """
         if not self.lookup_word:
-            return
+            return 0.0
 
         seq = difflib.SequenceMatcher(a=self.lookup_word, b=norm)
         distance = 0
@@ -75,7 +79,7 @@ class ICUToken(qmod.Token):
                 distance += max((ato-afrom), (bto-bfrom))
             elif tag != 'equal':
                 distance += abs((ato-afrom) - (bto-bfrom))
-        self.penalty += (distance/len(self.lookup_word))
+        return (distance/len(self.lookup_word))
 
     @staticmethod
     def from_db_row(row: SaRow) -> 'ICUToken':
@@ -330,9 +334,10 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
             norm = ''.join(f"{n.term_normalized}{'' if n.btype == qmod.BREAK_TOKEN else ' '}"
                            for n in query.nodes[start + 1:end + 1]).strip()
             for ttype, tokens in tlist.items():
-                if ttype != qmod.TOKEN_COUNTRY:
-                    for token in tokens:
-                        cast(ICUToken, token).rematch(norm)
+                for token in tokens:
+                    itok = cast(ICUToken, token)
+                    itok.penalty += itok.match_penalty(norm) * \
+                        (1 if ttype in (qmod.TOKEN_WORD, qmod.TOKEN_PARTIAL) else 2)
 
     def compute_break_penalties(self, query: qmod.QueryStruct) -> None:
         """ Set the break penalties for the nodes in the query.

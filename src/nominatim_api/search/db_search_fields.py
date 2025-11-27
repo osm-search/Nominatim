@@ -244,6 +244,21 @@ class SearchData:
 
             setattr(self, field, wstrs)
 
+    def set_countries(self, tokens: List[Token]) -> None:
+        """ Set the WeightedStrings properties for countries. Multiple
+            entries for the same country are deduplicated and the minimum
+            penalty is used. Adapts the global penalty, so that the
+            minimum penalty is 0.
+        """
+        if tokens:
+            min_penalty = min(t.penalty for t in tokens)
+            self.penalty += min_penalty
+            countries: dict[str, float] = {}
+            for t in tokens:
+                cc = t.get_country()
+                countries[cc] = min(t.penalty - min_penalty, countries.get(cc, 10000))
+            self.countries = WeightedStrings(list(countries.keys()), list(countries.values()))
+
     def set_qualifiers(self, tokens: List[Token]) -> None:
         """ Set the qulaifier field from the given tokens.
         """

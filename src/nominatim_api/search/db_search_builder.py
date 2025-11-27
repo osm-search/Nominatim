@@ -374,7 +374,7 @@ class SearchBuilder:
             tokens = self.get_country_tokens(assignment.country)
             if not tokens:
                 return None
-            sdata.set_strings('countries', tokens)
+            sdata.set_countries(tokens)
             sdata.penalty += self.query.get_in_word_penalty(assignment.country)
         elif self.details.countries:
             sdata.countries = dbf.WeightedStrings(self.details.countries,

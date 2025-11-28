@@ -321,7 +321,6 @@ module.NAME_TAGS = {}
 
 module.NAME_TAGS.core = {main = {'name', 'name:*',
                                  'int_name', 'int_name:*',
-                                 'nat_name', 'nat_name:*',
                                  'reg_name', 'reg_name:*',
                                  'loc_name', 'loc_name:*',
                                  'old_name', 'old_name:*',

@@ -23,6 +23,7 @@ from ..tokenizer.base import AbstractTokenizer
 from ..version import NOMINATIM_VERSION
 from .args import NominatimArgs
 
+import time
 
 LOG = logging.getLogger()
 
@@ -86,6 +87,8 @@ class SetupAll:
         from ..tools import database_import, postcodes, freeze
         from ..indexer.indexer import Indexer
 
+        start_time = time.time()
+
         num_threads = args.threads or psutil.cpu_count() or 1
         country_info.setup_country_config(args.config)
 
@@ -137,6 +140,10 @@ class SetupAll:
 
         LOG.warning('Recompute word counts')
         tokenizer.update_statistics(args.config, threads=num_threads)
+
+        end_time = time.time()
+        elapsed = end_time - start_time
+        LOG.warning(f'Import completed successfully in {elapsed:.2f} seconds.')
 
         self._finalize_database(args.config.get_libpq_dsn(), args.offline)
 

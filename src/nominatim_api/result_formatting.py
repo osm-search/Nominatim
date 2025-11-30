@@ -10,7 +10,7 @@ Helper classes and functions for formatting results into API responses.
 from typing import Type, TypeVar, Dict, List, Callable, Any, Mapping, Optional, cast
 from collections import defaultdict
 from pathlib import Path
-import importlib
+import importlib.util
 
 from .server.content_types import CONTENT_JSON
 

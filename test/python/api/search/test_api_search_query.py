@@ -17,6 +17,9 @@ class MyToken(query.Token):
     def get_category(self):
         return 'this', 'that'
 
+    def get_country(self):
+        return 'cc'
+
 
 def mktoken(tid: int):
     return MyToken(penalty=3.0, token=tid, count=1, addr_count=1,

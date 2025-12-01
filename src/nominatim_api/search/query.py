@@ -127,6 +127,12 @@ class Token(ABC):
             category objects.
         """
 
+    @abstractmethod
+    def get_country(self) -> str:
+        """ Return the country code this tojen is associated with
+            (currently for country tokens only).
+        """
+
 
 @dataclasses.dataclass
 class TokenRange:

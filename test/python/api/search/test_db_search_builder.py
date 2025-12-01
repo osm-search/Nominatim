@@ -21,6 +21,9 @@ class MyToken(Token):
     def get_category(self):
         return 'this', 'that'
 
+    def get_country(self):
+        return self.lookup_word
+
 
 def make_query(*args):
     q = QueryStruct([Phrase(qmod.PHRASE_ANY, '')])

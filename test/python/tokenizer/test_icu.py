@@ -343,16 +343,18 @@ def test_add_country_names_new(analyzer, word_table):
     with analyzer() as anl:
         anl.add_country_names('es', {'name': 'Espagña', 'name:en': 'Spain'})
 
-    assert word_table.get_country() == {('es', 'ESPAGÑA'), ('es', 'SPAIN')}
+    assert word_table.get_country() == {('es', 'ESPAGÑA', 'Espagña'),
+                                        ('es', 'SPAIN', 'Spain')}
 
 
 def test_add_country_names_extend(analyzer, word_table):
-    word_table.add_country('ch', 'SCHWEIZ')
+    word_table.add_country('ch', 'SCHWEIZ', 'Schweiz')
 
     with analyzer() as anl:
         anl.add_country_names('ch', {'name': 'Schweiz', 'name:fr': 'Suisse'})
 
-    assert word_table.get_country() == {('ch', 'SCHWEIZ'), ('ch', 'SUISSE')}
+    assert word_table.get_country() == {('ch', 'SCHWEIZ', 'Schweiz'),
+                                        ('ch', 'SUISSE', 'Suisse')}
 
 
 class TestPlaceNames:
@@ -403,7 +405,7 @@ class TestPlaceNames:
         info = self.analyzer.process_place(place)
 
         self.expect_name_terms(info, '#norge', 'norge')
-        assert word_table.get_country() == {('no', 'NORGE')}
+        assert word_table.get_country() == {('no', 'NORGE', 'Norge')}
 
 
 class TestPlaceAddress:

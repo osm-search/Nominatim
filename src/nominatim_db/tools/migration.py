@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Functions for database migration to newer software versions.
@@ -18,6 +18,7 @@ from ..db.connection import connect, Connection, \
 from ..db.sql_preprocessor import SQLPreprocessor
 from ..version import NominatimVersion, NOMINATIM_VERSION, parse_version
 from ..tokenizer import factory as tokenizer_factory
+from ..data.country_info import create_country_names, setup_country_config
 from . import refresh
 
 LOG = logging.getLogger()
@@ -156,3 +157,25 @@ def create_place_entrance_table(conn: Connection, config: Configuration, **_: An
             CREATE UNIQUE INDEX place_entrance_osm_id_idx ON place_entrance
               USING BTREE (osm_id);
               """)
+
+
+@_migration(5, 2, 99, 1)
+def convert_country_tokens(conn: Connection, config: Configuration, **_: Any) -> None:
+    """ Convert country word tokens
+
+        Country tokens now save the country in the info field instead of the
+        word. This migration removes all country tokens from the word table
+        and reimports the default country name. This means that custom names
+        are lost. If you need them back, invalidate the OSM objects containing
+        the names by setting indexed_status to 2 and then reindex the database.
+    """
+    tokenizer = tokenizer_factory.get_tokenizer_for_db(config)
+    # There is only one tokenizer at the time of migration, so we make
+    # some assumptions here about the structure of the database. This will
+    # fail if somebody has written a custom tokenizer.
+    with conn.cursor() as cur:
+        cur.execute("DELETE FROM word WHERE type = 'C'")
+    conn.commit()
+
+    setup_country_config(config)
+    create_country_names(conn, tokenizer, config.get_str_list('LANGUAGES'))

@@ -475,20 +475,23 @@ class ICUNameAnalyzer(AbstractAnalyzer):
         assert self.conn is not None
         word_tokens = set()
         for name in names:
-            norm_name = self._search_normalized(name.name)
-            if norm_name:
-                word_tokens.add(norm_name)
+            norm_name = self._normalized(name.name)
+            token_name = self._search_normalized(name.name)
+            if norm_name and token_name:
+                word_tokens.add((token_name, norm_name))
 
         with self.conn.cursor() as cur:
             # Get existing names
-            cur.execute("""SELECT word_token, coalesce(info ? 'internal', false) as is_internal
+            cur.execute("""SELECT word_token,
+                                  word as lookup,
+                                  coalesce(info ? 'internal', false) as is_internal
                              FROM word
-                             WHERE type = 'C' and word = %s""",
+                             WHERE type = 'C' and info->>'cc' = %s""",
                         (country_code, ))
             # internal/external names
-            existing_tokens: Dict[bool, Set[str]] = {True: set(), False: set()}
+            existing_tokens: Dict[bool, Set[Tuple[str, str]]] = {True: set(), False: set()}
             for word in cur:
-                existing_tokens[word[1]].add(word[0])
+                existing_tokens[word[2]].add((word[0], word[1]))
 
             # Delete names that no longer exist.
             gone_tokens = existing_tokens[internal] - word_tokens
@@ -496,10 +499,10 @@ class ICUNameAnalyzer(AbstractAnalyzer):
                 gone_tokens.update(existing_tokens[False] & word_tokens)
             if gone_tokens:
                 cur.execute("""DELETE FROM word
-                               USING unnest(%s::text[]) as token
-                               WHERE type = 'C' and word = %s
-                                     and word_token = token""",
-                            (list(gone_tokens), country_code))
+                               USING jsonb_array_elements(%s) as data
+                               WHERE type = 'C' and info->>'cc' = %s
+                                     and word_token = data->>0 and word = data->>1""",
+                            (Jsonb(list(gone_tokens)), country_code))
 
             # Only add those names that are not yet in the list.
             new_tokens = word_tokens - existing_tokens[True]
@@ -508,15 +511,17 @@ class ICUNameAnalyzer(AbstractAnalyzer):
             if new_tokens:
                 if internal:
                     sql = """INSERT INTO word (word_token, type, word, info)
-                               (SELECT token, 'C', %s, '{"internal": "yes"}'
-                                  FROM unnest(%s::text[]) as token)
+                               (SELECT data->>0, 'C', data->>1,
+                                       jsonb_build_object('internal', 'yes', 'cc', %s::text)
+                                  FROM jsonb_array_elements(%s) as data)
                            """
                 else:
-                    sql = """INSERT INTO word (word_token, type, word)
-                                   (SELECT token, 'C', %s
-                                    FROM unnest(%s::text[]) as token)
+                    sql = """INSERT INTO word (word_token, type, word, info)
+                                   (SELECT data->>0, 'C', data->>1,
+                                           jsonb_build_object('cc', %s::text)
+                                    FROM  jsonb_array_elements(%s) as data)
                           """
-                cur.execute(sql, (country_code, list(new_tokens)))
+                cur.execute(sql, (country_code, Jsonb(list(new_tokens))))
 
     def process_place(self, place: PlaceInfo) -> Mapping[str, Any]:
         """ Determine tokenizer information about the given place.

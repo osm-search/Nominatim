@@ -117,6 +117,7 @@ module.MAIN_TAGS.all_boundaries = {
     boundary = {'named',
                 place = 'delete',
                 land_area = 'delete',
+                protected_area = 'fallback',
                 postal_code = 'always'},
     landuse = 'fallback',
     place = 'always'
@@ -198,7 +199,7 @@ module.MAIN_TAGS_POIS = function (group)
                 no = group},
     landuse = {cemetery = 'always'},
     leisure = {'always',
-               nature_reserve = 'fallback',
+               nature_reserve = 'named',
                swimming_pool = 'named',
                garden = 'named',
                common = 'named',

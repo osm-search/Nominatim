@@ -116,8 +116,10 @@ async def test_penalty_postcodes_and_housenumbers(conn, term, order):
 
     assert query.num_token_slots() == 1
 
-    torder = [(tl.tokens[0].penalty, tl.ttype) for tl in query.nodes[0].starting]
+    torder = [(min(t.penalty for t in tl.tokens), tl.ttype) for tl in query.nodes[0].starting]
     torder.sort()
+
+    print(torder)
 
     assert [t[1] for t in torder] == order
 

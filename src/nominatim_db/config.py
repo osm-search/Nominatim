@@ -197,7 +197,7 @@ class Configuration:
         if dsn.startswith('pgsql:'):
             return dict((p.split('=', 1) for p in dsn[6:].split(';')))
 
-        return conninfo_to_dict(dsn)
+        return conninfo_to_dict(dsn)  # type: ignore
 
     def get_import_style_file(self) -> Path:
         """ Return the import style file as a path object. Translates the

@@ -340,7 +340,9 @@ class ReverseGeocoder:
 
         # Check for an interpolation that is either closer than our result
         # or belongs to a close street found.
-        if self.max_rank > 27 and self.layer_enabled(DataLayer.ADDRESS):
+        # No point in doing this when the result is already inside a building,
+        # i.e. when the distance is already 0.
+        if self.max_rank > 27 and self.layer_enabled(DataLayer.ADDRESS) and distance > 0:
             log().comment('Find interpolation for street')
             addr_row = await self._find_interpolation_for_street(parent_place_id,
                                                                  distance)

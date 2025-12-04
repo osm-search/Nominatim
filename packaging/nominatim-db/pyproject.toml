@@ -15,7 +15,7 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "psycopg<3.3",
+    "psycopg != 3.3.0",
     "python-dotenv",
     "jinja2",
     "pyYAML>=5.1",

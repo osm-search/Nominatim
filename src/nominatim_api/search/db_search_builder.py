@@ -413,7 +413,7 @@ class SearchBuilder:
         """
         tokens = self.query.get_tokens(trange, qmod.TOKEN_COUNTRY)
         if self.details.countries:
-            tokens = [t for t in tokens if t.lookup_word in self.details.countries]
+            tokens = [t for t in tokens if t.get_country() in self.details.countries]
 
         return tokens
 

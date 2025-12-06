@@ -157,19 +157,14 @@ BEGIN
     RETURN NULL;
   END IF;
 
-{% for partition in db.partitions %}
-  IF in_partition = {{ partition }} THEN
-    SELECT place_id FROM search_name_{{ partition }}
-      INTO parent
-      WHERE token_matches_street(token_info, name_vector)
-            AND centroid && ST_Expand(point, 0.015)
-            AND address_rank between 26 and 27
-      ORDER BY ST_Distance(centroid, point) ASC limit 1;
-    RETURN parent;
-  END IF;
-{% endfor %}
+  SELECT place_id INTO parent
+    FROM search_name
+    WHERE token_matches_street(token_info, name_vector)
+      AND centroid && ST_Expand(point, 0.015)
+      AND address_rank between 26 and 27
+    ORDER BY ST_Distance(centroid, point) ASC limit 1;
 
-  RAISE EXCEPTION 'Unknown partition %', in_partition;
+  RETURN parent;
 END
 $$
 LANGUAGE plpgsql STABLE PARALLEL SAFE;
@@ -289,25 +284,20 @@ DECLARE
   r RECORD;
   search_diameter FLOAT;
 BEGIN
-
-{% for partition in db.partitions %}
-  IF in_partition = {{ partition }} THEN
-    search_diameter := 0.00005;
-    WHILE search_diameter < 0.1 LOOP
-      FOR r IN
-        SELECT place_id FROM location_road_{{ partition }}
-          WHERE ST_DWithin(geometry, point, search_diameter)
-          ORDER BY ST_Distance(geometry, point) ASC limit 1
-      LOOP
-        RETURN r.place_id;
-      END LOOP;
-      search_diameter := search_diameter * 2;
+  search_diameter := 0.00005;
+  WHILE search_diameter < 0.1 LOOP
+    FOR r IN
+      SELECT place_id FROM placex
+        WHERE ST_DWithin(geometry, point, search_diameter)
+              AND rank_address between 26 and 27
+        ORDER BY ST_Distance(geometry, point) ASC limit 1
+    LOOP
+      RETURN r.place_id;
     END LOOP;
-    RETURN NULL;
-  END IF;
-{% endfor %}
-
-  RAISE EXCEPTION 'Unknown partition %', in_partition;
+    search_diameter := search_diameter * 2;
+  END LOOP;
+  
+  RETURN NULL;
 END
 $$
 LANGUAGE plpgsql STABLE PARALLEL SAFE;
@@ -332,26 +322,22 @@ BEGIN
   p2 := ST_LineInterpolatePoint(line,0.5);
   p3 := ST_LineInterpolatePoint(line,1);
 
-{% for partition in db.partitions %}
-  IF in_partition = {{ partition }} THEN
-    search_diameter := 0.0005;
-    WHILE search_diameter < 0.01 LOOP
-      FOR r IN
-        SELECT place_id FROM location_road_{{ partition }}
-          WHERE ST_DWithin(line, geometry, search_diameter)
-          ORDER BY (ST_distance(geometry, p1)+
-                    ST_distance(geometry, p2)+
-                    ST_distance(geometry, p3)) ASC limit 1
-      LOOP
-        RETURN r.place_id;
-      END LOOP;
-      search_diameter := search_diameter * 2;
+  search_diameter := 0.0005;
+  WHILE search_diameter < 0.01 LOOP
+    FOR r IN
+      SELECT place_id FROM placex
+        WHERE ST_DWithin(line, geometry, search_diameter)
+              AND rank_address between 26 and 27
+        ORDER BY (ST_distance(geometry, p1)+
+                  ST_distance(geometry, p2)+
+                  ST_distance(geometry, p3)) ASC limit 1
+    LOOP
+      RETURN r.place_id;
     END LOOP;
-    RETURN NULL;
-  END IF;
-{% endfor %}
-
-  RAISE EXCEPTION 'Unknown partition %', in_partition;
+    search_diameter := search_diameter * 2;
+  END LOOP;
+  
+  RETURN NULL;
 END
 $$
 LANGUAGE plpgsql STABLE PARALLEL SAFE;

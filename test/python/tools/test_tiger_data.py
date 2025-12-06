@@ -88,16 +88,24 @@ async def test_add_tiger_data(def_config, src_dir, tiger_table, tokenizer_mock, 
 
 
 @pytest.mark.asyncio
-async def test_add_tiger_data_database_frozen(def_config, temp_db_conn, tiger_table, tokenizer_mock,
-                                              tmp_path):
+async def test_add_tiger_data_after_drop_updates(def_config,
+                                                 src_dir,
+                                                 temp_db_conn,
+                                                 tiger_table,
+                                                 tokenizer_mock):
     freeze.drop_update_tables(temp_db_conn)
+    initial_count = tiger_table.count()
 
-    with pytest.raises(UsageError) as excinfo:
-        await tiger_data.add_tiger_data(str(tmp_path), def_config, 1, tokenizer_mock())
+    result = await tiger_data.add_tiger_data(
+        str(src_dir / "test" / "testdb" / "tiger"),
+        def_config,
+        threads=1,
+        tokenizer=tokenizer_mock(),
+    )
 
-        assert "database frozen" in str(excinfo.value)
-
-    assert tiger_table.count() == 0
+    assert result == 0
+    final_count = tiger_table.count()
+    assert final_count > initial_count
 
 
 @pytest.mark.asyncio

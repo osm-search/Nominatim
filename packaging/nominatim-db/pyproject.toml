@@ -20,7 +20,8 @@ dependencies = [
     "jinja2",
     "pyYAML>=5.1",
     "psutil",
-    "PyICU"
+    "PyICU",
+    "mwparserfromhell"
 ]
 dynamic = ["version"]
 

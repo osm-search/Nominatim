@@ -163,12 +163,12 @@ def test_reverse_housenumber_interpolation(apiobj, frontend, with_geom):
                       parent_place_id=990,
                       rank_search=30, rank_address=30,
                       housenumber='23',
-                      centroid=(10.0, 10.00002))
+                      centroid=(10.0, 10.0002))
     apiobj.add_osmline(place_id=992,
                        parent_place_id=990,
                        startnumber=1, endnumber=3, step=1,
-                       centroid=(10.0, 10.00001),
-                       geometry='LINESTRING(9.995 10.00001, 10.005 10.00001)')
+                       centroid=(10.0, 10.0001),
+                       geometry='LINESTRING(9.995 10.0001, 10.005 10.0001)')
     apiobj.add_placex(place_id=1990, class_='highway', type='service',
                       rank_search=27, rank_address=27,
                       name={'name': 'Other Street'},
@@ -177,8 +177,8 @@ def test_reverse_housenumber_interpolation(apiobj, frontend, with_geom):
     apiobj.add_osmline(place_id=1992,
                        parent_place_id=1990,
                        startnumber=1, endnumber=3, step=1,
-                       centroid=(10.0, 20.00001),
-                       geometry='LINESTRING(9.995 20.00001, 10.005 20.00001)')
+                       centroid=(10.0, 20.0001),
+                       geometry='LINESTRING(9.995 20.0001, 10.005 20.0001)')
 
     params = {'geometry_output': napi.GeometryFormat.TEXT} if with_geom else {}
 

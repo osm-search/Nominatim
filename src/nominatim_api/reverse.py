@@ -157,16 +157,19 @@ class ReverseGeocoder:
             include.extend(('natural', 'water', 'waterway'))
         return table.c.class_.in_(tuple(include))
 
-    async def _find_closest_street_or_poi(self, distance: float) -> Optional[SaRow]:
-        """ Look up the closest rank 26+ place in the database, which
-            is closer than the given distance.
+    async def _find_closest_street_or_pois(self, distance: float,
+                                           fuzziness: float) -> list[SaRow]:
+        """ Look up the closest rank 26+ place in the database.
+            The function finds the object that is closest to the reverse
+            search point as well as all objects within 'fuzziness' distance
+            to that best result.
         """
         t = self.conn.t.placex
 
         # PostgreSQL must not get the distance as a parameter because
         # there is a danger it won't be able to properly estimate index use
         # when used with prepared statements
-        diststr = sa.text(f"{distance}")
+        diststr = sa.text(f"{distance + fuzziness}")
 
         sql: SaLambdaSelect = sa.lambda_stmt(
             lambda: _select_from_placex(t)
@@ -174,9 +177,7 @@ class ReverseGeocoder:
             .where(t.c.indexed_status == 0)
             .where(t.c.linked_place_id == None)
             .where(sa.or_(sa.not_(t.c.geometry.is_area()),
-                          t.c.centroid.ST_Distance(WKT_PARAM) < diststr))
-            .order_by('distance')
-            .limit(2))
+                          t.c.centroid.ST_Distance(WKT_PARAM) < diststr)))
 
         if self.has_geometries():
             sql = self._add_geometry_columns(sql, t.c.geometry)
@@ -198,24 +199,39 @@ class ReverseGeocoder:
                                     self._filter_by_layer(t)))
 
         if not restrict:
-            return None
+            return []
 
-        sql = sql.where(sa.or_(*restrict))
+        inner = sql.where(sa.or_(*restrict)) \
+                   .add_columns(t.c.geometry.label('_geometry')) \
+                   .subquery()
 
-        # If the closest object is inside an area, then check if there is a
-        # POI node nearby and return that.
-        prev_row = None
-        for row in await self.conn.execute(sql, self.bind_params):
-            if prev_row is None:
-                if row.rank_search <= 27 or row.osm_type == 'N' or row.distance > 0:
-                    return row
-                prev_row = row
-            else:
-                if row.rank_search > 27 and row.osm_type == 'N'\
-                   and row.distance < 0.0001:
-                    return row
+        # Use a window function to get the closest results to the best result.
+        windowed = sa.select(inner,
+                             sa.func.first_value(inner.c.distance)
+                                    .over(order_by=inner.c.distance)
+                                    .label('_min_distance'),
+                             sa.func.first_value(inner.c._geometry.ST_ClosestPoint(WKT_PARAM))
+                                    .over(order_by=inner.c.distance)
+                                    .label('_closest_point'),
+                             sa.func.first_value(sa.case((sa.or_(inner.c.rank_search <= 27,
+                                                                 inner.c.osm_type == 'N'), None),
+                                                         else_=inner.c._geometry))
+                                    .over(order_by=inner.c.distance)
+                                    .label('_best_geometry')) \
+                     .subquery()
 
-        return prev_row
+        outer = sa.select(*(c for c in windowed.c if not c.key.startswith('_')),
+                          windowed.c.centroid.ST_Distance(windowed.c._closest_point)
+                                             .label('best_distance'),
+                          sa.case((sa.or_(windowed.c._best_geometry == None,
+                                          windowed.c.rank_search <= 27,
+                                          windowed.c.osm_type != 'N'), False),
+                                  else_=windowed.c.centroid.ST_CoveredBy(windowed.c._best_geometry))
+                            .label('best_inside')) \
+                  .where(windowed.c.distance < windowed.c._min_distance + fuzziness) \
+                  .order_by(windowed.c.distance)
+
+        return list(await self.conn.execute(outer, self.bind_params))
 
     async def _find_housenumber_for_street(self, parent_place_id: int) -> Optional[SaRow]:
         t = self.conn.t.placex
@@ -301,55 +317,69 @@ class ReverseGeocoder:
         """ Find a street or POI/address for the given WKT point.
         """
         log().section('Reverse lookup on street/address level')
-        distance = 0.006
-        parent_place_id = None
-
-        row = await self._find_closest_street_or_poi(distance)
         row_func: RowFunc = nres.create_from_placex_row
-        log().var_dump('Result (street/building)', row)
+        distance = 0.006
 
-        # If the closest result was a street, but an address was requested,
-        # check for a housenumber nearby which is part of the street.
-        if row is not None:
-            if self.max_rank > 27 \
-               and self.layer_enabled(DataLayer.ADDRESS) \
-               and row.rank_address <= 27:
-                distance = 0.001
-                parent_place_id = row.place_id
-                log().comment('Find housenumber for street')
-                addr_row = await self._find_housenumber_for_street(parent_place_id)
-                log().var_dump('Result (street housenumber)', addr_row)
-
-                if addr_row is not None:
-                    row = addr_row
-                    row_func = nres.create_from_placex_row
-                    distance = addr_row.distance
-                elif row.country_code == 'us' and parent_place_id is not None:
-                    log().comment('Find TIGER housenumber for street')
-                    addr_row = await self._find_tiger_number_for_street(parent_place_id)
-                    log().var_dump('Result (street Tiger housenumber)', addr_row)
-
-                    if addr_row is not None:
-                        row_func = cast(RowFunc,
-                                        functools.partial(nres.create_from_tiger_row,
-                                                          osm_type=row.osm_type,
-                                                          osm_id=row.osm_id))
-                        row = addr_row
-            else:
+        result = None
+        hnr_distance = None
+        parent_street = None
+        for row in await self._find_closest_street_or_pois(distance, 0.001):
+            if result is None:
+                log().var_dump('Closest result', row)
+                result = row
+                if self.max_rank > 27 \
+                        and self.layer_enabled(DataLayer.ADDRESS) \
+                        and result.rank_address <= 27:
+                    parent_street = result.place_id
+                    distance = 0.001
+                else:
+                    distance = row.distance
+            # If the closest result was a street but an address was requested,
+            # see if we can refine the result with a housenumber closeby.
+            elif parent_street is not None \
+                    and row.rank_address > 27 \
+                    and row.best_distance < 0.001 \
+                    and (hnr_distance is None or hnr_distance > row.best_distance) \
+                    and row.parent_place_id == parent_street:
+                log().var_dump('Housenumber to closest result', row)
+                result = row
+                hnr_distance = row.best_distance
                 distance = row.distance
+            # If the closest object is inside an area, then check if there is
+            # a POI nearby and return that with preference.
+            elif result.osm_type != 'N' and result.rank_search > 27 \
+                    and result.distance == 0 \
+                    and row.best_inside:
+                log().var_dump('POI near closest result area', row)
+                result = row
+                break  # it can't get better than that, everything else is farther away
+
+        # For the US also check the TIGER data, when no housenumber/POI was found.
+        if result is not None and parent_street is not None and hnr_distance is None \
+                and result.country_code == 'us':
+            log().comment('Find TIGER housenumber for street')
+            addr_row = await self._find_tiger_number_for_street(parent_street)
+            log().var_dump('Result (street Tiger housenumber)', addr_row)
+
+            if addr_row is not None:
+                row_func = cast(RowFunc,
+                                functools.partial(nres.create_from_tiger_row,
+                                                  osm_type=row.osm_type,
+                                                  osm_id=row.osm_id))
+                result = addr_row
 
         # Check for an interpolation that is either closer than our result
         # or belongs to a close street found.
-        if self.max_rank > 27 and self.layer_enabled(DataLayer.ADDRESS):
+        # No point in doing this when the result is already inside a building,
+        # i.e. when the distance is already 0.
+        if self.max_rank > 27 and self.layer_enabled(DataLayer.ADDRESS) and distance > 0:
             log().comment('Find interpolation for street')
-            addr_row = await self._find_interpolation_for_street(parent_place_id,
-                                                                 distance)
+            addr_row = await self._find_interpolation_for_street(parent_street, distance)
             log().var_dump('Result (street interpolation)', addr_row)
             if addr_row is not None:
-                row = addr_row
-                row_func = nres.create_from_osmline_row
+                return addr_row, nres.create_from_osmline_row
 
-        return row, row_func
+        return result, row_func
 
     async def _lookup_area_address(self) -> Optional[SaRow]:
         """ Lookup large addressable areas for the given WKT point.

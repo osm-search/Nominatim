@@ -210,7 +210,10 @@ class ReverseGeocoder:
                              sa.func.first_value(inner.c.distance)
                                     .over(order_by=inner.c.distance)
                                     .label('_min_distance'),
-                             sa.func.first_value(inner.c._geometry.ST_ClosestPoint(WKT_PARAM))
+                             sa.func.first_value(
+                                        sa.case((inner.c.rank_search <= 27,
+                                                 inner.c._geometry.ST_ClosestPoint(WKT_PARAM)),
+                                                else_=None))
                                     .over(order_by=inner.c.distance)
                                     .label('_closest_point'),
                              sa.func.first_value(sa.case((sa.or_(inner.c.rank_search <= 27,
@@ -221,8 +224,10 @@ class ReverseGeocoder:
                      .subquery()
 
         outer = sa.select(*(c for c in windowed.c if not c.key.startswith('_')),
-                          windowed.c.centroid.ST_Distance(windowed.c._closest_point)
-                                             .label('best_distance'),
+                          sa.case((sa.or_(windowed.c._closest_point == None,
+                                          windowed.c.housenumber == None), None),
+                                  else_=windowed.c.centroid.ST_Distance(windowed.c._closest_point))
+                            .label('distance_from_best'),
                           sa.case((sa.or_(windowed.c._best_geometry == None,
                                           windowed.c.rank_search <= 27,
                                           windowed.c.osm_type != 'N'), False),
@@ -337,13 +342,13 @@ class ReverseGeocoder:
             # If the closest result was a street but an address was requested,
             # see if we can refine the result with a housenumber closeby.
             elif parent_street is not None \
-                    and row.rank_address > 27 \
-                    and row.best_distance < 0.001 \
-                    and (hnr_distance is None or hnr_distance > row.best_distance) \
+                    and row.distance_from_best is not None \
+                    and row.distance_from_best < 0.001 \
+                    and (hnr_distance is None or hnr_distance > row.distance_from_best) \
                     and row.parent_place_id == parent_street:
                 log().var_dump('Housenumber to closest result', row)
                 result = row
-                hnr_distance = row.best_distance
+                hnr_distance = row.distance_from_best
                 distance = row.distance
             # If the closest object is inside an area, then check if there is
             # a POI nearby and return that with preference.

@@ -73,7 +73,7 @@ virtualenv ~/nominatim-dev-venv
     types-jinja2 types-markupsafe types-psutil types-psycopg2 \
     types-pygments types-pyyaml types-requests types-ujson \
     types-urllib3 typing-extensions unicorn falcon starlette \
-    uvicorn mypy osmium aiosqlite
+    uvicorn mypy osmium aiosqlite mwparserfromhell
 ```
 
 Now enter the virtual environment whenever you want to develop:

@@ -22,7 +22,7 @@ runs:
 
         - name: Install prerequisites from apt
           run: |
-            sudo apt-get install -y -qq python3-icu python3-datrie python3-jinja2 python3-psutil python3-dotenv python3-yaml python3-sqlalchemy python3-psycopg python3-asyncpg
+            sudo apt-get install -y -qq python3-icu python3-datrie python3-jinja2 python3-psutil python3-dotenv python3-yaml python3-sqlalchemy python3-psycopg python3-asyncpg python3-mwparserfromhell
           shell: bash
           if: inputs.dependencies == 'apt'
 

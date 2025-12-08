@@ -11,6 +11,8 @@ from typing import Iterable
 import re
 import logging
 
+import mwparserfromhell
+
 from ...config import Configuration
 from ...utils.url_utils import get_url
 from .special_phrase import SpecialPhrase
@@ -36,10 +38,6 @@ class SPWikiLoader:
     """
     def __init__(self, config: Configuration) -> None:
         self.config = config
-        # Compile the regex here to increase performances.
-        self.occurence_pattern = re.compile(
-            r'\| *([^\|]+) *\|\| *([^\|]+) *\|\| *([^\|]+) *\|\| *([^\|]+) *\|\| *([\-YN])'
-        )
         # Hack around a bug where building=yes was imported with quotes into the wiki
         self.type_fix_pattern = re.compile(r'\"|&quot;')
 
@@ -58,11 +56,21 @@ class SPWikiLoader:
             LOG.warning('Importing phrases for lang: %s...', lang)
             loaded_xml = _get_wiki_content(lang)
 
-            # One match will be of format [label, class, type, operator, plural]
-            matches = self.occurence_pattern.findall(loaded_xml)
+            wikicode = mwparserfromhell.parse(loaded_xml)
 
-            for match in matches:
-                yield SpecialPhrase(match[0],
-                                    match[1],
-                                    self.type_fix_pattern.sub('', match[2]),
-                                    match[3])
+            for table in wikicode.filter_tags(matches=lambda t: t.tag == 'table'):
+                for row in table.contents.filter_tags(matches=lambda t: t.tag == 'tr'):
+                    cells = list(row.contents.filter_tags(matches=lambda t: t.tag == 'td'))
+
+                    if len(cells) < 5:
+                        continue
+
+                    label = cells[0].contents.strip_code().strip()
+                    cls = cells[1].contents.strip_code().strip()
+                    typ = cells[2].contents.strip_code().strip()
+                    operator = cells[3].contents.strip_code().strip()
+
+                    yield SpecialPhrase(label,
+                                        cls,
+                                        self.type_fix_pattern.sub('', typ),
+                                        operator)

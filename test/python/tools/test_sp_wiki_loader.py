@@ -54,4 +54,6 @@ def test_generate_phrases(sp_wiki_loader):
          ('Water near', 'amenity', 'drinking_water', 'near'),
          ('Embassy', 'amenity', 'embassy', '-'),
          ('Embassys', 'amenity', 'embassy', '-'),
-         ('Embassies', 'amenity', 'embassy', '-')}
+         ('Embassies', 'amenity', 'embassy', '-'),
+         # test for one-cell-per-line format
+         ('Coworkings near', 'amenity', 'coworking_space', 'near')}

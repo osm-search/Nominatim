@@ -37,6 +37,7 @@ Furthermore the following Python libraries are required:
   * [Jinja2](https://palletsprojects.com/p/jinja/)
   * [PyICU](https://pypi.org/project/PyICU/)
   * [PyYaml](https://pyyaml.org/) (5.1+)
+  * [mwparserfromhell](https://github.com/earwig/mwparserfromhell/)
 
 These will be installed automatically when using pip installation.
 

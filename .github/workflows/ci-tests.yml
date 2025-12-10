@@ -105,11 +105,12 @@ jobs:
                   LUA_VERSION: ${{ matrix.lua }}
 
             - name: Install test prerequisites (apt)
-              run: sudo apt-get install -y -qq python3-pytest python3-pytest-asyncio uvicorn python3-falcon python3-aiosqlite python3-pyosmium
+              run: sudo apt-get install -y -qq python3-pytest python3-pytest-asyncio uvicorn python3-falcon python3-aiosqlite python3-pyosmium python3-unidecode
               if: matrix.dependencies == 'apt'
 
             - name: Install test prerequisites (pip)
-              run: ./venv/bin/pip install pytest-asyncio falcon starlette asgi_lifespan aiosqlite osmium uvicorn
+              run: |
+                ./venv/bin/pip install pytest-asyncio falcon starlette asgi_lifespan aiosqlite osmium uvicorn cantonese-romanisation unidecode opencc
               if: matrix.dependencies == 'pip'
 
             - name: Install test prerequisites

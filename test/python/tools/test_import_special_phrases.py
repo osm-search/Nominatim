@@ -203,7 +203,7 @@ def test_import_phrases(monkeypatch, temp_db_cursor, def_config, sp_importer,
     placex_table.add(cls='amenity', typ='animal_shelter')  # in db for special phrase filtering
     sp_importer.import_phrases(tokenizer, should_replace)
 
-    assert len(tokenizer.analyser_cache['special_phrases']) == 18
+    assert len(tokenizer.analyser_cache['special_phrases']) == 19
 
     assert check_table_exist(temp_db_cursor, class_test, type_test)
     assert check_placeid_and_centroid_indexes(temp_db_cursor, class_test, type_test)

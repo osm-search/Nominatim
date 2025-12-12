@@ -2,25 +2,17 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
-"""
-Helper functions for localizing names of results.
-"""
-from typing import Mapping, List, Optional
-from .config import Configuration
-from .results import AddressLines, BaseResultT
-
 import re
+from abc import ABC, abstractmethod
+from typing import Optional, List, Mapping, Tuple, Any
+from ..results import BaseResultT
+from ..config import Configuration
 
 
-class Locales:
-    """ Helper class for localization of names.
-
-        It takes a list of language prefixes in their order of preferred
-        usage.
-    """
-
+class AbstractLocales(ABC):
+    """Interface for localization logic."""
     def __init__(self, langs: Optional[List[str]] = None):
         self.config = Configuration(None)
         self.languages = langs or []
@@ -56,27 +48,53 @@ class Locales:
             If 'names' is null or empty, an empty string is returned. If no
             appropriate localization is found, the first name is returned.
         """
+        return self.display_name_with_locale(names)[0]
+
+    def display_name_with_locale(self, names: Optional[Mapping[str, str]]) -> Tuple[str, str]:
+        """ Return the best matching name from a dictionary of names
+            containing different name variants, as well as an identifier
+            with regards to what language used
+
+            If 'names' is null or empty, an empty tuple is returned. If no
+            appropriate localization is found, the first name is returned with
+            the 'default' marker, where afterwards iso is used, using country of origin.
+        """
         if not names:
-            return ''
+            return ('', '')
 
         if len(names) > 1:
             for tag in self.name_tags:
                 if tag in names:
-                    return names[tag]
+                    _, _, lang = tag.partition(':')
+                    return (names[tag], lang or 'default')
 
         # Nothing? Return any of the other names as a default.
-        return next(iter(names.values()))
+        return (next(iter(names.values())), 'default')
+
+    def localize_results(self, results: List[BaseResultT]) -> None:
+        """ Localize results according to the chosen locale. """
+        for result in results:
+            result.locale_name = self.display_name(result.names)
+            self.localize(result)
+
+    @abstractmethod
+    def localize(self, result: BaseResultT) -> None:
+        """ Localize address parts according to the chosen locale. """
+        pass
 
     @staticmethod
-    def from_accept_languages(langstr: str) -> 'Locales':
-        """ Create a localization object from a language list in the
-            format of HTTP accept-languages header.
+    @abstractmethod
+    def from_accept_languages(langstr: str) -> 'AbstractLocales':
+        """ Parse a language list in the format of HTTP accept-languages header.
 
-            The functions tries to be forgiving of format errors by first splitting
+            The function tries to be forgiving of format errors by first splitting
             the string into comma-separated parts and then parsing each
             description separately. Badly formatted parts are then ignored.
         """
-        # split string into languages
+        pass
+
+    @staticmethod
+    def sort_languages(langstr: str) -> List[Tuple[str, Any]]:
         candidates = []
         for desc in langstr.split(','):
             m = re.fullmatch(r'\s*([a-z_-]+)(?:;\s*q\s*=\s*([01](?:\.\d+)?))?\s*',
@@ -86,35 +104,4 @@ class Locales:
 
         # sort the results by the weight of each language (preserving order).
         candidates.sort(reverse=True, key=lambda e: e[1])
-
-        # If a language has a region variant, also add the language without
-        # variant but only if it isn't already in the list to not mess up the weight.
-        languages = []
-        for lid, _ in candidates:
-            languages.append(lid)
-            parts = lid.split('-', 1)
-            if len(parts) > 1 and all(c[0] != parts[0] for c in candidates):
-                languages.append(parts[0])
-
-        return Locales(languages)
-
-    def localize(self, lines: AddressLines) -> None:
-        """ Sets the local name of address parts according to the chosen
-            locale.
-
-            Only address parts that are marked as isaddress are localized.
-
-            AddressLines should be modified in place.
-        """
-        for line in lines:
-            if line.isaddress and line.names:
-                line.local_name = self.display_name(line.names)
-
-    def localize_results(self, results: List[BaseResultT]) -> None:
-        """ Set the local name of results according to the chosen
-            locale.
-        """
-        for result in results:
-            result.locale_name = self.display_name(result.names)
-            if result.address_rows:
-                self.localize(result.address_rows)
+        return candidates

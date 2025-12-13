@@ -9,8 +9,8 @@ Implementation of the 'freeze' subcommand.
 """
 import argparse
 
-from ..db.connection import connect
 from .args import NominatimArgs
+from ..tools import freeze
 
 
 class SetupFreeze:
@@ -29,10 +29,5 @@ class SetupFreeze:
         pass  # No options
 
     def run(self, args: NominatimArgs) -> int:
-        from ..tools import freeze
-
-        with connect(args.config.get_libpq_dsn()) as conn:
-            freeze.drop_update_tables(conn)
-        freeze.drop_flatnode_file(args.config.get_path('FLATNODE_FILE'))
-
+        freeze.freeze(args.config)
         return 0

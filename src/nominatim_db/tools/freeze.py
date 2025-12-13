@@ -12,7 +12,8 @@ from pathlib import Path
 
 from psycopg import sql as pysql
 
-from ..db.connection import Connection, drop_tables, table_exists
+from ..db.connection import Connection, drop_tables, table_exists, connect
+from ..config import Configuration
 
 UPDATE_TABLES = [
     'address_levels',
@@ -42,6 +43,45 @@ def drop_update_tables(conn: Connection) -> None:
 
     drop_tables(conn, *tables, cascade=True)
     conn.commit()
+
+
+def _install_frozen_partition_functions(conn: Connection, config: Configuration) -> None:
+    """Frozen versions of partition-functions.sql"""
+
+    frozen_functions_file = config.lib_dir.sql / 'functions' / 'frozen-db-functions.sql'
+
+    if not frozen_functions_file.exists():
+        raise FileNotFoundError(
+            f"Frozen SQL functions file not found at: {frozen_functions_file}"
+        )
+
+    with open(frozen_functions_file, 'r') as f:
+        sql_code = f.read()
+
+    try:
+        with conn.cursor() as cur:
+            # TODO: execute needs LiteralString
+            cur.execute(sql_code)  # tyoe: ignore [arg-type]
+        conn.commit()
+
+    except Exception as e:
+        conn.rollback()
+        raise RuntimeError(f"Failed to install frozen-db-functions.sql: {e}") from e
+
+
+def freeze(config: Configuration) -> None:
+    """Freeze the database for read-only operation."""
+    try:
+        with connect(config.get_libpq_dsn()) as connection:
+            drop_update_tables(connection)
+            _install_frozen_partition_functions(connection, config)
+        drop_flatnode_file(config.get_path('FLATNODE_FILE'))
+
+    except Exception as e:
+        print(f"FREEZE ERROR: {type(e).__name__}: {e}")
+        import traceback
+        traceback.print_exc()
+        raise
 
 
 def drop_flatnode_file(fpath: Optional[Path]) -> None:

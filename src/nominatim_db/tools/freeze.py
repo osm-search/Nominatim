@@ -45,7 +45,7 @@ def drop_update_tables(conn: Connection) -> None:
     conn.commit()
 
 
-def _install_frozen_partition_functions(conn: Connection, config: Configuration) -> None:
+def install_frozen_partition_functions(conn: Connection, config: Configuration) -> None:
     """Frozen versions of partition-functions.sql"""
 
     frozen_functions_file = config.lib_dir.sql / 'functions' / 'frozen-db-functions.sql'
@@ -74,7 +74,7 @@ def freeze(config: Configuration) -> None:
     try:
         with connect(config.get_libpq_dsn()) as connection:
             drop_update_tables(connection)
-            _install_frozen_partition_functions(connection, config)
+            install_frozen_partition_functions(connection, config)
         drop_flatnode_file(config.get_path('FLATNODE_FILE'))
 
     except Exception as e:

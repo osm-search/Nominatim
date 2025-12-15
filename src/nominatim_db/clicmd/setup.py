@@ -136,6 +136,7 @@ class SetupAll:
             if args.no_updates:
                 conn.autocommit = True
                 freeze.drop_update_tables(conn)
+                freeze.install_frozen_partition_functions(conn, args.config)
         tokenizer.finalize_import(args.config)
 
         LOG.warning('Recompute word counts')

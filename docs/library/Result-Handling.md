@@ -55,7 +55,7 @@ default `locale_name` must be explicitly set using the `localize` function withi
 most preferred by the user. Once this is set, the user can simply use the
 `display_name` field within a `Result` object to retrive the localized name.
 
-### Locale
+### Locales
 
 ::: nominatim_api.Locales
     options:

@@ -229,7 +229,7 @@ _None._
 
 | Option          | Description |
 |-----------------|-------------|
-| locales         | [Locale](../library/Result-Handling.md#locale) object for the requested language(s) |
+| locales         | [Locales](../library/Result-Handling.md#locales) object for the requested language(s) |
 | group_hierarchy | Setting of [group_hierarchy](../api/Details.md#output-details) parameter |
 | icon_base_url   | (optional) URL pointing to icons as set in [NOMINATIM_MAPICON_URL](Settings.md#nominatim_mapicon_url) |
 

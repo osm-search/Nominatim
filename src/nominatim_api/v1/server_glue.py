@@ -174,7 +174,8 @@ async def details_endpoint(api: NominatimAPIAsync, params: ASGIAdaptor) -> Any:
     if result is None:
         params.raise_error('No place with that OSM ID found.', status=404)
 
-    locales = Locales.from_accept_languages(get_accepted_languages(params))
+    locales = Locales.from_accept_languages(get_accepted_languages(params),
+                                            params.config().OUTPUT_NAMES)
     locales.localize_results([result])
 
     output = params.formatting().format_result(
@@ -215,8 +216,8 @@ async def reverse_endpoint(api: NominatimAPIAsync, params: ASGIAdaptor) -> Any:
         query = ''
 
     if result:
-        Locales.from_accept_languages(get_accepted_languages(params)).localize_results(
-            [result])
+        Locales.from_accept_languages(get_accepted_languages(params),
+                                      params.config().OUTPUT_NAMES).localize_results([result])
 
     fmt_options = {'query': query,
                    'extratags': params.get_bool('extratags', False),
@@ -255,7 +256,8 @@ async def lookup_endpoint(api: NominatimAPIAsync, params: ASGIAdaptor) -> Any:
     if debug:
         return build_response(params, loglib.get_and_disable(), num_results=len(results))
 
-    Locales.from_accept_languages(get_accepted_languages(params)).localize_results(results)
+    Locales.from_accept_languages(get_accepted_languages(params),
+                                  params.config().OUTPUT_NAMES).localize_results(results)
 
     fmt_options = {'extratags': params.get_bool('extratags', False),
                    'namedetails': params.get_bool('namedetails', False),
@@ -348,7 +350,8 @@ async def search_endpoint(api: NominatimAPIAsync, params: ASGIAdaptor) -> Any:
     except UsageError as err:
         params.raise_error(str(err))
 
-    Locales.from_accept_languages(get_accepted_languages(params)).localize_results(results)
+    Locales.from_accept_languages(get_accepted_languages(params),
+                                  params.config().OUTPUT_NAMES).localize_results(results)
 
     if details['dedupe'] and len(results) > 1:
         results = helpers.deduplicate_results(results, max_results)

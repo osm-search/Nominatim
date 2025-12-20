@@ -19,6 +19,7 @@ import nominatim_api as napi
 from nominatim_api.v1.helpers import zoom_to_rank, deduplicate_results
 from nominatim_api.server.content_types import CONTENT_JSON
 import nominatim_api.logging as loglib
+from ..config import Configuration
 from ..errors import UsageError
 from .args import NominatimArgs
 
@@ -91,13 +92,14 @@ def _get_geometry_output(args: NominatimArgs) -> napi.GeometryFormat:
         raise UsageError(f"Unknown polygon output format '{args.polygon_output}'.") from exp
 
 
-def _get_locales(args: NominatimArgs, default: Optional[str]) -> napi.Locales:
+def _get_locales(args: NominatimArgs, config: Configuration) -> napi.Locales:
     """ Get the locales from the language parameter.
     """
-    if args.lang:
-        return napi.Locales.from_accept_languages(args.lang)
-    if default:
-        return napi.Locales.from_accept_languages(default)
+    language = args.lang or config.DEFAULT_LANGUAGE
+    output_names = config.OUTPUT_NAMES
+
+    if language:
+        return napi.Locales.from_accept_languages(language, output_names)
 
     return napi.Locales()
 
@@ -214,7 +216,7 @@ class APISearch:
         except napi.UsageError as ex:
             raise UsageError(ex) from ex
 
-        locales = _get_locales(args, api.config.DEFAULT_LANGUAGE)
+        locales = _get_locales(args, api.config)
         locales.localize_results(results)
 
         if args.dedupe and len(results) > 1:
@@ -287,7 +289,7 @@ class APIReverse:
             raise UsageError(ex) from ex
 
         if result is not None:
-            locales = _get_locales(args, api.config.DEFAULT_LANGUAGE)
+            locales = _get_locales(args, api.config)
             locales.localize_results([result])
 
         if args.format == 'debug':
@@ -352,7 +354,7 @@ class APILookup:
         except napi.UsageError as ex:
             raise UsageError(ex) from ex
 
-        locales = _get_locales(args, api.config.DEFAULT_LANGUAGE)
+        locales = _get_locales(args, api.config)
         locales.localize_results(results)
 
         if args.format == 'debug':
@@ -452,7 +454,7 @@ class APIDetails:
             raise UsageError(ex) from ex
 
         if result is not None:
-            locales = _get_locales(args, api.config.DEFAULT_LANGUAGE)
+            locales = _get_locales(args, api.config)
             locales.localize_results([result])
 
         if args.format == 'debug':

@@ -154,7 +154,7 @@ async def dump_results(conn: napi.SearchConnection,
     await add_result_details(conn, results,
                              LookupDetails(address_details=True))
 
-    locale = napi.Locales([lang] if lang else None)
+    locale = napi.Locales([lang] if lang else None, conn.config.OUTPUT_NAMES)
     locale.localize_results(results)
 
     for result in results:

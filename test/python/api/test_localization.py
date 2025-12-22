@@ -31,20 +31,15 @@ def test_output_names_none_localized():
     loc = Locales()
 
     expected_tags = [
-        'name', '_place_name', 'brand', '_place_brand', 'official_name', '_place_official_name',
-        'short_name', '_place_short_name', 'ref', '_place_ref'
+        'name', '_place_name'
     ]
 
     assert loc.name_tags == expected_tags, f'Expected {expected_tags}, but got {loc.name_tags}'
 
 
-def test_output_names_none_localized_and_custom_output_names(monkeypatch):
-    monkeypatch.setenv(
-        'NOMINATIM_OUTPUT_NAMES',
-        'name:XX,entrance:XX,name,brand,test_tag,'
-        'official_name:XX,short_name:XX,alt_name:XX'
-    )
-    loc = Locales()
+def test_output_names_none_localized_and_custom_output_names():
+    loc = Locales(names='name:XX,entrance:XX,name,brand,test_tag,'
+                  'official_name:XX,short_name:XX,alt_name:XX')
 
     expected_tags = [
         'name', '_place_name', 'brand', '_place_brand', 'test_tag', '_place_test_tag'
@@ -53,13 +48,9 @@ def test_output_names_none_localized_and_custom_output_names(monkeypatch):
     assert loc.name_tags == expected_tags, f'Expected {expected_tags}, but got {loc.name_tags}'
 
 
-def test_output_names_none_localized_and_custom_output_names_more_than_two_changes(monkeypatch):
-    monkeypatch.setenv(
-        'NOMINATIM_OUTPUT_NAMES',
-        'name:XX,brand,test_tag:XX,official_name,short_name:XX,'
-        'alt_name,another_tag_with:XX,another_tag_withoutXX'
-    )
-    loc = Locales()
+def test_output_names_none_localized_and_custom_output_names_more_than_two_changes():
+    loc = Locales(names='name:XX,brand,test_tag:XX,official_name,short_name:XX,'
+                  'alt_name,another_tag_with:XX,another_tag_withoutXX')
 
     expected_tags = [
         'brand', '_place_brand', 'official_name', '_place_official_name', 'alt_name',
@@ -69,12 +60,8 @@ def test_output_names_none_localized_and_custom_output_names_more_than_two_chang
     assert loc.name_tags == expected_tags, f'Expected {expected_tags}, but got {loc.name_tags}'
 
 
-def test_output_names_none_localized_and_custom_output_names_including_space(monkeypatch):
-    monkeypatch.setenv(
-        'NOMINATIM_OUTPUT_NAMES',
-        'name:XX,name ,short_name:XX, short_name'
-    )
-    loc = Locales()
+def test_output_names_none_localized_and_custom_output_names_including_space():
+    loc = Locales(names='name:XX,name ,short_name:XX, short_name')
 
     expected_tags = [
         'name', '_place_name', 'short_name', '_place_short_name'
@@ -95,22 +82,32 @@ def test_output_names_localized():
     loc = Locales(['en', 'es'])
 
     expected_tags = [
-        'name:en', '_place_name:en', 'name:es', '_place_name:es', 'name', '_place_name', 'brand',
-        '_place_brand', 'official_name:en', '_place_official_name:en', 'official_name:es',
-        '_place_official_name:es', 'short_name:en', '_place_short_name:en', 'short_name:es',
-        '_place_short_name:es', 'official_name', '_place_official_name', 'short_name',
-        '_place_short_name', 'ref', '_place_ref'
+        'name:en', '_place_name:en', 'name:es', '_place_name:es', 'name', '_place_name'
     ]
 
     assert loc.name_tags == expected_tags, f'Expected {expected_tags}, but got {loc.name_tags}'
 
 
-def test_output_names_localized_and_custom_output_names_including_space(monkeypatch):
-    monkeypatch.setenv(
-        'NOMINATIM_OUTPUT_NAMES',
-        'name:XX,name ,short_name:XX, short_name'
-    )
-    loc = Locales(['en', 'es'])
+def test_output_names_localized_and_empty_names():
+    loc = Locales(['en'], "")
+    expected_tags = []
+
+    assert loc.name_tags == expected_tags, f'Expected {expected_tags}, but got {loc.name_tags}'
+
+
+def test_output_names_localized_and_custom_names_ordering_logic():
+    loc = Locales(['en', 'fr'], "name:XX,ref")
+
+    expected = [
+        'name:en', '_place_name:en',
+        'name:fr', '_place_name:fr',
+        'ref', '_place_ref'
+    ]
+    assert loc.name_tags == expected
+
+
+def test_output_names_localized_and_custom_output_names_including_space():
+    loc = Locales(['en', 'es'], names='name:XX,name ,short_name:XX, short_name')
 
     expected_tags = [
         'name:en', '_place_name:en', 'name:es', '_place_name:es',
@@ -122,12 +119,9 @@ def test_output_names_localized_and_custom_output_names_including_space(monkeypa
     assert loc.name_tags == expected_tags, f'Expected {expected_tags}, but got {loc.name_tags}'
 
 
-def test_output_names_localized_and_custom_output_names(monkeypatch):
-    monkeypatch.setenv(
-        'NOMINATIM_OUTPUT_NAMES',
-        'name:XX,entrance:XX,name,brand,test_tag,official_name:XX,short_name:XX,alt_name:XX'
-    )
-    loc = Locales(['en', 'es'])
+def test_output_names_localized_and_custom_output_names():
+    loc = Locales(['en', 'es'], names='name:XX,entrance:XX,name,brand,test_tag,'
+                  'official_name:XX,short_name:XX,alt_name:XX')
 
     expected_tags = [
         'name:en', '_place_name:en', 'name:es', '_place_name:es', 'entrance:en',
@@ -141,12 +135,9 @@ def test_output_names_localized_and_custom_output_names(monkeypatch):
     assert loc.name_tags == expected_tags, f'Expected {expected_tags}, but got {loc.name_tags}'
 
 
-def test_output_names_localized_and_custom_output_names_start_with_tag_that_has_no_XX(monkeypatch):
-    monkeypatch.setenv(
-        'NOMINATIM_OUTPUT_NAMES',
-        'name,brand,test_tag,official_name:XX,short_name:XX,alt_name:XX'
-    )
-    loc = Locales(['en', 'es'])
+def test_output_names_localized_and_custom_output_names_start_with_tag_that_has_no_XX():
+    loc = Locales(['en', 'es'],
+                  names='name,brand,test_tag,official_name:XX,short_name:XX,alt_name:XX')
 
     expected_tags = [
         'name', '_place_name', 'brand', '_place_brand', 'test_tag', '_place_test_tag',
@@ -159,12 +150,8 @@ def test_output_names_localized_and_custom_output_names_start_with_tag_that_has_
     assert loc.name_tags == expected_tags, f'Expected {expected_tags}, but got {loc.name_tags}'
 
 
-def test_output_names_localized_and_custom_output_names_no_named_tags(monkeypatch):
-    monkeypatch.setenv(
-        'NOMINATIM_OUTPUT_NAMES',
-        'name,brand,test_tag'
-    )
-    loc = Locales(['en', 'es'])
+def test_output_names_localized_and_custom_output_names_no_named_tags():
+    loc = Locales(['en', 'es'], names='name,brand,test_tag')
 
     expected_tags = [
         'name', '_place_name', 'brand', '_place_brand', 'test_tag', '_place_test_tag'
@@ -173,12 +160,9 @@ def test_output_names_localized_and_custom_output_names_no_named_tags(monkeypatc
     assert loc.name_tags == expected_tags, f'Expected {expected_tags}, but got {loc.name_tags}'
 
 
-def test_output_names_localized_and_custom_output_names_only_named_tags(monkeypatch):
-    monkeypatch.setenv(
-        'NOMINATIM_OUTPUT_NAMES',
-        'name:XX,entrance:XX,official_name:XX,short_name:XX,alt_name:XX'
-    )
-    loc = Locales(['en', 'es'])
+def test_output_names_localized_and_custom_output_names_only_named_tags():
+    loc = Locales(['en', 'es'],
+                  names='name:XX,entrance:XX,official_name:XX,short_name:XX,alt_name:XX')
 
     expected_tags = [
         'name:en', '_place_name:en', 'name:es', '_place_name:es', 'entrance:en',
@@ -191,13 +175,9 @@ def test_output_names_localized_and_custom_output_names_only_named_tags(monkeypa
     assert loc.name_tags == expected_tags, f'Expected {expected_tags}, but got {loc.name_tags}'
 
 
-def test_output_names_localized_and_custom_output_names_more_than_two_changes(monkeypatch):
-    monkeypatch.setenv(
-        'NOMINATIM_OUTPUT_NAMES',
-        'name:XX,brand,test_tag:XX,official_name,short_name:XX,'
-        'alt_name,another_tag_with:XX,another_tag_withoutXX'
-    )
-    loc = Locales(['en', 'es'])
+def test_output_names_localized_and_custom_output_names_more_than_two_changes():
+    loc = Locales(['en', 'es'], names='name:XX,brand,test_tag:XX,official_name,'
+                  'short_name:XX,alt_name,another_tag_with:XX,another_tag_withoutXX')
 
     expected_tags = [
         'name:en', '_place_name:en', 'name:es', '_place_name:es', 'brand', '_place_brand',
@@ -211,13 +191,9 @@ def test_output_names_localized_and_custom_output_names_more_than_two_changes(mo
     assert loc.name_tags == expected_tags, f'Expected {expected_tags}, but got {loc.name_tags}'
 
 
-def test_output_names_localized_and_custom_output_names_XX_in_the_middle(monkeypatch):
-    monkeypatch.setenv(
-        'NOMINATIM_OUTPUT_NAMES',
-        'name:XX,br:XXand,test_tag:XX,official_name,sh:XXort_name:XX,'
-        'alt_name,another_tag_with:XX,another_tag_withoutXX'
-    )
-    loc = Locales(['en', 'es'])
+def test_output_names_localized_and_custom_output_names_XX_in_the_middle():
+    loc = Locales(['en', 'es'], names='name:XX,br:XXand,test_tag:XX,official_name,'
+                  'sh:XXort_name:XX,alt_name,another_tag_with:XX,another_tag_withoutXX')
 
     expected_tags = [
         'name:en', '_place_name:en', 'name:es', '_place_name:es', 'br:XXand', '_place_br:XXand',

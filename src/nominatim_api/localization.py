@@ -8,7 +8,6 @@
 Helper functions for localizing names of results.
 """
 from typing import Mapping, List, Optional
-from .config import Configuration
 from .results import AddressLines, BaseResultT
 
 import re
@@ -18,15 +17,15 @@ class Locales:
     """ Helper class for localization of names.
 
         It takes a list of language prefixes in their order of preferred
-        usage.
+        usage and comma separated name keys (Configuration.OUTPUT_NAMES).
     """
 
-    def __init__(self, langs: Optional[List[str]] = None):
-        self.config = Configuration(None)
+    def __init__(self, langs: Optional[List[str]] = None,
+                 names: str = 'name:XX,name') -> None:
         self.languages = langs or []
         self.name_tags: List[str] = []
 
-        parts = self.config.OUTPUT_NAMES.split(',')
+        parts = names.split(',') if names else []
 
         for part in parts:
             part = part.strip()
@@ -68,7 +67,7 @@ class Locales:
         return next(iter(names.values()))
 
     @staticmethod
-    def from_accept_languages(langstr: str) -> 'Locales':
+    def from_accept_languages(langstr: str, names: str = 'name:XX,name') -> 'Locales':
         """ Create a localization object from a language list in the
             format of HTTP accept-languages header.
 
@@ -96,7 +95,7 @@ class Locales:
             if len(parts) > 1 and all(c[0] != parts[0] for c in candidates):
                 languages.append(parts[0])
 
-        return Locales(languages)
+        return Locales(languages, names)
 
     def localize(self, lines: AddressLines) -> None:
         """ Sets the local name of address parts according to the chosen

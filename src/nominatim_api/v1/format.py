@@ -132,7 +132,7 @@ def _add_parent_rows_grouped(writer: JsonWriter, rows: AddressLines,
 
 @dispatch.format_func(DetailedResult, 'json')
 def _format_details_json(result: DetailedResult, options: Mapping[str, Any]) -> str:
-    locales = options.get('locales', Locales())
+    locales = options.get('locales') or Locales()
     geom = result.geometry.get('geojson')
     centroid = result.centroid.to_geojson()
 

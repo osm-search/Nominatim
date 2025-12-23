@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Helper function for parsing parameters and and outputting data
@@ -12,7 +12,7 @@ from typing import Tuple, Optional, Any, Dict, Iterable
 from itertools import chain
 import re
 
-from ..results import SearchResult, SearchResults, SourceTable
+from ..results import SearchResults, SourceTable
 from ..types import SearchDetails, GeometryFormat
 
 
@@ -106,10 +106,6 @@ def deduplicate_results(results: SearchResults, max_results: int) -> SearchResul
     classification_done = set()
     deduped = SearchResults()
     for result in results:
-        if result.source_table == SourceTable.POSTCODE:
-            assert result.names and 'ref' in result.names
-            if any(_is_postcode_relation_for(r, result.names['ref']) for r in results):
-                continue
         if result.source_table == SourceTable.PLACEX:
             classification = (result.osm_object[0] if result.osm_object else None,
                               result.category,
@@ -126,15 +122,6 @@ def deduplicate_results(results: SearchResults, max_results: int) -> SearchResul
             break
 
     return deduped
-
-
-def _is_postcode_relation_for(result: SearchResult, postcode: str) -> bool:
-    return result.source_table == SourceTable.PLACEX \
-           and result.osm_object is not None \
-           and result.osm_object[0] == 'R' \
-           and result.category == ('boundary', 'postal_code') \
-           and result.names is not None \
-           and result.names.get('ref') == postcode
 
 
 def _deg(axis: str) -> str:

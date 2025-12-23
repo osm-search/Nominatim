@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Dataclasses for search results and helper functions to fill them.
@@ -407,11 +407,13 @@ def create_from_postcode_row(row: SaRow, class_type: Type[BaseResultT]) -> BaseR
     """
     return class_type(source_table=SourceTable.POSTCODE,
                       place_id=row.place_id,
+                      osm_object=None if row.osm_id is None else ('R', row.osm_id),
                       parent_place_id=row.parent_place_id,
-                      category=('place', 'postcode'),
+                      category=(('place', 'postcode') if row.osm_id is None
+                                else ('boundary', 'postal_code')),
                       names={'ref': row.postcode},
                       rank_search=row.rank_search,
-                      rank_address=row.rank_address,
+                      rank_address=5,
                       country_code=row.country_code,
                       centroid=Point.from_wkb(row.centroid),
                       geometry=_filter_geometries(row))
@@ -494,17 +496,15 @@ def _get_address_lookup_id(result: BaseResultT) -> int:
 
 async def _finalize_entry(conn: SearchConnection, result: BaseResultT) -> None:
     assert result.address_rows is not None
-    if result.category[0] not in ('boundary', 'place')\
-       or result.category[1] not in ('postal_code', 'postcode'):
-        postcode = result.postcode
-        if not postcode and result.address:
-            postcode = result.address.get('postcode')
-        if postcode and ',' not in postcode and ';' not in postcode:
-            result.address_rows.append(AddressLine(
-                category=('place', 'postcode'),
-                names={'ref': postcode},
-                fromarea=False, isaddress=True, rank_address=5,
-                distance=0.0))
+
+    postcode = result.postcode or (result.address and result.address.get('postcode'))
+    if postcode and ',' not in postcode and ';' not in postcode:
+        result.address_rows.append(AddressLine(
+            category=('place', 'postcode'),
+            names={'ref': postcode},
+            fromarea=False, isaddress=True, rank_address=5,
+            distance=0.0))
+
     if result.country_code:
         async def _get_country_names() -> Optional[Dict[str, str]]:
             t = conn.t.country_name
@@ -626,13 +626,6 @@ async def complete_address_details(conn: SearchConnection, results: List[BaseRes
 
         if current_result.country_code is None and row.country_code:
             current_result.country_code = row.country_code
-
-        if row.type in ('postcode', 'postal_code') and location_isaddress:
-            if not row.fromarea or \
-               (current_result.address and 'postcode' in current_result.address):
-                location_isaddress = False
-            else:
-                current_result.postcode = None
 
         assert current_result.address_rows is not None
         current_result.address_rows.append(_result_row_to_address_row(row, location_isaddress))

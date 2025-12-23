@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Implementation of place lookup by ID (doing many places at once).
@@ -291,11 +291,29 @@ async def find_in_postcode(conn: SearchConnection, collector: Collector) -> bool
                     .table_valued(sa.column('value', type_=sa.JSON))
         t = conn.t.postcode
         sql = sa.select(pid_tab.c.value['i'].as_integer().label('_idx'),
-                        t.c.place_id, t.c.parent_place_id,
-                        t.c.rank_search, t.c.rank_address,
+                        t.c.osm_id, t.c.place_id, t.c.parent_place_id,
+                        t.c.rank_search,
                         t.c.indexed_date, t.c.postcode, t.c.country_code,
-                        t.c.geometry.label('centroid'))\
+                        t.c.centroid)\
                 .where(t.c.place_id == pid_tab.c.value['id'].as_string().cast(sa.BigInteger))
+
+        if await collector.add_rows_from_sql(conn, sql, t.c.geometry,
+                                             nres.create_from_postcode_row):
+            return True
+
+    osm_ids = [{'i': i, 'oi': p.osm_id}
+               for i, p in collector.enumerate_free_osm_ids() if p.osm_type == 'R']
+
+    if osm_ids:
+        pid_tab = sa.func.JsonArrayEach(sa.type_coerce(osm_ids, sa.JSON))\
+                    .table_valued(sa.column('value', type_=sa.JSON))
+        t = conn.t.postcode
+        sql = sa.select(pid_tab.c.value['i'].as_integer().label('_idx'),
+                        t.c.osm_id, t.c.place_id, t.c.parent_place_id,
+                        t.c.rank_search,
+                        t.c.indexed_date, t.c.postcode, t.c.country_code,
+                        t.c.centroid)\
+                .where(t.c.osm_id == pid_tab.c.value['oi'].as_string().cast(sa.BigInteger))
 
         return await collector.add_rows_from_sql(conn, sql, t.c.geometry,
                                                  nres.create_from_postcode_row)

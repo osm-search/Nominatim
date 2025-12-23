@@ -323,6 +323,17 @@ END;
 $$
 LANGUAGE plpgsql;
 
+
+-- Return the bounding box of the geometry buffered by the given number
+-- of meters.
+CREATE OR REPLACE FUNCTION expand_by_meters(geom GEOMETRY, meters FLOAT)
+  RETURNS GEOMETRY
+  AS $$
+    SELECT ST_Envelope(ST_Buffer(geom::geography, meters, 1)::geometry)
+$$
+LANGUAGE sql IMMUTABLE PARALLEL SAFE;
+
+
 -- Create a bounding box with an extent computed from the radius (in meters)
 -- which in turn is derived from the given search rank.
 CREATE OR REPLACE FUNCTION place_node_fuzzy_area(geom GEOMETRY, rank_search INTEGER)
@@ -341,9 +352,7 @@ BEGIN
     radius := 1000;
   END IF;
 
-  RETURN ST_Envelope(ST_Collect(
-                     ST_Project(geom::geography, radius, 0.785398)::geometry,
-                     ST_Project(geom::geography, radius, 3.9269908)::geometry));
+  RETURN expand_by_meters(geom, radius);
 END;
 $$
 LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;

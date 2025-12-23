@@ -288,7 +288,7 @@ class TextLogger(BaseLogger):
             self._write(f"rank={res.rank_address}, ")
             self._write(f"osm={''.join(map(str, res.osm_object or []))}, ")
             self._write(f'cc={res.country_code}, ')
-            self._write(f'importance={res.importance or -1:.5f})\n')
+            self._write(f'importance={res.importance or float("NaN"):.5f})\n')
             total += 1
         self._write(f'TOTAL: {total}\n\n')
 

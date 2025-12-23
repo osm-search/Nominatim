@@ -304,7 +304,6 @@ DECLARE
 BEGIN
   IF bnd.rank_search >= 26 or bnd.rank_address = 0
      or ST_GeometryType(bnd.geometry) NOT IN ('ST_Polygon','ST_MultiPolygon')
-     or bnd.type IN ('postcode', 'postal_code')
   THEN
     RETURN NULL;
   END IF;
@@ -359,8 +358,7 @@ BEGIN
 
   -- If extratags has a place tag, look for linked nodes by their place type.
   -- Area and node still have to have the same name.
-  IF bnd.extratags ? 'place' and bnd.extratags->'place' != 'postcode'
-     and bnd_name is not null
+  IF bnd.extratags ? 'place' and bnd_name is not null
   THEN
     FOR linked_placex IN
       SELECT * FROM placex
@@ -393,7 +391,6 @@ BEGIN
         AND placex.class = 'place'
         AND (placex.linked_place_id is null or placex.linked_place_id = bnd.place_id)
         AND placex.rank_search < 26 -- needed to select the right index
-        AND placex.type != 'postcode'
         AND ST_Covers(bnd.geometry, placex.geometry)
     LOOP
       {% if debug %}RAISE WARNING 'Found matching place node %', linked_placex.osm_id;{% endif %}
@@ -697,17 +694,7 @@ BEGIN
   ELSE
     is_area := ST_GeometryType(NEW.geometry) IN ('ST_Polygon','ST_MultiPolygon');
 
-    IF NEW.class in ('place','boundary')
-       AND NEW.type in ('postcode','postal_code')
-    THEN
-      IF NEW.address IS NULL OR NOT NEW.address ? 'postcode' THEN
-          -- most likely just a part of a multipolygon postcode boundary, throw it away
-          RETURN NULL;
-      END IF;
-
-      NEW.name := hstore('ref', NEW.address->'postcode');
-
-    ELSEIF NEW.class = 'highway' AND is_area AND NEW.name is null
+    IF NEW.class = 'highway' AND is_area AND NEW.name is null
            AND NEW.extratags ? 'area' AND NEW.extratags->'area' = 'yes'
     THEN
         RETURN NULL;
@@ -876,16 +863,6 @@ BEGIN
     WHERE linked_place_id = NEW.place_id
           and (linked_place is null or place_id != linked_place);
   -- update not necessary for osmline, cause linked_place_id does not exist
-
-  -- Postcodes are just here to compute the centroids. They are not searchable
-  -- unless they are a boundary=postal_code.
-  -- There was an error in the style so that boundary=postal_code used to be
-  -- imported as place=postcode. That's why relations are allowed to pass here.
-  -- This can go away in a couple of versions.
-  IF NEW.class = 'place'  and NEW.type = 'postcode' and NEW.osm_type != 'R' THEN
-    NEW.token_info := null;
-    RETURN NEW;
-  END IF;
 
   -- Compute a preliminary centroid.
   NEW.centroid := get_center_point(NEW.geometry);
@@ -1286,8 +1263,6 @@ BEGIN
     END IF;
   ELSEIF NEW.rank_address > 25 THEN
     max_rank := 25;
-  ELSEIF NEW.class in ('place','boundary') and NEW.type in ('postcode','postal_code') THEN
-    max_rank := NEW.rank_search;
   ELSE
     max_rank := NEW.rank_address;
   END IF;

@@ -2,7 +2,7 @@
 --
 -- This file is part of Nominatim. (https://nominatim.org)
 --
--- Copyright (C) 2022 by the Nominatim developer community.
+-- Copyright (C) 2025 by the Nominatim developer community.
 -- For a full list of authors see the git log.
 
 drop table if exists import_status;
@@ -192,8 +192,7 @@ CREATE INDEX idx_placex_geometry_buildings ON placex
 --        - linking of place nodes with same type to boundaries
 CREATE INDEX idx_placex_geometry_placenode ON placex
   USING SPGIST (geometry) {{db.tablespace.address_index}}
-  WHERE osm_type = 'N' and rank_search < 26
-        and class = 'place' and type != 'postcode';
+  WHERE osm_type = 'N' and rank_search < 26 and class = 'place';
 
 -- Usage: - is node part of a way?
 --        - find parent of interpolation spatially

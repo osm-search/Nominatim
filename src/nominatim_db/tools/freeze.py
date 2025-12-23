@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Functions for removing unnecessary data from the database.
@@ -22,6 +22,8 @@ UPDATE_TABLES = [
     'location_area%',
     'location_road%',
     'place',
+    'place_entrance',
+    'place_postcode',
     'planet_osm_%',
     'search_name_%',
     'us_postcode',

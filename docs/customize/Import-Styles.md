@@ -113,6 +113,7 @@ The following classifications are recognized:
 | named           | Consider as main tag, when the object has a primary name (see [names](#name-tags) below) |
 | named_with_key  | Consider as main tag, when the object has a primary name with a domain prefix. For example, if the main tag is  `bridge=yes`, then it will only be added as an extra entry, if there is a tag `bridge:name[:XXX]` for the same object. If this property is set, all names that are not domain-specific are ignored. |
 | fallback        | Consider as main tag only when no other main tag was found. Fallback always implies `named`, i.e. fallbacks are only tried for objects with primary names. |
+| postcode_area   | Tag indicates a postcode area. Copy area into the table of postcodes but only when the object is a relation and has a postcode tagged. |
 | delete          | Completely ignore the tag in any further processing |
 | extra           | Move the tag to extratags and then ignore it for further processing |
 | `<function>`| Advanced handling, see [below](#advanced-main-tag-handling) |

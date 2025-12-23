@@ -2,7 +2,6 @@ Feature: Update of postcode only objects
     Tests that changes to objects containing only a postcode are
     propagated correctly.
 
-
     Scenario: Adding a postcode-only node
         When loading osm data
             """
@@ -15,11 +14,10 @@ Feature: Update of postcode only objects
             """
             n34 Tpostcode=4456
             """
-        Then place contains exactly
-            | object | class | type     |
-            | N34    | place | postcode |
-        When indexing
-        Then placex contains exactly
+        Then place_postcode contains exactly
+            | object | postcode |
+            | N34    | 4456     |
+        And place contains exactly
             | object |
 
 
@@ -28,9 +26,11 @@ Feature: Update of postcode only objects
             """
             n34 Tpostcode=4456
             """
-        Then place contains exactly
-            | object | class | type     |
-            | N34    | place | postcode |
+        Then place_postcode contains exactly
+            | object | postcode |
+            | N34    | 4456     |
+        And place contains exactly
+            | object |
 
         When updating osm data
             """
@@ -38,8 +38,7 @@ Feature: Update of postcode only objects
             """
         Then place contains exactly
             | object |
-        When indexing
-        Then placex contains exactly
+        And place_postcode contains exactly
             | object |
 
 
@@ -57,8 +56,10 @@ Feature: Update of postcode only objects
             n34 Tpostcode=4456
             """
         Then place contains exactly
-            | object | class | type     |
-            | N34    | place | postcode |
+            | object |
+        And place_postcode contains exactly
+            | object | postcode |
+            | N34    | 4456     |
         When indexing
         Then placex contains exactly
             | object |
@@ -74,9 +75,9 @@ Feature: Update of postcode only objects
             """
             n34 Tpostcode=4456
             """
-        Then place contains exactly
-            | object | class | type     |
-            | N34    | place | postcode |
+        Then place_postcode contains exactly
+            | object | postcode |
+            | N34    | 4456     |
 
         When updating osm data
             """
@@ -85,6 +86,8 @@ Feature: Update of postcode only objects
         Then place contains exactly
             | object | class   | type   |
             | N34    | <class> | <type> |
+        And place_postcode contains exactly
+            | object |
         When indexing
         Then placex contains exactly
             | object | class   | type   |
@@ -96,7 +99,7 @@ Feature: Update of postcode only objects
             | place   | hamlet     |
 
 
-    Scenario: Converting na interpolation into a postcode-only node
+    Scenario: Converting an interpolation into a postcode-only node
         Given the grid
             | 1 | 2 |
         When loading osm data
@@ -119,14 +122,12 @@ Feature: Update of postcode only objects
             | object | class | type     |
             | N1     | place | house    |
             | N2     | place | house    |
-            | W34    | place | postcode |
+        Then place_postcode contains exactly
+            | object | postcode |
+            | W34    | 4456     |
         When indexing
         Then location_property_osmline contains exactly
             | osm_id |
-        And placex contains exactly
-            | object | class | type   |
-            | N1     | place | house  |
-            | N2     | place | house  |
 
 
     Scenario: Converting a postcode-only node into an interpolation
@@ -144,7 +145,9 @@ Feature: Update of postcode only objects
             | N1     | place   | house    |
             | N2     | place   | house    |
             | W33    | highway | residential |
-            | W34    | place   | postcode |
+        And place_postcode contains exactly
+            | object | postcode |
+            | W34    | 4456     |
 
         When updating osm data
             """
@@ -156,6 +159,8 @@ Feature: Update of postcode only objects
             | N2     | place   | house  |
             | W33    | highway | residential |
             | W34    | place   | houses |
+        And place_postcode contains exactly
+            | object |
         When indexing
         Then location_property_osmline contains exactly
             | osm_id | startnumber | endnumber |

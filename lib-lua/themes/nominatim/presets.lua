@@ -118,7 +118,7 @@ module.MAIN_TAGS.all_boundaries = {
                 place = 'delete',
                 land_area = 'delete',
                 protected_area = 'fallback',
-                postal_code = 'always'},
+                postal_code = 'postcode_area'},
     landuse = 'fallback',
     place = 'always'
 }

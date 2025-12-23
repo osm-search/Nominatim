@@ -269,7 +269,8 @@ def _update_guessed_postcode(conn: Connection, analyzer: AbstractAnalyzer,
     with conn.cursor() as cur:
         cur.execute("DROP TABLE IF EXISTS _global_postcode_area")
         cur.execute("""CREATE TABLE _global_postcode_area AS
-                       (SELECT ST_SubDivide(ST_Union(geometry)) as geometry
+                       (SELECT ST_SubDivide(ST_SimplifyPreserveTopology(
+                                              ST_Union(geometry), 0.00001), 128) as geometry
                         FROM place_postcode WHERE geometry is not null)
                     """)
         cur.execute("CREATE INDEX ON _global_postcode_area USING gist(geometry)")

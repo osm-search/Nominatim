@@ -150,7 +150,7 @@ def test_truncate_database_tables(temp_db_conn, temp_db_cursor, table_factory, w
     tables = ['placex', 'place_addressline', 'location_area',
               'location_area_country',
               'location_property_tiger', 'location_property_osmline',
-              'location_postcode', 'location_road_23']
+              'location_postcodes', 'location_road_23']
     if with_search:
         tables.append('search_name')
 

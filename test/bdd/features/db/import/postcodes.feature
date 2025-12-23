@@ -121,8 +121,8 @@ Feature: Import of postcodes
             |    | 1 | 2 |   |    |
             |    | 4 | 3 |   |    |
         And the named places
-            | osm | class    | type           | geometry         |
-            | W93 | highway  | pedestriant    | (10,11,12,13,10) |
+            | osm | class    | type       | geometry         |
+            | W93 | highway  | pedestrian | (10,11,12,13,10) |
         And the named places
             | osm | class    | type        | addr+postcode | geometry    |
             | W22 | building | yes         | 45023         | (1,2,3,4,1) |
@@ -134,14 +134,13 @@ Feature: Import of postcodes
     Scenario: Roads get postcodes from nearby unnamed buildings without other info
         Given the grid with origin US
             | 10 |   |   |   | 11 |
-            |    | 1 | 2 |   |    |
-            |    | 4 | 3 |   |    |
+            |    | 1 |   |   |    |
         And the named places
             | osm | class    | type           | geometry |
             | W93 | highway  | residential    | 10,11    |
-        And the places
-            | osm | class    | type        | addr+postcode | geometry    |
-            | W22 | place    | postcode    | 45023         | (1,2,3,4,1) |
+        And the postcodes
+            | osm | postcode | centroid |
+            | W22 | 45023    | 1        |
         When importing
         Then placex contains
             | object | postcode |
@@ -172,25 +171,11 @@ Feature: Import of postcodes
     Scenario: Postcodes are added to the postcode
         Given the places
            | osm | class | type  | addr+postcode | addr+housenumber | geometry |
-           | N34 | place | house | 01982         | 111              |country:de |
+           | N34 | place | house | 01982         | 111              | country:de |
         When importing
-        Then location_postcode contains exactly
-           | country_code | postcode | geometry!wkt |
+        Then location_postcodes contains exactly
+           | country_code | postcode | centroid!wkt |
            | de           | 01982    | country:de |
-
-    @skip
-    Scenario: search and address ranks for GB post codes correctly assigned
-        Given the places
-         | osm  | class | type     | postcode | geometry |
-         | N1   | place | postcode | E45 2CD  | country:gb |
-         | N2   | place | postcode | E45 2    | country:gb |
-         | N3   | place | postcode | Y45      | country:gb |
-        When importing
-        Then location_postcode contains exactly
-         | postcode | country_code | rank_search | rank_address |
-         | E45 2CD  | gb           | 25          | 5 |
-         | E45 2    | gb           | 23          | 5 |
-         | Y45      | gb           | 21          | 5 |
 
     Scenario: Postcodes outside all countries are not added to the postcode table
         Given the places
@@ -200,7 +185,7 @@ Feature: Import of postcodes
             | osm | class | type   | name        | geometry |
             | N1  | place | hamlet | Null Island | 0 0      |
         When importing
-        Then location_postcode contains exactly
+        Then location_postcodes contains exactly
             | place_id |
         When geocoding "111, 01982 Null Island"
         Then the result set contains

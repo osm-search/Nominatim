@@ -11,6 +11,7 @@ import random
 import string
 
 from .geometry_alias import ALIASES
+from .grid import Grid
 
 
 class PlaceColumn:
@@ -19,7 +20,7 @@ class PlaceColumn:
     """
     def __init__(self, grid=None):
         self.columns = {'admin_level': 15}
-        self.grid = grid
+        self.grid = grid or Grid()
         self.geometry = None
 
     def add_row(self, headings, row, force_name):
@@ -91,26 +92,9 @@ class PlaceColumn:
         if value.startswith('country:'):
             ccode = value[8:].upper()
             self.geometry = "ST_SetSRID(ST_Point({}, {}), 4326)".format(*ALIASES[ccode])
-        elif ',' not in value:
-            if self.grid:
-                pt = self.grid.parse_point(value)
-            else:
-                pt = value.split(' ')
-            self.geometry = f"ST_SetSRID(ST_Point({pt[0]}, {pt[1]}), 4326)"
-        elif '(' not in value:
-            if self.grid:
-                coords = ','.join(' '.join(f"{p:.7f}" for p in pt)
-                                  for pt in self.grid.parse_line(value))
-            else:
-                coords = value
-            self.geometry = f"'srid=4326;LINESTRING({coords})'::geometry"
         else:
-            if self.grid:
-                coords = ','.join(' '.join(f"{p:.7f}" for p in pt)
-                                  for pt in self.grid.parse_line(value[1:-1]))
-            else:
-                coords = value[1:-1]
-            self.geometry = f"'srid=4326;POLYGON(({coords}))'::geometry"
+            wkt = self.grid.geometry_to_wkt(value)
+            self.geometry = f"'srid=4326;{wkt}'::geometry"
 
     def _add_hstore(self, column, key, value):
         if column in self.columns:
@@ -120,7 +104,7 @@ class PlaceColumn:
 
     def get_wkt(self):
         if self.columns['osm_type'] == 'N' and self.geometry is None:
-            pt = self.grid.get(str(self.columns['osm_id'])) if self.grid else None
+            pt = self.grid.get(str(self.columns['osm_id']))
             if pt is None:
                 pt = (random.uniform(-180, 180), random.uniform(-90, 90))
 

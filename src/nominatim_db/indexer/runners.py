@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Mix-ins that provide the actual commands for the indexer for various indexing
@@ -143,22 +143,22 @@ class InterpolationRunner:
 
 
 class PostcodeRunner(Runner):
-    """ Provides the SQL commands for indexing the location_postcode table.
+    """ Provides the SQL commands for indexing the location_postcodes table.
     """
 
     def name(self) -> str:
-        return "postcodes (location_postcode)"
+        return "postcodes (location_postcodes)"
 
     def sql_count_objects(self) -> Query:
-        return 'SELECT count(*) FROM location_postcode WHERE indexed_status > 0'
+        return 'SELECT count(*) FROM location_postcodes WHERE indexed_status > 0'
 
     def sql_get_objects(self) -> Query:
-        return """SELECT place_id FROM location_postcode
+        return """SELECT place_id FROM location_postcodes
                   WHERE indexed_status > 0
                   ORDER BY country_code, postcode"""
 
     def index_places_query(self, batch_size: int) -> Query:
-        return pysql.SQL("""UPDATE location_postcode SET indexed_status = 0
+        return pysql.SQL("""UPDATE location_postcodes SET indexed_status = 0
                                     WHERE place_id IN ({})""")\
                     .format(pysql.SQL(',').join((pysql.Placeholder() for _ in range(batch_size))))
 

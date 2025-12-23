@@ -2,7 +2,7 @@
 --
 -- This file is part of Nominatim. (https://nominatim.org)
 --
--- Copyright (C) 2022 by the Nominatim developer community.
+-- Copyright (C) 2025 by the Nominatim developer community.
 -- For a full list of authors see the git log.
 
 {% include('functions/utils.sql') %}
@@ -18,7 +18,7 @@
     {% include 'functions/placex_triggers.sql' %}
 {% endif %}
 
-{% if 'location_postcode' in db.tables %}
+{% if 'location_postcodes' in db.tables %}
     {% include 'functions/postcode_triggers.sql' %}
 {% endif %}
 

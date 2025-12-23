@@ -2,7 +2,7 @@
 --
 -- This file is part of Nominatim. (https://nominatim.org)
 --
--- Copyright (C) 2022 by the Nominatim developer community.
+-- Copyright (C) 2025 by the Nominatim developer community.
 -- For a full list of authors see the git log.
 
 -- insert creates the location tables, creates location indexes if indexed == true
@@ -25,5 +25,5 @@ CREATE TRIGGER place_before_delete BEFORE DELETE ON place
 CREATE TRIGGER place_before_insert BEFORE INSERT ON place
     FOR EACH ROW EXECUTE PROCEDURE place_insert();
 
-CREATE TRIGGER location_postcode_before_update BEFORE UPDATE ON location_postcode
+CREATE TRIGGER location_postcode_before_update BEFORE UPDATE ON location_postcodes
     FOR EACH ROW EXECUTE PROCEDURE postcode_update();

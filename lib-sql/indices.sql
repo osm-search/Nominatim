@@ -48,9 +48,6 @@ CREATE INDEX IF NOT EXISTS idx_osmline_parent_place_id
 ---
 CREATE INDEX IF NOT EXISTS idx_osmline_parent_osm_id
   ON location_property_osmline USING BTREE (osm_id) {{db.tablespace.search_index}};
----
-CREATE INDEX IF NOT EXISTS idx_postcode_postcode
-  ON location_postcode USING BTREE (postcode) {{db.tablespace.search_index}};
 
 {% if drop %}
 ---
@@ -77,8 +74,8 @@ CREATE INDEX IF NOT EXISTS idx_postcode_postcode
     deferred BOOLEAN
    );
 ---
-  CREATE INDEX IF NOT EXISTS idx_location_postcode_parent_place_id
-    ON location_postcode USING BTREE (parent_place_id) {{db.tablespace.address_index}};
+  CREATE INDEX IF NOT EXISTS idx_location_postcodes_parent_place_id
+    ON location_postcodes USING BTREE (parent_place_id) {{db.tablespace.address_index}};
 {% endif %}
 
 -- Indices only needed for search.

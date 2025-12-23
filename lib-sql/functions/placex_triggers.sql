@@ -1399,7 +1399,7 @@ BEGIN
 
   {% if debug %}RAISE WARNING 'placex_delete:12 % %',OLD.osm_type,OLD.osm_id;{% endif %}
 
-  UPDATE location_postcode SET indexed_status = 2 WHERE parent_place_id = OLD.place_id;
+  UPDATE location_postcodes SET indexed_status = 2 WHERE parent_place_id = OLD.place_id;
 
   RETURN OLD;
 

@@ -79,7 +79,7 @@ the placex table. Only three columns are special:
 Address interpolations are always ways in OSM, which is why there is no column
 `osm_type`.
 
-The **location_postcode** table holds computed centroids of all postcodes that
+The **location_postcodes** table holds computed centroids of all postcodes that
 can be found in the OSM data. The meaning of the columns is again the same
 as that of the placex table.
 

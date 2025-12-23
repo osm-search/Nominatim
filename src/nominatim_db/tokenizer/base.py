@@ -71,7 +71,7 @@ class AbstractAnalyzer(ABC):
     @abstractmethod
     def update_postcodes_from_db(self) -> None:
         """ Update the tokenizer's postcode tokens from the current content
-            of the `location_postcode` table.
+            of the `location_postcodes` table.
         """
 
     @abstractmethod

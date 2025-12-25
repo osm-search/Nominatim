@@ -248,19 +248,19 @@ of the result. To do that, you first need to decide in which language the
 results should be presented. As with the names in the result itself, the
 places in `address_rows` contain all possible name translation for each row.
 
-The library has a helper class `Locale` which helps extracting a name of a
+The library has a helper class `Locales` which helps extracting a name of a
 place in the preferred language. It takes a single parameter with a list
 of language codes in the order of preference. So
 
 ``` python
-locale = napi.Locale(['fr', 'en'])
+locale = napi.Locales(['fr', 'en'])
 ```
 
 creates a helper class that returns the name preferably in French. If that is
 not possible, it tries English and eventually falls back to the default `name`
 or `ref`.
 
-The `Locale` object can be applied to a name dictionary to return the best-matching
+The `Locales` object can be applied to a name dictionary to return the best-matching
 name out of it:
 
 ``` python
@@ -273,7 +273,7 @@ component based on its `local_name` field. This is then utilized by the overall 
 which has a helper function to apply the function to all its ‘address_row’ members and saves
 the result in the `locale_name` field. 
 
-However, in order to set this `local_name` field in a preferred language, you must use the `Locale`
+However, in order to set this `local_name` field in a preferred language, you must use the `Locales`
 object which contains the function `localize_results`, which explicitly sets each `local_name field`.
 
 ``` python

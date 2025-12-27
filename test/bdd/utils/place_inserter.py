@@ -9,6 +9,7 @@ Helper classes for filling the place table.
 """
 import random
 import string
+import json
 
 from .geometry_alias import ALIASES
 
@@ -49,7 +50,10 @@ class PlaceColumn:
         elif key.startswith('addr+'):
             self._add_hstore('address', key[5:], value)
         elif key in ('name', 'address', 'extratags'):
-            self.columns[key] = eval('{' + value + '}')
+            try:
+                self.columns[key] = json.loads('{' + value + '}')
+            except json.JSONDecodeError as e:
+                raise AssertionError(f"Invalid JSON for {key}: {value}") from e
         else:
             assert key in ('class', 'type'), "Unknown column '{}'.".format(key)
             self.columns[key] = None if value == '' else value

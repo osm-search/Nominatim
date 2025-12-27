@@ -58,7 +58,7 @@ COMPARISON_FUNCS = {
     None: lambda val, exp: str(val) == exp,
     'i': lambda val, exp: str(val).lower() == exp.lower(),
     'fm': lambda val, exp: re.fullmatch(exp, val) is not None,
-    'dict': lambda val, exp: val is None if exp == '-' else (val == eval('{' + exp + '}')),
+    'dict': lambda val, exp: val is None if exp == '-' else (val == json.loads('{' + exp + '}')),
     'in_box': within_box
 }
 

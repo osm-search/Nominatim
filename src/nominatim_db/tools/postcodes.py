@@ -117,6 +117,7 @@ class _PostcodeCollector:
                                WHERE country_code = %s and postcode = any(%s)
                                      AND osm_id is null
                             """, (self.country, to_delete))
+            cur.execute("ANALYSE location_postcodes")
 
     def _update_from_external(self, analyzer: AbstractAnalyzer, project_dir: Path) -> None:
         """ Look for an external postcode file for the active country in

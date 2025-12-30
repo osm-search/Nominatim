@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Main work horse for indexing (computing addresses) the database.
@@ -154,7 +154,7 @@ class Indexer:
         return total
 
     async def index_postcodes(self) -> int:
-        """Index the entries of the location_postcode table.
+        """Index the entries of the location_postcodes table.
         """
         LOG.warning("Starting indexing postcodes using %s threads", self.num_threads)
 

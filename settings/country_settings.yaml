@@ -305,6 +305,7 @@ ch:
     names: !include country-names/ch.yaml
     postcode:
       pattern: "dddd"
+      extent: 3000
 
 
 # Côte d'Ivoire (Côte d’Ivoire)
@@ -472,6 +473,7 @@ ee:
     names: !include country-names/ee.yaml
     postcode:
       pattern: "ddddd"
+      extent: 3000
 
 
 # Egypt (مصر)
@@ -585,6 +587,7 @@ gb:
     postcode:
       pattern: "(l?ld[A-Z0-9]?) ?(dll)"
       output: \1 \2
+      extent: 700
 
 
 # Grenada (Grenada)
@@ -612,6 +615,7 @@ gg:
     postcode:
       pattern: "(GYdd?) ?(dll)"
       output: \1 \2
+      extent: 1000
 
 
 # Ghana (Ghana)
@@ -766,6 +770,7 @@ ie:
     postcode:
       pattern: "(ldd) ?([0123456789ACDEFHKNPRTVWXY]{4})"
       output: \1 \2
+      extent: 50
 
 
 # Israel (ישראל)
@@ -785,6 +790,7 @@ im:
     postcode:
       pattern: "(IMdd?) ?(dll)"
       output: \1 \2
+      extent: 700
 
 
 # India (India)
@@ -879,6 +885,7 @@ jp:
     postcode:
       pattern: "(ddd)-?(dddd)"
       output: \1-\2
+      extent: 3000
 
 
 # Kenya (Kenya)
@@ -1013,6 +1020,7 @@ li:
     names: !include country-names/li.yaml
     postcode:
       pattern: "dddd"
+      extent: 4000
 
 
 # Sri Lanka (ශ්‍රී ලංකාව இலங்கை)
@@ -1058,6 +1066,7 @@ lu:
     names: !include country-names/lu.yaml
     postcode:
       pattern: "dddd"
+      extent: 1000
 
 
 # Latvia (Latvija)
@@ -1290,6 +1299,7 @@ nl:
     postcode:
       pattern: "(dddd) ?(ll)"
       output: \1 \2
+      extent: 800
 
 
 # Norway (Norge)
@@ -1425,6 +1435,7 @@ pt:
     names: !include country-names/pt.yaml
     postcode:
       pattern: "dddd(?:-ddd)?"
+      extent: 1000
 
 
 # Palau (Belau)
@@ -1460,6 +1471,7 @@ ro:
     names: !include country-names/ro.yaml
     postcode:
       pattern: "dddddd"
+      extent: 2500
 
 
 # Serbia (Србија)

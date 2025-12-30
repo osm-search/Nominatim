@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Hard-coded information about tag categories.
@@ -20,7 +20,9 @@ def get_label_tag(category: Tuple[str, str], extratags: Optional[Mapping[str, st
                   rank: int, country: Optional[str]) -> str:
     """ Create a label tag for the given place that can be used as an XML name.
     """
-    if rank < 26 and extratags and 'place' in extratags:
+    if category in (('place', 'postcode'), ('boundary', 'postal_code')):
+        label = 'postcode'
+    elif rank < 26 and extratags and 'place' in extratags:
         label = extratags['place']
     elif rank < 26 and extratags and 'linked_place' in extratags:
         label = extratags['linked_place']
@@ -28,8 +30,6 @@ def get_label_tag(category: Tuple[str, str], extratags: Optional[Mapping[str, st
         label = ADMIN_LABELS.get((country or '', rank // 2))\
                 or ADMIN_LABELS.get(('', rank // 2))\
                 or 'Administrative'
-    elif category[1] == 'postal_code':
-        label = 'postcode'
     elif rank < 26:
         label = category[1] if category[1] != 'yes' else category[0]
     elif rank < 28:

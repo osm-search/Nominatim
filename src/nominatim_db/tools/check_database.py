@@ -113,8 +113,8 @@ def _get_indexes(conn: Connection) -> List[str]:
                'idx_placex_geometry_placenode',
                'idx_osmline_parent_place_id',
                'idx_osmline_parent_osm_id',
-               'idx_postcode_id',
-               'idx_postcode_postcode'
+               'idx_location_postcodes_id',
+               'idx_location_postcodes_postcode'
                ]
 
     # These won't exist if --reverse-only import was used

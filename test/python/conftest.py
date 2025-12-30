@@ -26,6 +26,13 @@ import mocks
 from cursor import CursorForTesting
 
 
+def _with_srid(geom, default=None):
+    if geom is None:
+        return None if default is None else f"SRID=4326;{default}"
+
+    return f"SRID=4326;{geom}"
+
+
 @pytest.fixture
 def src_dir():
     return SRC_DIR
@@ -175,6 +182,36 @@ def place_row(place_table, temp_db_cursor):
                                (osm_id or next(idseq), osm_type, cls, typ, names,
                                 admin_level, address, extratags,
                                 geom or 'SRID=4326;POINT(0 0)'))
+
+    return _insert
+
+
+@pytest.fixture
+def place_postcode_table(temp_db_with_extensions, table_factory):
+    """ Create an empty version of the place_postcode table.
+    """
+    table_factory('place_postcode',
+                  """osm_type char(1) NOT NULL,
+                     osm_id bigint NOT NULL,
+                     postcode text NOT NULL,
+                     country_code text,
+                     centroid Geometry(Point, 4326) NOT NULL,
+                     geometry Geometry(Geometry, 4326)""")
+
+
+@pytest.fixture
+def place_postcode_row(place_postcode_table, temp_db_cursor):
+    """ A factory for rows in the place table. The table is created as a
+        prerequisite to the fixture.
+    """
+    idseq = itertools.count(5001)
+    def _insert(osm_type='N', osm_id=None, postcode=None, country=None,
+                centroid=None, geom=None):
+        temp_db_cursor.execute("INSERT INTO place_postcode VALUES (%s, %s, %s, %s, %s, %s)",
+                               (osm_type, osm_id or next(idseq),
+                                postcode, country,
+                                _with_srid(centroid, 'POINT(12.0 4.0)'),
+                                _with_srid(geom)))
 
     return _insert
 

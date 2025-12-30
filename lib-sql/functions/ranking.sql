@@ -2,7 +2,7 @@
 --
 -- This file is part of Nominatim. (https://nominatim.org)
 --
--- Copyright (C) 2022 by the Nominatim developer community.
+-- Copyright (C) 2025 by the Nominatim developer community.
 -- For a full list of authors see the git log.
 
 -- Functions related to search and address ranks
@@ -114,66 +114,6 @@ $$
 LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
 
 
--- Guess a ranking for postcodes from country and postcode format.
-CREATE OR REPLACE FUNCTION get_postcode_rank(country_code VARCHAR(2), postcode TEXT,
-                                             OUT rank_search SMALLINT,
-                                             OUT rank_address SMALLINT)
-AS $$
-DECLARE
-  part TEXT;
-BEGIN
-    rank_search := 30;
-    rank_address := 30;
-    postcode := upper(postcode);
-
-    IF country_code = 'gb' THEN
-        IF postcode ~ '^([A-Z][A-Z]?[0-9][0-9A-Z]? [0-9][A-Z][A-Z])$' THEN
-            rank_search := 25;
-            rank_address := 5;
-        ELSEIF postcode ~ '^([A-Z][A-Z]?[0-9][0-9A-Z]? [0-9])$' THEN
-            rank_search := 23;
-            rank_address := 5;
-        ELSEIF postcode ~ '^([A-Z][A-Z]?[0-9][0-9A-Z])$' THEN
-            rank_search := 21;
-            rank_address := 5;
-        END IF;
-
-    ELSEIF country_code = 'sg' THEN
-        IF postcode ~ '^([0-9]{6})$' THEN
-            rank_search := 25;
-            rank_address := 11;
-        END IF;
-
-    ELSEIF country_code = 'de' THEN
-        IF postcode ~ '^([0-9]{5})$' THEN
-            rank_search := 21;
-            rank_address := 11;
-        END IF;
-
-    ELSE
-        -- Guess at the postcode format and coverage (!)
-        IF postcode ~ '^[A-Z0-9]{1,5}$' THEN -- Probably too short to be very local
-            rank_search := 21;
-            rank_address := 11;
-        ELSE
-            -- Does it look splitable into and area and local code?
-            part := substring(postcode from '^([- :A-Z0-9]+)([- :][A-Z0-9]+)$');
-
-            IF part IS NOT NULL THEN
-                rank_search := 25;
-                rank_address := 11;
-            ELSEIF postcode ~ '^[- :A-Z0-9]{6,}$' THEN
-                rank_search := 21;
-                rank_address := 11;
-            END IF;
-        END IF;
-    END IF;
-
-END;
-$$
-LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
-
-
 -- Get standard search and address rank for an object.
 --
 -- \param country        Two-letter country code where the object is in.
@@ -198,12 +138,7 @@ AS $$
 DECLARE
   classtype TEXT;
 BEGIN
-  IF place_class in ('place','boundary')
-     and place_type in ('postcode','postal_code')
-  THEN
-    SELECT * INTO search_rank, address_rank
-      FROM get_postcode_rank(country, postcode);
-  ELSEIF extended_type = 'N' AND place_class = 'highway' THEN
+  IF extended_type = 'N' AND place_class = 'highway' THEN
     search_rank = 30;
     address_rank = 30;
   ELSEIF place_class = 'landuse' AND extended_type != 'A' THEN

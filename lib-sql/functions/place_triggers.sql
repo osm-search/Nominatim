@@ -2,7 +2,7 @@
 --
 -- This file is part of Nominatim. (https://nominatim.org)
 --
--- Copyright (C) 2022 by the Nominatim developer community.
+-- Copyright (C) 2025 by the Nominatim developer community.
 -- For a full list of authors see the git log.
 
 CREATE OR REPLACE FUNCTION place_insert()
@@ -84,35 +84,6 @@ BEGIN
        END IF;
 
        RETURN NULL;
-    END IF;
-
-    RETURN NEW;
-  END IF;
-
-  -- ---- Postcode points.
-
-  IF NEW.class = 'place' AND NEW.type = 'postcode' THEN
-    -- Pure postcodes are never queried from placex so we don't add them.
-    -- location_postcodes is filled from the place table directly.
-
-    -- Remove any old placex entry.
-    DELETE FROM placex WHERE osm_type = NEW.osm_type and osm_id = NEW.osm_id;
-
-    IF existing.osm_type IS NOT NULL THEN
-      IF coalesce(existing.address, ''::hstore) != coalesce(NEW.address, ''::hstore)
-         OR existing.geometry::text != NEW.geometry::text
-      THEN
-        UPDATE place
-          SET name = NEW.name,
-              address = NEW.address,
-              extratags = NEW.extratags,
-              admin_level = NEW.admin_level,
-              geometry = NEW.geometry
-          WHERE osm_type = NEW.osm_type and osm_id = NEW.osm_id
-                and class = NEW.class and type = NEW.type;
-      END IF;
-
-      RETURN NULL;
     END IF;
 
     RETURN NEW;
@@ -268,17 +239,6 @@ BEGIN
           geometry = NEW.geometry
       WHERE osm_type = NEW.osm_type and osm_id = NEW.osm_id
             and class = NEW.class and type = NEW.type;
-
-    -- Postcode areas are only kept, when there is an actual postcode assigned.
-    IF NEW.class = 'boundary' AND NEW.type = 'postal_code' THEN
-      IF NEW.address is NULL OR NOT NEW.address ? 'postcode' THEN
-        -- postcode was deleted, no longer retain in placex
-        DELETE FROM placex where place_id = existingplacex.place_id;
-        RETURN NULL;
-      END IF;
-
-      NEW.name := hstore('ref', NEW.address->'postcode');
-    END IF;
 
     -- Boundaries must be areas.
     IF NEW.class in ('boundary')

@@ -2,7 +2,7 @@
 --
 -- This file is part of Nominatim. (https://nominatim.org)
 --
--- Copyright (C) 2022 by the Nominatim developer community.
+-- Copyright (C) 2025 by the Nominatim developer community.
 -- For a full list of authors see the git log.
 
 drop table if exists import_status;
@@ -192,8 +192,7 @@ CREATE INDEX idx_placex_geometry_buildings ON placex
 --        - linking of place nodes with same type to boundaries
 CREATE INDEX idx_placex_geometry_placenode ON placex
   USING SPGIST (geometry) {{db.tablespace.address_index}}
-  WHERE osm_type = 'N' and rank_search < 26
-        and class = 'place' and type != 'postcode';
+  WHERE osm_type = 'N' and rank_search < 26 and class = 'place';
 
 -- Usage: - is node part of a way?
 --        - find parent of interpolation spatially
@@ -228,21 +227,29 @@ GRANT SELECT ON planet_osm_rels to "{{config.DATABASE_WEBUSER}}" ;
 GRANT SELECT on location_area to "{{config.DATABASE_WEBUSER}}" ;
 
 -- Table for synthetic postcodes.
-DROP TABLE IF EXISTS location_postcode;
-CREATE TABLE location_postcode (
-  place_id BIGINT,
+DROP TABLE IF EXISTS location_postcodes;
+CREATE TABLE location_postcodes (
+  place_id BIGINT NOT NULL,
   parent_place_id BIGINT,
+  osm_id BIGINT,
   rank_search SMALLINT,
-  rank_address SMALLINT,
   indexed_status SMALLINT,
   indexed_date TIMESTAMP,
   country_code varchar(2),
-  postcode TEXT,
-  geometry GEOMETRY(Geometry, 4326)
+  postcode TEXT NOT NULL,
+  centroid GEOMETRY(Geometry, 4326) NOT NULL,
+  geometry GEOMETRY(Geometry, 4326) NOT NULL
   );
-CREATE UNIQUE INDEX idx_postcode_id ON location_postcode USING BTREE (place_id) {{db.tablespace.search_index}};
-CREATE INDEX idx_postcode_geometry ON location_postcode USING GIST (geometry) {{db.tablespace.address_index}};
-GRANT SELECT ON location_postcode TO "{{config.DATABASE_WEBUSER}}" ;
+CREATE UNIQUE INDEX idx_location_postcodes_id ON location_postcodes
+  USING BTREE (place_id) {{db.tablespace.search_index}};
+CREATE INDEX idx_location_postcodes_geometry ON location_postcodes
+  USING GIST (geometry) {{db.tablespace.search_index}};
+CREATE INDEX IF NOT EXISTS idx_location_postcodes_postcode
+  ON location_postcodes USING BTREE (postcode, country_code)
+  {{db.tablespace.search_index}};
+CREATE INDEX IF NOT EXISTS idx_location_postcodes_osmid
+  ON location_postcodes USING BTREE (osm_id) {{db.tablespace.search_index}};
+GRANT SELECT ON location_postcodes TO "{{config.DATABASE_WEBUSER}}" ;
 
 -- Table to store location of entrance nodes
 DROP TABLE IF EXISTS placex_entrance;

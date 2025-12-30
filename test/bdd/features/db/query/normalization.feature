@@ -154,19 +154,6 @@ Feature: Import and search of names
          | object |
          | R2 |
 
-    Scenario: Postcode boundaries without ref
-        Given the grid with origin FR
-          |   | 2 |   |
-          | 1 |   | 3 |
-        Given the places
-          | osm | class    | type        | postcode  | geometry |
-          | R1  | boundary | postal_code | 123-45    | (1,2,3,1) |
-        When importing
-        When geocoding "123-45"
-        Then result 0 contains
-         | object |
-         | R1 |
-
     Scenario Outline: Housenumbers with special characters are found
         Given the grid
             | 1 |  |   |  | 2 |

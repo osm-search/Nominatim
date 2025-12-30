@@ -2,7 +2,7 @@
 --
 -- This file is part of Nominatim. (https://nominatim.org)
 --
--- Copyright (C) 2022 by the Nominatim developer community.
+-- Copyright (C) 2025 by the Nominatim developer community.
 -- For a full list of authors see the git log.
 
 -- Indices used only during search and update.
@@ -21,30 +21,25 @@ CREATE INDEX IF NOT EXISTS idx_placex_parent_place_id
   ON placex USING BTREE (parent_place_id) {{db.tablespace.search_index}}
   WHERE parent_place_id IS NOT NULL;
 ---
--- Used to find postcode areas after a search in location_postcode.
-CREATE INDEX IF NOT EXISTS idx_placex_postcode_areas
-  ON placex USING BTREE (country_code, postcode) {{db.tablespace.search_index}}
-  WHERE osm_type = 'R' AND class = 'boundary' AND type = 'postal_code';
----
 CREATE INDEX IF NOT EXISTS idx_placex_geometry ON placex
   USING GIST (geometry) {{db.tablespace.search_index}};
+---
 -- Index is needed during import but can be dropped as soon as a full
 -- geometry index is in place. The partial index is almost as big as the full
 -- index.
----
 DROP INDEX IF EXISTS idx_placex_geometry_lower_rank_ways;
 ---
 CREATE INDEX IF NOT EXISTS idx_placex_geometry_reverse_lookupPolygon
   ON placex USING gist (geometry) {{db.tablespace.search_index}}
   WHERE St_GeometryType(geometry) in ('ST_Polygon', 'ST_MultiPolygon')
-    AND rank_address between 4 and 25 AND type != 'postcode'
+    AND rank_address between 4 and 25
     AND name is not null AND indexed_status = 0 AND linked_place_id is null;
 ---
 -- used in reverse large area lookup
 CREATE INDEX IF NOT EXISTS idx_placex_geometry_reverse_lookupPlaceNode
   ON placex USING gist (ST_Buffer(geometry, reverse_place_diameter(rank_search)))
   {{db.tablespace.search_index}}
-  WHERE rank_address between 4 and 25 AND type != 'postcode'
+  WHERE rank_address between 4 and 25
     AND name is not null AND linked_place_id is null AND osm_type = 'N';
 ---
 CREATE INDEX IF NOT EXISTS idx_osmline_parent_place_id
@@ -53,9 +48,6 @@ CREATE INDEX IF NOT EXISTS idx_osmline_parent_place_id
 ---
 CREATE INDEX IF NOT EXISTS idx_osmline_parent_osm_id
   ON location_property_osmline USING BTREE (osm_id) {{db.tablespace.search_index}};
----
-CREATE INDEX IF NOT EXISTS idx_postcode_postcode
-  ON location_postcode USING BTREE (postcode) {{db.tablespace.search_index}};
 
 {% if drop %}
 ---
@@ -82,8 +74,8 @@ CREATE INDEX IF NOT EXISTS idx_postcode_postcode
     deferred BOOLEAN
    );
 ---
-  CREATE INDEX IF NOT EXISTS idx_location_postcode_parent_place_id
-    ON location_postcode USING BTREE (parent_place_id) {{db.tablespace.address_index}};
+  CREATE INDEX IF NOT EXISTS idx_location_postcodes_parent_place_id
+    ON location_postcodes USING BTREE (parent_place_id) {{db.tablespace.address_index}};
 {% endif %}
 
 -- Indices only needed for search.

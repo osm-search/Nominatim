@@ -74,15 +74,16 @@ map place_addressline {
   isaddress => BOOLEAN
 }
 
-map location_postcode {
+map location_postcodes {
   place_id => BIGINT
+  osm_id => BIGINT
   postcode => TEXT
   parent_place_id => BIGINT
   rank_search => SMALLINT
-  rank_address => SMALLINT
   indexed_status => SMALLINT
   indexed_date => TIMESTAMP
   geometry => GEOMETRY
+  centroid -> GEOMETRY
 }
 
 placex::place_id <-- search_name::place_id
@@ -94,6 +95,6 @@ search_name::nameaddress_vector --> word::word_id
 
 place_addressline -[hidden]> location_property_osmline
 search_name -[hidden]> place_addressline
-location_property_osmline -[hidden]-> location_postcode
+location_property_osmline -[hidden]-> location_postcodes
 
 @enduml

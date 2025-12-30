@@ -109,14 +109,16 @@ class APITester:
     def add_postcode(self, **kw):
         self.add_data('postcode',
                       {'place_id': kw.get('place_id', 1000),
+                       'osm_id': kw.get('osm_id'),
                        'parent_place_id': kw.get('parent_place_id'),
                        'country_code': kw.get('country_code'),
                        'postcode': kw.get('postcode'),
-                       'rank_search': kw.get('rank_search', 20),
-                       'rank_address': kw.get('rank_address', 22),
+                       'rank_search': kw.get('rank_search', 21),
                        'indexed_date': kw.get('indexed_date',
                                               dt.datetime(2022, 12, 7, 14, 14, 46, 0)),
-                       'geometry': kw.get('geometry', 'POINT(23 34)')})
+                       'centroid': kw.get('centroid', 'POINT(23 34)'),
+                       'geometry': kw.get('geometry', 'POLYGON((22.99 33.99, 22.99 34.01, '
+                                                      '23.01 34, 22.99 33.99))')})
 
     def add_country(self, country_code, geometry):
         self.add_data('country_grid',

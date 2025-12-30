@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Functions for setting up and importing a new Nominatim database.
@@ -183,7 +183,7 @@ def truncate_data_tables(conn: Connection) -> None:
         cur.execute('TRUNCATE location_area_country')
         cur.execute('TRUNCATE location_property_tiger')
         cur.execute('TRUNCATE location_property_osmline')
-        cur.execute('TRUNCATE location_postcode')
+        cur.execute('TRUNCATE location_postcodes')
         if table_exists(conn, 'search_name'):
             cur.execute('TRUNCATE search_name')
         cur.execute('DROP SEQUENCE IF EXISTS seq_place')

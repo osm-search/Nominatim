@@ -14,7 +14,7 @@ from . import base
 from ...typing import SaBind, SaExpression
 from ...sql.sqlalchemy_types import Geometry, IntArray
 from ...connection import SearchConnection
-from ...types import SearchDetails, Bbox
+from ...types import SearchDetails
 from ... import results as nres
 from ..db_search_fields import SearchData
 
@@ -42,10 +42,9 @@ class PostcodeSearch(base.AbstractSearch):
         t = conn.t.postcode
         pcs = self.postcodes.values
 
-        sql = sa.select(t.c.place_id, t.c.parent_place_id,
-                        t.c.rank_search, t.c.rank_address,
-                        t.c.postcode, t.c.country_code,
-                        t.c.geometry.label('centroid'))\
+        sql = sa.select(t.c.place_id, t.c.parent_place_id, t.c.osm_id,
+                        t.c.rank_search, t.c.postcode, t.c.country_code,
+                        t.c.centroid)\
                 .where(t.c.postcode.in_(pcs))
 
         if details.geometry_output:
@@ -59,7 +58,7 @@ class PostcodeSearch(base.AbstractSearch):
                                else_=1.0)
 
         if details.near is not None:
-            sql = sql.order_by(t.c.geometry.ST_Distance(NEAR_PARAM))
+            sql = sql.order_by(t.c.centroid.ST_Distance(NEAR_PARAM))
 
         sql = base.filter_by_area(sql, t, details)
 
@@ -100,29 +99,9 @@ class PostcodeSearch(base.AbstractSearch):
 
         results = nres.SearchResults()
         for row in await conn.execute(sql, bind_params):
-            p = conn.t.placex
-            placex_sql = base.select_placex(p)\
-                .add_columns(p.c.importance)\
-                .where(sa.text("""class = 'boundary'
-                                  AND type = 'postal_code'
-                                  AND osm_type = 'R'"""))\
-                .where(p.c.country_code == row.country_code)\
-                .where(p.c.postcode == row.postcode)\
-                .limit(1)
+            result = nres.create_from_postcode_row(row, nres.SearchResult)
 
-            if details.geometry_output:
-                placex_sql = base.add_geometry_columns(placex_sql, p.c.geometry, details)
-
-            for prow in await conn.execute(placex_sql, bind_params):
-                result = nres.create_from_placex_row(prow, nres.SearchResult)
-                if result is not None:
-                    result.bbox = Bbox.from_wkb(prow.bbox)
-                break
-            else:
-                result = nres.create_from_postcode_row(row, nres.SearchResult)
-
-            if result.place_id not in details.excluded:
-                result.accuracy = row.accuracy
-                results.append(result)
+            result.accuracy = row.accuracy
+            results.append(result)
 
         return results

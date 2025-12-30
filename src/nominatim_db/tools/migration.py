@@ -19,6 +19,7 @@ from ..db.sql_preprocessor import SQLPreprocessor
 from ..version import NominatimVersion, NOMINATIM_VERSION, parse_version
 from ..tokenizer import factory as tokenizer_factory
 from ..data.country_info import create_country_names, setup_country_config
+from .freeze import is_frozen
 from . import refresh
 
 LOG = logging.getLogger()
@@ -179,3 +180,165 @@ def convert_country_tokens(conn: Connection, config: Configuration, **_: Any) ->
 
     setup_country_config(config)
     create_country_names(conn, tokenizer, config.get_str_list('LANGUAGES'))
+
+
+@_migration(5, 2, 99, 2)
+def create_place_postcode_table(conn: Connection, config: Configuration, **_: Any) -> None:
+    """ Restructure postcode tables
+    """
+    sqlp = SQLPreprocessor(conn, config)
+    mutable = not is_frozen(conn)
+    has_place_table = table_exists(conn, 'place_postcode')
+    has_postcode_table = table_exists(conn, 'location_postcodes')
+    if mutable and not has_place_table:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                CREATE TABLE place_postcode (
+                    osm_type VARCHAR(1),
+                    osm_id BIGINT,
+                    postcode TEXT NOT NULL,
+                    country_code VARCHAR(2),
+                    centroid GEOMETRY(Point, 4326) NOT NULL,
+                    geometry GEOMETRY(Geometry, 4326)
+                )
+                """)
+            # Move postcode points into the new table
+            cur.execute("ALTER TABLE place DISABLE TRIGGER ALL")
+            cur.execute(
+                """
+                WITH deleted AS (
+                  DELETE FROM place
+                  WHERE (class = 'place' AND type = 'postcode')
+                        OR (osm_type = 'R'
+                            AND class = 'boundary' AND type = 'postal_code')
+                  RETURNING osm_type, osm_id, address->'postcode' as postcode,
+                            ST_Centroid(geometry) as centroid,
+                            (CASE WHEN class = 'place' THEN NULL ELSE geometry END) as geometry)
+                INSERT INTO place_postcode (osm_type, osm_id, postcode, centroid, geometry)
+                    (SELECT * FROM deleted
+                     WHERE deleted.postcode is not NULL AND deleted.centroid is not NULL)
+                """)
+            cur.execute(
+                """
+                CREATE INDEX place_postcode_osm_id_idx ON place_postcode
+                  USING BTREE (osm_type, osm_id)
+                """)
+            cur.execute("ALTER TABLE place ENABLE TRIGGER ALL")
+    if not has_postcode_table:
+        sqlp.run_sql_file(conn, 'functions/postcode_triggers.sql')
+        with conn.cursor() as cur:
+            # create a new location_postcode table which will replace the
+            # old one atomically in the end
+            cur.execute(
+                """
+                CREATE TABLE location_postcodes (
+                    place_id BIGINT,
+                    osm_id BIGINT,
+                    rank_search SMALLINT,
+                    parent_place_id BIGINT,
+                    indexed_status SMALLINT,
+                    indexed_date TIMESTAMP,
+                    country_code VARCHAR(2),
+                    postcode TEXT,
+                    centroid Geometry(Point, 4326),
+                    geometry Geometry(Geometry, 4326) NOT NULL
+                )
+                """)
+            # remove postcodes from the various auxillary tables
+            cur.execute(
+                """
+                DELETE FROM place_addressline
+                  WHERE address_place_id = ANY(
+                    SELECT place_id FROM placex
+                      WHERE osm_type = 'R'
+                            AND class = 'boundary' AND type = 'postal_code')
+                """)
+            if mutable:
+                cur.execute(
+                    """
+                    SELECT deleteLocationArea(partition, place_id, rank_search),
+                           deleteSearchName(partition, place_id)
+                      FROM placex
+                      WHERE osm_type = 'R' AND class = 'boundary' AND type = 'postal_code'
+                    """)
+            if table_exists(conn, 'search_name'):
+                cur.execute(
+                    """
+                    DELETE FROM search_name
+                      WHERE place_id = ANY(
+                        SELECT place_id FROM placex
+                          WHERE osm_type = 'R'
+                                AND class = 'boundary' AND type = 'postal_code')
+                    """)
+            # move postcode areas from placex to location_postcodes
+            # avoiding automatic invalidation
+            cur.execute("ALTER TABLE placex DISABLE TRIGGER ALL")
+            cur.execute(
+                """
+                WITH deleted AS (
+                    DELETE FROM placex
+                      WHERE osm_type = 'R'
+                            AND class = 'boundary' AND type = 'postal_code'
+                      RETURNING place_id, osm_id, rank_search, parent_place_id,
+                                indexed_status, indexed_date,
+                                country_code, postcode, centroid, geometry)
+                INSERT INTO location_postcodes (SELECT * from deleted)
+                """)
+            cur.execute("ALTER TABLE placex ENABLE TRIGGER ALL")
+            # remove any old postcode centroid that would overlap with areas
+            cur.execute(
+                """
+                DELETE FROM location_postcode o USING location_postcodes n
+                   WHERE o.country_code = n.country_code
+                         AND o.postcode = n.postcode
+                """)
+            # copy over old postcodes
+            cur.execute(
+                """
+                INSERT INTO location_postcodes
+                    (SELECT place_id, NULL, rank_search, parent_place_id,
+                            indexed_status, indexed_date, country_code,
+                            postcode, geometry,
+                            ST_Expand(geometry, 0.05)
+                     FROM location_postcode)
+                """)
+            # add indexes and triggers
+            cur.execute("""CREATE INDEX idx_location_postcodes_geometry
+                           ON location_postcodes USING GIST(geometry)""")
+            cur.execute("""CREATE INDEX idx_location_postcodes_id
+                           ON location_postcodes USING BTREE(place_id)""")
+            cur.execute("""CREATE INDEX idx_location_postcodes_osmid
+                           ON location_postcodes USING BTREE(osm_id)""")
+            cur.execute("""CREATE INDEX idx_location_postcodes_postcode
+                           ON location_postcodes USING BTREE(postcode, country_code)""")
+            cur.execute("""CREATE INDEX idx_location_postcodes_parent_place_id
+                           ON location_postcodes USING BTREE(parent_place_id)""")
+            cur.execute("""CREATE TRIGGER location_postcodes_before_update
+                           BEFORE UPDATE ON location_postcodes
+                           FOR EACH ROW EXECUTE PROCEDURE postcodes_update()""")
+            cur.execute("""CREATE TRIGGER location_postcodes_before_delete
+                           BEFORE DELETE ON location_postcodes
+                           FOR EACH ROW EXECUTE PROCEDURE postcodes_delete()""")
+            cur.execute("""CREATE TRIGGER location_postcodes_before_insert
+                           BEFORE INSERT ON location_postcodes
+                           FOR EACH ROW EXECUTE PROCEDURE postcodes_insert()""")
+        sqlp.run_string(
+            conn,
+            """
+            CREATE INDEX IF NOT EXISTS idx_placex_geometry_reverse_lookupPolygon_nopostcode
+            ON placex USING gist (geometry) {{db.tablespace.search_index}}
+            WHERE St_GeometryType(geometry) in ('ST_Polygon', 'ST_MultiPolygon')
+            AND rank_address between 4 and 25
+            AND name is not null AND linked_place_id is null;
+
+            CREATE INDEX IF NOT EXISTS idx_placex_geometry_reverse_lookupPlaceNode_nopostcode
+              ON placex USING gist (ST_Buffer(geometry, reverse_place_diameter(rank_search)))
+              {{db.tablespace.search_index}}
+              WHERE rank_address between 4 and 25
+                AND name is not null AND linked_place_id is null AND osm_type = 'N';
+
+            CREATE INDEX idx_placex_geometry_placenode_nopostcode ON placex
+              USING SPGIST (geometry) {{db.tablespace.address_index}}
+              WHERE osm_type = 'N' and rank_search < 26 and class = 'place';
+            """)

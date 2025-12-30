@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Custom types for SQLAlchemy.
@@ -178,6 +178,8 @@ class Geometry(types.UserDefinedType):  # type: ignore[type-arg]
 
     def bind_processor(self, dialect: 'sa.Dialect') -> Callable[[Any], str]:
         def process(value: Any) -> str:
+            if value is None:
+                return 'null'
             if isinstance(value, str):
                 return value
 

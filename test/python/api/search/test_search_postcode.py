@@ -16,6 +16,11 @@ from nominatim_api.search.db_search_fields import WeightedStrings, FieldLookup, 
                                                   FieldRanking, RankedTokens
 
 
+def poly_around(x, y, diff=0.01):
+    return f"POLYGON(({x - diff} {y - diff}, {x + diff} {y - diff},"\
+           f"         {x + diff} {y + diff}, {x - diff} {y + diff}, {x - diff} {y - diff}))"
+
+
 def run_search(apiobj, frontend, global_penalty, pcs, pc_penalties=None,
                ccodes=[], lookup=[], ranking=[], details=SearchDetails()):
     if pc_penalties is None:
@@ -58,19 +63,19 @@ def test_postcode_with_country(apiobj, frontend):
 
     assert len(results) == 1
     assert results[0].place_id == 101
+    assert results[0].osm_object is None
 
 
 def test_postcode_area(apiobj, frontend):
-    apiobj.add_postcode(place_id=100, country_code='ch', postcode='12345')
-    apiobj.add_placex(place_id=200, country_code='ch', postcode='12345',
-                      osm_type='R', osm_id=34, class_='boundary', type='postal_code',
-                      geometry='POLYGON((0 0, 1 0, 1 1, 0 1, 0 0))')
+    apiobj.add_postcode(place_id=200, country_code='ch', postcode='12345',
+                        osm_id=34,
+                        centroid='POINT(0.5 0.5)', geometry=poly_around(0.5, 0.5))
 
     results = run_search(apiobj, frontend, 0.3, ['12345'], [0.0])
 
     assert len(results) == 1
     assert results[0].place_id == 200
-    assert results[0].bbox.area == 1
+    assert results[0].osm_object == ('R', 34)
 
 
 class TestPostcodeSearchWithAddress:
@@ -79,10 +84,10 @@ class TestPostcodeSearchWithAddress:
     def fill_database(self, apiobj):
         apiobj.add_postcode(place_id=100, country_code='ch',
                             parent_place_id=1000, postcode='12345',
-                            geometry='POINT(17 5)')
+                            centroid='POINT(17 5)', geometry=poly_around(17, 5))
         apiobj.add_postcode(place_id=101, country_code='pl',
                             parent_place_id=2000, postcode='12345',
-                            geometry='POINT(-45 7)')
+                            centroid='POINT(-45 7)', geometry=poly_around(-45, 7))
         apiobj.add_placex(place_id=1000, class_='place', type='village',
                           rank_search=22, rank_address=22,
                           country_code='ch')

@@ -48,7 +48,7 @@ class IndexerTestDB:
                                indexed_status SMALLINT,
                                indexed_date TIMESTAMP,
                                geometry_sector INTEGER)""")
-            cur.execute("""CREATE TABLE location_postcode (
+            cur.execute("""CREATE TABLE location_postcodes (
                                place_id BIGINT,
                                indexed_status SMALLINT,
                                indexed_date TIMESTAMP,
@@ -94,7 +94,7 @@ class IndexerTestDB:
                            $$ LANGUAGE plpgsql STABLE;
                         """)
 
-            for table in ('placex', 'location_property_osmline', 'location_postcode'):
+            for table in ('placex', 'location_property_osmline', 'location_postcodes'):
                 cur.execute("""CREATE TRIGGER {0}_update BEFORE UPDATE ON {0}
                                FOR EACH ROW EXECUTE PROCEDURE date_update()
                             """.format(table))
@@ -132,7 +132,7 @@ class IndexerTestDB:
     def add_postcode(self, country, postcode):
         next_id = next(self.postcode_id)
         with self.conn.cursor() as cur:
-            cur.execute("""INSERT INTO location_postcode
+            cur.execute("""INSERT INTO location_postcodes
                             (place_id, indexed_status, country_code, postcode)
                             VALUES (%s, 1, %s, %s)""",
                         (next_id, country, postcode))
@@ -268,7 +268,7 @@ async def test_index_postcodes(test_db, threads, test_tokenizer):
     idx = indexer.Indexer('dbname=test_nominatim_python_unittest', test_tokenizer, threads)
     await idx.index_postcodes()
 
-    assert test_db.scalar("""SELECT count(*) FROM location_postcode
+    assert test_db.scalar("""SELECT count(*) FROM location_postcodes
                                   WHERE indexed_status != 0""") == 0
 
 
@@ -288,5 +288,5 @@ async def test_index_full(test_db, analyse, test_tokenizer):
 
     assert test_db.placex_unindexed() == 0
     assert test_db.osmline_unindexed() == 0
-    assert test_db.scalar("""SELECT count(*) FROM location_postcode
+    assert test_db.scalar("""SELECT count(*) FROM location_postcodes
                              WHERE indexed_status != 0""") == 0

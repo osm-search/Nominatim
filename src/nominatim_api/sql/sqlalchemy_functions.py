@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2025 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Custom functions and expressions for SQLAlchemy.
@@ -32,7 +32,6 @@ def _default_intersects(element: PlacexGeometryReverseLookuppolygon,
                         compiler: 'sa.Compiled', **kw: Any) -> str:
     return ("(ST_GeometryType(placex.geometry) in ('ST_Polygon', 'ST_MultiPolygon')"
             " AND placex.rank_address between 4 and 25"
-            " AND placex.type != 'postcode'"
             " AND placex.name is not null"
             " AND placex.indexed_status = 0"
             " AND placex.linked_place_id is null)")
@@ -43,7 +42,6 @@ def _sqlite_intersects(element: PlacexGeometryReverseLookuppolygon,
                        compiler: 'sa.Compiled', **kw: Any) -> str:
     return ("(ST_GeometryType(placex.geometry) in ('POLYGON', 'MULTIPOLYGON')"
             " AND placex.rank_address between 4 and 25"
-            " AND placex.type != 'postcode'"
             " AND placex.name is not null"
             " AND placex.indexed_status = 0"
             " AND placex.linked_place_id is null)")
@@ -64,7 +62,6 @@ def default_reverse_place_diameter(element: IntersectsReverseDistance,
                                    compiler: 'sa.Compiled', **kw: Any) -> str:
     table = element.tablename
     return f"({table}.rank_address between 4 and 25"\
-           f" AND {table}.type != 'postcode'"\
            f" AND {table}.name is not null"\
            f" AND {table}.linked_place_id is null"\
            f" AND {table}.osm_type = 'N'" + \
@@ -79,7 +76,6 @@ def sqlite_reverse_place_diameter(element: IntersectsReverseDistance,
     table = element.tablename
 
     return (f"({table}.rank_address between 4 and 25"
-            f" AND {table}.type != 'postcode'"
             f" AND {table}.name is not null"
             f" AND {table}.linked_place_id is null"
             f" AND {table}.osm_type = 'N'"

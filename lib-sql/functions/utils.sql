@@ -139,37 +139,46 @@ $$
 LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
 
 
--- Find the nearest artificial postcode for the given geometry.
--- TODO For areas there should not be more than two inside the geometry.
+-- Find the best-matching postcode for the given geometry
 CREATE OR REPLACE FUNCTION get_nearest_postcode(country VARCHAR(2), geom GEOMETRY)
   RETURNS TEXT
   AS $$
 DECLARE
   outcode TEXT;
   cnt INTEGER;
+  location RECORD;
 BEGIN
     -- If the geometry is an area then only one postcode must be within
     -- that area, otherwise consider the area as not having a postcode.
     IF ST_GeometryType(geom) in ('ST_Polygon','ST_MultiPolygon') THEN
-        SELECT min(postcode), count(*) FROM
-              (SELECT postcode FROM location_postcode
-                WHERE ST_Contains(geom, location_postcode.geometry) LIMIT 2) sub
-          INTO outcode, cnt;
+      SELECT min(postcode), count(*) FROM
+        (SELECT postcode FROM location_postcodes
+           WHERE geom && location_postcodes.geometry -- want to use the index
+                 AND ST_Contains(geom, location_postcodes.centroid)
+                 AND country_code = country
+           LIMIT 2) sub
+        INTO outcode, cnt;
 
         IF cnt = 1 THEN
             RETURN outcode;
-        ELSE
-            RETURN null;
         END IF;
+
+        RETURN null;
     END IF;
 
-    SELECT postcode FROM location_postcode
-     WHERE ST_DWithin(geom, location_postcode.geometry, 0.05)
-          AND location_postcode.country_code = country
-     ORDER BY ST_Distance(geom, location_postcode.geometry) LIMIT 1
-    INTO outcode;
+    -- Otherwise: be fully within the coverage area of a postcode
+    FOR location IN
+      SELECT postcode
+        FROM location_postcodes p
+       WHERE ST_Covers(p.geometry, geom)
+             AND p.country_code = country
+       ORDER BY osm_id is null, ST_Distance(p.centroid, geom)
+       LIMIT 1
+    LOOP
+        RETURN location.postcode;
+    END LOOP;
 
-    RETURN outcode;
+    RETURN NULL;
 END;
 $$
 LANGUAGE plpgsql STABLE PARALLEL SAFE;
@@ -314,6 +323,17 @@ END;
 $$
 LANGUAGE plpgsql;
 
+
+-- Return the bounding box of the geometry buffered by the given number
+-- of meters.
+CREATE OR REPLACE FUNCTION expand_by_meters(geom GEOMETRY, meters FLOAT)
+  RETURNS GEOMETRY
+  AS $$
+    SELECT ST_Envelope(ST_Buffer(geom::geography, meters, 1)::geometry)
+$$
+LANGUAGE sql IMMUTABLE PARALLEL SAFE;
+
+
 -- Create a bounding box with an extent computed from the radius (in meters)
 -- which in turn is derived from the given search rank.
 CREATE OR REPLACE FUNCTION place_node_fuzzy_area(geom GEOMETRY, rank_search INTEGER)
@@ -332,9 +352,7 @@ BEGIN
     radius := 1000;
   END IF;
 
-  RETURN ST_Envelope(ST_Collect(
-                     ST_Project(geom::geography, radius, 0.785398)::geometry,
-                     ST_Project(geom::geography, radius, 3.9269908)::geometry));
+  RETURN expand_by_meters(geom, radius);
 END;
 $$
 LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;

@@ -46,23 +46,6 @@ Feature: Import into placex
           | object | admin_level |
           | N1     | 3           |
 
-    Scenario: postcode node without postcode is dropped
-        Given the places
-          | osm | class   | type     | name+ref |
-          | N1  | place   | postcode | 12334    |
-        When importing
-        Then placex has no entry for N1
-
-    Scenario: postcode boundary without postcode is dropped
-        Given the 0.01 grid
-          | 1 | 2 |
-          | 3 |   |
-        Given the places
-          | osm | class    | type        | name+ref | geometry  |
-          | R1  | boundary | postal_code | 554476   | (1,2,3,1) |
-        When importing
-        Then placex has no entry for R1
-
     Scenario: search and address ranks for boundaries are correctly assigned
         Given the named places
           | osm | class    | type |

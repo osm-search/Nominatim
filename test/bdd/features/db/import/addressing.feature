@@ -268,33 +268,6 @@ Feature: Address computation
             | W93    | R34      |
             | W93    | R4       |
 
-    Scenario: postcode boundaries do appear in the address of a way
-       Given the grid with origin DE
-            | 1 |   |   |   |   | 8 |   | 6 |   | 2 |
-            |   |10 |11 |   |   |   |   |   |   |   |
-            |   |13 |12 |   |   |   |   |   |   |   |
-            | 20|   |   | 21|   |   |   |   |   |   |
-            |   |   |   |   |   |   |   |   |   |   |
-            |   |   |   |   |   | 9 |   |   |   |   |
-            | 4 |   |   |   |   |   |   | 7 |   | 3 |
-        And the named places
-            | osm | class    | type           | admin | addr+postcode | geometry    |
-            | R1  | boundary | administrative | 6     | 10000         | (1,2,3,4,1) |
-            | R34 | boundary | administrative | 8     | 11000         | (1,6,7,4,1) |
-        And the places
-            | osm | class    | type        | addr+postcode | geometry |
-            | R4  | boundary | postal_code | 11200         | (1,8,9,4,1) |
-        And the named places
-            | osm | class    | type           | geometry |
-            | W93 | highway  | residential    | 20,21    |
-        And the places
-            | osm | class    | type        | addr+postcode | geometry |
-            | W22 | place    | postcode    | 11234         | (10,11,12,13,10) |
-        When importing
-        Then place_addressline contains
-            | object | address |
-            | W93    | R4      |
-
     Scenario: squares do not appear in the address of a street
         Given the grid
             |   | 1 |   | 2 |   |

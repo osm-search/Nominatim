@@ -50,18 +50,18 @@ class MockPlacexTable:
 
     def add(self, osm_type='N', osm_id=None, cls='amenity', typ='cafe', names=None,
             admin_level=None, address=None, extratags=None, geom='POINT(10 4)',
-            country=None, housenumber=None, rank_search=30):
+            country=None, housenumber=None, rank_search=30, centroid=None):
         with self.conn.cursor() as cur:
             cur.execute("""INSERT INTO placex (place_id, osm_type, osm_id, class,
                                                type, name, admin_level, address,
                                                housenumber, rank_search,
-                                               extratags, geometry, country_code)
+                                               extratags, centroid, geometry, country_code)
                             VALUES(nextval('seq_place'), %s, %s, %s, %s, %s, %s,
-                                   %s, %s, %s, %s, %s, %s)
+                                   %s, %s, %s, %s, %s, %s, %s)
                             RETURNING place_id""",
                         (osm_type, osm_id or next(self.idseq), cls, typ, names,
                          admin_level, address, housenumber, rank_search,
-                         extratags, 'SRID=4326;' + geom,
+                         extratags, centroid, 'SRID=4326;' + geom,
                          country))
             place_id = cur.fetchone()[0]
         self.conn.commit()

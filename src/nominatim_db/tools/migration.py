@@ -245,6 +245,8 @@ def create_place_postcode_table(conn: Connection, config: Configuration, **_: An
                     geometry Geometry(Geometry, 4326) NOT NULL
                 )
                 """)
+            sqlp.run_string(conn,
+                            'GRANT SELECT ON location_postcodes TO "{{config.DATABASE_WEBUSER}}"')
             # remove postcodes from the various auxillary tables
             cur.execute(
                 """

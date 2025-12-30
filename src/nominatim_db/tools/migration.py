@@ -343,4 +343,5 @@ def create_place_postcode_table(conn: Connection, config: Configuration, **_: An
             CREATE INDEX idx_placex_geometry_placenode_nopostcode ON placex
               USING SPGIST (geometry) {{db.tablespace.address_index}}
               WHERE osm_type = 'N' and rank_search < 26 and class = 'place';
+            ANALYSE;
             """)

@@ -195,10 +195,10 @@ def create_place_postcode_table(conn: Connection, config: Configuration, **_: An
             cur.execute(
                 """
                 CREATE TABLE place_postcode (
-                    osm_type VARCHAR(1),
-                    osm_id BIGINT,
+                    osm_type CHAR(1) NOT NULL,
+                    osm_id BIGINT NOT NULL,
                     postcode TEXT NOT NULL,
-                    country_code VARCHAR(2),
+                    country_code TEXT,
                     centroid GEOMETRY(Point, 4326) NOT NULL,
                     geometry GEOMETRY(Geometry, 4326)
                 )
@@ -223,6 +223,11 @@ def create_place_postcode_table(conn: Connection, config: Configuration, **_: An
                 """
                 CREATE INDEX place_postcode_osm_id_idx ON place_postcode
                   USING BTREE (osm_type, osm_id)
+                """)
+            cur.execute(
+                """
+                CREATE INDEX place_postcode_postcode_idx ON place_postcode
+                  USING BTREE (postcode)
                 """)
             cur.execute("ALTER TABLE place ENABLE TRIGGER ALL")
     if not has_postcode_table:

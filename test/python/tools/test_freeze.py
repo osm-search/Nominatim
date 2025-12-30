@@ -12,7 +12,7 @@ from nominatim_db.tools import freeze
 NOMINATIM_RUNTIME_TABLES = [
     'country_name', 'country_osm_grid',
     'location_postcode', 'location_property_osmline', 'location_property_tiger',
-    'placex', 'place_adressline',
+    'placex', 'place_addressline',
     'search_name',
     'word'
 ]

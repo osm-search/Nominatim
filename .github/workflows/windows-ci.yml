@@ -15,6 +15,20 @@ jobs:
         with:
           submodules: true
 
+      - name: Cache country grid data
+        uses: actions/cache@v4
+        with:
+          path: |
+            packaging\\nominatim-db\\data\\country_osm_grid.sql.gz
+          key: nominatim-country-data-1
+
+      - name: Download country grid data (if missing)
+        run: |
+          if (!(Test-Path "packaging\\nominatim-db\\data\\country_osm_grid.sql.gz")) {
+            New-Item -ItemType Directory -Force -Path "packaging\\nominatim-db\\data" | Out-Null
+            Invoke-WebRequest -Uri "https://www.nominatim.org/data/country_grid.sql.gz" -OutFile "packaging\\nominatim-db\\data\\country_osm_grid.sql.gz"
+          }
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:

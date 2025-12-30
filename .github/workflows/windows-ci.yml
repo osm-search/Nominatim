@@ -29,30 +29,30 @@ jobs:
             Invoke-WebRequest -Uri "https://www.nominatim.org/data/country_grid.sql.gz" -OutFile "packaging\\nominatim-db\\data\\country_osm_grid.sql.gz"
           }
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Set up Miniconda (for PyICU)
+        uses: conda-incubator/setup-miniconda@v3
         with:
-          #on Windows,PyICU often requires a prebuilt wheel.
-          #use a newer Python to avoid compiling ICU from source.
+          miniforge-version: latest
+          channels: conda-forge
+          channel-priority: strict
+          activate-environment: nominatim
           python-version: "3.11"
-          cache: pip
-          cache-dependency-path: |
-            packaging/nominatim-db/pyproject.toml
-            packaging/nominatim-api/pyproject.toml
+          auto-activate-base: false
+          use-mamba: true
 
-      - name: Set up virtual environment
+      - name: Install PyICU (conda-forge)
+        run: conda install -y pyicu
+
+      - name: Install Nominatim packages
         run: |
-          python -m venv venv
-          venv\\Scripts\\python -m pip install -U pip
-
-      - name: Install dependencies
-        run: venv\\Scripts\\pip install --prefer-binary packaging\\nominatim-db packaging\\nominatim-api
+          conda run -n nominatim python -m pip install -U pip
+          conda run -n nominatim python -m pip install --prefer-binary packaging\\nominatim-db packaging\\nominatim-api
 
       - name: Install latest flake8
-        run: venv\\Scripts\\pip install -U flake8
+        run: conda run -n nominatim python -m pip install -U flake8
 
       - name: Python linting
-        run: venv\\Scripts\\python -m flake8 src test/python test/bdd
+        run: conda run -n nominatim python -m flake8 src test/python test/bdd
 
       - name: Run CLI smoke test
-        run: venv\\Scripts\\nominatim --help
+        run: conda run -n nominatim nominatim --help

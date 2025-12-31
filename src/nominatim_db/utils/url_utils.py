@@ -10,8 +10,6 @@ Helper functions for accessing URL.
 from typing import IO  # noqa
 import logging
 import urllib.request as urlrequest
-import urllib.error as urlerror
-import socket
 
 from ..version import NOMINATIM_VERSION
 

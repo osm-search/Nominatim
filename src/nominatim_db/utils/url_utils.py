@@ -10,6 +10,8 @@ Helper functions for accessing URL.
 from typing import IO  # noqa
 import logging
 import urllib.request as urlrequest
+import urllib.error as urlerror
+import socket
 
 from ..version import NOMINATIM_VERSION
 
@@ -25,8 +27,8 @@ def get_url(url: str) -> str:
 
     try:
         request = urlrequest.Request(url, headers=headers)
-        with urlrequest.urlopen(request) as response:  # type: IO[bytes]
+        with urlrequest.urlopen(request, timeout=30) as response:
             return response.read().decode('utf-8')
     except Exception:
-        LOG.fatal('Failed to load URL: %s', url)
+        LOG.exception('Failed to load URL: %s', url)
         raise

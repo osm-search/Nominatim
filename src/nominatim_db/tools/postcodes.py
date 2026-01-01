@@ -234,10 +234,10 @@ def _update_postcode_areas(conn: Connection, analyzer: AbstractAnalyzer,
                 country_code = cc
                 fmt = matcher.get_matcher(country_code)
                 pcs = []
-            assert fmt is not None
 
-            if (m := fmt.match(postcode)):
-                pcs.append({'out': fmt.normalize(m), 'in': postcode})
+            if fmt is not None:
+                if (m := fmt.match(postcode)):
+                    pcs.append({'out': fmt.normalize(m), 'in': postcode})
 
         if country_code is not None and pcs:
             _insert_postcode_areas(conn, country_code,

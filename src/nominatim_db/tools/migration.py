@@ -160,7 +160,7 @@ def create_place_entrance_table(conn: Connection, config: Configuration, **_: An
               """)
 
 
-@_migration(5, 2, 99, 1)
+@_migration(5, 2, 99, 0)
 def convert_country_tokens(conn: Connection, config: Configuration, **_: Any) -> None:
     """ Convert country word tokens
 
@@ -182,7 +182,7 @@ def convert_country_tokens(conn: Connection, config: Configuration, **_: Any) ->
     create_country_names(conn, tokenizer, config.get_str_list('LANGUAGES'))
 
 
-@_migration(5, 2, 99, 2)
+@_migration(5, 2, 99, 1)
 def create_place_postcode_table(conn: Connection, config: Configuration, **_: Any) -> None:
     """ Restructure postcode tables
     """

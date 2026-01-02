@@ -2,7 +2,7 @@
 --
 -- This file is part of Nominatim. (https://nominatim.org)
 --
--- Copyright (C) 2025 by the Nominatim developer community.
+-- Copyright (C) 2026 by the Nominatim developer community.
 -- For a full list of authors see the git log.
 
 drop table if exists import_status;
@@ -22,24 +22,6 @@ CREATE TABLE import_osmosis_log (
   endtime timestamp,
   event text
   );
-
-CREATE TABLE new_query_log (
-  type text,
-  starttime timestamp,
-  ipaddress text,
-  useragent text,
-  language text,
-  query text,
-  searchterm text,
-  endtime timestamp,
-  results integer,
-  format text,
-  secret text
-  );
-CREATE INDEX idx_new_query_log_starttime ON new_query_log USING BTREE (starttime);
-GRANT INSERT ON new_query_log TO "{{config.DATABASE_WEBUSER}}" ;
-GRANT UPDATE ON new_query_log TO "{{config.DATABASE_WEBUSER}}" ;
-GRANT SELECT ON new_query_log TO "{{config.DATABASE_WEBUSER}}" ;
 
 GRANT SELECT ON TABLE country_name TO "{{config.DATABASE_WEBUSER}}";
 

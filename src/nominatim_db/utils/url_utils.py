@@ -28,5 +28,5 @@ def get_url(url: str) -> str:
         with urlrequest.urlopen(request, timeout=30) as response:
             return response.read().decode('utf-8')
     except Exception:
-        LOG.exception('Failed to load URL: %s', url)
+        LOG.fatal('Failed to load URL: %s', url)
         raise

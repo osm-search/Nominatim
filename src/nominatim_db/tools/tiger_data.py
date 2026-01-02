@@ -17,13 +17,12 @@ import tarfile
 from psycopg.types.json import Json
 
 from ..config import Configuration
-from ..db.connection import connect
+from ..db.connection import connect, table_exists
 from ..db.sql_preprocessor import SQLPreprocessor
 from ..errors import UsageError
 from ..db.query_pool import QueryPool
 from ..data.place_info import PlaceInfo
 from ..tokenizer.base import AbstractTokenizer
-from . import freeze
 
 LOG = logging.getLogger()
 
@@ -90,16 +89,19 @@ async def add_tiger_data(data_dir: str, config: Configuration, threads: int,
     """
     dsn = config.get_libpq_dsn()
 
-    with connect(dsn) as conn:
-        if freeze.is_frozen(conn):
-            raise UsageError("Tiger cannot be imported when database frozen (Github issue #3048)")
-
     with TigerInput(data_dir) as tar:
         if not tar:
             return 1
 
         with connect(dsn) as conn:
             sql = SQLPreprocessor(conn, config)
+
+            if not table_exists(conn, 'search_name'):
+                raise UsageError(
+                    "Cannot perform tiger import: required tables are missing. "
+                    "See https://github.com/osm-search/Nominatim/issues/2463 for details."
+                )
+
             sql.run_sql_file(conn, 'tiger_import_start.sql')
 
         # Reading files and then for each file line handling

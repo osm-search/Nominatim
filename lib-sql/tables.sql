@@ -11,7 +11,7 @@ CREATE TABLE import_status (
   sequence_id integer,
   indexed boolean
   );
-GRANT SELECT ON import_status TO "{{config.DATABASE_WEBUSER}}" ;
+
 
 drop table if exists import_osmosis_log;
 CREATE TABLE import_osmosis_log (
@@ -23,14 +23,30 @@ CREATE TABLE import_osmosis_log (
   event text
   );
 
-GRANT SELECT ON TABLE country_name TO "{{config.DATABASE_WEBUSER}}";
+CREATE TABLE new_query_log (
+  type text,
+  starttime timestamp,
+  ipaddress text,
+  useragent text,
+  language text,
+  query text,
+  searchterm text,
+  endtime timestamp,
+  results integer,
+  format text,
+  secret text
+  );
+CREATE INDEX idx_new_query_log_starttime ON new_query_log USING BTREE (starttime);
+
+
+
 
 DROP TABLE IF EXISTS nominatim_properties;
 CREATE TABLE nominatim_properties (
     property TEXT NOT NULL,
     value TEXT
 );
-GRANT SELECT ON TABLE nominatim_properties TO "{{config.DATABASE_WEBUSER}}";
+
 
 drop table IF EXISTS location_area CASCADE;
 CREATE TABLE location_area (
@@ -66,7 +82,7 @@ CREATE TABLE location_property_tiger (
   partition SMALLINT,
   linegeo GEOMETRY,
   postcode TEXT);
-GRANT SELECT ON location_property_tiger TO "{{config.DATABASE_WEBUSER}}";
+
 
 drop table if exists location_property_osmline;
 CREATE TABLE location_property_osmline (
@@ -90,7 +106,7 @@ CREATE UNIQUE INDEX idx_osmline_place_id ON location_property_osmline USING BTRE
 CREATE INDEX idx_osmline_geometry_sector ON location_property_osmline USING BTREE (geometry_sector) {{db.tablespace.address_index}};
 CREATE INDEX idx_osmline_linegeo ON location_property_osmline USING GIST (linegeo) {{db.tablespace.search_index}}
   WHERE startnumber is not null;
-GRANT SELECT ON location_property_osmline TO "{{config.DATABASE_WEBUSER}}";
+
 
 drop table IF EXISTS search_name;
 {% if not db.reverse_only %}
@@ -105,7 +121,7 @@ CREATE TABLE search_name (
   centroid GEOMETRY(Geometry, 4326)
   ) {{db.tablespace.search_data}};
 CREATE INDEX idx_search_name_place_id ON search_name USING BTREE (place_id) {{db.tablespace.search_index}};
-GRANT SELECT ON search_name to "{{config.DATABASE_WEBUSER}}" ;
+
 {% endif %}
 
 drop table IF EXISTS place_addressline;
@@ -202,11 +218,7 @@ CREATE INDEX idx_placex_rank_boundaries_sector ON placex
 
 DROP SEQUENCE IF EXISTS seq_place;
 CREATE SEQUENCE seq_place start 1;
-GRANT SELECT on placex to "{{config.DATABASE_WEBUSER}}" ;
-GRANT SELECT on place_addressline to "{{config.DATABASE_WEBUSER}}" ;
-GRANT SELECT ON planet_osm_ways to "{{config.DATABASE_WEBUSER}}" ;
-GRANT SELECT ON planet_osm_rels to "{{config.DATABASE_WEBUSER}}" ;
-GRANT SELECT on location_area to "{{config.DATABASE_WEBUSER}}" ;
+
 
 -- Table for synthetic postcodes.
 DROP TABLE IF EXISTS location_postcodes;
@@ -222,16 +234,8 @@ CREATE TABLE location_postcodes (
   centroid GEOMETRY(Geometry, 4326) NOT NULL,
   geometry GEOMETRY(Geometry, 4326) NOT NULL
   );
-CREATE UNIQUE INDEX idx_location_postcodes_id ON location_postcodes
-  USING BTREE (place_id) {{db.tablespace.search_index}};
-CREATE INDEX idx_location_postcodes_geometry ON location_postcodes
-  USING GIST (geometry) {{db.tablespace.search_index}};
-CREATE INDEX IF NOT EXISTS idx_location_postcodes_postcode
-  ON location_postcodes USING BTREE (postcode, country_code)
-  {{db.tablespace.search_index}};
-CREATE INDEX IF NOT EXISTS idx_location_postcodes_osmid
-  ON location_postcodes USING BTREE (osm_id) {{db.tablespace.search_index}};
-GRANT SELECT ON location_postcodes TO "{{config.DATABASE_WEBUSER}}" ;
+CREATE UNIQUE INDEX idx_postcode_id ON location_postcode USING BTREE (place_id) {{db.tablespace.search_index}};
+CREATE INDEX idx_postcode_geometry ON location_postcode USING GIST (geometry) {{db.tablespace.address_index}};
 
 -- Table to store location of entrance nodes
 DROP TABLE IF EXISTS placex_entrance;
@@ -244,7 +248,7 @@ CREATE TABLE placex_entrance (
   );
 CREATE UNIQUE INDEX idx_placex_entrance_place_id_osm_id ON placex_entrance
   USING BTREE (place_id, osm_id) {{db.tablespace.search_index}};
-GRANT SELECT ON placex_entrance TO "{{config.DATABASE_WEBUSER}}" ;
+
 
 -- Create an index on the place table for lookups to populate the entrance
 -- table
@@ -266,7 +270,7 @@ CREATE TABLE import_polygon_error (
   newgeometry GEOMETRY(Geometry, 4326)
   );
 CREATE INDEX idx_import_polygon_error_osmid ON import_polygon_error USING BTREE (osm_type, osm_id);
-GRANT SELECT ON import_polygon_error TO "{{config.DATABASE_WEBUSER}}";
+
 
 DROP TABLE IF EXISTS import_polygon_delete;
 CREATE TABLE import_polygon_delete (
@@ -276,7 +280,7 @@ CREATE TABLE import_polygon_delete (
   type TEXT NOT NULL
   );
 CREATE INDEX idx_import_polygon_delete_osmid ON import_polygon_delete USING BTREE (osm_type, osm_id);
-GRANT SELECT ON import_polygon_delete TO "{{config.DATABASE_WEBUSER}}";
+
 
 DROP SEQUENCE IF EXISTS file;
 CREATE SEQUENCE file start 1;
@@ -308,4 +312,4 @@ CREATE INDEX IF NOT EXISTS idx_place_interpolations
     ON place USING gist(geometry) {{db.tablespace.address_index}}
     WHERE osm_type = 'W' and address ? 'interpolation';
 
-GRANT SELECT ON table country_osm_grid to "{{config.DATABASE_WEBUSER}}";
+

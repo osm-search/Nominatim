@@ -22,6 +22,7 @@ from ..db import status, properties
 from ..tokenizer.base import AbstractTokenizer
 from ..version import NOMINATIM_VERSION
 from .args import NominatimArgs
+from ..tools.admin import grant_readonly_access
 
 import time
 
@@ -146,6 +147,9 @@ class SetupAll:
         LOG.warning(f'Import completed successfully in {elapsed:.2f} seconds.')
 
         self._finalize_database(args.config.get_libpq_dsn(), args.offline)
+
+        LOG.warning("Granting read-only access to web user")
+        grant_readonly_access(args.config)
 
         return 0
 

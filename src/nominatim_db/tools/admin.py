@@ -19,6 +19,8 @@ from ..db.connection import connect, Cursor, register_hstore
 from ..errors import UsageError
 from ..tokenizer import factory as tokenizer_factory
 from ..data.place_info import PlaceInfo
+from ..tools.sql_preprocessor import SQLPreprocessor
+
 
 LOG = logging.getLogger()
 
@@ -105,3 +107,11 @@ def clean_deleted_relations(config: Configuration, age: str) -> None:
             except psycopg.DataError as exc:
                 raise UsageError('Invalid PostgreSQL time interval format') from exc
         conn.commit()
+
+
+def grant_readonly_access(config: Configuration) -> None:
+    """ Grant read-only (web user) access to all required database objects.
+    """
+    with connect(config.get_libpq_dsn()) as conn:
+        pre = SQLPreprocessor(conn, config)
+        pre.run_sql_file(conn, "grant-readonly.sql")

@@ -13,7 +13,7 @@ CREATE INDEX IF NOT EXISTS idx_location_property_tiger_parent_place_id_imp
 CREATE UNIQUE INDEX IF NOT EXISTS idx_location_property_tiger_place_id_imp
   ON location_property_tiger_import (place_id) {{db.tablespace.aux_index}};
 
-GRANT SELECT ON location_property_tiger_import TO "{{config.DATABASE_WEBUSER}}";
+
 
 DROP TABLE IF EXISTS location_property_tiger;
 ALTER TABLE location_property_tiger_import RENAME TO location_property_tiger;

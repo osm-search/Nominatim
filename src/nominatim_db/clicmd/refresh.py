@@ -17,6 +17,8 @@ from ..config import Configuration
 from ..db.connection import connect, table_exists
 from ..tokenizer.base import AbstractTokenizer
 from .args import NominatimArgs
+from ..tools.admin import grant_readonly_access
+
 
 
 LOG = logging.getLogger()
@@ -82,6 +84,10 @@ class UpdateRefresh:
                            help='Do not enable code for propagating updates')
         group.add_argument('--enable-debug-statements', action='store_true',
                            help='Enable debug warning statements in functions')
+        
+        group = parser.add_argument_group('Access control')
+        group.add_argument('--ro-access', action='store_true',
+                           help='Grant read-only database access to the web user')
 
     def run(self, args: NominatimArgs) -> int:
         from ..tools import refresh, postcodes
@@ -166,6 +172,10 @@ class UpdateRefresh:
                 for obj in args.data_area or []:
                     refresh.invalidate_osm_object(*obj, conn, recursive=True)
                 conn.commit()
+
+        if args.ro_access:
+            LOG.warning("Granting read-only access to web user")
+            grant_readonly_access(args.config)
 
         return 0
 

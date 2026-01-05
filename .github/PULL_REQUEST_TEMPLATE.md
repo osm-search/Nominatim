@@ -7,8 +7,6 @@
 ## Contributor guidelines (mandatory)
 <!-- We only accept pull requests that follow our guidelines. A deliberate violation may result in a ban. -->
 
-I hereby confirm that:
-
-- [ ] the [coding style](https://github.com/osm-search/Nominatim/blob/master/CONTRIBUTING.md#coding-style) has been adhered to
-- [ ] my contributions have been [tested](https://github.com/osm-search/Nominatim/blob/master/CONTRIBUTING.md#testing)
-- [ ] any usage of AI to generate code, documentation, or the pull request description has been [disclosed](https://github.com/osm-search/Nominatim/blob/master/CONTRIBUTING.md#using-ai-assisted-code-generators) above
+- [ ] I have adhered to the [coding style](https://github.com/osm-search/Nominatim/blob/master/CONTRIBUTING.md#coding-style)
+- [ ] I have [tested](https://github.com/osm-search/Nominatim/blob/master/CONTRIBUTING.md#testing) the proposed changes
+- [ ] I have [disclosed](https://github.com/osm-search/Nominatim/blob/master/CONTRIBUTING.md#using-ai-assisted-code-generators) above any use of AI to generate code, documentation, or the pull request description

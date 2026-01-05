@@ -1,0 +1,12 @@
+## Summary
+<!-- Describe the purpose of your pull request and, if present, link to existing issues. -->
+
+## AI usage
+<!-- Please list where and to what extent AI was used. -->
+
+## Contributor guidelines (mandatory)
+<!-- We only accept pull requests that follow our guidelines. A deliberate violation may result in a ban. -->
+
+- [ ] I have adhered to the [coding style](https://github.com/osm-search/Nominatim/blob/master/CONTRIBUTING.md#coding-style)
+- [ ] I have [tested](https://github.com/osm-search/Nominatim/blob/master/CONTRIBUTING.md#testing) the proposed changes
+- [ ] I have [disclosed](https://github.com/osm-search/Nominatim/blob/master/CONTRIBUTING.md#using-ai-assisted-code-generators) above any use of AI to generate code, documentation, or the pull request description

@@ -7,7 +7,7 @@
 ## Contributor guidelines (mandatory)
 <!-- We only accept pull requests that follow our guidelines. A deliberate violation may result in a ban. -->
 
-I herby confirm that:
+I hereby confirm that:
 
 - [ ] the [coding style](https://github.com/osm-search/Nominatim/blob/master/CONTRIBUTING.md#coding-style) has been adhered to
 - [ ] my contributions have been [tested](https://github.com/osm-search/Nominatim/blob/master/CONTRIBUTING.md#testing)

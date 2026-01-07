@@ -123,10 +123,12 @@ BEGIN
     RETURN TRUE;
   END IF;
 
-  IF in_rank_search <= 4 and not in_estimate THEN
-    INSERT INTO location_area_country (place_id, country_code, geometry)
-      (SELECT in_place_id, in_country_code, geom
-       FROM split_geometry(in_geometry) as geom);
+  IF in_rank_search <= 4 THEN
+    IF not in_estimate and in_country_code is not NULL THEN
+      INSERT INTO location_area_country (place_id, country_code, geometry)
+        (SELECT in_place_id, in_country_code, geom
+         FROM split_geometry(in_geometry) as geom);
+    END IF;
     RETURN TRUE;
   END IF;
 

@@ -2,7 +2,7 @@
 --
 -- This file is part of Nominatim. (https://nominatim.org)
 --
--- Copyright (C) 2025 by the Nominatim developer community.
+-- Copyright (C) 2026 by the Nominatim developer community.
 -- For a full list of authors see the git log.
 
 -- Trigger functions for the placex table.
@@ -859,7 +859,9 @@ BEGIN
   NEW.linked_place_id := OLD.linked_place_id;
 
   -- Remove linkage, if we have computed a different new linkee.
-  UPDATE placex SET linked_place_id = null, indexed_status = 2
+  UPDATE placex
+    SET linked_place_id = null,
+        indexed_status = CASE WHEN indexed_status = 0 THEN 2 ELSE indexed_status END
     WHERE linked_place_id = NEW.place_id
           and (linked_place is null or place_id != linked_place);
   -- update not necessary for osmline, cause linked_place_id does not exist
@@ -1340,10 +1342,10 @@ BEGIN
   -- RAISE WARNING 'placex_delete % %',OLD.osm_type,OLD.osm_id;
 
   IF OLD.linked_place_id is null THEN
-    update placex set linked_place_id = null, indexed_status = 2 where linked_place_id = OLD.place_id and indexed_status = 0;
-    {% if debug %}RAISE WARNING 'placex_delete:01 % %',OLD.osm_type,OLD.osm_id;{% endif %}
-    update placex set linked_place_id = null where linked_place_id = OLD.place_id;
-    {% if debug %}RAISE WARNING 'placex_delete:02 % %',OLD.osm_type,OLD.osm_id;{% endif %}
+    UPDATE placex
+      SET linked_place_id = NULL,
+          indexed_status = CASE WHEN indexed_status = 0 THEN 2 ELSE indexed_status END
+      WHERE linked_place_id = OLD.place_id;
   ELSE
     update placex set indexed_status = 2 where place_id = OLD.linked_place_id and indexed_status = 0;
   END IF;
@@ -1367,6 +1369,7 @@ BEGIN
     -- reparenting also for OSM Interpolation Lines (and for Tiger?)
     update location_property_osmline set indexed_status = 2 where indexed_status = 0 and parent_place_id = OLD.place_id;
 
+    UPDATE location_postcodes SET indexed_status = 2 WHERE parent_place_id = OLD.place_id;
   END IF;
 
   {% if debug %}RAISE WARNING 'placex_delete:08 % %',OLD.osm_type,OLD.osm_id;{% endif %}
@@ -1398,9 +1401,6 @@ BEGIN
   END IF;
 
   {% if debug %}RAISE WARNING 'placex_delete:12 % %',OLD.osm_type,OLD.osm_id;{% endif %}
-
-  UPDATE location_postcodes SET indexed_status = 2 WHERE parent_place_id = OLD.place_id;
-
   RETURN OLD;
 
 END;

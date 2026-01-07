@@ -465,7 +465,7 @@ BEGIN
     END IF;
   END LOOP;
 
-  name_vector := token_get_name_search_tokens(token_info);
+  name_vector := COALESCE(token_get_name_search_tokens(token_info), '{}'::INTEGER[]);
 
   -- Check if the parent covers all address terms.
   -- If not, create a search name entry with the house number as the name.
@@ -1279,10 +1279,10 @@ BEGIN
   NEW.postcode := coalesce(token_get_postcode(NEW.token_info), NEW.postcode);
 
   -- if we have a name add this to the name search table
-  IF NEW.name IS NOT NULL THEN
+  name_vector := token_get_name_search_tokens(NEW.token_info);
+  IF array_length(name_vector, 1) is not NULL THEN
     -- Initialise the name vector using our name
     NEW.name := add_default_place_name(NEW.country_code, NEW.name);
-    name_vector := token_get_name_search_tokens(NEW.token_info);
 
     IF NEW.rank_search <= 25 and NEW.rank_address > 0 THEN
       result := add_location(NEW.place_id, NEW.country_code, NEW.partition,

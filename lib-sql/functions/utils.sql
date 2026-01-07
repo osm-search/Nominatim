@@ -368,8 +368,6 @@ CREATE OR REPLACE FUNCTION add_location(place_id BIGINT, country_code varchar(2)
 DECLARE
   postcode TEXT;
 BEGIN
-  PERFORM deleteLocationArea(partition, place_id, rank_search);
-
   -- add postcode only if it contains a single entry, i.e. ignore postcode lists
   postcode := NULL;
   IF in_postcode is not null AND in_postcode not similar to '%(,|;)%' THEN

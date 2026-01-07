@@ -2,7 +2,7 @@
 --
 -- This file is part of Nominatim. (https://nominatim.org)
 --
--- Copyright (C) 2022 by the Nominatim developer community.
+-- Copyright (C) 2026 by the Nominatim developer community.
 -- For a full list of authors see the git log.
 
 DROP TYPE IF EXISTS nearfeaturecentr CASCADE;
@@ -214,7 +214,6 @@ DECLARE
 BEGIN
 {% for partition in db.partitions %}
   IF in_partition = {{ partition }} THEN
-    DELETE FROM search_name_{{ partition }} values WHERE place_id = in_place_id;
     IF in_rank_address > 0 THEN
       INSERT INTO search_name_{{ partition }} (place_id, address_rank, name_vector, centroid)
         values (in_place_id, in_rank_address, in_name_vector, in_geometry);
@@ -253,7 +252,6 @@ BEGIN
 
 {% for partition in db.partitions %}
   IF in_partition = {{ partition }} THEN
-    DELETE FROM location_road_{{ partition }} where place_id = in_place_id;
     INSERT INTO location_road_{{ partition }} (partition, place_id, country_code, geometry)
       values (in_partition, in_place_id, in_country_code, in_geometry);
     RETURN TRUE;

@@ -840,13 +840,15 @@ BEGIN
 
   NEW.indexed_date = now();
 
-  {% if 'search_name' in db.tables %}
-    DELETE from search_name WHERE place_id = NEW.place_id;
-  {% endif %}
-  result := deleteSearchName(NEW.partition, NEW.place_id);
-  DELETE FROM place_addressline WHERE place_id = NEW.place_id;
-  result := deleteRoad(NEW.partition, NEW.place_id);
-  result := deleteLocationArea(NEW.partition, NEW.place_id, NEW.rank_search);
+  IF OLD.indexed_status > 1 THEN
+    {% if 'search_name' in db.tables %}
+      DELETE from search_name WHERE place_id = NEW.place_id;
+    {% endif %}
+    result := deleteSearchName(NEW.partition, NEW.place_id);
+    DELETE FROM place_addressline WHERE place_id = NEW.place_id;
+    result := deleteRoad(NEW.partition, NEW.place_id);
+    result := deleteLocationArea(NEW.partition, NEW.place_id, NEW.rank_search);
+  END IF;
 
   NEW.extratags := NEW.extratags - 'linked_place'::TEXT;
   IF NEW.extratags = ''::hstore THEN
@@ -859,12 +861,13 @@ BEGIN
   NEW.linked_place_id := OLD.linked_place_id;
 
   -- Remove linkage, if we have computed a different new linkee.
-  UPDATE placex
-    SET linked_place_id = null,
-        indexed_status = CASE WHEN indexed_status = 0 THEN 2 ELSE indexed_status END
-    WHERE linked_place_id = NEW.place_id
-          and (linked_place is null or place_id != linked_place);
-  -- update not necessary for osmline, cause linked_place_id does not exist
+  IF OLD.indexed_status > 1 THEN
+    UPDATE placex
+      SET linked_place_id = null,
+          indexed_status = CASE WHEN indexed_status = 0 THEN 2 ELSE indexed_status END
+      WHERE linked_place_id = NEW.place_id
+            and (linked_place is null or place_id != linked_place);
+  END IF;
 
   -- Compute a preliminary centroid.
   NEW.centroid := get_center_point(NEW.geometry);
@@ -1034,7 +1037,9 @@ BEGIN
                 LOOP
                   UPDATE placex SET linked_place_id = NEW.place_id WHERE place_id = linked_node_id;
                   {% if 'search_name' in db.tables %}
-                    DELETE FROM search_name WHERE place_id = linked_node_id;
+                    IF OLD.indexed_status > 1 THEN
+                      DELETE FROM search_name WHERE place_id = linked_node_id;
+                    END IF;
                   {% endif %}
                 END LOOP;
               END IF;
@@ -1183,11 +1188,6 @@ BEGIN
     -- reset the address rank if necessary.
     UPDATE placex set linked_place_id = NEW.place_id, indexed_status = 2
       WHERE place_id = location.place_id;
-    -- ensure that those places are not found anymore
-    {% if 'search_name' in db.tables %}
-      DELETE FROM search_name WHERE place_id = location.place_id;
-    {% endif %}
-    PERFORM deleteLocationArea(NEW.partition, location.place_id, NEW.rank_search);
 
     SELECT wikipedia, importance
       FROM compute_importance(location.extratags, NEW.country_code,

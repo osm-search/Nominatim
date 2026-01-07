@@ -1196,7 +1196,7 @@ BEGIN
     IF linked_importance is not null AND
        (NEW.importance is null or NEW.importance < linked_importance)
     THEN
-      NEW.importance = linked_importance;
+      NEW.importance := linked_importance;
     END IF;
   ELSE
     -- No linked place? As a last resort check if the boundary is tagged with

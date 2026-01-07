@@ -2,7 +2,7 @@
 --
 -- This file is part of Nominatim. (https://nominatim.org)
 --
--- Copyright (C) 2022 by the Nominatim developer community.
+-- Copyright (C) 2026 by the Nominatim developer community.
 -- For a full list of authors see the git log.
 
 -- Functions for interpreting wkipedia/wikidata tags and computing importance.
@@ -166,7 +166,7 @@ BEGIN
   END LOOP;
 
   -- Nothing? Then try with the wikidata tag.
-  IF result.importance is null AND extratags ? 'wikidata' THEN
+  IF extratags ? 'wikidata' THEN
     FOR match IN
 {% if 'wikimedia_importance' in db.tables %}
       SELECT * FROM wikimedia_importance
@@ -185,18 +185,18 @@ BEGIN
   END IF;
 
   -- Still nothing? Fall back to a default.
-  IF result.importance is null THEN
-    result.importance := 0.40001 - (rank_search::float / 75);
-  END IF;
+  result.importance := 0.40001 - (rank_search::float / 75);
 
 {% if 'secondary_importance' in db.tables %}
   FOR match IN
     SELECT ST_Value(rast, centroid) as importance
-    FROM secondary_importance
-    WHERE ST_Intersects(ST_ConvexHull(rast), centroid) LIMIT 1
+      FROM secondary_importance
+      WHERE ST_Intersects(ST_ConvexHull(rast), centroid) LIMIT 1
   LOOP
-    -- Secondary importance as tie breaker with 0.0001 weight.
-    result.importance := result.importance + match.importance::float / 655350000;
+    IF match.importance is not NULL THEN
+      -- Secondary importance as tie breaker with 0.0001 weight.
+      result.importance := result.importance + match.importance::float / 655350000;
+    END IF;
   END LOOP;
 {% endif %}
 

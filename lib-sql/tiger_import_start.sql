@@ -207,6 +207,7 @@ BEGIN
 
     RETURN 1;
   END IF;
+  RETURN 0;
 
 END;
 $$

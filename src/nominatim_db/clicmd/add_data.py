@@ -65,13 +65,13 @@ class UpdateAddData:
     def run(self, args: NominatimArgs) -> int:
         from ..tools import add_osm_data
 
+        if args.tiger_data:
+            return asyncio.run(self._add_tiger_data(args))
+
         with connect(args.config.get_libpq_dsn()) as conn:
             if is_frozen(conn):
                 print('Database is marked frozen. New data can\'t be added.')
                 return 1
-
-        if args.tiger_data:
-            return asyncio.run(self._add_tiger_data(args))
 
         osm2pgsql_params = args.osm2pgsql_options(default_cache=1000, default_threads=1)
         if args.file or args.diff:

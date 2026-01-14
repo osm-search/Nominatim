@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2025 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Helper classes for filling the place table.
@@ -35,7 +35,8 @@ class PlaceColumn:
             self._add_hstore(
                 'name',
                 'name',
-                ''.join(random.choices(string.printable, k=random.randrange(30))),
+                ''.join(random.choices(string.ascii_uppercase)
+                        + random.choices(string.printable, k=random.randrange(30))),
             )
 
         return self

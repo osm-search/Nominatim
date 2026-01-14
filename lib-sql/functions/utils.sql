@@ -2,7 +2,7 @@
 --
 -- This file is part of Nominatim. (https://nominatim.org)
 --
--- Copyright (C) 2025 by the Nominatim developer community.
+-- Copyright (C) 2026 by the Nominatim developer community.
 -- For a full list of authors see the git log.
 
 -- Assorted helper functions for the triggers.
@@ -46,13 +46,13 @@ DECLARE
   r INTEGER[];
 BEGIN
   IF array_upper(a, 1) IS NULL THEN
-    RETURN b;
+    RETURN COALESCE(b, '{}'::INTEGER[]);
   END IF;
   IF array_upper(b, 1) IS NULL THEN
-    RETURN a;
+    RETURN COALESCE(a, '{}'::INTEGER[]);
   END IF;
   r := a;
-  FOR i IN 1..array_upper(b, 1) LOOP  
+  FOR i IN 1..array_upper(b, 1) LOOP
     IF NOT (ARRAY[b[i]] <@ r) THEN
       r := r || b[i];
     END IF;
@@ -368,8 +368,6 @@ CREATE OR REPLACE FUNCTION add_location(place_id BIGINT, country_code varchar(2)
 DECLARE
   postcode TEXT;
 BEGIN
-  PERFORM deleteLocationArea(partition, place_id, rank_search);
-
   -- add postcode only if it contains a single entry, i.e. ignore postcode lists
   postcode := NULL;
   IF in_postcode is not null AND in_postcode not similar to '%(,|;)%' THEN

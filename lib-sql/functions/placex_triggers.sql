@@ -2,7 +2,7 @@
 --
 -- This file is part of Nominatim. (https://nominatim.org)
 --
--- Copyright (C) 2025 by the Nominatim developer community.
+-- Copyright (C) 2026 by the Nominatim developer community.
 -- For a full list of authors see the git log.
 
 -- Trigger functions for the placex table.
@@ -465,7 +465,7 @@ BEGIN
     END IF;
   END LOOP;
 
-  name_vector := token_get_name_search_tokens(token_info);
+  name_vector := COALESCE(token_get_name_search_tokens(token_info), '{}'::INTEGER[]);
 
   -- Check if the parent covers all address terms.
   -- If not, create a search name entry with the house number as the name.
@@ -840,13 +840,15 @@ BEGIN
 
   NEW.indexed_date = now();
 
-  {% if 'search_name' in db.tables %}
-    DELETE from search_name WHERE place_id = NEW.place_id;
-  {% endif %}
-  result := deleteSearchName(NEW.partition, NEW.place_id);
-  DELETE FROM place_addressline WHERE place_id = NEW.place_id;
-  result := deleteRoad(NEW.partition, NEW.place_id);
-  result := deleteLocationArea(NEW.partition, NEW.place_id, NEW.rank_search);
+  IF OLD.indexed_status > 1 THEN
+    {% if 'search_name' in db.tables %}
+      DELETE from search_name WHERE place_id = NEW.place_id;
+    {% endif %}
+    result := deleteSearchName(NEW.partition, NEW.place_id);
+    DELETE FROM place_addressline WHERE place_id = NEW.place_id;
+    result := deleteRoad(NEW.partition, NEW.place_id);
+    result := deleteLocationArea(NEW.partition, NEW.place_id, NEW.rank_search);
+  END IF;
 
   NEW.extratags := NEW.extratags - 'linked_place'::TEXT;
   IF NEW.extratags = ''::hstore THEN
@@ -859,10 +861,13 @@ BEGIN
   NEW.linked_place_id := OLD.linked_place_id;
 
   -- Remove linkage, if we have computed a different new linkee.
-  UPDATE placex SET linked_place_id = null, indexed_status = 2
-    WHERE linked_place_id = NEW.place_id
-          and (linked_place is null or place_id != linked_place);
-  -- update not necessary for osmline, cause linked_place_id does not exist
+  IF OLD.indexed_status > 1 THEN
+    UPDATE placex
+      SET linked_place_id = null,
+          indexed_status = CASE WHEN indexed_status = 0 THEN 2 ELSE indexed_status END
+      WHERE linked_place_id = NEW.place_id
+            and (linked_place is null or place_id != linked_place);
+  END IF;
 
   -- Compute a preliminary centroid.
   NEW.centroid := get_center_point(NEW.geometry);
@@ -1032,7 +1037,9 @@ BEGIN
                 LOOP
                   UPDATE placex SET linked_place_id = NEW.place_id WHERE place_id = linked_node_id;
                   {% if 'search_name' in db.tables %}
-                    DELETE FROM search_name WHERE place_id = linked_node_id;
+                    IF OLD.indexed_status > 1 THEN
+                      DELETE FROM search_name WHERE place_id = linked_node_id;
+                    END IF;
                   {% endif %}
                 END LOOP;
               END IF;
@@ -1181,11 +1188,6 @@ BEGIN
     -- reset the address rank if necessary.
     UPDATE placex set linked_place_id = NEW.place_id, indexed_status = 2
       WHERE place_id = location.place_id;
-    -- ensure that those places are not found anymore
-    {% if 'search_name' in db.tables %}
-      DELETE FROM search_name WHERE place_id = location.place_id;
-    {% endif %}
-    PERFORM deleteLocationArea(NEW.partition, location.place_id, NEW.rank_search);
 
     SELECT wikipedia, importance
       FROM compute_importance(location.extratags, NEW.country_code,
@@ -1196,7 +1198,7 @@ BEGIN
     IF linked_importance is not null AND
        (NEW.importance is null or NEW.importance < linked_importance)
     THEN
-      NEW.importance = linked_importance;
+      NEW.importance := linked_importance;
     END IF;
   ELSE
     -- No linked place? As a last resort check if the boundary is tagged with
@@ -1277,10 +1279,10 @@ BEGIN
   NEW.postcode := coalesce(token_get_postcode(NEW.token_info), NEW.postcode);
 
   -- if we have a name add this to the name search table
-  IF NEW.name IS NOT NULL THEN
+  name_vector := token_get_name_search_tokens(NEW.token_info);
+  IF array_length(name_vector, 1) is not NULL THEN
     -- Initialise the name vector using our name
     NEW.name := add_default_place_name(NEW.country_code, NEW.name);
-    name_vector := token_get_name_search_tokens(NEW.token_info);
 
     IF NEW.rank_search <= 25 and NEW.rank_address > 0 THEN
       result := add_location(NEW.place_id, NEW.country_code, NEW.partition,
@@ -1340,10 +1342,10 @@ BEGIN
   -- RAISE WARNING 'placex_delete % %',OLD.osm_type,OLD.osm_id;
 
   IF OLD.linked_place_id is null THEN
-    update placex set linked_place_id = null, indexed_status = 2 where linked_place_id = OLD.place_id and indexed_status = 0;
-    {% if debug %}RAISE WARNING 'placex_delete:01 % %',OLD.osm_type,OLD.osm_id;{% endif %}
-    update placex set linked_place_id = null where linked_place_id = OLD.place_id;
-    {% if debug %}RAISE WARNING 'placex_delete:02 % %',OLD.osm_type,OLD.osm_id;{% endif %}
+    UPDATE placex
+      SET linked_place_id = NULL,
+          indexed_status = CASE WHEN indexed_status = 0 THEN 2 ELSE indexed_status END
+      WHERE linked_place_id = OLD.place_id;
   ELSE
     update placex set indexed_status = 2 where place_id = OLD.linked_place_id and indexed_status = 0;
   END IF;
@@ -1367,6 +1369,7 @@ BEGIN
     -- reparenting also for OSM Interpolation Lines (and for Tiger?)
     update location_property_osmline set indexed_status = 2 where indexed_status = 0 and parent_place_id = OLD.place_id;
 
+    UPDATE location_postcodes SET indexed_status = 2 WHERE parent_place_id = OLD.place_id;
   END IF;
 
   {% if debug %}RAISE WARNING 'placex_delete:08 % %',OLD.osm_type,OLD.osm_id;{% endif %}
@@ -1398,9 +1401,6 @@ BEGIN
   END IF;
 
   {% if debug %}RAISE WARNING 'placex_delete:12 % %',OLD.osm_type,OLD.osm_id;{% endif %}
-
-  UPDATE location_postcodes SET indexed_status = 2 WHERE parent_place_id = OLD.place_id;
-
   RETURN OLD;
 
 END;

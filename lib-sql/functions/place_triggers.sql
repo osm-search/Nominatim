@@ -2,7 +2,7 @@
 --
 -- This file is part of Nominatim. (https://nominatim.org)
 --
--- Copyright (C) 2025 by the Nominatim developer community.
+-- Copyright (C) 2026 by the Nominatim developer community.
 -- For a full list of authors see the git log.
 
 CREATE OR REPLACE FUNCTION place_insert()
@@ -66,7 +66,8 @@ BEGIN
     -- They get their parent from the interpolation.
     UPDATE placex p SET indexed_status = 2
       FROM planet_osm_ways w
-      WHERE w.id = NEW.osm_id and p.osm_type = 'N' and p.osm_id = any(w.nodes);
+      WHERE w.id = NEW.osm_id and p.osm_type = 'N' and p.osm_id = any(w.nodes)
+            and indexed_status = 0;
 
     -- If there is already an entry in place, just update that, if necessary.
     IF existing.osm_type is not null THEN

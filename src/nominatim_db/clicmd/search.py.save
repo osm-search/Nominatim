@@ -1,0 +1,28 @@
+parser.add_argument('--amenity', ...)
+parser.add_argument('--countrycodes', ...)
+
+
+# ----------------- Add this snippet -----------------
+parser.add_argument(
+    '--layer',
+    help='Restrict results to one or more layers (comma-separated)'
+)
+
+args = parser.parse_args()
+
+if args.layer:
+    # Pass the CLI input to the existing _get_layers logic
+    params['layer'] = args.layer
+# ----------------------------------------------------
+nominatim search -h
+
+nominatim search --query "Main Street" --layer address
+
+nominatim search --query "Main Street" --layer address
+
+git add src/nominatim_db/clicmd/search.py
+git commit -m "cli: add --layer option to nominatim search"
+
+git push origin add-layer-cli
+
+

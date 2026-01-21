@@ -7,7 +7,7 @@
 """
 Helper classes for filling the place table.
 """
-import json
+import ast
 import random
 import string
 
@@ -52,7 +52,7 @@ class PlaceColumn:
         elif key.startswith('addr+'):
             self._add_hstore('address', key[5:], value)
         elif key in ('name', 'address', 'extratags'):
-            self.columns[key] = json.loads('{' + value + '}')
+            self.columns[key] = ast.literal_eval('{' + value + '}')
         else:
             assert key in ('class', 'type'), "Unknown column '{}'.".format(key)
             self.columns[key] = None if value == '' else value

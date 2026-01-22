@@ -50,7 +50,7 @@ class ParamWrapper(ASGIAdaptor):
                              headers={'content-type': self.content_type})
 
     def create_response(self, status: int, output: str, num_results: int) -> Response:
-        self.request.state.num_results = num_results
+        setattr(self.request.state, 'num_results', num_results)
         return Response(output, status_code=status, media_type=self.content_type)
 
     def base_uri(self) -> str:
@@ -95,7 +95,7 @@ class FileLoggingMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request,
                        call_next: RequestResponseEndpoint) -> Response:
         qs = QueryStatistics()
-        request.state.query_stats = qs
+        setattr(request.state, 'query_stats', qs)
         response = await call_next(request)
 
         if response.status_code != 200 or 'start' not in qs:

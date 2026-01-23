@@ -42,6 +42,22 @@ Feature: Tests for finding places by osm_type and osm_id
         | jsonv2      | json        |
         | geojson     | geojson     |
 
+    Scenario Outline: Lookup with entrances
+        When sending v1/lookup with format <format>
+          | osm_ids    | entrances |
+          | W429210603 | 1         |
+        Then a HTTP 200 is returned
+        And the result is valid <outformat>
+        And result 0 contains in field entrances+0
+          | osm_id     | type | lat        | lon       |
+          | 6580031131 | yes  | 47.2489382 | 9.5284033 |
+
+        Examples:
+          | format | outformat |
+          | json   | json |
+          | jsonv2 | json |
+          | geojson | geojson |
+
     Scenario: Linked places return information from the linkee
         When sending v1/lookup with format geocodejson
           | osm_ids |

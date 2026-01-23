@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2025 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Generic part of the server implementation of the v1 API.
@@ -200,6 +200,7 @@ async def reverse_endpoint(api: NominatimAPIAsync, params: ASGIAdaptor) -> Any:
     details['max_rank'] = helpers.zoom_to_rank(params.get_int('zoom', 18))
     details['layers'] = get_layers(params)
     details['query_stats'] = params.query_stats()
+    details['entrances'] = params.get_bool('entrances', False)
 
     result = await api.reverse(coord, **details)
 
@@ -238,6 +239,7 @@ async def lookup_endpoint(api: NominatimAPIAsync, params: ASGIAdaptor) -> Any:
     debug = setup_debugging(params)
     details = parse_geometry_details(params, fmt)
     details['query_stats'] = params.query_stats()
+    details['entrances'] = params.get_bool('entrances', False)
 
     places = []
     for oid in (params.get('osm_ids') or '').split(','):

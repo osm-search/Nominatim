@@ -32,6 +32,8 @@ class MockTigerTable:
 
             # We need this table to determine if the database is frozen or not
             cur.execute("CREATE TABLE place (number INTEGER)")
+            # We need this table to determine if the database is in reverse-only mode
+            cur.execute("CREATE TABLE search_name (place_id BIGINT)")
 
     def count(self):
         return execute_scalar(self.conn, "SELECT count(*) FROM tiger")
@@ -87,15 +89,30 @@ async def test_add_tiger_data(def_config, src_dir, tiger_table, tokenizer_mock, 
     assert tiger_table.count() == 6213
 
 
+@pytest.mark.parametrize("threads", (1, 5))
 @pytest.mark.asyncio
-async def test_add_tiger_data_database_frozen(def_config, temp_db_conn, tiger_table, tokenizer_mock,
-                                              tmp_path):
+async def test_add_tiger_data_database_frozen(def_config, src_dir, temp_db_conn, tiger_table,
+                                              tokenizer_mock, threads):
     freeze.drop_update_tables(temp_db_conn)
 
-    with pytest.raises(UsageError) as excinfo:
-        await tiger_data.add_tiger_data(str(tmp_path), def_config, 1, tokenizer_mock())
+    await tiger_data.add_tiger_data(str(src_dir / 'test' / 'testdb' / 'tiger'),
+                                    def_config, threads, tokenizer_mock())
 
-        assert "database frozen" in str(excinfo.value)
+    assert tiger_table.count() == 6213
+
+
+@pytest.mark.asyncio
+async def test_add_tiger_data_reverse_only(def_config, src_dir, temp_db_conn, tiger_table,
+                                           tokenizer_mock):
+    with temp_db_conn.cursor() as cur:
+        cur.execute("DROP TABLE search_name")
+    temp_db_conn.commit()
+
+    with pytest.raises(UsageError,
+                       match="Cannot perform tiger import: required tables are missing. "
+                       "See https://github.com/osm-search/Nominatim/issues/2463 for details."):
+        await tiger_data.add_tiger_data(str(src_dir / 'test' / 'testdb' / 'tiger'),
+                                        def_config, 1, tokenizer_mock())
 
     assert tiger_table.count() == 0
 

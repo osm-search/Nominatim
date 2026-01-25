@@ -167,3 +167,18 @@ Feature: v1/reverse Parameter Tests
           | json   | json |
           | jsonv2 | json |
           | xml    | xml |
+
+    Scenario Outline: Reverse with entrances
+        When sending v1/reverse with format <format>
+          | lat               | lon              | entrances | zoom |
+          | 47.24942041089678 | 9.52854573737568 | 1         | 18   |
+        Then a HTTP 200 is returned
+        And the result is valid <outformat>
+        And the result contains array field entrances where element 0 contains
+          | osm_id     | type | lat        | lon       |
+          | 6580031131 | yes  | 47.2489382 | 9.5284033 |
+
+        Examples:
+          | format | outformat |
+          | json   | json |
+          | jsonv2 | json |

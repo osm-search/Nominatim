@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2025 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Various helper classes for running Nominatim commands.
@@ -54,15 +54,14 @@ class APIRunner:
     def create_engine_starlette(self, environ):
         import nominatim_api.server.starlette.server
         from asgi_lifespan import LifespanManager
-        import httpx
+        from starlette.testclient import TestClient
 
         async def _request(endpoint, params, http_headers):
             app = nominatim_api.server.starlette.server.get_application(None, environ)
 
             async with LifespanManager(app):
-                async with httpx.AsyncClient(app=app, base_url="http://nominatim.test") as client:
-                    response = await client.get("/" + endpoint, params=params,
-                                                headers=http_headers)
+                client = TestClient(app, base_url="http://nominatim.test")
+                response = client.get("/" + endpoint, params=params, headers=http_headers)
 
             return APIResponse(endpoint, response.status_code,
                                response.text, response.headers)

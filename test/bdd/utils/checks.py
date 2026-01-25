@@ -7,6 +7,7 @@
 """
 Helper functions to compare expected values.
 """
+import ast
 import collections.abc
 import json
 import re
@@ -58,7 +59,8 @@ COMPARISON_FUNCS = {
     None: lambda val, exp: str(val) == exp,
     'i': lambda val, exp: str(val).lower() == exp.lower(),
     'fm': lambda val, exp: re.fullmatch(exp, val) is not None,
-    'dict': lambda val, exp: val is None if exp == '-' else (val == eval('{' + exp + '}')),
+    'dict': lambda val, exp: (val is None if exp == '-'
+                              else (val == ast.literal_eval('{' + exp + '}'))),
     'in_box': within_box
 }
 

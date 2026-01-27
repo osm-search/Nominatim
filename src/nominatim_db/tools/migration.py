@@ -137,7 +137,6 @@ def create_placex_entrance_table(conn: Connection, config: Configuration, **_: A
               );
             CREATE UNIQUE INDEX idx_placex_entrance_place_id_osm_id ON placex_entrance
               USING BTREE (place_id, osm_id) {{db.tablespace.search_index}};
-            GRANT SELECT ON placex_entrance TO "{{config.DATABASE_WEBUSER}}" ;
               """)
 
 
@@ -250,8 +249,6 @@ def create_place_postcode_table(conn: Connection, config: Configuration, **_: An
                     geometry Geometry(Geometry, 4326) NOT NULL
                 )
                 """)
-            sqlp.run_string(conn,
-                            'GRANT SELECT ON location_postcodes TO "{{config.DATABASE_WEBUSER}}"')
             # remove postcodes from the various auxillary tables
             cur.execute(
                 """

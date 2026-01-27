@@ -144,10 +144,6 @@ class ICUTokenizer(AbstractTokenizer):
             with conn.cursor() as cur:
                 cur.execute('SET max_parallel_workers_per_gather TO 0')
 
-            sqlp = SQLPreprocessor(conn, config)
-            sqlp.run_string(conn,
-                            'GRANT SELECT ON tmp_word TO "{{config.DATABASE_WEBUSER}}"')
-            conn.commit()
         self._create_base_indices(config, 'tmp_word')
         self._create_lookup_indices(config, 'tmp_word')
         self._move_temporary_word_table('tmp_word')
@@ -245,11 +241,9 @@ class ICUTokenizer(AbstractTokenizer):
                       word text,
                       info jsonb
                     ) {{db.tablespace.search_data}};
-                GRANT SELECT ON word TO "{{config.DATABASE_WEBUSER}}";
 
                 DROP SEQUENCE IF EXISTS seq_word;
                 CREATE SEQUENCE seq_word start 1;
-                GRANT SELECT ON seq_word to "{{config.DATABASE_WEBUSER}}";
             """)
             conn.commit()
 

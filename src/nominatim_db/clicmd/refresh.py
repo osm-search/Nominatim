@@ -65,6 +65,8 @@ class UpdateRefresh:
                            help='Update secondary importance raster data')
         group.add_argument('--importance', action='store_true',
                            help='Recompute place importances (expensive!)')
+        group.add_argument('--ro-access', action='store_true',
+                           help='Grant read-only access to web user for all tables')
         group.add_argument('--website', action='store_true',
                            help='DEPRECATED. This function has no function anymore'
                                 ' and will be removed in a future version.')
@@ -158,6 +160,11 @@ class UpdateRefresh:
         if args.website:
             LOG.error('WARNING: Website setup is no longer required. '
                       'This function will be removed in future version of Nominatim.')
+
+        if args.ro_access:
+            from ..tools import admin
+            LOG.warning('Grant read-only access to web user')
+            admin.grant_ro_access(args.config.get_libpq_dsn(), args.config)
 
         if args.data_object or args.data_area:
             with connect(args.config.get_libpq_dsn()) as conn:

@@ -173,6 +173,10 @@ class APISearch:
                            help='Preferred area to find search results')
         group.add_argument('--bounded', action='store_true',
                            help='Strictly restrict results to viewbox area')
+        group.add_argument('--layer', metavar='LAYER',
+                           choices=[n.name.lower() for n in napi.DataLayer if n.name],
+                           action='append', required=False, dest='layers',
+                           help='OSM data layer (may be repeated)')
         group.add_argument('--no-dedupe', action='store_false', dest='dedupe',
                            help='Do not remove duplicates from the result list')
         _add_list_format(parser)
@@ -201,6 +205,10 @@ class APISearch:
                                           'bounded_viewbox': args.bounded,
                                           'entrances': args.entrances,
                                           }
+
+                layers = _get_layers(args, None)
+                if layers is not None:
+                    params['layers'] = layers
 
                 if args.query:
                     results = api.search(args.query, **params)

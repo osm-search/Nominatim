@@ -1240,7 +1240,7 @@ BEGIN
        LIMIT 1
     LOOP
       IF location.osm_id = NEW.osm_id THEN
-        {% if debug %}RAISE WARNING 'Updating names for country '%' with: %', NEW.country_code, NEW.name;{% endif %}
+        {% if debug %}RAISE WARNING 'Updating names for country ''%'' with: %', NEW.country_code, NEW.name;{% endif %}
         UPDATE country_name SET derived_name = NEW.name WHERE country_code = NEW.country_code;
       END IF;
     END LOOP;

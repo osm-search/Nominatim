@@ -82,7 +82,7 @@ BEGIN
 
   result.linked_place_id := location.place_id;
 
-  {%- if debug -%}
+  {% if debug -%}
   IF location.place_id is not NULL THEN
     RAISE WARNING 'Names original: %, location: %', result.name, location.name;
   END IF;
@@ -100,7 +100,7 @@ BEGIN
 
   result.name := coalesce(result.name, ''::hstore) || coalesce(extra_names, ''::hstore);
 
-  {%- if debug -%}
+  {% if debug -%}
   IF location.place_id is not NULL THEN
     RAISE WARNING 'Final names: %', result.name;
   END IF;

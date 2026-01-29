@@ -92,7 +92,7 @@ BEGIN
       INTO extra_names
       FROM each(location.name)
      WHERE result.name IS NULL
-        OR result.name -> key IS NULL
+        OR NOT result.name ? key
         OR result.name -> key != value;
 
     result.name := coalesce(result.name, ''::hstore) || coalesce(extra_names, ''::hstore);

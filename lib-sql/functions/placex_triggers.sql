@@ -80,31 +80,25 @@ BEGIN
   -- place already here.
   SELECT * INTO location FROM find_linked_place(p);
 
-  result.linked_place_id := location.place_id;
-
-  {%- if debug -%}
   IF location.place_id is not NULL THEN
-    RAISE WARNING 'Names original: %, location: %', result.name, location.name;
+    result.linked_place_id := location.place_id;
+
+    {% if debug %}RAISE WARNING 'Names original: %, location: %', result.name, location.name;{% endif %}
+    -- Add all names from the place nodes that deviate from the name
+    -- in the relation with the prefix '_place_'. Deviation means that
+    -- either the value is different or a given key is missing completely
+
+    SELECT hstore(array_agg('_place_' || key), array_agg(value))
+      INTO extra_names
+      FROM each(location.name)
+     WHERE result.name IS NULL
+        OR result.name -> key IS NULL
+        OR result.name -> key != value;
+
+    result.name := coalesce(result.name, ''::hstore) || coalesce(extra_names, ''::hstore);
+
+    {% if debug %}RAISE WARNING 'Final names: %', result.name;{% endif %}
   END IF;
-  {%- endif %}
-
-  -- Add all names from the place nodes that deviate from the name
-  -- in the relation with the prefix '_place_'. Deviation means that
-  -- either the value is different or a given key is missing completely
-  SELECT hstore(array_agg('_place_' || key), array_agg(value))
-    INTO extra_names
-    FROM each(location.name)
-   WHERE result.name IS NULL
-      OR result.name -> key IS NULL
-      OR result.name -> key != value;
-
-  result.name := coalesce(result.name, ''::hstore) || coalesce(extra_names, ''::hstore);
-
-  {%- if debug -%}
-  IF location.place_id is not NULL THEN
-    RAISE WARNING 'Final names: %', result.name;
-  END IF;
-  {%- endif %}
 
   RETURN result;
 END;

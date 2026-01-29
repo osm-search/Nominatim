@@ -104,7 +104,7 @@ def _get_locales(args: NominatimArgs, config: Configuration) -> napi.Locales:
     return napi.Locales()
 
 
-def _get_layers(args: NominatimArgs, default: napi.DataLayer) -> Optional[napi.DataLayer]:
+def _get_layers(args: NominatimArgs, default: Optional[napi.DataLayer]) -> Optional[napi.DataLayer]:
     """ Get the list of selected layers as a DataLayer enum.
     """
     if not args.layers:
@@ -173,6 +173,10 @@ class APISearch:
                            help='Preferred area to find search results')
         group.add_argument('--bounded', action='store_true',
                            help='Strictly restrict results to viewbox area')
+        group.add_argument('--layer', metavar='LAYER',
+                           choices=[n.name.lower() for n in napi.DataLayer if n.name],
+                           action='append', required=False, dest='layers',
+                           help='Restrict results to one or more layers (may be repeated)')
         group.add_argument('--no-dedupe', action='store_false', dest='dedupe',
                            help='Do not remove duplicates from the result list')
         _add_list_format(parser)
@@ -189,6 +193,8 @@ class APISearch:
             raise UsageError(f"Unsupported format '{args.format}'. "
                              'Use --list-formats to see supported formats.')
 
+        layers = _get_layers(args, None)
+
         try:
             with napi.NominatimAPI(args.project_dir) as api:
                 params: Dict[str, Any] = {'max_results': args.limit + min(args.limit, 10),
@@ -199,6 +205,7 @@ class APISearch:
                                           'excluded': args.exclude_place_ids,
                                           'viewbox': args.viewbox,
                                           'bounded_viewbox': args.bounded,
+                                          'layers': layers,
                                           'entrances': args.entrances,
                                           }
 
@@ -255,7 +262,7 @@ class APIReverse:
         group.add_argument('--layer', metavar='LAYER',
                            choices=[n.name.lower() for n in napi.DataLayer if n.name],
                            action='append', required=False, dest='layers',
-                           help='OSM id to lookup in format <NRW><id> (may be repeated)')
+                           help='Restrict results to one or more layers (may be repeated)')
 
         _add_api_output_arguments(parser)
         _add_list_format(parser)

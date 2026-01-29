@@ -152,6 +152,10 @@ jobs:
             - name: Unpack Nominatim
               run: tar xf nominatim-src.tar.bz2
 
+            - uses: ./Nominatim/.github/actions/setup-postgresql-windows
+              with:
+                  postgresql-version: 16
+
             - name: Set up Python
               uses: actions/setup-python@v5
               with:

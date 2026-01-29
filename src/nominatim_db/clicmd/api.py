@@ -104,7 +104,7 @@ def _get_locales(args: NominatimArgs, config: Configuration) -> napi.Locales:
     return napi.Locales()
 
 
-def _get_layers(args: NominatimArgs, default: napi.DataLayer) -> Optional[napi.DataLayer]:
+def _get_layers(args: NominatimArgs, default: Optional[napi.DataLayer]) -> Optional[napi.DataLayer]:
     """ Get the list of selected layers as a DataLayer enum.
     """
     if not args.layers:

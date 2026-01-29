@@ -87,7 +87,6 @@ BEGIN
     -- Add all names from the place nodes that deviate from the name
     -- in the relation with the prefix '_place_'. Deviation means that
     -- either the value is different or a given key is missing completely
-
     SELECT hstore(array_agg('_place_' || key), array_agg(value))
       INTO extra_names
       FROM each(location.name)

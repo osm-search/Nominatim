@@ -29,7 +29,7 @@ _MIGRATION_FUNCTIONS: List[Tuple[NominatimVersion, Callable[..., None]]] = []
 
 def migrate(config: Configuration, paths: Any) -> int:
     """ Check for the current database version and execute migrations,
-        if necesssary.
+        if necessary.
     """
     with connect(config.get_libpq_dsn()) as conn:
         register_hstore(conn)
@@ -143,7 +143,7 @@ def create_placex_entrance_table(conn: Connection, config: Configuration, **_: A
 
 @_migration(5, 1, 99, 1)
 def create_place_entrance_table(conn: Connection, config: Configuration, **_: Any) -> None:
-    """ Add the place_entrance table to store incomming entrance nodes
+    """ Add the place_entrance table to store incoming entrance nodes
     """
     if not table_exists(conn, 'place_entrance'):
         with conn.cursor() as cur:
@@ -252,7 +252,7 @@ def create_place_postcode_table(conn: Connection, config: Configuration, **_: An
                 """)
             sqlp.run_string(conn,
                             'GRANT SELECT ON location_postcodes TO "{{config.DATABASE_WEBUSER}}"')
-            # remove postcodes from the various auxillary tables
+            # remove postcodes from the various auxiliary tables
             cur.execute(
                 """
                 DELETE FROM place_addressline

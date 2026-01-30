@@ -22,7 +22,7 @@ class CountedTokenIDs:
     """ A list of token IDs with their respective counts, sorted
         from least frequent to most frequent.
 
-        If a token count is one, then statistics are likely to be unavaible
+        If a token count is one, then statistics are likely to be unavailable
         and a relatively high count is assumed instead.
     """
 

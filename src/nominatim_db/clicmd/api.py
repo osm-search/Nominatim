@@ -136,7 +136,7 @@ def _print_output(formatter: napi.FormatDispatcher, result: Any,
                 json.dump(json.loads(output), sys.stdout, indent=4, ensure_ascii=False)
             except json.decoder.JSONDecodeError as err:
                 # Catch the error here, so that data can be debugged,
-                # when people are developping custom result formatters.
+                # when people are developing custom result formatters.
                 LOG.fatal("Parsing json failed: %s\nUnformatted output:\n%s", err, output)
         else:
             sys.stdout.write(output)

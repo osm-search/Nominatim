@@ -4,7 +4,7 @@
 
 Bugs can be reported at https://github.com/openstreetmap/Nominatim/issues.
 Please always open a separate issue for each problem. In particular, do
-not add your bugs to closed issues. They may looks similar to you but
+not add your bugs to closed issues. They may look similar to you but
 often are completely different from the maintainer's point of view.
 
 ## Workflow for Pull Requests
@@ -21,7 +21,7 @@ that you are responsible for your pull requests. You should be prepared
 to get change requests because as the maintainers we have to make sure
 that your contribution fits well with the rest of the code. Please make
 sure that you have time to react to these comments and amend the code or
-engage in a conversion. Do not expect that others will pick up your code,
+engage in a conversation. Do not expect that others will pick up your code,
 it will almost never happen.
 
 Please open a separate pull request for each issue you want to address.
@@ -38,7 +38,7 @@ description or in documentation need to
 1. clearly mark the AI-generated sections as such, for example, by
    mentioning all use of AI in the PR description, and
 2. include proof that you have run the generated code on an actual
-   installation of Nominatim. Adding and excuting tests will not be
+   installation of Nominatim. Adding and executing tests will not be
    sufficient. You need to show that the code actually solves the problem
    the PR claims to solve.
 

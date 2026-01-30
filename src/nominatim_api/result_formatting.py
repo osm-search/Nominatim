@@ -43,7 +43,7 @@ class FormatDispatcher:
         return decorator
 
     def error_format_func(self, func: ErrorFormatFunc) -> ErrorFormatFunc:
-        """ Decorator for a function that formats error messges.
+        """ Decorator for a function that formats error messages.
             There is only one error formatter per dispatcher. Using
             the decorator repeatedly will overwrite previous functions.
         """
@@ -79,7 +79,7 @@ class FormatDispatcher:
     def set_content_type(self, fmt: str, content_type: str) -> None:
         """ Set the content type for the given format. This is the string
             that will be returned in the Content-Type header of the HTML
-            response, when the given format is choosen.
+            response, when the given format is chosen.
         """
         self.content_types[fmt] = content_type
 

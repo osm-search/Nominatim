@@ -43,8 +43,3 @@ GRANT SELECT ON country_osm_grid TO "{{config.DATABASE_WEBUSER}}";
 {% if 'word' in db.tables %}
 GRANT SELECT ON word TO "{{config.DATABASE_WEBUSER}}";
 {% endif %}
-
--- Tiger import table (if exists)
-{% if 'location_property_tiger_import' in db.tables %}
-GRANT SELECT ON location_property_tiger_import TO "{{config.DATABASE_WEBUSER}}";
-{% endif %}

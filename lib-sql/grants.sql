@@ -15,7 +15,6 @@ GRANT SELECT ON nominatim_properties TO "{{config.DATABASE_WEBUSER}}";
 -- Location tables
 GRANT SELECT ON location_property_tiger TO "{{config.DATABASE_WEBUSER}}";
 GRANT SELECT ON location_property_osmline TO "{{config.DATABASE_WEBUSER}}";
-GRANT SELECT ON location_area TO "{{config.DATABASE_WEBUSER}}";
 GRANT SELECT ON location_postcodes TO "{{config.DATABASE_WEBUSER}}";
 
 -- Search tables
@@ -28,10 +27,6 @@ GRANT SELECT ON placex TO "{{config.DATABASE_WEBUSER}}";
 GRANT SELECT ON place_addressline TO "{{config.DATABASE_WEBUSER}}";
 GRANT SELECT ON placex_entrance TO "{{config.DATABASE_WEBUSER}}";
 
--- OSM data tables
-GRANT SELECT ON planet_osm_ways TO "{{config.DATABASE_WEBUSER}}";
-GRANT SELECT ON planet_osm_rels TO "{{config.DATABASE_WEBUSER}}";
-
 -- Error/delete tracking tables
 GRANT SELECT ON import_polygon_error TO "{{config.DATABASE_WEBUSER}}";
 GRANT SELECT ON import_polygon_delete TO "{{config.DATABASE_WEBUSER}}";
@@ -43,3 +38,10 @@ GRANT SELECT ON country_osm_grid TO "{{config.DATABASE_WEBUSER}}";
 {% if 'word' in db.tables %}
 GRANT SELECT ON word TO "{{config.DATABASE_WEBUSER}}";
 {% endif %}
+
+-- Special phrase tables
+{% for table in db.tables %}
+{% if table.startswith('place_classtype_') %}
+GRANT SELECT ON {{ table }} TO "{{config.DATABASE_WEBUSER}}";
+{% endif %}
+{% endfor %}

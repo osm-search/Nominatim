@@ -61,7 +61,7 @@ class Indexer:
                         cur.execute('ANALYZE')
 
             while True:
-                if await self.index_by_rank(0, 4) > 0:
+                if await self.index_by_rank(1, 4) > 0:
                     _analyze()
 
                 if await self.index_boundaries() > 100:
@@ -71,6 +71,10 @@ class Indexer:
                     _analyze()
 
                 if await self.index_by_rank(26, 30) > 1000:
+                    _analyze()
+
+                # Special case: placenames that do not appear in addresses
+                if await self.index_by_rank(0, 0) > 0:
                     _analyze()
 
                 if await self.index_postcodes() > 100:
@@ -152,8 +156,10 @@ class Indexer:
                 total += await self._index(runners.RankRunner(rank, analyzer),
                                            batch=batch, total_tuples=total_tuples.get(rank, 0))
 
-            if maxrank == 30:
+            if minrank == 0:
                 total += await self._index(runners.RankRunner(0, analyzer))
+
+            if maxrank == 30:
                 total += await self._index(runners.InterpolationRunner(analyzer), batch=20)
 
         return total

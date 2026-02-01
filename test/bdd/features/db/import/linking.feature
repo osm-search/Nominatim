@@ -306,11 +306,17 @@ Feature: Linking of places
         Given the places
             | osm | class    | type           | name+name                | geometry    |
             | N9  | place    | city           | Popayán                  | 9           |
-            | R1  | boundary | administrative | Perímetro Urbano Popayán | (1,2,3,4,1) |
+        Given the places
+            | osm | class    | type           | name+name                | geometry    | admin |
+            | R1  | boundary | administrative | Perímetro Urbano Popayán | (1,2,3,4,1) | 8     |
         And the relations
             | id | members  |
             | 1  | N9:label |
         When importing
+        Then placex contains
+            | object      | linked_place_id |
+            | N9:place    | R1              |
+            | R1:boundary | -               |
         Then placex contains
             | object | name+_place_name | name+_place_name:es |
             | R1     | Popayán          | Popayán             |

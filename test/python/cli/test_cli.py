@@ -91,8 +91,12 @@ class TestCliWithDb:
         postcode_mock = async_mock_func_factory(nominatim_db.indexer.indexer.Indexer,
                                                 'index_postcodes')
 
+        def _patched_has_pending(*args):
+            monkeypatch.setattr(nominatim_db.indexer.indexer.Indexer, 'has_pending',
+                                lambda *args: False)
+            return True
         monkeypatch.setattr(nominatim_db.indexer.indexer.Indexer, 'has_pending',
-                            [False, True].pop)
+                            _patched_has_pending)
 
         assert self.call_nominatim('index', *params) == 0
 

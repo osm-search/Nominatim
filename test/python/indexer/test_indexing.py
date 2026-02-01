@@ -247,7 +247,7 @@ async def test_index_boundaries(test_db, threads, test_tokenizer):
     assert test_db.osmline_unindexed() == 1
 
     idx = indexer.Indexer('dbname=test_nominatim_python_unittest', test_tokenizer, threads)
-    await idx.index_boundaries(0, 30)
+    await idx.index_boundaries()
 
     assert test_db.placex_unindexed() == 31
     assert test_db.osmline_unindexed() == 1

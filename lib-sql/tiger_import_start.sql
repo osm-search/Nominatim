@@ -17,7 +17,7 @@ CREATE TABLE location_property_tiger_import (
 
 
 -- Lookup functions for tiger import when update 
--- informations are dropped (see gh-issue #2463)
+-- tables are dropped (see gh-issue #2463)
 CREATE OR REPLACE FUNCTION getNearestNamedRoadPlaceIdSlow(in_centroid GEOMETRY,
                                                       in_token_info JSONB)
   RETURNS BIGINT

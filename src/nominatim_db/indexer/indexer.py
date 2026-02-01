@@ -177,7 +177,7 @@ class Indexer:
 
             `total_tuples` may contain the total number of rows to process.
             When not supplied, the value will be computed using the
-            approriate runner function.
+            appropriate runner function.
         """
         LOG.warning("Starting %s (using batch size %s)", runner.name(), batch)
 

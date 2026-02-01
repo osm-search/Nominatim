@@ -17,7 +17,7 @@ import dataclasses
 # The x value for the regression computation will be the position of the
 # token in the query. Thus we know the x values will be [0, query length).
 # As the denominator only depends on the x values, we can pre-compute here
-# the denominatior to use for a given query length.
+# the denominator to use for a given query length.
 # Note that query length of two or less is special cased and will not use
 # the values from this array. Thus it is not a problem that they are 0.
 LINFAC = [i * (sum(si * si for si in range(i)) - (i - 1) * i * (i - 1) / 4)
@@ -129,7 +129,7 @@ class Token(ABC):
 
     @abstractmethod
     def get_country(self) -> str:
-        """ Return the country code this tojen is associated with
+        """ Return the country code this token is associated with
             (currently for country tokens only).
         """
 
@@ -231,7 +231,7 @@ class QueryNode:
         return max(0, -self.penalty)
 
     def name_address_ratio(self) -> float:
-        """ Return the propability that the partial token belonging to
+        """ Return the probability that the partial token belonging to
             this node forms part of a name (as opposed of part of the address).
         """
         if self.partial is None:
@@ -275,7 +275,7 @@ class QueryStruct:
         directed acyclic graph.
 
         A query also has a direction penalty 'dir_penalty'. This describes
-        the likelyhood if the query should be read from left-to-right or
+        the likelihood if the query should be read from left-to-right or
         vice versa. A negative 'dir_penalty' should be read as a penalty on
         right-to-left reading, while a positive value represents a penalty
         for left-to-right reading. The default value is 0, which is equivalent

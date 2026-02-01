@@ -225,7 +225,7 @@ async def load_data(dsn: str, threads: int) -> None:
                                       total=pysql.Literal(placex_threads),
                                       mod=pysql.Literal(imod)), None)
 
-        # Interpolations need to be copied seperately
+        # Interpolations need to be copied separately
         await pool.put_query("""
                 INSERT INTO location_property_osmline (osm_id, address, linegeo)
                   SELECT osm_id, address, geometry FROM place

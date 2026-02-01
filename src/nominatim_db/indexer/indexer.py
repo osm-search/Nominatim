@@ -137,7 +137,7 @@ class Indexer:
                 total_tuples = {row.rank_address: row.count for row in cur}
 
         with self.tokenizer.name_analyzer() as analyzer:
-            for rank in range(max(1, minrank), maxrank + 1):
+            for rank in range(max(0, minrank), maxrank + 1):
                 if rank >= 30:
                     batch = 20
                 elif rank >= 26:

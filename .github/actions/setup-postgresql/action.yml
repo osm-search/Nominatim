@@ -1,5 +1,7 @@
 name: 'Setup Postgresql and Postgis'
 
+description: 'Installs PostgreSQL and PostGIS and configures it for CI tests'
+
 inputs:
     postgresql-version:
         description: 'Version of PostgreSQL to install'

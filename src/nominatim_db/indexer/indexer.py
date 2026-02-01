@@ -64,7 +64,7 @@ class Indexer:
                 if await self.index_by_rank(0, 4) > 0:
                     _analyze()
 
-                if await self.index_boundaries(0, 30) > 100:
+                if await self.index_boundaries() > 100:
                     _analyze()
 
                 if await self.index_by_rank(5, 25) > 100:
@@ -79,7 +79,7 @@ class Indexer:
                 if not self.has_pending():
                     break
 
-    async def index_boundaries(self, minrank: int, maxrank: int) -> int:
+    async def index_boundaries(self, minrank: int = 4, maxrank: int = 25) -> int:
         """ Index only administrative boundaries within the given rank range.
         """
         total = 0

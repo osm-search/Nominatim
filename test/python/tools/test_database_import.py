@@ -201,6 +201,8 @@ class TestSetupSQL:
                        """CREATE FUNCTION test() RETURNS bool
                           AS $$ SELECT {{db.reverse_only}} $$ LANGUAGE SQL""")
 
+        self.write_sql('grants.sql', "-- Mock grants file for testing\n")
+
         database_import.create_tables(temp_db_conn, self.config, reverse)
 
         temp_db_cursor.scalar('SELECT test()') == reverse

@@ -157,6 +157,8 @@ def create_tables(conn: Connection, config: Configuration, reverse_only: bool = 
 
     sql.run_sql_file(conn, 'tables.sql')
 
+    sql.run_sql_file(conn, 'grants.sql')
+
 
 def create_table_triggers(conn: Connection, config: Configuration) -> None:
     """ Create the triggers for the tables. The trigger functions must already

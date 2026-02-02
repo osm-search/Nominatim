@@ -154,21 +154,43 @@ jobs:
 
             - uses: ./Nominatim/.github/actions/setup-postgresql-windows
               with:
-                  postgresql-version: 16
+                  postgresql-version: 18
 
             - name: Set up Python
               uses: actions/setup-python@v5
               with:
-                  python-version: '3.11'
+                  python-version: '3.14'
+
+            - name: Install Spatialite
+              run: |
+                  Invoke-WebRequest -Uri "https://www.gaia-gis.it/gaia-sins/windows-bin-amd64/mod_spatialite-5.1.0-win-amd64.7z" -OutFile "spatialite.7z"
+                  7z x spatialite.7z -o"C:\spatialite"
+                  echo "C:\spatialite\mod_spatialite-5.1.0-win-amd64" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+            - name: Set UTF-8 encoding
+              run: |
+                  echo "PYTHONUTF8=1" >> $env:GITHUB_ENV
+                  [System.Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+
+            - name: Install PyICU from wheel
+              run: |
+                  python -m pip install https://github.com/cgohlke/pyicu-build/releases/download/v2.16.0/pyicu-2.16-cp314-cp314-win_amd64.whl
                   
             - name: Install test prerequisites
               run: |
                   python -m pip install -U pip
-                  python -m pip install pytest pytest-asyncio "psycopg[binary]!=3.3.0" python-dotenv pyyaml jinja2 psutil sqlalchemy
+                  python -m pip install pytest pytest-asyncio "psycopg[binary]!=3.3.0" python-dotenv pyyaml jinja2 psutil sqlalchemy pytest-bdd falcon starlette uvicorn asgi_lifespan aiosqlite osmium mwparserfromhell
 
-            - name: Python unit tests (Windows subset)
+            - name: Python unit tests (subset)
               run: |
-                  python -m pytest test/python/utils test/python/config test/python/api/test_api_types.py test/python/api/search/test_query.py test/python/api/query_processing/test_regex_replace.py test/python/api/query_processing/test_split_japanese_phrases.py
+                  python -m pytest test/python `
+                    --ignore=test/python/tools/test_add_osm_data.py `
+                    --ignore=test/python/tools/test_database_import.py `
+                    --ignore=test/python/tools/test_exec_utils.py `
+                    --ignore=test/python/cli/test_cmd_import.py `
+                    --ignore=test/python/data/test_country_info.py `
+                    --ignore=test/python/db/test_utils.py `
+                    --ignore=test/python/tools/test_refresh.py
               working-directory: Nominatim
 
     install:

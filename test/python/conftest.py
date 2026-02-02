@@ -6,7 +6,11 @@
 # For a full list of authors see the git log.
 import itertools
 import sys
+import asyncio
 from pathlib import Path
+
+if sys.platform == 'win32':
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 import psycopg
 from psycopg import sql as pysql

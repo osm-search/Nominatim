@@ -154,12 +154,12 @@ jobs:
 
             - uses: ./Nominatim/.github/actions/setup-postgresql-windows
               with:
-                  postgresql-version: 16
+                  postgresql-version: 18
 
             - name: Set up Python
               uses: actions/setup-python@v5
               with:
-                  python-version: '3.11'
+                  python-version: '3.14'
                   
             - name: Install test prerequisites
               run: |

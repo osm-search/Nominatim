@@ -23,7 +23,7 @@ an ASGI-capable server like uvicorn. To install them from pypi run:
 You need to have a Nominatim database imported with the 'nominatim-db'
 package. Go to the project directory, then run uvicorn as:
 
-    uvicorn --factory nominatim.server.falcon.server:run_wsgi
+    uvicorn --factory nominatim_api.server.falcon.server:run_wsgi
 
 ## Documentation
 

@@ -18,7 +18,6 @@ UPDATE_TABLES = [
     'address_levels',
     'gb_postcode',
     'import_osmosis_log',
-    'import_polygon_%',
     'location_area%',
     'location_road%',
     'place',

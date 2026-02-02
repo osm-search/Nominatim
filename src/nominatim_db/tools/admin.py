@@ -16,6 +16,7 @@ from psycopg.types.json import Json
 from ..typing import DictCursorResult
 from ..config import Configuration
 from ..db.connection import connect, Cursor, register_hstore
+from ..db.sql_preprocessor import SQLPreprocessor
 from ..errors import UsageError
 from ..tokenizer import factory as tokenizer_factory
 from ..data.place_info import PlaceInfo
@@ -105,3 +106,12 @@ def clean_deleted_relations(config: Configuration, age: str) -> None:
             except psycopg.DataError as exc:
                 raise UsageError('Invalid PostgreSQL time interval format') from exc
         conn.commit()
+
+
+def grant_ro_access(dsn: str, config: Configuration) -> None:
+    """ Grant read-only access to the web user for all Nominatim tables.
+        This can be used to grant access to a different user after import.
+    """
+    with connect(dsn) as conn:
+        sql = SQLPreprocessor(conn, config)
+        sql.run_sql_file(conn, 'grants.sql')

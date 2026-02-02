@@ -160,11 +160,15 @@ jobs:
               uses: actions/setup-python@v5
               with:
                   python-version: '3.14'
+
+            - name: Install PyICU from wheel
+              run: |
+                  python -m pip install https://github.com/cgohlke/pyicu-build/releases/download/v2.16.0/pyicu-2.16-cp314-cp314-win_amd64.whl
                   
             - name: Install test prerequisites
               run: |
                   python -m pip install -U pip
-                  python -m pip install pytest pytest-asyncio "psycopg[binary]!=3.3.0" python-dotenv pyyaml jinja2 psutil sqlalchemy pytest-bdd falcon starlette uvicorn asgi_lifespan aiosqlite osmium PyICU mwparserfromhell
+                  python -m pip install pytest pytest-asyncio "psycopg[binary]!=3.3.0" python-dotenv pyyaml jinja2 psutil sqlalchemy pytest-bdd falcon starlette uvicorn asgi_lifespan aiosqlite osmium mwparserfromhell
 
             - name: Python unit tests 
               run: |

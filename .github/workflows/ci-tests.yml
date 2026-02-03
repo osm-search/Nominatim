@@ -154,7 +154,7 @@ jobs:
 
             - uses: ./Nominatim/.github/actions/setup-postgresql-windows
               with:
-                  postgresql-version: 18
+                  postgresql-version: 17
 
             - name: Set up Python
               uses: actions/setup-python@v5
@@ -166,6 +166,19 @@ jobs:
                   Invoke-WebRequest -Uri "https://www.gaia-gis.it/gaia-sins/windows-bin-amd64/mod_spatialite-5.1.0-win-amd64.7z" -OutFile "spatialite.7z"
                   7z x spatialite.7z -o"C:\spatialite"
                   echo "C:\spatialite\mod_spatialite-5.1.0-win-amd64" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+            - name: Install osm2pgsql
+              run: |
+                  Invoke-WebRequest -Uri "https://osm2pgsql.org/download/windows/osm2pgsql-latest-x64.zip" -OutFile "osm2pgsql.zip"
+                  Expand-Archive -Path "osm2pgsql.zip" -DestinationPath "C:\osm2pgsql"
+                  $BinDir = Get-ChildItem -Path "C:\osm2pgsql" -Recurse -Filter "osm2pgsql.exe" | Select-Object -ExpandProperty DirectoryName | Select-Object -First 1
+                  if (-not $BinDir) {
+                      Write-Error "Could not find osm2pgsql.exe"
+                      exit 1
+                  }
+                  echo "$BinDir" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+                  $FullExePath = Join-Path $BinDir "osm2pgsql.exe"
+                  echo "NOMINATIM_OSM2PGSQL_BINARY=$FullExePath" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
             - name: Set UTF-8 encoding
               run: |
@@ -181,16 +194,9 @@ jobs:
                   python -m pip install -U pip
                   python -m pip install pytest pytest-asyncio "psycopg[binary]!=3.3.0" python-dotenv pyyaml jinja2 psutil sqlalchemy pytest-bdd falcon starlette uvicorn asgi_lifespan aiosqlite osmium mwparserfromhell
 
-            - name: Python unit tests (subset)
+            - name: Python unit tests
               run: |
-                  python -m pytest test/python `
-                    --ignore=test/python/tools/test_add_osm_data.py `
-                    --ignore=test/python/tools/test_database_import.py `
-                    --ignore=test/python/tools/test_exec_utils.py `
-                    --ignore=test/python/cli/test_cmd_import.py `
-                    --ignore=test/python/data/test_country_info.py `
-                    --ignore=test/python/db/test_utils.py `
-                    --ignore=test/python/tools/test_refresh.py
+                  python -m pytest test/python -k "not (import_osm or run_osm2pgsql)"
               working-directory: Nominatim
 
     install:

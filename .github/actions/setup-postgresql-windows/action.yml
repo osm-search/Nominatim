@@ -11,6 +11,18 @@ runs:
     using: "composite"  
 
     steps:
+        - name: Set up PostgreSQL variables
+          shell: pwsh
+          run: |
+            $version = "${{ inputs.postgresql-version }}"
+            $root = "C:\Program Files\PostgreSQL\$version"
+            $bin = "$root\bin"
+
+            echo "PGROOT=$root" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+            echo "PGBIN=$bin"   | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+            echo "$bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
         - name: Decide Postgis version (Windows)
           id: postgis-ver
           shell: pwsh
@@ -36,19 +48,19 @@ runs:
             key: postgis-cache-${{ steps.postgis-ver.outputs.postgis_file }}
 
         - name: Download postgis
+          shell: pwsh
           run: |
             if (!(Test-Path "C:\postgis.zip")){(new-object net.webclient).DownloadFile($env:PGIS_BUNDLE_URL, "c:\postgis.zip")}
             if (Test-path "c:\postgis_archive"){Remove-Item "c:\postgis_archive" -Recurse -Force}
             7z x c:\postgis.zip -oc:\postgis_archive
-          shell: pwsh
           env: 
             PGIS_BUNDLE_URL: ${{ steps.postgis-ver.outputs.postgis_bundle_url }}
 
         - name: Install postgis
+          shell: bash
           run: |
             echo "Root: $PGROOT, Bin: $PGBIN"
-            cp -r c:/postgis_archive/postgis-bundle-*/* "$PGROOT"
-          shell: bash
+            cp -r c:/postgis_archive/postgis-bundle-*/* "$PGROOT" 
 
         - name: Start PostgreSQL on Windows
           run: |

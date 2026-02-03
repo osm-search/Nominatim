@@ -10,13 +10,13 @@ Nominatim. Please refer to the documentation of
 [Nginx](https://nginx.org/en/docs/) for background information on how
 to configure it.
 
-!!! Note
-    Throughout this page, we assume your Nominatim project directory is
-    located in `/srv/nominatim-project`. If you have put it somewhere else,
-    you need to adjust the commands and configuration accordingly.
-
-
 ### Installing the required packages
+
+!!! warning
+    ASGI support in gunicorn requires at least version 25.0. If you need
+    to work with an older version of gunicorn, please refer to
+    [older Nominatim deployment documentation](https://nominatim.org/release-docs/5.2/admin/Deployment-Python/)
+    to learn how to run gunicorn with uvicorn.
 
 The Nominatim frontend is best run from its own virtual environment. If
 you have already created one for the database backend during the
@@ -37,23 +37,27 @@ cd Nominatim
 ```
 
 The recommended way to deploy a Python ASGI application is to run
-the ASGI runner [uvicorn](https://www.uvicorn.org/)
-together with [gunicorn](https://gunicorn.org/) HTTP server. We use
+the [gunicorn](https://gunicorn.org/) HTTP server. We use
 Falcon here as the web framework.
 
 Add the necessary packages to your virtual environment:
 
 ``` sh
-/srv/nominatim-venv/bin/pip install falcon uvicorn gunicorn
+/srv/nominatim-venv/bin/pip install falcon gunicorn
 ```
 
 ### Setting up Nominatim as a systemd job
+
+!!! Note
+    These instructions assume your Nominatim project directory is
+    located in `/srv/nominatim-project`. If you have put it somewhere else,
+    you need to adjust the commands and configuration accordingly.
 
 Next you need to set up the service that runs the Nominatim frontend. This is
 easiest done with a systemd job.
 
 First you need to tell systemd to create a socket file to be used by
-hunicorn. Create the following file `/etc/systemd/system/nominatim.socket`:
+gunicorn. Create the following file `/etc/systemd/system/nominatim.socket`:
 
 ``` systemd
 [Unit]
@@ -81,10 +85,8 @@ Type=simple
 User=www-data
 Group=www-data
 WorkingDirectory=/srv/nominatim-project
-ExecStart=/srv/nominatim-venv/bin/gunicorn -b unix:/run/nominatim.sock -w 4 -k uvicorn.workers.UvicornWorker "nominatim_api.server.falcon.server:run_wsgi()"
+ExecStart=/srv/nominatim-venv/bin/gunicorn -b unix:/run/nominatim.sock -w 4 --worker-class asgi --protocol uwsgi --worker-connections 1000 "nominatim_api.server.falcon.server:run_wsgi()"
 ExecReload=/bin/kill -s HUP $MAINPID
-StandardOutput=append:/var/log/gunicorn-nominatim.log
-StandardError=inherit
 PrivateTmp=true
 TimeoutStopSec=5
 KillMode=mixed
@@ -96,7 +98,10 @@ WantedBy=multi-user.target
 This sets up gunicorn with 4 workers (`-w 4` in ExecStart). Each worker runs
 its own Python process using
 [`NOMINATIM_API_POOL_SIZE`](../customize/Settings.md#nominatim_api_pool_size)
-connections to the database to serve requests in parallel.
+connections to the database to serve requests in parallel. The parameter
+`--worker-connections` restricts how many requests gunicorn will queue for
+each worker. This can help distribute work better when the server is under
+high load.
 
 Make the new services known to systemd and start it:
 
@@ -108,13 +113,15 @@ sudo systemctl enable nominatim.service
 sudo systemctl start nominatim.service
 ```
 
-This sets the service up, so that Nominatim is automatically started
+This sets the service up so that Nominatim is automatically started
 on reboot.
 
 ### Configuring nginx
 
 To make the service available to the world, you need to proxy it through
-nginx. Add the following definition to the default configuration:
+nginx. We use the binary uwsgi protocol to speed up communication
+between nginx and gunicorn. Add the following definition to the default
+configuration:
 
 ``` nginx
 upstream nominatim_service {
@@ -129,11 +136,8 @@ server {
     index /search;
 
     location / {
-            proxy_set_header Host $http_host;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
-            proxy_redirect off;
-            proxy_pass http://nominatim_service;
+        uwsgi_pass nominatim_service;
+        include uwsgi_params;
     }
 }
 ```

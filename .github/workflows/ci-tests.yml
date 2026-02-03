@@ -167,6 +167,12 @@ jobs:
                   7z x spatialite.7z -o"C:\spatialite"
                   echo "C:\spatialite\mod_spatialite-5.1.0-win-amd64" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
+            - name: Install osm2pgsql
+              run: |
+                  Invoke-WebRequest -Uri "https://osm2pgsql.org/download/windows/osm2pgsql-latest-x64.zip" -OutFile "osm2pgsql.zip"
+                  Expand-Archive -Path "osm2pgsql.zip" -DestinationPath "C:\osm2pgsql"
+                  echo "C:\osm2pgsql" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
             - name: Set UTF-8 encoding
               run: |
                   echo "PYTHONUTF8=1" >> $env:GITHUB_ENV
@@ -181,16 +187,9 @@ jobs:
                   python -m pip install -U pip
                   python -m pip install pytest pytest-asyncio "psycopg[binary]!=3.3.0" python-dotenv pyyaml jinja2 psutil sqlalchemy pytest-bdd falcon starlette uvicorn asgi_lifespan aiosqlite osmium mwparserfromhell
 
-            - name: Python unit tests (subset)
+            - name: Python unit tests
               run: |
-                  python -m pytest test/python `
-                    --ignore=test/python/tools/test_add_osm_data.py `
-                    --ignore=test/python/tools/test_database_import.py `
-                    --ignore=test/python/tools/test_exec_utils.py `
-                    --ignore=test/python/cli/test_cmd_import.py `
-                    --ignore=test/python/data/test_country_info.py `
-                    --ignore=test/python/db/test_utils.py `
-                    --ignore=test/python/tools/test_refresh.py
+                  python -m pytest test/python
               working-directory: Nominatim
 
     install:

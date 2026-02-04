@@ -171,7 +171,12 @@ jobs:
               run: |
                   Invoke-WebRequest -Uri "https://osm2pgsql.org/download/windows/osm2pgsql-latest-x64.zip" -OutFile "osm2pgsql.zip"
                   Expand-Archive -Path "osm2pgsql.zip" -DestinationPath "C:\osm2pgsql"
-                  echo "C:\osm2pgsql" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+                  $ExePath = Get-ChildItem -Path "C:\osm2pgsql" -Recurse -Filter "osm2pgsql.exe" | Select-Object -ExpandProperty DirectoryName
+                  if (-not $ExePath) {
+                      Write-Error "Could not find osm2pgsql.exe inside the extracted zip"
+                      exit 1
+                  }
+                  echo "$ExePath" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
             - name: Set UTF-8 encoding
               run: |

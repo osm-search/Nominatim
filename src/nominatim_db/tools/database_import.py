@@ -195,7 +195,7 @@ def truncate_data_tables(conn: Connection) -> None:
                        WHERE tablename LIKE 'location_road_%'""")
 
         for table in [r[0] for r in list(cur)]:
-            cur.execute('TRUNCATE ' + table)
+            cur.execute(pysql.SQL('TRUNCATE {}').format(pysql.Identifier(table)))
 
     conn.commit()
 

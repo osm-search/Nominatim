@@ -56,7 +56,7 @@ The easiest way, to handle these Python dependencies is to run your
 development from within a virtual environment.
 
 ```sh
-sudo apt install libsqlite3-mod-spatialite osm2pgsql \
+sudo apt install build-essential libsqlite3-mod-spatialite osm2pgsql \
                  postgresql-postgis postgresql-postgis-scripts \
                  pkg-config libicu-dev virtualenv
 ```
@@ -68,11 +68,11 @@ virtualenv ~/nominatim-dev-venv
 ~/nominatim-dev-venv/bin/pip install\
     psutil 'psycopg[binary]' PyICU SQLAlchemy \
     python-dotenv jinja2 pyYAML \
-    mkdocs 'mkdocstrings[python]' mkdocs-gen-files \
+    mkdocs 'mkdocstrings[python]' mkdocs-gen-files mkdocs-material \
     pytest pytest-asyncio pytest-bdd flake8 \
     types-jinja2 types-markupsafe types-psutil types-psycopg2 \
     types-pygments types-pyyaml types-requests types-ujson \
-    types-urllib3 typing-extensions unicorn falcon starlette \
+    types-urllib3 typing-extensions gunicorn falcon starlette \
     uvicorn mypy osmium aiosqlite mwparserfromhell
 ```
 

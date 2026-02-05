@@ -11,6 +11,15 @@ runs:
     using: "composite"  
 
     steps:
+        - name: List installed PostgreSQL versions
+          shell: pwsh
+          run: |
+            if (Test-Path "C:\Program Files\PostgreSQL") {
+                Get-ChildItem "C:\Program Files\PostgreSQL" | Select-Object Name
+            } else {
+                Write-Error "PostgreSQL folder not found"
+            }
+            
         - name: Set up PostgreSQL variables
           shell: pwsh
           run: |

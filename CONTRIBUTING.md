@@ -42,6 +42,15 @@ description or in documentation need to
    sufficient. You need to show that the code actually solves the problem
    the PR claims to solve.
 
+## Getting Started with Development
+
+Please see the development section of the Nominatim documentation for
+
+* [an architecture overview](https://nominatim.org/release-docs/develop/develop/overview/)
+  and backgrounds on some of the algorithms
+* [how to set up a development environment](https://nominatim.org/release-docs/develop/develop/Development-Environment/)
+* and background on [how tests are organised](https://nominatim.org/release-docs/develop/develop/Testing/)
+
 
 ## Coding style
 

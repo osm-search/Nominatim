@@ -154,7 +154,7 @@ jobs:
 
             - uses: ./Nominatim/.github/actions/setup-postgresql-windows
               with:
-                  postgresql-version: 18
+                  postgresql-version: 17
 
             - name: Set up Python
               uses: actions/setup-python@v5

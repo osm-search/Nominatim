@@ -192,6 +192,10 @@ jobs:
                   python -m pip install -U pip
                   python -m pip install pytest pytest-asyncio "psycopg[binary]!=3.3.0" python-dotenv pyyaml jinja2 psutil sqlalchemy pytest-bdd falcon starlette uvicorn asgi_lifespan aiosqlite osmium mwparserfromhell
 
+            - name: Build Nominatim
+              run: |
+                  python -m pip install "./Nominatim/packaging/nominatim-api" "./Nominatim/packaging/nominatim-db"
+
             - name: Python unit tests
               run: |
                   python -m pytest test/python

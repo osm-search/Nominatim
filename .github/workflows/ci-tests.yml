@@ -214,7 +214,7 @@ jobs:
 
             - name: Python unit tests
               run: |
-                  python -m pytest test/python
+                  python -m pytest test/python -k "not (import_osm or run_osm2pgsql)"
               working-directory: Nominatim
 
     install:

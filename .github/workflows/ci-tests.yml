@@ -171,18 +171,14 @@ jobs:
               run: |
                   Invoke-WebRequest -Uri "https://osm2pgsql.org/download/windows/osm2pgsql-latest-x64.zip" -OutFile "osm2pgsql.zip"
                   Expand-Archive -Path "osm2pgsql.zip" -DestinationPath "C:\osm2pgsql"
-                  $ExePath = Get-ChildItem -Path "C:\osm2pgsql" -Recurse -Filter "osm2pgsql.exe" | Select-Object -ExpandProperty DirectoryName
-                  if (-not $ExePath) {
-                      Write-Error "Could not find osm2pgsql.exe inside the extracted zip"
+                  $BinDir = Get-ChildItem -Path "C:\osm2pgsql" -Recurse -Filter "osm2pgsql.exe" | Select-Object -ExpandProperty DirectoryName | Select-Object -First 1
+                  if (-not $BinDir) {
+                      Write-Error "Could not find osm2pgsql.exe"
                       exit 1
                   }
-                  echo "$ExePath" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-                  Write-Host "Executable located at: $ExePath"
-                  $ExeFile = Join-Path $ExePath "osm2pgsql.exe"
-                  Get-Item $ExeFile | Select-Object Name, Length, LastWriteTime
-
-                  Write-Host "Testing the binary execution : "
-                  & $ExeFile --version
+                  echo "$BinDir" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+                  $FullExePath = Join-Path $BinDir "osm2pgsql.exe"
+                  echo "NOMINATIM_OSM2PGSQL_BINARY=$FullExePath" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
             - name: Set UTF-8 encoding
               run: |

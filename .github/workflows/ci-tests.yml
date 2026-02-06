@@ -192,6 +192,22 @@ jobs:
                   python -m pip install -U pip
                   python -m pip install pytest pytest-asyncio "psycopg[binary]!=3.3.0" python-dotenv pyyaml jinja2 psutil sqlalchemy pytest-bdd falcon starlette uvicorn asgi_lifespan aiosqlite osmium mwparserfromhell
 
+            - name: Fix Windows paths 
+              shell: pwsh
+              run: |
+                $links = @("src", "data", "lib-lua", "lib-sql", "settings")
+                foreach ($link in $links) {
+                    $src = "Nominatim/$link"
+                    $dest = "Nominatim/packaging/nominatim-db/$link"
+
+                    if (Test-Path $src) {
+                        if (Test-Path $dest) { Remove-Item $dest -Force -Recurse }
+                        Copy-Item -Path $src -Destination $dest -Recurse -Force
+                    }
+                }
+
+                Copy-Item "Nominatim/extra_src/nominatim_db/paths.py" "Nominatim/packaging/nominatim-db/nominatim_db/paths.py" -Force
+
             - name: Build Nominatim
               run: |
                   python -m pip install "./Nominatim/packaging/nominatim-api" "./Nominatim/packaging/nominatim-db"

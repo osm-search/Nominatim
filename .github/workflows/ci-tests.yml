@@ -177,6 +177,12 @@ jobs:
                       exit 1
                   }
                   echo "$ExePath" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+                  Write-Host "Executable located at: $ExePath"
+                  $ExeFile = Join-Path $ExePath "osm2pgsql.exe"
+                  Get-Item $ExeFile | Select-Object Name, Length, LastWriteTime
+
+                  Write-Host "Testing the binary execution : "
+                  & $ExeFile --version
 
             - name: Set UTF-8 encoding
               run: |

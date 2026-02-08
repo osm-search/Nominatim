@@ -21,7 +21,7 @@ class TestCreateFunctions:
 
     def write_functions(self, content):
         sqlfile = self.config.lib_dir.sql / 'functions.sql'
-        sqlfile.write_text(content)
+        sqlfile.write_text(content, encoding='utf-8')
 
     def test_create_functions(self, temp_db_cursor):
         self.write_functions("""CREATE OR REPLACE FUNCTION test() RETURNS INTEGER

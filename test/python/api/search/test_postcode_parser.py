@@ -58,7 +58,7 @@ gb:
     pattern: "(l?ld[A-Z0-9]?) ?(dll)"
     output: \1 \2
 
-    """)
+    """, encoding='utf-8')
 
     return project_env
 

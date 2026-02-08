@@ -245,7 +245,7 @@ def test_postcodes_extern(postcode_update, postcode_table, tmp_path,
     insert_implicit_postcode(1, 'xx', 'POINT(10 12)', 'AB 4511')
 
     extfile = tmp_path / 'xx_postcodes.csv'
-    extfile.write_text("postcode,lat,lon\nAB 4511,-4,-1\nCD 4511,-5, -10")
+    extfile.write_text("postcode,lat,lon\nAB 4511,-4,-1\nCD 4511,-5, -10", encoding='utf-8')
 
     if gzipped:
         subprocess.run(['gzip', str(extfile)])
@@ -262,7 +262,7 @@ def test_postcodes_extern_bad_column(postcode_update, postcode_table, tmp_path,
     insert_implicit_postcode(1, 'xx', 'POINT(10 12)', 'AB 4511')
 
     extfile = tmp_path / 'xx_postcodes.csv'
-    extfile.write_text("postode,lat,lon\nAB 4511,-4,-1\nCD 4511,-5, -10")
+    extfile.write_text("postode,lat,lon\nAB 4511,-4,-1\nCD 4511,-5, -10", encoding='utf-8')
 
     postcode_update(tmp_path)
 
@@ -274,7 +274,7 @@ def test_postcodes_extern_bad_number(postcode_update, insert_implicit_postcode,
     insert_implicit_postcode(1, 'xx', 'POINT(10 12)', 'AB 4511')
 
     extfile = tmp_path / 'xx_postcodes.csv'
-    extfile.write_text("postcode,lat,lon\nXX 4511,-4,NaN\nCD 4511,-5, -10\n34,200,0")
+    extfile.write_text("postcode,lat,lon\nXX 4511,-4,NaN\nCD 4511,-5, -10\n34,200,0", encoding='utf-8')
 
     postcode_update(tmp_path)
 

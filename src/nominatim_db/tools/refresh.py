@@ -141,7 +141,7 @@ def import_importance_csv(dsn: str, data_file: Path) -> int:
 
             copy_cmd = """COPY wikimedia_importance(language, title, importance, wikidata)
                           FROM STDIN"""
-            with gzip.open(str(data_file), 'rt') as fd, cur.copy(copy_cmd) as copy:
+            with gzip.open(str(data_file), 'rt', encoding='utf-8') as fd, cur.copy(copy_cmd) as copy:
                 for row in csv.DictReader(fd, delimiter='\t', quotechar='|'):
                     wd_id = int(row['wikidata_id'][1:])
                     copy.write_row((row['language'],

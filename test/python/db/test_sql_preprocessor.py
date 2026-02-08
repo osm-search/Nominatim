@@ -22,7 +22,7 @@ def sql_factory(tmp_path):
           BEGIN
             {}
           END;
-          $$ LANGUAGE plpgsql IMMUTABLE;""".format(sql_body))
+          $$ LANGUAGE plpgsql IMMUTABLE;""".format(sql_body), encoding='utf-8')
         return 'test.sql'
 
     return _mk_sql
@@ -63,7 +63,7 @@ def test_load_file_with_params(sql_preprocessor, sql_factory, temp_db_conn, temp
 async def test_load_parallel_file(dsn, sql_preprocessor, tmp_path, temp_db_cursor):
     (tmp_path / 'test.sql').write_text("""
         CREATE TABLE foo (a TEXT);
-        CREATE TABLE foo2(a TEXT);""" + "\n---\nCREATE TABLE bar (b INT);")
+        CREATE TABLE foo2(a TEXT);""" + "\n---\nCREATE TABLE bar (b INT);", encoding='utf-8')
 
     await sql_preprocessor.run_parallel_sql_file(dsn, 'test.sql', num_threads=4)
 

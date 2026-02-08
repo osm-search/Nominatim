@@ -43,7 +43,7 @@ def opl_writer(tmp_path, node_grid):
     def _write(data):
         fname = tmp_path / f"test_osm_{nr[0]}.opl"
         nr[0] += 1
-        with fname.open('wt') as fd:
+        with fname.open('wt', encoding='utf-8') as fd:
             for line in data.split('\n'):
                 if line.startswith('n') and ' x' not in line:
                     coord = node_grid.get(line[1:].split(' ')[0]) \
@@ -59,7 +59,7 @@ def opl_writer(tmp_path, node_grid):
 @given('the lua style file', target_fixture='osm2pgsql_options')
 def set_lua_style_file(osm2pgsql_options, docstring, tmp_path):
     style = tmp_path / 'custom.lua'
-    style.write_text(docstring)
+    style.write_text(docstring, encoding='utf-8')
     osm2pgsql_options['osm2pgsql_style'] = str(style)
 
     return osm2pgsql_options

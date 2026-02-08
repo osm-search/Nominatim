@@ -48,7 +48,7 @@ def test_no_project_dir(make_config):
 @pytest.mark.parametrize("val", ('apache', '"apache"'))
 def test_prefer_project_setting_over_default(make_config, val, tmp_path):
     envfile = tmp_path / '.env'
-    envfile.write_text('NOMINATIM_DATABASE_WEBUSER={}\n'.format(val))
+    envfile.write_text('NOMINATIM_DATABASE_WEBUSER={}\n'.format(val), encoding='utf-8')
 
     config = make_config(tmp_path)
 
@@ -57,7 +57,7 @@ def test_prefer_project_setting_over_default(make_config, val, tmp_path):
 
 def test_prefer_os_environ_over_project_setting(make_config, monkeypatch, tmp_path):
     envfile = tmp_path / '.env'
-    envfile.write_text('NOMINATIM_DATABASE_WEBUSER=apache\n')
+    envfile.write_text('NOMINATIM_DATABASE_WEBUSER=apache\n', encoding='utf-8')
 
     monkeypatch.setenv('NOMINATIM_DATABASE_WEBUSER', 'nobody')
 
@@ -68,7 +68,7 @@ def test_prefer_os_environ_over_project_setting(make_config, monkeypatch, tmp_pa
 
 def test_prefer_os_environ_can_unset_project_setting(make_config, monkeypatch, tmp_path):
     envfile = tmp_path / '.env'
-    envfile.write_text('NOMINATIM_DATABASE_WEBUSER=apache\n')
+    envfile.write_text('NOMINATIM_DATABASE_WEBUSER=apache\n', encoding='utf-8')
 
     monkeypatch.setenv('NOMINATIM_DATABASE_WEBUSER', '')
 
@@ -233,7 +233,7 @@ def test_get_import_style_intern(make_config, src_dir, monkeypatch):
 
 def test_get_import_style_extern_relative(make_config_path, monkeypatch):
     config = make_config_path()
-    (config.project_dir / 'custom.style').write_text('x')
+    (config.project_dir / 'custom.style').write_text('x', encoding='utf-8')
 
     monkeypatch.setenv('NOMINATIM_IMPORT_STYLE', 'custom.style')
 
@@ -244,7 +244,7 @@ def test_get_import_style_extern_absolute(make_config, tmp_path, monkeypatch):
     config = make_config()
     cfgfile = tmp_path / 'test.style'
 
-    cfgfile.write_text('x')
+    cfgfile.write_text('x', encoding='utf-8')
 
     monkeypatch.setenv('NOMINATIM_IMPORT_STYLE', str(cfgfile))
 
@@ -255,10 +255,10 @@ def test_load_subconf_from_project_dir(make_config_path):
     config = make_config_path()
 
     testfile = config.project_dir / 'test.yaml'
-    testfile.write_text('cow: muh\ncat: miau\n')
+    testfile.write_text('cow: muh\ncat: miau\n', encoding='utf-8')
 
     testfile = config.config_dir / 'test.yaml'
-    testfile.write_text('cow: miau\ncat: muh\n')
+    testfile.write_text('cow: miau\ncat: muh\n', encoding='utf-8')
 
     rules = config.load_sub_configuration('test.yaml')
 
@@ -269,7 +269,7 @@ def test_load_subconf_from_settings_dir(make_config_path):
     config = make_config_path()
 
     testfile = config.config_dir / 'test.yaml'
-    testfile.write_text('cow: muh\ncat: miau\n')
+    testfile.write_text('cow: muh\ncat: miau\n', encoding='utf-8')
 
     rules = config.load_sub_configuration('test.yaml')
 
@@ -281,7 +281,7 @@ def test_load_subconf_empty_env_conf(make_config_path, monkeypatch):
     config = make_config_path()
 
     testfile = config.config_dir / 'test.yaml'
-    testfile.write_text('cow: muh\ncat: miau\n')
+    testfile.write_text('cow: muh\ncat: miau\n', encoding='utf-8')
 
     rules = config.load_sub_configuration('test.yaml', config='MY_CONFIG')
 
@@ -292,8 +292,8 @@ def test_load_subconf_env_absolute_found(make_config_path, monkeypatch, tmp_path
     monkeypatch.setenv('NOMINATIM_MY_CONFIG', str(tmp_path / 'other.yaml'))
     config = make_config_path()
 
-    (config.config_dir / 'test.yaml').write_text('cow: muh\ncat: miau\n')
-    (tmp_path / 'other.yaml').write_text('dog: muh\nfrog: miau\n')
+    (config.config_dir / 'test.yaml').write_text('cow: muh\ncat: miau\n', encoding='utf-8')
+    (tmp_path / 'other.yaml').write_text('dog: muh\nfrog: miau\n', encoding='utf-8')
 
     rules = config.load_sub_configuration('test.yaml', config='MY_CONFIG')
 
@@ -304,7 +304,7 @@ def test_load_subconf_env_absolute_not_found(make_config_path, monkeypatch, tmp_
     monkeypatch.setenv('NOMINATIM_MY_CONFIG', str(tmp_path / 'other.yaml'))
     config = make_config_path()
 
-    (config.config_dir / 'test.yaml').write_text('cow: muh\ncat: miau\n')
+    (config.config_dir / 'test.yaml').write_text('cow: muh\ncat: miau\n', encoding='utf-8')
 
     with pytest.raises(UsageError, match='Config file not found.'):
         config.load_sub_configuration('test.yaml', config='MY_CONFIG')
@@ -315,8 +315,8 @@ def test_load_subconf_env_relative_found(make_config_path, monkeypatch, location
     monkeypatch.setenv('NOMINATIM_MY_CONFIG', 'other.yaml')
     config = make_config_path()
 
-    (config.config_dir / 'test.yaml').write_text('cow: muh\ncat: miau\n')
-    (getattr(config, location) / 'other.yaml').write_text('dog: bark\n')
+    (config.config_dir / 'test.yaml').write_text('cow: muh\ncat: miau\n', encoding='utf-8')
+    (getattr(config, location) / 'other.yaml').write_text('dog: bark\n', encoding='utf-8')
 
     rules = config.load_sub_configuration('test.yaml', config='MY_CONFIG')
 
@@ -327,7 +327,7 @@ def test_load_subconf_env_relative_not_found(make_config_path, monkeypatch):
     monkeypatch.setenv('NOMINATIM_MY_CONFIG', 'other.yaml')
     config = make_config_path()
 
-    (config.config_dir / 'test.yaml').write_text('cow: muh\ncat: miau\n')
+    (config.config_dir / 'test.yaml').write_text('cow: muh\ncat: miau\n', encoding='utf-8')
 
     with pytest.raises(UsageError, match='Config file not found.'):
         config.load_sub_configuration('test.yaml', config='MY_CONFIG')
@@ -336,7 +336,7 @@ def test_load_subconf_env_relative_not_found(make_config_path, monkeypatch):
 def test_load_subconf_json(make_config_path):
     config = make_config_path()
 
-    (config.project_dir / 'test.json').write_text('{"cow": "muh", "cat": "miau"}')
+    (config.project_dir / 'test.json').write_text('{"cow": "muh", "cat": "miau"}', encoding='utf-8')
 
     rules = config.load_sub_configuration('test.json')
 
@@ -353,7 +353,7 @@ def test_load_subconf_not_found(make_config_path):
 def test_load_subconf_env_unknown_format(make_config_path):
     config = make_config_path()
 
-    (config.project_dir / 'test.xml').write_text('<html></html>')
+    (config.project_dir / 'test.xml').write_text('<html></html>', encoding='utf-8')
 
     with pytest.raises(UsageError, match='unknown format'):
         config.load_sub_configuration('test.xml')
@@ -363,8 +363,8 @@ def test_load_subconf_include_absolute(make_config_path, tmp_path):
     config = make_config_path()
 
     testfile = config.config_dir / 'test.yaml'
-    testfile.write_text(f'base: !include {tmp_path}/inc.yaml\n')
-    (tmp_path / 'inc.yaml').write_text('first: 1\nsecond: 2\n')
+    testfile.write_text(f'base: !include {tmp_path}/inc.yaml\n', encoding='utf-8')
+    (tmp_path / 'inc.yaml').write_text('first: 1\nsecond: 2\n', encoding='utf-8')
 
     rules = config.load_sub_configuration('test.yaml')
 
@@ -376,8 +376,8 @@ def test_load_subconf_include_relative(make_config_path, tmp_path, location):
     config = make_config_path()
 
     testfile = config.config_dir / 'test.yaml'
-    testfile.write_text('base: !include inc.yaml\n')
-    (getattr(config, location) / 'inc.yaml').write_text('first: 1\nsecond: 2\n')
+    testfile.write_text('base: !include inc.yaml\n', encoding='utf-8')
+    (getattr(config, location) / 'inc.yaml').write_text('first: 1\nsecond: 2\n', encoding='utf-8')
 
     rules = config.load_sub_configuration('test.yaml')
 
@@ -388,8 +388,8 @@ def test_load_subconf_include_bad_format(make_config_path):
     config = make_config_path()
 
     testfile = config.config_dir / 'test.yaml'
-    testfile.write_text('base: !include inc.txt\n')
-    (config.config_dir / 'inc.txt').write_text('first: 1\nsecond: 2\n')
+    testfile.write_text('base: !include inc.txt\n', encoding='utf-8')
+    (config.config_dir / 'inc.txt').write_text('first: 1\nsecond: 2\n', encoding='utf-8')
 
     with pytest.raises(UsageError, match='Cannot handle config file format.'):
         config.load_sub_configuration('test.yaml')
@@ -399,7 +399,7 @@ def test_load_subconf_include_not_found(make_config_path):
     config = make_config_path()
 
     testfile = config.config_dir / 'test.yaml'
-    testfile.write_text('base: !include inc.txt\n')
+    testfile.write_text('base: !include inc.txt\n', encoding='utf-8')
 
     with pytest.raises(UsageError, match='Config file not found.'):
         config.load_sub_configuration('test.yaml')
@@ -409,9 +409,9 @@ def test_load_subconf_include_recursive(make_config_path):
     config = make_config_path()
 
     testfile = config.config_dir / 'test.yaml'
-    testfile.write_text('base: !include inc.yaml\n')
-    (config.config_dir / 'inc.yaml').write_text('- !include more.yaml\n- upper\n')
-    (config.config_dir / 'more.yaml').write_text('- the end\n')
+    testfile.write_text('base: !include inc.yaml\n', encoding='utf-8')
+    (config.config_dir / 'inc.yaml').write_text('- !include more.yaml\n- upper\n', encoding='utf-8')
+    (config.config_dir / 'more.yaml').write_text('- the end\n', encoding='utf-8')
 
     rules = config.load_sub_configuration('test.yaml')
 

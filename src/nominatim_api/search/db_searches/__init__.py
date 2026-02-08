@@ -15,3 +15,4 @@ from .country_search import CountrySearch as CountrySearch
 from .postcode_search import PostcodeSearch as PostcodeSearch
 from .place_search import PlaceSearch as PlaceSearch
 from .address_search import AddressSearch as AddressSearch
+from .intersection_search import IntersectionSearch as IntersectionSearch

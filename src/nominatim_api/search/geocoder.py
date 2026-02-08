@@ -19,9 +19,12 @@ from ..timeout import Timeout
 from ..logging import log
 from .token_assignment import yield_token_assignments
 from .db_search_builder import SearchBuilder, build_poi_search, wrap_near_search
-from .db_searches import AbstractSearch
+from .db_searches import AbstractSearch, IntersectionSearch
 from .query_analyzer_factory import make_query_analyzer, AbstractQueryAnalyzer
 from .query import Phrase, QueryStruct
+from .intersection_parser import parse_intersection_query
+
+POC_INTERSECTION_PENALTY = 10.0
 
 
 class ForwardGeocoder:
@@ -55,6 +58,14 @@ class ForwardGeocoder:
                        lambda: f"[{'LR' if query.dir_penalty < 0 else 'RL'}] {query.dir_penalty}")
 
         searches: List[AbstractSearch] = []
+        if intersection := parse_intersection_query(phrases):
+            # Keep parser-only intersection searches behind normal searches
+            # until SQL lookup support is implemented.
+            searches.append(IntersectionSearch(POC_INTERSECTION_PENALTY,
+                                               intersection.street_a,
+                                               intersection.street_b,
+                                               intersection.context))
+
         if query.num_token_slots() > 0:
             # 2. Compute all possible search interpretations
             log().section('Compute abstract searches')

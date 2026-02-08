@@ -274,7 +274,8 @@ def test_postcodes_extern_bad_number(postcode_update, insert_implicit_postcode,
     insert_implicit_postcode(1, 'xx', 'POINT(10 12)', 'AB 4511')
 
     extfile = tmp_path / 'xx_postcodes.csv'
-    extfile.write_text("postcode,lat,lon\nXX 4511,-4,NaN\nCD 4511,-5, -10\n34,200,0", encoding='utf-8')
+    extfile.write_text("postcode,lat,lon\nXX 4511,-4,NaN\nCD 4511,-5, -10\n34,200,0",
+                        encoding='utf-8')
 
     postcode_update(tmp_path)
 

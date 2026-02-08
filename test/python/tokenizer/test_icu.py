@@ -80,7 +80,8 @@ def analyzer(tokenizer_factory, test_config, monkeypatch,
         if with_postcode:
             cfgstr['token-analysis'].append({'id': '@postcode',
                                              'analyzer': 'postcodes'})
-        (test_config.project_dir / 'icu_tokenizer.yaml').write_text(yaml.dump(cfgstr), encoding='utf-8')
+        (test_config.project_dir / 'icu_tokenizer.yaml').write_text(
+            yaml.dump(cfgstr), encoding='utf-8')
         tok.loader = nominatim_db.tokenizer.icu_rule_loader.ICURuleLoader(test_config)
 
         return tok.name_analyzer()

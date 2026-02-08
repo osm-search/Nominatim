@@ -27,7 +27,8 @@ class TestIcuRuleLoader:
         self.project_env = project_env
 
     def write_config(self, content):
-        (self.project_env.project_dir / 'icu_tokenizer.yaml').write_text(dedent(content), encoding='utf-8')
+        (self.project_env.project_dir / 'icu_tokenizer.yaml').write_text(
+            dedent(content), encoding='utf-8')
 
     def config_rules(self, *variants):
         content = dedent("""\

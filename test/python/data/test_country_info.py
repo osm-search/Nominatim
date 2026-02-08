@@ -22,7 +22,8 @@ def loaded_country(def_config):
 def env_with_country_config(project_env):
 
     def _mk_config(cfg):
-        (project_env.project_dir / 'country_settings.yaml').write_text(dedent(cfg), encoding='utf-8')
+        (project_env.project_dir / 'country_settings.yaml').write_text(
+            dedent(cfg), encoding='utf-8')
 
         return project_env
 

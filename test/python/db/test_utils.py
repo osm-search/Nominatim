@@ -15,7 +15,8 @@ from nominatim_db.errors import UsageError
 
 def test_execute_file_success(dsn, temp_db_cursor, tmp_path):
     tmpfile = tmp_path / 'test.sql'
-    tmpfile.write_text('CREATE TABLE test (id INT);\nINSERT INTO test VALUES(56);', encoding='utf-8')
+    tmpfile.write_text('CREATE TABLE test (id INT);\nINSERT INTO test VALUES(56);',
+                        encoding='utf-8')
 
     db_utils.execute_file(dsn, tmpfile)
 

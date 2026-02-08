@@ -21,7 +21,7 @@ if [ "$*" = "--version" ]; then
 else
   echo "$@"
 fi
-    """)
+    """, encoding='utf-8')
     osm2pgsql_exec.chmod(0o777)
 
     return dict(osm2pgsql=str(osm2pgsql_exec),

@@ -57,11 +57,11 @@ def tiger_table(def_config, temp_db_conn, sql_preprocessor,
            RETURNS INTEGER AS $$
             INSERT INTO tiger VALUES(linegeo, start, stop, interpol, token_info, postcode)
             RETURNING 1
-           $$ LANGUAGE SQL;""")
+           $$ LANGUAGE SQL;""", encoding='utf-8')
     (def_config.lib_dir.sql / 'tiger_import_finish.sql').write_text(
         """DROP FUNCTION tiger_line_import (linegeo GEOMETRY, in_startnumber INTEGER,
                                  in_endnumber INTEGER, interpolationtype TEXT,
-                                 token_info JSONB, in_postcode TEXT);""")
+                                 token_info JSONB, in_postcode TEXT);""", encoding='utf-8')
 
     return MockTigerTable(temp_db_conn)
 
@@ -75,7 +75,7 @@ def csv_factory(tmp_path):
         from;to;interpolation;street;city;state;postcode;geometry
         {};{};{};{};{};{};{};{}
         """.format(hnr_from, hnr_to, interpol, street, city, state,
-                   postcode, geometry)))
+                   postcode, geometry)), encoding='utf-8')
 
     return _mk_file
 
@@ -129,7 +129,7 @@ async def test_add_tiger_data_no_files(def_config, tiger_table, tokenizer_mock,
 async def test_add_tiger_data_bad_file(def_config, tiger_table, tokenizer_mock,
                                        tmp_path):
     sqlfile = tmp_path / '1010.csv'
-    sqlfile.write_text("""Random text""")
+    sqlfile.write_text("""Random text""", encoding='utf-8')
 
     await tiger_data.add_tiger_data(str(tmp_path), def_config, 1, tokenizer_mock())
 
@@ -167,7 +167,7 @@ async def test_add_tiger_data_tarfile(def_config, tiger_table, tokenizer_mock,
 async def test_add_tiger_data_bad_tarfile(def_config, tiger_table, tokenizer_mock,
                                           tmp_path):
     tarfile = tmp_path / 'sample.tar.gz'
-    tarfile.write_text("""Random text""")
+    tarfile.write_text("""Random text""", encoding='utf-8')
 
     with pytest.raises(UsageError):
         await tiger_data.add_tiger_data(str(tarfile), def_config, 1, tokenizer_mock())

@@ -13,7 +13,8 @@ for infile in VAGRANT_PATH.glob('Install-on-*.sh'):
     outfile = f"admin/{infile.stem}.md"
     title = infile.stem.replace('-', ' ')
 
-    with mkdocs_gen_files.open(outfile, "w") as outfd, infile.open() as infd:
+    with mkdocs_gen_files.open(outfile, "w", encoding='utf-8') as outfd, \
+            infile.open(encoding='utf-8') as infd:
         print("#", title, file=outfd)
         has_empty = False
         for line in infd:

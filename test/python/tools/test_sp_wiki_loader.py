@@ -21,7 +21,7 @@ def sp_wiki_loader(src_dir, monkeypatch, def_config):
 
     def _mock_wiki_content(lang):
         xml_test_content = src_dir / 'test' / 'testdata' / 'special_phrases_test_content.txt'
-        return xml_test_content.read_text()
+        return xml_test_content.read_text(encoding='utf-8')
 
     monkeypatch.setattr('nominatim_db.tools.special_phrases.sp_wiki_loader._get_wiki_content',
                         _mock_wiki_content)

@@ -54,7 +54,7 @@ def test_drop_flatnode_file_file_already_gone(tmp_path):
 
 def test_drop_flatnode_file_delete(tmp_path):
     flatfile = tmp_path / 'flatnode.store'
-    flatfile.write_text('Some content')
+    flatfile.write_text('Some content', encoding="utf-8")
 
     freeze.drop_flatnode_file(flatfile)
 

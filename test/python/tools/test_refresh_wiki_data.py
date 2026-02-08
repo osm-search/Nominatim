@@ -20,7 +20,7 @@ from nominatim_db.tools.refresh import (import_wikipedia_articles,
 @pytest.fixture
 def wiki_csv(tmp_path, sql_preprocessor):
     def _import(data):
-        with gzip.open(tmp_path / 'wikimedia-importance.csv.gz', mode='wt') as fd:
+        with gzip.open(tmp_path / 'wikimedia-importance.csv.gz', mode='wt', encoding='utf-8') as fd:
             writer = csv.DictWriter(fd, fieldnames=['language', 'type', 'title',
                                                     'importance', 'wikidata_id'],
                                     delimiter='\t', quotechar='|')

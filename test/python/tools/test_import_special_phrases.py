@@ -30,7 +30,7 @@ def xml_wiki_content(src_dir):
         return the content of the static xml test file.
     """
     xml_test_content = src_dir / 'test' / 'testdata' / 'special_phrases_test_content.txt'
-    return xml_test_content.read_text()
+    return xml_test_content.read_text(encoding='utf-8')
 
 
 @pytest.fixture

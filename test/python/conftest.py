@@ -60,7 +60,7 @@ def temp_db(monkeypatch):
 
     with psycopg.connect(dbname='postgres', autocommit=True) as conn:
         with conn.cursor() as cur:
-            cur.execute('DROP DATABASE IF EXISTS {}'.format(name))
+            cur.execute(pysql.SQL('DROP DATABASE IF EXISTS') + pysql.Identifier(name))
 
 
 @pytest.fixture
@@ -104,7 +104,9 @@ def table_factory(temp_db_conn):
     """
     def mk_table(name, definition='id INT', content=None):
         with psycopg.ClientCursor(temp_db_conn) as cur:
-            cur.execute('CREATE TABLE {} ({})'.format(name, definition))
+            cur.execute(pysql.SQL("CREATE TABLE {} ({})")
+                             .format(pysql.Identifier(name),
+                                     pysql.SQL(definition)))
             if content:
                 sql = pysql.SQL("INSERT INTO {} VALUES ({})")\
                            .format(pysql.Identifier(name),

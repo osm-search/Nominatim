@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2025 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for functions to import a new database.
@@ -25,12 +25,14 @@ class TestDatabaseSetup:
     def setup_nonexistant_db(self):
         with psycopg.connect(dbname='postgres', autocommit=True) as conn:
             with conn.cursor() as cur:
-                cur.execute(f'DROP DATABASE IF EXISTS {self.DBNAME}')
+                cur.execute(pysql.SQL('DROP DATABASE IF EXISTS ')
+                            + pysql.Identifier(self.DBNAME))
 
             yield True
 
             with conn.cursor() as cur:
-                cur.execute(f'DROP DATABASE IF EXISTS {self.DBNAME}')
+                cur.execute(pysql.SQL('DROP DATABASE IF EXISTS ')
+                            + pysql.Identifier(self.DBNAME))
 
     @pytest.fixture
     def cursor(self):

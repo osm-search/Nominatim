@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2025 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Test for loading dotenv configuration.
@@ -68,13 +68,13 @@ def test_prefer_os_environ_over_project_setting(make_config, monkeypatch, tmp_pa
 
 def test_prefer_os_environ_can_unset_project_setting(make_config, monkeypatch, tmp_path):
     envfile = tmp_path / '.env'
-    envfile.write_text('NOMINATIM_DATABASE_WEBUSER=apache\n', encoding='utf-8')
+    envfile.write_text('NOMINATIM_OSM2PGSQL_BINARY=osm2pgsql\n', encoding='utf-8')
 
-    monkeypatch.setenv('NOMINATIM_DATABASE_WEBUSER', '')
+    monkeypatch.setenv('NOMINATIM_OSM2PGSQL_BINARY', '')
 
     config = make_config(tmp_path)
 
-    assert config.DATABASE_WEBUSER == ''
+    assert config.OSM2PGSQL_BINARY == ''
 
 
 def test_get_os_env_add_defaults(make_config, monkeypatch):

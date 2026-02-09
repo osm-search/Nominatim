@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2025 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Nominatim configuration accessor.
@@ -12,6 +12,7 @@ import importlib.util
 import logging
 import os
 import sys
+import re
 from pathlib import Path
 import json
 import yaml
@@ -79,6 +80,10 @@ class Configuration:
 
         self.lib_dir = _LibDirs()
         self._private_plugins: Dict[str, object] = {}
+
+        if re.fullmatch(r'[\w-]+', self.DATABASE_WEBUSER) is None:
+            raise UsageError("Misconfigured DATABASE_WEBUSER. "
+                             "Only alphnumberic characters, - and _ are allowed.")
 
     def set_libdirs(self, **kwargs: StrPath) -> None:
         """ Set paths to library functions and data.

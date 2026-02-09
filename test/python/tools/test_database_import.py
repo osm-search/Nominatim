@@ -62,7 +62,7 @@ class TestDatabaseSetup:
     def test_create_db_missing_ro_user(self):
         with pytest.raises(UsageError, match='Missing read-only user.'):
             database_import.setup_database_skeleton(f'dbname={self.DBNAME}',
-                                                    rouser='sdfwkjkjgdugu2;jgsafkljas;')
+                                                    rouser='sdfwkjkjgdugu2jgsafkljas')
 
     def test_setup_extensions_old_postgis(self, monkeypatch):
         monkeypatch.setattr(database_import, 'POSTGIS_REQUIRED_VERSION', (50, 50))

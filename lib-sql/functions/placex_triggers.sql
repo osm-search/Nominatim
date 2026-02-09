@@ -87,11 +87,9 @@ BEGIN
     IF location.name is not NULL THEN
       {% if debug %}RAISE WARNING 'Names original: %, location: %', result.name, location.name;{% endif %}
 
+      -- Add the linked-place (e.g. city) name as a searchable placename in the default language (if any)
       default_language := get_country_language_code(location.country_code);
-      IF default_language is NULL OR location.name ? ('name:' || default_language) THEN
-        -- No default language, or a name in the local language is already configured; do nothing
-      ELSE
-        -- Merge in a default-language name from the linked place
+      IF default_language is not NULL AND NOT location.name ? ('name:' || default_language) THEN
         location.name := location.name || hstore('name:' || default_language, location.name->'name');
       END IF;
 

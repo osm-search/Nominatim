@@ -138,7 +138,7 @@ class Indexer:
 
         with self.tokenizer.name_analyzer() as analyzer:
             for rank in range(max(1, minrank), maxrank + 1):
-                if rank >= 30:
+                if rank == 30:
                     batch = 20
                 elif rank >= 26:
                     batch = 5

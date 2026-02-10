@@ -41,7 +41,7 @@ def test_load_default_module_with_hyphen(test_config):
 def test_load_plugin_module(test_config, tmp_path):
     (tmp_path / 'project' / 'testpath').mkdir()
     (tmp_path / 'project' / 'testpath' / 'mymod.py')\
-        .write_text("def my_test_function():\n  return 'gjwitlsSG42TG%'")
+        .write_text("def my_test_function():\n  return 'gjwitlsSG42TG%'", encoding='utf-8')
 
     module = test_config.load_plugin_module('testpath/mymod.py', 'private.something')
 
@@ -49,7 +49,7 @@ def test_load_plugin_module(test_config, tmp_path):
 
     # also test reloading module
     (tmp_path / 'project' / 'testpath' / 'mymod.py')\
-        .write_text("def my_test_function():\n  return 'hjothjorhj'")
+        .write_text("def my_test_function():\n  return 'hjothjorhj'", encoding='utf-8')
 
     module = test_config.load_plugin_module('testpath/mymod.py', 'private.something')
 
@@ -61,9 +61,9 @@ def test_load_external_library_module(test_config, tmp_path, monkeypatch):
     pythonpath = tmp_path / 'priv-python'
     pythonpath.mkdir()
     (pythonpath / MODULE_NAME).mkdir()
-    (pythonpath / MODULE_NAME / '__init__.py').write_text('')
+    (pythonpath / MODULE_NAME / '__init__.py').write_text('', encoding='utf-8')
     (pythonpath / MODULE_NAME / 'tester.py')\
-        .write_text("def my_test_function():\n  return 'gjwitlsSG42TG%'")
+        .write_text("def my_test_function():\n  return 'gjwitlsSG42TG%'", encoding='utf-8')
 
     monkeypatch.syspath_prepend(pythonpath)
 
@@ -73,7 +73,7 @@ def test_load_external_library_module(test_config, tmp_path, monkeypatch):
 
     # also test reloading module
     (pythonpath / MODULE_NAME / 'tester.py')\
-        .write_text("def my_test_function():\n  return 'dfigjreigj'")
+        .write_text("def my_test_function():\n  return 'dfigjreigj'", encoding='utf-8')
 
     module = test_config.load_plugin_module(f'{MODULE_NAME}.tester', 'private.something')
 

@@ -159,7 +159,7 @@ class _PostcodeCollector:
 
         if fname.is_file():
             LOG.info("Using external postcode file '%s'.", fname)
-            return gzip.open(fname, 'rt')
+            return gzip.open(fname, 'rt', encoding='utf-8')
 
         return None
 

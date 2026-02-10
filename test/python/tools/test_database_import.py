@@ -96,7 +96,7 @@ def test_import_osm_data_multifile(table_factory, tmp_path, osm2pgsql_options, c
 
     files = [tmp_path / 'file1.osm', tmp_path / 'file2.osm']
     for f in files:
-        f.write_text('test')
+        f.write_text('test', encoding='utf-8')
 
     database_import.import_osm_data(files, osm2pgsql_options)
     captured = capfd.readouterr()
@@ -124,7 +124,7 @@ def test_import_osm_data_drop(table_factory, temp_db_cursor, tmp_path, osm2pgsql
     table_factory('planet_osm_nodes')
 
     flatfile = tmp_path / 'flatfile'
-    flatfile.write_text('touch')
+    flatfile.write_text('touch', encoding='utf-8')
 
     osm2pgsql_options['flatnode_file'] = str(flatfile.resolve())
 
@@ -193,7 +193,7 @@ class TestSetupSQL:
         self.config = def_config
 
     def write_sql(self, fname, content):
-        (self.config.lib_dir.sql / fname).write_text(content)
+        (self.config.lib_dir.sql / fname).write_text(content, encoding='utf-8')
 
     @pytest.mark.parametrize("reverse", [True, False])
     def test_create_tables(self, temp_db_conn, temp_db_cursor, reverse):

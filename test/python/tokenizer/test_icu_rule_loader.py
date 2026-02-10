@@ -27,7 +27,8 @@ class TestIcuRuleLoader:
         self.project_env = project_env
 
     def write_config(self, content):
-        (self.project_env.project_dir / 'icu_tokenizer.yaml').write_text(dedent(content))
+        (self.project_env.project_dir / 'icu_tokenizer.yaml').write_text(
+            dedent(content), encoding='utf-8')
 
     def config_rules(self, *variants):
         content = dedent("""\
@@ -119,7 +120,7 @@ class TestIcuRuleLoader:
                   variants:
             """)
         transpath = self.project_env.project_dir / ('transliteration.yaml')
-        transpath.write_text('- "x > y"')
+        transpath.write_text('- "x > y"', encoding='utf-8')
 
         loader = ICURuleLoader(self.project_env)
         rules = loader.get_transliteration_rules()

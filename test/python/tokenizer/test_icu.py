@@ -31,7 +31,7 @@ def test_config(project_env, tmp_path):
     sqldir = tmp_path / 'sql'
     sqldir.mkdir()
     (sqldir / 'tokenizer').mkdir()
-    (sqldir / 'tokenizer' / 'icu_tokenizer.sql').write_text("SELECT 'a'")
+    (sqldir / 'tokenizer' / 'icu_tokenizer.sql').write_text("SELECT 'a'", encoding='utf-8')
 
     project_env.lib_dir.sql = sqldir
 
@@ -58,7 +58,7 @@ def db_prop(temp_db_conn):
 def analyzer(tokenizer_factory, test_config, monkeypatch,
              temp_db_with_extensions, tmp_path):
     sql = tmp_path / 'sql' / 'tokenizer' / 'icu_tokenizer.sql'
-    sql.write_text("SELECT 'a';")
+    sql.write_text("SELECT 'a';", encoding='utf-8')
 
     monkeypatch.setenv('NOMINATIM_TERM_NORMALIZATION', ':: lower();')
     tok = tokenizer_factory()
@@ -80,7 +80,8 @@ def analyzer(tokenizer_factory, test_config, monkeypatch,
         if with_postcode:
             cfgstr['token-analysis'].append({'id': '@postcode',
                                              'analyzer': 'postcodes'})
-        (test_config.project_dir / 'icu_tokenizer.yaml').write_text(yaml.dump(cfgstr))
+        (test_config.project_dir / 'icu_tokenizer.yaml').write_text(
+            yaml.dump(cfgstr), encoding='utf-8')
         tok.loader = nominatim_db.tokenizer.icu_rule_loader.ICURuleLoader(test_config)
 
         return tok.name_analyzer()
@@ -190,7 +191,7 @@ def test_update_sql_functions(db_prop, temp_db_cursor,
     table_factory('test', 'txt TEXT')
 
     func_file = test_config.lib_dir.sql / 'tokenizer' / 'icu_tokenizer.sql'
-    func_file.write_text("""INSERT INTO test VALUES (1133)""")
+    func_file.write_text("""INSERT INTO test VALUES (1133)""", encoding='utf-8')
 
     tok.update_sql_functions(test_config)
 

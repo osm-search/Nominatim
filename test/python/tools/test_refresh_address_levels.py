@@ -22,7 +22,7 @@ def test_load_ranks_def_config(temp_db_conn, temp_db_cursor, def_config):
 
 def test_load_ranks_from_project_dir(project_env, temp_db_conn, temp_db_cursor):
     test_file = project_env.project_dir / 'address-levels.json'
-    test_file.write_text('[{"tags":{"place":{"sea":2}}}]')
+    test_file.write_text('[{"tags":{"place":{"sea":2}}}]', encoding='utf-8')
 
     load_address_levels_from_config(temp_db_conn, project_env)
 
@@ -31,7 +31,7 @@ def test_load_ranks_from_project_dir(project_env, temp_db_conn, temp_db_cursor):
 
 def test_load_ranks_from_broken_file(project_env, temp_db_conn):
     test_file = project_env.project_dir / 'address-levels.json'
-    test_file.write_text('[{"tags":"place":{"sea":2}}}]')
+    test_file.write_text('[{"tags":"place":{"sea":2}}}]', encoding='utf-8')
 
     with pytest.raises(json.decoder.JSONDecodeError):
         load_address_levels_from_config(temp_db_conn, project_env)

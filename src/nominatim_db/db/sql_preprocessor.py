@@ -2,12 +2,13 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Preprocessing of SQL files.
 """
 from typing import Set, Dict, Any, cast
+import re
 
 import jinja2
 
@@ -34,7 +35,9 @@ def _get_tables(conn: Connection) -> Set[str]:
     with conn.cursor() as cur:
         cur.execute("SELECT tablename FROM pg_tables WHERE schemaname = 'public'")
 
-        return set((row[0] for row in list(cur)))
+        # paranoia check: make sure we don't get table names that cause
+        # an SQL injection later
+        return {row[0] for row in list(cur) if re.fullmatch(r'\w+', row[0])}
 
 
 def _get_middle_db_format(conn: Connection, tables: Set[str]) -> str:

@@ -12,6 +12,7 @@ from typing import Optional, Any, Type, Dict, cast, Sequence, Tuple
 from functools import reduce
 import dataclasses
 from urllib.parse import urlencode
+import asyncio
 
 import sqlalchemy as sa
 
@@ -440,6 +441,59 @@ async def polygons_endpoint(api: NominatimAPIAsync, params: ASGIAdaptor) -> Any:
 
     return build_response(params, params.formatting().format_result(results, fmt, {}))
 
+class LazySearchEndpoint:
+    """
+    Lazy-loading search endpoint that replaces itself after first successful check.
+
+    On first request:
+    - Checks if search_name table exists
+    - If yes: replaces __call__ with real endpoint
+    - If no: replaces __call__ with 404 handler (reverse-only mode)
+    - If connection fails: retries on next request (returns 503)
+    """
+    def __init__(self, api: NominatimAPIAsync, real_endpoint: EndpointFunc):
+        self.api = api
+        self.real_endpoint = real_endpoint
+        self._checked = False
+        self._lock = asyncio.Lock()
+
+    def _has_search_name(self, conn: sa.engine.Connection) -> bool:
+        insp = sa.inspect(conn)
+        return insp.has_table('search_name')
+
+    async def __call__(self, api: NominatimAPIAsync, params: ASGIAdaptor) -> Any:
+        if not self._checked:
+            async with self._lock:
+                # Double-check after acquiring lock (thread safety)
+                if not self._checked:
+                    self._checked = True
+
+                    try:
+                        async with api.begin() as conn:
+                            has_table = await conn.connection.run_sync(
+                                self._has_search_name)
+
+                        if has_table:
+                            # Replace method with real endpoint
+                            setattr(self, '__call__',
+                                    lambda api, params: self.real_endpoint(api, params))
+                            return await self.__call__(api, params)
+
+                        else:
+                            async def not_found(_api: NominatimAPIAsync,
+                                                params: ASGIAdaptor) -> Any:
+                                params.raise_error(
+                                    'Search not available (reverse-only mode)',
+                                    404)
+
+                            # Replace method with 404 handler
+                            setattr(self, '__call__', not_found)
+                            return await self.__call__(api, params)
+
+                    except (PGCORE_ERROR, sa.exc.OperationalError, OSError):
+                        self._checked = False
+                        params.raise_error('Search temporarily unavailable', 503)
+
 
 async def get_routes(api: NominatimAPIAsync) -> Sequence[Tuple[str, EndpointFunc]]:
     routes = [
@@ -459,7 +513,7 @@ async def get_routes(api: NominatimAPIAsync) -> Sequence[Tuple[str, EndpointFunc
         async with api.begin() as conn:
             if await conn.connection.run_sync(has_search_name):
                 routes.append(('search', search_endpoint))
-    except (PGCORE_ERROR, sa.exc.OperationalError):
-        pass  # ignored
+    except (PGCORE_ERROR, sa.exc.OperationalError, OSError):
+        routes.append(('search', LazySearchEndpoint(api, search_endpoint)))
 
     return routes

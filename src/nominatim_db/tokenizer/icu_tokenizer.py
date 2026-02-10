@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2025 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tokenizer implementing normalisation as used before Nominatim 4 but using
@@ -294,13 +294,12 @@ class ICUTokenizer(AbstractTokenizer):
         with connect(self.dsn) as conn:
             drop_tables(conn, 'word')
             with conn.cursor() as cur:
-                cur.execute(f"ALTER TABLE {old} RENAME TO word")
-                for idx in ('word_token', 'word_id'):
-                    cur.execute(f"""ALTER INDEX idx_{old}_{idx}
-                                      RENAME TO idx_word_{idx}""")
-                for name, _ in WORD_TYPES:
-                    cur.execute(f"""ALTER INDEX idx_{old}_{name}
-                                    RENAME TO idx_word_{name}""")
+                cur.execute(pysql.SQL("ALTER TABLE {} RENAME TO word")
+                                 .format(pysql.Identifier(old)))
+                for idx in ['word_token', 'word_id'] + [n[0] for n in WORD_TYPES]:
+                    cur.execute(pysql.SQL("ALTER INDEX {} RENAME TO {}")
+                                     .format(pysql.Identifier(f"idx_{old}_{idx}"),
+                                             pysql.Identifier(f"idx_word_{idx}")))
             conn.commit()
 
 

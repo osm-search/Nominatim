@@ -233,12 +233,6 @@ CREATE TABLE placex_entrance (
 CREATE UNIQUE INDEX idx_placex_entrance_place_id_osm_id ON placex_entrance
   USING BTREE (place_id, osm_id) {{db.tablespace.search_index}};
 
--- Create an index on the place table for lookups to populate the entrance
--- table
-CREATE INDEX IF NOT EXISTS idx_placex_entrance_lookup ON place
-  USING BTREE (osm_id)
-  WHERE class IN ('routing:entrance', 'entrance');
-
 DROP TABLE IF EXISTS import_polygon_error;
 CREATE TABLE import_polygon_error (
   osm_id BIGINT,
@@ -262,9 +256,6 @@ CREATE TABLE import_polygon_delete (
   type TEXT NOT NULL
   );
 CREATE INDEX idx_import_polygon_delete_osmid ON import_polygon_delete USING BTREE (osm_type, osm_id);
-
-DROP SEQUENCE IF EXISTS file;
-CREATE SEQUENCE file start 1;
 
 {% if 'wikimedia_importance' not in db.tables and 'wikipedia_article' not in db.tables %}
 -- create dummy tables here, if nothing was imported

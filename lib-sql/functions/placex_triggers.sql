@@ -29,6 +29,7 @@ DECLARE
   location RECORD;
   result prepare_update_info;
   extra_names HSTORE;
+  default_language VARCHAR(10);
 BEGIN
   IF not p.address ? '_inherited' THEN
     result.address := p.address;
@@ -85,6 +86,13 @@ BEGIN
 
     IF location.name is not NULL THEN
       {% if debug %}RAISE WARNING 'Names original: %, location: %', result.name, location.name;{% endif %}
+
+      -- Add the linked-place (e.g. city) name as a searchable placename in the default language (if any)
+      default_language := get_country_language_code(location.country_code);
+      IF default_language is not NULL AND NOT location.name ? ('name:' || default_language) THEN
+        location.name := location.name || hstore('name:' || default_language, location.name->'name');
+      END IF;
+
       -- Add all names from the place nodes that deviate from the name
       -- in the relation with the prefix '_place_'. Deviation means that
       -- either the value is different or a given key is missing completely

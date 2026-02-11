@@ -297,9 +297,8 @@ Feature: Linking of places
          | R1         | LabelPlace |
 
 
-    @skip
     Scenario: Linked places expand default language names
-        Given the grid
+        Given the grid with origin CO
             | 1 |   | 2 |
             |   | 9 |   |
             | 4 |   | 3 |

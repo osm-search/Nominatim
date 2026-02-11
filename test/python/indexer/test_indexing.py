@@ -226,12 +226,12 @@ async def test_index_partial_with_30(test_db, threads, test_tokenizer):
     idx = indexer.Indexer('dbname=test_nominatim_python_unittest', test_tokenizer, threads)
     await idx.index_by_rank(28, 30)
 
-    assert test_db.placex_unindexed() == 27
+    assert test_db.placex_unindexed() == 28
     assert test_db.osmline_unindexed() == 0
 
     assert test_db.scalar("""
                     SELECT count(*) FROM placex
-                      WHERE indexed_status = 0 AND rank_address between 1 and 27""") == 0
+                      WHERE indexed_status = 0 AND rank_address between 0 and 27""") == 0
 
 
 @pytest.mark.parametrize("threads", [1, 15])

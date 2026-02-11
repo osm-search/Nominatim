@@ -64,4 +64,4 @@ class UpdateIndex:
             if not args.boundaries_only:
                 await indexer.index_by_rank(args.minrank, args.maxrank)
                 await indexer.index_postcodes()
-            has_pending = indexer.has_pending()
+            has_pending = indexer.has_pending(args.minrank, args.maxrank)

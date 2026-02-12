@@ -38,6 +38,7 @@ class QueryPool:
         """ Schedule a query for execution.
         """
         if self.is_cancelled:
+            self.clear_queue()
             await self.finish()
             return
 
@@ -47,6 +48,7 @@ class QueryPool:
         await asyncio.sleep(0)
 
         if self.is_cancelled:
+            self.clear_queue()
             await self.finish()
 
     async def finish(self) -> None:

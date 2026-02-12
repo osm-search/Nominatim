@@ -152,12 +152,11 @@ def create_tables(conn: Connection, config: Configuration, reverse_only: bool = 
         When `reverse_only` is True, then the main table for searching will
         be skipped and only reverse search is possible.
     """
-    sql = SQLPreprocessor(conn, config)
-    sql.env.globals['db']['reverse_only'] = reverse_only
+    SQLPreprocessor(conn, config).run_sql_file(conn, 'tables.sql',
+                                               create_reverse_only=reverse_only)
 
-    sql.run_sql_file(conn, 'tables.sql')
-
-    sql.run_sql_file(conn, 'grants.sql')
+    # reinitiate the preprocessor to get all the newly created tables
+    SQLPreprocessor(conn, config).run_sql_file(conn, 'grants.sql')
 
 
 def create_table_triggers(conn: Connection, config: Configuration) -> None:

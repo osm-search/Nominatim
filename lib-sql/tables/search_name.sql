@@ -7,7 +7,7 @@
 
 DROP TABLE IF EXISTS search_name;
 
-{% if not db.reverse_only %}
+{% if not create_reverse_only %}
 
 CREATE TABLE search_name (
   place_id BIGINT NOT NULL,

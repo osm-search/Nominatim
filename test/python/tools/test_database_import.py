@@ -176,6 +176,18 @@ async def test_load_data(dsn, place_row, placex_table, osmline_table,
               geom='LINESTRING(0 0, 10 10)')
 
     temp_db_cursor.execute("""
+        CREATE OR REPLACE FUNCTION placex_insert() RETURNS TRIGGER AS $$
+        BEGIN
+          NEW.place_id := nextval('seq_place');
+          NEW.indexed_status := 1;
+          NEW.centroid := ST_Centroid(NEW.geometry);
+          NEW.partition := 0;
+          NEW.geometry_sector := 2424;
+          NEW.rank_address := 30;
+          NEW.rank_search := 30;
+        RETURN NEW;
+        END; $$ LANGUAGE plpgsql STABLE PARALLEL SAFE;
+
         CREATE OR REPLACE FUNCTION osmline_insert() RETURNS TRIGGER AS $$
         BEGIN
           NEW.place_id := nextval('seq_place');
@@ -187,8 +199,11 @@ async def test_load_data(dsn, place_row, placex_table, osmline_table,
         RETURN NEW;
         END; $$ LANGUAGE plpgsql STABLE PARALLEL SAFE;
 
+        CREATE TRIGGER placex_before_insert BEFORE INSERT ON placex
+        FOR EACH ROW EXECUTE PROCEDURE placex_insert();
+
         CREATE TRIGGER osmline_before_insert BEFORE INSERT ON location_property_osmline
-        FOR EACH ROW EXECUTE PROCEDURE osmline_insert()
+        FOR EACH ROW EXECUTE PROCEDURE osmline_insert();
     """)
 
     await database_import.load_data(dsn, threads)

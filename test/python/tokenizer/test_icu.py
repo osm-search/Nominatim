@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2025 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for ICU tokenizer.
@@ -653,22 +653,21 @@ class TestUpdateWordTokens:
         self.tok.update_word_tokens()
         assert word_table.count_housenumbers() == 1
 
-    def test_keep_housenumbers_from_placex_table(self, add_housenumber, word_table,
-                                                 placex_table):
+    def test_keep_housenumbers_from_placex_table(self, add_housenumber, word_table, placex_row):
         add_housenumber(9999, '5432a')
         add_housenumber(9990, '34z')
-        placex_table.add(housenumber='34z')
-        placex_table.add(housenumber='25432a')
+        placex_row(housenumber='34z')
+        placex_row(housenumber='25432a')
 
         assert word_table.count_housenumbers() == 2
         self.tok.update_word_tokens()
         assert word_table.count_housenumbers() == 1
 
     def test_keep_housenumbers_from_placex_table_hnr_list(self, add_housenumber,
-                                                          word_table, placex_table):
+                                                          word_table, placex_row):
         add_housenumber(9991, '9 b')
         add_housenumber(9990, '34z')
-        placex_table.add(housenumber='9 a;9 b;9 c')
+        placex_row(housenumber='9 a;9 b;9 c')
 
         assert word_table.count_housenumbers() == 2
         self.tok.update_word_tokens()

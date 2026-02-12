@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2025 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for maintenance and analysis functions.
@@ -77,7 +77,7 @@ def test_analyse_indexing_with_osm_id(project_env, temp_db_cursor):
 class TestAdminCleanDeleted:
 
     @pytest.fixture(autouse=True)
-    def setup_polygon_delete(self, project_env, table_factory, place_table,
+    def setup_polygon_delete(self, project_env, table_factory, country_table, place_table,
                              osmline_table, temp_db_cursor, temp_db_conn, def_config, src_dir):
         """ Set up place_force_delete function and related tables
         """
@@ -104,7 +104,6 @@ class TestAdminCleanDeleted:
                       class TEXT NOT NULL,
                       type TEXT NOT NULL,
                       deferred BOOLEAN""")
-        table_factory('country_name', 'partition INT')
         table_factory('import_polygon_error', """osm_id BIGINT,
                       osm_type CHAR(1),
                       class TEXT NOT NULL,

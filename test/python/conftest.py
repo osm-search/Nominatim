@@ -132,6 +132,20 @@ def project_env(tmp_path):
 
 
 @pytest.fixture
+def country_table(table_factory):
+    table_factory('country_name', 'partition INT, country_code varchar(2), name hstore')
+
+
+@pytest.fixture
+def country_row(country_table, temp_db_cursor):
+    def _add(partition=None, country=None, names=None):
+        temp_db_cursor.insert_row('country_name', partition=partition,
+                                  country_code=country, name=names)
+
+    return _add
+
+
+@pytest.fixture
 def property_table(table_factory, temp_db_conn):
     table_factory('nominatim_properties', 'property TEXT, value TEXT')
 
@@ -248,8 +262,10 @@ def osmline_table(temp_db_with_extensions, table_factory):
 
 
 @pytest.fixture
-def sql_preprocessor_cfg(tmp_path, table_factory, temp_db_with_extensions):
-    table_factory('country_name', 'partition INT', ((0, ), (1, ), (2, )))
+def sql_preprocessor_cfg(tmp_path, table_factory, temp_db_with_extensions, country_row):
+    for part in range(3):
+        country_row(partition=part)
+
     cfg = Configuration(None)
     cfg.set_libdirs(sql=tmp_path)
     return cfg

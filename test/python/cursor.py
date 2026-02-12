@@ -2,12 +2,13 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2025 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Specialised psycopg cursor with shortcut functions useful for testing.
 """
 import psycopg
+from psycopg import sql as pysql
 
 
 class CursorForTesting(psycopg.Cursor):
@@ -52,7 +53,8 @@ class CursorForTesting(psycopg.Cursor):
     def table_rows(self, table, where=None):
         """ Return the number of rows in the given table.
         """
-        if where is None:
-            return self.scalar('SELECT count(*) FROM ' + table)
+        sql = pysql.SQL('SELECT count(*) FROM') + pysql.Identifier(table)
+        if where is not None:
+            sql += pysql.SQL('WHERE') + pysql.SQL(where)
 
-        return self.scalar('SELECT count(*) FROM {} WHERE {}'.format(table, where))
+        return self.scalar(sql)

@@ -442,6 +442,13 @@ async def polygons_endpoint(api: NominatimAPIAsync, params: ASGIAdaptor) -> Any:
     return build_response(params, params.formatting().format_result(results, fmt, {}))
 
 
+async def search_unavailable_endpoint(_api: NominatimAPIAsync, params: ASGIAdaptor) -> Any:
+    """ Server glue for /search endpoint in reverse-only mode.
+        Returns 404 when search functionality is not available.
+    """
+    params.raise_error('Search not available (reverse-only mode)', 404)
+
+
 class LazySearchEndpoint:
     """
     Lazy-loading search endpoint that replaces itself after first successful check.
@@ -455,7 +462,6 @@ class LazySearchEndpoint:
     def __init__(self, api: NominatimAPIAsync, real_endpoint: EndpointFunc):
         self.api = api
         self.real_endpoint = real_endpoint
-        self._checked = False
         self._lock = asyncio.Lock()
         self._wrapper: Any = None  # Store reference to Falcon's EndpointWrapper
         self._delegate: Optional[EndpointFunc] = None
@@ -468,12 +474,10 @@ class LazySearchEndpoint:
         return insp.has_table('search_name')
 
     async def __call__(self, api: NominatimAPIAsync, params: ASGIAdaptor) -> Any:
-        if not self._checked:
+        if self._delegate is None:
             async with self._lock:
                 # Double-check after acquiring lock (thread safety)
-                if not self._checked:
-                    self._checked = True
-
+                if self._delegate is None:
                     try:
                         async with api.begin() as conn:
                             has_table = await conn.connection.run_sync(
@@ -486,22 +490,15 @@ class LazySearchEndpoint:
                             if self._wrapper is not None:
                                 self._wrapper.func = self.real_endpoint
                         else:
-                            async def not_found(_api: NominatimAPIAsync,
-                                                params: ASGIAdaptor) -> Any:
-                                params.raise_error(
-                                    'Search not available (reverse-only mode)', 404)
-
-                            self._delegate = not_found
+                            self._delegate = search_unavailable_endpoint
                             if self._wrapper is not None:
-                                self._wrapper.func = not_found
+                                self._wrapper.func = search_unavailable_endpoint
 
                     except (PGCORE_ERROR, sa.exc.OperationalError, OSError):
-                        self._checked = False
+                        # No _delegate set, so retry on next request
                         params.raise_error('Search temporarily unavailable', 503)
 
-        # After initial check, delegate to the determined function
-        if self._delegate is not None:
-            return await self._delegate(api, params)
+        return await self._delegate(api, params)
 
 
 async def get_routes(api: NominatimAPIAsync) -> Sequence[Tuple[str, EndpointFunc]]:

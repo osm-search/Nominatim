@@ -13,7 +13,6 @@ import datetime as dt
 from nominatim_db.errors import UsageError
 from nominatim_db.tools import admin
 from nominatim_db.tokenizer import factory
-from nominatim_db.db.sql_preprocessor import SQLPreprocessor
 
 
 @pytest.fixture(autouse=True)
@@ -78,7 +77,7 @@ class TestAdminCleanDeleted:
 
     @pytest.fixture(autouse=True)
     def setup_polygon_delete(self, project_env, table_factory, place_table, placex_row,
-                             osmline_table, temp_db_cursor, temp_db_conn, def_config, src_dir):
+                             osmline_table, temp_db_cursor, load_sql):
         """ Set up place_force_delete function and related tables
         """
         self.project_env = project_env
@@ -117,11 +116,7 @@ class TestAdminCleanDeleted:
                                $$ LANGUAGE plpgsql;""")
         temp_db_cursor.execute("""CREATE TRIGGER place_before_delete BEFORE DELETE ON place
                                FOR EACH ROW EXECUTE PROCEDURE place_delete();""")
-        orig_sql = def_config.lib_dir.sql
-        def_config.lib_dir.sql = src_dir / 'lib-sql'
-        sqlproc = SQLPreprocessor(temp_db_conn, def_config)
-        sqlproc.run_sql_file(temp_db_conn, 'functions/utils.sql')
-        def_config.lib_dir.sql = orig_sql
+        load_sql('functions/utils.sql')
 
     def test_admin_clean_deleted_no_records(self):
         admin.clean_deleted_relations(self.project_env, age='1 year')

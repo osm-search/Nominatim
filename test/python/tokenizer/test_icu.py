@@ -15,7 +15,6 @@ import pytest
 from nominatim_db.tokenizer import icu_tokenizer
 import nominatim_db.tokenizer.icu_rule_loader
 from nominatim_db.db import properties
-from nominatim_db.db.sql_preprocessor import SQLPreprocessor
 from nominatim_db.data.place_info import PlaceInfo
 
 from mock_icu_word_table import MockIcuWordTable
@@ -90,13 +89,9 @@ def analyzer(tokenizer_factory, test_config, monkeypatch,
 
 
 @pytest.fixture
-def sql_functions(temp_db_conn, def_config, src_dir):
-    orig_sql = def_config.lib_dir.sql
-    def_config.lib_dir.sql = src_dir / 'lib-sql'
-    sqlproc = SQLPreprocessor(temp_db_conn, def_config)
-    sqlproc.run_sql_file(temp_db_conn, 'functions/utils.sql')
-    sqlproc.run_sql_file(temp_db_conn, 'tokenizer/icu_tokenizer.sql')
-    def_config.lib_dir.sql = orig_sql
+def sql_functions(load_sql):
+    load_sql('functions/utils.sql')
+    load_sql('tokenizer/icu_tokenizer.sql')
 
 
 @pytest.fixture

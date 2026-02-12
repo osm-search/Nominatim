@@ -17,7 +17,7 @@ SRC_DIR = (Path(__file__) / '..' / '..' / '..').resolve()
 sys.path.insert(0, str(SRC_DIR / 'src'))
 
 from nominatim_db.config import Configuration
-from nominatim_db.db import connection
+from nominatim_db.db import connection, properties
 from nominatim_db.db.sql_preprocessor import SQLPreprocessor
 import nominatim_db.tokenizer.factory
 
@@ -159,7 +159,14 @@ def load_sql(temp_db_conn, country_row):
 def property_table(load_sql, temp_db_conn):
     load_sql('tables/nominatim_properties.sql')
 
-    return mocks.MockPropertyTable(temp_db_conn)
+    class _PropTable:
+        def set(self, name, value):
+            properties.set_property(temp_db_conn, name, value)
+
+        def get(self, name):
+            return properties.get_property(temp_db_conn, name)
+
+    return _PropTable()
 
 
 @pytest.fixture

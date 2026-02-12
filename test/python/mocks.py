@@ -9,8 +9,6 @@ Custom mocks for testing.
 """
 import itertools
 
-from nominatim_db.db import properties
-
 
 class MockPlacexTable:
     """ A placex table for testing.
@@ -66,20 +64,3 @@ class MockPlacexTable:
             place_id = cur.fetchone()[0]
         self.conn.commit()
         return place_id
-
-
-class MockPropertyTable:
-    """ A property table for testing.
-    """
-    def __init__(self, conn):
-        self.conn = conn
-
-    def set(self, name, value):
-        """ Set a property in the table to the given value.
-        """
-        properties.set_property(self.conn, name, value)
-
-    def get(self, name):
-        """ Set a property in the table to the given value.
-        """
-        return properties.get_property(self.conn, name)

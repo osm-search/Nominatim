@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2025 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 import itertools
 import sys
@@ -146,28 +146,28 @@ def country_row(country_table, temp_db_cursor):
 
 
 @pytest.fixture
-def property_table(table_factory, temp_db_conn):
-    table_factory('nominatim_properties', 'property TEXT, value TEXT')
+def load_sql(temp_db_conn, country_row):
+    proc = SQLPreprocessor(temp_db_conn, Configuration(None))
+
+    def _run(filename, **kwargs):
+        proc.run_sql_file(temp_db_conn, filename, **kwargs)
+
+    return _run
+
+
+@pytest.fixture
+def property_table(load_sql, temp_db_conn):
+    load_sql('tables/nominatim_properties.sql')
 
     return mocks.MockPropertyTable(temp_db_conn)
 
 
 @pytest.fixture
-def status_table(table_factory):
+def status_table(load_sql):
     """ Create an empty version of the status table and
         the status logging table.
     """
-    table_factory('import_status',
-                  """lastimportdate timestamp with time zone NOT NULL,
-                     sequence_id integer,
-                     indexed boolean""")
-    table_factory('import_osmosis_log',
-                  """batchend timestamp,
-                     batchseq integer,
-                     batchsize bigint,
-                     starttime timestamp,
-                     endtime timestamp,
-                     event text""")
+    load_sql('tables/status.sql')
 
 
 @pytest.fixture
@@ -243,22 +243,8 @@ def placex_table(temp_db_with_extensions, temp_db_conn):
 
 
 @pytest.fixture
-def osmline_table(temp_db_with_extensions, table_factory):
-    table_factory('location_property_osmline',
-                  """place_id BIGINT,
-                     osm_id BIGINT,
-                     parent_place_id BIGINT,
-                     geometry_sector INTEGER,
-                     indexed_date TIMESTAMP,
-                     startnumber INTEGER,
-                     endnumber INTEGER,
-                     partition SMALLINT,
-                     indexed_status SMALLINT,
-                     linegeo GEOMETRY,
-                     interpolationtype TEXT,
-                     address HSTORE,
-                     postcode TEXT,
-                     country_code VARCHAR(2)""")
+def osmline_table(temp_db_with_extensions, load_sql):
+    load_sql('tables/interpolation.sql')
 
 
 @pytest.fixture

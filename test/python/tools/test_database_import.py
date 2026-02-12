@@ -170,14 +170,26 @@ def test_truncate_database_tables(temp_db_conn, temp_db_cursor, table_factory, w
 @pytest.mark.asyncio
 async def test_load_data(dsn, place_row, placex_table, osmline_table,
                          temp_db_cursor, threads):
-    for func in ('precompute_words', 'getorcreate_housenumber_id', 'make_standard_name'):
-        temp_db_cursor.execute(pysql.SQL("""CREATE FUNCTION {} (src TEXT)
-                                            RETURNS TEXT AS $$ SELECT 'a'::TEXT $$ LANGUAGE SQL
-                                         """).format(pysql.Identifier(func)))
     for oid in range(100, 130):
         place_row(osm_id=oid)
     place_row(osm_type='W', osm_id=342, cls='place', typ='houses',
               geom='LINESTRING(0 0, 10 10)')
+
+    temp_db_cursor.execute("""
+        CREATE OR REPLACE FUNCTION osmline_insert() RETURNS TRIGGER AS $$
+        BEGIN
+          NEW.place_id := nextval('seq_place');
+          IF NEW.indexed_status IS NULL THEN
+            NEW.indexed_status := 1;
+            NEW.partition := 0;
+            NEW.geometry_sector := 2424;
+          END IF;
+        RETURN NEW;
+        END; $$ LANGUAGE plpgsql STABLE PARALLEL SAFE;
+
+        CREATE TRIGGER osmline_before_insert BEFORE INSERT ON location_property_osmline
+        FOR EACH ROW EXECUTE PROCEDURE osmline_insert()
+    """)
 
     await database_import.load_data(dsn, threads)
 

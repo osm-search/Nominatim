@@ -177,7 +177,7 @@ async def test_load_data(dsn, place_row, placex_table, osmline_table,
     for oid in range(100, 130):
         place_row(osm_id=oid)
     place_row(osm_type='W', osm_id=342, cls='place', typ='houses',
-              geom='SRID=4326;LINESTRING(0 0, 10 10)')
+              geom='LINESTRING(0 0, 10 10)')
 
     await database_import.load_data(dsn, threads)
 

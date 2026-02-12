@@ -58,3 +58,44 @@ class CursorForTesting(psycopg.Cursor):
             sql += pysql.SQL('WHERE') + pysql.SQL(where)
 
         return self.scalar(sql)
+
+    def insert_row(self, table, **data):
+        """ Insert a row into the given table.
+
+            'data' is a dictionary of column names and associated values.
+            When the value is a pysql.Literal or pysql.SQL, then the expression
+            will be inserted as is instead of loading the value. When the
+            value is a tuple, then the first element will be added as an
+            SQL expression for the value and the second element is treated
+            as the actual value to insert. The SQL expression must contain
+            a %s placeholder in that case.
+
+            If data contains a 'place_id' column, then the value of the
+            place_id column after insert is returned. Otherwise the function
+            returns nothing.
+        """
+        columns = []
+        placeholders = []
+        values = []
+        for k, v in data.items():
+            columns.append(pysql.Identifier(k))
+            if isinstance(v, tuple):
+                placeholders.append(pysql.SQL(v[0]))
+                values.append(v[1])
+            elif isinstance(v, (pysql.Literal, pysql.SQL)):
+                placeholders.append(v)
+            else:
+                placeholders.append(pysql.Placeholder())
+                values.append(v)
+
+        sql = pysql.SQL("INSERT INTO {table} ({columns}) VALUES({values})")\
+                   .format(table=pysql.Identifier(table),
+                           columns=pysql.SQL(',').join(columns),
+                           values=pysql.SQL(',').join(placeholders))
+
+        if 'place_id' in data:
+            sql += pysql.SQL('RETURNING place_id')
+
+        self.execute(sql, values)
+
+        return self.fetchone()[0] if 'place_id' in data else None

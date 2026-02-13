@@ -1,0 +1,95 @@
+name: 'Setup Postgresql and Postgis on Windows'
+
+description: 'Installs PostgreSQL and PostGIS for Windows and configures it for CI tests'
+
+inputs:
+    postgresql-version:
+        description: 'Version of PostgreSQL to install'
+        required: true
+
+runs:
+    using: "composite"  
+
+    steps:
+        - name: Set up PostgreSQL variables
+          shell: pwsh
+          run: |
+            $version = "${{ inputs.postgresql-version }}"
+            $root = "C:\Program Files\PostgreSQL\$version"
+            $bin = "$root\bin"
+
+            echo "PGROOT=$root" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+            echo "PGBIN=$bin"   | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+            echo "$bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+        - name: Decide Postgis version (Windows)
+          id: postgis-ver
+          shell: pwsh
+          run: |
+            echo "PowerShell version: ${PSVersionTable.PSVersion}"
+            $PG_VERSION = Split-Path $env:PGROOT -Leaf
+            $postgis_page = "https://download.osgeo.org/postgis/windows/pg$PG_VERSION"
+            echo "Detecting PostGIS version from $postgis_page for PostgreSQL $PG_VERSION"
+            $pgis_bundle = (Invoke-WebRequest -Uri $postgis_page -ErrorAction Stop).Links.Where({$_.href -match "^postgis.*zip$"}).href
+            if (!$pgis_bundle) {
+              Write-Error "Could not find latest PostGIS version in $postgis_page that would match  ^postgis.*zip$  pattern"
+              exit 1
+            }
+            $pgis_bundle = [IO.Path]::ChangeExtension($pgis_bundle, [NullString]::Value)
+            $pgis_bundle_url = "$postgis_page/$pgis_bundle.zip"
+            Add-Content $env:GITHUB_OUTPUT "postgis_file=$pgis_bundle"
+            Add-Content $env:GITHUB_OUTPUT "postgis_bundle_url=$pgis_bundle_url"
+
+        - uses: actions/cache@v4
+          with:
+            path: |
+              C:/postgis.zip
+            key: postgis-cache-${{ steps.postgis-ver.outputs.postgis_file }}
+
+        - name: Download postgis
+          shell: pwsh
+          run: |
+            if (!(Test-Path "C:\postgis.zip")){(new-object net.webclient).DownloadFile($env:PGIS_BUNDLE_URL, "c:\postgis.zip")}
+            if (Test-path "c:\postgis_archive"){Remove-Item "c:\postgis_archive" -Recurse -Force}
+            7z x c:\postgis.zip -oc:\postgis_archive
+          env: 
+            PGIS_BUNDLE_URL: ${{ steps.postgis-ver.outputs.postgis_bundle_url }}
+
+        - name: Install postgis
+          shell: bash
+          run: |
+            echo "Root: $PGROOT, Bin: $PGBIN"
+            cp -r c:/postgis_archive/postgis-bundle-*/* "$PGROOT" 
+
+        - name: Start PostgreSQL on Windows
+          run: |
+            $pgService = Get-Service -Name postgresql*
+            Set-Service -InputObject $pgService -Status running -StartupType automatic
+            Start-Process -FilePath "$env:PGBIN\pg_isready" -Wait -PassThru
+          shell: pwsh
+
+        - name: Adapt postgresql configuration
+          shell: pwsh
+          env:
+            PGPASSWORD: root
+          run: |
+            & "$env:PGBIN\psql" -U postgres -d postgres -c "ALTER SYSTEM SET fsync = 'off';"
+            & "$env:PGBIN\psql" -U postgres -d postgres -c "ALTER SYSTEM SET synchronous_commit = 'off';"
+            & "$env:PGBIN\psql" -U postgres -d postgres -c "ALTER SYSTEM SET full_page_writes = 'off';"
+            & "$env:PGBIN\psql" -U postgres -d postgres -c "ALTER SYSTEM SET shared_buffers = '1GB';"
+            & "$env:PGBIN\psql" -U postgres -d postgres -c "ALTER SYSTEM SET port = 5432;"
+
+            Restart-Service -Name postgresql*
+            Start-Process -FilePath "$env:PGBIN\pg_isready" -Wait -PassThru
+
+        - name: Setup database users
+          shell: pwsh
+          env:
+            PGPASSWORD: root
+          run: |
+            & "$env:PGBIN\createuser" -U postgres -S www-data
+            & "$env:PGBIN\createuser" -U postgres -s runner
+        
+
+

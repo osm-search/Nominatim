@@ -200,14 +200,15 @@ def test_get_path_empty(make_config):
     assert not config.get_path('TOKENIZER_CONFIG')
 
 
-def test_get_path_absolute(make_config, monkeypatch):
+def test_get_path_absolute(make_config, monkeypatch, tmp_path):
     config = make_config()
 
-    monkeypatch.setenv('NOMINATIM_FOOBAR', '/dont/care')
+    p = (tmp_path / "does_not_exist").resolve()
+    monkeypatch.setenv('NOMINATIM_FOOBAR', str(p))
     result = config.get_path('FOOBAR')
 
     assert isinstance(result, Path)
-    assert str(result) == '/dont/care'
+    assert str(result) == str(p)
 
 
 def test_get_path_relative(make_config, monkeypatch, tmp_path):

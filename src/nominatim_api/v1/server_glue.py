@@ -12,6 +12,7 @@ from typing import Optional, Any, Type, Dict, cast, Sequence, Tuple
 from functools import reduce
 import dataclasses
 from urllib.parse import urlencode
+import asyncio
 
 import sqlalchemy as sa
 
@@ -441,6 +442,65 @@ async def polygons_endpoint(api: NominatimAPIAsync, params: ASGIAdaptor) -> Any:
     return build_response(params, params.formatting().format_result(results, fmt, {}))
 
 
+async def search_unavailable_endpoint(_api: NominatimAPIAsync, params: ASGIAdaptor) -> Any:
+    """ Server glue for /search endpoint in reverse-only mode.
+        Returns 404 when search functionality is not available.
+    """
+    params.raise_error('Search not available (reverse-only mode)', 404)
+
+
+class LazySearchEndpoint:
+    """
+    Lazy-loading search endpoint that replaces itself after first successful check.
+
+    - Falcon: EndpointWrapper stores this instance in wrapper.func
+      On first request, replace wrapper.func directly with real endpoint
+
+    - Starlette: _wrap_endpoint wraps this instance in a callback
+      store a delegate function and call it on subsequent requests
+    """
+    def __init__(self, api: NominatimAPIAsync, real_endpoint: EndpointFunc):
+        self.api = api
+        self.real_endpoint = real_endpoint
+        self._lock = asyncio.Lock()
+        self._wrapper: Any = None  # Store reference to Falcon's EndpointWrapper
+        self._delegate: Optional[EndpointFunc] = None
+
+    def set_wrapper(self, wrapper: Any) -> None:
+        self._wrapper = wrapper
+
+    def _has_search_name(self, conn: sa.engine.Connection) -> bool:
+        insp = sa.inspect(conn)
+        return insp.has_table('search_name')
+
+    async def __call__(self, api: NominatimAPIAsync, params: ASGIAdaptor) -> Any:
+        if self._delegate is None:
+            async with self._lock:
+                # Double-check after acquiring lock (thread safety)
+                if self._delegate is None:
+                    try:
+                        async with api.begin() as conn:
+                            has_table = await conn.connection.run_sync(
+                                self._has_search_name)
+
+                        if has_table:
+                            # For Starlette
+                            self._delegate = self.real_endpoint
+                            # For Falcon
+                            if self._wrapper is not None:
+                                self._wrapper.func = self.real_endpoint
+                        else:
+                            self._delegate = search_unavailable_endpoint
+                            if self._wrapper is not None:
+                                self._wrapper.func = search_unavailable_endpoint
+
+                    except (PGCORE_ERROR, sa.exc.OperationalError, OSError):
+                        # No _delegate set, so retry on next request
+                        params.raise_error('Search temporarily unavailable', 503)
+
+        return await self._delegate(api, params)
+
+
 async def get_routes(api: NominatimAPIAsync) -> Sequence[Tuple[str, EndpointFunc]]:
     routes = [
         ('status', status_endpoint),
@@ -459,7 +519,7 @@ async def get_routes(api: NominatimAPIAsync) -> Sequence[Tuple[str, EndpointFunc
         async with api.begin() as conn:
             if await conn.connection.run_sync(has_search_name):
                 routes.append(('search', search_endpoint))
-    except (PGCORE_ERROR, sa.exc.OperationalError):
-        pass  # ignored
+    except (PGCORE_ERROR, sa.exc.OperationalError, OSError):
+        routes.append(('search', LazySearchEndpoint(api, search_endpoint)))
 
     return routes

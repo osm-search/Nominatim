@@ -184,6 +184,10 @@ class APIMiddleware:
         formatter = load_format_dispatcher('v1', self.api.config.project_dir)
         for name, func in await api_impl.get_routes(self.api):
             endpoint = EndpointWrapper(name, func, self.api, formatter)
+            # If func is a LazySearchEndpoint, give it a reference to wrapper
+            # so it can replace wrapper.func dynamically
+            if hasattr(func, 'set_wrapper'):
+                func.set_wrapper(endpoint)
             self.app.add_route(f"/{name}", endpoint)
             if legacy_urls:
                 self.app.add_route(f"/{name}.php", endpoint)

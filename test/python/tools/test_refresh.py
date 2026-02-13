@@ -42,8 +42,8 @@ def test_refresh_import_wikipedia(dsn, src_dir, table_factory, temp_db_cursor, r
 
 
 @pytest.mark.parametrize('osm_type', ('N', 'W', 'R'))
-def test_invalidate_osm_object_simple(placex_table, osm_type, temp_db_conn, temp_db_cursor):
-    placex_table.add(osm_type=osm_type, osm_id=57283)
+def test_invalidate_osm_object_simple(placex_row, osm_type, temp_db_conn, temp_db_cursor):
+    placex_row(osm_type=osm_type, osm_id=57283)
 
     refresh.invalidate_osm_object(osm_type, 57283, temp_db_conn, recursive=False)
     temp_db_conn.commit()
@@ -53,8 +53,8 @@ def test_invalidate_osm_object_simple(placex_table, osm_type, temp_db_conn, temp
                                       (osm_type, 57283))
 
 
-def test_invalidate_osm_object_nonexisting_simple(placex_table, temp_db_conn, temp_db_cursor):
-    placex_table.add(osm_type='W', osm_id=57283)
+def test_invalidate_osm_object_nonexisting_simple(placex_row, temp_db_conn, temp_db_cursor):
+    placex_row(osm_type='W', osm_id=57283)
 
     refresh.invalidate_osm_object('N', 57283, temp_db_conn, recursive=False)
     temp_db_conn.commit()
@@ -64,8 +64,8 @@ def test_invalidate_osm_object_nonexisting_simple(placex_table, temp_db_conn, te
 
 
 @pytest.mark.parametrize('osm_type', ('N', 'W', 'R'))
-def test_invalidate_osm_object_recursive(placex_table, osm_type, temp_db_conn, temp_db_cursor):
-    placex_table.add(osm_type=osm_type, osm_id=57283)
+def test_invalidate_osm_object_recursive(placex_row, osm_type, temp_db_conn, temp_db_cursor):
+    placex_row(osm_type=osm_type, osm_id=57283)
 
     temp_db_cursor.execute("""CREATE OR REPLACE FUNCTION place_force_update(placeid BIGINT)
                               RETURNS BOOLEAN AS $$

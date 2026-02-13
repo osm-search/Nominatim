@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2025 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
     Tests for import special phrases methods
@@ -125,9 +125,8 @@ def test_grant_access_to_web_user(temp_db_conn, temp_db_cursor, table_factory,
                               phrase_class, phrase_type)
 
 
-def test_create_place_classtype_table_and_indexes(
-        temp_db_cursor, def_config, placex_table,
-        sp_importer, temp_db_conn, monkeypatch):
+def test_create_place_classtype_table_and_indexes(temp_db_cursor, def_config, placex_row,
+                                                  sp_importer, temp_db_conn, monkeypatch):
     """
         Test that _create_place_classtype_table_and_indexes()
         create the right place_classtype tables and place_id indexes
@@ -136,7 +135,7 @@ def test_create_place_classtype_table_and_indexes(
     """
     pairs = set([('class1', 'type1'), ('class2', 'type2')])
     for pair in pairs:
-        placex_table.add(cls=pair[0], typ=pair[1])   # adding to db
+        placex_row(cls=pair[0], typ=pair[1])   # adding to db
     sp_importer._create_classtype_table_and_indexes(pairs)
     temp_db_conn.commit()
 
@@ -178,7 +177,7 @@ def test_remove_non_existent_tables_from_db(sp_importer, default_phrases,
 
 @pytest.mark.parametrize("should_replace", [(True), (False)])
 def test_import_phrases(monkeypatch, temp_db_cursor, def_config, sp_importer,
-                        placex_table, table_factory, tokenizer_mock,
+                        placex_row, table_factory, tokenizer_mock,
                         xml_wiki_content, should_replace):
     """
         Check that the main import_phrases() method is well executed.
@@ -199,8 +198,8 @@ def test_import_phrases(monkeypatch, temp_db_cursor, def_config, sp_importer,
     type_test = 'zip_line'
 
     tokenizer = tokenizer_mock()
-    placex_table.add(cls=class_test, typ=type_test)  # in db for special phrase filtering
-    placex_table.add(cls='amenity', typ='animal_shelter')  # in db for special phrase filtering
+    placex_row(cls=class_test, typ=type_test)  # in db for special phrase filtering
+    placex_row(cls='amenity', typ='animal_shelter')  # in db for special phrase filtering
     sp_importer.import_phrases(tokenizer, should_replace)
 
     assert len(tokenizer.analyser_cache['special_phrases']) == 19
@@ -257,7 +256,7 @@ def check_placeid_and_centroid_indexes(temp_db_cursor, phrase_class, phrase_type
 
 @pytest.mark.parametrize("should_replace", [(True), (False)])
 def test_import_phrases_special_phrase_filtering(monkeypatch, temp_db_cursor, def_config,
-                                                 sp_importer, placex_table, tokenizer_mock,
+                                                 sp_importer, placex_row, tokenizer_mock,
                                                  xml_wiki_content, should_replace):
 
     monkeypatch.setattr('nominatim_db.tools.special_phrases.sp_wiki_loader._get_wiki_content',
@@ -266,7 +265,7 @@ def test_import_phrases_special_phrase_filtering(monkeypatch, temp_db_cursor, de
     class_test = 'aerialway'
     type_test = 'zip_line'
 
-    placex_table.add(cls=class_test, typ=type_test)  # add to the database to make valid
+    placex_row(cls=class_test, typ=type_test)  # add to the database to make valid
     tokenizer = tokenizer_mock()
     sp_importer.import_phrases(tokenizer, should_replace)
 
@@ -276,11 +275,11 @@ def test_import_phrases_special_phrase_filtering(monkeypatch, temp_db_cursor, de
     assert check_grant_access(temp_db_cursor, def_config.DATABASE_WEBUSER, class_test, type_test)
 
 
-def test_get_classtype_pairs_directly(placex_table, temp_db_conn, sp_importer):
+def test_get_classtype_pairs_directly(placex_row, temp_db_conn, sp_importer):
     for _ in range(101):
-        placex_table.add(cls='highway', typ='residential')
+        placex_row(cls='highway', typ='residential')
     for _ in range(99):
-        placex_table.add(cls='amenity', typ='toilet')
+        placex_row(cls='amenity', typ='toilet')
 
     temp_db_conn.commit()
 

@@ -2,17 +2,17 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2025 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for maintenance and analysis functions.
 """
 import pytest
+import datetime as dt
 
 from nominatim_db.errors import UsageError
 from nominatim_db.tools import admin
 from nominatim_db.tokenizer import factory
-from nominatim_db.db.sql_preprocessor import SQLPreprocessor
 
 
 @pytest.fixture(autouse=True)
@@ -61,15 +61,14 @@ def test_analyse_indexing_unknown_osmid(project_env):
         admin.analyse_indexing(project_env, osm_id='W12345674')
 
 
-def test_analyse_indexing_with_place_id(project_env, temp_db_cursor):
-    temp_db_cursor.execute("INSERT INTO placex (place_id) VALUES(12345)")
+def test_analyse_indexing_with_place_id(project_env, placex_row):
+    place_id = placex_row()
 
-    admin.analyse_indexing(project_env, place_id=12345)
+    admin.analyse_indexing(project_env, place_id=place_id)
 
 
-def test_analyse_indexing_with_osm_id(project_env, temp_db_cursor):
-    temp_db_cursor.execute("""INSERT INTO placex (place_id, osm_type, osm_id)
-                              VALUES(9988, 'N', 10000)""")
+def test_analyse_indexing_with_osm_id(project_env, placex_row):
+    placex_row(osm_type='N', osm_id=10000)
 
     admin.analyse_indexing(project_env, osm_id='N10000')
 
@@ -77,8 +76,8 @@ def test_analyse_indexing_with_osm_id(project_env, temp_db_cursor):
 class TestAdminCleanDeleted:
 
     @pytest.fixture(autouse=True)
-    def setup_polygon_delete(self, project_env, table_factory, place_table,
-                             osmline_table, temp_db_cursor, temp_db_conn, def_config, src_dir):
+    def setup_polygon_delete(self, project_env, table_factory, place_table, placex_row,
+                             osmline_table, temp_db_cursor, load_sql):
         """ Set up place_force_delete function and related tables
         """
         self.project_env = project_env
@@ -91,12 +90,15 @@ class TestAdminCleanDeleted:
                       ((100, 'N', 'boundary', 'administrative'),
                        (145, 'N', 'boundary', 'administrative'),
                        (175, 'R', 'landcover', 'grass')))
-        temp_db_cursor.execute("""
-            INSERT INTO placex (place_id, osm_id, osm_type, class, type,
-                                indexed_date, indexed_status)
-            VALUES(1, 100, 'N', 'boundary', 'administrative', current_date - INTERVAL '1 month', 1),
-                  (2, 145, 'N', 'boundary', 'administrative', current_date - INTERVAL '3 month', 1),
-                  (3, 175, 'R', 'landcover', 'grass', current_date - INTERVAL '3 months', 1)""")
+
+        now = dt.datetime.now()
+        placex_row(osm_type='N', osm_id=100, cls='boundary', typ='administrative',
+                   indexed_status=1, indexed_date=now - dt.timedelta(days=30))
+        placex_row(osm_type='N', osm_id=145, cls='boundary', typ='administrative',
+                   indexed_status=1, indexed_date=now - dt.timedelta(days=90))
+        placex_row(osm_type='R', osm_id=175, cls='landcover', typ='grass',
+                   indexed_status=1, indexed_date=now - dt.timedelta(days=90))
+
         # set up tables and triggers for utils function
         table_factory('place_to_be_deleted',
                       """osm_id BIGINT,
@@ -104,7 +106,6 @@ class TestAdminCleanDeleted:
                       class TEXT NOT NULL,
                       type TEXT NOT NULL,
                       deferred BOOLEAN""")
-        table_factory('country_name', 'partition INT')
         table_factory('import_polygon_error', """osm_id BIGINT,
                       osm_type CHAR(1),
                       class TEXT NOT NULL,
@@ -115,11 +116,7 @@ class TestAdminCleanDeleted:
                                $$ LANGUAGE plpgsql;""")
         temp_db_cursor.execute("""CREATE TRIGGER place_before_delete BEFORE DELETE ON place
                                FOR EACH ROW EXECUTE PROCEDURE place_delete();""")
-        orig_sql = def_config.lib_dir.sql
-        def_config.lib_dir.sql = src_dir / 'lib-sql'
-        sqlproc = SQLPreprocessor(temp_db_conn, def_config)
-        sqlproc.run_sql_file(temp_db_conn, 'functions/utils.sql')
-        def_config.lib_dir.sql = orig_sql
+        load_sql('functions/utils.sql')
 
     def test_admin_clean_deleted_no_records(self):
         admin.clean_deleted_relations(self.project_env, age='1 year')

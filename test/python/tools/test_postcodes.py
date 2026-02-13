@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2025 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for functions to maintain the artificial postcode table.
@@ -75,20 +75,18 @@ class MockPostcodeTable:
 @pytest.fixture
 def postcode_table(def_config, temp_db_conn, placex_table, table_factory):
     country_info.setup_country_config(def_config)
-    table_factory('country_name', 'partition INT', ((0, ), (1, ), (2, )))
     return MockPostcodeTable(temp_db_conn, def_config)
 
 
 @pytest.fixture
-def insert_implicit_postcode(placex_table, place_postcode_row):
+def insert_implicit_postcode(placex_row, place_postcode_row):
     """ Insert data into the placex and place table
         which can then be used to compute one postcode.
     """
     def _insert_implicit_postcode(osm_id, country, geometry, postcode, in_placex=False):
         if in_placex:
-            placex_table.add(osm_id=osm_id, country=country, geom=geometry,
-                             centroid=f'SRID=4326;{geometry}',
-                             address={'postcode': postcode})
+            placex_row(osm_id=osm_id, country=country, geom=geometry,
+                       centroid=geometry, address={'postcode': postcode})
         else:
             place_postcode_row(osm_id=osm_id, centroid=geometry,
                                country=country, postcode=postcode)

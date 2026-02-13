@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2025 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for ICU tokenizer.
@@ -15,7 +15,6 @@ import pytest
 from nominatim_db.tokenizer import icu_tokenizer
 import nominatim_db.tokenizer.icu_rule_loader
 from nominatim_db.db import properties
-from nominatim_db.db.sql_preprocessor import SQLPreprocessor
 from nominatim_db.data.place_info import PlaceInfo
 
 from mock_icu_word_table import MockIcuWordTable
@@ -90,13 +89,9 @@ def analyzer(tokenizer_factory, test_config, monkeypatch,
 
 
 @pytest.fixture
-def sql_functions(temp_db_conn, def_config, src_dir):
-    orig_sql = def_config.lib_dir.sql
-    def_config.lib_dir.sql = src_dir / 'lib-sql'
-    sqlproc = SQLPreprocessor(temp_db_conn, def_config)
-    sqlproc.run_sql_file(temp_db_conn, 'functions/utils.sql')
-    sqlproc.run_sql_file(temp_db_conn, 'tokenizer/icu_tokenizer.sql')
-    def_config.lib_dir.sql = orig_sql
+def sql_functions(load_sql):
+    load_sql('functions/utils.sql')
+    load_sql('tokenizer/icu_tokenizer.sql')
 
 
 @pytest.fixture
@@ -653,22 +648,21 @@ class TestUpdateWordTokens:
         self.tok.update_word_tokens()
         assert word_table.count_housenumbers() == 1
 
-    def test_keep_housenumbers_from_placex_table(self, add_housenumber, word_table,
-                                                 placex_table):
+    def test_keep_housenumbers_from_placex_table(self, add_housenumber, word_table, placex_row):
         add_housenumber(9999, '5432a')
         add_housenumber(9990, '34z')
-        placex_table.add(housenumber='34z')
-        placex_table.add(housenumber='25432a')
+        placex_row(housenumber='34z')
+        placex_row(housenumber='25432a')
 
         assert word_table.count_housenumbers() == 2
         self.tok.update_word_tokens()
         assert word_table.count_housenumbers() == 1
 
     def test_keep_housenumbers_from_placex_table_hnr_list(self, add_housenumber,
-                                                          word_table, placex_table):
+                                                          word_table, placex_row):
         add_housenumber(9991, '9 b')
         add_housenumber(9990, '34z')
-        placex_table.add(housenumber='9 a;9 b;9 c')
+        placex_row(housenumber='9 a;9 b;9 c')
 
         assert word_table.count_housenumbers() == 2
         self.tok.update_word_tokens()

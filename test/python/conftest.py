@@ -281,6 +281,44 @@ def osmline_table(temp_db_with_extensions, load_sql):
 
 
 @pytest.fixture
+def osmline_row(osmline_table, temp_db_cursor):
+    idseq = itertools.count(20001)
+
+    def _add(osm_id=None, geom='LINESTRING(12.0 11.0, 12.003 11.0)'):
+        return temp_db_cursor.insert_row(
+            'location_property_osmline',
+            place_id=pysql.SQL("nextval('seq_place')"),
+            osm_id=osm_id or next(idseq),
+            geometry_sector=pysql.Literal(20),
+            partition=pysql.Literal(0),
+            indexed_status=1,
+            linegeo=_with_srid(geom))
+
+    return _add
+
+
+@pytest.fixture
+def postcode_table(temp_db_with_extensions, load_sql):
+    load_sql('tables/postcodes.sql')
+
+
+@pytest.fixture
+def postcode_row(postcode_table, temp_db_cursor):
+    def _add(country, postcode, x=34.5, y=-9.33):
+        geom = _with_srid(f"POINT({x} {y})")
+        return temp_db_cursor.insert_row(
+            'location_postcodes',
+            place_id=pysql.SQL("nextval('seq_place')"),
+            indexed_status=pysql.Literal(1),
+            country_code=country, postcode=postcode,
+            centroid=geom,
+            rank_search=pysql.Literal(16),
+            geometry=('ST_Expand(%s::geometry, 0.005)', geom))
+
+    return _add
+
+
+@pytest.fixture
 def sql_preprocessor_cfg(tmp_path, table_factory, temp_db_with_extensions, country_row):
     for part in range(3):
         country_row(partition=part)

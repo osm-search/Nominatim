@@ -89,7 +89,7 @@ BEGIN
 
       -- Add the linked-place (e.g. city) name as a searchable placename in the default language (if any)
       default_language := get_country_language_code(location.country_code);
-      IF default_language is not NULL AND NOT location.name ? ('name:' || default_language) THEN
+      IF default_language is not NULL AND location.name ? 'name' AND NOT location.name ? ('name:' || default_language) THEN
         location.name := location.name || hstore('name:' || default_language, location.name->'name');
       END IF;
 

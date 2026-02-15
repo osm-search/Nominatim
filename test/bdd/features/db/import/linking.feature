@@ -299,18 +299,23 @@ Feature: Linking of places
 
     Scenario: Linked places expand default language names
         Given the grid with origin CO
-            | 1 |   | 2 |
-            |   | 9 |   |
-            | 4 |   | 3 |
-        Given the places
+            | 1 |   | 2 |  | 5 |    | 6 |
+            |   | 9 |   |  |   | 10 |   |
+            | 4 |   | 3 |  | 8 |    | 7 |
+        And the places
             | osm | class    | type           | name+name                | geometry    |
             | N9  | place    | city           | Popayán                  | 9           |
-        Given the places
+        And the places
+            | osm | class    | type           | name+name:en             | geometry    |
+            | N10 | place    | city           | Open                     | 10          |
+        And the places
             | osm | class    | type           | name+name                | geometry    | admin |
             | R1  | boundary | administrative | Perímetro Urbano Popayán | (1,2,3,4,1) | 8     |
+            | R2  | boundary | administrative | Abre                     | (5,6,7,8,5) | 8     |
         And the relations
-            | id | members  |
-            | 1  | N9:label |
+            | id | members   |
+            | 1  | N9:label  |
+            | 2  | N10:label |
         When importing
         Then placex contains
             | object      | linked_place_id |

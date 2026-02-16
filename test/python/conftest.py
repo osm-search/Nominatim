@@ -192,9 +192,9 @@ def place_table(temp_db_with_extensions, table_factory):
                      type text NOT NULL,
                      name hstore,
                      admin_level smallint,
-                     address hstore,
-                     extratags hstore,
-                     geometry Geometry(Geometry,4326) NOT NULL""")
+                     address HSTORE,
+                     extratags HSTORE,
+                     geometry GEOMETRY(Geometry,4326) NOT NULL""")
 
 
 @pytest.fixture
@@ -223,9 +223,9 @@ def place_postcode_table(temp_db_with_extensions, table_factory):
                   """osm_type char(1) NOT NULL,
                      osm_id bigint NOT NULL,
                      postcode text NOT NULL,
-                     country_code text,
-                     centroid Geometry(Point, 4326) NOT NULL,
-                     geometry Geometry(Geometry, 4326)""")
+                     country_code TEXT,
+                     centroid GEOMETRY(Point, 4326) NOT NULL,
+                     geometry GEOMETRY(Geometry, 4326)""")
 
 
 @pytest.fixture
@@ -242,6 +242,36 @@ def place_postcode_row(place_postcode_table, temp_db_cursor):
                                   postcode=postcode, country_code=country,
                                   centroid=_with_srid(centroid),
                                   geometry=_with_srid(geom))
+
+    return _insert
+
+
+@pytest.fixture
+def place_interpolation_table(temp_db_with_extensions, table_factory):
+    """ Create an empty version of the place_interpolation table.
+    """
+    table_factory('place_interpolation',
+                  """osm_type char(1) NOT NULL,
+                     osm_id bigint NOT NULL,
+                     type TEXT,
+                     address HSTORE,
+                     nodes BIGINT[],
+                     geometry GEOMETRY(Geometry, 4326)""")
+
+
+@pytest.fixture
+def place_interpolation_row(place_interpolation_table, temp_db_cursor):
+    """ A factory for rows in the place_interpolation table. The table is created as a
+        prerequisite to the fixture.
+    """
+    idseq = itertools.count(30001)
+
+    def _insert(osm_type='N', osm_id=None, typ='odd', address=None,
+                nodes=None, geom='LINESTRING(0.1 0.21, 0.1 0.2)'):
+        params = {'osm_type': osm_type, 'osm_id': osm_id or next(idseq),
+                  'type': typ, 'address': address, 'nodes': nodes,
+                  'geometry': _with_srid(geom)}
+        temp_db_cursor.insert_row('place_interpolation', **params)
 
     return _insert
 
@@ -289,10 +319,11 @@ def osmline_table(temp_db_with_extensions, load_sql):
 def osmline_row(osmline_table, temp_db_cursor):
     idseq = itertools.count(20001)
 
-    def _add(osm_id=None, geom='LINESTRING(12.0 11.0, 12.003 11.0)'):
+    def _add(osm_type='W', osm_id=None, geom='LINESTRING(12.0 11.0, 12.003 11.0)'):
         return temp_db_cursor.insert_row(
             'location_property_osmline',
             place_id=pysql.SQL("nextval('seq_place')"),
+            osm_type=osm_type,
             osm_id=osm_id or next(idseq),
             geometry_sector=pysql.Literal(20),
             partition=pysql.Literal(0),

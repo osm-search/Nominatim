@@ -76,8 +76,8 @@ def test_analyse_indexing_with_osm_id(project_env, placex_row):
 class TestAdminCleanDeleted:
 
     @pytest.fixture(autouse=True)
-    def setup_polygon_delete(self, project_env, table_factory, place_table, placex_row,
-                             osmline_table, temp_db_cursor, load_sql):
+    def setup_polygon_delete(self, project_env, table_factory, place_interpolation_table,
+                             placex_row, osmline_table, temp_db_cursor, load_sql):
         """ Set up place_force_delete function and related tables
         """
         self.project_env = project_env
@@ -106,16 +106,24 @@ class TestAdminCleanDeleted:
                       class TEXT NOT NULL,
                       type TEXT NOT NULL,
                       deferred BOOLEAN""")
+        table_factory('place_interpolation_to_be_deleted',
+                      """osm_id BIGINT,
+                      osm_type CHAR(1)""")
         table_factory('import_polygon_error', """osm_id BIGINT,
                       osm_type CHAR(1),
                       class TEXT NOT NULL,
                       type TEXT NOT NULL""")
-        temp_db_cursor.execute("""CREATE OR REPLACE FUNCTION place_delete()
-                               RETURNS TRIGGER AS $$
-                               BEGIN RETURN NULL; END;
-                               $$ LANGUAGE plpgsql;""")
-        temp_db_cursor.execute("""CREATE TRIGGER place_before_delete BEFORE DELETE ON place
-                               FOR EACH ROW EXECUTE PROCEDURE place_delete();""")
+        temp_db_cursor.execute("""
+            CREATE OR REPLACE FUNCTION place_delete() RETURNS TRIGGER AS $$
+                BEGIN RETURN NULL; END;
+            $$ LANGUAGE plpgsql;
+
+            CREATE TRIGGER place_before_delete BEFORE DELETE ON place
+            FOR EACH ROW EXECUTE PROCEDURE place_delete();
+
+            CREATE TRIGGER place_interpolation_before_delete BEFORE DELETE ON place_interpolation
+            FOR EACH ROW EXECUTE PROCEDURE place_delete();
+        """)
         load_sql('functions/utils.sql')
 
     def test_admin_clean_deleted_no_records(self):

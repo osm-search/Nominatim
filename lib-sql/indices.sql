@@ -2,7 +2,7 @@
 --
 -- This file is part of Nominatim. (https://nominatim.org)
 --
--- Copyright (C) 2025 by the Nominatim developer community.
+-- Copyright (C) 2026 by the Nominatim developer community.
 -- For a full list of authors see the git log.
 
 -- Indices used only during search and update.
@@ -67,11 +67,16 @@ CREATE INDEX IF NOT EXISTS idx_osmline_parent_osm_id
 ---
 -- Table needed for running updates with osm2pgsql on place.
   CREATE TABLE IF NOT EXISTS place_to_be_deleted (
-    osm_type CHAR(1),
-    osm_id BIGINT,
-    class TEXT,
-    type TEXT,
-    deferred BOOLEAN
+    osm_type CHAR(1) NOT NULL,
+    osm_id BIGINT NOT NULL,
+    class TEXT NOT NULL,
+    type TEXT NOT NULL,
+    deferred BOOLEAN NOT NULL
+   );
+
+  CREATE TABLE IF NOT EXISTS place_interpolation_to_be_deleted (
+    osm_type CHAR(1) NOT NULL,
+    osm_id BIGINT NOT NULL
    );
 ---
   CREATE INDEX IF NOT EXISTS idx_location_postcodes_parent_place_id

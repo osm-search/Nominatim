@@ -53,12 +53,10 @@ BEGIN
       -- See if we can inherit additional address tags from an interpolation.
       -- These will become permanent.
       FOR location IN
-        SELECT (address - 'interpolation'::text - 'housenumber'::text) as address
-          FROM place, planet_osm_ways w
-          WHERE place.osm_type = 'W' and place.address ? 'interpolation'
-                and place.geometry && p.geometry
-                and place.osm_id = w.id
-                and p.osm_id = any(w.nodes)
+        SELECT address as address
+          FROM place_interpolation
+          WHERE p.osm_id = any(place_interpolation.nodes)
+                AND address is not NULL AND not address ? 'housenumber'
       LOOP
         result.address := location.address || result.address;
       END LOOP;

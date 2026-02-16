@@ -624,18 +624,22 @@ BEGIN
           and placex.type = place_to_be_deleted.type
           and not deferred;
 
-   -- Mark for delete in interpolations
-   UPDATE location_property_osmline SET indexed_status = 100 FROM place_to_be_deleted
-    WHERE place_to_be_deleted.osm_type = 'W'
-          and place_to_be_deleted.class = 'place'
-          and place_to_be_deleted.type = 'houses'
-          and location_property_osmline.osm_id = place_to_be_deleted.osm_id
-          and not deferred;
+  -- Clear todo list.
+  TRUNCATE TABLE place_to_be_deleted;
 
-   -- Clear todo list.
-   TRUNCATE TABLE place_to_be_deleted;
+   -- delete from place_interpolation table
+  ALTER TABLE place_interpolation DISABLE TRIGGER place_interpolation_before_delete;
+  DELETE FROM place_interpolation p USING place_interpolation_to_be_deleted d
+    WHERE p.osm_type = d.osm_type AND p.osm_id = d.osm_id;
+  ALTER TABLE place_interpolation ENABLE TRIGGER place_interpolation_before_delete;
 
-   RETURN NULL;
+  UPDATE location_property_osmline o SET indexed_status = 100
+    FROM place_interpolation_to_be_deleted d
+    WHERE o.osm_type = d.osm_Type AND o.osm_id = d.osm_id;
+
+  TRUNCATE TABLE place_interpolation_to_be_deleted;
+
+  RETURN NULL;
 END;
 $$ LANGUAGE plpgsql;
 

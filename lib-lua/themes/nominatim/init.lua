@@ -77,7 +77,19 @@ local table_definitions = {
         indexes = {
             { column = 'postcode', method = 'btree' }
         }
-     }
+     },
+     place_interpolation = {
+        ids = { type = 'any', id_column = 'osm_id', type_column = 'osm_type' },
+        columns = {
+            { column = 'type', type = 'text', not_null = true },
+            { column = 'address', type = 'hstore' },
+            { column = 'nodes', type = 'text', sql_type = 'bigint[]' },
+            { column = 'geometry', type = 'geometry', projection = 'WGS84', not_null = true },
+        },
+        indexes = {
+            { column = 'nodes', method = 'gin' }
+        }
+    }
 }
 
 local insert_row = {}
@@ -703,8 +715,30 @@ function module.process_tags(o)
         o.address['country'] = nil
     end
 
-    if o.address.interpolation ~= nil then
-        o:write_place('place', 'houses', PlaceTransform.always)
+    if o.address.interpolation ~= nil
+       and (o.address.housenumber == nil or string.find(o.address.housenumber, '-') ~= nil) then
+        if o:geometry_is_valid() then
+            local extra_addr = nil
+            for k, v in pairs(o.address) do
+                if k ~= 'interpolation' then
+                    if extra_addr == nil then
+                        extra_addr = {k = v}
+                    else
+                        extra_addr[k] = v
+                    end
+                end
+            end
+            local nodes = nil
+            if o.address.housenumber == nil and o.object.nodes ~= nil then
+                nodes = '{' .. table.concat(o.object.nodes, ',') .. '}'
+            end
+            insert_row.place_interpolation{
+                type = o.address.interpolation,
+                address = extra_addr,
+                nodes = nodes,
+                geometry = o.geometry
+            }
+        end
         return
     end
 

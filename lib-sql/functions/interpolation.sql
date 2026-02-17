@@ -69,16 +69,13 @@ BEGIN
   -- finally update/insert place_interpolation itself
 
   IF existing.osm_type is not NULL THEN
-    IF existing.type != NEW.type
-       OR coalesce(existing.address, ''::hstore) != coalesce(NEW.address, ''::hstore)
-       OR existing.geometry::text != NEW.geometry::text
-    THEN
-      UPDATE place_interpolation p
-        SET type = NEW.type,
-            address = NEW.address,
-            geometry = NEW.geometry
-        WHERE p.osm_type = NEW.osm_type AND p.osm_id = NEW.osm_id;
-    END IF;
+    -- Always updates as the nodes with the housenumber might be the reason
+    -- for the change.
+    UPDATE place_interpolation p
+      SET type = NEW.type,
+          address = NEW.address,
+          geometry = NEW.geometry
+      WHERE p.osm_type = NEW.osm_type AND p.osm_id = NEW.osm_id;
 
     RETURN NULL;
   END IF;
@@ -114,17 +111,21 @@ BEGIN
     RETURN in_address;
   END IF;
 
-  SELECT nodes INTO waynodes FROM planet_osm_ways WHERE id = wayid;
-  FOR location IN
-    SELECT placex.address, placex.osm_id FROM placex
-     WHERE osm_type = 'N' and osm_id = ANY(waynodes)
-           and placex.address is not null
-           and (placex.address ? 'street' or placex.address ? 'place')
-           and indexed_status < 100
-  LOOP
-    -- mark it as a derived address
-    RETURN location.address || coalesce(in_address, '{}'::hstore) || hstore('_inherited', '');
-  END LOOP;
+  SELECT nodes INTO waynodes FROM place_interpolation
+    WHERE osm_type = 'W' AND osm_id = wayid;
+
+  IF array_upper(waynodes, 1) IS NOT NULL THEN
+    FOR location IN
+      SELECT placex.address, placex.osm_id FROM placex
+       WHERE osm_type = 'N' and osm_id = ANY(waynodes)
+             and placex.address is not null
+             and (placex.address ? 'street' or placex.address ? 'place')
+             and indexed_status < 100
+    LOOP
+      -- mark it as a derived address
+      RETURN location.address || coalesce(in_address, ''::hstore) || hstore('_inherited', '');
+    END LOOP;
+  END IF;
 
   RETURN in_address;
 END;
@@ -285,7 +286,7 @@ BEGIN
     ELSE
       -- classic interpolation way
       SELECT nodes INTO waynodes
-        FROM planet_osm_ways WHERE id = NEW.osm_id;
+        FROM place_interpolation WHERE osm_type = NEW.osm_type AND osm_id = NEW.osm_id;
 
       IF array_upper(waynodes, 1) IS NULL THEN
         RETURN NEW;

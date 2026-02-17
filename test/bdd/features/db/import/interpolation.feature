@@ -8,12 +8,9 @@ Feature: Import of address interpolations
           | osm | class | type   | housenr |
           | N1  | place | house  | 2       |
           | N2  | place | house  | 6       |
-        And the places
-          | osm | class | type   | addr+interpolation | geometry |
-          | W1  | place | houses | even               | 1,2      |
-        And the ways
-          | id | nodes |
-          | 1  | 1,2 |
+        And the interpolations
+          | osm | type | geometry | nodes |
+          | W1  | even | 1,2      | 1,2   |
         When importing
         Then W1 expands to no interpolation
 
@@ -25,15 +22,12 @@ Feature: Import of address interpolations
           | osm | class | type   | housenr |
           | N1  | place | house  | 2       |
           | N2  | place | house  | 6       |
-        And the places
-          | osm | class | type   | addr+interpolation | geometry |
-          | W1  | place | houses | even               | 1,2      |
+        And the interpolations
+          | osm | type | geometry | nodes |
+          | W1  | even | 1,2      | 1,2   |
         And the named places
           | osm | class   | type        | geometry |
           | W10 | highway | residential | 4,5      |
-        And the ways
-          | id | nodes |
-          | 1  | 1,2 |
         When importing
         Then W1 expands to interpolation
           | start | end | geometry |
@@ -47,15 +41,12 @@ Feature: Import of address interpolations
           | osm | class | type   | housenr |
           | N1  | place | house  | 2       |
           | N2  | place | house  | 8       |
-        And the places
-          | osm | class | type   | addr+interpolation | geometry |
-          | W1  | place | houses | even               | 2,1      |
+        And the interpolations
+          | osm | type | geometry | nodes |
+          | W1  | even | 2,1      | 2,1   |
         And the named places
           | osm | class   | type        | geometry |
           | W10 | highway | residential | 4,5      |
-        And the ways
-          | id | nodes |
-          | 1  | 2,1 |
         When importing
         Then W1 expands to interpolation
           | start | end | geometry |
@@ -69,15 +60,12 @@ Feature: Import of address interpolations
           | osm | class | type   | housenr |
           | N1  | place | house  | 1       |
           | N2  | place | house  | 11      |
-        And the places
-          | osm | class | type   | addr+interpolation | geometry |
-          | W1  | place | houses | odd                | 1,2      |
+        And the interpolations
+          | osm | type | geometry | nodes |
+          | W1  | odd  | 1,2      | 1,2   |
         And the named places
           | osm | class   | type        | geometry |
           | W10 | highway | residential | 4,5      |
-        And the ways
-          | id | nodes |
-          | 1  | 1,2 |
         When importing
         Then W1 expands to interpolation
           | start | end | geometry |
@@ -91,15 +79,12 @@ Feature: Import of address interpolations
           | osm | class | type   | housenr |
           | N1  | place | house  | 1       |
           | N2  | place | house  | 4       |
-        And the places
-          | osm | class | type   | addr+interpolation | geometry |
-          | W1  | place | houses | all                | 1,2      |
+        And the interpolations
+          | osm | type | geometry | nodes |
+          | W1  | all  | 1,2      | 1,2 |
         And the named places
           | osm | class   | type        | geometry |
           | W10 | highway | residential | 4,5      |
-        And the ways
-          | id | nodes |
-          | 1  | 1,2 |
         When importing
         Then W1 expands to interpolation
           | start | end | geometry |
@@ -113,15 +98,12 @@ Feature: Import of address interpolations
           | osm | class | type   | housenr |
           | N1  | place | house  | 2       |
           | N2  | place | house  | 12      |
-        And the places
-          | osm | class | type   | addr+interpolation | geometry |
-          | W1  | place | houses | even               | 1,3,2    |
+        And the interpolations
+          | osm | type | geometry | nodes |
+          | W1  | even | 1,3,2    | 1,3,2 |
         And the named places
           | osm | class   | type        | geometry |
           | W10 | highway | residential | 4,5      |
-        And the ways
-          | id | nodes |
-          | 1  | 1,3,2 |
         When importing
         Then W1 expands to interpolation
           | start | end | geometry |
@@ -135,15 +117,12 @@ Feature: Import of address interpolations
           | osm | class | type   | housenr |
           | N1  | place | house  | 2       |
           | N2  | place | house  | 10      |
-        And the places
-          | osm | class | type   | addr+interpolation | geometry |
-          | W1  | place | houses | even               | 1,3,2 |
+        And the interpolations
+          | osm | type | geometry | nodes |
+          | W1  | even | 1,3,2    | 1,3,3,2 |
         And the named places
           | osm | class   | type        | geometry |
           | W10 | highway | residential | 4,5      |
-        And the ways
-          | id | nodes |
-          | 1  | 1,3,3,2 |
         When importing
         Then W1 expands to interpolation
           | start | end | geometry |
@@ -158,15 +137,12 @@ Feature: Import of address interpolations
           | N1  | place | house  | 2       |
           | N2  | place | house  | 14      |
           | N3  | place | house  | 10      |
-        And the places
-          | osm | class | type   | addr+interpolation | geometry |
-          | W1  | place | houses | even               | 1,3,2    |
+        And the interpolations
+          | osm | type | geometry | nodes |
+          | W1  | even | 1,3,2    | 1,3,2 |
         And the named places
           | osm | class   | type        | geometry |
           | W10 | highway | residential | 4,5      |
-        And the ways
-          | id | nodes |
-          | 1  | 1,3,2 |
         When importing
         Then W1 expands to interpolation
           | start | end | geometry |
@@ -184,15 +160,12 @@ Feature: Import of address interpolations
           | N2  | place | house | 14      |
           | N3  | place | house | 10      |
           | N4  | place | house | 18      |
-        And the places
-          | osm | class | type   | addr+interpolation | geometry |
-          | W1  | place | houses | even               | 1,3,2,4  |
+        And the interpolations
+          | osm | type | geometry | nodes |
+          | W1  | even | 1,3,2,4  | 1,3,2,4 |
         And the named places
           | osm | class   | type        | geometry |
           | W10 | highway | residential | 1,3,2,4  |
-        And the ways
-          | id | nodes |
-          | 1  | 1,3,2,4 |
         When importing
         Then W1 expands to interpolation
           | start | end | geometry |
@@ -209,15 +182,12 @@ Feature: Import of address interpolations
           | N1  | place | house | 2       |
           | N2  | place | house | 14      |
           | N3  | place | house | 10      |
-        And the places
-          | osm | class | type   | addr+interpolation | geometry |
-          | W1  | place | houses | even               | 2,3,1    |
+        And the interpolations
+          | osm | type | geometry | nodes |
+          | W1  | even | 2,3,1    | 2,3,1 |
         And the named places
           | osm | class   | type        | geometry |
           | W10 | highway | residential | 4,5      |
-        And the ways
-          | id | nodes |
-          | 1  | 2,3,1 |
         When importing
         Then W1 expands to interpolation
           | start | end | geometry |
@@ -233,15 +203,12 @@ Feature: Import of address interpolations
           | N1  | place | house | 2       |
           | N2  | place | house | 8       |
           | N3  | place | house | 7       |
-        And the places
-          | osm | class | type   | addr+interpolation | geometry |
-          | W1  | place | houses | even               | 1,3,2    |
+        And the interpolations
+          | osm | type | geometry | nodes |
+          | W1  | even | 1,3,2    | 1,3,2 |
         And the named places
           | osm | class   | type        | geometry |
           | W10 | highway | residential | 4,5      |
-        And the ways
-          | id | nodes |
-          | 1  | 1,3,2 |
         When importing
         Then W1 expands to interpolation
           | start | end | geometry |
@@ -257,15 +224,12 @@ Feature: Import of address interpolations
           | N1  | place | house | 2       |
           | N2  | place | house | 6       |
           | N3  | place | house | 10      |
-        And the places
-          | osm | class | type   | addr+interpolation | geometry |
-          | W1  | place | houses | even               | 1,2,3,2  |
+        And the interpolations
+          | osm | type | geometry | nodes |
+          | W1  | even | 1,2,3,2  | 1,2,3,2 |
         And the named places
           | osm | class   | type        | geometry |
           | W10 | highway | residential | 1,2,3    |
-        And the ways
-          | id | nodes |
-          | 1  | 1,2,3,2 |
         When importing
         Then W1 expands to interpolation
           | start | end | geometry |
@@ -281,15 +245,12 @@ Feature: Import of address interpolations
           | osm | class | type  | housenr |
           | N1  | place | house | 2       |
           | N2  | place | house | 6       |
-        And the places
-          | osm | class | type   | addr+interpolation | geometry |
-          | W1  | place | houses | even               | 1,2,3,2  |
+        And the interpolations
+          | osm | type | geometry | nodes |
+          | W1  | even | 1,2,3,2  | 1,2,3,2 |
         And the named places
           | osm | class   | type        | geometry |
           | W10 | highway | residential | 1,2,3    |
-        And the ways
-          | id | nodes |
-          | 1  | 1,2,3,2 |
         When importing
         Then W1 expands to interpolation
           | start | end | geometry |
@@ -306,18 +267,14 @@ Feature: Import of address interpolations
           | N2  | place | house | 6       | 2        |
           | N3  | place | house | 12      | 1        |
           | N4  | place | house | 16      | 2        |
-        And the places
-          | osm | class   | type    | addr+interpolation | street       | geometry |
-          | W10 | place   | houses  | even               |              | 1,2      |
-          | W11 | place   | houses  | even               | Cloud Street | 1,2      |
+        And the interpolations
+          | osm | type | street       | nodes | geometry | nodes |
+          | W10 | even |              | 1,2   | 1,2      | 1,2   |
+          | W11 | even | Cloud Street | 3,4   | 1,2      | 3,4   |
         And the places
           | osm | class   | type     | name         | geometry |
           | W2  | highway | tertiary | Sun Way      | 10,11    |
           | W3  | highway | tertiary | Cloud Street | 20,21    |
-        And the ways
-          | id | nodes |
-          | 10 | 1,2   |
-          | 11 | 3,4   |
         When importing
         Then placex contains
           | object | parent_place_id |
@@ -351,18 +308,14 @@ Feature: Import of address interpolations
           | N2  | place | house | 6       |              | 2        |
           | N3  | place | house | 12      | Cloud Street | 1        |
           | N4  | place | house | 16      | Cloud Street | 2        |
-        And the places
-          | osm | class   | type    | addr+interpolation | geometry |
-          | W10 | place   | houses  | even               | 1,2      |
-          | W11 | place   | houses  | even               | 1,2      |
+        And the interpolations
+          | osm | type | geometry | nodes |
+          | W10 | even | 1,2      | 1,2 |
+          | W11 | even | 1,2      | 3,4 |
         And the places
           | osm | class   | type     | name         | geometry |
           | W2  | highway | tertiary | Sun Way      | 10,11    |
           | W3  | highway | tertiary | Cloud Street | 20,21    |
-        And the ways
-          | id  | nodes |
-          | 10  | 1,2 |
-          | 11  | 3,4 |
         When importing
         Then placex contains
           | object | parent_place_id |
@@ -391,15 +344,12 @@ Feature: Import of address interpolations
           | N1  | place | house       | 10      | 144.9632341 -37.76163 |
           | N2  | place | house       | 6       | 144.9630541 -37.7628174 |
           | N3  | shop  | supermarket | 2       | 144.9629794 -37.7630755 |
-        And the places
-          | osm | class | type   | addr+interpolation | geometry |
-          | W1  | place | houses | even    | 144.9632341 -37.76163,144.9630541 -37.7628172,144.9629794 -37.7630755 |
+        And the interpolations
+          | osm | type | geometry                                                              | nodes |
+          | W1  | even | 144.9632341 -37.76163,144.9630541 -37.7628172,144.9629794 -37.7630755 | 1,2,3 |
         And the named places
           | osm | class   | type        | geometry |
           | W10 | highway | residential | 144.9632341 -37.76163,144.9629794 -37.7630755    |
-        And the ways
-          | id | nodes |
-          | 1  | 1,2,3 |
         When importing
         Then W1 expands to interpolation
           | start | end | geometry |
@@ -415,24 +365,21 @@ Feature: Import of address interpolations
           | N1  | place   | house  | 23      |
           | N2  | amenity | school |         |
           | N3  | place   | house  | 29      |
-        And the places
-          | osm | class | type   | addr+interpolation | geometry |
-          | W1  | place | houses | odd                | 1,2,3 |
+        And the interpolations
+          | osm | type | geometry | nodes |
+          | W1  | odd  | 1,2,3    | 1,2,3 |
         And the named places
           | osm | class   | type        | geometry |
           | W10 | highway | residential | 4,5      |
-        And the ways
-          | id | nodes |
-          | 1  | 1,2,3 |
         When importing
         Then W1 expands to interpolation
           | start | end | geometry |
           | 25    | 27  | 0.0000166 0,0.00002 0,0.0000333 0 |
 
     Scenario: Ways without node entries are ignored
-        Given the places
-          | osm | class | type   | housenr | geometry |
-          | W1  | place | houses | even    | 1 1, 1 1.001 |
+        Given the interpolations
+          | osm | type | geometry     |
+          | W1  | even | 1 1, 1 1.001 |
         And the named places
           | osm | class   | type        | geometry |
           | W10 | highway | residential | 1 1, 1 1.001 |
@@ -447,9 +394,9 @@ Feature: Import of address interpolations
           | osm | class | type   |
           | N1  | place | house  |
           | N2  | place | house  |
-        Given the places
-          | osm | class | type   | housenr | geometry |
-          | W1  | place | houses | even    | 1,2 |
+        Given the interpolations
+          | osm | type | geometry | nodes |
+          | W1  | even | 1,2      | 1,2   |
         And the named places
           | osm | class   | type        | geometry |
           | W10 | highway | residential | 4,5      |
@@ -464,15 +411,12 @@ Feature: Import of address interpolations
           | osm | class | type   | housenr |
           | N1  | place | house  | 0       |
           | N2  | place | house  | 10      |
-        And the places
-          | osm | class | type   | addr+interpolation | geometry |
-          | W1  | place | houses | even               | 1,2      |
+        And the interpolations
+          | osm | type | geometry | nodes |
+          | W1  | even | 1,2      | 1,2 |
         And the places
           | osm | class   | type        | name        | geometry |
           | W10 | highway | residential | London Road |4,5      |
-        And the ways
-          | id | nodes |
-          | 1  | 1,2 |
         When importing
         Then W1 expands to interpolation
           | start | end | geometry |
@@ -497,12 +441,9 @@ Feature: Import of address interpolations
           | osm | class   | type        | name     | geometry |
           | W1  | highway | residential | Vert St  | 1,2      |
           | W2  | highway | residential | Horiz St | 2,3      |
-        And the places
-          | osm | class | type   | addr+interpolation | addr+inclusion | geometry |
-          | W10 | place | houses | even               | actual         | 8,9      |
-        And the ways
-          | id | nodes |
-          | 10 | 8,9   |
+        And the interpolations
+          | osm | type | addr+inclusion | geometry | nodes |
+          | W10 | even | actual         | 8,9      | 8,9   |
         When importing
         Then placex contains
           | object | parent_place_id |
@@ -521,15 +462,12 @@ Feature: Import of address interpolations
           | osm | class | type   | housenr |
           | N1  | place | house  | 2       |
           | N2  | place | house  | 6       |
-        And the places
-          | osm | class | type   | addr+interpolation | geometry |
-          | W1  | place | houses | <value>            | 1,2      |
+        And the interpolations
+          | osm | type    | geometry | nodes |
+          | W1  | <value> | 1,2      | 1,2 |
         And the named places
           | osm | class   | type        | geometry |
           | W10 | highway | residential | 4,5      |
-        And the ways
-          | id | nodes |
-          | 1  | 1,2 |
         When importing
         Then W1 expands to no interpolation
 
@@ -549,15 +487,12 @@ Feature: Import of address interpolations
           | N2  | place | house  | 18      | 3 |
           | N3  | place | house  | 24      | 9 |
           | N4  | place | house  | 42      | 4 |
-        And the places
-          | osm | class | type   | addr+interpolation | geometry |
-          | W1  | place | houses | even               | 1,2,3,4  |
+        And the interpolations
+          | osm | type | geometry | nodes   |
+          | W1  | even | 1,2,3,4  | 1,2,3,4 |
         And the named places
           | osm | class   | type        | geometry |
           | W10 | highway | residential | 1,4      |
-        And the ways
-          | id | nodes   |
-          | 1  | 1,2,3,4 |
         When importing
         Then W1 expands to interpolation
           | start | end |
@@ -576,15 +511,12 @@ Feature: Import of address interpolations
           | N2  | place | house  | 6       | 8 |
           | N3  | place | house  | 10      | 8 |
           | N4  | place | house  | 14      | 9 |
-        And the places
-          | osm | class | type   | addr+interpolation | geometry |
-          | W1  | place | houses | even               | 7,8,8,9  |
+        And the interpolations
+          | osm | type | geometry | nodes   |
+          | W1  | even | 7,8,8,9  | 1,2,3,4 |
         And the named places
           | osm | class   | type        | geometry |
           | W10 | highway | residential | 4,5      |
-        And the ways
-          | id | nodes   |
-          | 1  | 1,2,3,4 |
         When importing
         Then W1 expands to interpolation
           | start | end | geometry |
@@ -601,15 +533,12 @@ Feature: Import of address interpolations
           | N2  | place | house  | 8       |
           | N3  | place | house  | 12      |
           | N4  | place | house  | 14      |
-        And the places
-          | osm | class | type   | addr+interpolation | geometry |
-          | W1  | place | houses | even               | 8,9      |
+        And the interpolations
+          | osm | type | geometry | nodes       |
+          | W1  | even | 8,9      | 1,8,9,2,3,4 |
         And the named places
           | osm | class   | type        | geometry |
           | W10 | highway | residential | 1,4      |
-        And the ways
-          | id | nodes       |
-          | 1  | 1,8,9,2,3,4 |
         When importing
         Then W1 expands to interpolation
           | start | end | geometry |

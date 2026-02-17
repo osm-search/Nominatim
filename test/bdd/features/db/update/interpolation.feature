@@ -11,18 +11,15 @@ Feature: Update of address interpolations
           | osm | class   | type         | name         | geometry |
           | W2  | highway | unclassified | Sun Way      | 10,11    |
           | W3  | highway | unclassified | Cloud Street | 20,21    |
-      And the ways
-          | id  | nodes |
-          | 10  | 1,2   |
       When importing
       Then W10 expands to no interpolation
       When updating places
           | osm | class | type  | housenr |
           | N1  | place | house | 2       |
           | N2  | place | house | 6       |
-      And updating places
-          | osm | class | type   | addr+interpolation | geometry |
-          | W10 | place | houses | even               | 1,2      |
+      And updating interpolations
+          | osm | type | geometry | nodes |
+          | W10 | even | 1,2      | 1,2   |
       Then placex contains
           | object | parent_place_id |
           | N1     | W2 |
@@ -41,16 +38,13 @@ Feature: Update of address interpolations
           | osm | class | type  | housenr |
           | N1  | place | house | 2       |
           | N2  | place | house | 6       |
-      And the places
-          | osm | class | type   | addr+interpolation | geometry |
-          | W10 | place | houses | even               | 1,2      |
+      And the interpolations
+          | osm | type | geometry | nodes |
+          | W10 | even | 1,2      | 1,2   |
       And the places
           | osm | class   | type         | name         | geometry |
           | W2  | highway | unclassified | Sun Way      | 10,11    |
           | W3  | highway | unclassified | Cloud Street | 20,21    |
-      And the ways
-          | id  | nodes |
-          | 10  | 1,2 |
       When importing
       Then placex contains
           | object | parent_place_id |
@@ -59,9 +53,9 @@ Feature: Update of address interpolations
       And W10 expands to interpolation
           | parent_place_id | start | end |
           | W2              | 4     | 4   |
-      When updating places
-          | osm | class   | type    | addr+interpolation | street       | geometry |
-          | W10 | place   | houses  | even               | Cloud Street | 1,2      |
+      When updating interpolations
+          | osm | type | street       | nodes | geometry |
+          | W10 | even | Cloud Street | 1,2   | 1,2      |
       Then placex contains
           | object | parent_place_id |
           | N1     | W3 |
@@ -80,16 +74,13 @@ Feature: Update of address interpolations
           | osm | class | type  | housenr |
           | N1  | place | house | 2       |
           | N2  | place | house | 6       |
-      And the places
-          | osm | class | type   | addr+interpolation | geometry |
-          | W10 | place | houses | even               | 1,2      |
+      And the interpolations
+          | osm | type | geometry | nodes |
+          | W10 | even | 1,2      | 1,2   |
       And the places
           | osm | class   | type         | name         | geometry |
           | W2  | highway | unclassified | Sun Way      | 10,11    |
           | W3  | highway | unclassified | Cloud Street | 20,21    |
-      And the ways
-          | id  | nodes |
-          | 10  | 1,2 |
       When importing
       Then placex contains
           | object | parent_place_id |
@@ -120,16 +111,13 @@ Feature: Update of address interpolations
           | osm | class | type  | housenr |
           | N1  | place | house | 2       |
           | N2  | place | house | 6       |
-      And the places
-          | osm | class | type   | addr+interpolation | geometry |
-          | W10 | place | houses | even               | 1,2      |
+      And the interpolations
+          | osm | type | geometry | nodes |
+          | W10 | even | 1,2      | 1,2   |
       And the places
           | osm | class   | type         | name         | geometry |
           | W2  | highway | unclassified | Sun Way      | 10,11    |
           | W3  | highway | unclassified | Cloud Street | 20,21    |
-      And the ways
-          | id  | nodes |
-          | 10  | 1,2 |
       When importing
       Then placex contains
           | object | parent_place_id |
@@ -155,15 +143,12 @@ Feature: Update of address interpolations
           | osm | class | type  | housenr |
           | N1  | place | house | 2       |
           | N2  | place | house | 6       |
-      And the places
-          | osm | class   | type    | addr+interpolation | street      | geometry |
-          | W10 | place   | houses  | even               | Cloud Street| 1,2      |
+      And the interpolations
+          | osm | type | street      | geometry | nodes |
+          | W10 | even | Cloud Street| 1,2      | 1,2   |
       And the places
           | osm | class   | type         | name     | geometry |
           | W2  | highway | unclassified | Sun Way  | 10,11    |
-      And the ways
-          | id  | nodes |
-          | 10  | 1,2   |
       When importing
       Then placex contains
           | object | parent_place_id |
@@ -193,16 +178,13 @@ Feature: Update of address interpolations
           | osm | class | type  | housenr |
           | N1  | place | house | 2       |
           | N2  | place | house | 6       |
-      And the places
-          | osm | class   | type    | addr+interpolation | street      | geometry |
-          | W10 | place   | houses  | even               | Cloud Street| 1,2      |
+      And the interpolations
+          | osm | type | street      | geometry | nodes |
+          | W10 | even | Cloud Street| 1,2      | 1,2   |
       And the places
           | osm | class   | type         | name         | geometry |
           | W2  | highway | unclassified | Sun Way      | 10,11    |
           | W3  | highway | unclassified | Cloud Street | 20,21    |
-      And the ways
-          | id  | nodes |
-          | 10  | 1,2 |
       When importing
       Then placex contains
           | object | parent_place_id |
@@ -220,67 +202,6 @@ Feature: Update of address interpolations
           | parent_place_id | start | end |
           | W2              | 4     | 4   |
 
-    Scenario: building becomes interpolation
-      Given the grid
-          | 10 |   |    |   | 11 |
-          |    | 1 |    | 2 |    |
-          |    | 4 |    | 3 |    |
-      And the places
-          | osm | class    | type  | housenr | geometry    |
-          | W1  | place    | house | 3       | (1,2,3,4,1) |
-      And the places
-          | osm | class   | type         | name         | geometry |
-          | W2  | highway | unclassified | Cloud Street | 10,11    |
-      When importing
-      Then placex contains
-          | object | parent_place_id |
-          | W1     | W2 |
-      Given the ways
-          | id  | nodes |
-          | 1   | 1,2   |
-      When updating places
-          | osm | class | type  | housenr |
-          | N1  | place | house | 2       |
-          | N2  | place | house | 6       |
-      And updating places
-          | osm | class   | type    | addr+interpolation | street      | geometry |
-          | W1  | place   | houses  | even               | Cloud Street| 1,2      |
-      Then placex has no entry for W1
-      And W1 expands to interpolation
-          | parent_place_id | start | end |
-          | W2              | 4     | 4   |
-
-    Scenario: interpolation becomes building
-      Given the grid
-          | 10 |   |    |   | 11 |
-          |    | 1 |    | 2 |    |
-          |    | 4 |    | 3 |    |
-      And the places
-          | osm | class | type  | housenr |
-          | N1  | place | house | 2       |
-          | N2  | place | house | 6       |
-      And the places
-          | osm | class   | type         | name         | geometry |
-          | W2  | highway | unclassified | Cloud Street | 10,11    |
-      And the ways
-          | id  | nodes |
-          | 1   | 1,2 |
-      And the places
-          | osm | class   | type    | addr+interpolation | street      | geometry |
-          | W1  | place   | houses  | even               | Cloud Street| 1,2      |
-      When importing
-      Then placex has no entry for W1
-      And W1 expands to interpolation
-          | parent_place_id | start | end |
-          | W2              | 4     | 4   |
-      When updating places
-          | osm | class    | type  | housenr | geometry    |
-          | W1  | place    | house | 3       | (1,2,3,4,1) |
-      Then placex contains
-          | object | parent_place_id |
-          | W1     | W2 |
-      And W1 expands to no interpolation
-
     Scenario: housenumbers added to interpolation
       Given the grid
           | 10 |   |    |   | 11 |
@@ -288,18 +209,18 @@ Feature: Update of address interpolations
       And the places
           | osm | class   | type         | name         | geometry |
           | W2  | highway | unclassified | Cloud Street | 10,11    |
-      And the ways
-          | id  | nodes |
-          | 1   | 1,2 |
-      And the places
-          | osm | class   | type    | addr+interpolation | geometry |
-          | W1  | place   | houses  | even               | 1,2 |
+      And the interpolations
+          | osm | type | geometry | nodes |
+          | W1  | even | 1,2      | 1,2   |
       When importing
       Then W1 expands to no interpolation
       When updating places
           | osm | class | type  | housenr |
           | N1  | place | house | 2       |
           | N2  | place | house | 6       |
+      And updating interpolations
+          | osm | type | geometry | nodes |
+          | W1  | even | 1,2      | 1,2   |
       Then W1 expands to interpolation
           | parent_place_id | start | end |
           | W2              | 4     | 4   |
@@ -311,12 +232,9 @@ Feature: Update of address interpolations
       And the places
           | osm | class   | type         | name         | geometry |
           | W1  | highway | unclassified | Cloud Street | 1, 2     |
-      And the ways
-          | id  | nodes |
-          | 2   | 3,4,5 |
-      And the places
-          | osm | class   | type    | addr+interpolation | geometry |
-          | W2  | place   | houses  | even    | 3,4,5    |
+      And the interpolations
+          | osm | type | geometry | nodes |
+          | W2  | even | 3,4,5    | 3,4,5 |
       And the places
           | osm | class | type  | housenr |
           | N3  | place | house | 2       |
@@ -328,12 +246,14 @@ Feature: Update of address interpolations
       When updating places
           | osm | class | type  | housenr |
           | N4  | place | house | 6       |
+      And updating interpolations
+          | osm | type | geometry | nodes |
+          | W2  | even | 3,4,5    | 3,4,5 |
       Then W2 expands to interpolation
           | parent_place_id | start | end |
           | W1              | 4     | 4   |
           | W1              | 8     | 8   |
 
-    @skip
     Scenario: housenumber removed in middle of interpolation
       Given the grid
           | 1 |  |  |   |  | 2 |
@@ -341,12 +261,9 @@ Feature: Update of address interpolations
       And the places
           | osm | class   | type         | name         | geometry |
           | W1  | highway | unclassified | Cloud Street | 1, 2     |
-      And the ways
-          | id  | nodes |
-          | 2   | 3,4,5 |
-      And the places
-          | osm | class   | type    | addr+interpolation | geometry |
-          | W2  | place   | houses  | even    | 3,4,5    |
+      And the interpolations
+          | osm | type | geometry | nodes |
+          | W2  | even | 3,4,5    | 3,4,5 |
       And the places
           | osm | class | type  | housenr |
           | N3  | place | house | 2       |
@@ -358,6 +275,9 @@ Feature: Update of address interpolations
           | W1              | 4     | 4   |
           | W1              | 8     | 8   |
       When marking for delete N4
+      And updating interpolations
+          | osm | type | geometry | nodes |
+          | W2  | even | 3,4,5    | 3,4,5 |
       Then W2 expands to interpolation
           | parent_place_id | start | end |
           | W1              | 4     | 8   |
@@ -369,12 +289,9 @@ Feature: Update of address interpolations
       And the places
           | osm | class   | type         | name         | geometry |
           | W1  | highway | unclassified | Cloud Street | 1, 2     |
-      And the ways
-          | id  | nodes |
-          | 2   | 3,4   |
-      And the places
-          | osm | class   | type    | addr+interpolation | geometry |
-          | W2  | place   | houses  | even    | 3,4      |
+      And the interpolations
+          | osm | type | geometry | nodes |
+          | W2  | even | 3,4      | 3,4   |
       And the places
           | osm | class | type  | housenr |
           | N3  | place | house | 2       |
@@ -386,33 +303,9 @@ Feature: Update of address interpolations
       When updating places
           | osm | class | type  | housenr |
           | N4  | place | house | 8       |
+      And updating interpolations
+          | osm | type | geometry | nodes |
+          | W2  | even | 3,4      | 3,4   |
       Then W2 expands to interpolation
           | parent_place_id | start | end |
           | W1              | 4     | 6   |
-
-    Scenario: Legal interpolation type changed to illegal one
-      Given the grid
-          | 1 |  | 2 |
-          | 3 |  | 4 |
-      And the places
-          | osm | class   | type         | name         | geometry |
-          | W1  | highway | unclassified | Cloud Street | 1, 2     |
-      And the ways
-          | id  | nodes |
-          | 2   | 3,4   |
-      And the places
-          | osm | class   | type    | addr+interpolation | geometry |
-          | W2  | place   | houses  | even               | 3,4      |
-      And the places
-          | osm | class | type  | housenr |
-          | N3  | place | house | 2       |
-          | N4  | place | house | 6       |
-      When importing
-      Then W2 expands to interpolation
-          | parent_place_id | start | end |
-          | W1              | 4     | 4   |
-      When updating places
-          | osm | class   | type    | addr+interpolation | geometry |
-          | W2  | place   | houses  | 12-2               | 3,4      |
-      Then W2 expands to no interpolation
-

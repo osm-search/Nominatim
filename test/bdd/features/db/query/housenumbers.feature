@@ -378,4 +378,3 @@ Feature: Searching of house numbers
         Then the result set contains
          | object |
          | W10    |
-

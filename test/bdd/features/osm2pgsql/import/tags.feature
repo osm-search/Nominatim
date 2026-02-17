@@ -206,15 +206,21 @@ Feature: Tag evaluation
 
 
     Scenario: Address interpolations
+        Given the grid
+            | 1 | 2 |
         When loading osm data
             """
-            n13001 Taddr:interpolation=odd
-            n13002 Taddr:interpolation=even,place=city
+            n1
+            n2
+            w13001 Taddr:interpolation=odd Nn1,n2
+            w13002 Taddr:interpolation=even,place=city Nn1,n2
             """
         Then place contains exactly
-            | object | class | type   | address!dict            |
-            | N13001 | place | houses | 'interpolation': 'odd'  |
-            | N13002 | place | houses | 'interpolation': 'even' |
+            | object |
+        And place_interpolation contains exactly
+            | object | type | address!dict            |
+            | W13001 | odd  | - |
+            | W13002 | even | - |
 
 
     Scenario: Footways

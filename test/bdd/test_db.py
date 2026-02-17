@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2025 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Collector for BDD import acceptance tests.
@@ -129,6 +129,26 @@ def import_place_entrances(row_factory, datatable, node_grid):
         row_factory('place_entrance', **params)
 
 
+@given(step_parse('the interpolations'), target_fixture=None)
+def import_place_interpolations(row_factory, datatable, node_grid):
+    """ Insert todo rows into the place_entrance table.
+    """
+    for row in datatable[1:]:
+        data = PlaceColumn(node_grid).add_row(datatable[0], row, False)
+
+        if 'nodes' in data.columns:
+            nodes = [int(x) for x in data.columns['nodes'].split(',')]
+        else:
+            nodes = None
+
+        params = {'osm_type': data.columns['osm_type'], 'osm_id': data.columns['osm_id'],
+                  'type': data.columns['type'],
+                  'address': data.columns.get('address'), 'nodes': nodes,
+                  'geometry': pysql.SQL(data.get_wkt())}
+
+        row_factory('place_interpolation', **params)
+
+
 @given(step_parse('the postcodes'), target_fixture=None)
 def import_place_postcode(db_conn, datatable, node_grid):
     """ Insert todo rows into the place_postcode table. If a row for the
@@ -249,6 +269,31 @@ def update_place_entrances(db_conn, datatable, node_grid):
     db_conn.commit()
 
 
+@when('updating interpolations', target_fixture=None)
+def update_place_interpolations(db_conn, row_factory, update_config, datatable, node_grid):
+    """ Update rows in the place_entrance table.
+    """
+    for row in datatable[1:]:
+        data = PlaceColumn(node_grid).add_row(datatable[0], row, False)
+
+        if 'nodes' in data.columns:
+            nodes = [int(x) for x in data.columns['nodes'].split(',')]
+        else:
+            nodes = None
+
+        params = {'osm_type': data.columns['osm_type'], 'osm_id': data.columns['osm_id'],
+                  'type': data.columns['type'],
+                  'address': data.columns.get('address'), 'nodes': nodes,
+                  'geometry': pysql.SQL(data.get_wkt())}
+
+        row_factory('place_interpolation', **params)
+
+    db_conn.execute('SELECT flush_deleted_places()')
+    db_conn.commit()
+
+    cli.nominatim(['index', '-q', '--minrank', '30'], update_config.environ)
+
+
 @when('refreshing postcodes')
 def do_postcode_update(update_config):
     """ Recompute the postcode centroids.
@@ -264,6 +309,8 @@ def do_delete_place(db_conn, update_config, node_grid, otype, oid):
     with db_conn.cursor() as cur:
         cur.execute('TRUNCATE place_to_be_deleted')
         cur.execute('DELETE FROM place WHERE osm_type = %s and osm_id = %s',
+                    (otype, oid))
+        cur.execute('DELETE FROM place_interpolation WHERE osm_type = %s and osm_id = %s',
                     (otype, oid))
         cur.execute('SELECT flush_deleted_places()')
         if otype == 'N':

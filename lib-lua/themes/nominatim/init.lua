@@ -387,7 +387,6 @@ function Place:grab_address_parts(data)
 
             if atype ~= nil then
                 if atype == 'main' then
-                    self.has_name = true
                     self.address[strip_address_prefix(k)] = v
                     count = count + 1
                 elseif atype == 'extra' then
@@ -708,24 +707,22 @@ function module.process_tags(o)
     local fallback = o:grab_name_parts{groups=NAME_FILTER}
 
     -- address keys
-    if o:grab_address_parts{groups=ADDRESS_FILTER} > 0 and fallback == nil then
-        fallback = {'place', 'house', address_fallback}
-    end
+    local fallback_address = (o:grab_address_parts{groups=ADDRESS_FILTER} > 0)
     if o.address.country ~= nil and #o.address.country ~= 2 then
         o.address['country'] = nil
     end
 
     if o.address.interpolation ~= nil
-       and (o.address.housenumber == nil or string.find(o.address.housenumber, '-') ~= nil) then
+       and (o.address.housenumber == nil
+            or string.find(o.address.housenumber, '^%d+%-%d+$') ~= nil) then
         if o:geometry_is_valid() then
             local extra_addr = nil
             for k, v in pairs(o.address) do
                 if k ~= 'interpolation' then
                     if extra_addr == nil then
-                        extra_addr = {k = v}
-                    else
-                        extra_addr[k] = v
+                        extra_addr = {}
                     end
+                    extra_addr[k] = v
                 end
             end
             local nodes = nil
@@ -738,8 +735,10 @@ function module.process_tags(o)
                 nodes = nodes,
                 geometry = o.geometry
             }
+            fallback_address = false
+        else
+            return
         end
-        return
     end
 
     -- collect main keys
@@ -761,8 +760,8 @@ function module.process_tags(o)
                         geometry = o.geometry
                     }
                 end
-            elseif ktype == 'fallback' and o.has_name then
-                fallback = {k, v, PlaceTransform.named}
+            elseif ktype == 'fallback' and (fallback_address or o.has_name) then
+                fallback = {k, v, PlaceTransform.always}
             end
         end
     end
@@ -770,6 +769,8 @@ function module.process_tags(o)
     if o.num_entries == 0 then
         if fallback ~= nil then
             o:write_place(fallback[1], fallback[2], fallback[3])
+        elseif fallback_address then
+            o:write_place('place', 'house', address_fallback)
         elseif POSTCODE_FALLBACK and not postcode_collect
                 and o.address.postcode ~= nil
                 and o:geometry_is_valid() then

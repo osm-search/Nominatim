@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2025 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Helper functions to compare expected values.
@@ -61,6 +61,8 @@ COMPARISON_FUNCS = {
     'fm': lambda val, exp: re.fullmatch(exp, val) is not None,
     'dict': lambda val, exp: (val is None if exp == '-'
                               else (val == ast.literal_eval('{' + exp + '}'))),
+    'ints': lambda val, exp: (val is None if exp == '-'
+                              else (val == [int(i) for i in exp.split(',')])),
     'in_box': within_box
 }
 
@@ -84,6 +86,8 @@ class ResultAttr:
         !fm     - consider comparison string a regular expression and match full value
         !wkt    - convert the expected value to a WKT string before comparing
         !in_box - the expected value is a comma-separated bbox description
+        !dict   - compare as a dictitionary, member order does not matter
+        !ints   - compare as integer array
     """
 
     def __init__(self, obj, key, grid=None):

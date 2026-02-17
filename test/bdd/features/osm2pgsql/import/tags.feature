@@ -205,24 +205,6 @@ Feature: Tag evaluation
             | N12005 | 12345    | -        |
 
 
-    Scenario: Address interpolations
-        Given the grid
-            | 1 | 2 |
-        When loading osm data
-            """
-            n1
-            n2
-            w13001 Taddr:interpolation=odd Nn1,n2
-            w13002 Taddr:interpolation=even,place=city Nn1,n2
-            """
-        Then place contains exactly
-            | object |
-        And place_interpolation contains exactly
-            | object | type | address!dict            |
-            | W13001 | odd  | - |
-            | W13002 | even | - |
-
-
     Scenario: Footways
         When loading osm data
             """

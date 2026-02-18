@@ -75,7 +75,6 @@ CREATE INDEX IF NOT EXISTS idx_osmline_parent_osm_id
    );
 
   CREATE TABLE IF NOT EXISTS place_interpolation_to_be_deleted (
-    osm_type CHAR(1) NOT NULL,
     osm_id BIGINT NOT NULL
    );
 ---

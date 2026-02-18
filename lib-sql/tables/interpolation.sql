@@ -8,7 +8,6 @@
 DROP TABLE IF EXISTS location_property_osmline;
 CREATE TABLE location_property_osmline (
     place_id BIGINT NOT NULL,
-    osm_type CHAR(1) NOT NULL,
     osm_id BIGINT NOT NULL,
     parent_place_id BIGINT,
     geometry_sector INTEGER NOT NULL,
@@ -19,7 +18,7 @@ CREATE TABLE location_property_osmline (
     step SMALLINT,
     partition SMALLINT NOT NULL,
     indexed_status SMALLINT NOT NULL,
-    linegeo GEOMETRY NOT NULL,
+    linegeo GEOMETRY(Geometry, 4326) NOT NULL,
     address HSTORE,
     token_info JSONB, -- custom column for tokenizer use only
     postcode TEXT,

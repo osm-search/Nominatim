@@ -169,8 +169,7 @@ async def test_load_data(dsn, place_row, place_interpolation_row, placex_table, 
                          temp_db_cursor, threads):
     for oid in range(100, 130):
         place_row(osm_id=oid)
-    place_interpolation_row(osm_type='W', osm_id=342, typ='odd',
-                            geom='LINESTRING(0 0, 10 10)')
+    place_interpolation_row(osm_id=342, typ='odd', geom='LINESTRING(0 0, 10 10)')
 
     temp_db_cursor.execute("""
         CREATE OR REPLACE FUNCTION placex_insert() RETURNS TRIGGER AS $$

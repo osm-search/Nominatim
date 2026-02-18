@@ -378,8 +378,8 @@ Feature: Import of address interpolations
 
     Scenario: Ways without node entries are ignored
         Given the interpolations
-          | osm | type | geometry     |
-          | W1  | even | 1 1, 1 1.001 |
+          | osm | type | geometry     | nodes |
+          | W1  | even | 1 1, 1 1.001 | 34,45 |
         And the named places
           | osm | class   | type        | geometry |
           | W10 | highway | residential | 1 1, 1 1.001 |

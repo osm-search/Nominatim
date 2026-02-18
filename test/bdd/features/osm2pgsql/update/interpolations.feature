@@ -30,8 +30,8 @@ Feature: Updates of address interpolation objects
             | N2     | place | house  |
             | W33    | highway | residential |
         And place_interpolation contains exactly
-            | object | type |
-            | W99    | odd  |
+            | osm_id | type |
+            | 99     | odd  |
         When indexing
         Then placex contains exactly
             | object | class   | type   |
@@ -55,8 +55,8 @@ Feature: Updates of address interpolation objects
             | N1     | place | house  |
             | N2     | place | house  |
         And place_interpolation contains exactly
-            | object | type |
-            | W99    | odd  |
+            | osm_id | type |
+            | 99     | odd  |
 
         When updating osm data
             """
@@ -67,7 +67,7 @@ Feature: Updates of address interpolation objects
             | N1     | place | house  |
             | N2     | place | house  |
         And place_interpolation contains exactly
-            | object |
+            | osm_id |
         When indexing
         Then placex contains exactly
             | object | class | type   |
@@ -92,7 +92,7 @@ Feature: Updates of address interpolation objects
             | W33    | highway | residential  |
             | W99    | highway | residential  |
         And place_interpolation contains exactly
-            | object |
+            | osm_id |
 
         When updating osm data
             """
@@ -104,8 +104,8 @@ Feature: Updates of address interpolation objects
             | N2     | place | house  |
             | W33    | highway | residential  |
         And place_interpolation contains exactly
-            | object | type |
-            | W99    | odd  |
+            | osm_id | type |
+            | 99     | odd  |
         When indexing
         Then placex contains exactly
             | object | class   | type   |
@@ -129,8 +129,8 @@ Feature: Updates of address interpolation objects
             | N1     | place | house  |
             | N2     | place | house  |
         And place_interpolation contains exactly
-            | object | type |
-            | W99    | odd  |
+            | osm_id | type |
+            | 99     | odd  |
 
         When updating osm data
             """
@@ -142,7 +142,7 @@ Feature: Updates of address interpolation objects
             | N2     | place   | house  |
             | W99    | highway | residential  |
         And place_interpolation contains exactly
-            | object |
+            | osm_id |
         When indexing
         Then placex contains exactly
             | object | class   | type   |

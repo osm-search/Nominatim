@@ -135,15 +135,12 @@ def import_place_interpolations(row_factory, datatable, node_grid):
     """
     for row in datatable[1:]:
         data = PlaceColumn(node_grid).add_row(datatable[0], row, False)
+        assert data.columns['osm_type'] == 'W'
 
-        if 'nodes' in data.columns:
-            nodes = [int(x) for x in data.columns['nodes'].split(',')]
-        else:
-            nodes = None
-
-        params = {'osm_type': data.columns['osm_type'], 'osm_id': data.columns['osm_id'],
+        params = {'osm_id': data.columns['osm_id'],
                   'type': data.columns['type'],
-                  'address': data.columns.get('address'), 'nodes': nodes,
+                  'address': data.columns.get('address'),
+                  'nodes': [int(x) for x in data.columns['nodes'].split(',')],
                   'geometry': pysql.SQL(data.get_wkt())}
 
         row_factory('place_interpolation', **params)
@@ -275,15 +272,12 @@ def update_place_interpolations(db_conn, row_factory, update_config, datatable, 
     """
     for row in datatable[1:]:
         data = PlaceColumn(node_grid).add_row(datatable[0], row, False)
+        assert data.columns['osm_type'] == 'W'
 
-        if 'nodes' in data.columns:
-            nodes = [int(x) for x in data.columns['nodes'].split(',')]
-        else:
-            nodes = None
-
-        params = {'osm_type': data.columns['osm_type'], 'osm_id': data.columns['osm_id'],
+        params = {'osm_id': data.columns['osm_id'],
                   'type': data.columns['type'],
-                  'address': data.columns.get('address'), 'nodes': nodes,
+                  'address': data.columns.get('address'),
+                  'nodes': [int(x) for x in data.columns['nodes'].split(',')],
                   'geometry': pysql.SQL(data.get_wkt())}
 
         row_factory('place_interpolation', **params)
@@ -310,8 +304,8 @@ def do_delete_place(db_conn, update_config, node_grid, otype, oid):
         cur.execute('TRUNCATE place_to_be_deleted')
         cur.execute('DELETE FROM place WHERE osm_type = %s and osm_id = %s',
                     (otype, oid))
-        cur.execute('DELETE FROM place_interpolation WHERE osm_type = %s and osm_id = %s',
-                    (otype, oid))
+        cur.execute('DELETE FROM place_interpolation WHERE osm_id = %s',
+                    (oid, ))
         cur.execute('SELECT flush_deleted_places()')
         if otype == 'N':
             cur.execute('DELETE FROM place_entrance WHERE osm_id = %s',

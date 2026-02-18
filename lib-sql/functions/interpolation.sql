@@ -15,67 +15,63 @@ DECLARE
   existingplacex BIGINT[];
 
 BEGIN
-  -- Remove the place from the list of places to be deleted
-  DELETE FROM place_interpolation_to_be_deleted pdel
-    WHERE pdel.osm_type = NEW.osm_type and pdel.osm_id = NEW.osm_id;
-
-  SELECT * INTO existing FROM place_interpolation p
-    WHERE p.osm_type = NEW.osm_type AND p.osm_id = NEW.osm_id;
-
   IF NOT (NEW.type in ('odd', 'even', 'all') OR NEW.type similar to '[1-9]') THEN
     -- the new interpolation is illegal, simply remove existing entries
-    DELETE FROM location_property_osmline o
-      WHERE o.osm_type = NEW.osm_type AND o.osm_id = NEW.osm_id;
+    DELETE FROM location_property_osmline o WHERE o.osm_id = NEW.osm_id;
+    RETURN NULL;
+  END IF;
+
+  -- Remove the place from the list of places to be deleted
+  DELETE FROM place_interpolation_to_be_deleted pdel WHERE pdel.osm_id = NEW.osm_id;
+
+  SELECT * INTO existing FROM place_interpolation p WHERE p.osm_id = NEW.osm_id;
+
+  -- Get the existing entry from the interpolation table.
+  SELECT array_agg(place_id) INTO existingplacex
+    FROM location_property_osmline o WHERE o.osm_id = NEW.osm_id;
+
+  IF array_length(existingplacex, 1) is NULL THEN
+    INSERT INTO location_property_osmline (osm_id, type, address, linegeo)
+      VALUES (NEW.osm_id, NEW.type, NEW.address, NEW.geometry);
   ELSE
-    -- Get the existing entry from the interpolation table.
-    SELECT array_agg(place_id) INTO existingplacex
-      FROM location_property_osmline o
-      WHERE o.osm_type = NEW.osm_type AND o.osm_id = NEW.osm_id;
-
-    IF array_length(existingplacex, 1) is NULL THEN
-      INSERT INTO location_property_osmline (osm_type, osm_id, type, address, linegeo)
-        VALUES (NEW.osm_type, NEW.osm_id, NEW.type, NEW.address, NEW.geometry);
-    ELSE
-      -- Update the interpolation table:
-      --   The first entry gets the original data, all other entries
-      --   are removed and will be recreated on indexing.
-      --   (An interpolation can be split up, if it has more than 2 address nodes)
-      -- Update unconditionally here as the changes might be coming from the
-      -- nodes on the interpolation.
-      UPDATE location_property_osmline
-        SET type = NEW.type,
-            address = NEW.address,
-            linegeo = NEW.geometry,
-            startnumber = null,
-            indexed_status = 1
-        WHERE place_id = existingplacex[1];
-      IF array_length(existingplacex, 1) > 1 THEN
-        DELETE FROM location_property_osmline
-          WHERE place_id = any(existingplacex[2:]);
-      END IF;
+    -- Update the interpolation table:
+    --   The first entry gets the original data, all other entries
+    --   are removed and will be recreated on indexing.
+    --   (An interpolation can be split up, if it has more than 2 address nodes)
+    -- Update unconditionally here as the changes might be coming from the
+    -- nodes on the interpolation.
+    UPDATE location_property_osmline
+      SET type = NEW.type,
+          address = NEW.address,
+          linegeo = NEW.geometry,
+          startnumber = null,
+          indexed_status = 1
+      WHERE place_id = existingplacex[1];
+    IF array_length(existingplacex, 1) > 1 THEN
+      DELETE FROM location_property_osmline WHERE place_id = any(existingplacex[2:]);
     END IF;
+  END IF;
 
-    -- need to invalidate nodes because they might copy address info
-    IF NEW.address is not NULL
-       AND (existing.osm_type is NULL
-            OR coalesce(existing.address, ''::hstore) != NEW.address)
-    THEN
-      UPDATE placex SET indexed_status = 2
-        WHERE osm_type = 'N' AND osm_id = ANY(NEW.nodes)
-              AND indexed_status = 0;
-    END IF;
+  -- need to invalidate nodes because they might copy address info
+  IF NEW.address is not NULL
+     AND (existing.osm_id is NULL
+          OR coalesce(existing.address, ''::hstore) != NEW.address)
+  THEN
+    UPDATE placex SET indexed_status = 2
+      WHERE osm_type = 'N' AND osm_id = ANY(NEW.nodes) AND indexed_status = 0;
   END IF;
 
   -- finally update/insert place_interpolation itself
 
-  IF existing.osm_type is not NULL THEN
+  IF existing.osm_id is not NULL THEN
     -- Always updates as the nodes with the housenumber might be the reason
     -- for the change.
     UPDATE place_interpolation p
       SET type = NEW.type,
           address = NEW.address,
+          nodes = NEW.nodes,
           geometry = NEW.geometry
-      WHERE p.osm_type = NEW.osm_type AND p.osm_id = NEW.osm_id;
+      WHERE p.osm_id = NEW.osm_id;
 
     RETURN NULL;
   END IF;
@@ -91,14 +87,14 @@ CREATE OR REPLACE FUNCTION place_interpolation_delete()
 DECLARE
   deferred BOOLEAN;
 BEGIN
-  {% if debug %}RAISE WARNING 'Delete for % % %/%', OLD.osm_type, OLD.osm_id, OLD.class, OLD.type;{% endif %}
+  {% if debug %}RAISE WARNING 'Delete for interpolation %', OLD.osm_id;{% endif %}
 
-  INSERT INTO place_interpolation_to_be_deleted (osm_type, osm_id)
-    VALUES(OLD.osm_type, OLD.osm_id);
+  INSERT INTO place_interpolation_to_be_deleted (osm_id) VALUES(OLD.osm_id);
 
   RETURN NULL;
 END;
 $$ LANGUAGE plpgsql;
+
 
 CREATE OR REPLACE FUNCTION get_interpolation_address(in_address HSTORE, wayid BIGINT)
 RETURNS HSTORE
@@ -111,8 +107,7 @@ BEGIN
     RETURN in_address;
   END IF;
 
-  SELECT nodes INTO waynodes FROM place_interpolation
-    WHERE osm_type = 'W' AND osm_id = wayid;
+  SELECT nodes INTO waynodes FROM place_interpolation WHERE osm_id = wayid;
 
   IF array_upper(waynodes, 1) IS NOT NULL THEN
     FOR location IN
@@ -184,22 +179,7 @@ BEGIN
         RETURN NULL;
     END IF;
 
-    IF NEW.address is not NULL AND NEW.address ? 'housenumber' THEN
-      IF NEW.address->'housenumber' not similar to '[0-9]+-[0-9]+' THEN
-          -- housenumber needs to look like an interpolation
-          RETURN NULL;
-      END IF;
-
-      centroid := ST_Centroid(NEW.linegeo);
-      -- interpolation of a housenumber, make sure we have a line to interpolate on
-      NEW.geometry := ST_MakeLine(centroid, ST_Project(centroid, 0.0000001, 0));
-    ELSE
-      centroid := get_center_point(NEW.linegeo);
-      IF NEW.osm_type != 'W' THEN
-        RETURN NULL;
-      END IF;
-    END IF;
-
+    centroid := get_center_point(NEW.linegeo);
     NEW.indexed_status := 1; --STATUS_NEW
     NEW.country_code := lower(get_country_code(centroid));
 
@@ -230,7 +210,6 @@ DECLARE
   sectiongeo GEOMETRY;
   postcode TEXT;
   stepmod SMALLINT;
-  splitstring TEXT[];
 BEGIN
   -- deferred delete
   IF OLD.indexed_status = 100 THEN
@@ -261,158 +240,132 @@ BEGIN
       stepmod := NULL;
     END IF;
 
-    IF NEW.address is not NULL AND NEW.address ? 'housenumer' THEN
-      -- interpolation interval is in housenumber
-      splitstring := string_to_array(NEW.address->'housenumber', '-');
-      NEW.startnumber := (splitstring[1])::INTEGER;
-      NEW.endnumber := (splitstring[2])::INTEGER;
+    SELECT nodes INTO waynodes FROM place_interpolation WHERE osm_id = NEW.osm_id;
 
-      IF stepmod is not NULL THEN
-        IF NEW.startnumber % NEW.step != stepmod THEN
-          NEW.startnumber := NEW.startnumber + 1;
-        END IF;
-        IF NEW.endnumber % NEW.step != stepmod THEN
-          NEW.endnumber := NEW.endnumber - 1;
-        END IF;
-      ELSE
-        NEW.endnumber := NEW.startnumber + ((NEW.endnumber - NEW.startnumber) / NEW.step) * NEW.step;
-      END IF;
-
-      IF NEW.startnumber = NEW.endnumber THEN
-        NEW.geometry := ST_PointN(NEW.geometry, 1);
-      ELSEIF NEW.startnumber > NEW.endnumber THEN
-        NEW.startnumber := NULL;
-      END IF;
-    ELSE
-      -- classic interpolation way
-      SELECT nodes INTO waynodes
-        FROM place_interpolation WHERE osm_type = NEW.osm_type AND osm_id = NEW.osm_id;
-
-      IF array_upper(waynodes, 1) IS NULL THEN
-        RETURN NEW;
-      END IF;
-
-      linegeo := null;
-      SELECT null::integer as hnr INTO prevnode;
-
-      -- Go through all nodes on the interpolation line that have a housenumber.
-      FOR nextnode IN
-        SELECT DISTINCT ON (nodeidpos)
-            osm_id, address, geometry,
-            -- Take the postcode from the node only if it has a housenumber itself.
-            -- Note that there is a corner-case where the node has a wrongly
-            -- formatted postcode and therefore 'postcode' contains a derived
-            -- variant.
-            CASE WHEN address ? 'postcode' THEN placex.postcode ELSE NULL::text END as postcode,
-            (address->'housenumber')::integer as hnr
-          FROM placex, generate_series(1, array_upper(waynodes, 1)) nodeidpos
-          WHERE osm_type = 'N' and osm_id = waynodes[nodeidpos]::BIGINT
-                and address is not NULL and address ? 'housenumber'
-                and address->'housenumber' ~ '^[0-9]{1,6}$'
-                and ST_Distance(NEW.linegeo, geometry) < 0.0005
-          ORDER BY nodeidpos
-      LOOP
-        {% if debug %}RAISE WARNING 'processing point % (%)', nextnode.hnr, ST_AsText(nextnode.geometry);{% endif %}
-        IF linegeo is null THEN
-          linegeo := NEW.linegeo;
-        ELSE
-          splitpoint := ST_LineLocatePoint(linegeo, nextnode.geometry);
-          IF splitpoint = 0 THEN
-            -- Corner case where the splitpoint falls on the first point
-            -- and thus would not return a geometry. Skip that section.
-            sectiongeo := NULL;
-          ELSEIF splitpoint = 1 THEN
-            -- Point is at the end of the line.
-            sectiongeo := linegeo;
-            linegeo := NULL;
-          ELSE
-            -- Split the line.
-            sectiongeo := ST_LineSubstring(linegeo, 0, splitpoint);
-            linegeo := ST_LineSubstring(linegeo, splitpoint, 1);
-          END IF;
-        END IF;
-
-        IF prevnode.hnr is not null
-           -- Check if there are housenumbers to interpolate between the
-           -- regularly mapped housenumbers.
-           -- (Conveniently also fails if one of the house numbers is not a number.)
-           and abs(prevnode.hnr - nextnode.hnr) > NEW.step
-           -- If the interpolation geometry is broken or two nodes are at the
-           -- same place, then splitting might produce a point. Ignore that.
-           and ST_GeometryType(sectiongeo) = 'ST_LineString'
-        THEN
-          IF prevnode.hnr < nextnode.hnr THEN
-            startnumber := prevnode.hnr;
-            endnumber := nextnode.hnr;
-          ELSE
-            startnumber := nextnode.hnr;
-            endnumber := prevnode.hnr;
-            sectiongeo := ST_Reverse(sectiongeo);
-          END IF;
-
-          -- Adjust the interpolation, so that only inner housenumbers
-          -- are taken into account.
-          IF stepmod is null THEN
-            newstart := startnumber + NEW.step;
-          ELSE
-            newstart := startnumber + 1;
-            moddiff := newstart % NEW.step - stepmod;
-            IF moddiff < 0 THEN
-              newstart := newstart + (NEW.step + moddiff);
-            ELSE
-              newstart := newstart + moddiff;
-            END IF;
-          END IF;
-          newend := newstart + ((endnumber - 1 - newstart) / NEW.step) * NEW.step;
-
-          -- If newstart and newend are the same, then this returns a point.
-          sectiongeo := ST_LineSubstring(sectiongeo,
-                                (newstart - startnumber)::float / (endnumber - startnumber)::float,
-                                (newend - startnumber)::float / (endnumber - startnumber)::float);
-          startnumber := newstart;
-          endnumber := newend;
-
-          -- determine postcode
-          postcode := coalesce(prevnode.postcode, nextnode.postcode, postcode);
-          IF postcode is NULL and NEW.parent_place_id > 0 THEN
-              SELECT placex.postcode FROM placex
-                WHERE place_id = NEW.parent_place_id INTO postcode;
-          END IF;
-          IF postcode is NULL THEN
-              postcode := get_nearest_postcode(NEW.country_code, nextnode.geometry);
-          END IF;
-
-          -- Add the interpolation. If this is the first segment, just modify
-          -- the interpolation to be inserted, otherwise add an additional one
-          -- (marking it indexed already).
-          IF NEW.startnumber IS NULL THEN
-              NEW.startnumber := startnumber;
-              NEW.endnumber := endnumber;
-              NEW.linegeo := ST_ReducePrecision(sectiongeo, 0.0000001);
-              NEW.postcode := postcode;
-          ELSE
-            INSERT INTO location_property_osmline
-                   (linegeo, partition, osm_type, osm_id, parent_place_id,
-                    startnumber, endnumber, step, type,
-                    address, postcode, country_code,
-                    geometry_sector, indexed_status)
-            VALUES (ST_ReducePrecision(sectiongeo, 0.0000001),
-                    NEW.partition, NEW.osm_type, NEW.osm_id, NEW.parent_place_id,
-                    startnumber, endnumber, NEW.step, NEW.type,
-                    NEW.address, postcode,
-                    NEW.country_code, NEW.geometry_sector, 0);
-          END IF;
-        END IF;
-
-        -- early break if we are out of line string,
-        -- might happen when a line string loops back on itself
-        IF linegeo is null or ST_GeometryType(linegeo) != 'ST_LineString' THEN
-            RETURN NEW;
-        END IF;
-
-        prevnode := nextnode;
-      END LOOP;
+    IF array_upper(waynodes, 1) IS NULL THEN
+      RETURN NEW;
     END IF;
+
+    linegeo := null;
+    SELECT null::integer as hnr INTO prevnode;
+
+    -- Go through all nodes on the interpolation line that have a housenumber.
+    FOR nextnode IN
+      SELECT DISTINCT ON (nodeidpos)
+          osm_id, address, geometry,
+          -- Take the postcode from the node only if it has a housenumber itself.
+          -- Note that there is a corner-case where the node has a wrongly
+          -- formatted postcode and therefore 'postcode' contains a derived
+          -- variant.
+          CASE WHEN address ? 'postcode' THEN placex.postcode ELSE NULL::text END as postcode,
+          (address->'housenumber')::integer as hnr
+        FROM placex, generate_series(1, array_upper(waynodes, 1)) nodeidpos
+        WHERE osm_type = 'N' and osm_id = waynodes[nodeidpos]::BIGINT
+              and address is not NULL and address ? 'housenumber'
+              and address->'housenumber' ~ '^[0-9]{1,6}$'
+              and ST_Distance(NEW.linegeo, geometry) < 0.0005
+        ORDER BY nodeidpos
+    LOOP
+      {% if debug %}RAISE WARNING 'processing point % (%)', nextnode.hnr, ST_AsText(nextnode.geometry);{% endif %}
+      IF linegeo is null THEN
+        linegeo := NEW.linegeo;
+      ELSE
+        splitpoint := ST_LineLocatePoint(linegeo, nextnode.geometry);
+        IF splitpoint = 0 THEN
+          -- Corner case where the splitpoint falls on the first point
+          -- and thus would not return a geometry. Skip that section.
+          sectiongeo := NULL;
+        ELSEIF splitpoint = 1 THEN
+          -- Point is at the end of the line.
+          sectiongeo := linegeo;
+          linegeo := NULL;
+        ELSE
+          -- Split the line.
+          sectiongeo := ST_LineSubstring(linegeo, 0, splitpoint);
+          linegeo := ST_LineSubstring(linegeo, splitpoint, 1);
+        END IF;
+      END IF;
+
+      IF prevnode.hnr is not null
+         -- Check if there are housenumbers to interpolate between the
+         -- regularly mapped housenumbers.
+         -- (Conveniently also fails if one of the house numbers is not a number.)
+         and abs(prevnode.hnr - nextnode.hnr) > NEW.step
+         -- If the interpolation geometry is broken or two nodes are at the
+         -- same place, then splitting might produce a point. Ignore that.
+         and ST_GeometryType(sectiongeo) = 'ST_LineString'
+      THEN
+        IF prevnode.hnr < nextnode.hnr THEN
+          startnumber := prevnode.hnr;
+          endnumber := nextnode.hnr;
+        ELSE
+          startnumber := nextnode.hnr;
+          endnumber := prevnode.hnr;
+          sectiongeo := ST_Reverse(sectiongeo);
+        END IF;
+
+        -- Adjust the interpolation, so that only inner housenumbers
+        -- are taken into account.
+        IF stepmod is null THEN
+          newstart := startnumber + NEW.step;
+        ELSE
+          newstart := startnumber + 1;
+          moddiff := newstart % NEW.step - stepmod;
+          IF moddiff < 0 THEN
+            newstart := newstart + (NEW.step + moddiff);
+          ELSE
+            newstart := newstart + moddiff;
+          END IF;
+        END IF;
+        newend := newstart + ((endnumber - 1 - newstart) / NEW.step) * NEW.step;
+
+        -- If newstart and newend are the same, then this returns a point.
+        sectiongeo := ST_LineSubstring(sectiongeo,
+                              (newstart - startnumber)::float / (endnumber - startnumber)::float,
+                              (newend - startnumber)::float / (endnumber - startnumber)::float);
+        startnumber := newstart;
+        endnumber := newend;
+
+        -- determine postcode
+        postcode := coalesce(prevnode.postcode, nextnode.postcode, postcode);
+        IF postcode is NULL and NEW.parent_place_id > 0 THEN
+            SELECT placex.postcode FROM placex
+              WHERE place_id = NEW.parent_place_id INTO postcode;
+        END IF;
+        IF postcode is NULL THEN
+            postcode := get_nearest_postcode(NEW.country_code, nextnode.geometry);
+        END IF;
+
+        -- Add the interpolation. If this is the first segment, just modify
+        -- the interpolation to be inserted, otherwise add an additional one
+        -- (marking it indexed already).
+        IF NEW.startnumber IS NULL THEN
+            NEW.startnumber := startnumber;
+            NEW.endnumber := endnumber;
+            NEW.linegeo := ST_ReducePrecision(sectiongeo, 0.0000001);
+            NEW.postcode := postcode;
+        ELSE
+          INSERT INTO location_property_osmline
+                 (linegeo, partition, osm_id, parent_place_id,
+                  startnumber, endnumber, step, type,
+                  address, postcode, country_code,
+                  geometry_sector, indexed_status)
+          VALUES (ST_ReducePrecision(sectiongeo, 0.0000001),
+                  NEW.partition, NEW.osm_id, NEW.parent_place_id,
+                  startnumber, endnumber, NEW.step, NEW.type,
+                  NEW.address, postcode,
+                  NEW.country_code, NEW.geometry_sector, 0);
+        END IF;
+      END IF;
+
+      -- early break if we are out of line string,
+      -- might happen when a line string loops back on itself
+      IF linegeo is null or ST_GeometryType(linegeo) != 'ST_LineString' THEN
+          RETURN NEW;
+      END IF;
+
+      prevnode := nextnode;
+    END LOOP;
   END IF;
 
   RETURN NEW;

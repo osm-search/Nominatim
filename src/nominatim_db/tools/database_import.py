@@ -225,8 +225,8 @@ async def load_data(dsn: str, threads: int) -> None:
 
         # Interpolations need to be copied separately
         await pool.put_query("""
-                INSERT INTO location_property_osmline (osm_type, osm_id, type, address, linegeo)
-                  SELECT osm_type, osm_id, type, address, geometry
+                INSERT INTO location_property_osmline (osm_id, type, address, linegeo)
+                  SELECT osm_id, type, address, geometry
                   FROM place_interpolation
                 """, None)
 

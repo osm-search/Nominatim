@@ -251,8 +251,7 @@ def place_interpolation_table(temp_db_with_extensions, table_factory):
     """ Create an empty version of the place_interpolation table.
     """
     table_factory('place_interpolation',
-                  """osm_type char(1) NOT NULL,
-                     osm_id bigint NOT NULL,
+                  """osm_id bigint NOT NULL,
                      type TEXT,
                      address HSTORE,
                      nodes BIGINT[],
@@ -266,9 +265,9 @@ def place_interpolation_row(place_interpolation_table, temp_db_cursor):
     """
     idseq = itertools.count(30001)
 
-    def _insert(osm_type='N', osm_id=None, typ='odd', address=None,
+    def _insert(osm_id=None, typ='odd', address=None,
                 nodes=None, geom='LINESTRING(0.1 0.21, 0.1 0.2)'):
-        params = {'osm_type': osm_type, 'osm_id': osm_id or next(idseq),
+        params = {'osm_id': osm_id or next(idseq),
                   'type': typ, 'address': address, 'nodes': nodes,
                   'geometry': _with_srid(geom)}
         temp_db_cursor.insert_row('place_interpolation', **params)
@@ -319,11 +318,10 @@ def osmline_table(temp_db_with_extensions, load_sql):
 def osmline_row(osmline_table, temp_db_cursor):
     idseq = itertools.count(20001)
 
-    def _add(osm_type='W', osm_id=None, geom='LINESTRING(12.0 11.0, 12.003 11.0)'):
+    def _add(osm_id=None, geom='LINESTRING(12.0 11.0, 12.003 11.0)'):
         return temp_db_cursor.insert_row(
             'location_property_osmline',
             place_id=pysql.SQL("nextval('seq_place')"),
-            osm_type=osm_type,
             osm_id=osm_id or next(idseq),
             geometry_sector=pysql.Literal(20),
             partition=pysql.Literal(0),

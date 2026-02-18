@@ -113,8 +113,8 @@ Feature: Update of postcode only objects
             | N1     | place | house  |
             | N2     | place | house  |
         And place_interpolation contains exactly
-            | object | type |
-            | W34    | odd  |
+            | osm_id | type |
+            | 34     | odd  |
 
         When updating osm data
             """
@@ -128,7 +128,7 @@ Feature: Update of postcode only objects
             | object | postcode |
             | W34    | 4456     |
         And place_interpolation contains exactly
-            | object |
+            | osm_id |
         When indexing
         Then location_property_osmline contains exactly
             | osm_id |
@@ -163,8 +163,8 @@ Feature: Update of postcode only objects
             | N2     | place   | house  |
             | W33    | highway | residential |
         And place_interpolation contains exactly
-            | object | type |
-            | W34    | odd  |
+            | osm_id | type |
+            | 34     | odd  |
         And place_postcode contains exactly
             | object |
         When indexing

@@ -8,7 +8,7 @@
 Complex datatypes used by the Nominatim API.
 """
 from typing import Optional, Union, Tuple, NamedTuple, TypeVar, Type, Dict, \
-                   Any, List, Sequence
+                   Any, List, Sequence, TYPE_CHECKING
 from collections import abc
 import dataclasses
 import datetime as dt
@@ -17,6 +17,8 @@ import math
 from struct import unpack
 from binascii import unhexlify
 
+if TYPE_CHECKING:
+    from .localization import Locales
 from .errors import UsageError
 
 
@@ -572,6 +574,13 @@ class SearchDetails(LookupDetails):
     """
 
     viewbox_x2: Optional[Bbox] = None
+
+    locales: Optional['Locales'] = dataclasses.field(
+        default=None, metadata={'transform': lambda v: v})
+    """ Locale preferences of the caller.
+        Used during result re-ranking to prefer results that match the
+        caller's locale over results that only match in an alternate language.
+    """
 
     def __post_init__(self) -> None:
         if self.viewbox is not None:

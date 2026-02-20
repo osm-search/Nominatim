@@ -102,6 +102,13 @@ class _PostcodeCollector:
 
         with conn.cursor() as cur:
             if to_add:
+                # postcodes_insert trigger checks for duplicates via
+                # SELECT on (postcode, country_code). On an initial import the
+                # table stats can be 0 rows, so the query planner ignores the
+                # index. All inserts in executemany are in a transaction and
+                # postgres doesn't update the table state. The 'ANALYSE' after
+                # is too late.
+                cur.execute("SET LOCAL enable_seqscan = off")
                 cur.executemany(pysql.SQL(
                     """INSERT INTO location_postcodes
                          (country_code, rank_search, postcode, centroid, geometry)
@@ -112,6 +119,7 @@ class _PostcodeCollector:
                                 pysql.Literal(_extent_to_rank(self.extent)),
                                 pysql.Literal(self.extent)),
                     to_add)
+                cur.execute("SET LOCAL enable_seqscan = on")
             if to_delete:
                 cur.execute("""DELETE FROM location_postcodes
                                WHERE country_code = %s and postcode = any(%s)

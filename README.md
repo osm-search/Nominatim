@@ -51,6 +51,18 @@ A quick summary of the necessary steps:
         ../nominatim-venv/bin/nominatim serve
 
 
+
+Important Notes
+===============
+
+1. Installation and development are best suited in a Linux environment, such as Ubuntu. Although other environments work, most dependencies are primarily designed for Linux.
+
+2. Nominatin requires osm2pgsql version ≥ 1.8. Some environments provide older versions by default. You can verify it using:
+
+                osm2pgsql --version
+
+3. Ensure that the necessary ASGI server dependences are installed before suing nominatin serve command.
+
 License
 =======
 

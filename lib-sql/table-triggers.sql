@@ -36,3 +36,11 @@ CREATE TRIGGER place_interpolation_before_insert BEFORE INSERT ON place_interpol
     FOR EACH ROW EXECUTE PROCEDURE place_interpolation_insert();
 CREATE TRIGGER place_interpolation_before_delete BEFORE DELETE ON place_interpolation
     FOR EACH ROW EXECUTE PROCEDURE place_interpolation_delete();
+
+-- Trigger to propagate changes to associatedStreet relations to house members
+-- so that the indexer re-computes their parent_place_id.
+{% if db.middle_db_format != '1' %}
+CREATE TRIGGER planet_osm_rels_associated_street_update
+    AFTER INSERT OR UPDATE OR DELETE ON planet_osm_rels
+    FOR EACH ROW EXECUTE FUNCTION invalidate_associated_street_members();
+{% endif %}

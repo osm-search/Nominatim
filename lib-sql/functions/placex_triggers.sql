@@ -1416,3 +1416,61 @@ BEGIN
 END;
 $$
 LANGUAGE plpgsql;
+
+
+-- Trigger function that invalidates house members of associatedStreet
+-- relations whenever the relation's members are changed in planet_osm_rels.
+{% if db.middle_db_format != '1' %}
+CREATE OR REPLACE FUNCTION invalidate_associated_street_members()
+  RETURNS TRIGGER
+  AS $$
+DECLARE
+  member JSONB;
+  members_to_check JSONB;
+BEGIN
+  -- Build the set of members to inspect:
+  --   INSERT  -> only NEW members
+  --   DELETE  -> only OLD members
+  --   UPDATE  -> union of OLD and NEW (catches adds, removes, and street swaps)
+  IF TG_OP = 'DELETE' THEN
+    IF OLD.tags->>'type' != 'associatedStreet' THEN
+      RETURN OLD;
+    END IF;
+    members_to_check := OLD.members;
+  ELSIF TG_OP = 'INSERT' THEN
+    IF NEW.tags->>'type' != 'associatedStreet' THEN
+      RETURN NEW;
+    END IF;
+    members_to_check := NEW.members;
+  ELSE -- UPDATE
+    IF (OLD.tags->>'type') != 'associatedStreet'
+       AND (NEW.tags->>'type') != 'associatedStreet' THEN
+      RETURN NEW;
+    END IF;
+    members_to_check := COALESCE(OLD.members, '[]'::jsonb)
+                        || COALESCE(NEW.members, '[]'::jsonb);
+  END IF;
+
+  -- Mark every non-street member for re-indexing so that the next run of
+  -- `nominatim index` recomputes their parent_place_id.
+  FOR member IN
+    SELECT value FROM jsonb_array_elements(COALESCE(members_to_check, '[]'::jsonb))
+  LOOP
+    IF member->>'role' != 'street' THEN
+      UPDATE placex
+        SET indexed_status = CASE WHEN indexed_status = 0 THEN 2
+                                  ELSE indexed_status END
+        WHERE osm_type = (member->>'type')::char(1)
+              AND osm_id = (member->>'ref')::bigint
+              AND indexed_status = 0;
+    END IF;
+  END LOOP;
+
+  IF TG_OP = 'DELETE' THEN
+    RETURN OLD;
+  END IF;
+  RETURN NEW;
+END;
+$$
+LANGUAGE plpgsql;
+{% endif %}

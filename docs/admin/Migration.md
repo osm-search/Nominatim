@@ -1,7 +1,6 @@
 # Database Migrations
 
-Nominatim offers automatic migrations for versions 4.3+. Please follow
-the following steps:
+Nominatim offers automatic migrations for versions 4.3+.Please follow these steps:
 
 * Stop any updates that are potentially running
 * Update the backend: `pip install -U nominatim-db`
@@ -51,8 +50,8 @@ instructions for the current version to change to pip.
 Nominatim no longer ships its own version of osm2pgsql. Please install a
 stock version of osm2pgsql from your distribution. See the
 [installation instruction for osm2pgsql](https://osm2pgsql.org/doc/install.html)
-for details. A minimum version of 1.8 is required. The current stable versions
-of Ubuntu and Debian already ship with an appropriate versions. For older
+for details. A minimum version of 1.8 is required.The current stable versions
+of Ubuntu and Debian already ship with an appropriate version.. For older
 installation, you may have to compile a newer osm2pgsql yourself.
 
 ### Legacy tokenizer removed
@@ -99,7 +98,7 @@ are now found in `nominatim_db`.
 
 The reverse lookup algorithm has changed slightly to improve performance.
 This change needs a different index in the database. The required index
-will be automatically build during migration. Until the new index is available
+will be automatically built during migration. Until the new index is available
 performance of the /reverse endpoint is significantly reduced. You should
 therefore either remove traffic from the machine before attempting a
 version update or create the index manually **before** starting the update
@@ -261,7 +260,7 @@ configuration file, run the following command after updating:
 
 ### Update SQL code
 
-To update the SQL code to the leatest version run:
+To update the SQL code to the latest version run:
 
 ```
 ./utils/setup.php --create-functions --enable-diff-updates --create-partition-functions

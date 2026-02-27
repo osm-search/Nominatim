@@ -442,3 +442,34 @@ def test_reverse_tiger_geometry(apiobj, frontend):
     output = api.reverse((11.0, 11.0), **params)
     assert json.loads(output.geometry['geojson']) \
         == {'coordinates': [11, 11.00001], 'type': 'Point'}
+
+def test_reverse_invalid_longitude(apiobj, frontend):
+    api = frontend(apiobj, options=API_OPTIONS)
+
+    assert api.reverse((181, 0)) is None
+    assert api.reverse((-181, 0)) is None
+
+
+def test_reverse_invalid_latitude(apiobj, frontend):
+    api = frontend(apiobj, options=API_OPTIONS)
+
+    assert api.reverse((0, 91)) is None
+    assert api.reverse((0, -91)) is None
+
+
+def test_reverse_boundary_coordinates(apiobj, frontend):
+    apiobj.add_placex(
+        place_id=999,
+        class_='place',
+        type='house',
+        housenumber='1',
+        rank_address=30,
+        rank_search=30,
+        centroid=(180, 90)
+    )
+
+    api = frontend(apiobj, options=API_OPTIONS)
+
+    result = api.reverse((180, 90))
+    assert result is not None
+    assert result.place_id == 999

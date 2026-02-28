@@ -80,5 +80,8 @@ test = [
 ]
 
 docs = [
-  "sphinx"
+  "mkdocs>=1.1.2",
+  "mkdocstrings[python]>=0.25",
+  "mkdocs-material",
+  "mkdocs-gen-files"
 ]

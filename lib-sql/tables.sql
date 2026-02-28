@@ -21,14 +21,17 @@ CREATE SEQUENCE seq_place start 1;
 {% include('tables/import_reports.sql') %}
 {% include('tables/importance_tables.sql') %}
 
--- osm2pgsql does not create indexes on the middle tables for Nominatim
--- Add one for lookup of associated street relations.
-{% if db.middle_db_format == '1' %}
+-- osm2pgsql does not create indexes on the middle tables for Nominatim.
+-- When the dedicated place_associated_street table exists,
+-- associatedStreet lookups use that table instead, so no extra index is needed.
+{% if 'place_associated_street' not in db.tables %}
+  {% if db.middle_db_format == '1' %}
 CREATE INDEX planet_osm_rels_parts_associated_idx ON planet_osm_rels USING gin(parts)
   {{db.tablespace.address_index}}
   WHERE tags @> ARRAY['associatedStreet'];
-{% else %}
+  {% else %}
 CREATE INDEX planet_osm_rels_relation_members_idx ON planet_osm_rels USING gin(planet_osm_member_ids(members, 'R'::character(1)))
   WITH (fastupdate=off)
   {{db.tablespace.address_index}};
+  {% endif %}
 {% endif %}

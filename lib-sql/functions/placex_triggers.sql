@@ -122,15 +122,49 @@ CREATE OR REPLACE FUNCTION find_associated_street(poi_osm_type CHAR(1),
   RETURNS BIGINT
   AS $$
 DECLARE
-  location RECORD;
-  member JSONB;
   parent RECORD;
   result BIGINT;
   distance FLOAT;
   new_distance FLOAT;
   waygeom GEOMETRY;
-BEGIN
 {% if db.middle_db_format == '1' %}
+  location RECORD;
+{% elif 'place_associated_street' not in db.tables %}
+  member JSONB;
+{% endif %}
+BEGIN
+{% if 'place_associated_street' in db.tables %}
+  FOR parent IN
+    SELECT p.place_id, p.geometry
+      FROM place_associated_street h
+      JOIN place_associated_street s
+           ON h.relation_id = s.relation_id AND s.member_role = 'street'
+      JOIN placex p
+           ON p.osm_type = s.member_type::char(1)
+              AND p.osm_id = s.member_id
+              AND p.name IS NOT NULL
+              AND p.rank_search BETWEEN 26 AND 27
+     WHERE h.member_type = poi_osm_type
+       AND h.member_id = poi_osm_id
+  LOOP
+    -- Find the closest 'street' member.
+    -- Avoid distance computation for the frequent case where there is
+    -- only one street member.
+    IF waygeom IS NULL THEN
+      result := parent.place_id;
+      waygeom := parent.geometry;
+    ELSE
+      distance := coalesce(distance, ST_Distance(waygeom, bbox));
+      new_distance := ST_Distance(parent.geometry, bbox);
+      IF new_distance < distance THEN
+        distance := new_distance;
+        result := parent.place_id;
+        waygeom := parent.geometry;
+      END IF;
+    END IF;
+  END LOOP;
+
+{% elif db.middle_db_format == '1' %}
   FOR location IN
     SELECT members FROM planet_osm_rels
     WHERE parts @> ARRAY[poi_osm_id]
@@ -147,9 +181,6 @@ BEGIN
                  and name is not null
                  and rank_search between 26 and 27
         LOOP
-          -- Find the closest 'street' member.
-          -- Avoid distance computation for the frequent case where there is
-          -- only one street member.
           IF waygeom is null THEN
             result := parent.place_id;
             waygeom := parent.geometry;
@@ -182,9 +213,6 @@ BEGIN
              and name is not null
              and rank_search between 26 and 27
     LOOP
-      -- Find the closest 'street' member.
-      -- Avoid distance computation for the frequent case where there is
-      -- only one street member.
       IF waygeom is null THEN
         result := parent.place_id;
         waygeom := parent.geometry;
@@ -1418,53 +1446,38 @@ $$
 LANGUAGE plpgsql;
 
 
--- Trigger function that invalidates house members of associatedStreet
--- relations whenever the relation's members are changed in planet_osm_rels.
-{% if db.middle_db_format != '1' %}
+-- Invalidates house members of associatedStreet relations
+-- whenever the place_associated_street table is modified.
+-- osm2pgsql flex handles updates as DELETE-all + re-INSERT, so each
+-- row-level trigger call covers exactly one member.
+{% if 'place_associated_street' in db.tables %}
 CREATE OR REPLACE FUNCTION invalidate_associated_street_members()
   RETURNS TRIGGER
   AS $$
 DECLARE
-  member JSONB;
-  members_to_check JSONB;
+  m_type CHAR(1);
+  m_id   BIGINT;
+  m_role TEXT;
 BEGIN
-  -- Build the set of members to inspect:
-  --   INSERT  -> only NEW members
-  --   DELETE  -> only OLD members
-  --   UPDATE  -> union of OLD and NEW (catches adds, removes, and street swaps)
   IF TG_OP = 'DELETE' THEN
-    IF OLD.tags->>'type' != 'associatedStreet' THEN
-      RETURN OLD;
-    END IF;
-    members_to_check := OLD.members;
-  ELSIF TG_OP = 'INSERT' THEN
-    IF NEW.tags->>'type' != 'associatedStreet' THEN
-      RETURN NEW;
-    END IF;
-    members_to_check := NEW.members;
-  ELSE -- UPDATE
-    IF (OLD.tags->>'type') != 'associatedStreet'
-       AND (NEW.tags->>'type') != 'associatedStreet' THEN
-      RETURN NEW;
-    END IF;
-    members_to_check := COALESCE(OLD.members, '[]'::jsonb)
-                        || COALESCE(NEW.members, '[]'::jsonb);
+    m_type := OLD.member_type;
+    m_id   := OLD.member_id;
+    m_role := OLD.member_role;
+  ELSE
+    m_type := NEW.member_type;
+    m_id   := NEW.member_id;
+    m_role := NEW.member_role;
   END IF;
 
-  -- Mark every non-street member for re-indexing so that the next run of
-  -- `nominatim index` recomputes their parent_place_id.
-  FOR member IN
-    SELECT value FROM jsonb_array_elements(COALESCE(members_to_check, '[]'::jsonb))
-  LOOP
-    IF member->>'role' != 'street' THEN
-      UPDATE placex
-        SET indexed_status = CASE WHEN indexed_status = 0 THEN 2
-                                  ELSE indexed_status END
-        WHERE osm_type = (member->>'type')::char(1)
-              AND osm_id = (member->>'ref')::bigint
-              AND indexed_status = 0;
-    END IF;
-  END LOOP;
+  -- Only invalidate non-street members (houses); streets don't need
+  -- re-parenting from associatedStreet changes.
+  IF m_role != 'street' THEN
+    UPDATE placex
+       SET indexed_status = 2
+     WHERE osm_type = m_type
+       AND osm_id = m_id
+       AND indexed_status = 0;
+  END IF;
 
   IF TG_OP = 'DELETE' THEN
     RETURN OLD;

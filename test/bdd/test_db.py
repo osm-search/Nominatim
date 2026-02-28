@@ -199,6 +199,7 @@ def import_ways(row_factory, datatable):
 @given('the relations', target_fixture=None)
 def import_rels(row_factory, datatable):
     """ Import raw relations into the osm2pgsql relation middle table.
+        Also populates place_associated_street for associatedStreet relations.
     """
     id_idx = datatable[0].index('id')
     memb_idx = datatable[0].index('members')
@@ -217,6 +218,17 @@ def import_rels(row_factory, datatable):
         row_factory('planet_osm_rels',
                     id=int(line[id_idx]), tags=tags,
                     members=psycopg.types.json.Json(members))
+
+            # Mirror associatedStreet data into the dedicated table.
+            raw_tags = {k[5:]: v for k, v in zip(datatable[0], line)
+                        if k.startswith("tags+")}
+            if raw_tags.get('type') == 'associatedStreet':
+                for mem in members:
+                    cur.execute("""INSERT INTO place_associated_street
+                                   (relation_id, member_type, member_id, member_role)
+                                   VALUES (%s, %s, %s, %s)""",
+                                (int(line[id_idx]), mem['type'],
+                                 mem['ref'], mem['role']))
 
 
 @when('importing', target_fixture='place_ids')

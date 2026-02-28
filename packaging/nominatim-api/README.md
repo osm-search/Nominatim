@@ -15,10 +15,14 @@ To install the Nominatim API from pypi, run:
 
 ## Running a Nominatim server
 
-You need Falcon or Starlette to run Nominatim as a service, as well as
-an ASGI-capable server like uvicorn. To install them from pypi run:
+You need Falcon or Starlette to run Nominatim as a service.
+To install Falcon support from PyPI run:
 
-    pip install falcon uvicorn
+    pip install nominatim-api[falcon]
+
+For Starlette support run:
+
+    pip install nominatim-api[starlette]
 
 You need to have a Nominatim database imported with the 'nominatim-db'
 package. Go to the project directory, then run uvicorn as:

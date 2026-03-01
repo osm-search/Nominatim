@@ -10,8 +10,8 @@ import asyncio
 from pathlib import Path
 
 if sys.platform == 'win32':
-    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-
+    loop = asyncio.SelectorEventLoop()
+    asyncio.set_event_loop(loop)    
 import psycopg
 from psycopg import sql as pysql
 import pytest

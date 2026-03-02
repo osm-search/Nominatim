@@ -20,7 +20,7 @@ functions as a tie-breaker between places with very similar primary
 importance values.
 
 nominatim.org has preprocessed importance tables for the
-[primary Wikipedia rankings](https://nominatim.org/data/wikimedia-importance.sql.gz)
+[primary Wikipedia rankings](https://nominatim.org/data/wikimedia-importance.csv.gz)
 and for [secondary importance](https://nominatim.org/data/wikimedia-secondary-importance.sql.gz)
 based on Wikipedia importance of the administrative areas.
 

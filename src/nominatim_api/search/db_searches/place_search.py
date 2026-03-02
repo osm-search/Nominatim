@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2025 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Implementation of search for a named place (without housenumber).
@@ -61,9 +61,7 @@ class PlaceSearch(base.AbstractSearch):
         sql = sa.select(t.c.place_id, t.c.search_rank, t.c.address_rank,
                         t.c.country_code, t.c.centroid,
                         t.c.name_vector, t.c.nameaddress_vector,
-                        sa.case((t.c.importance > 0, t.c.importance),
-                                else_=0.40001-(sa.cast(t.c.search_rank, sa.Float())/75))
-                          .label('importance'))
+                        t.c.importance)
 
         for lookup in self.lookups:
             sql = sql.where(lookup.sql_condition(t))

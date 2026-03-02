@@ -76,7 +76,9 @@ packages = ["src/nominatim_db"]
 test = [
   "pytest",
   "pytest-asyncio",
-  "pytest-bdd"
+  "pytest-bdd",
+  "flake8",
+  "mypy"
 ]
 
 docs = [
@@ -84,4 +86,10 @@ docs = [
   "mkdocstrings[python]>=0.25",
   "mkdocs-material",
   "mkdocs-gen-files"
+]
+
+serve = [
+  "falcon>=3.0",
+  "uvicorn",
+  "gunicorn"
 ]

@@ -59,21 +59,4 @@ packages = ["src/nominatim_api"]
 "settings" = "nominatim_api/resources/settings"
 
 
-[project.optional-dependencies]
-falcon=[
-  "falcon>=3.0"
-]
 
-starlette=[
-  "starlette"
-]
-
-test = [
-  "pytest",
-  "pytest-asyncio",
-  "pytest-bdd"
-]
-
-docs = [
-  "sphinx"
-]

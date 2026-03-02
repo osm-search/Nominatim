@@ -43,7 +43,7 @@ Falcon here as the web framework.
 Add the necessary packages to your virtual environment:
 
 ``` sh
-/srv/nominatim-venv/bin/pip install falcon gunicorn
+/srv/nominatim-venv/bin/pip install nominatim-db[serve]
 ```
 
 ### Setting up Nominatim as a systemd job

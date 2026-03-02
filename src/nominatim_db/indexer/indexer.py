@@ -31,14 +31,19 @@ class Indexer:
         self.tokenizer = tokenizer
         self.num_threads = num_threads
 
-    def has_pending(self) -> bool:
+    def has_pending(self, minrank: int = 0, maxrank: int = 30) -> bool:
         """ Check if any data still needs indexing.
             This function must only be used after the import has finished.
             Otherwise it will be very expensive.
         """
         with connect(self.dsn) as conn:
             with conn.cursor() as cur:
-                cur.execute("SELECT 'a' FROM placex WHERE indexed_status > 0 LIMIT 1")
+                cur.execute(""" SELECT 'a'
+                                  FROM placex
+                                 WHERE rank_address BETWEEN %s AND %s
+                                   AND indexed_status > 0
+                                 LIMIT 1""",
+                            (minrank, maxrank))
                 return cur.rowcount > 0
 
     async def index_full(self, analyse: bool = True) -> None:

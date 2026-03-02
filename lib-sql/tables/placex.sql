@@ -12,7 +12,7 @@ CREATE TABLE placex (
   place_id BIGINT NOT NULL,
   parent_place_id BIGINT,
   linked_place_id BIGINT,
-  importance FLOAT,
+  importance FLOAT NOT NULL,
   indexed_date TIMESTAMP,
   geometry_sector INTEGER NOT NULL,
   rank_address SMALLINT NOT NULL,

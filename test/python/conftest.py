@@ -293,13 +293,14 @@ def placex_row(placex_table, temp_db_cursor):
     def _add(osm_type='N', osm_id=None, cls='amenity', typ='cafe', names=None,
              admin_level=None, address=None, extratags=None, geom='POINT(10 4)',
              country=None, housenumber=None, rank_search=30, rank_address=30,
-             centroid='POINT(10 4)', indexed_status=0, indexed_date=None):
+             centroid='POINT(10 4)', indexed_status=0, indexed_date=None,
+             importance=0.00001):
         args = {'place_id': pysql.SQL("nextval('seq_place')"),
                 'osm_type': osm_type, 'osm_id': osm_id or next(idseq),
                 'class': cls, 'type': typ, 'name': names, 'admin_level': admin_level,
                 'address': address, 'housenumber': housenumber,
                 'rank_search': rank_search, 'rank_address': rank_address,
-                'extratags': extratags,
+                'extratags': extratags, 'importance': importance,
                 'centroid': _with_srid(centroid), 'geometry': _with_srid(geom),
                 'country_code': country,
                 'indexed_status': indexed_status, 'indexed_date': indexed_date,

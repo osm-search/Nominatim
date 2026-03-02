@@ -731,6 +731,10 @@ BEGIN
 
   END IF;
 
+  IF NEW.importance IS NULL THEN
+    NEW.importance := 0.40001 - (NEW.rank_search::float / 75);
+  END IF;
+
   {% if debug %}RAISE WARNING 'placex_insert:END: % % % %',NEW.osm_type,NEW.osm_id,NEW.class,NEW.type;{% endif %}
 
 {% if not disable_diff_updates %}
@@ -1076,10 +1080,8 @@ BEGIN
       {% if debug %}RAISE WARNING 'Waterway processed';{% endif %}
   END IF;
 
-  NEW.importance := null;
-  SELECT wikipedia, importance
-    FROM compute_importance(NEW.extratags, NEW.country_code, NEW.rank_search, NEW.centroid)
-    INTO NEW.wikipedia,NEW.importance;
+  SELECT wikipedia, importance INTO NEW.wikipedia, NEW.importance
+    FROM compute_importance(NEW.extratags, NEW.country_code, NEW.rank_search, NEW.centroid);
 
 {% if debug %}RAISE WARNING 'Importance computed from wikipedia: %', NEW.importance;{% endif %}
 

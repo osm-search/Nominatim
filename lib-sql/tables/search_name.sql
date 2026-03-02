@@ -12,7 +12,6 @@ DROP TABLE IF EXISTS search_name;
 CREATE TABLE search_name (
   place_id BIGINT NOT NULL,
   importance FLOAT NOT NULL,
-  search_rank SMALLINT NOT NULL,
   address_rank SMALLINT NOT NULL,
   name_vector integer[] NOT NULL,
   nameaddress_vector integer[] NOT NULL,

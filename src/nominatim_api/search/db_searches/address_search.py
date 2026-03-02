@@ -155,7 +155,7 @@ class AddressSearch(base.AbstractSearch):
         for ranking in self.rankings:
             penalty += ranking.sql_penalty(t)
 
-        sql = sa.select(t.c.place_id, t.c.search_rank, t.c.address_rank,
+        sql = sa.select(t.c.place_id, t.c.address_rank,
                         t.c.country_code, t.c.centroid,
                         t.c.name_vector, t.c.nameaddress_vector,
                         t.c.importance, penalty.label('penalty'))
@@ -199,7 +199,7 @@ class AddressSearch(base.AbstractSearch):
 
         inner = sql.limit(10000).order_by(sa.desc(sa.text('importance'))).subquery()
 
-        sql = sa.select(inner.c.place_id, inner.c.search_rank, inner.c.address_rank,
+        sql = sa.select(inner.c.place_id, inner.c.address_rank,
                         inner.c.country_code, inner.c.centroid, inner.c.importance,
                         inner.c.penalty)
 

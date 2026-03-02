@@ -1138,10 +1138,10 @@ BEGIN
                                        NEW.token_info, NEW.centroid);
 
         IF array_length(name_vector, 1) is not NULL THEN
-          INSERT INTO search_name (place_id, search_rank, address_rank,
+          INSERT INTO search_name (place_id, address_rank,
                                    importance, country_code, name_vector,
                                    nameaddress_vector, centroid)
-                 VALUES (NEW.place_id, NEW.rank_search, NEW.rank_address,
+                 VALUES (NEW.place_id, NEW.rank_address,
                          NEW.importance, NEW.country_code, name_vector,
                          nameaddress_vector, NEW.centroid);
           {% if debug %}RAISE WARNING 'Place added to search table';{% endif %}
@@ -1311,10 +1311,10 @@ BEGIN
     {% if debug %}RAISE WARNING 'added to search name (full)';{% endif %}
 
     {% if not db.reverse_only %}
-        INSERT INTO search_name (place_id, search_rank, address_rank,
+        INSERT INTO search_name (place_id, address_rank,
                                  importance, country_code, name_vector,
                                  nameaddress_vector, centroid)
-               VALUES (NEW.place_id, NEW.rank_search, NEW.rank_address,
+               VALUES (NEW.place_id, NEW.rank_address,
                        NEW.importance, NEW.country_code, name_vector,
                        nameaddress_vector, NEW.centroid);
     {% endif %}

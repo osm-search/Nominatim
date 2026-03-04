@@ -29,6 +29,7 @@ map placex {
   indexed_date => TIMESTAMP
   centroid => GEOMETRY
   geometry => GEOMETRY
+  token_info JSONB
 }
 
 map search_name {
@@ -51,11 +52,11 @@ map word {
 map location_property_osmline {
   place_id => BIGINT
   osm_id => BIGINT
+  type => TEXT
   startnumber => INT
   endnumber => INT
-  interpolationtype => TEXT
+  step => int
   address => HSTORE
-  partition => SMALLINT
   geometry_sector => INT
   parent_place_id => BIGINT
   country_code => VARCHAR(2)
@@ -63,6 +64,7 @@ map location_property_osmline {
   indexed_status => SMALLINT
   indexed_date => TIMESTAMP
   linegeo => GEOMETRY
+  token_info JSONB
 }
 
 map place_addressline {
@@ -78,6 +80,7 @@ map location_postcodes {
   place_id => BIGINT
   osm_id => BIGINT
   postcode => TEXT
+  country_code => TEXT
   parent_place_id => BIGINT
   rank_search => SMALLINT
   indexed_status => SMALLINT

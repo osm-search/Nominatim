@@ -35,10 +35,31 @@ map place {
   geometry => GEOMETRY
 }
 
+map place_postcode {
+  osm_type => CHAR(1)
+  osm_id => BIGINT
+  postcode => TEXT
+  country_code => TEXT
+  centroid => GEOMETRY
+  geometry => GEOMETRY
+}
+
+map place_interpolation {
+  osm_id => BIGINT
+  type => TEXT
+  address => HSTORE
+  nodes => BIGINT[]
+  geometry => GEOMETRY
+}
+
+
 planet_osm_nodes  -[hidden]> planet_osm_ways
 planet_osm_ways  -[hidden]> planet_osm_rels
 planet_osm_ways -[hidden]-> place
+place -[hidden]-> place_postcode
+place -[hidden]-> place_interpolation
 
 planet_osm_nodes::id <- planet_osm_ways::nodes
+planet_osm_nodes::id <- place_interpolation::nodes
 
 @enduml

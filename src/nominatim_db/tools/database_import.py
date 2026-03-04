@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2025 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Functions for setting up and importing a new Nominatim database.
@@ -219,19 +219,16 @@ async def load_data(dsn: str, threads: int) -> None:
                 pysql.SQL("""INSERT INTO placex ({columns})
                                SELECT {columns} FROM place
                                 WHERE osm_id % {total} = {mod}
-                                  AND NOT (class='place'
-                                           and (type='houses' or type='postcode'))
-                                  AND ST_IsValid(geometry)
                           """).format(columns=_COPY_COLUMNS,
                                       total=pysql.Literal(placex_threads),
                                       mod=pysql.Literal(imod)), None)
 
         # Interpolations need to be copied separately
         await pool.put_query("""
-                INSERT INTO location_property_osmline (osm_id, address, linegeo)
-                  SELECT osm_id, address, geometry FROM place
-                  WHERE class='place' and type='houses' and osm_type='W'
-                        and ST_GeometryType(geometry) = 'ST_LineString' """, None)
+                INSERT INTO location_property_osmline (osm_id, type, address, linegeo)
+                  SELECT osm_id, type, address, geometry
+                  FROM place_interpolation
+                """, None)
 
     progress.cancel()
 

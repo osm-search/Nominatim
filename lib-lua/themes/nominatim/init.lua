@@ -77,7 +77,19 @@ local table_definitions = {
         indexes = {
             { column = 'postcode', method = 'btree' }
         }
-     }
+     },
+     place_interpolation = {
+        ids = { type = 'way', id_column = 'osm_id' },
+        columns = {
+            { column = 'type', type = 'text', not_null = true },
+            { column = 'address', type = 'hstore' },
+            { column = 'nodes', type = 'text', sql_type = 'bigint[]', not_null = true },
+            { column = 'geometry', type = 'linestring', projection = 'WGS84', not_null = true },
+        },
+        indexes = {
+            { column = 'nodes', method = 'gin' }
+        }
+    }
 }
 
 local insert_row = {}
@@ -703,9 +715,24 @@ function module.process_tags(o)
         o.address['country'] = nil
     end
 
-    if o.address.interpolation ~= nil then
-        o:write_place('place', 'houses', PlaceTransform.always)
-        return
+    if o.address.interpolation ~= nil and o.address.housenumber == nil
+            and o.object.type == 'way' and o.object.nodes ~= nil then
+        local extra_addr = nil
+        for k, v in pairs(o.address) do
+            if k ~= 'interpolation' then
+                if extra_addr == nil then
+                    extra_addr = {}
+                end
+                extra_addr[k] = v
+            end
+        end
+
+        insert_row.place_interpolation{
+            type = o.address.interpolation,
+            address = extra_addr,
+            nodes = '{' .. table.concat(o.object.nodes, ',') .. '}',
+            geometry = o.object:as_linestring()
+        }
     end
 
     -- collect main keys
@@ -728,7 +755,7 @@ function module.process_tags(o)
                     }
                 end
             elseif ktype == 'fallback' and o.has_name then
-                fallback = {k, v, PlaceTransform.named}
+                fallback = {k, v, PlaceTransform.always}
             end
         end
     end

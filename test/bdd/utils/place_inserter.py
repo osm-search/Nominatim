@@ -54,7 +54,6 @@ class PlaceColumn:
         elif key in ('name', 'address', 'extratags'):
             self.columns[key] = ast.literal_eval('{' + value + '}')
         else:
-            assert key in ('class', 'type'), "Unknown column '{}'.".format(key)
             self.columns[key] = None if value == '' else value
 
     def _set_key_name(self, value):

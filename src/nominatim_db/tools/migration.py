@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2025 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Functions for database migration to newer software versions.
@@ -349,4 +349,74 @@ def create_place_postcode_table(conn: Connection, config: Configuration, **_: An
               USING SPGIST (geometry) {{db.tablespace.address_index}}
               WHERE osm_type = 'N' and rank_search < 26 and class = 'place';
             ANALYSE;
+            """)
+
+
+@_migration(5, 2, 99, 3)
+def create_place_interpolation_table(conn: Connection, config: Configuration, **_: Any) -> None:
+    """ Create place_interpolation table
+    """
+    sqlp = SQLPreprocessor(conn, config)
+    mutable = not is_frozen(conn)
+    has_place_table = table_exists(conn, 'place_interpolation')
+
+    if mutable and not has_place_table:
+        # create tables
+        conn.execute("""
+            CREATE TABLE place_interpolation (
+              osm_id BIGINT NOT NULL,
+              type TEXT NOT NULL,
+              address HSTORE,
+              nodes BIGINT[] NOT NULL,
+              geometry GEOMETRY(LineString, 4326)
+            );
+
+            CREATE TABLE IF NOT EXISTS place_interpolation_to_be_deleted (
+              osm_id BIGINT NOT NULL
+            );
+            """)
+        # copy data over
+        conn.execute("""
+            ALTER TABLE place DISABLE TRIGGER ALL;
+
+            WITH deleted AS (
+              DELETE FROM place
+                WHERE class='place' and type = 'houses'
+                RETURNING osm_type, osm_id,
+                          address->'interpolation' as itype,
+                          address - 'interpolation'::TEXT as address,
+                          geometry)
+            INSERT INTO place_interpolation (osm_id, type, address, nodes, geometry)
+              (SELECT d.osm_id, d.itype, d.address, p.nodes, d.geometry
+                 FROM deleted d, planet_osm_ways p
+                 WHERE osm_type = 'W'
+                       AND d.osm_id = p.id
+                       AND itype is not null
+                       AND ST_GeometryType(geometry) = 'ST_LineString');
+
+            ALTER TABLE place ENABLE TRIGGER ALL;
+            """)
+
+        # create indices
+        conn.execute("""
+            CREATE INDEX place_interpolation_nodes_idx ON place_interpolation
+              USING gin(nodes);
+            CREATE INDEX place_interpolation_osm_id_idx ON place_interpolation
+              USING btree(osm_id);
+            """)
+        # create triggers
+        sqlp.run_sql_file(conn, 'functions/interpolation.sql')
+        conn.execute("""
+            CREATE TRIGGER place_interpolation_before_insert BEFORE INSERT ON place_interpolation
+              FOR EACH ROW EXECUTE PROCEDURE place_interpolation_insert();
+            CREATE TRIGGER place_interpolation_before_delete BEFORE DELETE ON place_interpolation
+              FOR EACH ROW EXECUTE PROCEDURE place_interpolation_delete();
+            """)
+        # mutate location_property_osmline table
+        conn.execute("""
+            ALTER TABLE location_property_osmline ADD COLUMN type TEXT;
+
+            UPDATE location_property_osmline
+              SET type = coalesce(address->'interpolation', 'all'),
+                  address = address - 'interpolation'::TEXT;
             """)

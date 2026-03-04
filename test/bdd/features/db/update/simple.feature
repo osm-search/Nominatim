@@ -68,19 +68,6 @@ Feature: Update of simple objects
           | object | class | type    | centroid!wkt |
           | N3     | shop  | grocery | 1 -1 |
 
-    Scenario: remove postcode place when house number is added
-        Given the places
-          | osm | class | type     | postcode | geometry |
-          | N3  | place | postcode | 12345    | country:de |
-        When importing
-        Then placex has no entry for N3
-        When updating places
-          | osm | class | type  | postcode | housenr | geometry |
-          | N3  | place | house | 12345    | 13      | country:de |
-        Then placex contains
-          | object | class | type |
-          | N3     | place | house |
-
     Scenario: remove boundary when changing from polygon to way
         Given the grid
           | 1 | 2 |

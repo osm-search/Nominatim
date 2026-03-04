@@ -14,20 +14,24 @@ Feature: Updates of address interpolation objects
             n2 Taddr:housenumber=17
             w33 Thighway=residential,name=Tao Nn1,n2
             """
-        Then place contains
+        Then place contains exactly
             | object | class | type   |
             | N1     | place | house  |
             | N2     | place | house  |
+            | W33    | highway | residential |
 
         When updating osm data
             """
             w99 Taddr:interpolation=odd Nn1,n2
             """
-        Then place contains
+        Then place contains exactly
             | object | class | type   |
             | N1     | place | house  |
             | N2     | place | house  |
-            | W99    | place | houses |
+            | W33    | highway | residential |
+        And place_interpolation contains exactly
+            | osm_id | type |
+            | 99     | odd  |
         When indexing
         Then placex contains exactly
             | object | class   | type   |
@@ -46,11 +50,13 @@ Feature: Updates of address interpolation objects
             n2 Taddr:housenumber=7
             w99 Taddr:interpolation=odd Nn1,n2
             """
-        Then place contains
+        Then place contains exactly
             | object | class | type   |
             | N1     | place | house  |
             | N2     | place | house  |
-            | W99    | place | houses |
+        And place_interpolation contains exactly
+            | osm_id | type |
+            | 99     | odd  |
 
         When updating osm data
             """
@@ -60,6 +66,8 @@ Feature: Updates of address interpolation objects
             | object | class | type   |
             | N1     | place | house  |
             | N2     | place | house  |
+        And place_interpolation contains exactly
+            | osm_id |
         When indexing
         Then placex contains exactly
             | object | class | type   |
@@ -77,21 +85,27 @@ Feature: Updates of address interpolation objects
             w33 Thighway=residential Nn1,n2
             w99 Thighway=residential Nn1,n2
             """
-        Then place contains
+        Then place contains exactly
             | object | class   | type   |
             | N1     | place   | house  |
             | N2     | place   | house  |
+            | W33    | highway | residential  |
             | W99    | highway | residential  |
+        And place_interpolation contains exactly
+            | osm_id |
 
         When updating osm data
             """
             w99 Taddr:interpolation=odd Nn1,n2
             """
-        Then place contains
+        Then place contains exactly
             | object | class | type   |
             | N1     | place | house  |
             | N2     | place | house  |
-            | W99    | place | houses |
+            | W33    | highway | residential  |
+        And place_interpolation contains exactly
+            | osm_id | type |
+            | 99     | odd  |
         When indexing
         Then placex contains exactly
             | object | class   | type   |
@@ -110,11 +124,13 @@ Feature: Updates of address interpolation objects
             n2 Taddr:housenumber=17
             w99 Taddr:interpolation=odd Nn1,n2
             """
-        Then place contains
+        Then place contains exactly
             | object | class | type   |
             | N1     | place | house  |
             | N2     | place | house  |
-            | W99    | place | houses |
+        And place_interpolation contains exactly
+            | osm_id | type |
+            | 99     | odd  |
 
         When updating osm data
             """
@@ -125,6 +141,8 @@ Feature: Updates of address interpolation objects
             | N1     | place   | house  |
             | N2     | place   | house  |
             | W99    | highway | residential  |
+        And place_interpolation contains exactly
+            | osm_id |
         When indexing
         Then placex contains exactly
             | object | class   | type   |

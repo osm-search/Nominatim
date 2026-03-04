@@ -170,11 +170,20 @@ class ForwardGeocoder:
                 if qword not in words:
                     wdist = max(difflib.SequenceMatcher(a=qword, b=w).quick_ratio() for w in words)
                     distance += len(qword) if wdist < 0.4 else 1
-            # Compensate for the fact that country names do not get a
-            # match penalty yet by the tokenizer.
-            # Temporary hack that needs to be removed!
+            # Countries with high importance can dominate results when matched
+            # via an alternate-language name. Apply a language-aware penalty
+            # to offset this.
             if result.rank_address == 4:
-                distance *= 2
+                if self.params.locales and result.names:
+                    loc_names = [result.names[t] for t in self.params.locales.name_tags
+                                 if t in result.names]
+                    if loc_names:
+                        norm_loc = self.query_analyzer.normalize_text(' '.join(loc_names))
+                        loc_words = set(w for w in re.split('[-,: ]+', norm_loc) if w)
+                        if loc_words and loc_words.isdisjoint(qwords):
+                            result.accuracy += result.calculated_importance() * 0.5
+                else:
+                    distance *= 2
             result.accuracy += distance * 0.3 / sum(len(w) for w in qwords)
 
     async def lookup_pois(self, categories: List[Tuple[str, str]],

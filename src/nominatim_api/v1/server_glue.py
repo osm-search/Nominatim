@@ -334,6 +334,8 @@ async def search_endpoint(api: NominatimAPIAsync, params: ASGIAdaptor) -> Any:
         details['layers'] = DataLayer.ADDRESS
     else:
         details['layers'] = get_layers(params)
+    details['locales'] = Locales.from_accept_languages(get_accepted_languages(params),
+                                                       params.config().OUTPUT_NAMES)
 
     # unstructured query parameters
     query = params.get('q', None)
@@ -359,8 +361,7 @@ async def search_endpoint(api: NominatimAPIAsync, params: ASGIAdaptor) -> Any:
     except UsageError as err:
         params.raise_error(str(err))
 
-    Locales.from_accept_languages(get_accepted_languages(params),
-                                  params.config().OUTPUT_NAMES).localize_results(results)
+    details['locales'].localize_results(results)
 
     if details['dedupe'] and len(results) > 1:
         results = helpers.deduplicate_results(results, max_results)

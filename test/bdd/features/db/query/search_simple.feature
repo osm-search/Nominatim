@@ -80,3 +80,23 @@ Feature: Searching of simple objects
         | Chicago     | Illinois  | IL  |
         | Auburn      | Alabama   | AL  |
         | New Orleans | Louisiana | LA  |
+
+    # github #3210
+    Scenario: Country with alternate-language name does not dominate when locale differs
+        Given the 1.0 grid with origin DE
+         | 1 |    | 2 |
+         |   | 10 |   |
+         | 4 |    | 3 |
+        Given the places
+         | osm  | class    | type           | admin | name+name | name+name:fi | name+name:de | country | geometry    |
+         | R1   | boundary | administrative | 2     | Turgei    | Turgi        | Testland     | de      | (1,2,3,4,1) |
+        Given the places
+         | osm  | class | type    | name+name | geometry |
+         | N10  | place | village | Turgi     | 10       |
+        When importing
+        And geocoding "Turgi"
+         | accept-language |
+         | de              |
+        Then result 0 contains
+         | object |
+         | N10    |

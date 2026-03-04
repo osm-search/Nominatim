@@ -177,6 +177,7 @@ class SearchBuilder:
                 sdata.lookups = partials.split_lookup(split, 'nameaddress_vector')
                 sdata.lookups.append(
                     dbf.FieldLookup('name_vector', hnr_tokens, lookups.Restrict))
+                expected_count = partials.min_count() / (5**(split - 1))
             else:
                 addr_fulls = [t.token for t in
                               self.query.get_tokens(address[0], qmod.TOKEN_WORD)]

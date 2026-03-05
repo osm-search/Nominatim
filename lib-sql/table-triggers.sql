@@ -36,3 +36,11 @@ CREATE TRIGGER place_interpolation_before_insert BEFORE INSERT ON place_interpol
     FOR EACH ROW EXECUTE PROCEDURE place_interpolation_insert();
 CREATE TRIGGER place_interpolation_before_delete BEFORE DELETE ON place_interpolation
     FOR EACH ROW EXECUTE PROCEDURE place_interpolation_delete();
+
+-- Propagate changes to associatedStreet relations to house members
+-- so that the indexer re-computes their parent_place_id.
+{% if 'place_associated_street' in db.tables %}
+CREATE TRIGGER place_associated_street_update
+    AFTER INSERT OR DELETE ON place_associated_street
+    FOR EACH ROW EXECUTE FUNCTION invalidate_associated_street_members();
+{% endif %}

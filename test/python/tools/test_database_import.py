@@ -219,6 +219,8 @@ class TestSetupSQL:
                       (('db_format', 2),))
 
         table_factory('planet_osm_rels', 'id BIGINT, members JSONB, tags JSONB')
+        table_factory('place_associated_street',
+                      'relation_id BIGINT, member_type TEXT, member_id BIGINT, member_role TEXT')
         temp_db_conn.execute("""
             CREATE OR REPLACE FUNCTION planet_osm_member_ids(jsonb, character)
               RETURNS bigint[] AS $$

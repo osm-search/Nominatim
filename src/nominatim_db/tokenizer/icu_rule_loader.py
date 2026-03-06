@@ -13,7 +13,6 @@ import json
 import logging
 
 from icu import Transliterator
-
 from ..config import flatten_config_list, Configuration
 from ..db.properties import set_property, get_property
 from ..db.connection import Connection
@@ -22,6 +21,18 @@ from .place_sanitizer import PlaceSanitizer
 from .icu_token_analysis import ICUTokenAnalysis
 from .token_analysis.base import AnalysisModule, Analyzer
 from ..data import country_info
+
+
+def _register_han_pinyin_join() -> None:
+    """ Register a custom ICU transliterator that joins pinyin syllables
+        produced by Han-Latin into a single token.
+        Only syllables with tone marks are joined, so Latin words are unaffected.
+    """
+    tone = "āáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜ"
+    Transliterator.registerInstance(
+        Transliterator.createFromRules('Han-PinyinJoin',
+            f"([a-z{tone}]+) ' ' ([a-z{tone}]+) > $1$2;"))
+
 
 LOG = logging.getLogger()
 
@@ -47,6 +58,7 @@ class ICURuleLoader:
 
     def __init__(self, config: Configuration) -> None:
         self.config = config
+        _register_han_pinyin_join()
         rules = config.load_sub_configuration('icu_tokenizer.yaml',
                                               config='TOKENIZER_CONFIG')
 

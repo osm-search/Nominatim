@@ -126,7 +126,7 @@ class NearSearch(base.AbstractSearch):
         bind_params = {'limit': details.max_results,
                        'min_rank': details.min_rank,
                        'max_rank': details.max_rank,
-                       'excluded': details.excluded,
+                       'excluded': details.excluded_place_ids,
                        'countries': details.countries}
         for row in await conn.execute(sql, bind_params):
             result = nres.create_from_placex_row(row, nres.SearchResult)

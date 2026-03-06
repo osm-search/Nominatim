@@ -62,6 +62,7 @@ def _make_interpolation_subquery(table: SaFromClause, inner: SaFromClause,
 
     if details.excluded:
         sql = sql.where(base.exclude_places(table))
+        sql = sql.where(table.c.parent_place_id.not_in(sa.bindparam('excluded')))
 
     return sql.scalar_subquery()
 
@@ -314,7 +315,7 @@ class AddressSearch(base.AbstractSearch):
             'viewbox2': details.viewbox_x2,
             'near': details.near,
             'near_radius': details.near_radius,
-            'excluded': details.excluded,
+            'excluded': details.excluded_place_ids,
             'countries': details.countries
         }
 
@@ -344,7 +345,7 @@ class AddressSearch(base.AbstractSearch):
 
                 # Only add the street as a result, if it meets all other
                 # filter conditions.
-                if (not details.excluded or result.place_id not in details.excluded)\
+                if (not details.excluded or result.place_id not in details.excluded_place_ids)\
                    and (not self.qualifiers or result.category in self.qualifiers.values)\
                    and result.rank_address >= details.min_rank:
                     result.accuracy += 1.0  # penalty for missing housenumber

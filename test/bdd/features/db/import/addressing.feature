@@ -241,8 +241,8 @@ Feature: Address computation
     Scenario: buildings with only addr:postcodes do not appear in the address of a way
         Given the grid with origin DE
             | 1 |   |   |   |   | 8 |   | 6 |   | 2 |
-            |   |10 |11 |   |   |   |   |   |   |   |
-            |   |13 |12 |   |   |   |   |   |   |   |
+            |   |   |   |   |   |   |   |   |   |   |
+            |   |13 |   |   |   |   |   |   |   |   |
             | 20|   |   | 21|   |   |   |   |   |   |
             |   |   |   |   |   |   |   |   |   |   |
             |   |   |   |   |   | 9 |   |   |   |   |
@@ -255,9 +255,9 @@ Feature: Address computation
         And the named places
             | osm | class    | type           | geometry |
             | W93 | highway  | residential    | 20,21    |
-        And the places
-            | osm | class    | type        | addr+postcode | geometry |
-            | W22 | place    | postcode    | 11234         | (10,11,12,13,10) |
+        And the postcodes
+            | osm |  postcode | centroid |
+            | W22 |  11234    | 13 |
         When importing
         Then place_addressline contains exactly
             | object | address  |

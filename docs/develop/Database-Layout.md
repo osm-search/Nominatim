@@ -11,10 +11,38 @@ The import process creates the following tables:
 
 The `planet_osm_*` tables are the usual backing tables for OSM data. Note
 that Nominatim uses them to look up special relations and to find nodes on
-ways.
+ways. Apart from those the osm2pgsql import produces three tables as output.
 
-The osm2pgsql import produces a single table `place` as output with the following
-columns:
+The **place_postcode** table collects postcode information that is not
+already present on an object in the place table. That is for one thing
+[postcode area relations](https://wiki.openstreetmap.org/wiki/Tag:boundary%3Dpostal_code)
+and for another objects with a postcode tag but no other tagging that
+qualifies it for inclusion into the geocoding database.
+
+The table has the following fields:
+
+ * `osm_type` - kind of OSM object (**N** - node, **W** - way, **R** - relation)
+ * `osm_id` - original OSM ID
+ * `postcode` - postcode as extacted from the `postcal_code` tag
+ * `country_code` - computed country code for this postcode. This field
+   functions as a cache and is only computed when the table is used for
+   the computation of the final postcodes.
+ * `centroid` - centroid of the object
+ * `geometry` - the full geometry of the area for postcode areas only
+
+The **place_interpolation** table holds all
+[address interpolation lines](https://wiki.openstreetmap.org/wiki/Addresses#Interpolation)
+and has the following fields:
+
+ * `osm_id` - original OSM ID
+ * `type` - type of interpolation as extracted from the `addr:interpolation` tag
+ * `address` - any other `addr:*` tags
+ * `nodes` - list of OSM nodes contained in this interpolation,
+    needed to compute the involved housenumbers later
+ * `geometry` - the linestring for the interpolation (in WSG84)
+
+The **place** table holds all other OSM object that are interesting and
+has the following fields:
 
  * `osm_type` - kind of OSM object (**N** - node, **W** - way, **R** - relation)
  * `osm_id` - original OSM ID
@@ -65,23 +93,32 @@ additional columns:
  * `indexed_status` - processing status of the place (0 - ready, 1 - freshly inserted, 2 - needs updating, 100 - needs deletion)
  * `indexed_date` - timestamp when the place was processed last
  * `centroid` - a point feature for the place
+ * `token_info` - a dummy field used to inject information from the tokenizer
+   into the indexing process
 
 The **location_property_osmline** table is a special table for
 [address interpolations](https://wiki.openstreetmap.org/wiki/Addresses#Using_interpolation).
 The columns have the same meaning and use as the columns with the same name in
-the placex table. Only three columns are special:
+the placex table. Only the following columns are special:
 
- * `startnumber` and `endnumber` - beginning and end of the number range
-    for the interpolation
- * `interpolationtype` - a string `odd`, `even` or `all` to indicate
-    the interval between the numbers
+ * `startnumber`, `endnumber` and `step` - beginning and end of the number range
+    for the interpolation and the increment steps
+ * `type` - a string to indicate the interval between the numbers as imported
+   from the OSM `addr:interpolation` tag; valid values are `odd`, `even`, `all`
+   or a single digit number; interpolations with other values are silently
+   dropped
 
 Address interpolations are always ways in OSM, which is why there is no column
 `osm_type`.
 
-The **location_postcodes** table holds computed centroids of all postcodes that
-can be found in the OSM data. The meaning of the columns is again the same
-as that of the placex table.
+The **location_postcodes** table holds computed postcode assembled from the
+postcode information available in OSM. When a postcode has a postcode area
+relation, then the table stores its full geometry. For all other postcode
+the centroid is computed using the position of all OSM object that reference
+the same postoce. The `osm_id` field can be used to distinguish the two.
+When set, it refers to the OSM relation with the postcode area.
+The meaning of the columns in the table is again the same as that of the
+placex table.
 
 Every place needs an address, a set of surrounding places that describe the
 location of the place. The set of address places is made up of OSM places

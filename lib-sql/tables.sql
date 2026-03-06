@@ -32,8 +32,3 @@ CREATE INDEX planet_osm_rels_relation_members_idx ON planet_osm_rels USING gin(p
   WITH (fastupdate=off)
   {{db.tablespace.address_index}};
 {% endif %}
-
--- Needed for lookups if a node is part of an interpolation.
-CREATE INDEX IF NOT EXISTS idx_place_interpolations
-    ON place USING gist(geometry) {{db.tablespace.address_index}}
-    WHERE osm_type = 'W' and address ? 'interpolation';

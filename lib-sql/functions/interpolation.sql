@@ -2,10 +2,98 @@
 --
 -- This file is part of Nominatim. (https://nominatim.org)
 --
--- Copyright (C) 2022 by the Nominatim developer community.
+-- Copyright (C) 2026 by the Nominatim developer community.
 -- For a full list of authors see the git log.
 
 -- Functions for address interpolation objects in location_property_osmline.
+
+CREATE OR REPLACE FUNCTION place_interpolation_insert()
+  RETURNS TRIGGER
+  AS $$
+DECLARE
+  existing RECORD;
+  existingplacex BIGINT[];
+
+BEGIN
+  IF NOT (NEW.type in ('odd', 'even', 'all') OR NEW.type similar to '[1-9]') THEN
+    -- the new interpolation is illegal, simply remove existing entries
+    DELETE FROM location_property_osmline o WHERE o.osm_id = NEW.osm_id;
+    RETURN NULL;
+  END IF;
+
+  -- Remove the place from the list of places to be deleted
+  DELETE FROM place_interpolation_to_be_deleted pdel WHERE pdel.osm_id = NEW.osm_id;
+
+  SELECT * INTO existing FROM place_interpolation p WHERE p.osm_id = NEW.osm_id;
+
+  -- Get the existing entry from the interpolation table.
+  SELECT array_agg(place_id) INTO existingplacex
+    FROM location_property_osmline o WHERE o.osm_id = NEW.osm_id;
+
+  IF array_length(existingplacex, 1) is NULL THEN
+    INSERT INTO location_property_osmline (osm_id, type, address, linegeo)
+      VALUES (NEW.osm_id, NEW.type, NEW.address, NEW.geometry);
+  ELSE
+    -- Update the interpolation table:
+    --   The first entry gets the original data, all other entries
+    --   are removed and will be recreated on indexing.
+    --   (An interpolation can be split up, if it has more than 2 address nodes)
+    -- Update unconditionally here as the changes might be coming from the
+    -- nodes on the interpolation.
+    UPDATE location_property_osmline
+      SET type = NEW.type,
+          address = NEW.address,
+          linegeo = NEW.geometry,
+          startnumber = null,
+          indexed_status = 1
+      WHERE place_id = existingplacex[1];
+    IF array_length(existingplacex, 1) > 1 THEN
+      DELETE FROM location_property_osmline WHERE place_id = any(existingplacex[2:]);
+    END IF;
+  END IF;
+
+  -- need to invalidate nodes because they might copy address info
+  IF NEW.address is not NULL
+     AND (existing.osm_id is NULL
+          OR coalesce(existing.address, ''::hstore) != NEW.address)
+  THEN
+    UPDATE placex SET indexed_status = 2
+      WHERE osm_type = 'N' AND osm_id = ANY(NEW.nodes) AND indexed_status = 0;
+  END IF;
+
+  -- finally update/insert place_interpolation itself
+
+  IF existing.osm_id is not NULL THEN
+    -- Always updates as the nodes with the housenumber might be the reason
+    -- for the change.
+    UPDATE place_interpolation p
+      SET type = NEW.type,
+          address = NEW.address,
+          nodes = NEW.nodes,
+          geometry = NEW.geometry
+      WHERE p.osm_id = NEW.osm_id;
+
+    RETURN NULL;
+  END IF;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+
+CREATE OR REPLACE FUNCTION place_interpolation_delete()
+  RETURNS TRIGGER
+  AS $$
+DECLARE
+  deferred BOOLEAN;
+BEGIN
+  {% if debug %}RAISE WARNING 'Delete for interpolation %', OLD.osm_id;{% endif %}
+
+  INSERT INTO place_interpolation_to_be_deleted (osm_id) VALUES(OLD.osm_id);
+
+  RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
 
 
 CREATE OR REPLACE FUNCTION get_interpolation_address(in_address HSTORE, wayid BIGINT)
@@ -19,17 +107,20 @@ BEGIN
     RETURN in_address;
   END IF;
 
-  SELECT nodes INTO waynodes FROM planet_osm_ways WHERE id = wayid;
-  FOR location IN
-    SELECT placex.address, placex.osm_id FROM placex
-     WHERE osm_type = 'N' and osm_id = ANY(waynodes)
-           and placex.address is not null
-           and (placex.address ? 'street' or placex.address ? 'place')
-           and indexed_status < 100
-  LOOP
-    -- mark it as a derived address
-    RETURN location.address || in_address || hstore('_inherited', '');
-  END LOOP;
+  SELECT nodes INTO waynodes FROM place_interpolation WHERE osm_id = wayid;
+
+  IF array_upper(waynodes, 1) IS NOT NULL THEN
+    FOR location IN
+      SELECT placex.address, placex.osm_id FROM placex
+       WHERE osm_type = 'N' and osm_id = ANY(waynodes)
+             and placex.address is not null
+             and (placex.address ? 'street' or placex.address ? 'place')
+             and indexed_status < 100
+    LOOP
+      -- mark it as a derived address
+      RETURN location.address || coalesce(in_address, ''::hstore) || hstore('_inherited', '');
+    END LOOP;
+  END IF;
 
   RETURN in_address;
 END;
@@ -73,51 +164,6 @@ $$
 LANGUAGE plpgsql STABLE PARALLEL SAFE;
 
 
-CREATE OR REPLACE FUNCTION reinsert_interpolation(way_id BIGINT, addr HSTORE,
-                                                  geom GEOMETRY)
-  RETURNS INT
-  AS $$
-DECLARE
-  existing BIGINT[];
-BEGIN
-  IF addr is NULL OR NOT addr ? 'interpolation'
-         OR NOT (addr->'interpolation' in ('odd', 'even', 'all')
-                 or addr->'interpolation' similar to '[1-9]')
-  THEN
-    -- the new interpolation is illegal, simply remove existing entries
-    DELETE FROM location_property_osmline WHERE osm_id = way_id;
-  ELSE
-    -- Get the existing entry from the interpolation table.
-    SELECT array_agg(place_id) INTO existing
-      FROM location_property_osmline WHERE osm_id = way_id;
-
-    IF existing IS NULL or array_length(existing, 1) = 0 THEN
-      INSERT INTO location_property_osmline (osm_id, address, linegeo)
-        VALUES (way_id, addr, geom);
-    ELSE
-      -- Update the interpolation table:
-      --   The first entry gets the original data, all other entries
-      --   are removed and will be recreated on indexing.
-      --   (An interpolation can be split up, if it has more than 2 address nodes)
-      UPDATE location_property_osmline
-        SET address = addr,
-            linegeo = geom,
-            startnumber = null,
-            indexed_status = 1
-        WHERE place_id = existing[1];
-      IF array_length(existing, 1) > 1 THEN
-        DELETE FROM location_property_osmline
-          WHERE place_id = any(existing[2:]);
-      END IF;
-    END IF;
-  END IF;
-
-  RETURN 1;
-END;
-$$
-LANGUAGE plpgsql;
-
-
 CREATE OR REPLACE FUNCTION osmline_insert()
   RETURNS TRIGGER
   AS $$
@@ -128,20 +174,17 @@ BEGIN
   NEW.indexed_date := now();
 
   IF NEW.indexed_status IS NULL THEN
-      IF NEW.address is NULL OR NOT NEW.address ? 'interpolation'
-         OR NOT (NEW.address->'interpolation' in ('odd', 'even', 'all')
-                 or NEW.address->'interpolation' similar to '[1-9]')
-      THEN
-          -- alphabetic interpolation is not supported
-          RETURN NULL;
-      END IF;
+    IF NOT(NEW.type in ('odd', 'even', 'all') OR NEW.type similar to '[1-9]') THEN
+        -- alphabetic interpolation is not supported
+        RETURN NULL;
+    END IF;
 
-      NEW.indexed_status := 1; --STATUS_NEW
-      centroid := get_center_point(NEW.linegeo);
-      NEW.country_code := lower(get_country_code(centroid));
+    centroid := get_center_point(NEW.linegeo);
+    NEW.indexed_status := 1; --STATUS_NEW
+    NEW.country_code := lower(get_country_code(centroid));
 
-      NEW.partition := get_partition(NEW.country_code);
-      NEW.geometry_sector := geometry_sector(NEW.partition, centroid);
+    NEW.partition := get_partition(NEW.country_code);
+    NEW.geometry_sector := geometry_sector(NEW.partition, centroid);
   END IF;
 
   RETURN NEW;
@@ -182,32 +225,22 @@ BEGIN
                                                   get_center_point(NEW.linegeo),
                                                   NEW.linegeo);
 
-  -- Cannot find a parent street. We will not be able to display a reliable
-  -- address, so drop entire interpolation.
-  IF NEW.parent_place_id is NULL THEN
-    DELETE FROM location_property_osmline where place_id = OLD.place_id;
-    RETURN NULL;
-  END IF;
-
   NEW.token_info := token_strip_info(NEW.token_info);
   IF NEW.address ? '_inherited' THEN
-    NEW.address := hstore('interpolation', NEW.address->'interpolation');
+    NEW.address := NULL;
   END IF;
 
   -- If the line was newly inserted, split the line as necessary.
-  IF OLD.indexed_status = 1 THEN
-    IF NEW.address->'interpolation' in ('odd', 'even') THEN
+  IF NEW.parent_place_id is not NULL AND NEW.startnumber is NULL THEN
+    IF NEW.type in ('odd', 'even') THEN
       NEW.step := 2;
-      stepmod := CASE WHEN NEW.address->'interpolation' = 'odd' THEN 1 ELSE 0 END;
+      stepmod := CASE WHEN NEW.type = 'odd' THEN 1 ELSE 0 END;
     ELSE
-      NEW.step := CASE WHEN NEW.address->'interpolation' = 'all'
-                       THEN 1
-                       ELSE (NEW.address->'interpolation')::SMALLINT END;
+      NEW.step := CASE WHEN NEW.type = 'all' THEN 1 ELSE (NEW.type)::SMALLINT END;
       stepmod := NULL;
     END IF;
 
-    SELECT nodes INTO waynodes
-      FROM planet_osm_ways WHERE id = NEW.osm_id;
+    SELECT nodes INTO waynodes FROM place_interpolation WHERE osm_id = NEW.osm_id;
 
     IF array_upper(waynodes, 1) IS NULL THEN
       RETURN NEW;
@@ -314,12 +347,12 @@ BEGIN
         ELSE
           INSERT INTO location_property_osmline
                  (linegeo, partition, osm_id, parent_place_id,
-                  startnumber, endnumber, step,
+                  startnumber, endnumber, step, type,
                   address, postcode, country_code,
                   geometry_sector, indexed_status)
           VALUES (ST_ReducePrecision(sectiongeo, 0.0000001),
                   NEW.partition, NEW.osm_id, NEW.parent_place_id,
-                  startnumber, endnumber, NEW.step,
+                  startnumber, endnumber, NEW.step, NEW.type,
                   NEW.address, postcode,
                   NEW.country_code, NEW.geometry_sector, 0);
         END IF;

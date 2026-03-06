@@ -36,6 +36,9 @@ class PlaceID:
     The internal ID of the place to reference.
     """
 
+    def __str__(self) -> str:
+        return str(self.place_id)
+
 
 @dataclasses.dataclass
 class OsmID:
@@ -58,6 +61,9 @@ class OsmID:
         If there are multiple objects in the database and `osm_class` is
         left out, then one of the objects is returned at random.
     """
+
+    def __str__(self) -> str:
+        return f"{self.osm_type}{self.osm_id}"
 
     def __post_init__(self) -> None:
         if self.osm_type not in ('N', 'W', 'R'):
@@ -407,7 +413,7 @@ def format_excluded(ids: Any) -> List[PlaceRef]:
     """
     if not ids:
         return []
-    
+
     plist: Sequence[str]
     if isinstance(ids, str):
         plist = [s.strip() for s in ids.split(',')]
@@ -416,7 +422,7 @@ def format_excluded(ids: Any) -> List[PlaceRef]:
     else:
         raise UsageError("Parameter 'excluded' needs to be a comma-separated list "
                          "or a Python list of place IDs or OSM IDs.")
-    
+
     result: List[PlaceRef] = []
     for i in plist:
         if not i:
@@ -424,18 +430,22 @@ def format_excluded(ids: Any) -> List[PlaceRef]:
         if isinstance(i, (PlaceID, OsmID)):
             result.append(i)
         elif isinstance(i, int):
-            result.append(PlaceID(i))
+            if i > 0:
+                result.append(PlaceID(i))
         elif isinstance(i, str):
             if i.isdigit():
-                result.append(PlaceID(int(i)))
+                if int(i) > 0:
+                    result.append(PlaceID(int(i)))
             elif len(i) > 1 and i[0].upper() in ('N', 'W', 'R') and i[1:].isdigit():
-                result.append(OsmID(i[0].upper(), int(i[1:])))
+                if int(i[1:]) > 0:
+                    result.append(OsmID(i[0].upper(), int(i[1:])))
             else:
                 raise UsageError(f"Invalid exclude ID: {i}")
         else:
             raise UsageError("Parameter 'excluded' contains invalid types.")
-        
+
     return result
+
 
 def format_categories(categories: List[Tuple[str, str]]) -> List[Tuple[str, str]]:
     """ Extract a list of categories. Currently a noop.
@@ -555,8 +565,8 @@ class SearchDetails(LookupDetails):
     """
 
     excluded: List[PlaceRef] = dataclasses.field(default_factory=list,
-                                            metadata={'transform': format_excluded})
-    """ List of OSM objects to exclude from the results, 
+                                                 metadata={'transform': format_excluded})
+    """ List of OSM objects to exclude from the results,
         provided as either internal Place IDs or OSM IDs.
     """
 

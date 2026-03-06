@@ -51,7 +51,7 @@ class ForwardGeocoder:
         if not excluded or all(isinstance(e, PlaceID) for e in excluded):
             return
 
-        place_ids = [e.place_id for e in excluded if isinstance(e, PlaceID)]
+        place_ids = [e for e in excluded if isinstance(e, PlaceID)]
         osm_ids = [e for e in excluded if isinstance(e, OsmID)]
 
         if osm_ids:
@@ -61,10 +61,10 @@ class ForwardGeocoder:
                 for oid in osm_ids
             ]
             sql = sa.select(t.c.place_id).where(sa.or_(*conditions))
-            for row in await self.conn.execute(sql):
-                place_ids.append(row.place_id)
+            place_ids.extend(PlaceID(row.place_id)
+                             for row in await self.conn.execute(sql))
 
-        self.params.excluded = [PlaceID(pid) for pid in place_ids]
+        self.params.excluded = place_ids
 
     async def build_searches(self,
                              phrases: List[Phrase]) -> Tuple[QueryStruct, List[AbstractSearch]]:

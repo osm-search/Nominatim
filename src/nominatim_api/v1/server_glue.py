@@ -375,8 +375,8 @@ async def search_endpoint(api: NominatimAPIAsync, params: ASGIAdaptor) -> Any:
                                    params.get_bool('namedetails', False),
                                    params.get_bool('extratags', False),
                                    (f"{r.osm_object[0]}{r.osm_object[1]}"
-                                    if r.osm_object 
-                                    else str(r.place_id) 
+                                    if r.osm_object
+                                    else str(r.place_id)
                                     for r in results
                                     if r.osm_object or r.place_id))
         queryparts['format'] = fmt

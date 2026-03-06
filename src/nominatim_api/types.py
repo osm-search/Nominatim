@@ -407,7 +407,7 @@ def format_excluded(ids: Any) -> List[PlaceRef]:
     """
     if not ids:
         return []
-    
+
     plist: Sequence[str]
     if isinstance(ids, str):
         plist = [s.strip() for s in ids.split(',')]
@@ -416,7 +416,7 @@ def format_excluded(ids: Any) -> List[PlaceRef]:
     else:
         raise UsageError("Parameter 'excluded' needs to be a comma-separated list "
                          "or a Python list of place IDs or OSM IDs.")
-    
+
     result: List[PlaceRef] = []
     for i in plist:
         if not i:
@@ -434,8 +434,9 @@ def format_excluded(ids: Any) -> List[PlaceRef]:
                 raise UsageError(f"Invalid exclude ID: {i}")
         else:
             raise UsageError("Parameter 'excluded' contains invalid types.")
-        
+
     return result
+
 
 def format_categories(categories: List[Tuple[str, str]]) -> List[Tuple[str, str]]:
     """ Extract a list of categories. Currently a noop.
@@ -555,8 +556,8 @@ class SearchDetails(LookupDetails):
     """
 
     excluded: List[PlaceRef] = dataclasses.field(default_factory=list,
-                                            metadata={'transform': format_excluded})
-    """ List of OSM objects to exclude from the results, 
+                                                 metadata={'transform': format_excluded})
+    """ List of OSM objects to exclude from the results,
         provided as either internal Place IDs or OSM IDs.
     """
 
@@ -597,6 +598,8 @@ class SearchDetails(LookupDetails):
     """
 
     def __post_init__(self) -> None:
+        if self.excluded and not all(isinstance(e, (PlaceID, OsmID)) for e in self.excluded):
+            self.excluded = format_excluded(self.excluded)
         if self.viewbox is not None:
             xext = (self.viewbox.maxlon - self.viewbox.minlon)/2
             yext = (self.viewbox.maxlat - self.viewbox.minlat)/2

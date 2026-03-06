@@ -43,7 +43,7 @@ class PoiSearch(base.AbstractSearch):
             'viewbox': details.viewbox,
             'near': details.near,
             'near_radius': details.near_radius,
-            'excluded': details.excluded
+            'excluded': details.excluded_place_ids
         }
 
         t = conn.t.placex
@@ -77,6 +77,9 @@ class PoiSearch(base.AbstractSearch):
             if details.viewbox is not None and details.bounded_viewbox:
                 sql = sql.where(t.c.geometry.intersects(VIEWBOX_PARAM))
 
+            if details.excluded:
+                sql = sql.where(base.exclude_places(t))
+
             rows.extend(await conn.execute(sql, bind_params))
         else:
             # use the class type tables
@@ -99,6 +102,9 @@ class PoiSearch(base.AbstractSearch):
 
                     if self.countries:
                         sql = sql.where(t.c.country_code.in_(self.countries.values))
+
+                    if details.excluded:
+                        sql = sql.where(base.exclude_places(t))
 
                     sql = sql.limit(LIMIT_PARAM)
                     rows.extend(await conn.execute(sql, bind_params))

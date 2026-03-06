@@ -51,7 +51,7 @@ def select_placex(t: SaFromClause) -> SaSelect:
 
 
 def exclude_places(t: SaFromClause) -> Callable[[], SaExpression]:
-    """ Return an expression to exclude place IDs from the list in the
+    """ Return an expression to exclude place IDs and OSM IDs from the list in the
         SearchDetails.
 
         Requires the excluded IDs to be supplied as a bind parameter in SQL.

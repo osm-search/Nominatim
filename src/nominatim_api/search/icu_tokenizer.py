@@ -11,10 +11,10 @@ from typing import Tuple, Dict, List, Optional, Iterator, Any, cast
 import dataclasses
 import difflib
 import re
+import unicodedata
 from itertools import zip_longest
 
 from icu import Transliterator
-
 import sqlalchemy as sa
 
 from ..errors import UsageError
@@ -27,6 +27,28 @@ from ..query_preprocessing.config import QueryConfig
 from ..query_preprocessing.base import QueryProcessingFunc
 from .query_analyzer_factory import AbstractQueryAnalyzer
 from .postcode_parser import PostcodeParser
+
+def _is_han_word(text: str) -> bool:
+    """ Return True if every character is a CJK Unified Ideograph.
+        Uses unicodedata.name() — covers all Han extensions automatically.
+        Fast-exits for empty text or text starting outside CJK codepoint
+        ranges, avoiding unicodedata lookup cost for Latin queries.
+    """
+    if not text or ord(text[0]) < 0x3400:
+        return False
+    return all(
+        unicodedata.name(ch, '').startswith('CJK UNIFIED IDEOGRAPH')
+        for ch in text
+    )
+
+def _is_japanese_script(text: str) -> bool:
+    """ Return True if text contains hiragana or katakana characters.
+        Reliable guard to distinguish Japanese from Chinese text.
+    """
+    return any(
+        unicodedata.name(ch, '').startswith(('HIRAGANA', 'KATAKANA'))
+        for ch in text
+    )
 
 
 DB_TO_TOKEN_TYPE = {
@@ -185,9 +207,6 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
 
         for row in await self.lookup_in_db(list(words.keys())):
             for trange in words[row.word_token]:
-                # Create a new token for each position because the token
-                # penalty can vary depending on the position in the query.
-                # (See rerank_tokens() below.)
                 token = ICUToken.from_db_row(row)
                 if row.type == 'S':
                     if row.info['op'] in ('in', 'near'):
@@ -257,13 +276,21 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
         for phrase in query.source:
             query.nodes[-1].ptype = phrase.ptype
             phrase_split = re.split('([ :-])', phrase.text)
-            # The zip construct will give us the pairs of word/break from
-            # the regular expression split. As the split array ends on the
-            # final word, we simply use the fillvalue to even out the list and
-            # add the phrase break at the end.
             for word, breakchar in zip_longest(*[iter(phrase_split)]*2, fillvalue=','):
                 if not word:
                     continue
+                # Add original Han token for exact match ranking.
+                # Skip if the phrase contains Japanese kana (hiragana or
+                # katakana) — those scripts only appear in Japanese text,
+                # never in Chinese. This reliably prevents Japanese kanji
+                # from being double-tokenized.
+                if _is_han_word(word) and not _is_japanese_script(phrase.text):
+                    query.add_node(qmod.BREAK_TOKEN, phrase.ptype, word, word)
+                    # BREAK_TOKEN is correct here — it signals that more tokens
+                    # follow immediately (the transliteration tokens below).
+                    # breakchar is assigned to the last transliteration node,
+                    # correctly marking the real phrase boundary.
+                    query.nodes[-1].btype = qmod.BREAK_TOKEN
                 if trans := self.transliterator.transliterate(word):
                     for term, term_word in self.split_transliteration(trans, word):
                         if term:
@@ -336,6 +363,15 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
             for ttype, tokens in tlist.items():
                 for token in tokens:
                     itok = cast(ICUToken, token)
+                    # Apply a small fixed penalty for Han script tokens instead
+                    # of running match_penalty(). Comparing Han characters against
+                    # a transliterated norm produces a meaningless large distance
+                    # and would wrongly penalize the exact match token we added
+                    # in split_query(). A small fixed penalty avoids over-ranking
+                    # while still scoring better than transliterated partial tokens.
+                    if _is_han_word(itok.word_token or ''):
+                        itok.penalty+=0.1
+                        continue
                     itok.penalty += itok.match_penalty(norm) * \
                         (1 if ttype in (qmod.TOKEN_WORD, qmod.TOKEN_PARTIAL) else 2)
 

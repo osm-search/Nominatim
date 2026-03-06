@@ -57,3 +57,6 @@ packages = ["src/nominatim_api"]
 "src/nominatim_db/config.py" = "nominatim_api/config.py"
 "extra_src/paths.py" = "nominatim_api/paths.py"
 "settings" = "nominatim_api/resources/settings"
+
+
+

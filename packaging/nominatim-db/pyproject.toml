@@ -71,3 +71,25 @@ packages = ["src/nominatim_db"]
 "data/country_osm_grid.sql.gz" = "nominatim_db/resources/country_osm_grid.sql.gz"
 "data/words.sql" = "nominatim_db/resources/words.sql"
 "extra_src/nominatim_db/paths.py" = "nominatim_db/paths.py"
+
+[project.optional-dependencies]
+test = [
+  "pytest",
+  "pytest-asyncio",
+  "pytest-bdd",
+  "flake8",
+  "mypy"
+]
+
+docs = [
+  "mkdocs>=1.1.2",
+  "mkdocstrings[python]>=0.25",
+  "mkdocs-material",
+  "mkdocs-gen-files"
+]
+
+serve = [
+  "falcon>=3.0",
+  "uvicorn",
+  "gunicorn"
+]

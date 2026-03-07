@@ -94,7 +94,7 @@ class PostcodeSearch(base.AbstractSearch):
             'viewbox2': details.viewbox_x2,
             'near': details.near,
             'near_radius': details.near_radius,
-            'excluded': details.excluded
+            'excluded': details.excluded_place_ids
         }
 
         results = nres.SearchResults()

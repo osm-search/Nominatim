@@ -47,7 +47,7 @@ class CountrySearch(base.AbstractSearch):
         sql = base.filter_by_area(sql, t, details)
 
         bind_params = {
-            'excluded': details.excluded,
+            'excluded': details.excluded_place_ids,
             'viewbox': details.viewbox,
             'near': details.near,
             'near_radius': details.near_radius

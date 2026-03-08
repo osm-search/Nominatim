@@ -7,12 +7,20 @@
 """
 Helper functions for output of results in json formats.
 """
-from typing import Mapping, Any, Optional, Tuple, Union, List
+from typing import Mapping, Any, Optional, Tuple, Dict, Union, List
 
 from ..utils.json_writer import JsonWriter
-from ..results import AddressLines, ReverseResults, SearchResults
+from ..results import AddressLines, ReverseResults, SearchResults, BaseResult
 from . import classtypes as cl
 from ..types import EntranceDetails
+
+
+def _add_admin_level(result: BaseResult) -> Optional[Dict[str, str]]:
+    tags = result.extratags
+    if result.category == ('boundary', 'administrative') and result.admin_level < 15:
+        tags = dict(tags) if tags else {}
+        tags['admin_level'] = str(result.admin_level)
+    return tags
 
 
 def _write_osm_id(out: JsonWriter, osm_object: Optional[Tuple[str, int]]) -> None:
@@ -134,7 +142,7 @@ def format_base_json(results: Union[ReverseResults, SearchResults],
             write_entrances(out, result.entrances)
 
         if options.get('extratags', False):
-            out.keyval('extratags', result.extratags)
+            out.keyval('extratags', _add_admin_level(result))
 
         if options.get('namedetails', False):
             out.keyval('namedetails', result.names)
@@ -210,7 +218,7 @@ def format_base_geojson(results: Union[ReverseResults, SearchResults],
             write_entrances(out, result.entrances)
 
         if options.get('extratags', False):
-            out.keyval('extratags', result.extratags)
+            out.keyval('extratags', _add_admin_level(result))
 
         if options.get('namedetails', False):
             out.keyval('namedetails', result.names)
@@ -284,7 +292,7 @@ def format_base_geocodejson(results: Union[ReverseResults, SearchResults],
             write_entrances(out, result.entrances)
 
         if options.get('extratags', False):
-            out.keyval('extra', result.extratags)
+            out.keyval('extra', _add_admin_level(result))
 
         out.end_object().next().end_object().next()
 

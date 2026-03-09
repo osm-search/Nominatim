@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2025 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Implementation of search for an address (search with housenumber).
@@ -155,13 +155,7 @@ class AddressSearch(base.AbstractSearch):
         for ranking in self.rankings:
             penalty += ranking.sql_penalty(t)
 
-        sql = sa.select(t.c.place_id, t.c.search_rank, t.c.address_rank,
-                        t.c.country_code, t.c.centroid,
-                        t.c.name_vector, t.c.nameaddress_vector,
-                        sa.case((t.c.importance > 0, t.c.importance),
-                                else_=0.40001-(sa.cast(t.c.search_rank, sa.Float())/75))
-                          .label('importance'),
-                        penalty.label('penalty'))
+        sql = sa.select(t.c.place_id, penalty.label('penalty'))
 
         for lookup in self.lookups:
             sql = sql.where(lookup.sql_condition(t))
@@ -202,9 +196,7 @@ class AddressSearch(base.AbstractSearch):
 
         inner = sql.limit(10000).order_by(sa.desc(sa.text('importance'))).subquery()
 
-        sql = sa.select(inner.c.place_id, inner.c.search_rank, inner.c.address_rank,
-                        inner.c.country_code, inner.c.centroid, inner.c.importance,
-                        inner.c.penalty)
+        sql = sa.select(inner.c.place_id, inner.c.penalty)
 
         return sql.cte('searches')
 
@@ -240,12 +232,12 @@ class AddressSearch(base.AbstractSearch):
                                else_=1.0)
 
         if details.near is not None:
-            sql = sql.add_columns((-tsearch.c.centroid.ST_Distance(NEAR_PARAM))
+            sql = sql.add_columns((-t.c.centroid.ST_Distance(NEAR_PARAM))
                                   .label('importance'))
             sql = sql.order_by(sa.desc(sa.text('importance')))
         else:
-            sql = sql.order_by(penalty - tsearch.c.importance)
-            sql = sql.add_columns(tsearch.c.importance)
+            sql = sql.order_by(penalty - t.c.importance)
+            sql = sql.add_columns(t.c.importance)
 
         sql = sql.add_columns(penalty.label('accuracy'))\
                  .order_by(sa.text('accuracy'))
@@ -253,7 +245,7 @@ class AddressSearch(base.AbstractSearch):
         hnr_list = '|'.join(self.housenumbers.values)
 
         if self.has_address_terms:
-            sql = sql.where(sa.or_(tsearch.c.address_rank < 30,
+            sql = sql.where(sa.or_(t.c.rank_address < 30,
                                    sa.func.RegexpWord(hnr_list, t.c.housenumber)))
 
         inner = sql.subquery()

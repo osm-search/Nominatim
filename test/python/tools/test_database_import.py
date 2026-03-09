@@ -176,6 +176,7 @@ async def test_load_data(dsn, place_row, place_interpolation_row, placex_table, 
         BEGIN
           NEW.place_id := nextval('seq_place');
           NEW.indexed_status := 1;
+          NEW.importance := 0.00001;
           NEW.centroid := ST_Centroid(NEW.geometry);
           NEW.partition := 0;
           NEW.geometry_sector := 2424;

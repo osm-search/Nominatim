@@ -731,6 +731,10 @@ BEGIN
 
   END IF;
 
+  IF NEW.importance IS NULL THEN
+    NEW.importance := 0.40001 - (NEW.rank_search::float / 75);
+  END IF;
+
   {% if debug %}RAISE WARNING 'placex_insert:END: % % % %',NEW.osm_type,NEW.osm_id,NEW.class,NEW.type;{% endif %}
 
 {% if not disable_diff_updates %}
@@ -1076,10 +1080,8 @@ BEGIN
       {% if debug %}RAISE WARNING 'Waterway processed';{% endif %}
   END IF;
 
-  NEW.importance := null;
-  SELECT wikipedia, importance
-    FROM compute_importance(NEW.extratags, NEW.country_code, NEW.rank_search, NEW.centroid)
-    INTO NEW.wikipedia,NEW.importance;
+  SELECT wikipedia, importance INTO NEW.wikipedia, NEW.importance
+    FROM compute_importance(NEW.extratags, NEW.country_code, NEW.rank_search, NEW.centroid);
 
 {% if debug %}RAISE WARNING 'Importance computed from wikipedia: %', NEW.importance;{% endif %}
 
@@ -1136,10 +1138,10 @@ BEGIN
                                        NEW.token_info, NEW.centroid);
 
         IF array_length(name_vector, 1) is not NULL THEN
-          INSERT INTO search_name (place_id, search_rank, address_rank,
+          INSERT INTO search_name (place_id, address_rank,
                                    importance, country_code, name_vector,
                                    nameaddress_vector, centroid)
-                 VALUES (NEW.place_id, NEW.rank_search, NEW.rank_address,
+                 VALUES (NEW.place_id, NEW.rank_address,
                          NEW.importance, NEW.country_code, name_vector,
                          nameaddress_vector, NEW.centroid);
           {% if debug %}RAISE WARNING 'Place added to search table';{% endif %}
@@ -1309,10 +1311,10 @@ BEGIN
     {% if debug %}RAISE WARNING 'added to search name (full)';{% endif %}
 
     {% if not db.reverse_only %}
-        INSERT INTO search_name (place_id, search_rank, address_rank,
+        INSERT INTO search_name (place_id, address_rank,
                                  importance, country_code, name_vector,
                                  nameaddress_vector, centroid)
-               VALUES (NEW.place_id, NEW.rank_search, NEW.rank_address,
+               VALUES (NEW.place_id, NEW.rank_address,
                        NEW.importance, NEW.country_code, name_vector,
                        nameaddress_vector, NEW.centroid);
     {% endif %}

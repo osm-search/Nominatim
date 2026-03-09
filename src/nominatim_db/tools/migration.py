@@ -14,7 +14,7 @@ from ..errors import UsageError
 from ..config import Configuration
 from ..db import properties
 from ..db.connection import connect, Connection, \
-                            table_exists, register_hstore
+                            table_exists, register_hstore, table_has_column
 from ..db.sql_preprocessor import SQLPreprocessor
 from ..version import NominatimVersion, NOMINATIM_VERSION, parse_version
 from ..tokenizer import factory as tokenizer_factory
@@ -420,3 +420,20 @@ def create_place_interpolation_table(conn: Connection, config: Configuration, **
               SET type = coalesce(address->'interpolation', 'all'),
                   address = address - 'interpolation'::TEXT;
             """)
+
+
+@_migration(5, 2, 99, 4)
+def backfill_importance(conn: Connection, **_: Any) -> None:
+    """ Backfill missing importance values.
+    """
+    conn.execute("""UPDATE placex
+                    SET importance = 0.40001 - (rank_search::float / 75)
+                    WHERE importance is NULL OR importance <= 0
+                 """)
+    if table_exists(conn, 'search_name')\
+       and table_has_column(conn, 'search_name', 'search_rank'):
+        conn.execute("""UPDATE search_name
+                        SET importance = 0.40001 - (search_rank::float / 75)
+                        WHERE importance is NULL OR importance <= 0
+                     """)
+        conn.execute("ALTER TABLE search_name DROP COLUMN search_rank")

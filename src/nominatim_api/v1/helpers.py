@@ -12,8 +12,18 @@ from typing import Tuple, Optional, Any, Dict, Iterable
 from itertools import chain
 import re
 
-from ..results import SearchResults, SourceTable
+from ..results import SearchResults, SourceTable, BaseResult
 from ..types import SearchDetails, GeometryFormat
+
+
+def _add_admin_level(result: BaseResult) -> Optional[Dict[str, str]]:
+    """ Inject admin_level into extratags for boundary=administrative results.
+    """
+    tags = result.extratags
+    if result.category == ('boundary', 'administrative') and result.admin_level < 15:
+        tags = dict(tags) if tags else {}
+        tags['admin_level'] = str(result.admin_level)
+    return tags
 
 
 REVERSE_MAX_RANKS = [2, 2, 2,   # 0-2   Continent/Sea

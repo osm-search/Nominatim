@@ -14,7 +14,7 @@ import xml.etree.ElementTree as ET
 from ..results import AddressLines, ReverseResult, ReverseResults, \
                       SearchResult, SearchResults
 from . import classtypes as cl
-from .format_json import _add_admin_level
+from .helpers import _add_admin_level
 from ..types import EntranceDetails
 
 

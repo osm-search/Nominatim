@@ -7,20 +7,13 @@
 """
 Helper functions for output of results in json formats.
 """
-from typing import Mapping, Any, Optional, Tuple, Dict, Union, List
+from typing import Mapping, Any, Optional, Tuple, Union, List
 
 from ..utils.json_writer import JsonWriter
-from ..results import AddressLines, ReverseResults, SearchResults, BaseResult
+from ..results import AddressLines, ReverseResults, SearchResults
 from . import classtypes as cl
+from .helpers import _add_admin_level
 from ..types import EntranceDetails
-
-
-def _add_admin_level(result: BaseResult) -> Optional[Dict[str, str]]:
-    tags = result.extratags
-    if result.category == ('boundary', 'administrative') and result.admin_level < 15:
-        tags = dict(tags) if tags else {}
-        tags['admin_level'] = str(result.admin_level)
-    return tags
 
 
 def _write_osm_id(out: JsonWriter, osm_object: Optional[Tuple[str, int]]) -> None:

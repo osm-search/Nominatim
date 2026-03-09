@@ -19,7 +19,7 @@ from ..localization import Locales
 from ..result_formatting import FormatDispatcher
 from .classtypes import ICONS
 from . import format_json, format_xml
-from .format_json import _add_admin_level
+from .helpers import _add_admin_level
 from .. import logging as loglib
 from ..server import content_types as ct
 

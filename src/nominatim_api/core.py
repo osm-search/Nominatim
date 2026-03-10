@@ -36,6 +36,60 @@ from . import search as nsearch
 from . import types as ntyp
 from .results import DetailedResult, ReverseResult, SearchResults
 
+_STRUCTURED_FIELDS = (
+    ('street', nsearch.PHRASE_STREET),
+    ('city', nsearch.PHRASE_CITY),
+    ('county', nsearch.PHRASE_COUNTY),
+    ('state', nsearch.PHRASE_STATE),
+    ('postalcode', nsearch.PHRASE_POSTCODE),
+    ('country', nsearch.PHRASE_COUNTRY),
+)
+
+
+def _build_bulk_phrases(query: Any,
+                        details: ntyp.SearchDetails) -> List[nsearch.Phrase]:
+    """ Convert a bulk query entry into a list of Phrase objects.
+        For structured queries (dicts), also adjusts rank restrictions
+        on the details object, mirroring search_address() logic.
+    """
+    if isinstance(query, str):
+        query = query.strip()
+        if not query:
+            return []
+        return [nsearch.Phrase(nsearch.PHRASE_ANY, p.strip())
+                for p in query.split(',')]
+
+    if isinstance(query, dict):
+        phrases: List[nsearch.Phrase] = []
+        for key, ptype in _STRUCTURED_FIELDS:
+            value = query.get(key)
+            if value:
+                phrases.append(nsearch.Phrase(ptype, value))
+
+        if not phrases:
+            return []
+
+        # Apply rank restrictions matching search_address() logic
+        if query.get('street'):
+            details.restrict_min_max_rank(26, 30)
+        elif query.get('city'):
+            details.restrict_min_max_rank(13, 25)
+        elif query.get('county'):
+            details.restrict_min_max_rank(10, 12)
+        elif query.get('state'):
+            details.restrict_min_max_rank(5, 9)
+        elif query.get('postalcode'):
+            details.restrict_min_max_rank(5, 11)
+        else:
+            details.restrict_min_max_rank(4, 4)
+
+        if details.layers is None:
+            details.layers = ntyp.DataLayer.ADDRESS
+
+        return phrases
+
+    return []
+
 
 class NominatimAPIAsync:
     """ The main frontend to the Nominatim database implements the
@@ -336,6 +390,47 @@ class NominatimAPIAsync:
                 conn.set_query_timeout(self.query_timeout)
                 geocoder = nsearch.ForwardGeocoder(conn, details, timeout)
                 return await geocoder.lookup(phrases)
+
+    async def search_bulk(self, queries: List[Any],
+                          **params: Any) -> List[SearchResults]:
+        """ Run multiple forward geocoding queries over a single database
+            connection, reusing the query analyzer for efficiency.
+
+            Each query can be either a string (free-text search) or a dict
+            with structured fields: street, city, county, state, postalcode,
+            country.
+        """
+        timeout = Timeout(self.request_timeout)
+        details = ntyp.SearchDetails.from_kwargs(params)
+        orig_min_rank = details.min_rank
+        orig_max_rank = details.max_rank
+        orig_layers = details.layers
+
+        async with self.begin(abs_timeout=timeout.abs) as conn:
+            conn.set_query_timeout(self.query_timeout)
+            geocoder = nsearch.ForwardGeocoder(conn, details, timeout)
+
+            all_results: List[SearchResults] = []
+            for query in queries:
+                # Reset rank/layer restrictions for each query
+                details.min_rank = orig_min_rank
+                details.max_rank = orig_max_rank
+                details.layers = orig_layers
+
+                phrases = _build_bulk_phrases(query, details)
+                if not phrases:
+                    all_results.append(SearchResults())
+                    continue
+
+                results = await geocoder.lookup(phrases)
+                all_results.append(results)
+
+                if timeout.is_elapsed():
+                    for _ in range(len(queries) - len(all_results)):
+                        all_results.append(SearchResults())
+                    break
+
+            return all_results
 
     async def search_category(self, categories: List[Tuple[str, str]],
                               near_query: Optional[str] = None,

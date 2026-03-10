@@ -9,6 +9,7 @@ Server implementation using the starlette webserver framework.
 """
 from typing import Any, Optional, Mapping, Callable, cast, Coroutine, Dict, \
                    Awaitable, AsyncIterator
+import json
 from pathlib import Path
 import asyncio
 import contextlib
@@ -73,6 +74,13 @@ class ParamWrapper(ASGIAdaptor):
 
     def query_stats(self) -> Optional[QueryStatistics]:
         return cast(Optional[QueryStatistics], getattr(self.request.state, 'query_stats', None))
+
+    async def get_json_body(self) -> Dict[str, Any]:
+        try:
+            body = await self.request.body()
+            return cast(Dict[str, Any], json.loads(body))
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            self.raise_error('Invalid JSON in request body.')
 
 
 def _wrap_endpoint(func: EndpointFunc)\
@@ -144,7 +152,7 @@ def get_application(project_dir: Path,
     if config.get_bool('CORS_NOACCESSCONTROL'):
         middleware.append(Middleware(CORSMiddleware,
                                      allow_origins=['*'],
-                                     allow_methods=['GET', 'OPTIONS'],
+                                     allow_methods=['GET', 'POST', 'OPTIONS'],
                                      max_age=86400))
 
     log_file = config.LOG_FILE
@@ -163,11 +171,15 @@ def get_application(project_dir: Path,
         config = app.state.API.config
 
         legacy_urls = config.get_bool('SERVE_LEGACY_URLS')
+        post_endpoints = {'bulk'}
         for name, func in await api_impl.get_routes(app.state.API):
             endpoint = _wrap_endpoint(func)
-            app.routes.append(Route(f"/{name}", endpoint=endpoint))
+            methods = ['POST'] if name in post_endpoints else ['GET']
+            app.routes.append(Route(f"/{name}", endpoint=endpoint,
+                                    methods=methods))
             if legacy_urls:
-                app.routes.append(Route(f"/{name}.php", endpoint=endpoint))
+                app.routes.append(Route(f"/{name}.php", endpoint=endpoint,
+                                        methods=methods))
 
         yield
 

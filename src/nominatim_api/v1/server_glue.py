@@ -8,9 +8,10 @@
 Generic part of the server implementation of the v1 API.
 Combine with the scaffolding provided for the various Python ASGI frameworks.
 """
-from typing import Optional, Any, Type, Dict, cast, Sequence, Tuple
+from typing import Optional, Any, Type, Dict, List, cast, Sequence, Tuple
 from functools import reduce
 import dataclasses
+import json
 from urllib.parse import urlencode
 import asyncio
 
@@ -394,6 +395,85 @@ async def search_endpoint(api: NominatimAPIAsync, params: ASGIAdaptor) -> Any:
     return build_response(params, output, num_results=len(results))
 
 
+async def bulk_endpoint(api: NominatimAPIAsync, params: ASGIAdaptor) -> Any:
+    """ Server glue for /bulk endpoint. Accepts a JSON POST body with
+        multiple search queries and returns results for each.
+    """
+    body = await params.get_json_body()
+
+    queries = body.get('queries')
+    if not isinstance(queries, list) or not queries:
+        params.raise_error("Parameter 'queries' must be a non-empty list.")
+
+    max_queries = params.config().get_int('BULK_MAX_QUERIES')
+    if len(queries) > max_queries:
+        params.raise_error(f'Too many queries. Maximum is {max_queries}.')
+
+    # Validate all queries are strings or structured dicts
+    for i, q in enumerate(queries):
+        if isinstance(q, dict):
+            valid_keys = {'street', 'city', 'county', 'state', 'postalcode', 'country'}
+            if not any(q.get(k) for k in valid_keys):
+                params.raise_error(f"Structured query at index {i} must have at least "
+                                   "one of: street, city, county, state, postalcode, country.")
+        elif not isinstance(q, str):
+            params.raise_error(f"Query at index {i} must be a string or structured object.")
+
+    limit = max(1, min(50, int(body.get('limit', 1))))
+    details: Dict[str, Any] = {
+        'max_results': limit,
+        'dedupe': True,
+        'address_details': bool(body.get('addressdetails', False)),
+        'geometry_output': GeometryFormat.NONE,
+    }
+
+    countries = body.get('countrycodes')
+    if countries:
+        details['countries'] = countries
+
+    locales = Locales.from_accept_languages(
+        body.get('accept-language', '') or params.get_header('accept-language') or
+        params.config().DEFAULT_LANGUAGE,
+        params.config().OUTPUT_NAMES)
+
+    try:
+        bulk_results = await api.search_bulk(queries, **details)
+    except UsageError as err:
+        params.raise_error(str(err))
+
+    output_list: List[Dict[str, Any]] = []
+    for query, results in zip(queries, bulk_results):
+        locales.localize_results(results)
+        if details['dedupe'] and len(results) > 1:
+            results = helpers.deduplicate_results(results, limit)
+        result_dicts = []
+        for r in results:
+            entry: Dict[str, Any] = {}
+            if r.place_id is not None:
+                entry['place_id'] = r.place_id
+            if r.osm_object is not None:
+                entry['osm_type'] = r.osm_object[0]
+                entry['osm_id'] = r.osm_object[1]
+            entry['display_name'] = r.display_name or ''
+            if r.centroid is not None:
+                entry['lat'] = str(r.centroid.lat)
+                entry['lon'] = str(r.centroid.lon)
+            if r.bbox is not None:
+                entry['boundingbox'] = [str(r.bbox.minlat), str(r.bbox.maxlat),
+                                        str(r.bbox.minlon), str(r.bbox.maxlon)]
+            if r.address_rows is not None:
+                entry['address'] = {row.label: row.local_name
+                                    for row in r.address_rows
+                                    if row.local_name and row.label}
+            entry['importance'] = r.calculated_importance()
+            result_dicts.append(entry)
+        output_list.append({'query': query, 'results': result_dicts})
+
+    params.content_type = ct.CONTENT_JSON
+    return build_response(params, json.dumps(output_list, ensure_ascii=False),
+                          num_results=sum(len(r['results']) for r in output_list))
+
+
 async def deletable_endpoint(api: NominatimAPIAsync, params: ASGIAdaptor) -> Any:
     """ Server glue for /deletable endpoint.
         This is a special endpoint that shows polygons that have been
@@ -518,6 +598,7 @@ async def get_routes(api: NominatimAPIAsync) -> Sequence[Tuple[str, EndpointFunc
         async with api.begin() as conn:
             if await conn.connection.run_sync(has_search_name):
                 routes.append(('search', search_endpoint))
+                routes.append(('bulk', bulk_endpoint))
             else:
                 routes.append(('search', search_unavailable_endpoint))
     except (PGCORE_ERROR, sa.exc.OperationalError, OSError):

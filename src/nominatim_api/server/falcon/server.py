@@ -9,10 +9,11 @@ Server implementation using the falcon webserver framework.
 """
 from __future__ import annotations
 
-from typing import Optional, Mapping, Any, List, cast
+from typing import Optional, Mapping, Any, List, Dict, cast
 from pathlib import Path
 import asyncio
 import datetime as dt
+import json
 
 from falcon.asgi import App, Request, Response
 
@@ -101,6 +102,13 @@ class ParamWrapper(ASGIAdaptor):
     def query_stats(self) -> Optional[QueryStatistics]:
         return cast(Optional[QueryStatistics], getattr(self.request.context, 'query_stats', None))
 
+    async def get_json_body(self) -> Dict[str, Any]:
+        try:
+            body = await self.request.bounded_stream.read()
+            return cast(Dict[str, Any], json.loads(body))
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            self.raise_error('Invalid JSON in request body.')
+
 
 class EndpointWrapper:
     """ Converter for server glue endpoint functions to Falcon request handlers.
@@ -115,6 +123,12 @@ class EndpointWrapper:
 
     async def on_get(self, req: Request, resp: Response) -> None:
         """ Implementation of the endpoint.
+        """
+        await self.func(self.api, ParamWrapper(req, resp, self.api.config,
+                                               self.formatter))
+
+    async def on_post(self, req: Request, resp: Response) -> None:
+        """ Implementation of POST endpoints (e.g. /bulk).
         """
         await self.func(self.api, ParamWrapper(req, resp, self.api.config,
                                                self.formatter))

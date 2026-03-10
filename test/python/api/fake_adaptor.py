@@ -29,10 +29,11 @@ FakeResponse = namedtuple('FakeResponse', ['status', 'output', 'content_type'])
 
 class FakeAdaptor(glue.ASGIAdaptor):
 
-    def __init__(self, params=None, headers=None, config=None):
+    def __init__(self, params=None, headers=None, config=None, json_body=None):
         self.params = params or {}
         self.headers = headers or {}
         self._config = config or Configuration(None)
+        self._json_body = json_body or {}
 
     def get(self, name, default=None):
         return self.params.get(name, default)
@@ -57,3 +58,6 @@ class FakeAdaptor(glue.ASGIAdaptor):
 
     def query_stats(self):
         return None
+
+    async def get_json_body(self):
+        return self._json_body

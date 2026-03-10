@@ -7,7 +7,7 @@
 """
 Base abstraction for implementing based on different ASGI frameworks.
 """
-from typing import Optional, Any, NoReturn, Callable
+from typing import Optional, Any, NoReturn, Callable, Dict
 import abc
 import math
 
@@ -73,6 +73,12 @@ class ASGIAdaptor(abc.ABC):
     def query_stats(self) -> Optional[QueryStatistics]:
         """ Return the object for saving query statistics or None if
             no statistics are required.
+        """
+
+    @abc.abstractmethod
+    async def get_json_body(self) -> Dict[str, Any]:
+        """ Return the parsed JSON body of a POST request.
+            Raises an error if the body is missing or not valid JSON.
         """
 
     def get_int(self, name: str, default: Optional[int] = None) -> int:

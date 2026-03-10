@@ -318,6 +318,28 @@ Feature: Search queries
           | jsonv2 | json |
           | geojson | geojson |
 
+    Scenario Outline: Search boundary=administrative with extratags=1 returns admin_level
+        When sending v1/search with format <format>
+          | q           | featureType | extratags |
+          | Triesenberg | city        | 1         |
+        Then a HTTP 200 is returned
+        And the result is valid <outformat>
+        And more than 0 results are returned
+        And result 0 contains
+          | <cname>  | <tname>        |
+          | boundary | administrative |
+        And result 0 contains in field <ename>
+          | param       | value |
+          | admin_level | 8     |
+
+        Examples:
+          | format      | outformat   | cname    | tname     | ename     |
+          | xml         | xml         | class    | type      | extratags |
+          | json        | json        | class    | type      | extratags |
+          | jsonv2      | json        | category | type      | extratags |
+          | geojson     | geojson     | category | type      | extratags |
+          | geocodejson | geocodejson | osm_key  | osm_value | extra     |
+
     Scenario Outline: Search with namedetails
         When sending v1/search with format <format>
           | q       | namedetails |

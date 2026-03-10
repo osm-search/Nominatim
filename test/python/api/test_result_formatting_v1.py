@@ -12,6 +12,7 @@ For functional tests see BDD test suite.
 """
 import datetime as dt
 import json
+import xml.etree.ElementTree as ET
 
 import pytest
 
@@ -332,3 +333,98 @@ def test_search_details_keywords_address():
     assert js['keywords'] == {'address': [{'id': 23, 'token': 'foo'},
                                           {'id': 24, 'token': 'foo'}],
                               'name': []}
+
+
+# admin_level injection into extratags
+
+SEARCH_FORMATS = ['json', 'jsonv2', 'geojson', 'geocodejson', 'xml']
+
+
+@pytest.mark.parametrize('fmt', SEARCH_FORMATS)
+def test_search_extratags_boundary_administrative_injects_admin_level(fmt):
+    search = napi.SearchResult(napi.SourceTable.PLACEX,
+                               ('boundary', 'administrative'),
+                               napi.Point(1.0, 2.0),
+                               admin_level=6,
+                               extratags={'place': 'city'})
+
+    raw = v1_format.format_result(napi.SearchResults([search]), fmt,
+                                  {'extratags': True})
+
+    if fmt == 'xml':
+        root = ET.fromstring(raw)
+        tags = {tag.attrib['key']: tag.attrib['value']
+                for tag in root.find('.//extratags').findall('tag')}
+        assert tags['admin_level'] == '6'
+        assert tags['place'] == 'city'
+    else:
+        result = json.loads(raw)
+        if fmt == 'geocodejson':
+            extra = result['features'][0]['properties']['geocoding']['extra']
+        elif fmt == 'geojson':
+            extra = result['features'][0]['properties']['extratags']
+        else:
+            extra = result[0]['extratags']
+
+        assert extra['admin_level'] == '6'
+        assert extra['place'] == 'city'
+
+
+@pytest.mark.parametrize('fmt', SEARCH_FORMATS)
+def test_search_extratags_non_boundary_no_admin_level_injection(fmt):
+    search = napi.SearchResult(napi.SourceTable.PLACEX,
+                               ('place', 'city'),
+                               napi.Point(1.0, 2.0),
+                               admin_level=8,
+                               extratags={'place': 'city'})
+
+    raw = v1_format.format_result(napi.SearchResults([search]), fmt,
+                                  {'extratags': True})
+
+    if fmt == 'xml':
+        root = ET.fromstring(raw)
+        tags = {tag.attrib['key']: tag.attrib['value']
+                for tag in root.find('.//extratags').findall('tag')}
+        assert 'admin_level' not in tags
+        assert tags['place'] == 'city'
+    else:
+        result = json.loads(raw)
+        if fmt == 'geocodejson':
+            extra = result['features'][0]['properties']['geocoding']['extra']
+        elif fmt == 'geojson':
+            extra = result['features'][0]['properties']['extratags']
+        else:
+            extra = result[0]['extratags']
+
+        assert 'admin_level' not in extra
+        assert extra['place'] == 'city'
+
+
+@pytest.mark.parametrize('fmt', SEARCH_FORMATS)
+def test_search_extratags_boundary_admin_level_15_no_injection(fmt):
+    search = napi.SearchResult(napi.SourceTable.PLACEX,
+                               ('boundary', 'administrative'),
+                               napi.Point(1.0, 2.0),
+                               admin_level=15,
+                               extratags={'place': 'city'})
+
+    raw = v1_format.format_result(napi.SearchResults([search]), fmt,
+                                  {'extratags': True})
+
+    if fmt == 'xml':
+        root = ET.fromstring(raw)
+        tags = {tag.attrib['key']: tag.attrib['value']
+                for tag in root.find('.//extratags').findall('tag')}
+        assert 'admin_level' not in tags
+        assert tags['place'] == 'city'
+    else:
+        result = json.loads(raw)
+        if fmt == 'geocodejson':
+            extra = result['features'][0]['properties']['geocoding']['extra']
+        elif fmt == 'geojson':
+            extra = result['features'][0]['properties']['extratags']
+        else:
+            extra = result[0]['extratags']
+
+        assert 'admin_level' not in extra
+        assert extra['place'] == 'city'

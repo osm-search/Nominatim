@@ -19,6 +19,7 @@ from ..localization import Locales
 from ..result_formatting import FormatDispatcher
 from .classtypes import ICONS
 from . import format_json, format_xml
+from .helpers import _add_admin_level
 from .. import logging as loglib
 from ..server import content_types as ct
 
@@ -157,7 +158,7 @@ def _format_details_json(result: DetailedResult, options: Mapping[str, Any]) -> 
        .keyval_not_none('indexed_date', result.indexed_date, lambda v: v.isoformat())\
        .keyval_not_none('importance', result.importance)\
        .keyval('calculated_importance', result.calculated_importance())\
-       .keyval('extratags', result.extratags or {})\
+       .keyval('extratags', _add_admin_level(result) or {})\
        .keyval_not_none('calculated_wikipedia', result.wikipedia)\
        .keyval('rank_address', result.rank_address)\
        .keyval('rank_search', result.rank_search)\

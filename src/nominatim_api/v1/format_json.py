@@ -12,6 +12,7 @@ from typing import Mapping, Any, Optional, Tuple, Union, List
 from ..utils.json_writer import JsonWriter
 from ..results import AddressLines, ReverseResults, SearchResults
 from . import classtypes as cl
+from .helpers import _add_admin_level
 from ..types import EntranceDetails
 
 
@@ -134,7 +135,7 @@ def format_base_json(results: Union[ReverseResults, SearchResults],
             write_entrances(out, result.entrances)
 
         if options.get('extratags', False):
-            out.keyval('extratags', result.extratags)
+            out.keyval('extratags', _add_admin_level(result))
 
         if options.get('namedetails', False):
             out.keyval('namedetails', result.names)
@@ -210,7 +211,7 @@ def format_base_geojson(results: Union[ReverseResults, SearchResults],
             write_entrances(out, result.entrances)
 
         if options.get('extratags', False):
-            out.keyval('extratags', result.extratags)
+            out.keyval('extratags', _add_admin_level(result))
 
         if options.get('namedetails', False):
             out.keyval('namedetails', result.names)
@@ -284,7 +285,7 @@ def format_base_geocodejson(results: Union[ReverseResults, SearchResults],
             write_entrances(out, result.entrances)
 
         if options.get('extratags', False):
-            out.keyval('extra', result.extratags)
+            out.keyval('extra', _add_admin_level(result))
 
         out.end_object().next().end_object().next()
 

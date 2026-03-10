@@ -14,6 +14,7 @@ import xml.etree.ElementTree as ET
 from ..results import AddressLines, ReverseResult, ReverseResults, \
                       SearchResult, SearchResults
 from . import classtypes as cl
+from .helpers import _add_admin_level
 from ..types import EntranceDetails
 
 
@@ -125,8 +126,9 @@ def format_base_xml(results: Union[ReverseResults, SearchResults],
 
         if options.get('extratags', False):
             eroot = ET.SubElement(root if simple else place, 'extratags')
-            if result.extratags:
-                for k, v in result.extratags.items():
+            tags = _add_admin_level(result)
+            if tags:
+                for k, v in tags.items():
                     ET.SubElement(eroot, 'tag', attrib={'key': k, 'value': v})
 
         if options.get('namedetails', False):

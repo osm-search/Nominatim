@@ -141,22 +141,6 @@ When this setting is enabled, search and reverse queries also take data
 from [Tiger house number data](Tiger.md) into account.
 
 
-#### NOMINATIM_USE_AUX_LOCATION_DATA
-
-| Summary            |                                                     |
-| --------------     | --------------------------------------------------- |
-| **Description:**   | Enable searching in external house number tables |
-| **Format:**        | boolean |
-| **Default:**       | no |
-| **After Changes:** | run `nominatim refresh --functions` |
-| **Comment:**       | Do not use. |
-
-When this setting is enabled, search queries also take data from external
-house number tables into account.
-
-*Warning:* This feature is currently unmaintained and should not be used.
-
-
 #### NOMINATIM_HTTP_PROXY
 
 | Summary            |                                                     |

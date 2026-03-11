@@ -7,6 +7,14 @@ Please always open a separate issue for each problem. In particular, do
 not add your bugs to closed issues. They may look similar to you but
 often are completely different from the maintainer's point of view.
 
+If you just have a question or when you are not sure if what you have found
+is an actual bug, use the [Discussion section](https://github.com/openstreetmap/Nominatim/discussions).
+
+If you have questions about the underlying OpenStreetMap data rather than
+the geocoding software, then the
+[OpenStreetMap forum](https://community.openstreetmap.org/) is the best
+place to start.
+
 ## Workflow for Pull Requests
 
 We love to get pull requests from you. We operate the "Fork & Pull" model

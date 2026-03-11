@@ -20,6 +20,7 @@ from nominatim_db.config import Configuration
 from nominatim_db.db import connection, properties
 from nominatim_db.db.sql_preprocessor import SQLPreprocessor
 import nominatim_db.tokenizer.factory
+
 import dummy_tokenizer
 from cursor import CursorForTesting
 

@@ -8,10 +8,6 @@ import itertools
 import sys
 import asyncio
 from pathlib import Path
-
-if sys.platform == 'win32':
-    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-
 import psycopg
 from psycopg import sql as pysql
 import pytest
@@ -24,7 +20,6 @@ from nominatim_db.config import Configuration
 from nominatim_db.db import connection, properties
 from nominatim_db.db.sql_preprocessor import SQLPreprocessor
 import nominatim_db.tokenizer.factory
-
 import dummy_tokenizer
 from cursor import CursorForTesting
 
@@ -34,6 +29,17 @@ def _with_srid(geom, default=None):
         return None if default is None else f"SRID=4326;{default}"
 
     return f"SRID=4326;{geom}"
+
+
+@pytest.fixture(scope="session")
+def event_loop():
+    if sys.platform == 'win32':
+        loop = asyncio.WindowsSelectorEventLoopPolicy().new_event_loop()
+    else:
+        loop = asyncio.get_event_loop_policy().new_event_loop()
+
+    yield loop
+    loop.close()
 
 
 @pytest.fixture

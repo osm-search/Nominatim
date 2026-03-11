@@ -7,6 +7,14 @@ Please always open a separate issue for each problem. In particular, do
 not add your bugs to closed issues. They may look similar to you but
 often are completely different from the maintainer's point of view.
 
+If you just have a question or when you are not sure if what you have found
+is an actual bug, use the [Discussion section](https://github.com/openstreetmap/Nominatim/discussions).
+
+If you have questions about the underlying OpenStreetMap data rather than
+the geocoding software, then the
+[OpenStreetMap forum](https://community.openstreetmap.org/) is the best
+place to start.
+
 ## Workflow for Pull Requests
 
 We love to get pull requests from you. We operate the "Fork & Pull" model
@@ -15,20 +23,24 @@ explained at
 https://help.github.com/articles/using-pull-requests
 
 You should fork the project into your own repo, create a topic branch
-there and then make one or more pull requests back to the openstreetmap repository.
-Your pull requests will then be reviewed and discussed. Please be aware
-that you are responsible for your pull requests. You should be prepared
-to get change requests because as the maintainers we have to make sure
-that your contribution fits well with the rest of the code. Please make
-sure that you have time to react to these comments and amend the code or
-engage in a conversation. Do not expect that others will pick up your code,
-it will almost never happen.
+there and then make a single pull requests back to the main repository.
+Your pull requests will then be reviewed and discussed.
 
-Please open a separate pull request for each issue you want to address.
-Don't mix multiple changes. In particular, don't mix style cleanups with
-feature pull requests. If you plan to make larger changes, please open
-an issue first or comment on the appropriate issue already existing so
-that duplicate work can be avoided.
+Please make sure to follow these guidelines:
+
+* Make sure CI passes _before_ opening the pull request. The repo is configured
+  to run the CI on branches. Once you have enabled the CI on your forked
+  repo, Actions will execute every time you push to your branch. Check
+  the Actions tab in your repo to make sure everything works.
+* Make sure that you have time to react to these comments and amend the code or
+  engage in a conversation. Do not expect that others will pick up your code,
+  it will almost never happen.
+* Open a separate pull request for each issue you want to address.
+  Don't mix multiple changes. In particular, don't mix style cleanups with
+  feature pull requests (exceptions, see 'Style modernisation' below).
+* For small fixes and amendments open a PR directly.
+  If you plan to make larger changes, please open an issue first or comment
+  on the appropriate issue to outline your planned implementation.
 
 ### Using AI-assisted code generators
 
@@ -54,26 +66,24 @@ Please see the development section of the Nominatim documentation for
 
 ## Coding style
 
-Nominatim historically hasn't followed a particular coding style but we
-are in process of consolidating the style. The following rules apply:
-
- * Python code uses the official Python style
- * indentation
-   * SQL use 2 spaces
-   * all other file types use 4 spaces
-   * [BSD style](https://en.wikipedia.org/wiki/Indent_style#Allman_style) for braces
- * spaces
-   * spaces before and after equal signs and operators
-   * no trailing spaces
-   * no spaces after opening and before closing bracket
-   * leave out space between a function name and bracket
-     but add one between control statement(if, while, etc.) and bracket
-
-The coding style is enforced with flake8. It can be tested with:
+The coding style for Python is enforced with flake8. It can be tested with:
 
 ```
 make lint
 ```
+
+SQL code is currently not linted but should follow the following rules:
+
+* 2 spaces indentation
+* UPPER CASE for all SQL keywords
+
+### Style modernisation
+
+There are a few places where we modernize code style as we go. The following
+changes can be made when you touch the code anyway:
+
+* update copyright date in the file header to the current year
+* switch Python code to use [generics in standard collections](https://docs.python.org/3/whatsnew/3.9.html#type-hinting-generics-in-standard-collections)
 
 ## Testing
 

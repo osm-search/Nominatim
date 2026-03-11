@@ -15,20 +15,24 @@ explained at
 https://help.github.com/articles/using-pull-requests
 
 You should fork the project into your own repo, create a topic branch
-there and then make one or more pull requests back to the openstreetmap repository.
-Your pull requests will then be reviewed and discussed. Please be aware
-that you are responsible for your pull requests. You should be prepared
-to get change requests because as the maintainers we have to make sure
-that your contribution fits well with the rest of the code. Please make
-sure that you have time to react to these comments and amend the code or
-engage in a conversation. Do not expect that others will pick up your code,
-it will almost never happen.
+there and then make a single pull requests back to the main repository.
+Your pull requests will then be reviewed and discussed.
 
-Please open a separate pull request for each issue you want to address.
-Don't mix multiple changes. In particular, don't mix style cleanups with
-feature pull requests. If you plan to make larger changes, please open
-an issue first or comment on the appropriate issue already existing so
-that duplicate work can be avoided.
+Please make sure to follow these guidelines:
+
+* Make sure CI passes _before_ opening the pull request. The repo is configured
+  to run the CI on branches. Once you have enabled the CI on your forked
+  repo, Actions will execute every time you push to your branch. Check
+  the Actions tab in your repo to make sure everything works.
+* Make sure that you have time to react to these comments and amend the code or
+  engage in a conversation. Do not expect that others will pick up your code,
+  it will almost never happen.
+* Open a separate pull request for each issue you want to address.
+  Don't mix multiple changes. In particular, don't mix style cleanups with
+  feature pull requests.
+* For small fixes and amendmends open a PR directly.
+  If you plan to make larger changes, please open an issue first or comment
+  on the appropriate issue to outline your planned implementation.
 
 ### Using AI-assisted code generators
 

@@ -25,11 +25,11 @@ import dummy_tokenizer
 from cursor import CursorForTesting
 
 
-def pytest_asyncio_event_loop_factory():
+@pytest.fixture(scope="session")
+def event_loop_policy():
     if sys.platform == 'win32':
-        return asyncio.WindowsSelectorEventLoopPolicy().new_event_loop
-
-    return None
+        return asyncio.WindowsSelectorEventLoopPolicy()
+    return asyncio.DefaultEventLoopPolicy()
 
 
 def _with_srid(geom, default=None):

@@ -225,10 +225,13 @@ def test_name_with_qualifier():
     searches = list(builder.build(TokenAssignment(name=TokenRange(0, 1),
                                                   qualifier=TokenRange(1, 2))))
 
-    assert len(searches) == 1
-    search = searches[0]
+    assert len(searches) == 2
 
-    assert isinstance(search, dbs.PlaceSearch)
+    assert isinstance(searches[0], dbs.QualifierNearSearch)
+    assert isinstance(searches[1], dbs.PlaceSearch)
+
+    search = searches[1]
+
     assert not search.postcodes.values
     assert not search.countries.values
     assert search.qualifiers.values == [('this', 'that')]

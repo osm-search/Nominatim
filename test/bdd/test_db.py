@@ -219,6 +219,17 @@ def import_rels(row_factory, datatable):
                     members=psycopg.types.json.Json(members))
 
 
+@given('the special phrases', target_fixture=None)
+def add_special_phrases(def_config, datatable):
+    """ Add special phrases to the tokenizer for use in search queries.
+        Expects a table with columns: phrase, class, type, operator.
+    """
+    tokenizer = tokenizer_factory.get_tokenizer_for_db(def_config)
+    phrases = [(row[0], row[1], row[2], row[3]) for row in datatable[1:]]
+    with tokenizer.name_analyzer() as analyzer:
+        analyzer.update_special_phrases(phrases, False)
+
+
 @when('importing', target_fixture='place_ids')
 def do_import(db_conn, def_config):
     """ Run a reduced version of the Nominatim import.

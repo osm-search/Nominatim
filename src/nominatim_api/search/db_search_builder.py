@@ -104,7 +104,8 @@ class SearchBuilder:
                                                     bool(near_items))
         else:
             if (sdata.qualifiers and not near_items and
-                    len(sdata.qualifiers.values) == 1):
+                    len(sdata.qualifiers.values) == 1 and
+                    not self.details.categories and assignment.address):
                 categories = sdata.qualifiers
                 sdata.qualifiers = dbf.WeightedCategories([], [])
                 builder = self._build_qualifier_address_search(

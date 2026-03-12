@@ -14,9 +14,7 @@ from .sqlalchemy_types import Geometry, KeyValueStore, IntArray
 
 class SearchTables:
     """ Data class that holds the tables of the Nominatim database.
-
         This schema strictly reflects the read-access view of the database.
-        Any data used for updates only will not be visible.
     """
 
     def __init__(self, meta: sa.MetaData) -> None:
@@ -40,7 +38,6 @@ class SearchTables:
             sa.Column('linked_place_id', sa.BigInteger),
             sa.Column('importance', sa.Float),
             sa.Column('indexed_date', sa.DateTime),
-            # SQL: rank_address, rank_search, indexed_status are now NOT NULL
             sa.Column('rank_address', sa.SmallInteger, nullable=False),
             sa.Column('rank_search', sa.SmallInteger, nullable=False),
             sa.Column('indexed_status', sa.SmallInteger, nullable=False),
@@ -57,12 +54,10 @@ class SearchTables:
             sa.Column('country_code', sa.String(2)),
             sa.Column('housenumber', sa.Text),
             sa.Column('postcode', sa.Text),
-            # SQL: centroid is now GEOMETRY NOT NULL
             sa.Column('centroid', Geometry, nullable=False))
 
         self.addressline = sa.Table(
             'place_addressline', meta,
-            # SQL: All columns in place_addressline are now NOT NULL
             sa.Column('place_id', sa.BigInteger, nullable=False),
             sa.Column('address_place_id', sa.BigInteger, nullable=False),
             sa.Column('distance', sa.Float, nullable=False),
@@ -74,7 +69,6 @@ class SearchTables:
             sa.Column('place_id', sa.BigInteger, nullable=False),
             sa.Column('parent_place_id', sa.BigInteger),
             sa.Column('osm_id', sa.BigInteger),
-            # SQL: rank_search, indexed_status, country_code, postcode, centroid, geometry are NOT NULL
             sa.Column('rank_search', sa.SmallInteger, nullable=False),
             sa.Column('indexed_status', sa.SmallInteger, nullable=False),
             sa.Column('indexed_date', sa.DateTime),
@@ -89,10 +83,6 @@ class SearchTables:
             sa.Column('osm_id', sa.BigInteger, nullable=False),
             sa.Column('parent_place_id', sa.BigInteger),
             sa.Column('indexed_date', sa.DateTime),
-            sa.Column('startnumber', sa.Integer),
-            sa.Column('endnumber', sa.Integer),
-            sa.Column('step', sa.SmallInteger),
-            # SQL: partition, indexed_status, and linegeo are NOT NULL
             sa.Column('indexed_status', sa.SmallInteger, nullable=False),
             sa.Column('linegeo', Geometry, nullable=False),
             sa.Column('address', KeyValueStore),
@@ -108,15 +98,12 @@ class SearchTables:
 
         self.country_grid = sa.Table(
             'country_osm_grid', meta,
-            # SQL: location_area_country shows place_id, country_code, and geometry are NOT NULL
             sa.Column('country_code', sa.String(2), nullable=False),
             sa.Column('area', sa.Float),
             sa.Column('geometry', Geometry, nullable=False))
 
-        # The following tables are not necessarily present.
         self.search_name = sa.Table(
             'search_name', meta,
-            # SQL: All core columns in search_name (and blank) are now NOT NULL
             sa.Column('place_id', sa.BigInteger, nullable=False),
             sa.Column('importance', sa.Float, nullable=False),
             sa.Column('address_rank', sa.SmallInteger, nullable=False),
@@ -129,7 +116,6 @@ class SearchTables:
             'location_property_tiger', meta,
             sa.Column('place_id', sa.BigInteger, nullable=False),
             sa.Column('parent_place_id', sa.BigInteger),
-            # SQL: start, end, step, and linegeo are NOT NULL
             sa.Column('startnumber', sa.Integer, nullable=False),
             sa.Column('endnumber', sa.Integer, nullable=False),
             sa.Column('step', sa.SmallInteger, nullable=False),

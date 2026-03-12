@@ -29,10 +29,11 @@ class NearSearch(base.AbstractSearch):
     """ Category search of a place type near the result of another search.
     """
     def __init__(self, penalty: float, categories: WeightedCategories,
-                 search: base.AbstractSearch) -> None:
+                 search: base.AbstractSearch, max_area: float = 20.0) -> None:
         super().__init__(penalty)
         self.search = search
         self.categories = categories
+        self.max_area = max_area
 
     async def lookup(self, conn: SearchConnection,
                      details: SearchDetails) -> nres.SearchResults:
@@ -58,7 +59,7 @@ class NearSearch(base.AbstractSearch):
         base = nres.SearchResults(r for r in base
                                   if (r.source_table == nres.SourceTable.PLACEX
                                       and r.accuracy <= max_accuracy
-                                      and r.bbox and r.bbox.area < 20
+                                      and r.bbox and r.bbox.area < self.max_area
                                       and r.rank_address >= min_rank
                                       and r.rank_address <= max_rank))
 
@@ -128,8 +129,17 @@ class NearSearch(base.AbstractSearch):
                        'max_rank': details.max_rank,
                        'excluded': details.excluded,
                        'countries': details.countries}
+        new_results = []
         for row in await conn.execute(sql, bind_params):
             result = nres.create_from_placex_row(row, nres.SearchResult)
             result.accuracy = self.penalty + penalty
+            if result.names:
+                result.accuracy += 0.4
             result.bbox = Bbox.from_wkb(row.bbox)
-            results.append(result)
+            new_results.append(result)
+
+        if len(new_results) > 1:
+            for result in new_results:
+                result.accuracy += 0.2
+
+        results.extend(new_results)

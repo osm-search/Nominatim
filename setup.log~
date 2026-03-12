@@ -1,0 +1,4 @@
+2026-03-11 06:48:38: Using project directory: /home/rob/OSM-GSOC/Nominatim
+2026-03-11 06:48:39: Creating database
+createdb: error: connection to server on socket "/var/run/postgresql/.s.PGSQL.5432" failed: FATAL:  role "root" does not exist
+2026-03-11 06:48:39: FATAL: Creating new database failed.

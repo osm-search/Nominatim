@@ -40,9 +40,10 @@ class SearchTables:
             sa.Column('linked_place_id', sa.BigInteger),
             sa.Column('importance', sa.Float),
             sa.Column('indexed_date', sa.DateTime),
-            sa.Column('rank_address', sa.SmallInteger),
-            sa.Column('rank_search', sa.SmallInteger),
-            sa.Column('indexed_status', sa.SmallInteger),
+            # SQL: rank_address, rank_search, indexed_status are now NOT NULL
+            sa.Column('rank_address', sa.SmallInteger, nullable=False),
+            sa.Column('rank_search', sa.SmallInteger, nullable=False),
+            sa.Column('indexed_status', sa.SmallInteger, nullable=False),
             sa.Column('osm_type', sa.String(1), nullable=False),
             sa.Column('osm_id', sa.BigInteger, nullable=False),
             sa.Column('class', sa.Text, nullable=False, key='class_'),
@@ -56,40 +57,44 @@ class SearchTables:
             sa.Column('country_code', sa.String(2)),
             sa.Column('housenumber', sa.Text),
             sa.Column('postcode', sa.Text),
-            sa.Column('centroid', Geometry))
+            # SQL: centroid is now GEOMETRY NOT NULL
+            sa.Column('centroid', Geometry, nullable=False))
 
         self.addressline = sa.Table(
             'place_addressline', meta,
-            sa.Column('place_id', sa.BigInteger),
-            sa.Column('address_place_id', sa.BigInteger),
-            sa.Column('distance', sa.Float),
-            sa.Column('fromarea', sa.Boolean),
-            sa.Column('isaddress', sa.Boolean))
+            # SQL: All columns in place_addressline are now NOT NULL
+            sa.Column('place_id', sa.BigInteger, nullable=False),
+            sa.Column('address_place_id', sa.BigInteger, nullable=False),
+            sa.Column('distance', sa.Float, nullable=False),
+            sa.Column('fromarea', sa.Boolean, nullable=False),
+            sa.Column('isaddress', sa.Boolean, nullable=False))
 
         self.postcode = sa.Table(
             'location_postcodes', meta,
-            sa.Column('place_id', sa.BigInteger),
+            sa.Column('place_id', sa.BigInteger, nullable=False),
             sa.Column('parent_place_id', sa.BigInteger),
             sa.Column('osm_id', sa.BigInteger),
-            sa.Column('rank_search', sa.SmallInteger),
-            sa.Column('indexed_status', sa.SmallInteger),
+            # SQL: rank_search, indexed_status, country_code, postcode, centroid, geometry are NOT NULL
+            sa.Column('rank_search', sa.SmallInteger, nullable=False),
+            sa.Column('indexed_status', sa.SmallInteger, nullable=False),
             sa.Column('indexed_date', sa.DateTime),
-            sa.Column('country_code', sa.String(2)),
-            sa.Column('postcode', sa.Text),
-            sa.Column('centroid', Geometry),
-            sa.Column('geometry', Geometry))
+            sa.Column('country_code', sa.String(2), nullable=False),
+            sa.Column('postcode', sa.Text, nullable=False),
+            sa.Column('centroid', Geometry, nullable=False),
+            sa.Column('geometry', Geometry, nullable=False))
 
         self.osmline = sa.Table(
             'location_property_osmline', meta,
             sa.Column('place_id', sa.BigInteger, nullable=False),
-            sa.Column('osm_id', sa.BigInteger),
+            sa.Column('osm_id', sa.BigInteger, nullable=False),
             sa.Column('parent_place_id', sa.BigInteger),
             sa.Column('indexed_date', sa.DateTime),
             sa.Column('startnumber', sa.Integer),
             sa.Column('endnumber', sa.Integer),
             sa.Column('step', sa.SmallInteger),
-            sa.Column('indexed_status', sa.SmallInteger),
-            sa.Column('linegeo', Geometry),
+            # SQL: partition, indexed_status, and linegeo are NOT NULL
+            sa.Column('indexed_status', sa.SmallInteger, nullable=False),
+            sa.Column('linegeo', Geometry, nullable=False),
             sa.Column('address', KeyValueStore),
             sa.Column('postcode', sa.Text),
             sa.Column('country_code', sa.String(2)))
@@ -103,29 +108,32 @@ class SearchTables:
 
         self.country_grid = sa.Table(
             'country_osm_grid', meta,
-            sa.Column('country_code', sa.String(2)),
+            # SQL: location_area_country shows place_id, country_code, and geometry are NOT NULL
+            sa.Column('country_code', sa.String(2), nullable=False),
             sa.Column('area', sa.Float),
-            sa.Column('geometry', Geometry))
+            sa.Column('geometry', Geometry, nullable=False))
 
         # The following tables are not necessarily present.
         self.search_name = sa.Table(
             'search_name', meta,
-            sa.Column('place_id', sa.BigInteger),
-            sa.Column('importance', sa.Float),
-            sa.Column('address_rank', sa.SmallInteger),
-            sa.Column('name_vector', IntArray),
-            sa.Column('nameaddress_vector', IntArray),
+            # SQL: All core columns in search_name (and blank) are now NOT NULL
+            sa.Column('place_id', sa.BigInteger, nullable=False),
+            sa.Column('importance', sa.Float, nullable=False),
+            sa.Column('address_rank', sa.SmallInteger, nullable=False),
+            sa.Column('name_vector', IntArray, nullable=False),
+            sa.Column('nameaddress_vector', IntArray, nullable=False),
             sa.Column('country_code', sa.String(2)),
-            sa.Column('centroid', Geometry))
+            sa.Column('centroid', Geometry, nullable=False))
 
         self.tiger = sa.Table(
             'location_property_tiger', meta,
-            sa.Column('place_id', sa.BigInteger),
+            sa.Column('place_id', sa.BigInteger, nullable=False),
             sa.Column('parent_place_id', sa.BigInteger),
-            sa.Column('startnumber', sa.Integer),
-            sa.Column('endnumber', sa.Integer),
-            sa.Column('step', sa.SmallInteger),
-            sa.Column('linegeo', Geometry),
+            # SQL: start, end, step, and linegeo are NOT NULL
+            sa.Column('startnumber', sa.Integer, nullable=False),
+            sa.Column('endnumber', sa.Integer, nullable=False),
+            sa.Column('step', sa.SmallInteger, nullable=False),
+            sa.Column('linegeo', Geometry, nullable=False),
             sa.Column('postcode', sa.Text))
 
         self.placex_entrance = sa.Table(

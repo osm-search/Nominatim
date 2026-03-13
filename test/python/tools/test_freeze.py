@@ -21,7 +21,8 @@ NOMINATIM_DROP_TABLES = [
     'address_levels',
     'location_area', 'location_area_country', 'location_area_large_100',
     'location_road_1',
-    'place', 'planet_osm_nodes', 'planet_osm_rels', 'planet_osm_ways',
+    'place', 'place_associated_street',
+    'planet_osm_nodes', 'planet_osm_rels', 'planet_osm_ways',
     'search_name_111',
     'wikipedia_article', 'wikipedia_redirect'
 ]

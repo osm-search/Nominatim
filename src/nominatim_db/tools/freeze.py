@@ -21,6 +21,7 @@ UPDATE_TABLES = [
     'location_area%',
     'location_road%',
     'place',
+    'place_associated_street',
     'place_entrance',
     'place_postcode',
     'planet_osm_%',

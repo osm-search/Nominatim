@@ -176,8 +176,8 @@ Additional information requested with `addressdetails=1`, `extratags=1`,
 ```
 <searchresults timestamp="Sat, 11 Aug 18 11:55:35 +0000"
                attribution="Data © OpenStreetMap contributors, ODbL 1.0. https://www.openstreetmap.org/copyright"
-               querystring="london" polygon="false" exclude_place_ids="100149"
-               more_url="https://nominatim.openstreetmap.org/search?q=london&addressdetails=1&extratags=1&exclude_place_ids=100149&format=xml&accept-language=en-US%2Cen%3Bq%3D0.7%2Cde%3Bq%3D0.3">
+               querystring="london" polygon="false" exclude_place_ids="N107775"
+               more_url="https://nominatim.openstreetmap.org/search?q=london&addressdetails=1&extratags=1&exclude_place_ids=N107775&format=xml&accept-language=en-US%2Cen%3Bq%3D0.7%2Cde%3Bq%3D0.3">
   <place place_id="100149" osm_type="node" osm_id="107775" place_rank="15" address_rank="15"
          boundingbox="51.3473219,51.6673219,-0.2876474,0.0323526" lat="51.5073219" lon="-0.1276474"
          display_name="London, Greater London, England, SW1A 2DU, United Kingdom"
@@ -208,7 +208,7 @@ generic information about the query:
  * `attribution` - OSM licensing information
  * `querystring` - original query
  * `polygon` - true when extra geometry information was requested
- * `exclude_place_ids` - IDs of places that should be ignored in a follow-up request
+ * `exclude_place_ids` - IDs of places that should be ignored in a follow-up request (OSM IDs where possible, otherwise `place_id`s)
  * `more_url` - search call that will yield additional results for the query
    just sent
 

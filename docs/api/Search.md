@@ -231,10 +231,18 @@ to the address layer (see above).
 
 | Parameter | Value | Default |
 |-----------| ----- | ------- |
-| exclude_place_ids | comma-separated list of place ids |
+| exclude_place_ids | comma-separated list of ids (OSM IDs where possible, otherwise place_ids) |
 
 If you do not want certain OSM objects to appear in the search
-result, give a comma separated list of the `place_id`s you want to skip.
+result, give a comma separated list of the ids you want to skip.
+
+Each entry may be one of:
+
+* a Nominatim internal `place_id` (for example `125279639`)
+* an OSM object reference in the form `<osm_type><osm_id>` where `<osm_type>` is one of `N` (node), `W` (way) or `R` (relation), for example `N107775`
+
+Usage of OSM IDs is recommended because they are server independent. `place_id`s are stil required for results without an OSM object reference (for example, postcodes and countries). When a street is excluded via its OSM ID, then interpolations and TIGER data derived from that street are excluded as well.
+
 This can be used to retrieve additional search results. For example, if a
 previous query only returned a few results, then including those here would
 cause the search to return other, less accurate, matches (if possible).
@@ -324,8 +332,8 @@ This overrides the specified machine readable format.
 <searchresults timestamp="Tue, 08 Aug 2023 15:45:41 +00:00"
                attribution="Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright"
                querystring="135 pilkington avenue, birmingham"
-               more_url="https://nominatim.openstreetmap.org/search?q=135+pilkington+avenue%2C+birmingham&amp;polygon_kml=1&amp;addressdetails=1&amp;limit=20&amp;exclude_place_ids=125279639&amp;format=xml"
-               exclude_place_ids="125279639">
+               more_url="https://nominatim.openstreetmap.org/search?q=135+pilkington+avenue%2C+birmingham&amp;polygon_kml=1&amp;addressdetails=1&amp;limit=20&amp;exclude_place_ids=W90394480&amp;format=xml"
+               exclude_place_ids="W90394480">
   <place place_id="125279639"
          osm_type="way"
          osm_id="90394480"

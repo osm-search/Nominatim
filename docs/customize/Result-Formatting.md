@@ -239,7 +239,7 @@ _None._
 |-----------------|-------------|
 | query           | Original query string |
 | more_url        | URL for requesting additional results for the same query |
-| exclude_place_ids | List of place IDs already returned |
+| exclude_place_ids | List of IDs already returned (OSM IDs where possible, otherwise `place_id`s) |
 | viewbox         | Setting of [viewbox](../api/Search.md#result-restriction) parameter |
 | extratags       | Setting of [extratags](../api/Search.md#output-details) parameter |
 | namedetails     | Setting of [namedetails](../api/Search.md#output-details) parameter |

@@ -13,7 +13,7 @@ from itertools import chain
 import re
 
 from ..results import SearchResults, SourceTable, BaseResult
-from ..types import SearchDetails, GeometryFormat, PlaceID
+from ..types import SearchDetails, GeometryFormat
 
 
 def _add_admin_level(result: BaseResult) -> Optional[Dict[str, str]]:

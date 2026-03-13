@@ -10,7 +10,7 @@ Tests for running the near searcher.
 import pytest
 
 import nominatim_api as napi
-from nominatim_api.types import SearchDetails
+from nominatim_api.types import SearchDetails, PlaceID
 from nominatim_api.search.db_searches import NearSearch, PlaceSearch
 from nominatim_api.search.db_search_fields import WeightedStrings, WeightedCategories, \
                                                   FieldLookup
@@ -144,7 +144,7 @@ class TestNearSearch:
                           country_code='us')
 
         results = run_search(apiobj, frontend, 0.1, [('amenity', 'bank')],
-                             details=SearchDetails(excluded=[excluded]))
+                             details=SearchDetails(excluded=[PlaceID(excluded)]))
 
         assert [r.place_id for r in results] == [rid]
 

@@ -15,7 +15,7 @@ import difflib
 import sqlalchemy as sa
 
 from ..connection import SearchConnection
-from ..types import SearchDetails, PlaceID, OsmID
+from ..types import PlaceRef, SearchDetails, PlaceID, OsmID
 from ..results import SearchResult, SearchResults, add_result_details
 from ..timeout import Timeout
 from ..logging import log
@@ -51,7 +51,7 @@ class ForwardGeocoder:
         if not excluded or all(isinstance(e, PlaceID) for e in excluded):
             return
 
-        place_ids = [e for e in excluded if isinstance(e, PlaceID)]
+        place_ids: List[PlaceRef] = [e for e in excluded if isinstance(e, PlaceID)]
         osm_ids = [e for e in excluded if isinstance(e, OsmID)]
 
         if osm_ids:

@@ -10,7 +10,7 @@ Tests for running the postcode searcher.
 import pytest
 
 import nominatim_api as napi
-from nominatim_api.types import SearchDetails
+from nominatim_api.types import SearchDetails, PlaceID
 from nominatim_api.search.db_searches import PostcodeSearch
 from nominatim_api.search.db_search_fields import WeightedStrings, FieldLookup, \
                                                   FieldRanking, RankedTokens
@@ -168,6 +168,6 @@ class TestPostcodeSearchWithAddress:
     @pytest.mark.parametrize('pid,rid', [(100, 101), (101, 100)])
     def test_exclude(self, apiobj, frontend, pid, rid):
         results = run_search(apiobj, frontend, 0.1, ['12345'],
-                             details=SearchDetails(excluded=[pid]))
+                             details=SearchDetails(excluded=[PlaceID(pid)]))
 
         assert [r.place_id for r in results] == [rid]

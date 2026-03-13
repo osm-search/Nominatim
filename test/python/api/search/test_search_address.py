@@ -10,7 +10,7 @@ Tests for running the address searcher.
 import pytest
 
 import nominatim_api as napi
-from nominatim_api.types import SearchDetails
+from nominatim_api.types import SearchDetails, PlaceID
 from nominatim_api.search.db_searches import AddressSearch
 from nominatim_api.search.db_search_fields import WeightedStrings, WeightedCategories, \
                                                   FieldLookup, FieldRanking, RankedTokens
@@ -106,7 +106,7 @@ class TestStreetWithHousenumber:
         ranking = FieldRanking('name_vector', 0.3, [RankedTokens(0.0, [10])])
 
         results = run_search(apiobj, frontend, 0.1, [lookup], [ranking], hnrs=['22'],
-                             details=SearchDetails(excluded=[92]))
+                             details=SearchDetails(excluded=[PlaceID(92)]))
 
         assert [r.place_id for r in results] == [2, 1000, 2000]
 
@@ -115,7 +115,7 @@ class TestStreetWithHousenumber:
         ranking = FieldRanking('name_vector', 0.3, [RankedTokens(0.0, [10])])
 
         results = run_search(apiobj, frontend, 0.1, [lookup], [ranking], hnrs=['22'],
-                             details=SearchDetails(excluded=[1000]))
+                             details=SearchDetails(excluded=[PlaceID(1000)]))
 
         assert [r.place_id for r in results] == [2, 92, 2000]
 

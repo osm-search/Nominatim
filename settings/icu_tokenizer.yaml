@@ -21,6 +21,14 @@ normalization:
     - "[-:]?[:Space:]+[-:]? > ' '"
 transliteration:
     - "[-:]  > ' '"
+    - "' ' > '│'"
+    - ":: Han-Latin ()"
+    - ":: Han-PinyinJoin ()"
+    - ":: Han-PinyinJoin ()"
+    - ":: Han-PinyinJoin ()"
+    - ":: Han-PinyinJoin ()"
+    - ":: Han-PinyinJoin ()"
+    - "'│' > ' '"
     - ":: Latin ()"
     - !include icu-rules/extended-unicode-to-asccii.yaml
     - ":: Ascii ()"

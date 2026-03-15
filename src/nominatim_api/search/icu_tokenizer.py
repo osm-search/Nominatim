@@ -14,7 +14,6 @@ import re
 from itertools import zip_longest
 
 from icu import Transliterator
-
 import sqlalchemy as sa
 
 from ..errors import UsageError
@@ -28,6 +27,15 @@ from ..query_preprocessing.base import QueryProcessingFunc
 from .query_analyzer_factory import AbstractQueryAnalyzer
 from .postcode_parser import PostcodeParser
 
+def _register_han_pinyin_join() -> None:
+    """ Register a custom ICU transliterator that joins pinyin syllables
+        produced by Han-Latin into a single token.
+        Only syllables with tone marks are joined, so Latin words are unaffected.
+    """
+    tone = "āáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜ"
+    Transliterator.registerInstance(
+        Transliterator.createFromRules('Han-PinyinJoin',
+            f"([a-z{tone}]+) ' ' ([a-z{tone}]+) > $1$2;"))
 
 DB_TO_TOKEN_TYPE = {
     'W': qmod.TOKEN_WORD,
@@ -126,6 +134,7 @@ class ICUAnalyzerConfig:
 
     @staticmethod
     async def create(conn: SearchConnection) -> 'ICUAnalyzerConfig':
+        _register_han_pinyin_join()
         rules = await conn.get_property('tokenizer_import_normalisation')
         normalizer = Transliterator.createFromRules("normalization", rules)
 
@@ -185,9 +194,6 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
 
         for row in await self.lookup_in_db(list(words.keys())):
             for trange in words[row.word_token]:
-                # Create a new token for each position because the token
-                # penalty can vary depending on the position in the query.
-                # (See rerank_tokens() below.)
                 token = ICUToken.from_db_row(row)
                 if row.type == 'S':
                     if row.info['op'] in ('in', 'near'):
@@ -252,15 +258,10 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
         return tlist
 
     def split_query(self, query: qmod.QueryStruct) -> None:
-        """ Transliterate the phrases and split them into tokens.
-        """
+        """ Transliterate the phrases and split them into tokens."""
         for phrase in query.source:
             query.nodes[-1].ptype = phrase.ptype
             phrase_split = re.split('([ :-])', phrase.text)
-            # The zip construct will give us the pairs of word/break from
-            # the regular expression split. As the split array ends on the
-            # final word, we simply use the fillvalue to even out the list and
-            # add the phrase break at the end.
             for word, breakchar in zip_longest(*[iter(phrase_split)]*2, fillvalue=','):
                 if not word:
                     continue
@@ -336,6 +337,12 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
             for ttype, tokens in tlist.items():
                 for token in tokens:
                     itok = cast(ICUToken, token)
+                    # Apply a small fixed penalty for Han script tokens instead
+                    # of running match_penalty(). Comparing Han characters against
+                    # a transliterated norm produces a meaningless large distance
+                    # and would wrongly penalize the exact match token we added
+                    # in split_query(). A small fixed penalty avoids over-ranking
+                    # while still scoring better than transliterated partial tokens.
                     itok.penalty += itok.match_penalty(norm) * \
                         (1 if ttype in (qmod.TOKEN_WORD, qmod.TOKEN_PARTIAL) else 2)
 

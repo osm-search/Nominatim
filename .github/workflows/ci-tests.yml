@@ -7,11 +7,11 @@ jobs:
         runs-on: ubuntu-latest
 
         steps:
-            - uses: actions/checkout@v4
+            - uses: actions/checkout@v6
               with:
                 submodules: true
 
-            - uses: actions/cache@v4
+            - uses: actions/cache@v5
               with:
                   path: |
                      data/country_osm_grid.sql.gz
@@ -27,7 +27,7 @@ jobs:
                   mv nominatim-src.tar.bz2 Nominatim
 
             - name: 'Upload Artifact'
-              uses: actions/upload-artifact@v4
+              uses: actions/upload-artifact@v7
               with:
                   name: full-source
                   path: nominatim-src.tar.bz2
@@ -55,7 +55,7 @@ jobs:
         runs-on: ubuntu-${{ matrix.ubuntu }}.04
 
         steps:
-            - uses: actions/download-artifact@v4
+            - uses: actions/download-artifact@v8
               with:
                   name: full-source
 
@@ -70,7 +70,7 @@ jobs:
               with:
                   dependencies: ${{ matrix.dependencies }}
 
-            - uses: actions/cache@v4
+            - uses: actions/cache@v5
               with:
                   path: |
                      /usr/local/bin/osm2pgsql
@@ -78,7 +78,7 @@ jobs:
               if: matrix.ubuntu == '22'
 
             - name: Set up Python
-              uses: actions/setup-python@v5
+              uses: actions/setup-python@v6
               with:
                   python-version: ${{ matrix.python }}
               if: matrix.python != 'builtin'
@@ -145,7 +145,7 @@ jobs:
         runs-on: windows-latest
 
         steps:
-            - uses: actions/download-artifact@v4
+            - uses: actions/download-artifact@v8
               with:
                   name: full-source
 
@@ -157,7 +157,7 @@ jobs:
                   postgresql-version: 17
 
             - name: Set up Python
-              uses: actions/setup-python@v5
+              uses: actions/setup-python@v6
               with:
                   python-version: '3.14'
 
@@ -245,7 +245,7 @@ jobs:
                 OS: ${{ matrix.name }}
                 INSTALL_MODE: ${{ matrix.install_mode }}
 
-            - uses: actions/download-artifact@v4
+            - uses: actions/download-artifact@v8
               with:
                   name: full-source
                   path: /home/nominatim
@@ -336,7 +336,7 @@ jobs:
       needs: create-archive
 
       steps:
-          - uses: actions/download-artifact@v4
+          - uses: actions/download-artifact@v8
             with:
                 name: full-source
 
@@ -376,7 +376,7 @@ jobs:
       needs: create-archive
 
       steps:
-          - uses: actions/download-artifact@v4
+          - uses: actions/download-artifact@v8
             with:
                 name: full-source
 

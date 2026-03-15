@@ -41,7 +41,7 @@ runs:
             Add-Content $env:GITHUB_OUTPUT "postgis_file=$pgis_bundle"
             Add-Content $env:GITHUB_OUTPUT "postgis_bundle_url=$pgis_bundle_url"
 
-        - uses: actions/cache@v4
+        - uses: actions/cache@v5
           with:
             path: |
               C:/postgis.zip

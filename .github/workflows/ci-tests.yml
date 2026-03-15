@@ -411,10 +411,3 @@ jobs:
             run: |
               ./master/bin/nominatim admin --migrate
               ./release/bin/nominatim add-data --file Nominatim/test/testdb/additional_api_test.data.osm
-
-    codespell:
-      runs-on: ubuntu-latest
-      steps:
-          - uses: codespell-project/actions-codespell@v2
-            with:
-                only_warn: 1

@@ -81,12 +81,12 @@ Feature: Simple Tests
     Scenario: Empty XML search with excluded place ids
         When sending v1/search with format xml
           | q              | exclude_place_ids |
-          | jghrleoxsbwjer | 123,76,342565 |
+          | jghrleoxsbwjer | 123,n456,W789 |
         Then a HTTP 200 is returned
         And the result is valid xml
         And the result metadata contains
           | param             | value |
-          | exclude_place_ids | 123,76,342565 |
+          | exclude_place_ids | 123,N456,W789 |
 
     Scenario: Empty XML search with bad excluded place ids
         When sending v1/search with format xml
@@ -95,6 +95,24 @@ Feature: Simple Tests
         Then a HTTP 200 is returned
         And the result is valid xml
         And the result metadata has no attributes exclude_place_ids
+
+    Scenario: Search with invalid excluded place ids
+        When sending v1/search with format json
+          | q     | exclude_place_ids |
+          | Tokyo | <ids> |
+        Then a HTTP 400 is returned
+        And the result is valid json
+        And the result contains
+          | error+code | error+message |
+          | 400        | Invalid exclude ID: <bad_id> |
+
+        Examples:
+          | ids | bad_id |
+          | abc | abc |
+          | X123 | X123 |
+          | N:100 | N:100 |
+          | -123 | -123 |
+          | 123,abc,456 | abc |
 
     Scenario Outline: Wrapping of illegal jsonp search requests
         When sending v1/search with format json

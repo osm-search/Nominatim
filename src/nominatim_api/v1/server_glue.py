@@ -374,7 +374,11 @@ async def search_endpoint(api: NominatimAPIAsync, params: ASGIAdaptor) -> Any:
                                    params.get('featureType', ''),
                                    params.get_bool('namedetails', False),
                                    params.get_bool('extratags', False),
-                                   (str(r.place_id) for r in results if r.place_id))
+                                   (f"{r.osm_object[0]}{r.osm_object[1]}"
+                                    if r.osm_object
+                                    else str(r.place_id)
+                                    for r in results
+                                    if r.osm_object or r.place_id))
         queryparts['format'] = fmt
 
         moreurl = params.base_uri() + '/search?' + urlencode(queryparts)

@@ -36,6 +36,9 @@ class PlaceID:
     The internal ID of the place to reference.
     """
 
+    def __str__(self) -> str:
+        return str(self.place_id)
+
 
 @dataclasses.dataclass
 class OsmID:
@@ -58,6 +61,9 @@ class OsmID:
         If there are multiple objects in the database and `osm_class` is
         left out, then one of the objects is returned at random.
     """
+
+    def __str__(self) -> str:
+        return f"{self.osm_type}{self.osm_id}"
 
     def __post_init__(self) -> None:
         if self.osm_type not in ('N', 'W', 'R'):
@@ -402,11 +408,12 @@ def format_country(cc: Any) -> List[str]:
     return [cc.lower() for cc in clist if isinstance(cc, str) and len(cc) == 2]
 
 
-def format_excluded(ids: Any) -> List[int]:
-    """ Extract a list of place ids from the input which may be either
-        a string or a list of strings or ints. Ignores empty value but
-        throws a UserError on anything that cannot be converted to int.
+def format_excluded(ids: Any) -> List[PlaceRef]:
+    """ Extract a list of place IDs and OSM IDs from the input.
     """
+    if not ids:
+        return []
+
     plist: Sequence[str]
     if isinstance(ids, str):
         plist = [s.strip() for s in ids.split(',')]
@@ -414,12 +421,30 @@ def format_excluded(ids: Any) -> List[int]:
         plist = ids
     else:
         raise UsageError("Parameter 'excluded' needs to be a comma-separated list "
-                         "or a Python list of numbers.")
-    if not all(isinstance(i, int) or
-               (isinstance(i, str) and (not i or i.isdigit())) for i in plist):
-        raise UsageError("Parameter 'excluded' only takes place IDs.")
+                         "or a Python list of place IDs or OSM IDs.")
 
-    return [int(id) for id in plist if id] or [0]
+    result: List[PlaceRef] = []
+    for i in plist:
+        if not i:
+            continue
+        if isinstance(i, (PlaceID, OsmID)):
+            result.append(i)
+        elif isinstance(i, int):
+            if i > 0:
+                result.append(PlaceID(i))
+        elif isinstance(i, str):
+            if i.isdigit():
+                if int(i) > 0:
+                    result.append(PlaceID(int(i)))
+            elif len(i) > 1 and i[0].upper() in ('N', 'W', 'R') and i[1:].isdigit():
+                if int(i[1:]) > 0:
+                    result.append(OsmID(i[0].upper(), int(i[1:])))
+            else:
+                raise UsageError(f"Invalid exclude ID: {i}")
+        else:
+            raise UsageError("Parameter 'excluded' contains invalid types.")
+
+    return result
 
 
 def format_categories(categories: List[Tuple[str, str]]) -> List[Tuple[str, str]]:
@@ -539,11 +564,10 @@ class SearchDetails(LookupDetails):
         default) will disable this filter.
     """
 
-    excluded: List[int] = dataclasses.field(default_factory=list,
-                                            metadata={'transform': format_excluded})
-    """ List of OSM objects to exclude from the results. Currently only
-        works when the internal place ID is given.
-        An empty list (the default) will disable this filter.
+    excluded: List[PlaceRef] = dataclasses.field(default_factory=list,
+                                                 metadata={'transform': format_excluded})
+    """ List of OSM objects to exclude from the results,
+        provided as either internal Place IDs or OSM IDs.
     """
 
     viewbox: Optional[Bbox] = dataclasses.field(default=None,
@@ -588,6 +612,14 @@ class SearchDetails(LookupDetails):
             yext = (self.viewbox.maxlat - self.viewbox.minlat)/2
             self.viewbox_x2 = Bbox(self.viewbox.minlon - xext, self.viewbox.minlat - yext,
                                    self.viewbox.maxlon + xext, self.viewbox.maxlat + yext)
+
+    @property
+    def excluded_place_ids(self) -> List[int]:
+        """ Return excluded entries as a plain list of place ID integers.
+            Only includes PlaceID entries. Returns [0] if empty to
+            ensure SQL NOT IN clauses work correctly.
+        """
+        return [e.place_id for e in self.excluded if isinstance(e, PlaceID)] or [0]
 
     def restrict_min_max_rank(self, new_min: int, new_max: int) -> None:
         """ Change the min_rank and max_rank fields to respect the

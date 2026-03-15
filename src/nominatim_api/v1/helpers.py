@@ -95,7 +95,8 @@ def extend_query_parts(queryparts: Dict[str, Any], details: Dict[str, Any],
     if parsed.countries:
         queryparts['countrycodes'] = ','.join(parsed.countries)
     queryparts['exclude_place_ids'] = \
-        ','.join(chain(excluded, map(str, (e for e in parsed.excluded if e > 0))))
+        ','.join(chain(excluded,
+                       (str(e) for e in parsed.excluded)))
     if parsed.viewbox:
         queryparts['viewbox'] = ','.join(f"{c:.7g}" for c in parsed.viewbox.coords)
     if parsed.bounded_viewbox:

@@ -155,10 +155,11 @@ class ICUTokenizer(AbstractTokenizer):
     def _cleanup_housenumbers(self) -> None:
         """ Remove unused house numbers.
         """
+        # Fetching the unused housenumber tokens as deletion candidates.
         with connect(self.dsn) as conn:
             if not table_exists(conn, 'search_name'):
                 return
-            with conn.cursor(name="hnr_counter") as cur:
+            with conn.cursor(name="hnr_counter_tags") as cur:
                 cur.execute("""SELECT DISTINCT word_id, coalesce(info->>'lookup', word_token)
                                FROM word
                                WHERE type = 'H'
@@ -168,7 +169,7 @@ class ICUTokenizer(AbstractTokenizer):
                                       OR coalesce(word, word_token) not similar to '\\d+')
                             """)
                 candidates = {token: wid for wid, token in cur}
-            with conn.cursor(name="hnr_counter") as cur:
+            with conn.cursor(name="hnr_counter_places") as cur: # Using a different cursor name to avoid conflicts if the first cursor in case it fails to close properly due to an exception mid-iteration.
                 cur.execute("""SELECT housenumber FROM placex
                                WHERE housenumber is not null
                                      AND (char_length(housenumber) > 6

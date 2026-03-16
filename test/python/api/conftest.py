@@ -115,7 +115,7 @@ class APITester:
                        'country_code': kw.get('country_code'),
                        'postcode': kw.get('postcode'),
                        'rank_search': kw.get('rank_search', 21),
-		       'indexed_status': kw.get('indexed_status',0),
+                       'indexed_status': kw.get('indexed_status', 0),
                        'indexed_date': kw.get('indexed_date',
                                               dt.datetime(2022, 12, 7, 14, 14, 46, 0)),
                        'centroid': kw.get('centroid', 'POINT(23 34)'),

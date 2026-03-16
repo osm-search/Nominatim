@@ -317,7 +317,7 @@ BEGIN
     SELECT members FROM planet_osm_rels WHERE id = bnd.osm_id INTO relation_members;
     {% if debug %}RAISE WARNING 'Got relation members';{% endif %}
 
-    -- Search for relation members with role 'lable'.
+    -- Search for relation members with role 'label'.
     IF relation_members IS NOT NULL THEN
       FOR rel_member IN
         SELECT get_rel_node_members(relation_members, ARRAY['label']) as member

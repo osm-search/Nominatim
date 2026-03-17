@@ -88,7 +88,7 @@ class SearchTables:
             sa.Column('startnumber', sa.Integer),
             sa.Column('endnumber', sa.Integer),
             sa.Column('step', sa.SmallInteger),
-            sa.Column('indexed_status', sa.SmallInteger),
+            sa.Column('indexed_status', sa.SmallInteger, nullable=False),
             sa.Column('linegeo', Geometry, nullable=False),
             sa.Column('address', KeyValueStore),
             sa.Column('postcode', sa.Text),

@@ -60,11 +60,11 @@ class SearchTables:
 
         self.addressline = sa.Table(
             'place_addressline', meta,
-            sa.Column('place_id', sa.BigInteger),
-            sa.Column('address_place_id', sa.BigInteger),
-            sa.Column('distance', sa.Float),
-            sa.Column('fromarea', sa.Boolean),
-            sa.Column('isaddress', sa.Boolean))
+            sa.Column('place_id', sa.BigInteger, nullable=False),
+            sa.Column('address_place_id', sa.BigInteger, nullable=False),
+            sa.Column('distance', sa.Float, nullable=False),
+            sa.Column('fromarea', sa.Boolean, nullable=False),
+            sa.Column('isaddress', sa.Boolean, nullable=False))
 
         self.postcode = sa.Table(
             'location_postcodes', meta,
@@ -120,18 +120,18 @@ class SearchTables:
 
         self.tiger = sa.Table(
             'location_property_tiger', meta,
-            sa.Column('place_id', sa.BigInteger),
+            sa.Column('place_id', sa.BigInteger, nullable=False),
             sa.Column('parent_place_id', sa.BigInteger),
-            sa.Column('startnumber', sa.Integer),
-            sa.Column('endnumber', sa.Integer),
-            sa.Column('step', sa.SmallInteger),
-            sa.Column('linegeo', Geometry),
+            sa.Column('startnumber', sa.Integer, nullable=False),
+            sa.Column('endnumber', sa.Integer, nullable=False),
+            sa.Column('step', sa.SmallInteger, nullable=False),
+            sa.Column('linegeo', Geometry, nullable=False),
             sa.Column('postcode', sa.Text))
 
         self.placex_entrance = sa.Table(
             'placex_entrance', meta,
-            sa.Column('place_id', sa.BigInteger),
-            sa.Column('osm_id', sa.BigInteger),
-            sa.Column('type', sa.Text),
+            sa.Column('place_id', sa.BigInteger, nullable=False),
+            sa.Column('osm_id', sa.BigInteger, nullable=False),
+            sa.Column('type', sa.Text, nullable=False),
             sa.Column('location', Geometry, nullable=False),
             sa.Column('extratags', KeyValueStore))

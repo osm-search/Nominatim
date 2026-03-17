@@ -38,11 +38,11 @@ class SearchTables:
             sa.Column('place_id', sa.BigInteger, nullable=False),
             sa.Column('parent_place_id', sa.BigInteger),
             sa.Column('linked_place_id', sa.BigInteger),
-            sa.Column('importance', sa.Float),
+            sa.Column('importance', sa.Float, nullable=False),
             sa.Column('indexed_date', sa.DateTime),
-            sa.Column('rank_address', sa.SmallInteger),
-            sa.Column('rank_search', sa.SmallInteger),
-            sa.Column('indexed_status', sa.SmallInteger),
+            sa.Column('rank_address', sa.SmallInteger, nullable=False),
+            sa.Column('rank_search', sa.SmallInteger, nullable=False),
+            sa.Column('indexed_status', sa.SmallInteger, nullable=False),
             sa.Column('osm_type', sa.String(1), nullable=False),
             sa.Column('osm_id', sa.BigInteger, nullable=False),
             sa.Column('class', sa.Text, nullable=False, key='class_'),
@@ -56,7 +56,7 @@ class SearchTables:
             sa.Column('country_code', sa.String(2)),
             sa.Column('housenumber', sa.Text),
             sa.Column('postcode', sa.Text),
-            sa.Column('centroid', Geometry))
+            sa.Column('centroid', Geometry, nullable=False))
 
         self.addressline = sa.Table(
             'place_addressline', meta,
@@ -82,14 +82,14 @@ class SearchTables:
         self.osmline = sa.Table(
             'location_property_osmline', meta,
             sa.Column('place_id', sa.BigInteger, nullable=False),
-            sa.Column('osm_id', sa.BigInteger),
+            sa.Column('osm_id', sa.BigInteger, nullable=False),
             sa.Column('parent_place_id', sa.BigInteger),
             sa.Column('indexed_date', sa.DateTime),
             sa.Column('startnumber', sa.Integer),
             sa.Column('endnumber', sa.Integer),
             sa.Column('step', sa.SmallInteger),
             sa.Column('indexed_status', sa.SmallInteger),
-            sa.Column('linegeo', Geometry),
+            sa.Column('linegeo', Geometry, nullable=False),
             sa.Column('address', KeyValueStore),
             sa.Column('postcode', sa.Text),
             sa.Column('country_code', sa.String(2)))
@@ -110,13 +110,13 @@ class SearchTables:
         # The following tables are not necessarily present.
         self.search_name = sa.Table(
             'search_name', meta,
-            sa.Column('place_id', sa.BigInteger),
-            sa.Column('importance', sa.Float),
-            sa.Column('address_rank', sa.SmallInteger),
+            sa.Column('place_id', sa.BigInteger, nullable=False),
+            sa.Column('importance', sa.Float, nullable=False),
+            sa.Column('address_rank', sa.SmallInteger, nullable=False),
             sa.Column('name_vector', IntArray),
             sa.Column('nameaddress_vector', IntArray),
             sa.Column('country_code', sa.String(2)),
-            sa.Column('centroid', Geometry))
+            sa.Column('centroid', Geometry, nullable=False))
 
         self.tiger = sa.Table(
             'location_property_tiger', meta,

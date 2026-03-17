@@ -68,16 +68,16 @@ class SearchTables:
 
         self.postcode = sa.Table(
             'location_postcodes', meta,
-            sa.Column('place_id', sa.BigInteger),
+            sa.Column('place_id', sa.BigInteger, nullable=False),
             sa.Column('parent_place_id', sa.BigInteger),
             sa.Column('osm_id', sa.BigInteger),
-            sa.Column('rank_search', sa.SmallInteger),
-            sa.Column('indexed_status', sa.SmallInteger),
+            sa.Column('rank_search', sa.SmallInteger, nullable=False),
+            sa.Column('indexed_status', sa.SmallInteger, nullable=False),
             sa.Column('indexed_date', sa.DateTime),
-            sa.Column('country_code', sa.String(2)),
-            sa.Column('postcode', sa.Text),
-            sa.Column('centroid', Geometry),
-            sa.Column('geometry', Geometry))
+            sa.Column('country_code', sa.String(2), nullable=False),
+            sa.Column('postcode', sa.Text, nullable=False),
+            sa.Column('centroid', Geometry, nullable=False),
+            sa.Column('geometry', Geometry, nullable=False))
 
         self.osmline = sa.Table(
             'location_property_osmline', meta,

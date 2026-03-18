@@ -73,7 +73,13 @@ The following tables carry all information needed to do the search:
 ![search tables](search-tables.svg)
 
 The **placex** table is the central table that saves all information about the
-searchable places in Nominatim. The basic columns are the same as for the
+searchable places in Nominatim. 
+
+In simpler terms, the `placex` table can be seen as the final, processed version of OSM data that is ready for search.
+While the `place` table contains raw imported data, `placex` stores enriched and indexed data that includes ranking, hierarchy (parent-child relationships), and computed metadata such as importance and postcode.
+Most search queries in Nominatim ultimately read from this table, making it the core table for forward and reverse geocoding.
+
+The basic columns are the same as for the
 place table and have the same meaning. The placex tables adds the following
 additional columns:
 
@@ -95,6 +101,8 @@ additional columns:
  * `centroid` - a point feature for the place
  * `token_info` - a dummy field used to inject information from the tokenizer
    into the indexing process
+
+For implementation details, see the SQL definition in `lib-sql/tables/placex.sql` and the SQLAlchemy schema in `src/nominatim_api/sql/sqlalchemy_schema.py`.
 
 The **location_property_osmline** table is a special table for
 [address interpolations](https://wiki.openstreetmap.org/wiki/Addresses#Using_interpolation).

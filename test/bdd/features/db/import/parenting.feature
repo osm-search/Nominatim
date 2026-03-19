@@ -295,12 +295,12 @@ Feature: Parenting of objects
          | W1  | highway | residential | foo  | 10,11    |
          | W2  | highway | residential | bar  | 20,21    |
         And the relations
-         | id | members         | tags+type |
+         | id | members            | tags+type        |
          | 1  | W1:street,N1:house | associatedStreet |
         When importing
         Then placex contains
          | object | parent_place_id |
-         | N1     | W1 |
+         | N1     | W1              |
 
     Scenario: Building without tags, closest street from center point
         Given the grid

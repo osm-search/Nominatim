@@ -5,10 +5,10 @@
 # Copyright (C) 2024 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
-Sanitizer that adds a Pinyin variant for names written in Chinese Han
-characters, when no Pinyin transliteration exists yet in the name tags.
-This ensures that places with Han character names can still be found
-by users searching in Pinyin (Latin script).
+For the places which only have a Han character name,
+add a Pinyin transliteration as an extra name.
+This allows users who type iin Pinyin to still find
+the places which are only tagged in Chinese script.
 """
 from typing import Callable
 import unicodedata

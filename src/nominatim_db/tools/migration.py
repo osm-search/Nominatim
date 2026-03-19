@@ -456,13 +456,19 @@ def create_place_associated_street_table(conn: Connection, **_: Any) -> None:
             )
         """)
 
+        # Check the osm2pgsql middle table format using the properties table.
+        db_format = '1'
+        if table_exists(conn, 'osm2pgsql_properties'):
+            cur.execute("""
+                SELECT value FROM osm2pgsql_properties
+                WHERE property = 'db_format'
+            """)
+            row = cur.fetchone()
+            if row is not None:
+                db_format = row[0]
+
         # Populate from planet_osm_rels if the JSONB members format is in use.
-        cur.execute("""
-            SELECT data_type FROM information_schema.columns
-            WHERE table_name = 'planet_osm_rels' AND column_name = 'members'
-        """)
-        row = cur.fetchone()
-        if row and row[0] == 'jsonb':
+        if db_format != '1':
             cur.execute("""
                 INSERT INTO place_associated_street
                        (relation_id, member_type, member_id, member_role)

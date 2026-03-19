@@ -688,14 +688,22 @@ function module.process_relation(object)
     if object.tags.type == 'associatedStreet' then
         local has_street = false
         for _, member in ipairs(object.members) do
-            if member.role == 'street' then
+            -- Streets can only be ways or relations, not nodes
+            if member.role == 'street' and (member.type == 'w' or member.type == 'r') then
                 has_street = true
                 break
             end
         end
         if has_street then
             for _, member in ipairs(object.members) do
-                if member.role == 'street' or member.role == 'house' then
+                -- Only insert streets that are ways or relations
+                if member.role == 'street' and (member.type == 'w' or member.type == 'r') then
+                    insert_row.place_associated_street{
+                        member_type = member.type:upper(),
+                        member_id = member.ref,
+                        member_role = member.role
+                    }
+                elseif member.role == 'house' then
                     insert_row.place_associated_street{
                         member_type = member.type:upper(),
                         member_id = member.ref,

@@ -127,26 +127,37 @@ DECLARE
   distance FLOAT;
   new_distance FLOAT;
   waygeom GEOMETRY;
-{% if db.middle_db_format == '1' %}
-  location RECORD;
-{% elif 'place_associated_street' not in db.tables %}
-  member JSONB;
-{% endif %}
 BEGIN
-{% if 'place_associated_street' in db.tables %}
+  -- Use UNION of two queries (one for Ways, one for Relations) to allow
+  -- PostgreSQL to use partial indexes on placex.osm_type.
   FOR parent IN
     SELECT p.place_id, p.geometry
       FROM place_associated_street h
       JOIN place_associated_street s
            ON h.relation_id = s.relation_id AND s.member_role = 'street'
       JOIN placex p
-           ON p.osm_type = s.member_type::char(1)
+           ON p.osm_type = 'W'
               AND p.osm_id = s.member_id
               AND p.name IS NOT NULL
               AND p.rank_search BETWEEN 26 AND 27
      WHERE h.member_type = poi_osm_type
        AND h.member_id = poi_osm_id
        AND h.member_role = 'house'
+       AND s.member_type = 'W'
+    UNION ALL
+    SELECT p.place_id, p.geometry
+      FROM place_associated_street h
+      JOIN place_associated_street s
+           ON h.relation_id = s.relation_id AND s.member_role = 'street'
+      JOIN placex p
+           ON p.osm_type = 'R'
+              AND p.osm_id = s.member_id
+              AND p.name IS NOT NULL
+              AND p.rank_search BETWEEN 26 AND 27
+     WHERE h.member_type = poi_osm_type
+       AND h.member_id = poi_osm_id
+       AND h.member_role = 'house'
+       AND s.member_type = 'R'
   LOOP
     -- Find the closest 'street' member.
     -- Avoid distance computation for the frequent case where there is
@@ -164,71 +175,6 @@ BEGIN
       END IF;
     END IF;
   END LOOP;
-
-{% elif db.middle_db_format == '1' %}
-  FOR location IN
-    SELECT members FROM planet_osm_rels
-    WHERE parts @> ARRAY[poi_osm_id]
-          and members @> ARRAY[lower(poi_osm_type) || poi_osm_id]
-          and tags @> ARRAY['associatedStreet']
-  LOOP
-    FOR i IN 1..array_upper(location.members, 1) BY 2 LOOP
-      IF location.members[i+1] = 'street' THEN
-        FOR parent IN
-          SELECT place_id, geometry
-           FROM placex
-           WHERE osm_type = upper(substring(location.members[i], 1, 1))::char(1)
-                 and osm_id = substring(location.members[i], 2)::bigint
-                 and name is not null
-                 and rank_search between 26 and 27
-        LOOP
-          IF waygeom is null THEN
-            result := parent.place_id;
-            waygeom := parent.geometry;
-          ELSE
-            distance := coalesce(distance, ST_Distance(waygeom, bbox));
-            new_distance := ST_Distance(parent.geometry, bbox);
-            IF new_distance < distance THEN
-              distance := new_distance;
-              result := parent.place_id;
-              waygeom := parent.geometry;
-            END IF;
-          END IF;
-        END LOOP;
-      END IF;
-    END LOOP;
-  END LOOP;
-
-{% else %}
-  FOR member IN
-    SELECT value FROM planet_osm_rels r, LATERAL jsonb_array_elements(members)
-    WHERE planet_osm_member_ids(members, poi_osm_type::char(1)) && ARRAY[poi_osm_id]
-          and tags->>'type' = 'associatedStreet'
-          and value->>'role' = 'street'
-  LOOP
-    FOR parent IN
-      SELECT place_id, geometry
-       FROM placex
-       WHERE osm_type = (member->>'type')::char(1)
-             and osm_id = (member->>'ref')::bigint
-             and name is not null
-             and rank_search between 26 and 27
-    LOOP
-      IF waygeom is null THEN
-        result := parent.place_id;
-        waygeom := parent.geometry;
-      ELSE
-        distance := coalesce(distance, ST_Distance(waygeom, bbox));
-        new_distance := ST_Distance(parent.geometry, bbox);
-        IF new_distance < distance THEN
-          distance := new_distance;
-          result := parent.place_id;
-          waygeom := parent.geometry;
-        END IF;
-      END IF;
-    END LOOP;
-  END LOOP;
-{% endif %}
 
   RETURN result;
 END;
@@ -1453,7 +1399,6 @@ LANGUAGE plpgsql;
 -- whenever the place_associated_street table is modified.
 -- osm2pgsql flex handles updates as DELETE-all + re-INSERT, so each
 -- row-level trigger call covers exactly one member.
-{% if 'place_associated_street' in db.tables %}
 CREATE OR REPLACE FUNCTION invalidate_associated_street_members()
   RETURNS TRIGGER
   AS $$
@@ -1478,4 +1423,3 @@ BEGIN
 END;
 $$
 LANGUAGE plpgsql;
-{% endif %}

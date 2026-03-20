@@ -45,7 +45,7 @@ class ForwardGeocoder:
 
     async def _resolve_excluded_osm_ids(self) -> None:
         """ Resolve any OsmID entries in the excluded list to PlaceID entries
-            by looking them up in the placex table.
+            by looking them up in the placex and location_postcode table.
         """
         excluded = self.params.excluded
         if not excluded or all(isinstance(e, PlaceID) for e in excluded):
@@ -63,6 +63,13 @@ class ForwardGeocoder:
             sql = sa.select(t.c.place_id).where(sa.or_(*conditions))
             place_ids.extend(PlaceID(row.place_id)
                              for row in await self.conn.execute(sql))
+
+            relation_ids = [oid.osm_id for oid in osm_ids if oid.osm_type == 'R']
+            if relation_ids:
+                p = self.conn.t.postcode
+                sql = sa.select(p.c.place_id).where(p.c.osm_id.in_(relation_ids))
+                place_ids.extend(PlaceID(row.place_id)
+                                 for row in await self.conn.execute(sql))
 
         self.params.excluded = place_ids
 

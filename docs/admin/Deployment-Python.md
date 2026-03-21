@@ -150,3 +150,71 @@ sudo systemctl reload nginx
 
 and you should be able to see the status of your server under
 `http://localhost/status`.
+
+
+### Proposed Documentation Update: Troubleshooting the Python Frontend
+
+If you are setting up the Python frontend for the first time or in a development environment (like a local home directory), you may encounter the following issues.
+
+### 1. Essential System Dependencies
+The `nominatim-api` package depends on `pyicu`, which requires C++ development headers and `pkg-config` to build correctly from source.
+
+**Error you might see:**
+* Error: `RuntimeError: Please install pkg-config on your system`
+* Error: `KeyError: 'ICU_VERSION'`
+
+**Solution:**
+Install the missing system libraries before running `pip install`:
+```bash
+sudo apt-get install pkg-config libicu-dev
+```
+### 2. Permissions & Directory Setup
+The guide assumes a global /srv/ directory. If you are a standard user, you will face "Permission Denied" errors when creating the virtual environment.
+
+**Error you might see:**
+* Error: `virtualenv: error: argument dest: the destination . is not write-able at /srv`
+
+**Solution:**
+```bash
+sudo mkdir -p /srv/nominatim-venv
+sudo chown $USER:$USER /srv/nominatim-venv
+virtualenv /srv/nominatim-venv
+```
+
+### 3. Proper Pathing for Installation
+When installing from the local source tree (./packaging/nominatim-api), you must be in the root directory of the cloned repository.
+
+**Error you might see:**
+* Error: `Invalid requirement: 'packaging/nominatim-api' ... File does not exist.`
+
+**Solution:**
+Verify your location with ls. You should see the packaging and src folders. If your path contains spaces, wrap it in quotes:
+
+```Bash
+
+cd "/home/user/Downloads/Nominatim-master"
+pip install ./packaging/nominatim-api
+```
+
+### 4. Nginx Directory Readiness
+On fresh Ubuntu/Debian installs, the `sites-available` folder might not exist, causing Nginx configuration saves to fail.
+
+**Error you might see:**
+* Error: `Error writing /etc/nginx/sites-available/default: No such file or directory`
+
+**Solution:**
+Create the directory structure manually before opening the editor:
+```Bash
+sudo mkdir -p /etc/nginx/sites-available
+sudo nano /etc/nginx/sites-available/default
+```
+
+### 5. Final Permission Check (The "403 Forbidden" Fix)
+If you run Nominatim from your /home/user/Downloads folder, the Nginx user (www-data) cannot see your files, resulting in a 403 Forbidden error.
+
+**Solution:**
+Grant "Execute" permissions to your home and project folders so the web server can access the directory tree:
+```Bash
+chmod +x /home/your-username
+chmod +x /home/your-username/Downloads
+```

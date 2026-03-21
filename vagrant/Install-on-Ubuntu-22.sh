@@ -131,7 +131,7 @@ fi                                 #DOCS:
 
     virtualenv $USERHOME/nominatim-venv
 
-# We want the faster binary version pf psycopg, so install that:
+# We want the faster binary version of psycopg, so install that:
 
     $USERHOME/nominatim-venv/bin/pip install psycopg[binary]
 

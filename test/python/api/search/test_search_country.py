@@ -10,7 +10,7 @@ Tests for running the country searcher.
 import pytest
 
 import nominatim_api as napi
-from nominatim_api.types import SearchDetails
+from nominatim_api.types import SearchDetails, PlaceID
 from nominatim_api.search.db_searches import CountrySearch
 from nominatim_api.search.db_search_fields import WeightedStrings
 
@@ -103,7 +103,7 @@ class TestCountryParameters:
     @pytest.mark.parametrize('pid,rids', [(76, [55]), (55, [])])
     def test_exclude_place_id(self, apiobj, frontend, pid, rids):
         results = run_search(apiobj, frontend, 0.5, ['yw', 'ro'],
-                             details=SearchDetails(excluded=[pid]))
+                             details=SearchDetails(excluded=[PlaceID(pid)]))
 
         assert [r.place_id for r in results] == rids
 

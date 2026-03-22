@@ -12,7 +12,7 @@ import json
 import pytest
 
 import nominatim_api as napi
-from nominatim_api.types import SearchDetails
+from nominatim_api.types import SearchDetails, PlaceID
 from nominatim_api.search.db_searches import PlaceSearch
 from nominatim_api.search.db_search_fields import WeightedStrings, WeightedCategories, \
                                                   FieldLookup, FieldRanking, RankedTokens
@@ -117,7 +117,7 @@ class TestNameOnlySearches:
         ranking = FieldRanking('name_vector', 0.4, [RankedTokens(0.0, [10])])
 
         results = run_search(apiobj, frontend, 0.1, [lookup], [ranking],
-                             details=SearchDetails(excluded=[101]))
+                             details=SearchDetails(excluded=[PlaceID(101)]))
 
         assert [r.place_id for r in results] == [100]
 

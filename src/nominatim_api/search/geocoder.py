@@ -12,8 +12,10 @@ import itertools
 import re
 import difflib
 
+import sqlalchemy as sa
+
 from ..connection import SearchConnection
-from ..types import SearchDetails
+from ..types import PlaceRef, SearchDetails, PlaceID, OsmID
 from ..results import SearchResult, SearchResults, add_result_details
 from ..timeout import Timeout
 from ..logging import log
@@ -40,6 +42,36 @@ class ForwardGeocoder:
         """ Return the configured maximum number of search results.
         """
         return self.params.max_results
+
+    async def _resolve_excluded_osm_ids(self) -> None:
+        """ Resolve any OsmID entries in the excluded list to PlaceID entries
+            by looking them up in the placex and location_postcode table.
+        """
+        excluded = self.params.excluded
+        if not excluded or all(isinstance(e, PlaceID) for e in excluded):
+            return
+
+        place_ids: List[PlaceRef] = [e for e in excluded if isinstance(e, PlaceID)]
+        osm_ids = [e for e in excluded if isinstance(e, OsmID)]
+
+        if osm_ids:
+            t = self.conn.t.placex
+            conditions = [
+                sa.and_(t.c.osm_type == oid.osm_type, t.c.osm_id == oid.osm_id)
+                for oid in osm_ids
+            ]
+            sql = sa.select(t.c.place_id).where(sa.or_(*conditions))
+            place_ids.extend(PlaceID(row.place_id)
+                             for row in await self.conn.execute(sql))
+
+            relation_ids = [oid.osm_id for oid in osm_ids if oid.osm_type == 'R']
+            if relation_ids:
+                p = self.conn.t.postcode
+                sql = sa.select(p.c.place_id).where(p.c.osm_id.in_(relation_ids))
+                place_ids.extend(PlaceID(row.place_id)
+                                 for row in await self.conn.execute(sql))
+
+        self.params.excluded = place_ids
 
     async def build_searches(self,
                              phrases: List[Phrase]) -> Tuple[QueryStruct, List[AbstractSearch]]:
@@ -194,6 +226,8 @@ class ForwardGeocoder:
         """
         log().function('forward_lookup_pois', categories=categories, params=self.params)
 
+        await self._resolve_excluded_osm_ids()
+
         if phrases:
             query, searches = await self.build_searches(phrases)
 
@@ -223,6 +257,8 @@ class ForwardGeocoder:
 
         if self.params.is_impossible():
             return results
+
+        await self._resolve_excluded_osm_ids()
 
         query, searches = await self.build_searches(phrases)
 

@@ -695,7 +695,7 @@ class NominatimAPI:
               countries (list[str]): Restrict search to countries with the given
                 ISO 3166-1 alpha-2 country code. An empty list (the default)
                 disables this filter.
-              excluded (list[int]): A list of internal IDs of places to exclude
+              excluded (list[int | str]): A list of internal Nominatim IDs or OSM IDs to exclude
                 from the search.
               viewbox (Optional[Bbox]): Bounding box of an area to focus search on.
               bounded_viewbox (bool): Consider the bounding box given in `viewbox`
@@ -813,7 +813,7 @@ class NominatimAPI:
                 ISO 3166-1 alpha-2 country code. An empty list (the default)
                 disables this filter. Do not use, when the country parameter
                 is used.
-              excluded (list[int]): A list of internal IDs of places to exclude
+              excluded (list[int | str]): A list of internal Nominatim IDs or OSM IDs to exclude
                 from the search.
               viewbox (Optional[Bbox]): Bounding box of an area to focus search on.
               bounded_viewbox (bool): Consider the bounding box given in `viewbox`
@@ -925,7 +925,7 @@ class NominatimAPI:
               countries (list[str]): Restrict search to countries with the given
                 ISO 3166-1 alpha-2 country code. An empty list (the default)
                 disables this filter.
-              excluded (list[int]): A list of internal IDs of places to exclude
+              excluded (list[int | str]): A list of internal Nominatim IDs or OSM IDs to exclude
                 from the search.
               viewbox (Optional[Bbox]): Bounding box of an area to focus search on.
               bounded_viewbox (bool): Consider the bounding box given in `viewbox`

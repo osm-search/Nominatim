@@ -258,6 +258,18 @@ Feature: Search queries
           | category | type |
           | place    | village |
 
+    Scenario: Exclude a specific place using an OSM ID
+        When geocoding "Malbun"
+        Then result 0 contains
+          | category | type |
+          | place | village |
+        When geocoding "Malbun"
+          | exclude_place_ids |
+          | N347290636 |
+        Then result 0 contains
+          | category | 
+          | landuse | 
+
     Scenario Outline: Search with polygon threshold (json)
         When sending v1/search with format json
           | q           | polygon_geojson | polygon_threshold |

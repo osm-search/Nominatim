@@ -71,7 +71,7 @@ class TigerInput:
         if self.tar_handle is not None:
             extracted = self.tar_handle.extractfile(fname)
             assert extracted is not None
-            return io.TextIOWrapper(extracted)
+            return io.TextIOWrapper(extracted, encoding='utf-8')
 
         return open(cast(str, fname), encoding='utf-8')
 

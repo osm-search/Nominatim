@@ -182,7 +182,6 @@ jobs:
 
             - name: Set UTF-8 encoding
               run: |
-                  echo "PYTHONUTF8=1" >> $env:GITHUB_ENV
                   [System.Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
             - name: Install PyICU from wheel

@@ -20,18 +20,21 @@ place to start.
 We love to get pull requests from you. We operate the "Fork & Pull" model
 explained at
 
-https://help.github.com/articles/using-pull-requests
+https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/about-pull-requests
 
 You should fork the project into your own repo, create a topic branch
 there and then make a single pull requests back to the main repository.
 Your pull requests will then be reviewed and discussed.
 
+Enable CI (we use Github Actions workflows) on your fork. It will run the
+full test suite whenever you push to one of your branches.
+https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/enabling-features-for-your-repository/managing-github-actions-settings-for-a-repository
+
+
 Please make sure to follow these guidelines:
 
-* Make sure CI passes _before_ opening the pull request. The repo is configured
-  to run the CI on branches. Once you have enabled the CI on your forked
-  repo, Actions will execute every time you push to your branch. Check
-  the Actions tab in your repo to make sure everything works.
+* Make sure CI passes _before_ opening the pull request. Check the "Actions" tab
+  in your repo to make sure everything works.
 * Make sure that you have time to react to these comments and amend the code or
   engage in a conversation. Do not expect that others will pick up your code,
   it will almost never happen.

@@ -1,0 +1,51 @@
+[tool.uv.workspace]
+members = ["packaging/*"]
+
+[dependency-groups]
+dev = [
+    { include-group = "test" },
+    { include-group = "lint" },
+    { include-group = "types" },
+    { include-group = "docs" },
+    { include-group = "serve" },
+]
+
+test = [
+    "pytest",
+    "pytest-asyncio",
+    "pytest-bdd",
+    "aiosqlite",
+    "osmium",
+]
+
+lint = [
+    "flake8",
+]
+
+types = [
+    "mypy",
+    "types-jinja2",
+    "types-markupsafe",
+    "types-psycopg2",
+    "types-psutil",
+    "types-Pygments",
+    "types-PyYAML",
+    "types-requests",
+    "types-ujson",
+    "types-urllib3",
+    "typing-extensions",
+]
+
+docs = [
+    "mkdocs",
+    "mkdocstrings[python]",
+    "mkdocs-gen-files",
+    "mkdocs-material",
+]
+
+serve = [
+    "falcon",
+    "gunicorn",
+    "starlette",
+    "uvicorn",
+]

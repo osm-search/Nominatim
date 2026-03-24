@@ -82,6 +82,27 @@ Now enter the virtual environment whenever you want to develop:
 . ~/nominatim-dev-venv/bin/activate
 ```
 
+### Alternative: Using uv
+
+If you prefer, you can use [uv](https://docs.astral.sh/uv/) for a faster
+development setup. Install uv following the
+[official instructions](https://docs.astral.sh/uv/getting-started/installation/),
+then from the Nominatim source directory:
+
+```sh
+uv sync
+```
+
+This creates a virtual environment and installs all Python dependencies
+automatically. To run commands in the environment:
+
+```sh
+uv run nominatim --version
+uv run pytest test/python
+uv run make lint
+```
+
+
 ### Running Nominatim during development
 
 The source code for Nominatim can be found in the `src` directory and can

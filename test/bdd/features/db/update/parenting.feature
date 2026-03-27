@@ -161,3 +161,89 @@ Feature: Update parenting of objects
         Then placex contains
          | object | parent_place_id |
          | N1     | N4              |
+
+
+    Scenario: House re-parented when added to an associatedStreet relation
+        Given the grid
+         | 10 |   |   |   |   | 11 |
+         |    | 1 |   |   |   |    |
+         |    |   |   |   |   |    |
+         | 12 |   |   |   |   |    |
+        And the places
+         | osm | class | type  |
+         | N1  | place | house |
+        And the places
+         | osm | class   | type        | name | geometry |
+         | W1  | highway | residential | foo  | 10,11    |
+         | W2  | highway | residential | bar  | 10,12    |
+        And the relations
+         | id | members   | tags+type        |
+         | 1  | W1:street | associatedStreet |
+        When importing
+        Then placex contains
+         | object | parent_place_id |
+         | N1     | W1              |
+        When updating relations
+         | id | members             | tags+type        |
+         | 1  | W2:street,N1:house  | associatedStreet |
+        Then placex contains
+         | object | parent_place_id |
+         | N1     | W2              |
+
+
+    Scenario: House reverts to nearest street when removed from associatedStreet relation
+        Given the grid
+         | 10 |   |   |   |   | 11 |
+         |    |   |   |   |   |    |
+         |    |   |   |   |   |    |
+         |    |   |   |   |   |    |
+         | 12 | 1 |   |   |   |    |
+        And the places
+         | osm | class | type  |
+         | N1  | place | house |
+        And the places
+         | osm | class   | type        | name | geometry |
+         | W1  | highway | residential | foo  | 10,11    |
+         | W2  | highway | residential | bar  | 10,12    |
+        And the relations
+         | id | members             | tags+type        |
+         | 1  | W1:street,N1:house  | associatedStreet |
+        When importing
+        Then placex contains
+         | object | parent_place_id |
+         | N1     | W1              |
+        When updating relations
+         | id | members   | tags+type        |
+         | 1  | W1:street | associatedStreet |
+        Then placex contains
+         | object | parent_place_id |
+         | N1     | W2              |
+
+
+    Scenario: Houses re-parented when street member of relation changes
+        Given the grid
+         | 10 |   |   |   |   | 11 |
+         |    | 1 |   |   |   |    |
+         |    |   |   |   |   |    |
+         | 12 |   |   |   |   |    |
+        And the places
+         | osm | class | type  |
+         | N1  | place | house |
+        And the places
+         | osm | class   | type        | name | geometry |
+         | W1  | highway | residential | foo  | 10,11    |
+         | W2  | highway | residential | bar  | 10,12    |
+        And the relations
+         | id | members             | tags+type        |
+         | 1  | W1:street,N1:house  | associatedStreet |
+        When importing
+        Then placex contains
+         | object | parent_place_id |
+         | N1     | W1              |
+        When updating relations
+         | id | members             | tags+type        |
+         | 1  | W2:street,N1:house  | associatedStreet |
+        Then placex contains
+         | object | parent_place_id |
+         | N1     | W2              |
+

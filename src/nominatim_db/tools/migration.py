@@ -437,3 +437,62 @@ def backfill_importance(conn: Connection, **_: Any) -> None:
                         WHERE importance is NULL OR importance <= 0
                      """)
         conn.execute("ALTER TABLE search_name DROP COLUMN search_rank")
+
+
+@_migration(5, 2, 99, 5)
+def create_place_associated_street_table(conn: Connection, **_: Any) -> None:
+    """ Create place_associated_street table for associatedStreet relations
+    """
+    if table_exists(conn, 'place_associated_street'):
+        return
+
+    with conn.cursor() as cur:
+        cur.execute("""
+            CREATE TABLE place_associated_street (
+              relation_id BIGINT NOT NULL,
+              member_type TEXT NOT NULL,
+              member_id   BIGINT NOT NULL,
+              member_role TEXT NOT NULL
+            )
+        """)
+
+        # Check the osm2pgsql middle table format using the properties table.
+        db_format = '1'
+        if table_exists(conn, 'osm2pgsql_properties'):
+            cur.execute("""
+                SELECT value FROM osm2pgsql_properties
+                WHERE property = 'db_format'
+            """)
+            row = cur.fetchone()
+            if row is not None:
+                db_format = row[0]
+
+        # Populate from planet_osm_rels if the JSONB members format is in use.
+        if db_format != '1':
+            cur.execute("""
+                INSERT INTO place_associated_street
+                       (relation_id, member_type, member_id, member_role)
+                SELECT id,
+                       UPPER(x.type),
+                       x.ref,
+                       x.role
+                  FROM planet_osm_rels,
+                       LATERAL jsonb_to_recordset(members)
+                         AS x(ref bigint, role text, type text)
+                 WHERE tags->>'type' = 'associatedStreet'
+                   AND x.role IN ('street', 'house')
+            """)
+        else:
+            LOG.warning(
+                '\n'
+                'WARNING: Your database uses an old osm2pgsql middle table format.\n'
+                'The place_associated_street table has been created but is empty.\n'
+                'A full reimport is strongly recommended.\n'
+            )
+
+        cur.execute("""
+            CREATE INDEX place_associated_street_member_idx
+              ON place_associated_street USING BTREE (member_type, member_id);
+            CREATE INDEX place_associated_street_relation_id_idx
+              ON place_associated_street USING BTREE (relation_id);
+        """)

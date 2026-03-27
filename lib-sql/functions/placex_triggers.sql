@@ -122,84 +122,59 @@ CREATE OR REPLACE FUNCTION find_associated_street(poi_osm_type CHAR(1),
   RETURNS BIGINT
   AS $$
 DECLARE
-  location RECORD;
-  member JSONB;
   parent RECORD;
   result BIGINT;
   distance FLOAT;
   new_distance FLOAT;
   waygeom GEOMETRY;
 BEGIN
-{% if db.middle_db_format == '1' %}
-  FOR location IN
-    SELECT members FROM planet_osm_rels
-    WHERE parts @> ARRAY[poi_osm_id]
-          and members @> ARRAY[lower(poi_osm_type) || poi_osm_id]
-          and tags @> ARRAY['associatedStreet']
+  -- Use UNION of two queries (one for Ways, one for Relations) to allow
+  -- PostgreSQL to use partial indexes on placex.osm_type.
+  FOR parent IN
+    SELECT p.place_id, p.geometry
+      FROM place_associated_street h
+      JOIN place_associated_street s
+           ON h.relation_id = s.relation_id AND s.member_role = 'street'
+      JOIN placex p
+           ON p.osm_type = 'W'
+              AND p.osm_id = s.member_id
+              AND p.name IS NOT NULL
+              AND p.rank_search BETWEEN 26 AND 27
+     WHERE h.member_type = poi_osm_type
+       AND h.member_id = poi_osm_id
+       AND h.member_role = 'house'
+       AND s.member_type = 'W'
+    UNION ALL
+    SELECT p.place_id, p.geometry
+      FROM place_associated_street h
+      JOIN place_associated_street s
+           ON h.relation_id = s.relation_id AND s.member_role = 'street'
+      JOIN placex p
+           ON p.osm_type = 'R'
+              AND p.osm_id = s.member_id
+              AND p.name IS NOT NULL
+              AND p.rank_search BETWEEN 26 AND 27
+     WHERE h.member_type = poi_osm_type
+       AND h.member_id = poi_osm_id
+       AND h.member_role = 'house'
+       AND s.member_type = 'R'
   LOOP
-    FOR i IN 1..array_upper(location.members, 1) BY 2 LOOP
-      IF location.members[i+1] = 'street' THEN
-        FOR parent IN
-          SELECT place_id, geometry
-           FROM placex
-           WHERE osm_type = upper(substring(location.members[i], 1, 1))::char(1)
-                 and osm_id = substring(location.members[i], 2)::bigint
-                 and name is not null
-                 and rank_search between 26 and 27
-        LOOP
-          -- Find the closest 'street' member.
-          -- Avoid distance computation for the frequent case where there is
-          -- only one street member.
-          IF waygeom is null THEN
-            result := parent.place_id;
-            waygeom := parent.geometry;
-          ELSE
-            distance := coalesce(distance, ST_Distance(waygeom, bbox));
-            new_distance := ST_Distance(parent.geometry, bbox);
-            IF new_distance < distance THEN
-              distance := new_distance;
-              result := parent.place_id;
-              waygeom := parent.geometry;
-            END IF;
-          END IF;
-        END LOOP;
-      END IF;
-    END LOOP;
-  END LOOP;
-
-{% else %}
-  FOR member IN
-    SELECT value FROM planet_osm_rels r, LATERAL jsonb_array_elements(members)
-    WHERE planet_osm_member_ids(members, poi_osm_type::char(1)) && ARRAY[poi_osm_id]
-          and tags->>'type' = 'associatedStreet'
-          and value->>'role' = 'street'
-  LOOP
-    FOR parent IN
-      SELECT place_id, geometry
-       FROM placex
-       WHERE osm_type = (member->>'type')::char(1)
-             and osm_id = (member->>'ref')::bigint
-             and name is not null
-             and rank_search between 26 and 27
-    LOOP
-      -- Find the closest 'street' member.
-      -- Avoid distance computation for the frequent case where there is
-      -- only one street member.
-      IF waygeom is null THEN
+    -- Find the closest 'street' member.
+    -- Avoid distance computation for the frequent case where there is
+    -- only one street member.
+    IF waygeom IS NULL THEN
+      result := parent.place_id;
+      waygeom := parent.geometry;
+    ELSE
+      distance := coalesce(distance, ST_Distance(waygeom, bbox));
+      new_distance := ST_Distance(parent.geometry, bbox);
+      IF new_distance < distance THEN
+        distance := new_distance;
         result := parent.place_id;
         waygeom := parent.geometry;
-      ELSE
-        distance := coalesce(distance, ST_Distance(waygeom, bbox));
-        new_distance := ST_Distance(parent.geometry, bbox);
-        IF new_distance < distance THEN
-          distance := new_distance;
-          result := parent.place_id;
-          waygeom := parent.geometry;
-        END IF;
       END IF;
-    END LOOP;
+    END IF;
   END LOOP;
-{% endif %}
 
   RETURN result;
 END;
@@ -1415,6 +1390,36 @@ BEGIN
   {% if debug %}RAISE WARNING 'placex_delete:12 % %',OLD.osm_type,OLD.osm_id;{% endif %}
   RETURN OLD;
 
+END;
+$$
+LANGUAGE plpgsql;
+
+
+-- Invalidates house members of associatedStreet relations
+-- whenever the place_associated_street table is modified.
+-- osm2pgsql flex handles updates as DELETE-all + re-INSERT, so each
+-- row-level trigger call covers exactly one member.
+CREATE OR REPLACE FUNCTION invalidate_associated_street_members()
+  RETURNS TRIGGER
+  AS $$
+DECLARE
+  object RECORD;
+BEGIN
+  IF TG_OP = 'DELETE' THEN
+    object := OLD;
+  ELSE
+    object := NEW;
+  END IF;
+
+  IF object.member_role = 'house' THEN
+    UPDATE placex
+       SET indexed_status = 2
+     WHERE osm_type = object.member_type
+       AND osm_id = object.member_id
+       AND indexed_status = 0;
+  END IF;
+
+  RETURN object;
 END;
 $$
 LANGUAGE plpgsql;

@@ -229,7 +229,7 @@ Feature: Parenting of objects
          | object | parent_place_id |
          | N1     | W1 |
 
-    Scenario: Untagged address in simple associated street relation
+    Scenario: House members in associatedStreet relation get correct parent
         Given the grid
          | 10 |   |   |   |   | 11 |
          |    | 2 |   | 3 |   |    |
@@ -242,11 +242,11 @@ Feature: Parenting of objects
          | N3  | place | house |
         And the places
          | osm | class   | type        | name | geometry |
-         | W1  | highway | residential | foo  | 10,11 |
-         | W2  | highway | service     | bar  | 10,12 |
+         | W1  | highway | residential | foo  | 10,11    |
+         | W2  | highway | service     | bar  | 10,12    |
         And the relations
-         | id | members            | tags+type |
-         | 1  | W1:street,N1,N2,N3 | associatedStreet |
+         | id | members                              | tags+type        |
+         | 1  | W1:street,N1:house,N2:house,N3:house | associatedStreet |
         When importing
         Then placex contains
          | object | parent_place_id |
@@ -295,12 +295,12 @@ Feature: Parenting of objects
          | W1  | highway | residential | foo  | 10,11    |
          | W2  | highway | residential | bar  | 20,21    |
         And the relations
-         | id | members      | tags+type |
-         | 1  | W1:street,N1 | associatedStreet |
+         | id | members            | tags+type        |
+         | 1  | W1:street,N1:house | associatedStreet |
         When importing
         Then placex contains
          | object | parent_place_id |
-         | N1     | W1 |
+         | N1     | W1              |
 
     Scenario: Building without tags, closest street from center point
         Given the grid

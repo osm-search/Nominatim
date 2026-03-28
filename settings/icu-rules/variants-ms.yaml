@@ -1,12 +1,77 @@
-# Source: https://wiki.openstreetmap.org/wiki/Name_finder:Abbreviations#Bahasa_Melayu_-_Malay
+# Malay language abbreviations for Nominatim
+#
+# Primary source for Malaysia:
+#   JUPEM (Jabatan Ukur dan Pemetaan Malaysia) Toponymic Guidelines
+#   "Abbreviations of Geographical Terms and Other Words Used in Maps"
+#
+# Secondary sources:
+#   https://wiki.openstreetmap.org/wiki/Name_finder:Abbreviations#Bahasa_Melayu_-_Malay
+#   https://wiki.openstreetmap.org/wiki/Malaysia/Abbreviations
+
 - lang: ms
   words:
-    -  Jalan -> Jln
-    -  Simpang -> Spg
-    -  Kampong -> Kg
-    -  Sungai -> Sg
-    -  Haji -> Hj
-    -  Pengiran -> Pg
-    -  Awang -> Awg
-    -  Dayang -> Dyg
+    - Jalan -> Jln
+    - Lorong -> Lrg,Lor
+    - Lebuh -> Lbh
+    - Simpang -> Spg
+    - Kampung -> Kg
+    - Kampong -> Kg
+    - Taman -> Tmn
+    - Bangunan -> Bgn
+    - Bukit -> Bkt
+    - Batu -> Bt
+    - Sungai -> Sg
+    - Pulau -> P,Pl
+    - Tanjung -> Tg
+    - Tanjong -> Tg
+    - Teluk -> Tlk
+    - Telok -> Tlk
+    - Gunung -> G,Gn
+    - Gunong -> G,Gn
+    - Haji -> Hj
+    - Hajjah -> Hjh
+    - Abdul -> Abd
 
+- lang: ms
+  country: my
+  words:
+    - Persiaran -> Psrn
+    - Lebuhraya -> Lbh.Raya
+    - Bandar -> Bdr
+    - Kondominium -> Kondo
+    - Bahagian -> Bhg
+    - Blok -> Blk
+    - Kuala -> K,Kl
+    - Alur -> Alr
+    - Bakau -> Bak
+    - Hulu -> H
+    - Hilir -> Hr
+    - Jeram -> J,Jr
+    - Lembah -> Lmbh
+    - Padang -> Pdg
+    - Parit -> Pt
+    - Permatang -> Pmtg
+    - Pelabuhan -> Plbh
+    - Kepulauan -> Kep
+    - Ladang -> Ldg
+    - Lapangan -> Lpg
+    - Gosong -> Gsg
+    - Sekolah kebangsaan -> SK
+    - Sekolah menengah -> SM
+    - Sekolah menengah kebangsaan -> SMK
+    - Sekolah rendah -> SR
+    - Hospital -> Hosp
+    - Dispensari -> Disp
+
+- lang: ms
+  country: bn
+  words:
+    - Pengiran -> Pg
+    - Awang -> Awg
+    - Dayang -> Dyg
+
+- lang: ms
+  country: sg
+  words:
+    - Bukit -> Bt
+    - Lorong -> Lor

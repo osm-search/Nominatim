@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2025 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Server implementation using the starlette webserver framework.
@@ -40,7 +40,7 @@ class ParamWrapper(ASGIAdaptor):
         self.request = request
 
     def get(self, name: str, default: Optional[str] = None) -> Optional[str]:
-        return self.request.query_params.get(name, default=default)
+        return self.request.query_params.get(name, default)
 
     def get_header(self, name: str, default: Optional[str] = None) -> Optional[str]:
         return self.request.headers.get(name, default)

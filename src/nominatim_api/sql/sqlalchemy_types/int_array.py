@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Custom type for an array of integers.
@@ -32,9 +32,6 @@ class IntList(sa.types.TypeDecorator[Any]):
     def process_result_value(self, value: Optional[Any],
                              dialect: SaDialect) -> Optional[List[int]]:
         return [int(v) for v in value.split(',')] if value is not None else None
-
-    def copy(self, **kw: Any) -> 'IntList':
-        return IntList(self.impl.length)
 
 
 class IntArray(sa.types.TypeDecorator[Any]):

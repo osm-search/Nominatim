@@ -107,6 +107,11 @@ class SearchTables:
             sa.Column('area', sa.Float),
             sa.Column('geometry', Geometry))
 
+        self.ocean_grid = sa.Table(
+            'ocean_grid', meta,
+            sa.Column('name', KeyValueStore),
+            sa.Column('geometry', Geometry))
+
         # The following tables are not necessarily present.
         self.search_name = sa.Table(
             'search_name', meta,

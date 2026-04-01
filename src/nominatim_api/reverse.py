@@ -602,6 +602,34 @@ class ReverseGeocoder:
 
         return address_row, row_func
 
+    async def lookup_ocean(self) -> Tuple[Optional[SaRow], RowFunc]:
+        """ Look up ocean/sea name as a last-resort fallback for
+            coordinates in international waters. Only works when the
+            ocean_grid table has been populated with Natural Earth data.
+        """
+        log().section('Reverse lookup by ocean area')
+        row_func: RowFunc = nres.create_from_ocean_row
+
+        t = self.conn.t.ocean_grid
+
+        sql = sa.select(t.c.name,
+                        t.c.geometry.ST_Centroid().label('centroid'),
+                        t.c.geometry.ST_Expand(0).label('bbox'))\
+                .where(t.c.geometry.ST_Contains(WKT_PARAM))\
+                .limit(1)
+
+        sql = self._add_geometry_columns(sql, t.c.geometry)
+
+        try:
+            row = (await self.conn.execute(sql, self.bind_params)).one_or_none()
+        except sa.exc.ProgrammingError:
+            # ocean_grid table does not exist
+            return None, row_func
+
+        log().var_dump('Result (ocean)', row)
+
+        return row, row_func
+
     async def lookup(self, coord: AnyPoint) -> Optional[nres.ReverseResult]:
         """ Look up a single coordinate. Returns the place information,
             if a place was found near the coordinates or None otherwise.
@@ -630,6 +658,9 @@ class ReverseGeocoder:
                 row = await self.lookup_area()
             if row is None and self.layer_enabled(DataLayer.ADDRESS):
                 row, row_func = await self.lookup_country(ccodes)
+
+        if row is None:
+            row, row_func = await self.lookup_ocean()
 
         if row is None:
             return None

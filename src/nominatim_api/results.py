@@ -76,6 +76,10 @@ class SourceTable(enum.Enum):
     """ The country table provides a fallback, when country data is missing
         in the OSM data.
     """
+    OCEAN = 6
+    """ The ocean_grid table provides a fallback for reverse geocoding in
+        international waters, using Natural Earth marine area data.
+    """
 
 
 @dataclasses.dataclass
@@ -430,6 +434,20 @@ def create_from_country_row(row: SaRow, class_type: Type[BaseResultT]) -> BaseRe
                       names=row.name,
                       rank_address=4, rank_search=4,
                       country_code=row.country_code,
+                      geometry=_filter_geometries(row))
+
+
+def create_from_ocean_row(row: SaRow, class_type: Type[BaseResultT]) -> BaseResultT:
+    """ Construct a new result from the ocean_grid table.
+        Used as a last-resort fallback for reverse geocoding in
+        international waters.
+    """
+    return class_type(source_table=SourceTable.OCEAN,
+                      category=('place', 'ocean'),
+                      centroid=Point.from_wkb(row.centroid),
+                      names=row.name,
+                      rank_address=4, rank_search=4,
+                      country_code=None,
                       geometry=_filter_geometries(row))
 
 

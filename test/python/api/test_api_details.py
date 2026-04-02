@@ -80,6 +80,7 @@ def test_lookup_in_placex_minimal_info(apiobj, frontend):
                       rank_search=27, rank_address=26,
                       centroid=(23, 34),
                       indexed_date=import_date,
+                      importance=0.8,
                       geometry='LINESTRING(23 34, 23.1 34, 23.1 34.1, 23 34)')
 
     api = frontend(apiobj, options={'details'})
@@ -108,7 +109,7 @@ def test_lookup_in_placex_minimal_info(apiobj, frontend):
 
     assert result.rank_search == 27
     assert result.rank_address == 26
-    assert result.importance is None
+    assert result.importance == pytest.approx(0.8)
 
     assert result.country_code is None
     assert result.indexed_date == import_date.replace(tzinfo=dt.timezone.utc)

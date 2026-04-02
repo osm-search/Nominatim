@@ -297,6 +297,40 @@ Feature: Linking of places
          | R1         | LabelPlace |
 
 
+    Scenario: Boundaries and places do not link by name when wikidata mismatches
+        Given the 0.05 grid
+         | 1 |   | 2 |
+         |   | 9 |   |
+         | 4 |   | 3 |
+        Given the places
+         | osm | class    | type           | extra+wikidata | name | admin | geometry    |
+         | R1  | boundary | administrative | Q34            | Foo  | 8     | (1,2,3,4,1) |
+        And the places
+         | osm | class    | type           | extra+wikidata | name |
+         | N9  | place    | city           | Q35            | Foo  |
+        When importing
+        Then placex contains
+         | object     | linked_place_id |
+         | N9         | - |
+
+
+    Scenario: Boundaries and places link by name when wikidata matches
+        Given the 0.05 grid
+         | 1 |   | 2 |
+         |   | 9 |   |
+         | 4 |   | 3 |
+        Given the places
+         | osm | class    | type           | extra+wikidata | name | admin | geometry    |
+         | R1  | boundary | administrative | Q34            | Foo  | 8     | (1,2,3,4,1) |
+        And the places
+         | osm | class    | type           | extra+wikidata | name |
+         | N9  | place    | city           | Q34            | Foo  |
+        When importing
+        Then placex contains
+         | object     | linked_place_id |
+         | N9         | R1 |
+
+
     @skip
     Scenario: Linked places expand default language names
         Given the grid

@@ -18,7 +18,7 @@ dependencies = [
     "async-timeout",
     "python-dotenv",
     "pyYAML>=5.1",
-    "SQLAlchemy>=1.4.31",
+    "SQLAlchemy[asyncio]>=1.4.31",
     "psycopg",
     "PyICU"
 ]

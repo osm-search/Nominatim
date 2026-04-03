@@ -1495,7 +1495,7 @@ ru:
 # Rwanda (Rwanda)
 rw:
     partition: 102
-    languages: rw, fr, en
+    languages: rw, en, fr
     names: !include country-names/rw.yaml
     postcode: no
 

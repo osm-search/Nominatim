@@ -170,6 +170,15 @@
       }
   }
 },
+{ "countries" : [ "br" ],
+  "tags" : {
+      "boundary" : {
+          "administrative5" : [10, 0],
+          "administrative6" : [12, 0],
+          "administrative7" : [14, 0]
+      }
+  }
+},
 { "countries" : ["se", "no"],
   "tags" : {
       "place" : {

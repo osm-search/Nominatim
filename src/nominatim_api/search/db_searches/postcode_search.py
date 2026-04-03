@@ -14,7 +14,7 @@ from . import base
 from ...typing import SaBind, SaExpression
 from ...sql.sqlalchemy_types import Geometry, IntArray
 from ...connection import SearchConnection
-from ...types import SearchDetails
+from ...types import SearchDetails, Bbox
 from ... import results as nres
 from ..db_search_fields import SearchData
 
@@ -44,11 +44,14 @@ class PostcodeSearch(base.AbstractSearch):
 
         sql = sa.select(t.c.place_id, t.c.parent_place_id, t.c.osm_id,
                         t.c.rank_search, t.c.postcode, t.c.country_code,
-                        t.c.centroid)\
+                        t.c.centroid,
+                        t.c.geometry.ST_Expand(0).label('bbox'))\
                 .where(t.c.postcode.in_(pcs))
 
         if details.geometry_output:
-            sql = base.add_geometry_columns(sql, t.c.geometry, details)
+            pcgeom = sa.case((sa.func.ST_NPoints(t.c.geometry) > 5, t.c.geometry),
+                             else_=t.c.centroid)
+            sql = base.add_geometry_columns(sql, pcgeom, details)
 
         penalty: SaExpression = sa.literal(self.penalty)
 
@@ -101,6 +104,7 @@ class PostcodeSearch(base.AbstractSearch):
         for row in await conn.execute(sql, bind_params):
             result = nres.create_from_postcode_row(row, nres.SearchResult)
 
+            result.bbox = Bbox.from_wkb(row.bbox)
             result.accuracy = row.accuracy
             results.append(result)
 

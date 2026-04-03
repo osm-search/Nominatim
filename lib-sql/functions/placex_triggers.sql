@@ -347,6 +347,8 @@ BEGIN
         AND placex.osm_type = 'N'
         AND (placex.linked_place_id is null or placex.linked_place_id = bnd.place_id)
         AND placex.rank_search < 26 -- needed to select the right index
+        AND (NOT placex.extratags ? 'wikidata' OR NOT bnd.extratags ? 'wikidata'
+             OR placex.extratags->'wikidata' = bnd.extratags->'wikidata')
         AND ST_Covers(bnd.geometry, placex.geometry)
     LOOP
       {% if debug %}RAISE WARNING 'Found type-matching place node %', linked_placex.osm_id;{% endif %}
@@ -370,6 +372,8 @@ BEGIN
         AND placex.class = 'place'
         AND (placex.linked_place_id is null or placex.linked_place_id = bnd.place_id)
         AND placex.rank_search < 26 -- needed to select the right index
+        AND (placex.extratags->'wikidata' is null OR bnd.extratags->'wikidata' is null
+             OR placex.extratags->'wikidata' = bnd.extratags->'wikidata')
         AND ST_Covers(bnd.geometry, placex.geometry)
     LOOP
       {% if debug %}RAISE WARNING 'Found matching place node %', linked_placex.osm_id;{% endif %}

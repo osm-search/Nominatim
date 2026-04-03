@@ -133,6 +133,18 @@
       }
   }
 },
+{ "countries": [ "cz" ],
+  "tags" : {
+      "boundary" : {
+          "administrative5": 12,
+          "administrative6": [13, 0],
+          "administrative7": [14, 0],
+          "administrative8": 14,
+          "administrative9": 15,
+          "administrative10": 16
+      }
+  }
+},
 { "countries" : [ "de" ],
   "tags" : {
       "place" : {

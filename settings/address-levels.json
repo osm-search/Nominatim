@@ -126,6 +126,13 @@
       }
   }
 },
+{ "countries" : [ "au" ],
+  "tags" : {
+      "boundary" : {
+          "administrative6": [12, 0]
+      }
+  }
+},
 { "countries" : [ "ca" ],
   "tags" : {
       "place" : {

@@ -1,3 +1,43 @@
+5.3.0
+ * reorganise postcode and interpolation handling into separate tables
+ * add table for handling associatedStreet relations (thanks @Itz-Agasta)
+ * allow TIGER data imports on frozen tables (thanks @AyushDharDubey)
+ * add layer filtering option to search cli command (thanks @Itz-Agasta)
+ * add support for addr:interpolation together with addr:housenumber
+ * add support for exclude_place_ids to take an OSM ID (thanks @Itz-Agasta)
+ * add more abbreviations for Malay (thanks @harithilmi)
+   and Pakistan (thanks @bgo-eiu)
+ * adaptions to boundary processing in Czech Republic, Australia and Brazil
+ * return admin_level tag in extratags (thanks @kad-link)
+ * clean up table creation SQL and add more constraints
+ * add new cli administration tool to grant read rights to a new user
+   (thanks @Itz-Agasta)
+ * remove uvicorn from the deployment instructions, guvicorn is now sufficient
+ * fix entrance output for reverse and lookup
+ * fix performance issue with instantiation of config (thanks @AyushDharDubey)
+ * fix badly quoted SQL
+ * ensure use of UTF-8 everywhere (thanks @kad-link)
+ * fix endless loop when indexing only partial ranks (thanks @jayaddison)
+ * fix erroring on /search endpoint when Postgresql wasn't running on startup
+ * improve searching addresses by addr:* tags (thanks @Itz-Agasta)
+ * add langauge-aware penalty for matching country names (thanks @Itz-Agasta)
+ * compute default langauge also for linked place names (thanks @jayaddison)
+ * use mwparserfromhell for parsing wiki pages (thanks @AyushDharDubey)
+ * refactor table creation SQL to be reusable in tests
+ * reduce SQL queries for reverse
+ * enforce non-null importance and remove all code that expects otherwise
+ * add rematching against country names
+ * import now reports on total time (thanks @daishu0000)
+ * give wikidata matches preference over name matching when linking places
+ * removed nat_name from list of parsed names
+ * exclude zero-only postcodes
+ * type annotation updates due to dependency changes (thanks @vytas5)
+ * improve display of test names for BDD tests
+ * enable CI unit tests on Windows (thanks @kad-link)
+ * remove unused settings from the documentation
+ * various fixes and improvements to documentation (thanks @28Deepakpandey,
+   @Aditya30ag, @AmmarYasser455, @jonas-endter-optimax-energy, @vai67)
+
 5.2.0
  * increase minimum required Python to 3.9
  * index and output entrances of buildings and areas (thanks @emlove)

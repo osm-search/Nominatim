@@ -17,6 +17,14 @@ breaking changes. **Please read them before running the migration.**
     and migrate to 4.3 first. Then you can migrate to the current
     version. It is strongly recommended to do a reimport instead.
 
+## 5.2.0 -> 5.3.0
+
+#### Expensive table migrations
+
+This version introduces new tables for postcodes, interpolations and
+associatedStreet relations. Migration is possible but will take a bit
+longer. It is recommended to take Nominatim offline while migrating to 5.3.
+
 ## 5.1.0 -> 5.2.0
 
 ### Lua import style: required extratags removed
@@ -53,7 +61,7 @@ stock version of osm2pgsql from your distribution. See the
 [installation instruction for osm2pgsql](https://osm2pgsql.org/doc/install.html)
 for details. A minimum version of 1.8 is required. The current stable versions
 of Ubuntu and Debian already ship with an appropriate versions. For older
-installation, you may have to compile a newer osm2pgsql yourself.
+installations, you may have to compile a newer osm2pgsql yourself.
 
 ### Legacy tokenizer removed
 

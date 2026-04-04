@@ -37,7 +37,7 @@ lint = [
 ]
 
 types = [
-    "mypy<=1.19.1",
+    "mypy",
     "types-jinja2",
     "types-markupsafe",
     "types-psycopg2",

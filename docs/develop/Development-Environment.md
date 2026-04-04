@@ -61,28 +61,25 @@ sudo apt install build-essential libsqlite3-mod-spatialite osm2pgsql \
                  pkg-config libicu-dev virtualenv
 ```
 
-To set up the virtual environment with all necessary packages run:
+#### Using pip
 
+Create a virtual environment and install all dependencies from the project's
+`pyproject.toml`:
 ```sh
 virtualenv ~/nominatim-dev-venv
-~/nominatim-dev-venv/bin/pip install\
-    psutil 'psycopg[binary]' PyICU SQLAlchemy \
-    python-dotenv jinja2 pyYAML \
-    mkdocs 'mkdocstrings[python]' mkdocs-gen-files mkdocs-material \
-    pytest pytest-asyncio pytest-bdd flake8 \
-    types-jinja2 types-markupsafe types-psutil types-psycopg2 \
-    types-pygments types-pyyaml types-requests types-ujson \
-    types-urllib3 typing-extensions gunicorn falcon starlette \
-    uvicorn mypy osmium aiosqlite mwparserfromhell
-```
-
-Now enter the virtual environment whenever you want to develop:
-
-```sh
 . ~/nominatim-dev-venv/bin/activate
+pip install --group dev .
 ```
 
-### Alternative: Using uv
+This installs the two Nominatim packages (`nominatim-api`, `nominatim-db`)
+along with all development dependencies (tests, linting, type stubs, docs, serve).
+
+To install runtime dependencies only:
+```sh
+pip install .
+```
+
+#### Using uv
 
 If you prefer, you can use [uv](https://docs.astral.sh/uv/) for a faster
 development setup. Install uv following the
@@ -101,7 +98,6 @@ uv run nominatim --version
 uv run pytest test/python
 uv run make lint
 ```
-
 
 ### Running Nominatim during development
 

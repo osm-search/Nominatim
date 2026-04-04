@@ -14,3 +14,4 @@ data/country_osm_grid.sql.gz
 
 # Not committed per project policy
 uv.lock
+*.egg-info/

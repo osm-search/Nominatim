@@ -1397,33 +1397,3 @@ BEGIN
 END;
 $$
 LANGUAGE plpgsql;
-
-
--- Invalidates house members of associatedStreet relations
--- whenever the place_associated_street table is modified.
--- osm2pgsql flex handles updates as DELETE-all + re-INSERT, so each
--- row-level trigger call covers exactly one member.
-CREATE OR REPLACE FUNCTION invalidate_associated_street_members()
-  RETURNS TRIGGER
-  AS $$
-DECLARE
-  object RECORD;
-BEGIN
-  IF TG_OP = 'DELETE' THEN
-    object := OLD;
-  ELSE
-    object := NEW;
-  END IF;
-
-  IF object.member_role = 'house' THEN
-    UPDATE placex
-       SET indexed_status = 2
-     WHERE osm_type = object.member_type
-       AND osm_id = object.member_id
-       AND indexed_status = 0;
-  END IF;
-
-  RETURN object;
-END;
-$$
-LANGUAGE plpgsql;

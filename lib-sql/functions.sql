@@ -23,3 +23,4 @@
 {% endif %}
 
 {% include('functions/partition-functions.sql') %}
+{% include('functions/associated_street_triggers.sql') %}

@@ -496,3 +496,14 @@ def create_place_associated_street_table(conn: Connection, **_: Any) -> None:
             CREATE INDEX place_associated_street_relation_id_idx
               ON place_associated_street USING BTREE (relation_id);
         """)
+
+
+@_migration(5, 3, 0, 1)
+def create_associated_street_triggers(conn: Connection, config: Configuration, **_: Any) -> None:
+    """ Create triggers for tables on associated street tables.
+    """
+    SQLPreprocessor(conn, config).run_sql_file(conn, 'functions/associated_street_triggers.sql')
+    with conn.cursor() as cur:
+        cur.execute("""CREATE OR REPLACE TRIGGER place_associated_street_update
+                       AFTER INSERT OR DELETE ON place_associated_street
+                       FOR EACH ROW EXECUTE FUNCTION invalidate_associated_street_members()""")

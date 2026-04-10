@@ -1,3 +1,6 @@
+5.3.1
+ * fix slow updates with associatedStreet relations
+
 5.3.0
  * reorganise postcode and interpolation handling into separate tables
  * add table for handling associatedStreet relations (thanks @Itz-Agasta)

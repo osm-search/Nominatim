@@ -183,8 +183,9 @@ BEGIN
             and class = NEW.class and type = NEW.type;
 
     -- Boundaries must be areas.
-    IF NEW.class in ('boundary')
-       AND ST_GeometryType(NEW.geometry) not in ('ST_Polygon','ST_MultiPolygon')
+    IF NOT is_rankable_place(NEW.osm_type, NEW.class, NEW.admin_level,
+                             NEW.name, NEW.extratags,
+                             ST_GeometryType(NEW.geometry) IN ('ST_Polygon','ST_MultiPolygon'))
     THEN
       DELETE FROM placex where place_id = existingplacex.place_id;
       RETURN NULL;

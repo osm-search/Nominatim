@@ -677,15 +677,8 @@ BEGIN
   ELSE
     is_area := ST_GeometryType(NEW.geometry) IN ('ST_Polygon','ST_MultiPolygon');
 
-    IF NEW.class = 'highway' AND is_area AND NEW.name is null
-           AND NEW.extratags ? 'area' AND NEW.extratags->'area' = 'yes'
-    THEN
-        RETURN NULL;
-    ELSEIF NEW.class = 'boundary' AND NOT is_area
-    THEN
-        RETURN NULL;
-    ELSEIF NEW.class = 'boundary' AND NEW.type = 'administrative'
-           AND NEW.admin_level <= 4 AND NEW.osm_type = 'W'
+    IF NOT is_rankable_place(NEW.osm_type, NEW.class, NEW.admin_level,
+                             NEW.name, NEW.extratags, is_area)
     THEN
         RETURN NULL;
     END IF;

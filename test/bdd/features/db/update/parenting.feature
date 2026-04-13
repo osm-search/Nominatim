@@ -109,8 +109,6 @@ Feature: Update parenting of objects
          | N1     | W2              |
 
 
-    # Invalidation of geometries currently disabled for addr:place matches.
-    @skip
     Scenario: Housenumber is reparented when place is renamed to matching addr:place
         Given the grid
          | 1 |    |   | 2 |

@@ -677,15 +677,8 @@ BEGIN
   ELSE
     is_area := ST_GeometryType(NEW.geometry) IN ('ST_Polygon','ST_MultiPolygon');
 
-    IF NEW.class = 'highway' AND is_area AND NEW.name is null
-           AND NEW.extratags ? 'area' AND NEW.extratags->'area' = 'yes'
-    THEN
-        RETURN NULL;
-    ELSEIF NEW.class = 'boundary' AND NOT is_area
-    THEN
-        RETURN NULL;
-    ELSEIF NEW.class = 'boundary' AND NEW.type = 'administrative'
-           AND NEW.admin_level <= 4 AND NEW.osm_type = 'W'
+    IF NOT is_rankable_place(NEW.osm_type, NEW.class, NEW.admin_level,
+                             NEW.name, NEW.extratags, is_area)
     THEN
         RETURN NULL;
     END IF;
@@ -718,50 +711,6 @@ BEGIN
 
 {% if not disable_diff_updates %}
   -- The following is not needed until doing diff updates, and slows the main index process down
-
-  IF NEW.rank_address between 2 and 27 THEN
-    IF (ST_GeometryType(NEW.geometry) in ('ST_Polygon','ST_MultiPolygon') AND ST_IsValid(NEW.geometry)) THEN
-      -- Performance: We just can't handle re-indexing for country level changes
-      IF (NEW.rank_address < 26 and st_area(NEW.geometry) <= 2)
-         OR (NEW.rank_address >= 26 and st_area(NEW.geometry) < 0.01)
-      THEN
-        -- mark items within the geometry for re-indexing
-  --    RAISE WARNING 'placex poly insert: % % % %',NEW.osm_type,NEW.osm_id,NEW.class,NEW.type;
-
-        UPDATE placex SET indexed_status = 2
-         WHERE ST_Intersects(NEW.geometry, placex.geometry)
-               and indexed_status = 0
-               and ((rank_address = 0 and rank_search > NEW.rank_address)
-                    or rank_address > NEW.rank_address
-                    or (class = 'place' and osm_type = 'N')
-                   )
-               and (rank_search < 28
-                    or name is not null
-                    or (NEW.rank_address >= 16 and address ? 'place'));
-      END IF;
-    ELSEIF ST_GeometryType(NEW.geometry) not in ('ST_LineString', 'ST_MultiLineString')
-           OR ST_Length(NEW.geometry) < 0.5
-    THEN
-      -- mark nearby items for re-indexing, where 'nearby' depends on the features rank_search and is a complete guess :(
-      diameter := update_place_diameter(NEW.rank_address);
-      IF diameter > 0 THEN
-  --      RAISE WARNING 'placex point insert: % % % % %',NEW.osm_type,NEW.osm_id,NEW.class,NEW.type,diameter;
-        IF NEW.rank_search >= 26 THEN
-          -- roads may cause reparenting for >27 rank places
-          update placex set indexed_status = 2 where indexed_status = 0 and rank_search > NEW.rank_search and ST_DWithin(placex.geometry, NEW.geometry, diameter);
-          -- reparenting also for OSM Interpolation Lines (and for Tiger?)
-          update location_property_osmline set indexed_status = 2 where indexed_status = 0 and startnumber is not null and ST_DWithin(location_property_osmline.linegeo, NEW.geometry, diameter);
-        ELSEIF NEW.rank_search >= 16 THEN
-          -- up to rank 16, street-less addresses may need reparenting
-          update placex set indexed_status = 2 where indexed_status = 0 and rank_search > NEW.rank_search and ST_DWithin(placex.geometry, NEW.geometry, diameter) and (rank_search < 28 or name is not null or address ? 'place');
-        ELSE
-          -- for all other places the search terms may change as well
-          update placex set indexed_status = 2 where indexed_status = 0 and rank_search > NEW.rank_search and ST_DWithin(placex.geometry, NEW.geometry, diameter) and (rank_search < 28 or name is not null);
-        END IF;
-      END IF;
-    END IF;
-  END IF;
-
 
    -- add to tables for special search
   classtable := 'place_classtype_' || NEW.class || '_' || NEW.type;

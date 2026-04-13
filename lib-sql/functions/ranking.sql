@@ -2,10 +2,38 @@
 --
 -- This file is part of Nominatim. (https://nominatim.org)
 --
--- Copyright (C) 2025 by the Nominatim developer community.
+-- Copyright (C) 2026 by the Nominatim developer community.
 -- For a full list of authors see the git log.
 
 -- Functions related to search and address ranks
+
+-- Check if a place is rankable at all.
+-- These really should be dropped at the lua level eventually.
+CREATE OR REPLACE FUNCTION is_rankable_place(osm_type TEXT, class TEXT,
+                                             admin_level SMALLINT, name HSTORE,
+                                             extratags HSTORE, is_area BOOLEAN)
+  RETURNS BOOLEAN
+  AS $$
+BEGIN
+  IF class = 'highway' AND is_area AND name is null
+         AND extratags ? 'area' AND extratags->'area' = 'yes'
+  THEN
+      RETURN FALSE;
+  END IF;
+
+  IF class = 'boundary' THEN
+    IF NOT is_area
+       OR (admin_level <= 4 AND osm_type = 'W')
+    THEN
+      RETURN FALSE;
+    END IF;
+  END IF;
+
+  RETURN TRUE;
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
 
 -- Return an approximate search radius according to the search rank.
 CREATE OR REPLACE FUNCTION reverse_place_diameter(rank_search SMALLINT)

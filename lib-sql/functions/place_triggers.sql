@@ -9,11 +9,14 @@ CREATE OR REPLACE FUNCTION place_insert()
   RETURNS TRIGGER
   AS $$
 DECLARE
-  i INTEGER;
-  country RECORD;
   existing RECORD;
   existingplacex RECORD;
-  existingline BIGINT[];
+  newplacex RECORD;
+  is_area BOOLEAN;
+  existing_is_area BOOLEAN;
+  area_size FLOAT;
+  address_rank SMALLINT;
+  search_rank SMALLINT;
 BEGIN
   {% if debug %}
     RAISE WARNING 'place_insert: % % % % %',NEW.osm_type,NEW.osm_id,NEW.class,NEW.type,st_area(NEW.geometry);
@@ -54,13 +57,15 @@ BEGIN
   DELETE from import_polygon_error where osm_type = NEW.osm_type and osm_id = NEW.osm_id;
   DELETE from import_polygon_delete where osm_type = NEW.osm_type and osm_id = NEW.osm_id;
 
-  -- ---- All other place types.
+  is_area := ST_GeometryType(NEW.geometry) in ('ST_Polygon','ST_MultiPolygon');
+  IF is_area THEN
+    area_size = ST_Area(NEW.geometry);
+  END IF;
 
   -- When an area is changed from large to small: log and discard change
   IF existing.geometry is not null AND ST_IsValid(existing.geometry)
     AND ST_Area(existing.geometry) > 0.02
-    AND ST_GeometryType(NEW.geometry) in ('ST_Polygon','ST_MultiPolygon')
-    AND ST_Area(NEW.geometry) < ST_Area(existing.geometry) * 0.5
+    AND is_area AND area_size < ST_Area(existing.geometry) * 0.5
   THEN
     INSERT INTO import_polygon_error (osm_type, osm_id, class, type, name,
                                       country_code, updated, errormessage,
@@ -81,173 +86,139 @@ BEGIN
 
   {% if debug %}RAISE WARNING 'Existing PlaceX: %',existingplacex.place_id;{% endif %}
 
-  -- To paraphrase: if there isn't an existing item, OR if the admin level has changed
-  IF existingplacex.osm_type IS NULL
-     or (existingplacex.class = 'boundary'
-         and ((coalesce(existingplacex.admin_level, 15) != coalesce(NEW.admin_level, 15)
-               and existingplacex.type = 'administrative')
-              or existingplacex.type != NEW.type))
-  THEN
-    {% if config.get_bool('LIMIT_REINDEXING') %}
-    -- sanity check: ignore admin_level changes on places with too many active children
-    -- or we end up reindexing entire countries because somebody accidentally deleted admin_level
-    IF existingplacex.osm_type IS NOT NULL THEN
-      SELECT count(*) INTO i FROM
-        (SELECT 'a' FROM placex, place_addressline
-          WHERE address_place_id = existingplacex.place_id
-                and placex.place_id = place_addressline.place_id
-                and indexed_status = 0 and place_addressline.isaddress LIMIT 100001) sub;
-      IF i > 100000 THEN
-        RETURN null;
-      END IF;
-    END IF;
-    {% endif %}
-
-    IF existingplacex.osm_type is not NULL THEN
-      -- Mark any existing place for delete in the placex table
-      UPDATE placex SET indexed_status = 100
-        WHERE placex.osm_type = NEW.osm_type and placex.osm_id = NEW.osm_id
-              and placex.class = NEW.class and placex.type = NEW.type;
-    END IF;
-
-    -- Process it as a new insertion
-    INSERT INTO placex (osm_type, osm_id, class, type, name,
+  IF existingplacex.osm_type IS NULL THEN
+    -- Inserting a new placex.
+    FOR newplacex IN
+      INSERT INTO placex (osm_type, osm_id, class, type, name,
                         admin_level, address, extratags, geometry)
       VALUES (NEW.osm_type, NEW.osm_id, NEW.class, NEW.type, NEW.name,
-              NEW.admin_level, NEW.address, NEW.extratags, NEW.geometry);
+              NEW.admin_level, NEW.address, NEW.extratags, NEW.geometry)
+      RETURNING rank_address
+    LOOP
+      PERFORM update_invalidate_for_new_place(newplacex.rank_address,
+                                              is_area, area_size,
+                                              NEW.osm_Type, NEW.geometry);
+    END LOOP;
+  ELSE
+    -- Modify an existing placex.
+    IF is_rankable_place(NEW.osm_type, NEW.class, NEW.admin_level,
+                         NEW.name, NEW.extratags, is_area)
+    THEN
+      -- Recompute the ranks to look out for changes.
+      -- We use the old country assignment here which is good enough for the
+      -- purpose.
+      SELECT * INTO search_rank, address_rank
+        FROM compute_place_rank(existingplacex.country_code,
+                                CASE WHEN is_area THEN 'A' ELSE NEW.osm_type END,
+                                NEW.class, NEW.type, NEW.admin_level,
+                                (NEW.extratags->'capital') = 'yes',
+                                NEW.address->'postcode');
 
-    {% if debug %}RAISE WARNING 'insert done % % % % %',NEW.osm_type,NEW.osm_id,NEW.class,NEW.type,NEW.name;{% endif %}
+      existing_is_area := ST_GeometryType(existingplacex.geometry) in ('ST_Polygon','ST_MultiPolygon');
 
-    IF existing.osm_type is not NULL THEN
-      -- If there is already an entry in place, just update that, if necessary.
-      IF coalesce(existing.name, ''::hstore) != coalesce(NEW.name, ''::hstore)
-         or coalesce(existing.address, ''::hstore) != coalesce(NEW.address, ''::hstore)
-         or coalesce(existing.extratags, ''::hstore) != coalesce(NEW.extratags, ''::hstore)
-         or coalesce(existing.admin_level, 15) != coalesce(NEW.admin_level, 15)
-         or existing.geometry::text != NEW.geometry::text
+      IF (address_rank BETWEEN 4 and 27
+          AND (existingplacex.rank_address <= 0 OR existingplacex.rank_address > 27))
+         OR (not existing_is_area and is_area)
       THEN
-        UPDATE place
-          SET name = NEW.name,
-              address = NEW.address,
-              extratags = NEW.extratags,
-              admin_level = NEW.admin_level,
-              geometry = NEW.geometry
-          WHERE osm_type = NEW.osm_type and osm_id = NEW.osm_id
-                and class = NEW.class and type = NEW.type;
+        -- object newly relevant for addressing, invalidate new version
+        PERFORM update_invalidate_for_new_place(address_rank,
+                                                is_area, area_size,
+                                                NEW.osm_type, NEW.geometry);
+      ELSEIF (existingplacex.rank_address BETWEEN 4 and 27
+              AND (address_rank <= 0 OR address_rank > 27))
+             OR (existing_is_area and not is_area)
+      THEN
+        -- object no longer relevant for addressing, invalidate old version
+        PERFORM update_invalidate_for_new_place(existingplacex.rank_address,
+                                                existing_is_area, null,
+                                                existingplacex.osm_type,
+                                                existingplacex.geometry);
+      ELSEIF address_rank BETWEEN 4 and 27 THEN
+        IF coalesce(existing.name, ''::hstore) != coalesce(NEW.name, ''::hstore)
+           OR existing.admin_level != NEW.admin_level
+        THEN
+          -- Name changes may have an effect on searchable objects and parenting
+          -- for new and old areas.
+          PERFORM update_invalidate_for_new_place(address_rank, is_area, null,
+                                                  NEW.osm_type,
+                                                  CASE WHEN is_area and existing_is_area
+                                                    THEN ST_Union(NEW.geometry, existingplacex.geometry)
+                                                    ELSE ST_Collect(NEW.geometry, existingplacex.geometry)
+                                                  END);
+        ELSEIF existingplacex.geometry::text != NEW.geometry::text THEN
+            -- Geometry change, just invalidate the changed areas.
+            -- Changes of other geometry types are currently ignored.
+          IF is_area and existing_is_area THEN
+            PERFORM update_invalidate_for_new_place(address_rank, true, null,
+                                                    NEW.osm_type,
+                                                    ST_SymDifference(existingplacex.geometry,
+                                                                     NEW.geometry));
+          END IF;
+        END IF;
       END IF;
 
-      RETURN NULL;
-    END IF;
-
-    RETURN NEW;
-  END IF;
-
-  -- Special case for polygon shape changes because they tend to be large
-  -- and we can be a bit clever about how we handle them
-  IF existing.geometry::text != NEW.geometry::text
-     AND ST_GeometryType(existing.geometry) in ('ST_Polygon','ST_MultiPolygon')
-     AND ST_GeometryType(NEW.geometry) in ('ST_Polygon','ST_MultiPolygon')
-  THEN
-    -- Performance limit
-    IF ST_Area(NEW.geometry) < 0.000000001 AND ST_Area(existingplacex.geometry) < 1
-    THEN
-      -- re-index points that have moved in / out of the polygon.
-      -- Could be done as a single query but postgres gets the index usage wrong.
-      update placex set indexed_status = 2 where indexed_status = 0
-          AND ST_Intersects(NEW.geometry, placex.geometry)
-          AND NOT ST_Intersects(existingplacex.geometry, placex.geometry)
-          AND rank_search > existingplacex.rank_search AND (rank_search < 28 or name is not null);
-
-      update placex set indexed_status = 2 where indexed_status = 0
-          AND ST_Intersects(existingplacex.geometry, placex.geometry)
-          AND NOT ST_Intersects(NEW.geometry, placex.geometry)
-          AND rank_search > existingplacex.rank_search AND (rank_search < 28 or name is not null);
-    END IF;
-  END IF;
-
-
-  -- Has something relevant changed?
-  IF coalesce(existing.name::text, '') != coalesce(NEW.name::text, '')
-     OR coalesce(existing.extratags::text, '') != coalesce(NEW.extratags::text, '')
-     OR coalesce(existing.address, ''::hstore) != coalesce(NEW.address, ''::hstore)
-     OR coalesce(existing.admin_level, 15) != coalesce(NEW.admin_level, 15)
-     OR existing.geometry::text != NEW.geometry::text
-  THEN
-    UPDATE place
-      SET name = NEW.name,
-          address = NEW.address,
-          extratags = NEW.extratags,
-          admin_level = NEW.admin_level,
-          geometry = NEW.geometry
-      WHERE osm_type = NEW.osm_type and osm_id = NEW.osm_id
-            and class = NEW.class and type = NEW.type;
-
-    -- Boundaries must be areas.
-    IF NOT is_rankable_place(NEW.osm_type, NEW.class, NEW.admin_level,
-                             NEW.name, NEW.extratags,
-                             ST_GeometryType(NEW.geometry) IN ('ST_Polygon','ST_MultiPolygon'))
-    THEN
-      DELETE FROM placex where place_id = existingplacex.place_id;
-      RETURN NULL;
-    END IF;
-
-    -- Update the placex entry in-place.
-    UPDATE placex
-      SET name = NEW.name,
-          address = NEW.address,
-          parent_place_id = null,
-          extratags = NEW.extratags,
-          admin_level = NEW.admin_level,
-          indexed_status = 2,
-          geometry = CASE WHEN existingplacex.rank_address = 0
-                          THEN simplify_large_polygons(NEW.geometry)
-                          ELSE NEW.geometry END
-      WHERE place_id = existingplacex.place_id;
-
-    -- Invalidate linked places: they potentially get a new name and addresses.
-    IF existingplacex.linked_place_id is not NULL THEN
-      UPDATE placex x
-        SET name = p.name,
-            extratags = p.extratags,
-            indexed_status = 2
-        FROM place p
-        WHERE x.place_id = existingplacex.linked_place_id
-              and x.indexed_status = 0
-              and x.osm_type = p.osm_type
-              and x.osm_id = p.osm_id
-              and x.class = p.class;
-    END IF;
-
-    -- Invalidate dependent objects effected by name changes
-    IF coalesce(existing.name::text, '') != coalesce(NEW.name::text, '')
-    THEN
-      IF existingplacex.rank_address between 26 and 27 THEN
-        -- When streets change their name, this may have an effect on POI objects
-        -- with addr:street tags.
-        UPDATE placex SET indexed_status = 2
-          WHERE indexed_status = 0 and address ? 'street'
-                and parent_place_id = existingplacex.place_id;
-        UPDATE placex SET indexed_status = 2
-          WHERE indexed_status = 0 and rank_search = 30 and address ? 'street'
-                and ST_DWithin(NEW.geometry, geometry, 0.002);
-      ELSEIF existingplacex.rank_address between 16 and 25 THEN
-        -- When places change their name, this may have an effect on POI objects
-        -- with addr:place tags.
-        UPDATE placex SET indexed_status = 2
-          WHERE indexed_status = 0 and address ? 'place' and rank_search = 30
-                and parent_place_id = existingplacex.place_id;
-        -- No update of surrounding objects, potentially too expensive.
+      -- Invalidate linked places: they potentially get a new name and addresses.
+      IF existingplacex.linked_place_id is not NULL THEN
+        UPDATE placex x
+          SET name = p.name,
+              extratags = p.extratags,
+              indexed_status = 2
+          FROM place p
+          WHERE x.place_id = existingplacex.linked_place_id
+                and x.indexed_status = 0
+                and x.osm_type = p.osm_type
+                and x.osm_id = p.osm_id
+                and x.class = p.class;
       END IF;
+
+      -- update placex in place
+      UPDATE placex
+        SET name = NEW.name,
+            address = NEW.address,
+            parent_place_id = null,
+            extratags = NEW.extratags,
+            admin_level = NEW.admin_level,
+            rank_address = address_rank,
+            rank_search = search_rank,
+            indexed_status = 2,
+            geometry = CASE WHEN address_rank = 0
+                            THEN simplify_large_polygons(NEW.geometry)
+                            ELSE NEW.geometry END
+        WHERE place_id = existingplacex.place_id;
+    ELSE
+      -- New place is not really valid, remove the placex entry
+      UPDATE placex SET indexed_status = 100 WHERE place_id = existingplacex.place_id;
+    END IF;
+
+    -- When an existing way is updated, recalculate entrances
+    IF existingplacex.osm_type = 'W' and (existingplacex.rank_search > 27 or existingplacex.class IN ('landuse', 'leisure')) THEN
+      PERFORM place_update_entrances(existingplacex.place_id, existingplacex.osm_id);
     END IF;
   END IF;
 
-  -- When an existing way is updated, recalculate entrances
-  IF existingplacex.osm_type = 'W' and (existingplacex.rank_search > 27 or existingplacex.class IN ('landuse', 'leisure')) THEN
-    PERFORM place_update_entrances(existingplacex.place_id, existingplacex.osm_id);
+  -- Finally update place itself.
+  IF existing.osm_type is not NULL THEN
+    -- If there is already an entry in place, just update that, if necessary.
+    IF coalesce(existing.name, ''::hstore) != coalesce(NEW.name, ''::hstore)
+       or coalesce(existing.address, ''::hstore) != coalesce(NEW.address, ''::hstore)
+       or coalesce(existing.extratags, ''::hstore) != coalesce(NEW.extratags, ''::hstore)
+       or coalesce(existing.admin_level, 15) != coalesce(NEW.admin_level, 15)
+       or existing.geometry::text != NEW.geometry::text
+    THEN
+      UPDATE place
+        SET name = NEW.name,
+            address = NEW.address,
+            extratags = NEW.extratags,
+            admin_level = NEW.admin_level,
+            geometry = NEW.geometry
+        WHERE osm_type = NEW.osm_type and osm_id = NEW.osm_id
+              and class = NEW.class and type = NEW.type;
+    END IF;
+
+    RETURN NULL;
   END IF;
 
-  -- Abort the insertion (we modified the existing place instead)
-  RETURN NULL;
+  RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 

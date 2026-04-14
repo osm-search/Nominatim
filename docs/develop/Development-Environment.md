@@ -63,20 +63,24 @@ sudo apt install build-essential libsqlite3-mod-spatialite osm2pgsql \
 
 #### Using pip
 
-Create a virtual environment and install all dependencies from the project's
-`pyproject.toml`:
+Create a virtual environment and install all dependencies:
+
 ```sh
 virtualenv ~/nominatim-dev-venv
 . ~/nominatim-dev-venv/bin/activate
-pip install --group dev .
+pip install --group runtime --group dev .
 ```
 
-This installs the two Nominatim packages (`nominatim-api`, `nominatim-db`)
-along with all development dependencies (tests, linting, type stubs, docs, serve).
+To install dependencies individually:
 
-To install runtime dependencies only:
 ```sh
-pip install .
+pip install \
+    packaging/nominatim-db packaging/nominatim-api \
+    pytest pytest-asyncio pytest-bdd flake8 mypy \
+    mkdocs mkdocstrings mkdocs-gen-files mkdocs-material \
+    osmium aiosqlite falcon starlette uvicorn \
+    types-jinja2 types-markupsafe types-psutil types-psycopg2 \
+    types-pygments types-pyyaml types-requests types-ujson types-urllib3 typing-extensions
 ```
 
 #### Using uv

@@ -1,19 +1,5 @@
-[project]
-name = "nominatim"
-version = "5.3.0"
-requires-python = ">=3.9"
-
-dependencies = [
-    "nominatim-api",
-    "nominatim-db",
-]
-
 [tool.uv.workspace]
 members = ["packaging/*"]
-
-[tool.uv.sources]
-nominatim-api = { workspace = true }
-nominatim-db  = { workspace = true }
 
 [dependency-groups]
 dev = [
@@ -48,6 +34,18 @@ types = [
     "types-ujson",
     "types-urllib3",
     "typing-extensions",
+]
+
+runtime = [
+    "psycopg != 3.3.0",
+    "async-timeout",
+    "python-dotenv",
+    "jinja2",
+    "pyYAML>=5.1",
+    "psutil",
+    "PyICU",
+    "mwparserfromhell",
+    "SQLAlchemy>=1.4.31",
 ]
 
 docs = [

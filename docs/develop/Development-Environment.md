@@ -68,14 +68,14 @@ Create a virtual environment and install all dependencies:
 ```sh
 virtualenv ~/nominatim-dev-venv
 . ~/nominatim-dev-venv/bin/activate
-pip install --group runtime --group dev .
+pip install --group runtime --group dev
 ```
 
 To install dependencies individually:
 
 ```sh
 pip install \
-    psutil 'psycopg[binary]' PyICU SQLAlchemy \
+    psutil 'psycopg[binary]' PyICU 'SQLAlchemy[asyncio]' \
     python-dotenv jinja2 pyYAML \
     mkdocs 'mkdocstrings[python]' mkdocs-gen-files mkdocs-material \
     pytest pytest-asyncio pytest-bdd flake8 \

@@ -75,12 +75,14 @@ To install dependencies individually:
 
 ```sh
 pip install \
-    packaging/nominatim-db packaging/nominatim-api \
-    pytest pytest-asyncio pytest-bdd flake8 mypy \
-    mkdocs mkdocstrings mkdocs-gen-files mkdocs-material \
-    osmium aiosqlite falcon starlette uvicorn \
+    psutil 'psycopg[binary]' PyICU SQLAlchemy \
+    python-dotenv jinja2 pyYAML \
+    mkdocs 'mkdocstrings[python]' mkdocs-gen-files mkdocs-material \
+    pytest pytest-asyncio pytest-bdd flake8 \
     types-jinja2 types-markupsafe types-psutil types-psycopg2 \
-    types-pygments types-pyyaml types-requests types-ujson types-urllib3 typing-extensions
+    types-pygments types-pyyaml types-requests types-ujson \
+    types-urllib3 typing-extensions gunicorn falcon starlette \
+    uvicorn mypy osmium aiosqlite mwparserfromhell
 ```
 
 #### Using uv

@@ -239,7 +239,7 @@ BEGIN
   END IF;
 
   INSERT INTO place_to_be_deleted (osm_type, osm_id, class, type, deferred)
-    VALUES(OLD.osm_type, OLD.osm_id, OLD.class, OLD.type, deferred);
+    VALUES(OLD.osm_type, OLD.osm_id, OLD.class, OLD.type, COALESCE(deferred, FALSE));
 
   RETURN NULL;
 END;

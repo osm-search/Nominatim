@@ -1,3 +1,6 @@
+5.3.2
+ * fix constraint error from SQL when deleting places
+
 5.3.1
  * fix slow updates with associatedStreet relations
 

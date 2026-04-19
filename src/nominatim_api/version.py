@@ -8,4 +8,4 @@
 Version information for the Nominatim API.
 """
 
-NOMINATIM_API_VERSION = '5.3.1'
+NOMINATIM_API_VERSION = '5.3.2'

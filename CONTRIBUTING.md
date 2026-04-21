@@ -64,6 +64,7 @@ Please see the development section of the Nominatim documentation for
 * [an architecture overview](https://nominatim.org/release-docs/develop/develop/overview/)
   and backgrounds on some of the algorithms
 * [how to set up a development environment](https://nominatim.org/release-docs/develop/develop/Development-Environment/)
+  using virtualenv or [uv](https://docs.astral.sh/uv/)
 * and background on [how tests are organised](https://nominatim.org/release-docs/develop/develop/Testing/)
 
 

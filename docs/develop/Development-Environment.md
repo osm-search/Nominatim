@@ -61,12 +61,21 @@ sudo apt install build-essential libsqlite3-mod-spatialite osm2pgsql \
                  pkg-config libicu-dev virtualenv
 ```
 
-To set up the virtual environment with all necessary packages run:
+#### Using pip
+
+Create a virtual environment and install all dependencies:
 
 ```sh
 virtualenv ~/nominatim-dev-venv
-~/nominatim-dev-venv/bin/pip install\
-    psutil 'psycopg[binary]' PyICU SQLAlchemy \
+. ~/nominatim-dev-venv/bin/activate
+pip install --group runtime --group dev
+```
+
+To install dependencies individually:
+
+```sh
+pip install \
+    psutil 'psycopg[binary]' PyICU 'SQLAlchemy[asyncio]' \
     python-dotenv jinja2 pyYAML \
     mkdocs 'mkdocstrings[python]' mkdocs-gen-files mkdocs-material \
     pytest pytest-asyncio pytest-bdd flake8 \
@@ -76,10 +85,24 @@ virtualenv ~/nominatim-dev-venv
     uvicorn mypy osmium aiosqlite mwparserfromhell
 ```
 
-Now enter the virtual environment whenever you want to develop:
+#### Using uv
+
+If you prefer, you can use [uv](https://docs.astral.sh/uv/) for a faster
+development setup. Install uv following the
+[official instructions](https://docs.astral.sh/uv/getting-started/installation/),
+then from the Nominatim source directory:
 
 ```sh
-. ~/nominatim-dev-venv/bin/activate
+uv sync
+```
+
+This creates a virtual environment and installs all Python dependencies
+automatically. To run commands in the environment:
+
+```sh
+uv run nominatim --version
+uv run pytest test/python
+uv run make lint
 ```
 
 ### Running Nominatim during development

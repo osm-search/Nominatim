@@ -543,7 +543,7 @@ class ICUNameAnalyzer(AbstractAnalyzer):
             if item.kind == 'postcode':
                 token_info.set_postcode(self._add_postcode(item))
             elif item.kind == 'housenumber':
-                token_info.add_housenumber(*self._compute_housenumber_token(item))
+                token_info.add_housenumber(self._compute_housenumber_token(item))
             elif item.kind == 'street':
                 token_info.add_street(self._retrieve_full_tokens(item.name))
             elif item.kind == 'place':
@@ -554,23 +554,23 @@ class ICUNameAnalyzer(AbstractAnalyzer):
                 token_info.add_address_term(item.kind,
                                             self._compute_name_tokens([item]))
 
-    def _compute_housenumber_token(self, hnr: PlaceName) -> Tuple[Optional[int], Optional[str]]:
+    def _compute_housenumber_token(self, hnr: PlaceName) -> Optional[itype.HousenumberTokenInfo]:
         """ Normalize the housenumber and return the word token and the
             canonical form.
         """
         assert self.conn is not None
         analyzer = self.token_analysis.analysis.get('@housenumber')
-        result: Tuple[Optional[int], Optional[str]] = (None, None)
+        result = None
 
         if analyzer is None:
             # When no custom analyzer is set, simply normalize and transliterate
             norm_name = self._search_normalized(hnr.name)
             if norm_name:
-                result = self._cache.housenumbers.get(norm_name, result)
-                if result[0] is None:
+                result = self._cache.housenumbers.get(norm_name)
+                if result is None:
                     hid = execute_scalar(self.conn, "SELECT getorcreate_hnr_id(%s)", (norm_name, ))
 
-                    result = hid, norm_name
+                    result = itype.HousenumberTokenInfo(hid, norm_name)
                     self._cache.housenumbers[norm_name] = result
         else:
             # Otherwise use the analyzer to determine the canonical name.
@@ -578,8 +578,8 @@ class ICUNameAnalyzer(AbstractAnalyzer):
             # name that gets saved in the housenumber field of the place.
             word_id = analyzer.get_canonical_id(hnr)
             if word_id:
-                result = self._cache.housenumbers.get(word_id, result)
-                if result[0] is None:
+                result = self._cache.housenumbers.get(word_id)
+                if result is None:
                     varout = analyzer.compute_variants(word_id)
                     if isinstance(varout, tuple):
                         variants = varout[0]
@@ -588,7 +588,7 @@ class ICUNameAnalyzer(AbstractAnalyzer):
                     if variants:
                         hid = execute_scalar(self.conn, "SELECT create_analyzed_hnr_id(%s, %s)",
                                              (word_id, variants))
-                        result = hid, variants[0]
+                        result = itype.HousenumberTokenInfo(hid, variants[0])
                         self._cache.housenumbers[word_id] = result
 
         return result
@@ -712,14 +712,13 @@ class _TokenInfo:
         """
         self.names = _mk_array(tokens)
 
-    def add_housenumber(self, token: Optional[int], hnr: Optional[str]) -> None:
+    def add_housenumber(self, token_info: Optional[itype.HousenumberTokenInfo]) -> None:
         """ Extract housenumber information from a list of normalised
             housenumbers.
         """
-        if token:
-            assert hnr is not None
-            self.housenumbers.add(hnr)
-            self.housenumber_tokens.add(token)
+        if token_info:
+            self.housenumbers.add(token_info.housenumber)
+            self.housenumber_tokens.add(token_info.token)
 
     def add_street(self, tokens: Iterable[int]) -> None:
         """ Add addr:street match terms.

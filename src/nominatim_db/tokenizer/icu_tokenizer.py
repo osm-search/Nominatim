@@ -26,13 +26,9 @@ from .icu_rule_loader import ICURuleLoader
 from .place_sanitizer import PlaceSanitizer
 from .icu_token_analysis import ICUTokenAnalysis
 from .base import AbstractAnalyzer, AbstractTokenizer
+from . import icu_types as itype
 
 LOG = logging.getLogger()
-
-WORD_TYPES = (('country_names', 'C'),
-              ('postcodes', 'P'),
-              ('full_word', 'W'),
-              ('housenumbers', 'H'))
 
 
 def create(dsn: str) -> 'ICUTokenizer':
@@ -261,7 +257,7 @@ class ICUTokenizer(AbstractTokenizer):
                             """CREATE INDEX idx_{{table_name}}_word_token ON {{table_name}}
                                USING BTREE (word_token) {{db.tablespace.search_index}}""",
                             table_name=table_name)
-            for name, ctype in WORD_TYPES:
+            for name, ctype in itype.WORD_TYPES:
                 sqlp.run_string(conn,
                                 """CREATE INDEX idx_{{table_name}}_{{idx_name}} ON {{table_name}}
                                    USING BTREE (word) {{db.tablespace.address_index}}
@@ -294,7 +290,7 @@ class ICUTokenizer(AbstractTokenizer):
             with conn.cursor() as cur:
                 cur.execute(pysql.SQL("ALTER TABLE {} RENAME TO word")
                                  .format(pysql.Identifier(old)))
-                for idx in ['word_token', 'word_id'] + [n[0] for n in WORD_TYPES]:
+                for idx in ['word_token', 'word_id'] + [n[0] for n in itype.WORD_TYPES]:
                     cur.execute(pysql.SQL("ALTER INDEX {} RENAME TO {}")
                                      .format(pysql.Identifier(f"idx_{old}_{idx}"),
                                              pysql.Identifier(f"idx_word_{idx}")))

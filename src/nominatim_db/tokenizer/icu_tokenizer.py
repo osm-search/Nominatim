@@ -27,8 +27,6 @@ from .place_sanitizer import PlaceSanitizer
 from .icu_token_analysis import ICUTokenAnalysis
 from .base import AbstractAnalyzer, AbstractTokenizer
 
-DBCFG_TERM_NORMALIZATION = "tokenizer_term_normalization"
-
 LOG = logging.getLogger()
 
 WORD_TYPES = (('country_names', 'C'),

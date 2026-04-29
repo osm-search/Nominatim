@@ -10,7 +10,6 @@ libICU instead of the PostgreSQL module.
 """
 from typing import Optional, Sequence, List, Tuple, Mapping, Any, cast, \
                    Dict, Set, Iterable
-import itertools
 import logging
 
 from psycopg.types.json import Jsonb
@@ -527,7 +526,7 @@ class ICUNameAnalyzer(AbstractAnalyzer):
         names, address = self.sanitizer.process_names(place)
 
         if names:
-            token_info.set_names(*self._compute_name_tokens(names))
+            token_info.set_names(self._compute_name_tokens(names))
 
             if place.is_country():
                 assert place.country_code is not None
@@ -549,11 +548,11 @@ class ICUNameAnalyzer(AbstractAnalyzer):
                 token_info.add_street(self._retrieve_full_tokens(item.name))
             elif item.kind == 'place':
                 if not item.suffix:
-                    token_info.add_place(itertools.chain(*self._compute_name_tokens([item])))
+                    token_info.add_place(self._compute_name_tokens([item]))
             elif (not item.kind.startswith('_') and not item.suffix and
                   item.kind not in ('country', 'full', 'inclusion')):
                 token_info.add_address_term(item.kind,
-                                            itertools.chain(*self._compute_name_tokens([item])))
+                                            self._compute_name_tokens([item]))
 
     def _compute_housenumber_token(self, hnr: PlaceName) -> Tuple[Optional[int], Optional[str]]:
         """ Normalize the housenumber and return the word token and the
@@ -614,13 +613,12 @@ class ICUNameAnalyzer(AbstractAnalyzer):
 
         return full
 
-    def _compute_name_tokens(self, names: Sequence[PlaceName]) -> Tuple[Set[int], Set[int]]:
+    def _compute_name_tokens(self, names: Sequence[PlaceName]) -> set[int]:
         """ Computes the full name and partial name tokens for the given
             dictionary of names.
         """
         assert self.conn is not None
-        full_tokens: Set[int] = set()
-        partial_tokens: Set[int] = set()
+        out = set()
 
         for name in names:
             analyzer_id = name.get_attr('analyzer')
@@ -650,10 +648,10 @@ class ICUNameAnalyzer(AbstractAnalyzer):
 
             assert part is not None
 
-            full_tokens.add(full)
-            partial_tokens.update(part)
+            out.add(full)
+            out.update(part)
 
-        return full_tokens, partial_tokens
+        return out
 
     def _add_postcode(self, item: PlaceName) -> Optional[str]:
         """ Make sure the normalized postcode is present in the word table.
@@ -665,6 +663,12 @@ class ICUNameAnalyzer(AbstractAnalyzer):
             return item.name.strip().upper()
         else:
             return analyzer.get_canonical_id(item)
+
+
+def _mk_array(tokens: Iterable[Any]) -> str:
+    """ Create an array string suitable for Postgres array input.
+    """
+    return '{' + ','.join((str(s) for s in tokens)) + '}'
 
 
 class _TokenInfo:
@@ -679,9 +683,6 @@ class _TokenInfo:
         self.address_tokens: Dict[str, str] = {}
         self.postcode: Optional[str] = None
 
-    def _mk_array(self, tokens: Iterable[Any]) -> str:
-        return f"{{{','.join((str(s) for s in tokens))}}}"
-
     def to_dict(self) -> Dict[str, Any]:
         """ Return the token information in database importable format.
         """
@@ -692,13 +693,13 @@ class _TokenInfo:
 
         if self.housenumbers:
             out['hnr'] = ';'.join(self.housenumbers)
-            out['hnr_tokens'] = self._mk_array(self.housenumber_tokens)
+            out['hnr_tokens'] = _mk_array(self.housenumber_tokens)
 
         if self.street_tokens is not None:
-            out['street'] = self._mk_array(self.street_tokens)
+            out['street'] = _mk_array(self.street_tokens)
 
         if self.place_tokens:
-            out['place'] = self._mk_array(self.place_tokens)
+            out['place'] = _mk_array(self.place_tokens)
 
         if self.address_tokens:
             out['addr'] = self.address_tokens
@@ -708,10 +709,10 @@ class _TokenInfo:
 
         return out
 
-    def set_names(self, fulls: Iterable[int], partials: Iterable[int]) -> None:
+    def set_names(self, tokens: Iterable[int]) -> None:
         """ Adds token information for the normalised names.
         """
-        self.names = self._mk_array(itertools.chain(fulls, partials))
+        self.names = _mk_array(tokens)
 
     def add_housenumber(self, token: Optional[int], hnr: Optional[str]) -> None:
         """ Extract housenumber information from a list of normalised
@@ -737,7 +738,7 @@ class _TokenInfo:
     def add_address_term(self, key: str, partials: Iterable[int]) -> None:
         """ Add additional address terms.
         """
-        array = self._mk_array(partials)
+        array = _mk_array(partials)
         if len(array) > 2:
             self.address_tokens[key] = array
 

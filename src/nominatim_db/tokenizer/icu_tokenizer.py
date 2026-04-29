@@ -310,7 +310,7 @@ class ICUNameAnalyzer(AbstractAnalyzer):
         self.sanitizer = sanitizer
         self.token_analysis = token_analysis
 
-        self._cache = _TokenCache()
+        self._cache = itype.TokenCache()
 
     def close(self) -> None:
         """ Free all resources used by the analyzer.
@@ -629,8 +629,8 @@ class ICUNameAnalyzer(AbstractAnalyzer):
             else:
                 token_id = f'{word_id}@{analyzer_id}'
 
-            full, part = self._cache.names.get(token_id, (None, None))
-            if full is None:
+            tokens = self._cache.names.get(token_id)
+            if tokens is None:
                 varset = analyzer.compute_variants(word_id)
                 if isinstance(varset, tuple):
                     variants, lookups = varset
@@ -640,16 +640,14 @@ class ICUNameAnalyzer(AbstractAnalyzer):
                     continue
 
                 with self.conn.cursor() as cur:
-                    cur.execute("SELECT * FROM getorcreate_full_word(%s, %s, %s)",
+                    cur.execute("""SELECT partial_tokens || full_token
+                                   FROM getorcreate_full_word(%s, %s, %s)""",
                                 (token_id, variants, lookups))
-                    full, part = cast(Tuple[int, List[int]], cur.fetchone())
+                    tokens = cast(tuple[list[int]], cur.fetchone())[0]
 
-                self._cache.names[token_id] = (full, part)
+                self._cache.names[token_id] = tokens
 
-            assert part is not None
-
-            out.add(full)
-            out.update(part)
+            out.update(tokens)
 
         return out
 
@@ -746,16 +744,3 @@ class _TokenInfo:
         """ Set the postcode to the given one.
         """
         self.postcode = postcode
-
-
-class _TokenCache:
-    """ Cache for token information to avoid repeated database queries.
-
-        This cache is not thread-safe and needs to be instantiated per
-        analyzer.
-    """
-    def __init__(self) -> None:
-        self.names: Dict[str, Tuple[int, List[int]]] = {}
-        self.partials: Dict[str, int] = {}
-        self.fulls: Dict[str, List[int]] = {}
-        self.housenumbers: Dict[str, Tuple[Optional[int], Optional[str]]] = {}

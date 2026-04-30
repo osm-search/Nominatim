@@ -2,12 +2,12 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Data class for a single name of a place.
 """
-from typing import Optional, Dict, Mapping
+from typing import Optional, Mapping
 
 
 class PlaceName:
@@ -27,11 +27,12 @@ class PlaceName:
         names.
     """
 
-    def __init__(self, name: str, kind: str, suffix: Optional[str]):
+    def __init__(self, name: str, kind: str, suffix: Optional[str],
+                 attr: Optional[dict[str, str]] = None):
         self.name = name
         self.kind = kind
         self.suffix = suffix
-        self.attr: Dict[str, str] = {}
+        self.attr: dict[str, str] = {} if attr is None else attr
 
     def __repr__(self) -> str:
         return f"PlaceName(name={self.name!r},kind={self.kind!r},suffix={self.suffix!r})"

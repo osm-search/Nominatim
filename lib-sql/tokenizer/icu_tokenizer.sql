@@ -217,6 +217,33 @@ END;
 $$
 LANGUAGE plpgsql;
 
+CREATE OR REPLACE FUNCTION getorcreate_partial_words(lookup_terms TEXT[],
+                                                    OUT partial_tokens INT[])
+  AS $$
+DECLARE
+  term TEXT;
+  term_id INTEGER;
+BEGIN
+  partial_tokens := '{}'::INT[];
+  FOR term IN
+    SELECT DISTINCT trim(unnest(string_to_array(unnest(lookup_terms), ' ')))
+  LOOP
+    SELECT min(word_id) INTO term_id
+      FROM word WHERE word_token = term and type = 'w';
+
+    IF term_id IS NULL THEN
+      term_id := nextval('seq_word');
+      INSERT INTO word (word_id, word_token, type)
+        VALUES (term_id, term, 'w');
+    END IF;
+
+    partial_tokens := array_merge(partial_tokens, ARRAY[term_id]);
+  END LOOP;
+END;
+$$
+LANGUAGE plpgsql;
+
+
 
 CREATE OR REPLACE FUNCTION getorcreate_partial_word(partial TEXT)
   RETURNS INTEGER

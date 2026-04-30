@@ -10,7 +10,6 @@ libICU instead of the PostgreSQL module.
 """
 from typing import Optional, Sequence, List, Tuple, Mapping, Any, cast, \
                    Dict, Set, Iterable
-import itertools
 import logging
 
 from psycopg.types.json import Jsonb
@@ -26,15 +25,9 @@ from .icu_rule_loader import ICURuleLoader
 from .place_sanitizer import PlaceSanitizer
 from .icu_token_analysis import ICUTokenAnalysis
 from .base import AbstractAnalyzer, AbstractTokenizer
-
-DBCFG_TERM_NORMALIZATION = "tokenizer_term_normalization"
+from . import icu_types as itype
 
 LOG = logging.getLogger()
-
-WORD_TYPES = (('country_names', 'C'),
-              ('postcodes', 'P'),
-              ('full_word', 'W'),
-              ('housenumbers', 'H'))
 
 
 def create(dsn: str) -> 'ICUTokenizer':
@@ -263,7 +256,7 @@ class ICUTokenizer(AbstractTokenizer):
                             """CREATE INDEX idx_{{table_name}}_word_token ON {{table_name}}
                                USING BTREE (word_token) {{db.tablespace.search_index}}""",
                             table_name=table_name)
-            for name, ctype in WORD_TYPES:
+            for name, ctype in itype.WORD_TYPES:
                 sqlp.run_string(conn,
                                 """CREATE INDEX idx_{{table_name}}_{{idx_name}} ON {{table_name}}
                                    USING BTREE (word) {{db.tablespace.address_index}}
@@ -296,7 +289,7 @@ class ICUTokenizer(AbstractTokenizer):
             with conn.cursor() as cur:
                 cur.execute(pysql.SQL("ALTER TABLE {} RENAME TO word")
                                  .format(pysql.Identifier(old)))
-                for idx in ['word_token', 'word_id'] + [n[0] for n in WORD_TYPES]:
+                for idx in ['word_token', 'word_id'] + [n[0] for n in itype.WORD_TYPES]:
                     cur.execute(pysql.SQL("ALTER INDEX {} RENAME TO {}")
                                      .format(pysql.Identifier(f"idx_{old}_{idx}"),
                                              pysql.Identifier(f"idx_word_{idx}")))
@@ -317,7 +310,7 @@ class ICUNameAnalyzer(AbstractAnalyzer):
         self.sanitizer = sanitizer
         self.token_analysis = token_analysis
 
-        self._cache = _TokenCache()
+        self._cache = itype.TokenCache()
 
     def close(self) -> None:
         """ Free all resources used by the analyzer.
@@ -533,7 +526,7 @@ class ICUNameAnalyzer(AbstractAnalyzer):
         names, address = self.sanitizer.process_names(place)
 
         if names:
-            token_info.set_names(*self._compute_name_tokens(names))
+            token_info.set_names(self._compute_name_tokens(names))
 
             if place.is_country():
                 assert place.country_code is not None
@@ -550,34 +543,34 @@ class ICUNameAnalyzer(AbstractAnalyzer):
             if item.kind == 'postcode':
                 token_info.set_postcode(self._add_postcode(item))
             elif item.kind == 'housenumber':
-                token_info.add_housenumber(*self._compute_housenumber_token(item))
+                token_info.add_housenumber(self._compute_housenumber_token(item))
             elif item.kind == 'street':
                 token_info.add_street(self._retrieve_full_tokens(item.name))
             elif item.kind == 'place':
                 if not item.suffix:
-                    token_info.add_place(itertools.chain(*self._compute_name_tokens([item])))
+                    token_info.add_place(self._compute_name_tokens([item]))
             elif (not item.kind.startswith('_') and not item.suffix and
                   item.kind not in ('country', 'full', 'inclusion')):
                 token_info.add_address_term(item.kind,
-                                            itertools.chain(*self._compute_name_tokens([item])))
+                                            self._compute_name_tokens([item]))
 
-    def _compute_housenumber_token(self, hnr: PlaceName) -> Tuple[Optional[int], Optional[str]]:
+    def _compute_housenumber_token(self, hnr: PlaceName) -> Optional[itype.HousenumberTokenInfo]:
         """ Normalize the housenumber and return the word token and the
             canonical form.
         """
         assert self.conn is not None
         analyzer = self.token_analysis.analysis.get('@housenumber')
-        result: Tuple[Optional[int], Optional[str]] = (None, None)
+        result = None
 
         if analyzer is None:
             # When no custom analyzer is set, simply normalize and transliterate
             norm_name = self._search_normalized(hnr.name)
             if norm_name:
-                result = self._cache.housenumbers.get(norm_name, result)
-                if result[0] is None:
+                result = self._cache.housenumbers.get(norm_name)
+                if result is None:
                     hid = execute_scalar(self.conn, "SELECT getorcreate_hnr_id(%s)", (norm_name, ))
 
-                    result = hid, norm_name
+                    result = itype.HousenumberTokenInfo(hid, norm_name)
                     self._cache.housenumbers[norm_name] = result
         else:
             # Otherwise use the analyzer to determine the canonical name.
@@ -585,8 +578,8 @@ class ICUNameAnalyzer(AbstractAnalyzer):
             # name that gets saved in the housenumber field of the place.
             word_id = analyzer.get_canonical_id(hnr)
             if word_id:
-                result = self._cache.housenumbers.get(word_id, result)
-                if result[0] is None:
+                result = self._cache.housenumbers.get(word_id)
+                if result is None:
                     varout = analyzer.compute_variants(word_id)
                     if isinstance(varout, tuple):
                         variants = varout[0]
@@ -595,7 +588,7 @@ class ICUNameAnalyzer(AbstractAnalyzer):
                     if variants:
                         hid = execute_scalar(self.conn, "SELECT create_analyzed_hnr_id(%s, %s)",
                                              (word_id, variants))
-                        result = hid, variants[0]
+                        result = itype.HousenumberTokenInfo(hid, variants[0])
                         self._cache.housenumbers[word_id] = result
 
         return result
@@ -620,13 +613,12 @@ class ICUNameAnalyzer(AbstractAnalyzer):
 
         return full
 
-    def _compute_name_tokens(self, names: Sequence[PlaceName]) -> Tuple[Set[int], Set[int]]:
+    def _compute_name_tokens(self, names: Sequence[PlaceName]) -> set[int]:
         """ Computes the full name and partial name tokens for the given
             dictionary of names.
         """
         assert self.conn is not None
-        full_tokens: Set[int] = set()
-        partial_tokens: Set[int] = set()
+        out = set()
 
         for name in names:
             analyzer_id = name.get_attr('analyzer')
@@ -637,8 +629,8 @@ class ICUNameAnalyzer(AbstractAnalyzer):
             else:
                 token_id = f'{word_id}@{analyzer_id}'
 
-            full, part = self._cache.names.get(token_id, (None, None))
-            if full is None:
+            tokens = self._cache.names.get(token_id)
+            if tokens is None:
                 varset = analyzer.compute_variants(word_id)
                 if isinstance(varset, tuple):
                     variants, lookups = varset
@@ -648,18 +640,16 @@ class ICUNameAnalyzer(AbstractAnalyzer):
                     continue
 
                 with self.conn.cursor() as cur:
-                    cur.execute("SELECT * FROM getorcreate_full_word(%s, %s, %s)",
+                    cur.execute("""SELECT partial_tokens || full_token
+                                   FROM getorcreate_full_word(%s, %s, %s)""",
                                 (token_id, variants, lookups))
-                    full, part = cast(Tuple[int, List[int]], cur.fetchone())
+                    tokens = cast(tuple[list[int]], cur.fetchone())[0]
 
-                self._cache.names[token_id] = (full, part)
+                self._cache.names[token_id] = tokens
 
-            assert part is not None
+            out.update(tokens)
 
-            full_tokens.add(full)
-            partial_tokens.update(part)
-
-        return full_tokens, partial_tokens
+        return out
 
     def _add_postcode(self, item: PlaceName) -> Optional[str]:
         """ Make sure the normalized postcode is present in the word table.
@@ -671,6 +661,12 @@ class ICUNameAnalyzer(AbstractAnalyzer):
             return item.name.strip().upper()
         else:
             return analyzer.get_canonical_id(item)
+
+
+def _mk_array(tokens: Iterable[Any]) -> str:
+    """ Create an array string suitable for Postgres array input.
+    """
+    return '{' + ','.join((str(s) for s in tokens)) + '}'
 
 
 class _TokenInfo:
@@ -685,9 +681,6 @@ class _TokenInfo:
         self.address_tokens: Dict[str, str] = {}
         self.postcode: Optional[str] = None
 
-    def _mk_array(self, tokens: Iterable[Any]) -> str:
-        return f"{{{','.join((str(s) for s in tokens))}}}"
-
     def to_dict(self) -> Dict[str, Any]:
         """ Return the token information in database importable format.
         """
@@ -698,13 +691,13 @@ class _TokenInfo:
 
         if self.housenumbers:
             out['hnr'] = ';'.join(self.housenumbers)
-            out['hnr_tokens'] = self._mk_array(self.housenumber_tokens)
+            out['hnr_tokens'] = _mk_array(self.housenumber_tokens)
 
         if self.street_tokens is not None:
-            out['street'] = self._mk_array(self.street_tokens)
+            out['street'] = _mk_array(self.street_tokens)
 
         if self.place_tokens:
-            out['place'] = self._mk_array(self.place_tokens)
+            out['place'] = _mk_array(self.place_tokens)
 
         if self.address_tokens:
             out['addr'] = self.address_tokens
@@ -714,19 +707,18 @@ class _TokenInfo:
 
         return out
 
-    def set_names(self, fulls: Iterable[int], partials: Iterable[int]) -> None:
+    def set_names(self, tokens: Iterable[int]) -> None:
         """ Adds token information for the normalised names.
         """
-        self.names = self._mk_array(itertools.chain(fulls, partials))
+        self.names = _mk_array(tokens)
 
-    def add_housenumber(self, token: Optional[int], hnr: Optional[str]) -> None:
+    def add_housenumber(self, token_info: Optional[itype.HousenumberTokenInfo]) -> None:
         """ Extract housenumber information from a list of normalised
             housenumbers.
         """
-        if token:
-            assert hnr is not None
-            self.housenumbers.add(hnr)
-            self.housenumber_tokens.add(token)
+        if token_info:
+            self.housenumbers.add(token_info.housenumber)
+            self.housenumber_tokens.add(token_info.token)
 
     def add_street(self, tokens: Iterable[int]) -> None:
         """ Add addr:street match terms.
@@ -743,7 +735,7 @@ class _TokenInfo:
     def add_address_term(self, key: str, partials: Iterable[int]) -> None:
         """ Add additional address terms.
         """
-        array = self._mk_array(partials)
+        array = _mk_array(partials)
         if len(array) > 2:
             self.address_tokens[key] = array
 
@@ -751,16 +743,3 @@ class _TokenInfo:
         """ Set the postcode to the given one.
         """
         self.postcode = postcode
-
-
-class _TokenCache:
-    """ Cache for token information to avoid repeated database queries.
-
-        This cache is not thread-safe and needs to be instantiated per
-        analyzer.
-    """
-    def __init__(self) -> None:
-        self.names: Dict[str, Tuple[int, List[int]]] = {}
-        self.partials: Dict[str, int] = {}
-        self.fulls: Dict[str, List[int]] = {}
-        self.housenumbers: Dict[str, Tuple[Optional[int], Optional[str]]] = {}

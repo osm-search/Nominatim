@@ -22,9 +22,17 @@ class PlaceName:
 
         In addition to that, a name may have arbitrary additional attributes.
         How attributes are used, depends on the sanitizers and token analysers.
-        The exception is the 'analyzer' attribute. This attribute determines
-        which token analysis module will be used to finalize the treatment of
-        names.
+
+        The default ICU token analyser currently understands the following
+        additional properties:
+
+        * `analyzer` determines which token analysis module will be used to
+           finalize the treatment of names.
+        * `partial` marks a name that is not a full name in itself but may
+          rarely appear in conjunction with the other names. Can be used to
+          allow prefixes and suffixes to be recognised but not found on their
+          own. Matches against such a partial match will always be lower ranked
+          than full name matches.
     """
 
     def __init__(self, name: str, kind: str, suffix: Optional[str],

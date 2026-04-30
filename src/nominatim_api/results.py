@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2025 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Dataclasses for search results and helper functions to fill them.
@@ -594,7 +594,7 @@ async def complete_address_details(conn: SearchConnection, results: List[BaseRes
                     t.c.place_id, t.c.osm_type, t.c.osm_id, t.c.name,
                     t.c.class_, t.c.type, t.c.extratags,
                     t.c.admin_level, taddr.c.fromarea,
-                    sa.case((t.c.rank_address == 11, 5),
+                    sa.case((t.c.type == 'postcal_code', 5),
                             else_=t.c.rank_address).label('rank_address'),
                     taddr.c.distance, t.c.country_code, t.c.postcode)\
             .join(taddr, sa.or_(taddr.c.place_id == ltab.c.value['pid'].as_integer(),

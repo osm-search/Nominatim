@@ -78,3 +78,8 @@ class PlaceInfo:
         return self.rank_address == 4 \
             and self.is_a('boundary', 'administrative') \
             and self.country_code is not None
+
+    def is_street(self) -> bool:
+        """ Return True when the place is a street object.
+        """
+        return 26 <= self.rank_address <= 27

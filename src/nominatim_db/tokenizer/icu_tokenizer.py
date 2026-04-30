@@ -622,12 +622,15 @@ class ICUNameAnalyzer(AbstractAnalyzer):
 
         for name in names:
             analyzer_id = name.get_attr('analyzer')
+            is_partial = name.get_attr('partial')
             analyzer = self.token_analysis.get_analyzer(analyzer_id)
             word_id = analyzer.get_canonical_id(name)
             if analyzer_id is None:
                 token_id = word_id
             else:
                 token_id = f'{word_id}@{analyzer_id}'
+            if is_partial:
+                token_id += '@@part'
 
             tokens = self._cache.names.get(token_id)
             if tokens is None:
@@ -640,9 +643,14 @@ class ICUNameAnalyzer(AbstractAnalyzer):
                     continue
 
                 with self.conn.cursor() as cur:
-                    cur.execute("""SELECT partial_tokens || full_token
-                                   FROM getorcreate_full_word(%s, %s, %s)""",
-                                (token_id, variants, lookups))
+                    if is_partial:
+                        cur.execute("SELECT * FROM getorcreate_partial_words(%s)",
+                                    (variants,))
+                    else:
+                        cur.execute("""SELECT partial_tokens || full_token
+                                       FROM getorcreate_full_word(%s, %s, %s)""",
+                                    (token_id, variants, lookups))
+
                     tokens = cast(tuple[list[int]], cur.fetchone())[0]
 
                 self._cache.names[token_id] = tokens

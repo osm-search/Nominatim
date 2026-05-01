@@ -594,7 +594,7 @@ async def complete_address_details(conn: SearchConnection, results: List[BaseRes
                     t.c.place_id, t.c.osm_type, t.c.osm_id, t.c.name,
                     t.c.class_, t.c.type, t.c.extratags,
                     t.c.admin_level, taddr.c.fromarea,
-                    sa.case((t.c.type == 'postcal_code', 5),
+                    sa.case((t.c.type == 'postal_code', 5),
                             else_=t.c.rank_address).label('rank_address'),
                     taddr.c.distance, t.c.country_code, t.c.postcode)\
             .join(taddr, sa.or_(taddr.c.place_id == ltab.c.value['pid'].as_integer(),

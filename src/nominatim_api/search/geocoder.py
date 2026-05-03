@@ -175,6 +175,28 @@ class ForwardGeocoder:
 
         return final
 
+    def _get_result_rerank_text(self, result: SearchResult) -> str:
+        if not self.params.locales:
+            return result.display_name or ''
+
+        label_parts: List[str] = []
+        if result.address_rows:
+            for line in result.address_rows:
+                if line.isaddress and line.names:
+                    address_name = self.params.locales.display_name(line.names)
+                    if address_name and (
+                        not label_parts or label_parts[-1] != address_name
+                    ):
+                        label_parts.append(address_name)
+
+        if label_parts:
+            return ', '.join(label_parts)
+
+        if result.names:
+            return self.params.locales.display_name(result.names)
+
+        return result.display_name or ''
+
     def rerank_by_query(self, query: QueryStruct, results: SearchResults) -> None:
         """ Adjust the accuracy of the localized result according to how well
             they match the original query.
@@ -192,8 +214,12 @@ class ForwardGeocoder:
                or (result.importance is not None and result.importance < 0):
                 continue
             distance = 0.0
-            norm = self.query_analyzer.normalize_text(' '.join((result.display_name,
-                                                                result.country_code or '')))
+            # Use locale-aware text for word matching so that translated names
+            # (e.g., name:en) are included in the match pool.
+            rerank_text = self._get_result_rerank_text(result)
+            norm = self.query_analyzer.normalize_text(
+                ' '.join((rerank_text, result.country_code or ''))
+            )
             words = set((w for w in re.split('[-,: ]+', norm) if w))
             if not words:
                 continue

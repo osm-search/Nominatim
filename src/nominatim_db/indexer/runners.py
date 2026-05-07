@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2025 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Mix-ins that provide the actual commands for the indexer for various indexing
@@ -11,11 +11,10 @@ tasks.
 from typing import Any, Sequence
 
 from psycopg import sql as pysql
-from psycopg.abc import Query
 from psycopg.rows import DictRow
 from psycopg.types.json import Json
 
-from ..typing import Protocol
+from ..typing import Protocol, QueryNoTemplate
 from ..data.place_info import PlaceInfo
 from ..tokenizer.base import AbstractAnalyzer
 
@@ -30,9 +29,9 @@ def _analyze_place(place: DictRow, analyzer: AbstractAnalyzer) -> Json:
 
 class Runner(Protocol):
     def name(self) -> str: ...
-    def sql_count_objects(self) -> Query: ...
-    def sql_get_objects(self) -> Query: ...
-    def index_places_query(self, batch_size: int) -> Query: ...
+    def sql_count_objects(self) -> QueryNoTemplate: ...
+    def sql_get_objects(self) -> QueryNoTemplate: ...
+    def index_places_query(self, batch_size: int) -> QueryNoTemplate: ...
     def index_places_params(self, place: DictRow) -> Sequence[Any]: ...
 
 
@@ -50,7 +49,7 @@ class AbstractPlacexRunner:
         self.rank = rank
         self.analyzer = analyzer
 
-    def index_places_query(self, batch_size: int) -> Query:
+    def index_places_query(self, batch_size: int) -> QueryNoTemplate:
         return pysql.SQL(
             """ UPDATE placex
                 SET indexed_status = 0, address = v.addr, token_info = v.ti,
@@ -94,14 +93,14 @@ class BoundaryRunner(AbstractPlacexRunner):
     def name(self) -> str:
         return f"boundaries rank {self.rank}"
 
-    def sql_count_objects(self) -> Query:
+    def sql_count_objects(self) -> QueryNoTemplate:
         return pysql.SQL("""SELECT count(*) FROM placex
                             WHERE indexed_status > 0
                               AND rank_search = {}
                               AND class = 'boundary' and type = 'administrative'
                          """).format(pysql.Literal(self.rank))
 
-    def sql_get_objects(self) -> Query:
+    def sql_get_objects(self) -> QueryNoTemplate:
         return SELECT_SQL.format(pysql.SQL(
                 """WHERE placex.indexed_status > 0 and placex.rank_search = {}
                          and placex.class = 'boundary' and placex.type = 'administrative'
@@ -120,17 +119,17 @@ class InterpolationRunner:
     def name(self) -> str:
         return "interpolation lines (location_property_osmline)"
 
-    def sql_count_objects(self) -> Query:
+    def sql_count_objects(self) -> QueryNoTemplate:
         return """SELECT count(*) FROM location_property_osmline
                   WHERE indexed_status > 0"""
 
-    def sql_get_objects(self) -> Query:
+    def sql_get_objects(self) -> QueryNoTemplate:
         return """SELECT place_id, get_interpolation_address(address, osm_id) as address
                   FROM location_property_osmline
                   WHERE indexed_status > 0
                   ORDER BY geometry_sector"""
 
-    def index_places_query(self, batch_size: int) -> Query:
+    def index_places_query(self, batch_size: int) -> QueryNoTemplate:
         return pysql.SQL("""UPDATE location_property_osmline
                             SET indexed_status = 0, address = v.addr, token_info = v.ti
                             FROM (VALUES {}) as v(id, addr, ti)
@@ -149,15 +148,15 @@ class PostcodeRunner(Runner):
     def name(self) -> str:
         return "postcodes (location_postcodes)"
 
-    def sql_count_objects(self) -> Query:
+    def sql_count_objects(self) -> QueryNoTemplate:
         return 'SELECT count(*) FROM location_postcodes WHERE indexed_status > 0'
 
-    def sql_get_objects(self) -> Query:
+    def sql_get_objects(self) -> QueryNoTemplate:
         return """SELECT place_id FROM location_postcodes
                   WHERE indexed_status > 0
                   ORDER BY country_code, postcode"""
 
-    def index_places_query(self, batch_size: int) -> Query:
+    def index_places_query(self, batch_size: int) -> QueryNoTemplate:
         return pysql.SQL("""UPDATE location_postcodes SET indexed_status = 0
                                     WHERE place_id IN ({})""")\
                     .format(pysql.SQL(',').join((pysql.Placeholder() for _ in range(batch_size))))

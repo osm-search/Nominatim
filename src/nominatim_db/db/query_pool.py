@@ -14,9 +14,11 @@ import time
 
 import psycopg
 
+from ..typing import QueryNoTemplate
+
 LOG = logging.getLogger()
 
-QueueItem = Optional[Tuple[psycopg.abc.Query, Any]]
+QueueItem = Optional[Tuple[QueryNoTemplate, Any]]
 
 
 class QueryPool:
@@ -34,7 +36,7 @@ class QueryPool:
         self.pool = [asyncio.create_task(self._worker_loop_cancellable(dsn, **conn_args))
                      for _ in range(pool_size)]
 
-    async def put_query(self, query: psycopg.abc.Query, params: Any) -> None:
+    async def put_query(self, query: QueryNoTemplate, params: Any) -> None:
         """ Schedule a query for execution.
         """
         if self.is_cancelled:

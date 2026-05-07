@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Type definitions for typing annotations.
@@ -38,7 +38,9 @@ if TYPE_CHECKING:
     from typing_extensions import (Protocol as Protocol,
                                    Final as Final,
                                    TypedDict as TypedDict)
+    from psycopg.abc import (QueryNoTemplate as QueryNoTemplate)
 else:
     Protocol = object
     Final = 'Final'
     TypedDict = dict
+    QueryNoTemplate = 'QueryNoTemplate'

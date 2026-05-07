@@ -43,6 +43,11 @@ sanitizers:
     - step: clean-tiger-tags
     - step: split-name-list
       delimiters: ;
+    - step: delete-tags
+      filter-kind: ref
+      name:
+        - ".*,.*"
+        - ".{41,}"
     - step: strip-brace-terms
     - step: tag-analyzer-by-language
       filter-kind: [".*name.*"]

@@ -18,7 +18,7 @@ build-api:
 tests: mypy lint pytest bdd
 
 mypy:
-	mypy --strict --python-version 3.9 src
+	mypy --strict --python-version 3.10 src
 
 pytest:
 	pytest test/python

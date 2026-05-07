@@ -81,6 +81,22 @@ Feature: Searching of simple objects
         | Auburn      | Alabama   | AL  |
         | New Orleans | Louisiana | LA  |
 
+    Scenario: Qualifier search finds unnamed POI near a small place
+        Given the places
+          | osm | class | type    | name+name | geometry   |
+          | N1  | place | village | Kingston  | 10.0 -10.0 |
+        And the places
+          | osm | class   | type | geometry           |
+          | N2  | amenity | pub  | 10.0001 -10.0001   |
+        And the special phrases
+          | phrase | class   | type | operator |
+          | Pub    | amenity | pub  | -        |
+        When importing
+        And geocoding "Kingston pub"
+        Then result 0 contains
+          | object | category | type |
+          | N2     | amenity  | pub  |
+
     # github #3210
     Scenario: Country with alternate-language name does not dominate when locale differs
         Given the 1.0 grid with origin DE

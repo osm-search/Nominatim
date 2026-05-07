@@ -210,3 +210,13 @@ Feature: Search queries
        Then result 0 contains
          | address+town |
          | Vaduz |
+
+    # github #3750
+    Scenario: Qualifier search finds unnamed POI near a place
+        When geocoding "[amenity=restaurant] Vaduz"
+        Then all results contain
+          | category | type       |
+          | amenity  | restaurant |
+        And result 0 contains
+          | address+town |
+          | Vaduz |

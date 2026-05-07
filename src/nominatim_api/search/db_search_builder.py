@@ -103,6 +103,15 @@ class SearchBuilder:
                 builder = self.build_special_search(sdata, assignment.address,
                                                     bool(near_items))
         else:
+            if (sdata.qualifiers and not near_items and
+                    not self.details.categories):
+                near_builder = self._build_qualifier_address_search(
+                    sdata,
+                    assignment.name, assignment.address,
+                    assignment.penalty)
+                for search in near_builder:
+                    yield search
+
             builder = self.build_name_search(sdata, assignment.name, assignment.address,
                                              bool(near_items))
 
@@ -118,6 +127,39 @@ class SearchBuilder:
             for search in builder:
                 search.penalty += assignment.penalty
                 yield search
+
+    def _build_qualifier_address_search(self, sdata: dbf.SearchData,
+                                        name: qmod.TokenRange,
+                                        address: List[qmod.TokenRange],
+                                        base_penalty: float
+                                        ) -> Iterator[dbs.AbstractSearch]:
+        """ Build a QualifierNearSearch for queries like 'Kingston pub' where
+            a qualifier category is combined with an address but no explicit
+            name. Searches for the address as a place, then finds POIs of the
+            given category nearby.
+
+            Temporarily modifies sdata in place and restores it before
+            returning.
+        """
+        categories = sdata.qualifiers
+        penalty = min(categories.penalties)
+        categories.penalties = [p - penalty for p in categories.penalties]
+
+        sdata.qualifiers = dbf.WeightedCategories([], [])
+        saved_rankings = sdata.rankings
+        sdata.rankings = list(saved_rankings)
+
+        for search in self.build_name_search(sdata, name, address,
+                                             is_category=False):
+            if isinstance(search, dbs.PlaceSearch):
+                search_penalty = search.penalty
+                search.penalty = 0.0
+                yield dbs.QualifierNearSearch(
+                    penalty + base_penalty + search_penalty,
+                    categories, search)
+
+        sdata.qualifiers = categories
+        sdata.rankings = saved_rankings
 
     def build_poi_search(self, sdata: dbf.SearchData) -> Iterator[dbs.AbstractSearch]:
         """ Build abstract search query for a simple category search.

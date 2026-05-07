@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Specialised connection and cursor functions.
@@ -15,7 +15,7 @@ import psycopg
 import psycopg.types.hstore
 from psycopg import sql as pysql
 
-from ..typing import SysEnv
+from ..typing import SysEnv, QueryNoTemplate
 from ..errors import UsageError
 
 LOG = logging.getLogger()
@@ -24,7 +24,7 @@ Cursor = psycopg.Cursor[Any]
 Connection = psycopg.Connection[Any]
 
 
-def execute_scalar(conn: Connection, sql: psycopg.abc.Query, args: Any = None) -> Any:
+def execute_scalar(conn: Connection, sql: QueryNoTemplate, args: Any = None) -> Any:
     """ Execute query that returns a single value. The value is returned.
         If the query yields more than one row, a ValueError is raised.
     """

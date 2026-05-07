@@ -20,7 +20,7 @@ from ..tokenizer import factory as tokenizer_factory
 from . import freeze
 from ..version import NOMINATIM_VERSION, parse_version
 
-CHECKLIST = []
+CHECKLIST: list[Any] = []
 
 
 class CheckState(Enum):

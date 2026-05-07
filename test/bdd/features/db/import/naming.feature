@@ -102,3 +102,17 @@ Feature: Import and search of names
         Then the result set contains
             | object |
             | N3  |
+
+
+    Scenario: ref tags with full address are not searchable
+        Given the places
+            | osm | class   | type    | name+ref                         | geometry |
+            | N1  | amenity | postbox | Hoopter Straße 207, 21423 Winsen | 23 45    |
+        When importing
+        Then placex contains
+            | object | name+ref                         |
+            | N1     | Hoopter Straße 207, 21423 Winsen |
+        And search_name contains exactly
+            | object |
+        When geocoding "Hoopter Straße"
+        Then exactly 0 results are returned

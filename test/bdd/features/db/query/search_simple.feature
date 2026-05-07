@@ -100,3 +100,17 @@ Feature: Searching of simple objects
         Then result 0 contains
          | object |
          | N10    |
+
+    # github #3871
+    Scenario: Localized result name is used for reranking
+        Given the places
+         | osm | class | type | name+name | name+name:en | geometry   |
+         | N1  | place | city | Αθήνα     | Athens       | country:gr |
+         | N2  | place | town | Athens    |              | country:us |
+        When importing
+        And geocoding "Athens"
+         | accept-language |
+         | en              |
+        Then result 0 contains
+         | object |
+         | N1     |

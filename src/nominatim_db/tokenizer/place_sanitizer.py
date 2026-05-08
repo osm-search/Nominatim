@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Handler for cleaning name and address tags in place information before it
@@ -33,6 +33,10 @@ class PlaceSanitizer:
                     raise UsageError("Sanitizer rule is missing the 'step' attribute.")
                 if not isinstance(func['step'], str):
                     raise UsageError("'step' attribute must be a simple string.")
+                if func['step'].startswith('_'):
+                    raise UsageError("Illegal name for 'step', must not start with '_'.")
+                if func['step'].startswith('_') or func['step'] in ('base', 'config'):
+                    raise UsageError("'base' and 'config' cannot be used as name for 'step'.")
 
                 module: SanitizerHandler = \
                     config.load_plugin_module(func['step'], 'nominatim_db.tokenizer.sanitizers')

@@ -114,3 +114,9 @@ Feature: Searching of simple objects
         Then result 0 contains
          | object |
          | N1     |
+        When geocoding "Athens"
+         | accept-language |
+         | de              |
+        Then result 0 contains
+         | object |
+         | N2     |

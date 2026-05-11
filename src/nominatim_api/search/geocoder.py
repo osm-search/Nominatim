@@ -7,7 +7,7 @@
 """
 Public interface to the search code.
 """
-from typing import List, Any, Optional, Iterator, Tuple, Dict, Set
+from typing import List, Any, Optional, Iterator, Tuple, Dict
 import itertools
 import re
 import difflib
@@ -175,11 +175,11 @@ class ForwardGeocoder:
 
         return final
 
-    def _get_result_rerank_text(self, result: SearchResult) -> Set[str]:
+    def _get_result_rerank_text(self, result: SearchResult) -> set[str]:
         if not self.params.locales:
             return {result.display_name} if result.display_name else set()
 
-        label_parts: Set[str] = set()
+        label_parts: set[str] = set()
         if result.address_rows:
             for line in result.address_rows:
                 if line.isaddress and line.names:

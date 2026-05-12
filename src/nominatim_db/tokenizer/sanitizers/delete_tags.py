@@ -5,6 +5,8 @@
 # Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
+DEPRECATED, use delete-names instead.
+
 Sanitizer which prevents certain tags from getting into the search index.
 It remove tags which matches all properties given below.
 

@@ -64,7 +64,8 @@ class PlaceSearch(base.AbstractSearch):
             sql = sql.where(lookup.sql_condition(t))
 
         if self.countries:
-            sql = sql.where(t.c.country_code.in_(self.countries.values))
+            sql = sql.where(t.c.country_code.in_(self.countries.values))\
+                     .where(t.c.address_rank != 4)
 
         if self.postcodes:
             # if a postcode is given, don't search for state or country level objects

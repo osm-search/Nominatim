@@ -203,10 +203,15 @@ Feature: Search queries
           | category | type |
           | highway  | residential |
 
-
     # github #1949
     Scenario: Addressdetails always return the place type
-       When geocoding "Vaduz"
-       Then result 0 contains
-         | address+town |
-         | Vaduz |
+        When geocoding "Vaduz"
+        Then result 0 contains
+          | address+town |
+          | Vaduz |
+
+    Scenario: Place searches with a country component should not return countries
+        When geocoding "Liechtenstein, LI"
+        Then result 0 contains
+          | place_rank |
+          | 30   |

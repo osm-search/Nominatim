@@ -231,11 +231,12 @@ class ForwardGeocoder:
             # to offset this.
             if result.rank_address == 4:
                 if self.params.locales and result.names:
-                    # Exclude country code from disjoint check
-                    check_words = (words - {result.country_code.lower()}) \
-                        if result.country_code else words
-                    if check_words and check_words.isdisjoint(qwords):
-                        result.accuracy += result.calculated_importance() * 0.5
+                    locale_name = self.params.locales.display_name(result.names)
+                    if locale_name:
+                        norm_name = self.query_analyzer.normalize_text(locale_name)
+                        norm_query = self.query_analyzer.normalize_text(' '.join(qwords))
+                        if norm_query != norm_name:
+                            result.accuracy += result.calculated_importance() * 0.5
                 else:
                     distance *= 2
             result.accuracy += distance * 0.3 / sum(len(w) for w in qwords)

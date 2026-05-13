@@ -8,6 +8,7 @@
 Tests for functions to maintain the artificial postcode table.
 """
 import subprocess
+import json
 
 import pytest
 
@@ -197,8 +198,8 @@ class TestPostcodes:
                                 (None, 'cc', 'DD23 T', 100, 56)}
 
     @pytest.mark.parametrize("gzipped", [True, False])
-    def test_postcodes_extern(self, postcode_update, tmp_path,
-                              insert_implicit_postcode, gzipped):
+    def test_postcodes_extern_csv(self, postcode_update, tmp_path,
+                                  insert_implicit_postcode, gzipped):
         insert_implicit_postcode(1, 'xx', 'POINT(10 12)', 'AB 4511')
 
         extfile = tmp_path / 'xx_postcodes.csv'
@@ -213,8 +214,8 @@ class TestPostcodes:
         assert self.row_set == {(None, 'xx', 'AB 4511', 10, 12),
                                 (None, 'xx', 'CD 4511', -10, -5)}
 
-    def test_postcodes_extern_bad_column(self, postcode_update, tmp_path,
-                                         insert_implicit_postcode):
+    def test_postcodes_extern_csv_bad_column(self, postcode_update, tmp_path,
+                                             insert_implicit_postcode):
         insert_implicit_postcode(1, 'xx', 'POINT(10 12)', 'AB 4511')
 
         extfile = tmp_path / 'xx_postcodes.csv'
@@ -224,8 +225,8 @@ class TestPostcodes:
 
         assert self.row_set == {(None, 'xx', 'AB 4511', 10, 12)}
 
-    def test_postcodes_extern_bad_number(self, postcode_update, insert_implicit_postcode,
-                                         tmp_path):
+    def test_postcodes_extern_csv_bad_number(self, postcode_update, insert_implicit_postcode,
+                                             tmp_path):
         insert_implicit_postcode(1, 'xx', 'POINT(10 12)', 'AB 4511')
 
         extfile = tmp_path / 'xx_postcodes.csv'
@@ -236,6 +237,58 @@ class TestPostcodes:
 
         assert self.row_set == {(None, 'xx', 'AB 4511', 10, 12),
                                 (None, 'xx', 'CD 4511', -10, -5)}
+
+    @pytest.mark.parametrize("gzipped", [True, False])
+    def test_postcodes_extern_jsonl(self, postcode_update, tmp_path,
+                                    insert_implicit_postcode, gzipped):
+        insert_implicit_postcode(1, 'xx', 'POINT(10 12)', 'AB 4511', in_placex=True)
+
+        extfile = tmp_path / 'xx_postcodes_geometry.jsonl'
+        extfile.write_text(
+            json.dumps({'properties': {'postcode': 'CD 4511'},
+                        # Centroid : 0.5, 0.5
+                        'geometry': {'type': 'Polygon', 'coordinates': [[
+                            [0, 0], [0, 1], [1, 1], [1, 0], [0, 0]]]}}) + '\n' +
+            json.dumps({'properties': {'postcode': '822114', 'lat': 0.1, 'lon': 0.2},
+                        'geometry': {'type': 'Polygon', 'coordinates': [[
+                            [0, 0], [0, 1], [1, 1], [1, 0], [0, 0]]]}}) + '\n', encoding='utf-8')
+
+        if gzipped:
+            subprocess.run(['gzip', str(extfile)])
+            assert not extfile.is_file()
+
+        postcode_update(tmp_path)
+
+        assert self.row_set == {(None, 'xx', 'AB 4511', 10, 12),
+                                (None, 'xx', 'CD 4511', 0.5, 0.5),
+                                (None, 'xx', '822114', 0.2, 0.1)}
+
+    def test_postcodes_extern_jsonl_invalid_data(self, postcode_update, tmp_path,
+                                                 insert_implicit_postcode):
+        insert_implicit_postcode(1, 'xx', 'POINT(10 12)', 'AB 4511', in_placex=True)
+
+        extfile = tmp_path / 'xx_postcodes_geometry.jsonl'
+        extfile.write_text(
+            # Invalid JSON
+            '{"geometry": {"type": "Polygon"}, "properties": {"postcode": "BAD"}\n'
+            # Missing geometry
+            + json.dumps({'properties': {'postcode': 'NOGEOM'}}) + '\n'
+            # Invalid geometry type
+            + json.dumps({'geometry': {'type': 'Point', 'coordinates': [0, 0]},
+                          'properties': {'postcode': 'BADGEOM'}}) + '\n'
+            # Missing postcode
+            + json.dumps({'properties': {'lat': 0, 'lon': 0},
+                          'geometry': {'type': 'Polygon', 'coordinates': [[
+                              [0, 0], [0, 1], [1, 1], [1, 0], [0, 0]]]}}) + '\n'
+            # Valid one
+            + json.dumps({'geometry': {'type': 'Polygon', 'coordinates': [[
+                [0, 0], [0, 1], [1, 1], [1, 0], [0, 0]]]},
+                'properties': {'postcode': 'GOOD'}}) + '\n', encoding='utf-8')
+
+        postcode_update(tmp_path)
+
+        assert self.row_set == {(None, 'xx', 'AB 4511', 10, 12),
+                                (None, 'xx', 'GOOD', 0.5, 0.5)}
 
     def test_no_placex_entry(self, postcode_update, temp_db_cursor, place_postcode_row):
         # Rewrite the get_country_code function to verify its execution.

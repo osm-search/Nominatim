@@ -43,9 +43,9 @@ sanitizers:
     - step: clean-tiger-tags
     - step: split-name-list
       delimiters: ;
-    - step: delete-tags
+    - step: delete-names
       filter-kind: ref
-      name:
+      filter-name:
         - ".*,.*"
         - ".{41,}"
     - step: strip-brace-terms

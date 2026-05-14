@@ -232,6 +232,14 @@ The following is a list of sanitizers that are shipped with Nominatim.
         heading_level: 6
         docstring_section_style: spacy
 
+##### derive-names
+
+::: nominatim_db.tokenizer.sanitizers.derive_names
+    options:
+        members: False
+        heading_level: 6
+        docstring_section_style: spacy
+
 ##### tag-japanese
 
 ::: nominatim_db.tokenizer.sanitizers.tag_japanese

@@ -1,0 +1,103 @@
+# Source: https://wiki.openstreetmap.org/wiki/Name_finder/Abbreviations#Hrvatski_-_Croatian
+- lang: hr
+  words:
+    - akademika -> akad
+    - aleja -> al
+    - autocesta -> ac
+    - avenija -> av
+    - bara -> ba
+    - blažene djevice marije,blažena djevica marija -> bdm
+    - blaženog,blažene,blaženih -> bl
+    - brdo,brijeg -> b
+    - brdo,brijeg -> br
+    - centralni objekt za pročišćavanje otpadnih voda,uređaj za pročišćavanje otpadnih voda -> cupov
+    - crni,crna,crno -> cr
+    - dalekovod -> dv
+    - dječji vrtić -> dv
+    - dobrovoljno vatrogasno društvo -> dvd
+    - doktor,doktorica,doktora,doktorice -> dr
+    - dolina -> dol
+    - dom zdravlja -> dz
+    - domovinske,domovinskog -> dom
+    - domovinske,domovinskog -> domov 
+    - donji,donja,donje,dug,duga,dugo -> d
+    - farma -> fm
+    - fratra -> fra
+    - glava,glavica -> gl
+    - gornji,gornja,gornje -> g
+    - groblje -> gr
+    - hidroelektrana -> he
+    - hrvatskih,hrvatskog,hrvatske -> hr
+    - hrvatskih,hrvatskog,hrvatske -> hrv
+    - hrvatskih,hrvatskog,hrvatske -> hrvat
+    - industrijska,industrijski -> ind
+    - inženjera -> ing
+    - izvor -> izv
+    - jezero -> jez
+    - kardinala -> kard
+    - klinički bolnički centar -> kbc
+    - livada -> liv
+    - lovački dom -> ld
+    - mali,mala,malo -> m
+    - naselje -> nas
+    - novi,nova,novo,nove -> n
+    - nuklearna elektrana -> ne
+    - obala -> ob
+    - odmorište -> odm
+    - odvojak -> odv
+    - osnovna škola -> oš
+    - otok -> o
+    - pilana -> pil
+    - planinarski -> planin
+    - planinarski dom -> pd
+    - plemenitog,plemenite -> pl
+    - područna škola -> pš
+    - poljana -> polj
+    - potok -> p
+    - prekomorskih -> prekom
+    - profesora,profesorice -> prof
+    - pukovnika -> puk
+    - rijeka,riječni,riječna,riječno -> r
+    - rijeka,riječni,riječna,riječno -> rij
+    - slavonski,slavonska,slavonsko -> sl
+    - solarna elektrana -> se
+    - sportsko rekreativni centar,sportsko rekreacijski centar -> src
+    - sportsko rekreativni centar,sportsko rekreacijski centar -> šrc
+    - sportsko ribolovna udruga -> sru
+    - srednja škola -> sš
+    - stari,stara,staro,starog,stare,starih,stanica -> st
+    - strana -> str
+    - sveti,sveta,svetog,svete,svetih -> sv
+    - termoelektrana -> te
+    - trafostanica -> ts
+    - trg -> t
+    - tvornica -> tv
+    - ulica -> ul
+    - uvala -> u
+    - veliki,velika,veliko -> v
+    - vjetroelektrana -> ve
+    - zaljev -> z
+    - časnika -> čas
+    - šetalište,šetnica -> šet
+    - šumarska kuća -> šk
+    - željeznički,željezničke,željeznička -> želj
+    - jedan,prvi,prva,prvo,prvog,prve -> I
+    - dva,drugi,druga,drugo,drugog,druge -> II
+    - tri,treći,treća,treće,trećeg,treće -> III
+    - četiri,četri,četvrti,četvrta,četvrto,četvrtog,četvrte -> IV
+    - pet,peti,peta,peto,petog,pete -> V
+    - šest,šesti,šesta,šesto,šestog,šeste -> VI
+    - sedam,sedmi,sedma,sedmo,sedmog,sedme -> VII
+    - osam,osmi,osma,osmo,osmog,osme -> VIII
+    - devet,deveti,deveta,deveto,devetog,devete -> IX
+    - deset,deseti,deseta,deseto,desetog,desete -> X
+    - jedanaest,jedanaesti,jedanaesta,jedanaesto,jedanaestog,jedanaeste -> XI
+    - dvanaest,dvanaesti,dvanaesta,dvanaesto,dvanaestog,dvanaeste -> XII
+    - trinaest,trinaesti,trinaesta,trinaesto,trinaestog,trinaeste -> XIII
+    - četrnaest,četrnaesti,četrnaesta,četrnaesto,četrnaestog,četrnaeste -> XIV
+    - petnaest,petnaesti,petnaesta,petnaesto,petnaestog,petnaeste -> XV
+    - šesnaest,šesnaesti,šesnaesta,šesnaesto,šesnaestog,šesnaeste -> XVI
+    - sedamnaest,sedamnaesti,sedamnaesta,sedamnaesto,sedamnaestog,sedamnaeste -> XVII
+    - osamnaest,osamnaesti,osamnaesta,osamnaesto,osamnaestog,osamnaeste -> XVIII
+    - devetnaest,devetnaesti,devetnaesta,devetnaesto,devetnaestog,devetnaeste -> XIX
+    - dvadeset,dvadeseti,dvadeseta,dvadeseto,dvadesetog,dvadesete -> XX

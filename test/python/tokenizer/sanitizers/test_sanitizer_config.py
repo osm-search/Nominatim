@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2025 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for sanitizer configuration helper functions.
@@ -11,6 +11,29 @@ import pytest
 
 from nominatim_db.errors import UsageError
 from nominatim_db.tokenizer.sanitizers.config import SanitizerConfig
+
+
+def test_pattern_error_on_missing():
+    with pytest.raises(UsageError):
+        SanitizerConfig().get_pattern('foo')
+
+
+def test_pattern_default_on_missing():
+    pat = SanitizerConfig().get_pattern('foo', '.*')
+    assert pat.pattern == '.*'
+
+
+def test_pattern_good_with_group():
+    pat = SanitizerConfig({'foo': 'x(X)'}).get_pattern('foo', '.*')
+
+    assert pat.pattern == 'x(X)'
+    assert pat.groups == 1
+
+
+@pytest.mark.parametrize('value', [True, 1, {}, ['a', 'b']])
+def test_pattern_bad(value):
+    with pytest.raises(UsageError):
+        SanitizerConfig({'foo': value}).get_pattern('foo')
 
 
 def test_string_list_default_empty():

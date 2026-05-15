@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Configuration for Sanitizers.
@@ -28,6 +28,25 @@ class SanitizerConfig(_BaseUserDict):
         accessors to standard sanitizer options that are used by many of the
         sanitizers.
     """
+
+    def get_pattern(self, param: str, default: Optional[str] = None,
+                    flags: int = 0) -> re.Pattern[str]:
+        """ Extract a configuration parameter as a regular expression
+            and return a compiled regex pattern. Use 'flags' to initiate
+            the pattern with different compile flags.
+
+            If 'default' is not given, then the parameter must exist
+            or a UsageError is thrown.
+        """
+        strpattern = self.data.get(param, default)
+
+        if strpattern is None:
+            raise UsageError(f"Parameter {param} is missing but required.")
+
+        if not isinstance(strpattern, str):
+            raise UsageError(f"Parameter {param} must be a string.")
+
+        return re.compile(strpattern, flags=flags)
 
     def get_string_list(self, param: str, default: Sequence[str] = tuple()) -> Sequence[str]:
         """ Extract a configuration parameter as a string list.

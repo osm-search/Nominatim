@@ -2,9 +2,11 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
+DEPRECATED, use delete-names instead.
+
 Sanitizer which prevents certain tags from getting into the search index.
 It remove tags which matches all properties given below.
 
@@ -54,72 +56,30 @@ Arguments:
 
 
 """
-from typing import Callable, List, Tuple, Sequence
+from typing import Callable, Sequence, Optional
 
 from ...data.place_name import PlaceName
 from .base import ProcessInfo
 from .config import SanitizerConfig
+from ._derived_name_sanitizer import DerivedNameSanitizer
 
 
-class _TagSanitizer:
+class _DeleteNameSanitizer(DerivedNameSanitizer):
 
     def __init__(self, config: SanitizerConfig) -> None:
-        self.type = config.get('type', 'name')
-        self.filter_kind = config.get_filter('filter-kind')
-        self.country_codes = config.get_string_list('country_code', [])
-        self.filter_suffix = config.get_filter('suffix')
+        super().__init__(config, keep_original=False,
+                         filter_country_option='country_code',
+                         filter_suffix_option='suffix',
+                         filter_rank_option='rank_address')
         self.filter_name = config.get_filter('name')
-        self.allowed_ranks = self._set_allowed_ranks(
-            config.get_string_list("rank_address", ["0-30"])
-        )
 
-        self.has_country_code = config.get('country_code', None) is not None
-
-    def __call__(self, obj: ProcessInfo) -> None:
-        tags = obj.names if self.type == 'name' else obj.address
-
-        if not tags \
-           or not self.allowed_ranks[obj.place.rank_address] \
-           or self.has_country_code \
-           and obj.place.country_code not in self.country_codes:
-            return
-
-        filtered_tags: List[PlaceName] = []
-
-        for tag in tags:
-
-            if not self.filter_kind(tag.kind) \
-               or not self.filter_suffix(tag.suffix or '') \
-               or not self.filter_name(tag.name):
-                filtered_tags.append(tag)
-
-        if self.type == 'name':
-            obj.names = filtered_tags
-        else:
-            obj.address = filtered_tags
-
-    def _set_allowed_ranks(self, ranks: Sequence[str]) -> Tuple[bool, ...]:
-        """ Returns a tuple of 31 boolean values corresponding to the
-            address ranks 0-30. Value at index 'i' is True if rank 'i'
-            is present in the ranks or lies in the range of any of the
-            ranks provided in the sanitizer configuration, otherwise
-            the value is False.
-        """
-        allowed_ranks = [False] * 31
-
-        for rank in ranks:
-            intvl = [int(x) for x in rank.split('-')]
-
-            start, end = intvl[0], intvl[0] if len(intvl) == 1 else intvl[1]
-
-            for i in range(start, end + 1):
-                allowed_ranks[i] = True
-
-        return tuple(allowed_ranks)
+    def compute_derived_names(self, name: PlaceName,
+                              obj: ProcessInfo) -> Optional[Sequence[PlaceName]]:
+        return [] if self.filter_name(name.name) else None
 
 
 def create(config: SanitizerConfig) -> Callable[[ProcessInfo], None]:
     """ Create a function to process removal of certain tags.
     """
 
-    return _TagSanitizer(config)
+    return _DeleteNameSanitizer(config)

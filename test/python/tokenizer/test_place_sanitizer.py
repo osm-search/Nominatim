@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2025 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for execution of the sanitztion step.
@@ -75,3 +75,9 @@ def test_sanitizer_empty_list(def_config, rules):
 def test_sanitizer_missing_step_definition(def_config):
     with pytest.raises(UsageError):
         sanitizer.PlaceSanitizer([{'id': 'split-name-list'}], def_config)
+
+
+@pytest.mark.parametrize('stepname', ['_something', '__init__', 'base', 'config'])
+def test_sanitizer_illegal_step_names(def_config, stepname):
+    with pytest.raises(UsageError):
+        sanitizer.PlaceSanitizer([{'step': stepname}], def_config)

@@ -204,6 +204,7 @@ class ForwardGeocoder:
                   for word in re.split('[-,: ]+', phrase.text) if word]
         if not qwords:
             return
+        norm_query = self.query_analyzer.normalize_text(' '.join(qwords))
 
         for result in results:
             # Negative importance indicates ordering by distance, which is
@@ -231,12 +232,13 @@ class ForwardGeocoder:
             # to offset this.
             if result.rank_address == 4:
                 if self.params.locales and result.names:
-                    locale_name = self.params.locales.display_name(result.names)
-                    if locale_name:
-                        norm_name = self.query_analyzer.normalize_text(locale_name)
-                        norm_query = self.query_analyzer.normalize_text(' '.join(qwords))
-                        if norm_query != norm_name:
-                            result.accuracy += result.calculated_importance() * 0.5
+                    country_names = {self.query_analyzer.normalize_text(result.names[t])
+                                     for t in self.params.locales.name_tags
+                                     if t in result.names}
+                    if result.country_code:
+                        country_names.add(result.country_code)
+                    if norm_query not in country_names:
+                        result.accuracy += result.calculated_importance() * 0.5
                 else:
                     distance *= 2
             result.accuracy += distance * 0.3 / sum(len(w) for w in qwords)

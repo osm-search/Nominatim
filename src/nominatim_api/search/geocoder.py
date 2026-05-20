@@ -175,6 +175,26 @@ class ForwardGeocoder:
 
         return final
 
+    def _get_result_rerank_text(self, result: SearchResult) -> set[str]:
+        if not self.params.locales:
+            return {result.display_name} if result.display_name else set()
+
+        label_parts: set[str] = set()
+        if result.address_rows:
+            for line in result.address_rows:
+                if line.isaddress and line.names:
+                    address_name = self.params.locales.display_name(line.names)
+                    if address_name:
+                        label_parts.add(address_name)
+
+        if label_parts:
+            return label_parts
+
+        if result.names:
+            return {self.params.locales.display_name(result.names)}
+
+        return {result.display_name} if result.display_name else set()
+
     def rerank_by_query(self, query: QueryStruct, results: SearchResults) -> None:
         """ Adjust the accuracy of the localized result according to how well
             they match the original query.
@@ -184,6 +204,7 @@ class ForwardGeocoder:
                   for word in re.split('[-,: ]+', phrase.text) if word]
         if not qwords:
             return
+        norm_query = self.query_analyzer.normalize_text(' '.join(qwords))
 
         for result in results:
             # Negative importance indicates ordering by distance, which is
@@ -192,8 +213,12 @@ class ForwardGeocoder:
                or (result.importance is not None and result.importance < 0):
                 continue
             distance = 0.0
-            norm = self.query_analyzer.normalize_text(' '.join((result.display_name,
-                                                                result.country_code or '')))
+            # Use locale-aware text for word matching so that translated names
+            # (e.g., name:en) are included in the match pool.
+            rerank_text = self._get_result_rerank_text(result)
+            norm = self.query_analyzer.normalize_text(
+                ' '.join((*rerank_text, result.country_code or ''))
+            )
             words = set((w for w in re.split('[-,: ]+', norm) if w))
             if not words:
                 continue
@@ -207,13 +232,13 @@ class ForwardGeocoder:
             # to offset this.
             if result.rank_address == 4:
                 if self.params.locales and result.names:
-                    loc_names = [result.names[t] for t in self.params.locales.name_tags
-                                 if t in result.names]
-                    if loc_names:
-                        norm_loc = self.query_analyzer.normalize_text(' '.join(loc_names))
-                        loc_words = set(w for w in re.split('[-,: ]+', norm_loc) if w)
-                        if loc_words and loc_words.isdisjoint(qwords):
-                            result.accuracy += result.calculated_importance() * 0.5
+                    country_names = {self.query_analyzer.normalize_text(result.names[t])
+                                     for t in self.params.locales.name_tags
+                                     if t in result.names}
+                    if result.country_code:
+                        country_names.add(result.country_code)
+                    if norm_query not in country_names:
+                        result.accuracy += result.calculated_importance() * 0.5
                 else:
                     distance *= 2
             result.accuracy += distance * 0.3 / sum(len(w) for w in qwords)

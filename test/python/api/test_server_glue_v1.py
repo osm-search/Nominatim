@@ -317,6 +317,15 @@ class TestDetailsEndpoint:
         assert self.lookup_args[0].osm_class is None
 
     @pytest.mark.asyncio
+    async def test_details_by_postcode_ref(self):
+        a = FakeAdaptor(params={'place_ref': 'Pus:94110'})
+
+        await glue.details_endpoint(napi.NominatimAPIAsync(), a)
+
+        assert self.lookup_args[0].country_code == 'us'
+        assert self.lookup_args[0].postcode == '94110'
+
+    @pytest.mark.asyncio
     async def test_details_with_debugging(self):
         a = FakeAdaptor(params={'osmtype': 'N', 'osmid': '45', 'debug': '1'})
 

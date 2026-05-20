@@ -90,6 +90,10 @@ class LookupCollector:
         return ((i, p.pid) for i, p in enumerate(self.lookups)
                 if p.result is None and isinstance(p.pid, ntyp.OsmID))
 
+    def enumerate_free_postcode_refs(self) -> Iterable[Tuple[int, ntyp.PostcodeRef]]:
+        return ((i, p.pid) for i, p in enumerate(self.lookups)
+                if p.result is None and isinstance(p.pid, ntyp.PostcodeRef))
+
 
 class DetailedCollector:
     """ Result collector for detailed lookup.
@@ -136,6 +140,11 @@ class DetailedCollector:
 
     def enumerate_free_osm_ids(self) -> Iterable[Tuple[int, ntyp.OsmID]]:
         if self.result is None and isinstance(self.place, ntyp.OsmID):
+            return [(0, self.place)]
+        return []
+
+    def enumerate_free_postcode_refs(self) -> Iterable[Tuple[int, ntyp.PostcodeRef]]:
+        if self.result is None and isinstance(self.place, ntyp.PostcodeRef):
             return [(0, self.place)]
         return []
 
@@ -296,6 +305,25 @@ async def find_in_postcode(conn: SearchConnection, collector: Collector) -> bool
                         t.c.indexed_date, t.c.postcode, t.c.country_code,
                         t.c.centroid)\
                 .where(t.c.place_id == pid_tab.c.value['id'].as_string().cast(sa.BigInteger))
+
+        if await collector.add_rows_from_sql(conn, sql, t.c.geometry,
+                                             nres.create_from_postcode_row):
+            return True
+
+    postcode_refs = [{'i': i, 'cc': p.country_code, 'pc': p.postcode}
+                     for i, p in collector.enumerate_free_postcode_refs()]
+
+    if postcode_refs:
+        ref_tab = sa.func.JsonArrayEach(sa.type_coerce(postcode_refs, sa.JSON))\
+                    .table_valued(sa.column('value', type_=sa.JSON))
+        t = conn.t.postcode
+        sql = sa.select(ref_tab.c.value['i'].as_integer().label('_idx'),
+                        t.c.osm_id, t.c.place_id, t.c.parent_place_id,
+                        t.c.rank_search,
+                        t.c.indexed_date, t.c.postcode, t.c.country_code,
+                        t.c.centroid)\
+                .where(t.c.country_code == ref_tab.c.value['cc'].as_string())\
+                .where(t.c.postcode == ref_tab.c.value['pc'].as_string())
 
         if await collector.add_rows_from_sql(conn, sql, t.c.geometry,
                                              nres.create_from_postcode_row):

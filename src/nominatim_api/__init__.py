@@ -20,6 +20,7 @@ from .connection import (SearchConnection as SearchConnection)
 from .status import (StatusResult as StatusResult)
 from .types import (PlaceID as PlaceID,
                     OsmID as OsmID,
+                    PostcodeRef as PostcodeRef,
                     PlaceRef as PlaceRef,
                     Point as Point,
                     Bbox as Bbox,

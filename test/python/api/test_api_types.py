@@ -48,9 +48,13 @@ class TestFormatExcluded:
         ('N100', [typ.OsmID('N', 100)]),
         ('W101', [typ.OsmID('W', 101)]),
         ('R102', [typ.OsmID('R', 102)]),
+        ('Pus:94110', [typ.PostcodeRef('us', '94110')]),
+        ('Pgb:EH4 7EA', [typ.PostcodeRef('gb', 'EH4 7EA')]),
         ('N100,W101,R102', [typ.OsmID('N', 100), typ.OsmID('W', 101), typ.OsmID('R', 102)]),
         ('n100', [typ.OsmID('N', 100)]),
-        ('123,N456,W789', [typ.PlaceID(123), typ.OsmID('N', 456), typ.OsmID('W', 789)]),
+        ('123,N456,W789,Pus:94110', [typ.PlaceID(123), typ.OsmID('N', 456),
+                                     typ.OsmID('W', 789),
+                                     typ.PostcodeRef('us', '94110')]),
         (' 123 , N456 ', [typ.PlaceID(123), typ.OsmID('N', 456)]),
         ('123,,456', [typ.PlaceID(123), typ.PlaceID(456)]),
         ('0', []),
@@ -66,7 +70,11 @@ class TestFormatExcluded:
         ('-540', '-540'),
         ('N-100', 'N-100'),
         ('123,abc,456', 'abc'),
-        ('N:100', 'N:100')
+        ('N:100', 'N:100'),
+        ('Pus', 'Pus'),
+        ('P:94110', 'P:94110'),
+        ('Pusa:94110', 'Pusa:94110'),
+        ('Pus:', 'Pus:')
         ])
     def test_invalid_exclude_ids(self, inp, bad_id):
         with pytest.raises(UsageError, match=f"Invalid exclude ID: {bad_id}"):

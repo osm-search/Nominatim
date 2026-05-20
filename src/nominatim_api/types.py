@@ -81,7 +81,40 @@ class OsmID:
         return None
 
 
-PlaceRef = Union[PlaceID, OsmID]
+@dataclasses.dataclass
+class PostcodeRef:
+    """ Reference an artificial postcode by country code and postcode.
+    """
+    country_code: str
+    postcode: str
+
+    def __post_init__(self) -> None:
+        if len(self.country_code) != 2 or not self.country_code.isalpha():
+            raise ValueError('Country code must be two letters.')
+        if not self.postcode:
+            raise ValueError('Postcode must not be empty.')
+        self.country_code = self.country_code.lower()
+
+    def __str__(self) -> str:
+        return f"P{self.country_code}:{self.postcode}"
+
+
+PlaceRef = Union[PlaceID, OsmID, PostcodeRef]
+
+
+def parse_place_ref(ref: Any) -> PlaceRef:
+    """ Parse a stable place reference string.
+    """
+    if isinstance(ref, (PlaceID, OsmID, PostcodeRef)):
+        return ref
+
+    if not isinstance(ref, str):
+        raise UsageError("Parameter 'place_ref' must be a string.")
+
+    if len(ref) > 4 and ref[0] == 'P' and ref[1:3].isalpha() and ref[3] == ':' and ref[4:]:
+        return PostcodeRef(ref[1:3], ref[4:])
+
+    raise UsageError(f"Invalid place_ref: {ref}")
 
 
 class Point(NamedTuple):
@@ -427,7 +460,7 @@ def format_excluded(ids: Any) -> List[PlaceRef]:
     for i in plist:
         if not i:
             continue
-        if isinstance(i, (PlaceID, OsmID)):
+        if isinstance(i, (PlaceID, OsmID, PostcodeRef)):
             result.append(i)
         elif isinstance(i, int):
             if i > 0:
@@ -439,6 +472,8 @@ def format_excluded(ids: Any) -> List[PlaceRef]:
             elif len(i) > 1 and i[0].upper() in ('N', 'W', 'R') and i[1:].isdigit():
                 if int(i[1:]) > 0:
                     result.append(OsmID(i[0].upper(), int(i[1:])))
+            elif len(i) > 4 and i[0] == 'P' and i[1:3].isalpha() and i[3] == ':' and i[4:]:
+                result.append(PostcodeRef(i[1:3], i[4:]))
             else:
                 raise UsageError(f"Invalid exclude ID: {i}")
         else:

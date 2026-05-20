@@ -22,7 +22,7 @@ Feature: Tag evaluation
         When loading osm data
             """
             n2001 Thighway=road,name=Foo,alt_name:de=Bar,ref=45
-            n2002 Thighway=road,name:prefix=Pre,name:suffix=Post,ref:de=55
+            n2002 Thighway=road,name:full=Full,ref:de=55
             n2003 Thighway=yes,name:%20%de=Foo,name=real1
             n2004 Thighway=yes,name:%a%de=Foo,name=real2
             n2005 Thighway=yes,name:%9%de=Foo,name:\\=real3
@@ -39,7 +39,7 @@ Feature: Tag evaluation
 
         And place contains
             | object | extratags!dict |
-            | N2002  | 'name:prefix': 'Pre', 'name:suffix': 'Post', 'ref:de': '55' |
+            | N2002  | 'name:full': 'Full', 'ref:de': '55' |
 
 
     Scenario: Name when using with_name flag

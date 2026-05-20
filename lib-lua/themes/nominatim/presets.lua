@@ -330,7 +330,8 @@ module.NAME_TAGS.core = {main = {'name', 'name:*',
                                  'place_name', 'place_name:*',
                                  'short_name', 'short_name:*'},
                          extra = {'ref', 'int_ref', 'nat_ref', 'reg_ref',
-                                  'loc_ref', 'old_ref', 'ISO3166-2'}
+                                  'loc_ref', 'old_ref', 'ISO3166-2',
+                                  '*:prefix', '*:suffix', 'name:prefix:*', 'name:suffix:*'}
                         }
 module.NAME_TAGS.address = {house = {'addr:housename'}}
 module.NAME_TAGS.poi = group_merge({main = {'brand'},
@@ -368,7 +369,7 @@ module.IGNORE_KEYS.metatags = {'note', 'note:*', 'source', 'source:*', '*source'
                                'ref:bygningsnr', 'ref:ruian:*', 'building:ruian:type',
                                'type',
                                'is_in:postcode'}
-module.IGNORE_KEYS.name = {'*:prefix', '*:suffix', 'name:prefix:*', 'name:suffix:*',
+module.IGNORE_KEYS.name = {'name:full',
                            'name:etymology', 'name:etymology:*',
                            'name:signed', 'name:botanical'}
 module.IGNORE_KEYS.address = {'addr:street:*', 'addr:city:*', 'addr:district:*',

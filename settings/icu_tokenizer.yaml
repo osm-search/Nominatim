@@ -43,6 +43,8 @@ sanitizers:
     - step: clean-tiger-tags
     - step: split-name-list
       delimiters: ;
+    - step: affix-expansion
+      mode: add-expanded
     - step: delete-names
       filter-kind: ref
       filter-name:

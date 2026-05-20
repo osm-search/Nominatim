@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 This sanitizer sets the `analyzer` property depending on the
@@ -10,7 +10,6 @@ language of the tag. The language is taken from the suffix of the name.
 If a name already has an analyzer tagged, then this is kept.
 
 Arguments:
-
     filter-kind: Restrict the names the sanitizer should be applied to
                  the given tags. The parameter expects a list of
                  regular expressions which are matched against 'kind'.

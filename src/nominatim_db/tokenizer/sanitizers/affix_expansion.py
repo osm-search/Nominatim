@@ -5,7 +5,38 @@
 # Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
-Sanitizer which creates derived names from prefix and suffix tags
+Sanitizer which contracts or expands names based on the presence of
+prefix and suffix tags.
+
+The sanitizer can handle three kinds of prefix/suffix tags: The most simple
+one is of the form `<kind>:<prefix-tag>`. It is presumed to refer to the
+name tag `<kind>`. For example, the `name:prefix` tag will be recognised
+as a prefix tag and paired with `name`, while `alt_name:suffix` is paired
+with `alt_name`. For name tags that are of the form `<kind>:<suffix>`,
+meaning that they have another suffix, for example a language suffix, to
+notations for the prefix/suffix tag are accepted: `<kind>:<prefix-tag>:<suffix>`
+and `<kind>:<suffix>:<prefix-tag>`. That means for a German name tag `name:de`
+both `name:prefix:de` and `name:de:prefix` will work.
+
+Arguments:
+    prefix-tags: Specifies how to identify tags containing name prefixes.
+                 This is a single string or a list of suffixes which identify
+                 prefix names.
+                 (default: prefix)
+    prefix-tags: Specifies how to identify tags containing name suffixes.
+                 This is a single string or a list of suffixes which identify
+                 suffix names.
+                 (default: suffix)
+    mode: Defines how names are handled. _full-name_ means to only keep the
+          expanded version of the name with prefix/suffix attached. _short-name_
+          means to only keep the contracted version without prefix/suffix.
+          Prefixes and suffixes are still added as partial terms to the index
+          and are thus still searchable. _all-variants_ adds the expanded and
+          contracted version of the name. _add_expanded_ adds the expanded
+          version if it doesn't exist yet. If name contains the contracted
+          name, then it will not be removed. _add_contracted_ add the contracted
+          version if it doesn't exist yet. Any expanded version of the name
+          that already exists will be kept.
 """
 from typing import Optional, Callable, Sequence
 from collections import defaultdict

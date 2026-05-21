@@ -20,7 +20,7 @@ from ..errors import UsageError
 from .. import logging as loglib
 from ..core import NominatimAPIAsync
 from .format import RawDataList
-from ..types import DataLayer, GeometryFormat, PlaceRef, PlaceID, OsmID, Point
+from ..types import DataLayer, GeometryFormat, PlaceRef, PlaceID, OsmID, Point, parse_place_ref
 from ..status import StatusResult
 from ..results import DetailedResult, ReverseResults, SearchResult, SearchResults
 from ..localization import Locales
@@ -156,10 +156,17 @@ async def details_endpoint(api: NominatimAPIAsync, params: ASGIAdaptor) -> Any:
     if place_id:
         place = PlaceID(place_id)
     else:
+        place_ref = params.get('place_ref')
+        if place_ref is not None:
+            try:
+                place = parse_place_ref(place_ref)
+            except UsageError as err:
+                params.raise_error(str(err))
         osmtype = params.get('osmtype')
-        if osmtype is None:
-            params.raise_error("Missing ID parameter 'place_id' or 'osmtype'.")
-        place = OsmID(osmtype, params.get_int('osmid'), params.get('class'))
+        if place_ref is None:
+            if osmtype is None:
+                params.raise_error("Missing ID parameter 'place_id', 'place_ref' or 'osmtype'.")
+            place = OsmID(osmtype, params.get_int('osmid'), params.get('class'))
 
     debug = setup_debugging(params)
 

@@ -15,7 +15,7 @@ import difflib
 import sqlalchemy as sa
 
 from ..connection import SearchConnection
-from ..types import PlaceRef, SearchDetails, PlaceID, OsmID
+from ..types import PlaceRef, SearchDetails, PlaceID, OsmID, PostcodeRef
 from ..results import SearchResult, SearchResults, add_result_details
 from ..timeout import Timeout
 from ..logging import log
@@ -53,6 +53,17 @@ class ForwardGeocoder:
 
         place_ids: List[PlaceRef] = [e for e in excluded if isinstance(e, PlaceID)]
         osm_ids = [e for e in excluded if isinstance(e, OsmID)]
+        postcode_refs = [e for e in excluded if isinstance(e, PostcodeRef)]
+
+        if postcode_refs:
+            p = self.conn.t.postcode
+            conditions = [
+                sa.and_(p.c.country_code == ref.country_code, p.c.postcode == ref.postcode)
+                for ref in postcode_refs
+            ]
+            sql = sa.select(p.c.place_id).where(sa.or_(*conditions))
+            place_ids.extend(PlaceID(row.place_id)
+                             for row in await self.conn.execute(sql))
 
         if osm_ids:
             t = self.conn.t.placex

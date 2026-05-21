@@ -248,6 +248,14 @@ The following is a list of sanitizers that are shipped with Nominatim.
         heading_level: 6
         docstring_section_style: spacy
 
+##### affix-expansion
+
+::: nominatim_db.tokenizer.sanitizers.affix_expansion
+    options:
+        members: False
+        heading_level: 6
+        docstring_section_style: spacy
+
 #### Token Analysis
 
 Token analyzers take a full name and transform it into one or more normalized

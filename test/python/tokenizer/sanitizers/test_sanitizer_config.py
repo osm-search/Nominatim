@@ -171,3 +171,41 @@ def test_create_kind_filter_many_negative(kind):
                            ).get_filter('filter-kind')
 
     assert not filt(kind)
+
+
+class MyOpts:
+    FOO = 1
+    bar = 2
+    FOO_BAR = 3
+    BAD = 'string'
+    _SECRET = 1
+
+    def FUNC():
+        pass
+
+
+def test_get_choice_missing_no_default():
+    with pytest.raises(UsageError, match='is missing'):
+        SanitizerConfig().get_choice('test', MyOpts)
+
+
+def test_get_choice_missing_default():
+    assert SanitizerConfig().get_choice('test', MyOpts, 99) == 99
+
+
+@pytest.mark.parametrize('value', [1, True, [], {}])
+def test_get_choice_bad_type(value):
+    with pytest.raises(UsageError, match='must be a string'):
+        SanitizerConfig({'test': value}).get_choice('test', MyOpts)
+
+
+@pytest.mark.parametrize('param,result', [('FOO', 1), ('foo', 1),
+                                          ('FOO_BAR', 3), ('foo-bar', 3)])
+def test_get_choice_positive_results(param, result):
+    assert SanitizerConfig({'test': param}).get_choice('test', MyOpts) == result
+
+
+@pytest.mark.parametrize('param', ['bar', 'BAD', '_SECRET', 'FUNC', '__init__'])
+def test_get_choice_bad_parameters(param):
+    with pytest.raises(UsageError, match='Invalid value'):
+        SanitizerConfig({'test': param}).get_choice('test', MyOpts)

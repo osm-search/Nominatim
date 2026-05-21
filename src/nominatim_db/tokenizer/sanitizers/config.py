@@ -166,3 +166,47 @@ class SanitizerConfig(_BaseUserDict):
 
         raise ValueError("Default parameter must be a non-empty list or a string value \
                           ('PASS_ALL' or 'FAIL_ALL').")
+
+    def get_choice(self, param: str, opt_cls: type[Any], default: Optional[int] = None) -> int:
+        """ Return an integer representing a value from a fixed list of choices.
+
+            The choices must be given in form of a class containing class constants
+            of type int. The given value in the configuration must be a string which,
+            after having been cnverted to upper case and hyphens having been
+            replaced with underscores, corresponds to one of the class constants.
+            Only values starting with an ASCII letter and containing ASCII letters
+            and numbers, hyphen and underscore are accepted.
+
+            Arguments:
+                param: The parameter containing the choice variable.
+                opt_cls: The class describing valid choices.
+                default: Default value to use when none is supplied in the
+                         configuration. Must be an integer representing one
+                         of the choices. When left None (the default), then
+                         the parameter is required and leaving it out will
+                         throw an error.
+
+            Returns:
+                The integer with the selected choice.
+        """
+        value = self.data.get(param)
+
+        if value is None:
+            if default is None:
+                raise UsageError(f"Parameter {param} is missing but required.")
+            return default
+
+        if not isinstance(value, str):
+            raise UsageError(f"Parameter {param} must be a string.")
+
+        value = value.upper().replace('-', '_')
+
+        if re.fullmatch('[A-Z][A-Z0-9_]*', value) is None:
+            raise UsageError(f"Invalid value for parameter {param}.")
+
+        res = getattr(opt_cls, value, None)
+
+        if not isinstance(res, int):
+            raise UsageError(f"Invalid value for parameter {param}.")
+
+        return res

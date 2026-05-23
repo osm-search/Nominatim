@@ -40,13 +40,14 @@ changes when data gets reimported. Therefore it cannot be used as
 a permanent id and shouldn't be used in bug reports.
 
 ``` xml
-https://nominatim.openstreetmap.org/details?place_ref=P<country_code>:<postcode>
+https://nominatim.openstreetmap.org/details?postcode=<country_code>:<postcode_id>
 ```
 
 Artificial postcodes do not always have an OSM object reference. For these,
 Nominatim provides a stable postcode reference that combines the country code
- and postcode. For example, `Pus:94110` refers to postcode `94110` in the
- United States.
+and postcode. Spaces and hyphens in the postcode id are replaced with
+underscores. For example, `us:94110` refers to postcode `94110` in the
+United States and `gb:EH4_7EA` refers to postcode `EH4 7EA` in Great Britain.
 
 !!! danger "Deprecation warning"
     The API can also be used with the URL

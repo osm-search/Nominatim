@@ -20,7 +20,7 @@ from ..errors import UsageError
 from .. import logging as loglib
 from ..core import NominatimAPIAsync
 from .format import RawDataList
-from ..types import DataLayer, GeometryFormat, PlaceRef, PlaceID, OsmID, Point, parse_place_ref
+from ..types import DataLayer, GeometryFormat, PlaceRef, PlaceID, OsmID, Point, parse_postcode_param
 from ..status import StatusResult
 from ..results import DetailedResult, ReverseResults, SearchResult, SearchResults
 from ..localization import Locales
@@ -155,18 +155,15 @@ async def details_endpoint(api: NominatimAPIAsync, params: ASGIAdaptor) -> Any:
     place: PlaceRef
     if place_id:
         place = PlaceID(place_id)
+    elif (postcode := params.get('postcode')) is not None:
+        try:
+            place = parse_postcode_param(postcode)
+        except UsageError as err:
+            params.raise_error(str(err))
+    elif (osmtype := params.get('osmtype')) is not None:
+        place = OsmID(osmtype, params.get_int('osmid'), params.get('class'))
     else:
-        place_ref = params.get('place_ref')
-        if place_ref is not None:
-            try:
-                place = parse_place_ref(place_ref)
-            except UsageError as err:
-                params.raise_error(str(err))
-        osmtype = params.get('osmtype')
-        if place_ref is None:
-            if osmtype is None:
-                params.raise_error("Missing ID parameter 'place_id', 'place_ref' or 'osmtype'.")
-            place = OsmID(osmtype, params.get_int('osmid'), params.get('class'))
+        params.raise_error("Missing ID parameter 'place_id', 'postcode' or 'osmtype'.")
 
     debug = setup_debugging(params)
 
@@ -186,7 +183,7 @@ async def details_endpoint(api: NominatimAPIAsync, params: ASGIAdaptor) -> Any:
         return build_response(params, loglib.get_and_disable())
 
     if result is None:
-        params.raise_error('No place with that OSM ID found.', status=404)
+        params.raise_error('No place with that ID found.', status=404)
 
     locales = Locales.from_accept_languages(get_accepted_languages(params),
                                             params.config().OUTPUT_NAMES)
@@ -381,11 +378,9 @@ async def search_endpoint(api: NominatimAPIAsync, params: ASGIAdaptor) -> Any:
                                    params.get('featureType', ''),
                                    params.get_bool('namedetails', False),
                                    params.get_bool('extratags', False),
-                                   (f"{r.osm_object[0]}{r.osm_object[1]}"
-                                    if r.osm_object
-                                    else str(r.place_id)
-                                    for r in results
-                                    if r.osm_object or r.place_id))
+                                   (rid for rid in (helpers.result_to_exclude_id(r)
+                                                    for r in results)
+                                    if rid is not None))
         queryparts['format'] = fmt
 
         moreurl = params.base_uri() + '/search?' + urlencode(queryparts)

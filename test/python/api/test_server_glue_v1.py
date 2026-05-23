@@ -317,8 +317,17 @@ class TestDetailsEndpoint:
         assert self.lookup_args[0].osm_class is None
 
     @pytest.mark.asyncio
-    async def test_details_by_postcode_ref(self):
-        a = FakeAdaptor(params={'place_ref': 'Pus:94110'})
+    async def test_details_by_postcode(self):
+        a = FakeAdaptor(params={'postcode': 'us:94110'})
+
+        await glue.details_endpoint(napi.NominatimAPIAsync(), a)
+
+        assert self.lookup_args[0].country_code == 'us'
+        assert self.lookup_args[0].postcode == '94110'
+
+    @pytest.mark.asyncio
+    async def test_details_by_postcode_id(self):
+        a = FakeAdaptor(params={'postcode': 'Pus:94110'})
 
         await glue.details_endpoint(napi.NominatimAPIAsync(), a)
 
@@ -478,6 +487,34 @@ class TestSearchEndPointSearch:
 
         assert res.status == 200
         assert res.output.index('something') > 0
+
+    @pytest.mark.asyncio
+    async def test_search_free_text_xml_uses_stable_postcode_exclude_ids(self):
+        self.results = [napi.SearchResult(napi.SourceTable.POSTCODE,
+                                          ('place', 'postcode'),
+                                          napi.Point(1.0, 2.0),
+                                          place_id=123,
+                                          names={'ref': 'EH4 7EA'},
+                                          country_code='gb')]
+        a = FakeAdaptor(params={'q': 'something', 'format': 'xml'})
+
+        res = await glue.search_endpoint(napi.NominatimAPIAsync(), a)
+
+        assert 'exclude_place_ids="Pgb:EH4_7EA"' in res.output
+
+    @pytest.mark.asyncio
+    async def test_search_free_text_jsonv2_emits_postcode_id(self):
+        self.results = [napi.SearchResult(napi.SourceTable.POSTCODE,
+                                          ('place', 'postcode'),
+                                          napi.Point(1.0, 2.0),
+                                          place_id=123,
+                                          names={'ref': 'EH4 7EA'},
+                                          country_code='gb')]
+        a = FakeAdaptor(params={'q': 'something'})
+
+        res = await glue.search_endpoint(napi.NominatimAPIAsync(), a)
+
+        assert '"postcode_id":"Pgb:EH4_7EA"' in res.output
 
     @pytest.mark.asyncio
     async def test_search_free_and_structured(self):

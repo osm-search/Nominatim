@@ -49,7 +49,7 @@ class TestFormatExcluded:
         ('W101', [typ.OsmID('W', 101)]),
         ('R102', [typ.OsmID('R', 102)]),
         ('Pus:94110', [typ.PostcodeRef('us', '94110')]),
-        ('Pgb:EH4 7EA', [typ.PostcodeRef('gb', 'EH4 7EA')]),
+        ('Pgb:EH4_7EA', [typ.PostcodeRef('gb', 'EH4_7EA')]),
         ('N100,W101,R102', [typ.OsmID('N', 100), typ.OsmID('W', 101), typ.OsmID('R', 102)]),
         ('n100', [typ.OsmID('N', 100)]),
         ('123,N456,W789,Pus:94110', [typ.PlaceID(123), typ.OsmID('N', 456),
@@ -84,3 +84,21 @@ class TestFormatExcluded:
     def test_invalid_list_element_type(self, inp):
         with pytest.raises(UsageError, match="Parameter 'excluded' contains invalid types."):
             typ.format_excluded(inp)
+
+
+@pytest.mark.parametrize('inp,expected', [
+    ('Pus:94110', typ.PostcodeRef('us', '94110')),
+    ('Pgb:EH4_7EA', typ.PostcodeRef('gb', 'EH4_7EA')),
+])
+def test_parse_place_ref(inp, expected):
+    assert typ.parse_place_ref(inp) == expected
+
+
+@pytest.mark.parametrize('inp,expected', [
+    ('Pus:94110', typ.PostcodeRef('us', '94110')),
+    ('Pgb:EH4_7EA', typ.PostcodeRef('gb', 'EH4_7EA')),
+    ('us:94110', typ.PostcodeRef('us', '94110')),
+    ('gb:EH4_7EA', typ.PostcodeRef('gb', 'EH4_7EA')),
+])
+def test_parse_postcode_param(inp, expected):
+    assert typ.parse_postcode_param(inp) == expected

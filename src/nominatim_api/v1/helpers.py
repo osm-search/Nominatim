@@ -13,7 +13,7 @@ from itertools import chain
 import re
 
 from ..results import SearchResults, SourceTable, BaseResult
-from ..types import SearchDetails, GeometryFormat
+from ..types import SearchDetails, GeometryFormat, PostcodeRef
 
 
 def _add_admin_level(result: BaseResult) -> Optional[Dict[str, str]]:
@@ -105,6 +105,22 @@ def extend_query_parts(queryparts: Dict[str, Any], details: Dict[str, Any],
         queryparts['dedupe'] = '0'
     if feature_type in FEATURE_TYPE_TO_RANK:
         queryparts['featureType'] = feature_type
+
+
+def result_to_exclude_id(result: BaseResult) -> Optional[str]:
+    """Return the best stable follow-up identifier for a search result.
+    """
+    if result.osm_object:
+        return f"{result.osm_object[0]}{result.osm_object[1]}"
+
+    if result.category == ('place', 'postcode') and result.country_code \
+       and result.names and 'ref' in result.names:
+        return str(PostcodeRef(result.country_code, result.names['ref']))
+
+    if result.place_id:
+        return str(result.place_id)
+
+    return None
 
 
 def deduplicate_results(results: SearchResults, max_results: int) -> SearchResults:

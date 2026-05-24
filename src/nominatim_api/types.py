@@ -99,6 +99,7 @@ class PostcodeRef:
         if not self.postcode:
             raise ValueError('Postcode must not be empty.')
         self.country_code = self.country_code.lower()
+        self.postcode = self.postcode.replace('_', ' ')
 
     def __str__(self) -> str:
         return f"P{self.country_code}:{self.place_id_part()}"
@@ -106,12 +107,7 @@ class PostcodeRef:
     def place_id_part(self) -> str:
         """Return a URL-safe identifier part for APIs.
         """
-        return self.postcode.replace(' ', '_').replace('-', '_')
-
-    def normalized_postcode(self) -> str:
-        """Return a normalized postcode for database comparisons.
-        """
-        return re.sub(r'[\s_-]+', '', self.postcode).upper()
+        return self.postcode.replace(' ', '_')
 
 
 PlaceRef = Union[PlaceID, OsmID, PostcodeRef]

@@ -45,9 +45,9 @@ https://nominatim.openstreetmap.org/details?postcode=<country_code>:<postcode_id
 
 Artificial postcodes do not always have an OSM object reference. For these,
 Nominatim provides a stable postcode reference that combines the country code
-and postcode. Spaces and hyphens in the postcode id are replaced with
-underscores. For example, `us:94110` refers to postcode `94110` in the
-United States and `gb:EH4_7EA` refers to postcode `EH4 7EA` in Great Britain.
+and postcode. Spaces in the postcode id are replaced with underscores. For
+example, `us:94110` refers to postcode `94110` in the United States and
+`gb:EH4_7EA` refers to postcode `EH4 7EA` in Great Britain.
 
 !!! danger "Deprecation warning"
     The API can also be used with the URL

@@ -152,13 +152,6 @@ class DetailedCollector:
 Collector = Union[LookupCollector, DetailedCollector]
 
 
-def _normalized_postcode_expr(expr: sa.ColumnElement[str]) -> sa.ColumnElement[str]:
-    return sa.func.upper(
-        sa.func.replace(
-            sa.func.replace(
-                sa.func.replace(expr, ' ', ''), '-', ''), '_', ''))
-
-
 async def get_detailed_place(conn: SearchConnection, place: ntyp.PlaceRef,
                              details: ntyp.LookupDetails) -> Optional[nres.DetailedResult]:
     """ Retrieve a place with additional details from the database.
@@ -331,8 +324,7 @@ async def find_in_postcode(conn: SearchConnection, collector: Collector) -> bool
                         t.c.centroid)\
                 .where(t.c.osm_id.is_(None))\
                 .where(t.c.country_code == ref_tab.c.value['cc'].as_string())\
-                .where(_normalized_postcode_expr(t.c.postcode)
-                       == _normalized_postcode_expr(ref_tab.c.value['pc'].as_string()))
+                .where(t.c.postcode == ref_tab.c.value['pc'].as_string())
 
         if await collector.add_rows_from_sql(conn, sql, t.c.geometry,
                                              nres.create_from_postcode_row):

@@ -49,7 +49,7 @@ class TestFormatExcluded:
         ('W101', [typ.OsmID('W', 101)]),
         ('R102', [typ.OsmID('R', 102)]),
         ('Pus:94110', [typ.PostcodeRef('us', '94110')]),
-        ('Pgb:EH4_7EA', [typ.PostcodeRef('gb', 'EH4_7EA')]),
+        ('Pgb:EH4_7EA', [typ.PostcodeRef('gb', 'EH4 7EA')]),
         ('N100,W101,R102', [typ.OsmID('N', 100), typ.OsmID('W', 101), typ.OsmID('R', 102)]),
         ('n100', [typ.OsmID('N', 100)]),
         ('123,N456,W789,Pus:94110', [typ.PlaceID(123), typ.OsmID('N', 456),
@@ -88,7 +88,7 @@ class TestFormatExcluded:
 
 @pytest.mark.parametrize('inp,expected', [
     ('Pus:94110', typ.PostcodeRef('us', '94110')),
-    ('Pgb:EH4_7EA', typ.PostcodeRef('gb', 'EH4_7EA')),
+    ('Pgb:EH4_7EA', typ.PostcodeRef('gb', 'EH4 7EA')),
 ])
 def test_parse_place_ref(inp, expected):
     assert typ.parse_place_ref(inp) == expected
@@ -96,9 +96,16 @@ def test_parse_place_ref(inp, expected):
 
 @pytest.mark.parametrize('inp,expected', [
     ('Pus:94110', typ.PostcodeRef('us', '94110')),
-    ('Pgb:EH4_7EA', typ.PostcodeRef('gb', 'EH4_7EA')),
+    ('Pgb:EH4_7EA', typ.PostcodeRef('gb', 'EH4 7EA')),
     ('us:94110', typ.PostcodeRef('us', '94110')),
-    ('gb:EH4_7EA', typ.PostcodeRef('gb', 'EH4_7EA')),
+    ('gb:EH4_7EA', typ.PostcodeRef('gb', 'EH4 7EA')),
 ])
 def test_parse_postcode_param(inp, expected):
     assert typ.parse_postcode_param(inp) == expected
+
+
+def test_postcode_ref_normalizes_underscores_to_spaces():
+    ref = typ.PostcodeRef('gb', 'EH4_7EA')
+
+    assert ref.postcode == 'EH4 7EA'
+    assert str(ref) == 'Pgb:EH4_7EA'

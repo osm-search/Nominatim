@@ -242,7 +242,7 @@ Each entry may be one of:
 * an OSM object reference in the form `<osm_type><osm_id>` where `<osm_type>` is one of `N` (node), `W` (way) or `R` (relation), for example `N107775`
 * a stable postcode reference in the form `P<country_code>:<postcode_id>`, for example `Pus:94110` or `Pgb:EH4_7EA`
 
-Usage of OSM IDs is recommended because they are server independent. Stable postcode refs should be used for artificial postcode results without an OSM object reference. In postcode refs, spaces and hyphens are replaced with underscores. `place_id`s are still required for results without either kind of stable reference (for example, countries). When a street is excluded via its OSM ID, then interpolations and TIGER data derived from that street are excluded as well.
+Usage of OSM IDs is recommended because they are server independent. Stable postcode refs should be used for artificial postcode results without an OSM object reference. In postcode refs, spaces are replaced with underscores. `place_id`s are still required for results without either kind of stable reference (for example, countries). When a street is excluded via its OSM ID, then interpolations and TIGER data derived from that street are excluded as well.
 
 This can be used to retrieve additional search results. For example, if a
 previous query only returned a few results, then including those here would

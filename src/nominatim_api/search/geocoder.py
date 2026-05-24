@@ -26,13 +26,6 @@ from .query_analyzer_factory import make_query_analyzer, AbstractQueryAnalyzer
 from .query import Phrase, QueryStruct
 
 
-def _normalized_postcode_expr(expr: sa.ColumnElement[str]) -> sa.ColumnElement[str]:
-    return sa.func.upper(
-        sa.func.replace(
-            sa.func.replace(
-                sa.func.replace(expr, ' ', ''), '-', ''), '_', ''))
-
-
 class ForwardGeocoder:
     """ Main class responsible for place search.
     """
@@ -67,8 +60,7 @@ class ForwardGeocoder:
             conditions = [
                 sa.and_(p.c.osm_id.is_(None),
                         p.c.country_code == ref.country_code,
-                        _normalized_postcode_expr(p.c.postcode)
-                        == _normalized_postcode_expr(sa.literal(ref.postcode)))
+                        p.c.postcode == ref.postcode)
                 for ref in postcode_refs
             ]
             sql = sa.select(p.c.place_id).where(sa.or_(*conditions))

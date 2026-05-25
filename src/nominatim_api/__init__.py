@@ -20,7 +20,9 @@ from .connection import (SearchConnection as SearchConnection)
 from .status import (StatusResult as StatusResult)
 from .types import (PlaceID as PlaceID,
                     OsmID as OsmID,
+                    PostcodeRef as PostcodeRef,
                     PlaceRef as PlaceRef,
+                    parse_postcode_param as parse_postcode_param,
                     Point as Point,
                     Bbox as Bbox,
                     GeometryFormat as GeometryFormat,

@@ -12,7 +12,7 @@ from typing import Mapping, Any, Optional, Tuple, Union, List
 from ..utils.json_writer import JsonWriter
 from ..results import AddressLines, ReverseResults, SearchResults
 from . import classtypes as cl
-from .helpers import _add_admin_level
+from .helpers import _add_admin_level, result_to_exclude_id
 from ..types import EntranceDetails
 
 
@@ -108,6 +108,10 @@ def format_base_json(results: Union[ReverseResults, SearchResults],
 
         _write_osm_id(out, result.osm_object)
 
+        if (postcode_id := result_to_exclude_id(result)) is not None \
+           and postcode_id.startswith('P'):
+            out.keyval('postcode_id', postcode_id)
+
         # lat and lon must be string values
         out.keyval('lat', f"{result.centroid.lat:0.7f}")\
            .keyval('lon', f"{result.centroid.lon:0.7f}")\
@@ -192,6 +196,10 @@ def format_base_geojson(results: Union[ReverseResults, SearchResults],
 
         _write_osm_id(out, result.osm_object)
 
+        if (postcode_id := result_to_exclude_id(result)) is not None \
+           and postcode_id.startswith('P'):
+            out.keyval('postcode_id', postcode_id)
+
         out.keyval('place_rank', result.rank_search)\
            .keyval('category', result.category[0])\
            .keyval('type', result.category[1])\
@@ -261,6 +269,10 @@ def format_base_geocodejson(results: Union[ReverseResults, SearchResults],
         out.keyval_not_none('place_id', result.place_id)
 
         _write_osm_id(out, result.osm_object)
+
+        if (postcode_id := result_to_exclude_id(result)) is not None \
+           and postcode_id.startswith('P'):
+            out.keyval('postcode_id', postcode_id)
 
         out.keyval('osm_key', result.category[0])\
            .keyval('osm_value', result.category[1])\

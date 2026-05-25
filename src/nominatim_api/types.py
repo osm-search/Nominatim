@@ -14,12 +14,17 @@ import dataclasses
 import datetime as dt
 import enum
 import math
+import re
 from struct import unpack
 from binascii import unhexlify
 
 if TYPE_CHECKING:
     from .localization import Locales
 from .errors import UsageError
+
+
+POSTCODE_REF_RE = re.compile(r'^P(?P<cc>[A-Za-z]{2}):(?P<postcode>.+)$')
+POSTCODE_PARAM_RE = re.compile(r'^(?P<cc>[A-Za-z]{2}):(?P<postcode>.+)$')
 
 
 @dataclasses.dataclass
@@ -81,7 +86,64 @@ class OsmID:
         return None
 
 
-PlaceRef = Union[PlaceID, OsmID]
+@dataclasses.dataclass
+class PostcodeRef:
+    """ Reference an artificial postcode by country code and postcode.
+    """
+    country_code: str
+    postcode: str
+
+    def __post_init__(self) -> None:
+        if len(self.country_code) != 2 or not self.country_code.isalpha():
+            raise ValueError('Country code must be two letters.')
+        if not self.postcode:
+            raise ValueError('Postcode must not be empty.')
+        self.country_code = self.country_code.lower()
+        self.postcode = self.postcode.replace('_', ' ')
+
+    def __str__(self) -> str:
+        return f"P{self.country_code}:{self.place_id_part()}"
+
+    def place_id_part(self) -> str:
+        """Return a URL-safe identifier part for APIs.
+        """
+        return self.postcode.replace(' ', '_')
+
+
+PlaceRef = Union[PlaceID, OsmID, PostcodeRef]
+
+
+def parse_place_ref(ref: Any) -> PlaceRef:
+    """ Parse a stable place reference string.
+    """
+    if isinstance(ref, (PlaceID, OsmID, PostcodeRef)):
+        return ref
+
+    if not isinstance(ref, str):
+        raise UsageError("Parameter 'place_ref' must be a string.")
+
+    if match := POSTCODE_REF_RE.fullmatch(ref):
+        return PostcodeRef(match.group('cc'), match.group('postcode'))
+
+    raise UsageError(f"Invalid place_ref: {ref}")
+
+
+def parse_postcode_param(ref: Any) -> PostcodeRef:
+    """Parse the /details postcode parameter.
+    """
+    if isinstance(ref, PostcodeRef):
+        return ref
+
+    if not isinstance(ref, str):
+        raise UsageError("Parameter 'postcode' must be a string.")
+
+    if match := POSTCODE_REF_RE.fullmatch(ref):
+        return PostcodeRef(match.group('cc'), match.group('postcode'))
+
+    if match := POSTCODE_PARAM_RE.fullmatch(ref):
+        return PostcodeRef(match.group('cc'), match.group('postcode'))
+
+    raise UsageError(f"Invalid postcode ID: {ref}")
 
 
 class Point(NamedTuple):
@@ -427,7 +489,7 @@ def format_excluded(ids: Any) -> List[PlaceRef]:
     for i in plist:
         if not i:
             continue
-        if isinstance(i, (PlaceID, OsmID)):
+        if isinstance(i, (PlaceID, OsmID, PostcodeRef)):
             result.append(i)
         elif isinstance(i, int):
             if i > 0:
@@ -439,6 +501,8 @@ def format_excluded(ids: Any) -> List[PlaceRef]:
             elif len(i) > 1 and i[0].upper() in ('N', 'W', 'R') and i[1:].isdigit():
                 if int(i[1:]) > 0:
                     result.append(OsmID(i[0].upper(), int(i[1:])))
+            elif match := POSTCODE_REF_RE.fullmatch(i):
+                result.append(PostcodeRef(match.group('cc'), match.group('postcode')))
             else:
                 raise UsageError(f"Invalid exclude ID: {i}")
         else:

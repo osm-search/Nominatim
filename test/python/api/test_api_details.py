@@ -534,6 +534,29 @@ def test_lookup_in_postcode(apiobj, frontend):
     assert result.geometry == {'type': 'ST_Polygon'}
 
 
+def test_lookup_in_postcode_by_stable_ref(apiobj, frontend):
+    import_date = dt.datetime(2022, 12, 7, 14, 14, 46, 0)
+    apiobj.add_postcode(place_id=554,
+                        parent_place_id=152,
+                        postcode='94110',
+                        country_code='us',
+                        rank_search=20,
+                        indexed_date=import_date,
+                        centroid='POINT(-122.4170874 37.7536873)',
+                        geometry='POLYGON((-122.47 37.70, -122.47 37.80, '
+                                 '-122.36 37.75, -122.47 37.70))')
+
+    api = frontend(apiobj, options={'details'})
+    result = api.details(napi.PostcodeRef('us', '94110'))
+
+    assert result is not None
+    assert result.source_table.name == 'POSTCODE'
+    assert result.place_id == 554
+    assert result.osm_object is None
+    assert result.names == {'ref': '94110'}
+    assert result.country_code == 'us'
+
+
 @pytest.mark.parametrize('lookup', [napi.PlaceID(9000),
                                     napi.OsmID('R', 12)])
 def test_lookup_postcode_with_address_details(apiobj, frontend, lookup):

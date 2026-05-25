@@ -14,7 +14,7 @@ versions of Nominatim. Do not rely on the output in scripts or applications.
 
 
 
-The details API supports the following two request formats:
+The details API supports the following three request formats:
 
 ``` xml
 https://nominatim.openstreetmap.org/details?osmtype=[N|W|R]&osmid=<value>&class=<value>
@@ -38,6 +38,16 @@ Place IDs are assigned sequentially during Nominatim data import. The ID
 for a place is different between Nominatim installation (servers) and
 changes when data gets reimported. Therefore it cannot be used as
 a permanent id and shouldn't be used in bug reports.
+
+``` xml
+https://nominatim.openstreetmap.org/details?postcode=<country_code>:<postcode_id>
+```
+
+Artificial postcodes do not always have an OSM object reference. For these,
+Nominatim provides a stable postcode reference that combines the country code
+and postcode. Spaces in the postcode id are replaced with underscores. For
+example, `us:94110` refers to postcode `94110` in the United States and
+`gb:EH4_7EA` refers to postcode `EH4 7EA` in Great Britain.
 
 !!! danger "Deprecation warning"
     The API can also be used with the URL

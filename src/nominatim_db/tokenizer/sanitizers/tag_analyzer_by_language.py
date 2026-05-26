@@ -17,6 +17,9 @@ Arguments:
     whitelist: Restrict the set of languages that should be tagged.
                Expects a list of acceptable suffixes. When unset,
                all 2- and 3-letter lower-case codes are accepted.
+    suffix-ignore: List of suffixes that are not language-related. Names
+                   with a suffix from that list will be handled like a name
+                   without suffix. (default: empty)
     use-defaults:  Configure what happens when the name has no suffix.
                    When set to 'all', a variant is created for
                    each of the default languages in the country
@@ -44,6 +47,7 @@ class _AnalyzerByLanguage:
         self.filter_kind = config.get_filter('filter-kind')
         self.replace = config.get('mode', 'replace') != 'append'
         self.whitelist = config.get('whitelist')
+        self.suffix_ignore = set(config.get_string_list('suffix-ignore'))
 
         self._compute_default_languages(config.get('use-defaults', 'no'))
 
@@ -72,7 +76,7 @@ class _AnalyzerByLanguage:
 
         for name in (n for n in obj.names
                      if not n.has_attr('analyzer') and self.filter_kind(n.kind)):
-            if name.suffix:
+            if name.suffix and name.suffix not in self.suffix_ignore:
                 langs = [name.suffix] if self._suffix_matches(name.suffix) else None
             else:
                 langs = self.deflangs.get(obj.place.country_code)

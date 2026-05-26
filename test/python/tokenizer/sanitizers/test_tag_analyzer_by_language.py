@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2025 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for the sanitizer that enables language-dependent analyzers.
@@ -258,3 +258,38 @@ class TestWhiteList:
 
     def test_empty_whitelist(self):
         assert self.run_sanitizer_on([], ref_yy='123') == [('123', '')]
+
+
+class TestSuffixIgnore:
+
+    @pytest.fixture(autouse=True)
+    def setup_country(self, def_config):
+        self.config = def_config
+        setup_country_config(def_config)
+
+    def run_sanitizer_on(self, suffix_ignore, **kwargs):
+        place = PlaceInfo({'name': {k.replace('_', ':'): v for k, v in kwargs.items()},
+                           'country_code': 'de'})
+        name, _ = PlaceSanitizer([{'step': 'tag-analyzer-by-language',
+                                   'mode': 'replace',
+                                   'use-defaults': 'mono',
+                                   'whitelist': ['de', 'en'],
+                                   'suffix-ignore': suffix_ignore}],
+                                 self.config).process_names(place)
+
+        assert all(isinstance(p.attr, dict) for p in name)
+        assert all(len(p.attr) <= 1 for p in name)
+        assert all(not p.attr or ('analyzer' in p.attr and p.attr['analyzer'])
+                   for p in name)
+
+        return sorted([(p.name, p.attr.get('analyzer', '')) for p in name])
+
+    def test_ignored_suffix(self):
+        assert self.run_sanitizer_on(['left'], name_left='foo') == [('foo', 'de')]
+
+    def test_not_ignored_suffix(self):
+        assert self.run_sanitizer_on(['left'], name_en='foo') == [('foo', 'en')]
+        assert self.run_sanitizer_on(['left'], name_fr='foo') == [('foo', '')]
+
+    def test_ignored_suffix_and_whitelisted(self):
+        assert self.run_sanitizer_on(['de'], name_de='foo') == [('foo', 'de')]

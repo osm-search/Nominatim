@@ -46,27 +46,26 @@ class _AnalyzerByLanguage:
     def __init__(self, config: SanitizerConfig) -> None:
         self.filter_kind = config.get_filter('filter-kind')
         self.replace = config.get('mode', 'replace') != 'append'
-        self.whitelist = config.get('whitelist')
         self.suffix_ignore = set(config.get_string_list('suffix-ignore'))
+        whitelist = config.get('whitelist')
+        self.suffix_matcher: Callable[[str], bool]
+        if whitelist is None:
+            self.suffix_matcher = lambda s: len(s) in (2, 3) and s.islower()
+        else:
+            self.suffix_matcher = lambda s: s in whitelist
 
-        self._compute_default_languages(config.get('use-defaults', 'no'))
+        self._compute_default_languages(config.get('use-defaults', 'no'), whitelist)
 
-    def _compute_default_languages(self, use_defaults: str) -> None:
+    def _compute_default_languages(self, use_defaults: str, whitelist: Optional[list[str]]) -> None:
         self.deflangs: Dict[Optional[str], List[str]] = {}
 
         if use_defaults in ('mono', 'all'):
             for ccode, clangs in country_info.iterate('languages'):
                 if len(clangs) == 1 or use_defaults == 'all':
-                    if self.whitelist:
-                        self.deflangs[ccode] = [cl for cl in clangs if cl in self.whitelist]
+                    if whitelist:
+                        self.deflangs[ccode] = [cl for cl in clangs if cl in whitelist]
                     else:
                         self.deflangs[ccode] = clangs
-
-    def _suffix_matches(self, suffix: str) -> bool:
-        if self.whitelist is None:
-            return len(suffix) in (2, 3) and suffix.islower()
-
-        return suffix in self.whitelist
 
     def __call__(self, obj: ProcessInfo) -> None:
         if not obj.names:
@@ -77,7 +76,7 @@ class _AnalyzerByLanguage:
         for name in (n for n in obj.names
                      if not n.has_attr('analyzer') and self.filter_kind(n.kind)):
             if name.suffix and name.suffix not in self.suffix_ignore:
-                langs = [name.suffix] if self._suffix_matches(name.suffix) else None
+                langs = [name.suffix] if self.suffix_matcher(name.suffix) else None
             else:
                 langs = self.deflangs.get(obj.place.country_code)
 

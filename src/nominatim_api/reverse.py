@@ -219,7 +219,8 @@ class ReverseGeocoder:
                              sa.func.first_value(sa.case((sa.or_(inner.c.rank_search <= 27,
                                                                  inner.c.osm_type == 'N'), None),
                                                          else_=inner.c._geometry))
-                                    .over(order_by=inner.c.distance)
+                                    .over(order_by=[inner.c.distance,
+                                                    sa.func.ST_Area(inner.c._geometry)])
                                     .label('_best_geometry')) \
                      .subquery()
 

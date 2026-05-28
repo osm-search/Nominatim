@@ -22,7 +22,7 @@ from ..db.sql_preprocessor import SQLPreprocessor
 from ..data.place_info import PlaceInfo
 from ..data.place_name import PlaceName
 from .icu_rule_loader import ICURuleLoader
-from .place_sanitizer import PlaceSanitizer
+from .place_sanitizer import PlaceSanitizer, load_sanitizers
 from .icu_token_analysis import ICUTokenAnalysis
 from .base import AbstractAnalyzer, AbstractTokenizer
 from . import icu_types as itype
@@ -201,7 +201,7 @@ class ICUTokenizer(AbstractTokenizer):
             Analyzers are not thread-safe. You need to instantiate one per thread.
         """
         assert self.loader is not None
-        return ICUNameAnalyzer(self.dsn, self.loader.make_sanitizer(),
+        return ICUNameAnalyzer(self.dsn, load_sanitizers(self.loader.config),
                                self.loader.make_token_analysis())
 
     def most_frequent_words(self, conn: Connection, num: int) -> List[str]:

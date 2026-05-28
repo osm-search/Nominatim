@@ -54,3 +54,27 @@ class PlaceSanitizer:
             func(obj)
 
         return obj.names, obj.address
+
+
+def load_sanitizers(config: Configuration) -> PlaceSanitizer:
+    """ Load the sanitizers from the configuration.
+
+        This looks for a configuration file 'sanitizers.yaml' and creates
+        a sanitizer based on that.
+
+        Failing to find the file it will further look for the 'icu_tokenizer.yam;'
+        and read sanitizers from there. This is only for backward compatibility
+        and will go away in the next major version.
+    """
+    try:
+        config.find_config_file('sanitizers.yaml')
+        use_config = 'sanitizers.yaml'
+    except UsageError:
+        use_config = 'icu_tokenizer.yaml'
+
+    rules = config.load_sub_configuration(use_config)
+
+    if use_config == 'icu_tokenizer.yaml':
+        rules = rules.get('sanitizers', [])
+
+    return PlaceSanitizer(rules, config)

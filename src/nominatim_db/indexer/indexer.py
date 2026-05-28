@@ -2,17 +2,19 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2025 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Main work horse for indexing (computing addresses) the database.
 """
-from typing import cast, List, Any, Optional
+from typing import cast, Any, Optional
 import logging
 import time
 
 import psycopg
+from psycopg.types.json import Json
 
+from ..data.place_info import PlaceInfo
 from ..db.connection import connect, execute_scalar
 from ..db.query_pool import QueryPool
 from ..tokenizer.base import AbstractTokenizer
@@ -109,10 +111,9 @@ class Indexer:
                                    (minrank, maxrank))
                 total_tuples = {row.rank_search: row.count for row in cur}
 
-        with self.tokenizer.name_analyzer() as analyzer:
-            for rank in range(minrank, maxrank + 1):
-                total += await self._index(runners.BoundaryRunner(rank, analyzer),
-                                           total_tuples=total_tuples.get(rank, 0))
+        for rank in range(minrank, maxrank + 1):
+            total += await self._index(runners.BoundaryRunner(rank),
+                                       total_tuples=total_tuples.get(rank, 0))
 
         return total
 
@@ -144,23 +145,22 @@ class Indexer:
                                    (minrank, maxrank))
                 total_tuples = {row.rank_address: row.count for row in cur}
 
-        with self.tokenizer.name_analyzer() as analyzer:
-            for rank in range(max(1, minrank), maxrank + 1):
-                if rank >= 30:
-                    batch = 20
-                elif rank >= 26:
-                    batch = 5
-                else:
-                    batch = 1
-                total += await self._index(runners.RankRunner(rank, analyzer),
-                                           batch=batch, total_tuples=total_tuples.get(rank, 0))
+        for rank in range(max(1, minrank), maxrank + 1):
+            if rank >= 30:
+                batch = 20
+            elif rank >= 26:
+                batch = 5
+            else:
+                batch = 1
+            total += await self._index(runners.RankRunner(rank),
+                                       batch=batch, total_tuples=total_tuples.get(rank, 0))
 
-            # Special case: rank zero depends on ranks [1..30]
-            if minrank == 0:
-                total += await self._index(runners.RankRunner(0, analyzer))
+        # Special case: rank zero depends on ranks [1..30]
+        if minrank == 0:
+            total += await self._index(runners.RankRunner(0))
 
-            if maxrank == 30:
-                total += await self._index(runners.InterpolationRunner(analyzer), batch=20)
+        if maxrank == 30:
+            total += await self._index(runners.InterpolationRunner(), batch=20)
 
         return total
 
@@ -198,32 +198,38 @@ class Indexer:
         progress = ProgressLogger(runner.name(), total_tuples)
 
         if total_tuples > 0:
-            async with await psycopg.AsyncConnection.connect(
-                                 self.dsn, row_factory=psycopg.rows.dict_row) as aconn, \
-                       QueryPool(self.dsn, self.num_threads, autocommit=True) as pool:
-                fetcher_time = 0.0
-                tstart = time.time()
-                async with aconn.cursor(name='places') as cur:
-                    query = runner.index_places_query(batch)
-                    params: List[Any] = []
-                    num_places = 0
-                    async for place in cur.stream(runner.sql_get_objects()):
-                        fetcher_time += time.time() - tstart
+            with self.tokenizer.name_analyzer() as analyzer:
+                async with await psycopg.AsyncConnection.connect(
+                                     self.dsn, row_factory=psycopg.rows.dict_row) as aconn, \
+                           QueryPool(self.dsn, self.num_threads, autocommit=True) as pool:
+                    fetcher_time = 0.0
+                    tstart = time.time()
+                    async with aconn.cursor(name='places') as cur:
+                        query = runner.index_places_query(batch)
+                        params: list[Any] = []
+                        num_places = 0
+                        needs_token_info = 'token_info' in runner.QUERY_ROWS
+                        async for place in cur.stream(runner.sql_get_objects()):
+                            fetcher_time += time.time() - tstart
 
-                        params.extend(runner.index_places_params(place))
-                        num_places += 1
+                            if needs_token_info:
+                                place_info = PlaceInfo(place)
+                                place['token_info'] = Json(analyzer.process_place(place_info))
 
-                        if num_places >= batch:
-                            LOG.debug("Processing places: %s", str(params))
-                            await pool.put_query(query, params)
-                            progress.add(num_places)
-                            params = []
-                            num_places = 0
+                            params.extend(place.get(i) for i in runner.QUERY_ROWS)
+                            num_places += 1
 
-                        tstart = time.time()
+                            if num_places >= batch:
+                                LOG.debug("Processing places: %s", str(params))
+                                await pool.put_query(query, params)
+                                progress.add(num_places)
+                                params = []
+                                num_places = 0
 
-                if num_places > 0:
-                    await pool.put_query(runner.index_places_query(num_places), params)
+                            tstart = time.time()
+
+                    if num_places > 0:
+                        await pool.put_query(runner.index_places_query(num_places), params)
 
             LOG.info("Wait time: fetcher: %.2fs,  pool: %.2fs",
                      fetcher_time, pool.wait_time)

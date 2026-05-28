@@ -8,31 +8,21 @@
 Mix-ins that provide the actual commands for the indexer for various indexing
 tasks.
 """
-from typing import Any, Sequence
-
 from psycopg import sql as pysql
-from psycopg.rows import DictRow
-from psycopg.types.json import Json
 
 from ..typing import Protocol, QueryNoTemplate
-from ..data.place_info import PlaceInfo
-from ..tokenizer.base import AbstractAnalyzer
 
 
 def _mk_valuelist(template: str, num: int) -> pysql.Composed:
     return pysql.SQL(',').join([pysql.SQL(template)] * num)
 
 
-def _analyze_place(place: DictRow, analyzer: AbstractAnalyzer) -> Json:
-    return Json(analyzer.process_place(PlaceInfo(place)))
-
-
 class Runner(Protocol):
+    QUERY_ROWS: list[str] = []
     def name(self) -> str: ...
     def sql_count_objects(self) -> QueryNoTemplate: ...
     def sql_get_objects(self) -> QueryNoTemplate: ...
     def index_places_query(self, batch_size: int) -> QueryNoTemplate: ...
-    def index_places_params(self, place: DictRow) -> Sequence[Any]: ...
 
 
 SELECT_SQL = pysql.SQL("""SELECT place_id, extra.*
@@ -44,10 +34,10 @@ UPDATE_LINE = "(%s, %s::hstore, %s::hstore, %s::int, %s::jsonb)"
 class AbstractPlacexRunner:
     """ Returns SQL commands for indexing of the placex table.
     """
+    QUERY_ROWS = ['place_id', 'name', 'address', 'linked_place_id', 'token_info']
 
-    def __init__(self, rank: int, analyzer: AbstractAnalyzer) -> None:
+    def __init__(self, rank: int) -> None:
         self.rank = rank
-        self.analyzer = analyzer
 
     def index_places_query(self, batch_size: int) -> QueryNoTemplate:
         return pysql.SQL(
@@ -57,13 +47,6 @@ class AbstractPlacexRunner:
                 FROM (VALUES {}) as v(id, name, addr, linked_place_id, ti)
                 WHERE place_id = v.id
             """).format(_mk_valuelist(UPDATE_LINE, batch_size))
-
-    def index_places_params(self, place: DictRow) -> Sequence[Any]:
-        return (place['place_id'],
-                place['name'],
-                place['address'],
-                place['linked_place_id'],
-                _analyze_place(place, self.analyzer))
 
 
 class RankRunner(AbstractPlacexRunner):
@@ -112,9 +95,7 @@ class InterpolationRunner:
     """ Returns SQL commands for indexing the address interpolation table
         location_property_osmline.
     """
-
-    def __init__(self, analyzer: AbstractAnalyzer) -> None:
-        self.analyzer = analyzer
+    QUERY_ROWS = ['place_id', 'address', 'token_info']
 
     def name(self) -> str:
         return "interpolation lines (location_property_osmline)"
@@ -136,14 +117,11 @@ class InterpolationRunner:
                             WHERE place_id = v.id
                          """).format(_mk_valuelist("(%s, %s::hstore, %s::jsonb)", batch_size))
 
-    def index_places_params(self, place: DictRow) -> Sequence[Any]:
-        return (place['place_id'], place['address'],
-                _analyze_place(place, self.analyzer))
-
 
 class PostcodeRunner(Runner):
     """ Provides the SQL commands for indexing the location_postcodes table.
     """
+    QUERY_ROWS = ['place_id']
 
     def name(self) -> str:
         return "postcodes (location_postcodes)"
@@ -160,6 +138,3 @@ class PostcodeRunner(Runner):
         return pysql.SQL("""UPDATE location_postcodes SET indexed_status = 0
                                     WHERE place_id IN ({})""")\
                     .format(pysql.SQL(',').join((pysql.Placeholder() for _ in range(batch_size))))
-
-    def index_places_params(self, place: DictRow) -> Sequence[Any]:
-        return (place['place_id'], )

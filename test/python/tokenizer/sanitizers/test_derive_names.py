@@ -37,7 +37,8 @@ def test_name_deletion(mk_sanitizer, prim, out, keep):
     place = PlaceInfo({'name': names, 'address': names,
                        'country_code': 'de', 'rank_address': 30})
 
-    res = san.process_names(place)
+    san.process_names(place)
+    res = [place.sanitized_names, place.sanitized_address]
 
     assert len(res[(out + 1) % 2]) == 3
     if keep:
@@ -53,9 +54,9 @@ def simple_replace(mk_sanitizer):
         san = mk_sanitizer(name_pattern=pattern, type='name', keep_original=keep,
                            variants=variants)
         place = PlaceInfo({'name': {'name': name}, 'country_code': 'de', 'rank_address': 30})
-        out, _ = san.process_names(place)
+        san.process_names(place)
 
-        return {p.name for p in out}
+        return {p.name for p in place.sanitized_names}
     return _impl
 
 

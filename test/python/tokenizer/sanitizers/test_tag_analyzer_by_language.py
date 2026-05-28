@@ -23,10 +23,9 @@ class TestWithDefaults:
     def run_sanitizer_on(self, country, **kwargs):
         place = PlaceInfo({'name': {k.replace('_', ':'): v for k, v in kwargs.items()},
                            'country_code': country})
-        name, _ = PlaceSanitizer([{'step': 'tag-analyzer-by-language'}],
-                                 self.config).process_names(place)
+        PlaceSanitizer([{'step': 'tag-analyzer-by-language'}], self.config).process_names(place)
 
-        return sorted([(p.name, p.kind, p.suffix, p.attr) for p in name])
+        return sorted([(p.name, p.kind, p.suffix, p.attr) for p in place.sanitized_names])
 
     def test_no_names(self):
         assert self.run_sanitizer_on('de') == []
@@ -53,11 +52,11 @@ class TestFilterKind:
     def run_sanitizer_on(self, filt, **kwargs):
         place = PlaceInfo({'name': {k.replace('_', ':'): v for k, v in kwargs.items()},
                            'country_code': 'de'})
-        name, _ = PlaceSanitizer([{'step': 'tag-analyzer-by-language',
-                                   'filter-kind': filt}],
-                                 self.config).process_names(place)
+        PlaceSanitizer([{'step': 'tag-analyzer-by-language',
+                         'filter-kind': filt}],
+                       self.config).process_names(place)
 
-        return sorted([(p.name, p.kind, p.suffix, p.attr) for p in name])
+        return sorted([(p.name, p.kind, p.suffix, p.attr) for p in place.sanitized_names])
 
     def test_single_exact_name(self):
         res = self.run_sanitizer_on(['name'], name_fr='A', ref_fr='12',
@@ -102,44 +101,44 @@ class TestDefaultCountry:
     def run_sanitizer_append(self, mode,  country, **kwargs):
         place = PlaceInfo({'name': {k.replace('_', ':'): v for k, v in kwargs.items()},
                            'country_code': country})
-        name, _ = PlaceSanitizer([{'step': 'tag-analyzer-by-language',
-                                   'use-defaults': mode,
-                                   'mode': 'append'}],
-                                 self.config).process_names(place)
+        PlaceSanitizer([{'step': 'tag-analyzer-by-language',
+                         'use-defaults': mode,
+                         'mode': 'append'}],
+                       self.config).process_names(place)
 
-        assert all(isinstance(p.attr, dict) for p in name)
-        assert all(len(p.attr) <= 1 for p in name)
+        assert all(isinstance(p.attr, dict) for p in place.sanitized_names)
+        assert all(len(p.attr) <= 1 for p in place.sanitized_names)
         assert all(not p.attr or ('analyzer' in p.attr and p.attr['analyzer'])
-                   for p in name)
+                   for p in place.sanitized_names)
 
-        return sorted([(p.name, p.attr.get('analyzer', '')) for p in name])
+        return sorted([(p.name, p.attr.get('analyzer', '')) for p in place.sanitized_names])
 
     def run_sanitizer_replace(self, mode,  country, **kwargs):
         place = PlaceInfo({'name': {k.replace('_', ':'): v for k, v in kwargs.items()},
                            'country_code': country})
-        name, _ = PlaceSanitizer([{'step': 'tag-analyzer-by-language',
-                                   'use-defaults': mode,
-                                   'mode': 'replace'}],
-                                 self.config).process_names(place)
+        PlaceSanitizer([{'step': 'tag-analyzer-by-language',
+                         'use-defaults': mode,
+                         'mode': 'replace'}],
+                       self.config).process_names(place)
 
-        assert all(isinstance(p.attr, dict) for p in name)
-        assert all(len(p.attr) <= 1 for p in name)
+        assert all(isinstance(p.attr, dict) for p in place.sanitized_names)
+        assert all(len(p.attr) <= 1 for p in place.sanitized_names)
         assert all(not p.attr or ('analyzer' in p.attr and p.attr['analyzer'])
-                   for p in name)
+                   for p in place.sanitized_names)
 
-        return sorted([(p.name, p.attr.get('analyzer', '')) for p in name])
+        return sorted([(p.name, p.attr.get('analyzer', '')) for p in place.sanitized_names])
 
     def test_missing_country(self):
         place = PlaceInfo({'name': {'name': 'something'}})
-        name, _ = PlaceSanitizer([{'step': 'tag-analyzer-by-language',
-                                   'use-defaults': 'all',
-                                   'mode': 'replace'}],
-                                 self.config).process_names(place)
+        PlaceSanitizer([{'step': 'tag-analyzer-by-language',
+                         'use-defaults': 'all',
+                         'mode': 'replace'}],
+                       self.config).process_names(place)
 
-        assert len(name) == 1
-        assert name[0].name == 'something'
-        assert name[0].suffix is None
-        assert 'analyzer' not in name[0].attr
+        assert len(place.sanitized_names) == 1
+        assert place.sanitized_names[0].name == 'something'
+        assert place.sanitized_names[0].suffix is None
+        assert 'analyzer' not in place.sanitized_names[0].attr
 
     def test_mono_unknown_country(self):
         expect = [('XX', '')]
@@ -200,18 +199,18 @@ class TestCountryWithWhitelist:
     def run_sanitizer_on(self, mode,  country, **kwargs):
         place = PlaceInfo({'name': {k.replace('_', ':'): v for k, v in kwargs.items()},
                            'country_code': country})
-        name, _ = PlaceSanitizer([{'step': 'tag-analyzer-by-language',
-                                   'use-defaults': mode,
-                                   'mode': 'replace',
-                                   'whitelist': ['de', 'fr', 'ru']}],
-                                 self.config).process_names(place)
+        PlaceSanitizer([{'step': 'tag-analyzer-by-language',
+                         'use-defaults': mode,
+                         'mode': 'replace',
+                         'whitelist': ['de', 'fr', 'ru']}],
+                       self.config).process_names(place)
 
-        assert all(isinstance(p.attr, dict) for p in name)
-        assert all(len(p.attr) <= 1 for p in name)
+        assert all(isinstance(p.attr, dict) for p in place.sanitized_names)
+        assert all(len(p.attr) <= 1 for p in place.sanitized_names)
         assert all(not p.attr or ('analyzer' in p.attr and p.attr['analyzer'])
-                   for p in name)
+                   for p in place.sanitized_names)
 
-        return sorted([(p.name, p.attr.get('analyzer', '')) for p in name])
+        return sorted([(p.name, p.attr.get('analyzer', '')) for p in place.sanitized_names])
 
     def test_mono_monoling(self):
         assert self.run_sanitizer_on('mono', 'de', name='Foo') == [('Foo', 'de')]
@@ -238,17 +237,17 @@ class TestWhiteList:
 
     def run_sanitizer_on(self, whitelist, **kwargs):
         place = PlaceInfo({'name': {k.replace('_', ':'): v for k, v in kwargs.items()}})
-        name, _ = PlaceSanitizer([{'step': 'tag-analyzer-by-language',
-                                   'mode': 'replace',
-                                   'whitelist': whitelist}],
-                                 self.config).process_names(place)
+        PlaceSanitizer([{'step': 'tag-analyzer-by-language',
+                         'mode': 'replace',
+                         'whitelist': whitelist}],
+                       self.config).process_names(place)
 
-        assert all(isinstance(p.attr, dict) for p in name)
-        assert all(len(p.attr) <= 1 for p in name)
+        assert all(isinstance(p.attr, dict) for p in place.sanitized_names)
+        assert all(len(p.attr) <= 1 for p in place.sanitized_names)
         assert all(not p.attr or ('analyzer' in p.attr and p.attr['analyzer'])
-                   for p in name)
+                   for p in place.sanitized_names)
 
-        return sorted([(p.name, p.attr.get('analyzer', '')) for p in name])
+        return sorted([(p.name, p.attr.get('analyzer', '')) for p in place.sanitized_names])
 
     def test_in_whitelist(self):
         assert self.run_sanitizer_on(['de', 'xx'], ref_xx='123') == [('123', 'xx')]
@@ -270,19 +269,19 @@ class TestSuffixIgnore:
     def run_sanitizer_on(self, suffix_ignore, **kwargs):
         place = PlaceInfo({'name': {k.replace('_', ':'): v for k, v in kwargs.items()},
                            'country_code': 'de'})
-        name, _ = PlaceSanitizer([{'step': 'tag-analyzer-by-language',
-                                   'mode': 'replace',
-                                   'use-defaults': 'mono',
-                                   'whitelist': ['de', 'en'],
-                                   'suffix-ignore': suffix_ignore}],
-                                 self.config).process_names(place)
+        PlaceSanitizer([{'step': 'tag-analyzer-by-language',
+                         'mode': 'replace',
+                         'use-defaults': 'mono',
+                         'whitelist': ['de', 'en'],
+                         'suffix-ignore': suffix_ignore}],
+                       self.config).process_names(place)
 
-        assert all(isinstance(p.attr, dict) for p in name)
-        assert all(len(p.attr) <= 1 for p in name)
+        assert all(isinstance(p.attr, dict) for p in place.sanitized_names)
+        assert all(len(p.attr) <= 1 for p in place.sanitized_names)
         assert all(not p.attr or ('analyzer' in p.attr and p.attr['analyzer'])
-                   for p in name)
+                   for p in place.sanitized_names)
 
-        return sorted([(p.name, p.attr.get('analyzer', '')) for p in name])
+        return sorted([(p.name, p.attr.get('analyzer', '')) for p in place.sanitized_names])
 
     def test_ignored_suffix(self):
         assert self.run_sanitizer_on(['left'], name_left='foo') == [('foo', 'de')]

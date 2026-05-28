@@ -2,13 +2,15 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2025 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Wrapper around place information the indexer gets from the database and hands to
 the tokenizer.
 """
 from typing import Optional, Mapping, Any, Tuple, cast
+
+from .place_name import PlaceName
 
 
 class PlaceInfo:
@@ -18,6 +20,8 @@ class PlaceInfo:
 
     def __init__(self, info: Mapping[str, Any]) -> None:
         self._info = info
+        self._sanitized_names: list[PlaceName] = []
+        self._sanitized_address: list[PlaceName] = []
 
     @property
     def name(self) -> Optional[Mapping[str, str]]:
@@ -41,6 +45,18 @@ class PlaceInfo:
             [1]: ../customize/Import-Styles.md
         """
         return self._info.get('address')
+
+    @property
+    def sanitized_names(self) -> list[PlaceName]:
+        """ List of place names after sanitization.
+        """
+        return self._sanitized_names
+
+    @property
+    def sanitized_address(self) -> list[PlaceName]:
+        """ List of address terms after sanitization.
+        """
+        return self._sanitized_address
 
     @property
     def country_code(self) -> Optional[str]:
@@ -83,3 +99,7 @@ class PlaceInfo:
         """ Return True when the place is a street object.
         """
         return 26 <= self.rank_address <= 27
+
+    def set_sanitized(self, names: list[PlaceName], address: list[PlaceName]) -> None:
+        self._sanitized_names = names
+        self._sanitized_address = address

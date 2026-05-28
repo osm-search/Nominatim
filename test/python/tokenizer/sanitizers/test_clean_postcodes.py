@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2025 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for the sanitizer that normalizes postcodes.
@@ -26,9 +26,10 @@ def sanitize(def_config, request):
         if country is not None:
             pi['country_code'] = country
 
-        _, address = PlaceSanitizer([sanitizer_args], def_config).process_names(PlaceInfo(pi))
+        place = PlaceInfo(pi)
+        PlaceSanitizer([sanitizer_args], def_config).process_names(place)
 
-        return sorted([(p.kind, p.name) for p in address])
+        return sorted([(p.kind, p.name) for p in place.sanitized_address])
 
     return _run
 

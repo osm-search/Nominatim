@@ -455,9 +455,8 @@ class ICUNameAnalyzer(AbstractAnalyzer):
         info = PlaceInfo({'name': names, 'country_code': country_code,
                           'rank_address': 4, 'class': 'boundary',
                           'type': 'administrative'})
-        self._add_country_full_names(country_code,
-                                     self.sanitizer.process_names(info)[0],
-                                     internal=True)
+        self.sanitizer.process_names(info)
+        self._add_country_full_names(country_code, info.sanitized_names, internal=True)
 
     def _add_country_full_names(self, country_code: str, names: Sequence[PlaceName],
                                 internal: bool = False) -> None:
@@ -523,17 +522,17 @@ class ICUNameAnalyzer(AbstractAnalyzer):
         """
         token_info = _TokenInfo()
 
-        names, address = self.sanitizer.process_names(place)
+        self.sanitizer.process_names(place)
 
-        if names:
-            token_info.set_names(self._compute_name_tokens(names))
+        if place.sanitized_names:
+            token_info.set_names(self._compute_name_tokens(place.sanitized_names))
 
             if place.is_country():
                 assert place.country_code is not None
-                self._add_country_full_names(place.country_code, names)
+                self._add_country_full_names(place.country_code, place.sanitized_names)
 
-        if address:
-            self._process_place_address(token_info, address)
+        if place.sanitized_address:
+            self._process_place_address(token_info, place.sanitized_address)
 
         return token_info.to_dict()
 

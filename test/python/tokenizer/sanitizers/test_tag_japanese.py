@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2025 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 import pytest
 
@@ -21,8 +21,8 @@ class TestTagJapanese:
             'country_code': 'jp'
         })
         sanitizer_args = {'step': 'tag-japanese'}
-        _, address = PlaceSanitizer([sanitizer_args], self.config).process_names(place)
-        tmp_list = [(p.name, p.kind) for p in address]
+        PlaceSanitizer([sanitizer_args], self.config).process_names(place)
+        tmp_list = [(p.name, p.kind) for p in place.sanitized_address]
         return sorted(tmp_list)
 
     def test_on_address(self):

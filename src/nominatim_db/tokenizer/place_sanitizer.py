@@ -8,13 +8,12 @@
 Handler for cleaning name and address tags in place information before it
 is handed to the token analysis.
 """
-from typing import Optional, List, Mapping, Sequence, Callable, Any, Tuple
+from typing import Optional, Mapping, Sequence, Callable, Any
 
 from ..errors import UsageError
 from ..config import Configuration
 from .sanitizers.config import SanitizerConfig
 from .sanitizers.base import SanitizerHandler, ProcessInfo
-from ..data.place_name import PlaceName
 from ..data.place_info import PlaceInfo
 
 
@@ -25,7 +24,7 @@ class PlaceSanitizer:
 
     def __init__(self, rules: Optional[Sequence[Mapping[str, Any]]],
                  config: Configuration) -> None:
-        self.handlers: List[Callable[[ProcessInfo], None]] = []
+        self.handlers: list[Callable[[ProcessInfo], None]] = []
 
         if rules:
             for func in rules:
@@ -43,7 +42,7 @@ class PlaceSanitizer:
 
                 self.handlers.append(module.create(SanitizerConfig(func)))
 
-    def process_names(self, place: PlaceInfo) -> Tuple[List[PlaceName], List[PlaceName]]:
+    def process_names(self, place: PlaceInfo) -> None:
         """ Extract a sanitized list of names and address parts from the
             given place. The function returns a tuple
             (list of names, list of address names)
@@ -53,7 +52,7 @@ class PlaceSanitizer:
         for func in self.handlers:
             func(obj)
 
-        return obj.names, obj.address
+        place.set_sanitized(obj.names, obj.address)
 
 
 def load_sanitizers(config: Configuration) -> PlaceSanitizer:

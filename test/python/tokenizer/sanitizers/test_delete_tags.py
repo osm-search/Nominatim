@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2025 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for the sanitizer that normalizes housenumbers.
@@ -26,11 +26,12 @@ class TestWithDefault:
 
         sanitizer_args = {'step': 'delete-tags'}
 
-        name, address = PlaceSanitizer([sanitizer_args],
-                                       self.config).process_names(place)
+        PlaceSanitizer([sanitizer_args], self.config).process_names(place)
 
-        return {'name': sorted([(p.name, p.kind, p.suffix or '') for p in name]),
-                'address': sorted([(p.name, p.kind, p.suffix or '') for p in address])}
+        return {'name': sorted([(p.name, p.kind, p.suffix or '')
+                                for p in place.sanitized_names]),
+                'address': sorted([(p.name, p.kind, p.suffix or '')
+                                  for p in place.sanitized_address])}
 
     def test_on_name(self):
         res = self.run_sanitizer_on('name', name='foo', ref='bar', ref_abc='baz')
@@ -58,10 +59,9 @@ class TestTypeField:
         sanitizer_args = {'step': 'delete-tags',
                           'type': type}
 
-        name, _ = PlaceSanitizer([sanitizer_args],
-                                 self.config).process_names(place)
+        PlaceSanitizer([sanitizer_args], self.config).process_names(place)
 
-        return sorted([(p.name, p.kind, p.suffix or '') for p in name])
+        return sorted([(p.name, p.kind, p.suffix or '') for p in place.sanitized_names])
 
     def test_name_type(self):
         res = self.run_sanitizer_on('name', name='foo', ref='bar', ref_abc='baz')
@@ -89,10 +89,9 @@ class TestFilterKind:
         sanitizer_args = {'step': 'delete-tags',
                           'filter-kind': filt}
 
-        name, _ = PlaceSanitizer([sanitizer_args],
-                                 self.config).process_names(place)
+        PlaceSanitizer([sanitizer_args], self.config).process_names(place)
 
-        return sorted([(p.name, p.kind, p.suffix or '') for p in name])
+        return sorted([(p.name, p.kind, p.suffix or '') for p in place.sanitized_names])
 
     def test_single_exact_name(self):
         res = self.run_sanitizer_on(['name'], ref='foo', name='foo',
@@ -129,10 +128,9 @@ class TestRankAddress:
         sanitizer_args = {'step': 'delete-tags',
                           'rank_address': rank_addr}
 
-        name, _ = PlaceSanitizer([sanitizer_args],
-                                 self.config).process_names(place)
+        PlaceSanitizer([sanitizer_args], self.config).process_names(place)
 
-        return sorted([(p.name, p.kind, p.suffix or '') for p in name])
+        return sorted([(p.name, p.kind, p.suffix or '') for p in place.sanitized_names])
 
     def test_single_rank(self):
         res = self.run_sanitizer_on('30', name='foo', ref='bar')
@@ -179,10 +177,9 @@ class TestSuffix:
         sanitizer_args = {'step': 'delete-tags',
                           'suffix': suffix}
 
-        name, _ = PlaceSanitizer([sanitizer_args],
-                                 self.config).process_names(place)
+        PlaceSanitizer([sanitizer_args], self.config).process_names(place)
 
-        return sorted([(p.name, p.kind, p.suffix or '') for p in name])
+        return sorted([(p.name, p.kind, p.suffix or '') for p in place.sanitized_names])
 
     def test_single_suffix(self):
         res = self.run_sanitizer_on('abc', name='foo', name_abc='foo',
@@ -211,10 +208,9 @@ class TestCountryCodes:
         sanitizer_args = {'step': 'delete-tags',
                           'country_code': country_code}
 
-        name, _ = PlaceSanitizer([sanitizer_args],
-                                 self.config).process_names(place)
+        PlaceSanitizer([sanitizer_args], self.config).process_names(place)
 
-        return sorted([(p.name, p.kind) for p in name])
+        return sorted([(p.name, p.kind) for p in place.sanitized_names])
 
     def test_single_country_code_pass(self):
         res = self.run_sanitizer_on('de', name='foo', ref='bar')
@@ -253,20 +249,18 @@ class TestAllParameters:
         place = PlaceInfo({'name': {k.replace('_', ':'): v for k, v in kwargs.items()},
                            'country_code': 'de', 'rank_address': 30})
 
-        sanitizer_args = {
-                        'step': 'delete-tags',
-                        'type': 'name',
-                        'filter-kind': ['name', 'ref'],
-                        'country_code': country_code,
-                        'rank_address': rank_addr,
-                        'suffix': suffix,
-                        'name': r'[\s\S]*',
-                    }
+        sanitizer_args = {'step': 'delete-tags',
+                          'type': 'name',
+                          'filter-kind': ['name', 'ref'],
+                          'country_code': country_code,
+                          'rank_address': rank_addr,
+                          'suffix': suffix,
+                          'name': r'[\s\S]*',
+                          }
 
-        name, _ = PlaceSanitizer([sanitizer_args],
-                                 self.config).process_names(place)
+        PlaceSanitizer([sanitizer_args], self.config).process_names(place)
 
-        return sorted([(p.name, p.kind, p.suffix or '') for p in name])
+        return sorted([(p.name, p.kind, p.suffix or '') for p in place.sanitized_names])
 
     def test_string_arguments_pass(self):
         res = self.run_sanitizer_on('de', '25-30', r'[\s\S]*',

@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2025 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for sanitizer that clean up TIGER tags.
@@ -21,10 +21,9 @@ class TestCleanTigerTags:
 
     def run_sanitizer_on(self, addr):
         place = PlaceInfo({'address': addr})
-        _, outaddr = PlaceSanitizer([{'step': 'clean-tiger-tags'}],
-                                    self.config).process_names(place)
+        PlaceSanitizer([{'step': 'clean-tiger-tags'}], self.config).process_names(place)
 
-        return sorted([(p.name, p.kind, p.suffix) for p in outaddr])
+        return sorted([(p.name, p.kind, p.suffix) for p in place.sanitized_address])
 
     @pytest.mark.parametrize('inname,outname', [('Hamilton, AL', 'Hamilton'),
                                                 ('Little, Borough, CA', 'Little, Borough')])

@@ -2,19 +2,20 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2025 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Abstract class definitions for tokenizers. These base classes are here
 mainly for documentation purposes.
 """
 from abc import ABC, abstractmethod
-from typing import List, Tuple, Dict, Any, Optional, Iterable
+from typing import List, Tuple, Any, Optional, Iterable
 
 from ..typing import Protocol
 from ..config import Configuration
 from ..db.connection import Connection
 from ..data.place_info import PlaceInfo
+from ..data.place_name import PlaceName
 
 
 class AbstractAnalyzer(ABC):
@@ -90,13 +91,13 @@ class AbstractAnalyzer(ABC):
         """
 
     @abstractmethod
-    def add_country_names(self, country_code: str, names: Dict[str, str]) -> None:
+    def add_country_names(self, country_code: str, names: list[PlaceName]) -> None:
         """ Add the given names to the tokenizer's list of country tokens.
 
             Arguments:
                 country_code: two-letter country code for the country the names
                               refer to.
-                names: Dictionary of name type to name.
+                names: List of names to add.
         """
 
     @abstractmethod

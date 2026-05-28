@@ -23,6 +23,7 @@ from ..errors import UsageError
 from ..db.query_pool import QueryPool
 from ..data.place_info import PlaceInfo
 from ..tokenizer.base import AbstractTokenizer
+from ..tokenizer.place_sanitizer import load_sanitizers
 
 LOG = logging.getLogger()
 
@@ -110,12 +111,18 @@ async def add_tiger_data(data_dir: str, config: Configuration, threads: int,
 
         async with QueryPool(dsn, place_threads, autocommit=True) as pool:
             with tokenizer.name_analyzer() as analyzer:
+                sanitizer = load_sanitizers(config)
                 for lineno, row in enumerate(tar, 1):
                     try:
-                        address = dict(street=row['street'], postcode=row['postcode'])
+                        place = PlaceInfo({'address': {'street': row['street'],
+                                                       'postcode': row['postcode']},
+                                           'country_code': 'us',
+                                           'rank_address': 30,
+                                           'class': 'place', 'type': 'house'})
+                        sanitizer.process_names(place)
                         args = ('SRID=4326;' + row['geometry'],
                                 int(row['from']), int(row['to']), row['interpolation'],
-                                Json(analyzer.process_place(PlaceInfo({'address': address}))),
+                                Json(analyzer.process_place(place)),
                                 analyzer.normalize_postcode(row['postcode']))
                     except ValueError:
                         continue

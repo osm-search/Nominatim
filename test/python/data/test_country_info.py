@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2025 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for function that handle country properties.
@@ -53,7 +53,8 @@ def test_setup_country_tables(src_dir, temp_db_with_extensions, dsn, temp_db_cur
 
 @pytest.mark.parametrize("languages", (None, ['fr', 'en']))
 def test_create_country_names(temp_db_with_extensions, temp_db_conn, temp_db_cursor,
-                              country_row, tokenizer_mock, languages, loaded_country):
+                              country_row, tokenizer_mock, languages, loaded_country,
+                              def_config):
     temp_db_cursor.execute('TRUNCATE country_name')
     country_row(country='us', names={"name": "us1", "name:af": "us2"})
     country_row(country='fr', names={"name": "Fra", "name:en": "Fren"})
@@ -62,11 +63,11 @@ def test_create_country_names(temp_db_with_extensions, temp_db_conn, temp_db_cur
 
     tokenizer = tokenizer_mock()
 
-    country_info.create_country_names(temp_db_conn, tokenizer, languages)
+    country_info.create_country_names(temp_db_conn, tokenizer, def_config, languages)
 
     assert len(tokenizer.analyser_cache['countries']) == 2
 
-    result_set = {k: set(v.values())
+    result_set = {k: set(p.name for p in v)
                   for k, v in tokenizer.analyser_cache['countries']}
 
     if languages:

@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Implementation of the 'replication' sub-command.
@@ -136,7 +136,7 @@ class UpdateReplication:
         recheck_interval = args.config.get_int('REPLICATION_RECHECK_INTERVAL')
 
         tokenizer = tokenizer_factory.get_tokenizer_for_db(args.config)
-        indexer = Indexer(args.config.get_libpq_dsn(), tokenizer, args.threads or 1)
+        indexer = Indexer(args.config, tokenizer, args.threads or 1)
 
         dsn = args.config.get_libpq_dsn()
 

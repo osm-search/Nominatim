@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Implementation of 'refresh' subcommand.
@@ -102,8 +102,7 @@ class UpdateRefresh:
                 postcodes.update_postcodes(args.config.get_libpq_dsn(),
                                            args.project_dir, tokenizer,
                                            force_reimport=args.postcode_force_reimport)
-                indexer = Indexer(args.config.get_libpq_dsn(), tokenizer,
-                                  args.threads or 1)
+                indexer = Indexer(args.config, tokenizer, args.threads or 1)
                 asyncio.run(indexer.index_postcodes())
             else:
                 LOG.error("The place table doesn't exist. "

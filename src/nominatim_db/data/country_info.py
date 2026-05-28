@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Functions for importing and managing static country information.
@@ -12,9 +12,12 @@ from pathlib import Path
 
 from ..db import utils as db_utils
 from ..db.connection import connect, Connection, register_hstore
+from ..data.place_info import PlaceInfo
+from ..data.place_name import PlaceName
 from ..errors import UsageError
 from ..config import Configuration
 from ..tokenizer.base import AbstractTokenizer
+from ..tokenizer.place_sanitizer import load_sanitizers
 
 
 def _flatten_name_list(names: Any) -> Dict[str, str]:
@@ -147,28 +150,32 @@ def setup_country_tables(dsn: str, sql_dir: Path, ignore_partitions: bool = Fals
 
 
 def create_country_names(conn: Connection, tokenizer: AbstractTokenizer,
+                         config: Configuration,
                          languages: Optional[Container[str]] = None) -> None:
     """ Add default country names to search index. `languages` is a comma-
         separated list of language codes as used in OSM. If `languages` is not
         empty then only name translations for the given languages are added
         to the index.
     """
-    def _include_key(key: str) -> bool:
-        return ':' not in key or not languages or \
-               key[key.index(':') + 1:] in languages
-
     register_hstore(conn)
     with conn.cursor() as cur:
         cur.execute("""SELECT country_code, name FROM country_name
                        WHERE country_code is not null""")
 
         with tokenizer.name_analyzer() as analyzer:
+            sanitizer = load_sanitizers(config)
             for code, name in cur:
-                names = {'countrycode': code}
+                # Make sure any name preprocessing for country names applies.
+                info = PlaceInfo({'name': name, 'country_code': code,
+                                  'rank_address': 4, 'class': 'boundary',
+                                  'type': 'administrative'})
+                sanitizer.process_names(info)
 
-                # country names (only in languages as provided)
-                if name:
-                    names.update({k: v for k, v in name.items() if _include_key(k)})
+                names = info.sanitized_names
+                if languages:
+                    names = list(filter(lambda n: not n.suffix or n.suffix in languages,
+                                        names))
+                names.append(PlaceName(code, 'countrycode', None))
 
                 analyzer.add_country_names(code, names)
 

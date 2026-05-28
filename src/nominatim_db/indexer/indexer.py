@@ -14,10 +14,12 @@ import time
 import psycopg
 from psycopg.types.json import Json
 
+from ..config import Configuration
 from ..data.place_info import PlaceInfo
 from ..db.connection import connect, execute_scalar
 from ..db.query_pool import QueryPool
 from ..tokenizer.base import AbstractTokenizer
+from ..tokenizer.place_sanitizer import load_sanitizers
 from .progress import ProgressLogger
 from . import runners
 
@@ -28,8 +30,9 @@ class Indexer:
     """ Main indexing routine.
     """
 
-    def __init__(self, dsn: str, tokenizer: AbstractTokenizer, num_threads: int):
-        self.dsn = dsn
+    def __init__(self, config: Configuration, tokenizer: AbstractTokenizer, num_threads: int):
+        self.dsn = config.get_libpq_dsn()
+        self.sanitizer = load_sanitizers(config)
         self.tokenizer = tokenizer
         self.num_threads = num_threads
 
@@ -214,6 +217,7 @@ class Indexer:
 
                             if needs_token_info:
                                 place_info = PlaceInfo(place)
+                                self.sanitizer.process_names(place_info)
                                 place['token_info'] = Json(analyzer.process_place(place_info))
 
                             params.extend(place.get(i) for i in runner.QUERY_ROWS)

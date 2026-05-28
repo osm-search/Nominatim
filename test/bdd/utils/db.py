@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2025 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Helper functions for managing test databases.
@@ -99,4 +99,4 @@ class DBManager:
             asyncio.run(create_search_indices(conn, config))
 
             tokenizer = tokenizer_factory.create_tokenizer(config)
-            create_country_names(conn, tokenizer)
+            create_country_names(conn, tokenizer, config)

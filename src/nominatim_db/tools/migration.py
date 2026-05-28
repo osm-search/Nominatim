@@ -179,7 +179,7 @@ def convert_country_tokens(conn: Connection, config: Configuration, **_: Any) ->
     conn.commit()
 
     setup_country_config(config)
-    create_country_names(conn, tokenizer, config.get_str_list('LANGUAGES'))
+    create_country_names(conn, tokenizer, config.get_str_list('LANGUAGES'))  # type: ignore
 
 
 @_migration(5, 2, 99, 1)

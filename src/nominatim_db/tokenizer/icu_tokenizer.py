@@ -22,7 +22,6 @@ from ..db.sql_preprocessor import SQLPreprocessor
 from ..data.place_info import PlaceInfo
 from ..data.place_name import PlaceName
 from .icu_rule_loader import ICURuleLoader
-from .place_sanitizer import PlaceSanitizer, load_sanitizers
 from .icu_token_analysis import ICUTokenAnalysis
 from .base import AbstractAnalyzer, AbstractTokenizer
 from . import icu_types as itype
@@ -201,8 +200,7 @@ class ICUTokenizer(AbstractTokenizer):
             Analyzers are not thread-safe. You need to instantiate one per thread.
         """
         assert self.loader is not None
-        return ICUNameAnalyzer(self.dsn, load_sanitizers(self.loader.config),
-                               self.loader.make_token_analysis())
+        return ICUNameAnalyzer(self.dsn, self.loader.make_token_analysis())
 
     def most_frequent_words(self, conn: Connection, num: int) -> List[str]:
         """ Return a list of the `num` most frequent full words
@@ -303,11 +301,9 @@ class ICUNameAnalyzer(AbstractAnalyzer):
         normalization.
     """
 
-    def __init__(self, dsn: str, sanitizer: PlaceSanitizer,
-                 token_analysis: ICUTokenAnalysis) -> None:
+    def __init__(self, dsn: str, token_analysis: ICUTokenAnalysis) -> None:
         self.conn: Optional[Connection] = connect(dsn)
         self.conn.autocommit = True
-        self.sanitizer = sanitizer
         self.token_analysis = token_analysis
 
         self._cache = itype.TokenCache()
@@ -448,15 +444,10 @@ class ICUNameAnalyzer(AbstractAnalyzer):
 
         return len(to_delete)
 
-    def add_country_names(self, country_code: str, names: Mapping[str, str]) -> None:
+    def add_country_names(self, country_code: str, names: list[PlaceName]) -> None:
         """ Add default names for the given country to the search index.
         """
-        # Make sure any name preprocessing for country names applies.
-        info = PlaceInfo({'name': names, 'country_code': country_code,
-                          'rank_address': 4, 'class': 'boundary',
-                          'type': 'administrative'})
-        self.sanitizer.process_names(info)
-        self._add_country_full_names(country_code, info.sanitized_names, internal=True)
+        self._add_country_full_names(country_code, names, internal=True)
 
     def _add_country_full_names(self, country_code: str, names: Sequence[PlaceName],
                                 internal: bool = False) -> None:
@@ -521,8 +512,6 @@ class ICUNameAnalyzer(AbstractAnalyzer):
             the database via the token_info field.
         """
         token_info = _TokenInfo()
-
-        self.sanitizer.process_names(place)
 
         if place.sanitized_names:
             token_info.set_names(self._compute_name_tokens(place.sanitized_names))

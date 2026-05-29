@@ -409,4 +409,4 @@ jobs:
           - name: Migrate to master version
             run: |
               ./master/bin/nominatim admin --migrate
-              ./release/bin/nominatim add-data --file Nominatim/test/testdb/additional_api_test.data.osm
+              ./master/bin/nominatim add-data --file Nominatim/test/testdb/additional_api_test.data.osm

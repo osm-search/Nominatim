@@ -371,7 +371,8 @@ module.IGNORE_KEYS.metatags = {'note', 'note:*', 'source', 'source:*', '*source'
                                'is_in:postcode'}
 module.IGNORE_KEYS.name = {'name:full',
                            'name:etymology', 'name:etymology:*',
-                           'name:signed', 'name:botanical'}
+                           'name:signed', 'name:botanical',
+                           '*:forward', '*:backward'}
 module.IGNORE_KEYS.address = {'addr:street:*', 'addr:city:*', 'addr:district:*',
                               'addr:province:*', 'addr:subdistrict:*', 'addr:place:*',
                               'addr:TW:dataset'}

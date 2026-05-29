@@ -11,11 +11,27 @@ Feature: Reverse searches
           | W1  | aeroway | terminal   | (1,2,3,4,1) |
           | N9  | amenity | restaurant | 9           |
         When importing
-        And reverse geocoding 1.0001,1.0001
+        And reverse geocoding 1.0002,1.0001
         Then the result contains
          | object |
          | N9  |
         When reverse geocoding 1.0003,1.0001
+        Then the result contains
+         | object |
+         | W1  |
+
+
+    Scenario: POI in POI area with different housenumbers
+        Given the 0.0001 grid with origin 1,1
+          | 1 |   |  |  |  |  |  |  | 2 |
+          |   | 9 |  |  |  |  |  |  |   |
+          | 4 |   |  |  |  |  |  |  | 3 |
+        And the places
+          | osm | class   | type       | housenr | geometry    |
+          | W1  | aeroway | terminal   | 11      | (1,2,3,4,1) |
+          | N9  | amenity | restaurant | 13      | 9           |
+        When importing
+        And reverse geocoding 1.0002,1.0001
         Then the result contains
          | object |
          | W1  |

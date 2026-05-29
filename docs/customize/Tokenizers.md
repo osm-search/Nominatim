@@ -29,15 +29,12 @@ NOMINATIM_TOKENIZER=icu
 
 ### How it works
 
-On import the tokenizer processes names in the following three stages:
+On import the tokenizer receives the sanaitzed list of names and
+processes it in the following two stages:
 
-1. During the **Sanitizer step** incoming names are cleaned up and converted to
-   **full names**. This step can be used to regularize spelling, split multi-name
-   tags into their parts and tag names with additional attributes. See the
-   [Sanitizers section](#sanitizers) below for available cleaning routines.
-2. The **Normalization** part removes all information from the full names
+1. The **normalization** part removes all information from the full names
    that are not relevant for search.
-3. The **Token analysis** step takes the normalized full names and creates
+2. The **token analysis** step takes the normalized full names and creates
    all transliterated variants under which the name should be searchable.
    See the [Token analysis](#token-analysis) section below for more
    information.
@@ -80,8 +77,6 @@ normalization:
 transliteration:
     - !include /etc/nominatim/icu-rules/extended-unicode-to-asccii.yaml
     - ":: Ascii ()"
-sanitizers:
-    - step: split-name-list
 token-analysis:
     - analyzer: generic
       variants:
@@ -153,109 +148,6 @@ and may again include other files.
     YAML syntax. You should therefore always enclose the ICU rules in
     double-quotes.
 
-#### Sanitizers
-
-The sanitizers section defines an ordered list of functions that are applied
-to the name and address tags before they are further processed by the tokenizer.
-They allows to clean up the tagging and bring it to a standardized form more
-suitable for building the search index.
-
-!!! hint
-    Sanitizers only have an effect on how the search index is built. They
-    do not change the information about each place that is saved in the
-    database. In particular, they have no influence on how the results are
-    displayed. The returned results always show the original information as
-    stored in the OpenStreetMap database.
-
-Each entry contains information of a sanitizer to be applied. It has a
-mandatory parameter `step` which gives the name of the sanitizer. Depending
-on the type, it may have additional parameters to configure its operation.
-
-The order of the list matters. The sanitizers are applied exactly in the order
-that is configured. Each sanitizer works on the results of the previous one.
-
-The following is a list of sanitizers that are shipped with Nominatim.
-
-##### split-name-list
-
-::: nominatim_db.tokenizer.sanitizers.split_name_list
-    options:
-        members: False
-        heading_level: 6
-        docstring_section_style: spacy
-
-##### strip-brace-terms
-
-::: nominatim_db.tokenizer.sanitizers.strip_brace_terms
-    options:
-        members: False
-        heading_level: 6
-        docstring_section_style: spacy
-
-##### tag-analyzer-by-language
-
-::: nominatim_db.tokenizer.sanitizers.tag_analyzer_by_language
-    options:
-        members: False
-        heading_level: 6
-        docstring_section_style: spacy
-
-##### clean-housenumbers
-
-::: nominatim_db.tokenizer.sanitizers.clean_housenumbers
-    options:
-        members: False
-        heading_level: 6
-        docstring_section_style: spacy
-
-##### clean-postcodes
-
-::: nominatim_db.tokenizer.sanitizers.clean_postcodes
-    options:
-        members: False
-        heading_level: 6
-        docstring_section_style: spacy
-
-##### clean-tiger-tags
-
-::: nominatim_db.tokenizer.sanitizers.clean_tiger_tags
-    options:
-        members: False
-        heading_level: 6
-        docstring_section_style: spacy
-
-##### delete-names
-
-::: nominatim_db.tokenizer.sanitizers.delete_names
-    options:
-        members: False
-        heading_level: 6
-        docstring_section_style: spacy
-
-##### derive-names
-
-::: nominatim_db.tokenizer.sanitizers.derive_names
-    options:
-        members: False
-        heading_level: 6
-        docstring_section_style: spacy
-
-##### tag-japanese
-
-::: nominatim_db.tokenizer.sanitizers.tag_japanese
-    options:
-        members: False
-        heading_level: 6
-        docstring_section_style: spacy
-
-##### affix-expansion
-
-::: nominatim_db.tokenizer.sanitizers.affix_expansion
-    options:
-        members: False
-        heading_level: 6
-        docstring_section_style: spacy
-
 #### Token Analysis
 
 Token analyzers take a full name and transform it into one or more normalized
@@ -267,7 +159,7 @@ decomposition and abbreviation.
 The ICU tokenizer may use different analyzers for different names. To select
 the analyzer to be used, the name must be tagged with the `analyzer` attribute
 by a sanitizer (see for example the
-[tag-analyzer-by-language sanitizer](#tag-analyzer-by-language)).
+[tag-analyzer-by-language sanitizer](Sanitizers.md#tag-analyzer-by-language)).
 
 The token-analysis section contains the list of configured analyzers. Each
 analyzer must have an `id` parameter that uniquely identifies the analyzer.

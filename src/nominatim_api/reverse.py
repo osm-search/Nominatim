@@ -219,7 +219,8 @@ class ReverseGeocoder:
                              sa.func.first_value(sa.case((sa.or_(inner.c.rank_search <= 27,
                                                                  inner.c.osm_type == 'N'), None),
                                                          else_=inner.c._geometry))
-                                    .over(order_by=inner.c.distance)
+                                    .over(order_by=[inner.c.distance,
+                                                    sa.func.ST_Area(inner.c._geometry)])
                                     .label('_best_geometry')) \
                      .subquery()
 
@@ -354,7 +355,8 @@ class ReverseGeocoder:
             # a POI nearby and return that with preference.
             elif result.osm_type != 'N' and result.rank_search > 27 \
                     and result.distance == 0 \
-                    and row.best_inside:
+                    and row.best_inside \
+                    and (result.housenumber is None or result.housenumber == row.housenumber):
                 log().var_dump('POI near closest result area', row)
                 result = row
                 break  # it can't get better than that, everything else is farther away

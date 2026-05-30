@@ -29,7 +29,7 @@ def sanitize(def_config, request):
         place = PlaceInfo(pi)
         PlaceSanitizer([sanitizer_args], def_config).process_names(place)
 
-        return sorted([(p.kind, p.name) for p in place.sanitized_address])
+        return sorted([(p.kind, p.name) for p in place.searchable_address])
 
     return _run
 

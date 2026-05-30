@@ -513,15 +513,15 @@ class ICUNameAnalyzer(AbstractAnalyzer):
         """
         token_info = _TokenInfo()
 
-        if place.sanitized_names:
-            token_info.set_names(self._compute_name_tokens(place.sanitized_names))
+        if place.searchable_names:
+            token_info.set_names(self._compute_name_tokens(place.searchable_names))
 
             if place.is_country():
                 assert place.country_code is not None
-                self._add_country_full_names(place.country_code, place.sanitized_names)
+                self._add_country_full_names(place.country_code, place.searchable_names)
 
-        if place.sanitized_address:
-            self._process_place_address(token_info, place.sanitized_address)
+        if place.searchable_address:
+            self._process_place_address(token_info, place.searchable_address)
 
         return token_info.to_dict()
 

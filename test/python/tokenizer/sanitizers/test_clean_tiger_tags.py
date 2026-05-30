@@ -23,7 +23,7 @@ class TestCleanTigerTags:
         place = PlaceInfo({'address': addr})
         PlaceSanitizer([{'step': 'clean-tiger-tags'}], self.config).process_names(place)
 
-        return sorted([(p.name, p.kind, p.suffix) for p in place.sanitized_address])
+        return sorted([(p.name, p.kind, p.suffix) for p in place.searchable_address])
 
     @pytest.mark.parametrize('inname,outname', [('Hamilton, AL', 'Hamilton'),
                                                 ('Little, Borough, CA', 'Little, Borough')])

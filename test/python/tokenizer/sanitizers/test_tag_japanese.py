@@ -22,7 +22,7 @@ class TestTagJapanese:
         })
         sanitizer_args = {'step': 'tag-japanese'}
         PlaceSanitizer([sanitizer_args], self.config).process_names(place)
-        tmp_list = [(p.name, p.kind) for p in place.sanitized_address]
+        tmp_list = [(p.name, p.kind) for p in place.searchable_address]
         return sorted(tmp_list)
 
     def test_on_address(self):

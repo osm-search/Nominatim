@@ -29,9 +29,9 @@ class TestWithDefault:
         PlaceSanitizer([sanitizer_args], self.config).process_names(place)
 
         return {'name': sorted([(p.name, p.kind, p.suffix or '')
-                                for p in place.sanitized_names]),
+                                for p in place.searchable_names]),
                 'address': sorted([(p.name, p.kind, p.suffix or '')
-                                   for p in place.sanitized_address])}
+                                   for p in place.searchable_address])}
 
     def test_on_name(self):
         res = self.run_sanitizer_on('name', name='foo', ref='bar', ref_abc='baz')
@@ -61,7 +61,7 @@ class TestTypeField:
 
         PlaceSanitizer([sanitizer_args], self.config).process_names(place)
 
-        return sorted([(p.name, p.kind, p.suffix or '') for p in place.sanitized_names])
+        return sorted([(p.name, p.kind, p.suffix or '') for p in place.searchable_names])
 
     def test_name_type(self):
         res = self.run_sanitizer_on('name', name='foo', ref='bar', ref_abc='baz')
@@ -91,7 +91,7 @@ class TestFilterKind:
 
         PlaceSanitizer([sanitizer_args], self.config).process_names(place)
 
-        return sorted([(p.name, p.kind, p.suffix or '') for p in place.sanitized_names])
+        return sorted([(p.name, p.kind, p.suffix or '') for p in place.searchable_names])
 
     def test_single_exact_name(self):
         res = self.run_sanitizer_on(['name'], ref='foo', name='foo',
@@ -130,7 +130,7 @@ class TestRankAddress:
 
         PlaceSanitizer([sanitizer_args], self.config).process_names(place)
 
-        return sorted([(p.name, p.kind, p.suffix or '') for p in place.sanitized_names])
+        return sorted([(p.name, p.kind, p.suffix or '') for p in place.searchable_names])
 
     def test_single_rank(self):
         res = self.run_sanitizer_on('30', name='foo', ref='bar')
@@ -179,7 +179,7 @@ class TestSuffix:
 
         PlaceSanitizer([sanitizer_args], self.config).process_names(place)
 
-        return sorted([(p.name, p.kind, p.suffix or '') for p in place.sanitized_names])
+        return sorted([(p.name, p.kind, p.suffix or '') for p in place.searchable_names])
 
     def test_single_suffix(self):
         res = self.run_sanitizer_on('abc', name='foo', name_abc='foo',
@@ -210,7 +210,7 @@ class TestCountryCodes:
 
         PlaceSanitizer([sanitizer_args], self.config).process_names(place)
 
-        return sorted([(p.name, p.kind) for p in place.sanitized_names])
+        return sorted([(p.name, p.kind) for p in place.searchable_names])
 
     def test_single_country_code_pass(self):
         res = self.run_sanitizer_on('de', name='foo', ref='bar')
@@ -261,7 +261,7 @@ class TestAllParameters:
 
         PlaceSanitizer([sanitizer_args], self.config).process_names(place)
 
-        return sorted([(p.name, p.kind, p.suffix or '') for p in place.sanitized_names])
+        return sorted([(p.name, p.kind, p.suffix or '') for p in place.searchable_names])
 
     def test_string_arguments_pass(self):
         res = self.run_sanitizer_on('de', '25-30', r'[\s\S]*',

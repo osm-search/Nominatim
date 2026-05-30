@@ -18,8 +18,8 @@ def run_sanitizer(def_config):
     def _f(place, **kwargs):
         args = {k.replace('_', '-'): v for k, v in kwargs.items()}
         PlaceSanitizer([args | {'step': 'affix-expansion'}], def_config).process_names(place)
-        nameset = {(p.name, p.kind, p.suffix) for p in place.sanitized_names}
-        assert len(place.sanitized_names) == len(nameset)
+        nameset = {(p.name, p.kind, p.suffix) for p in place.searchable_names}
+        assert len(place.searchable_names) == len(nameset)
         return nameset
 
     return _f

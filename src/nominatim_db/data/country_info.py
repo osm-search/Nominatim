@@ -171,7 +171,7 @@ def create_country_names(conn: Connection, tokenizer: AbstractTokenizer,
                                   'type': 'administrative'})
                 sanitizer.process_names(info)
 
-                names = info.sanitized_names
+                names = info.searchable_names
                 if languages:
                     names = list(filter(lambda n: not n.suffix or n.suffix in languages,
                                         names))

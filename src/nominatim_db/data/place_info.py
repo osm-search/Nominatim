@@ -20,8 +20,8 @@ class PlaceInfo:
 
     def __init__(self, info: Mapping[str, Any]) -> None:
         self._info = info
-        self._sanitized_names: list[PlaceName] = []
-        self._sanitized_address: list[PlaceName] = []
+        self._searchable_names: list[PlaceName] = []
+        self._searchable_address: list[PlaceName] = []
 
     @property
     def name(self) -> Optional[Mapping[str, str]]:
@@ -47,16 +47,17 @@ class PlaceInfo:
         return self._info.get('address')
 
     @property
-    def sanitized_names(self) -> list[PlaceName]:
-        """ List of place names after sanitization.
+    def searchable_names(self) -> list[PlaceName]:
+        """ List of place names that should be indexed for searching.
         """
-        return self._sanitized_names
+        return self._searchable_names
 
     @property
-    def sanitized_address(self) -> list[PlaceName]:
-        """ List of address terms after sanitization.
+    def searchable_address(self) -> list[PlaceName]:
+        """ List of address terms that should be used to build the search
+            index.
         """
-        return self._sanitized_address
+        return self._searchable_address
 
     @property
     def country_code(self) -> Optional[str]:
@@ -101,5 +102,5 @@ class PlaceInfo:
         return 26 <= self.rank_address <= 27
 
     def set_sanitized(self, names: list[PlaceName], address: list[PlaceName]) -> None:
-        self._sanitized_names = names
-        self._sanitized_address = address
+        self._searchable_names = names
+        self._searchable_address = address

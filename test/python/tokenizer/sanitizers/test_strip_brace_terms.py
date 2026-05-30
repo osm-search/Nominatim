@@ -23,7 +23,7 @@ class TestStripBrace:
         place = PlaceInfo({'name': kwargs})
         PlaceSanitizer([{'step': 'strip-brace-terms'}], self.config).process_names(place)
 
-        return sorted([(p.name, p.kind, p.suffix) for p in place.sanitized_names])
+        return sorted([(p.name, p.kind, p.suffix) for p in place.searchable_names])
 
     def test_no_braces(self):
         assert self.run_sanitizer_on(name='foo', ref='23') == [('23', 'ref', None),
@@ -51,5 +51,5 @@ def test_no_names(def_config):
     place = PlaceInfo({'address': {'housenumber': '3'}})
     PlaceSanitizer([{'step': 'strip-brace-terms'}], def_config).process_names(place)
 
-    assert not place.sanitized_names
-    assert len(place.sanitized_address) == 1
+    assert not place.searchable_names
+    assert len(place.searchable_address) == 1

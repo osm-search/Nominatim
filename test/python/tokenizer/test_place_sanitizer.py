@@ -54,8 +54,8 @@ def test_sanitizer_default(def_config):
     place = PlaceInfo({'name': {'name:de:de': '1;2;3'},
                        'address': {'street': 'Bald'}})
     san.process_names(place)
-    name = place.sanitized_names
-    address = place.sanitized_address
+    name = place.searchable_names
+    address = place.searchable_address
 
     assert len(name) == 3
     assert all(isinstance(n, PlaceName) for n in name)
@@ -73,8 +73,8 @@ def test_sanitizer_empty_list(def_config, rules):
     place = PlaceInfo({'name': {'name:de:de': '1;2;3'}})
     san.process_names(place)
 
-    assert len(place.sanitized_names) == 1
-    assert all(isinstance(n, PlaceName) for n in place.sanitized_names)
+    assert len(place.searchable_names) == 1
+    assert all(isinstance(n, PlaceName) for n in place.searchable_names)
 
 
 def test_sanitizer_missing_step_definition(def_config):

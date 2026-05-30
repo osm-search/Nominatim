@@ -25,7 +25,7 @@ class TestWithDefaults:
                            'country_code': country})
         PlaceSanitizer([{'step': 'tag-analyzer-by-language'}], self.config).process_names(place)
 
-        return sorted([(p.name, p.kind, p.suffix, p.attr) for p in place.sanitized_names])
+        return sorted([(p.name, p.kind, p.suffix, p.attr) for p in place.searchable_names])
 
     def test_no_names(self):
         assert self.run_sanitizer_on('de') == []
@@ -56,7 +56,7 @@ class TestFilterKind:
                          'filter-kind': filt}],
                        self.config).process_names(place)
 
-        return sorted([(p.name, p.kind, p.suffix, p.attr) for p in place.sanitized_names])
+        return sorted([(p.name, p.kind, p.suffix, p.attr) for p in place.searchable_names])
 
     def test_single_exact_name(self):
         res = self.run_sanitizer_on(['name'], name_fr='A', ref_fr='12',
@@ -106,12 +106,12 @@ class TestDefaultCountry:
                          'mode': 'append'}],
                        self.config).process_names(place)
 
-        assert all(isinstance(p.attr, dict) for p in place.sanitized_names)
-        assert all(len(p.attr) <= 1 for p in place.sanitized_names)
+        assert all(isinstance(p.attr, dict) for p in place.searchable_names)
+        assert all(len(p.attr) <= 1 for p in place.searchable_names)
         assert all(not p.attr or ('analyzer' in p.attr and p.attr['analyzer'])
-                   for p in place.sanitized_names)
+                   for p in place.searchable_names)
 
-        return sorted([(p.name, p.attr.get('analyzer', '')) for p in place.sanitized_names])
+        return sorted([(p.name, p.attr.get('analyzer', '')) for p in place.searchable_names])
 
     def run_sanitizer_replace(self, mode,  country, **kwargs):
         place = PlaceInfo({'name': {k.replace('_', ':'): v for k, v in kwargs.items()},
@@ -121,12 +121,12 @@ class TestDefaultCountry:
                          'mode': 'replace'}],
                        self.config).process_names(place)
 
-        assert all(isinstance(p.attr, dict) for p in place.sanitized_names)
-        assert all(len(p.attr) <= 1 for p in place.sanitized_names)
+        assert all(isinstance(p.attr, dict) for p in place.searchable_names)
+        assert all(len(p.attr) <= 1 for p in place.searchable_names)
         assert all(not p.attr or ('analyzer' in p.attr and p.attr['analyzer'])
-                   for p in place.sanitized_names)
+                   for p in place.searchable_names)
 
-        return sorted([(p.name, p.attr.get('analyzer', '')) for p in place.sanitized_names])
+        return sorted([(p.name, p.attr.get('analyzer', '')) for p in place.searchable_names])
 
     def test_missing_country(self):
         place = PlaceInfo({'name': {'name': 'something'}})
@@ -135,10 +135,10 @@ class TestDefaultCountry:
                          'mode': 'replace'}],
                        self.config).process_names(place)
 
-        assert len(place.sanitized_names) == 1
-        assert place.sanitized_names[0].name == 'something'
-        assert place.sanitized_names[0].suffix is None
-        assert 'analyzer' not in place.sanitized_names[0].attr
+        assert len(place.searchable_names) == 1
+        assert place.searchable_names[0].name == 'something'
+        assert place.searchable_names[0].suffix is None
+        assert 'analyzer' not in place.searchable_names[0].attr
 
     def test_mono_unknown_country(self):
         expect = [('XX', '')]
@@ -205,12 +205,12 @@ class TestCountryWithWhitelist:
                          'whitelist': ['de', 'fr', 'ru']}],
                        self.config).process_names(place)
 
-        assert all(isinstance(p.attr, dict) for p in place.sanitized_names)
-        assert all(len(p.attr) <= 1 for p in place.sanitized_names)
+        assert all(isinstance(p.attr, dict) for p in place.searchable_names)
+        assert all(len(p.attr) <= 1 for p in place.searchable_names)
         assert all(not p.attr or ('analyzer' in p.attr and p.attr['analyzer'])
-                   for p in place.sanitized_names)
+                   for p in place.searchable_names)
 
-        return sorted([(p.name, p.attr.get('analyzer', '')) for p in place.sanitized_names])
+        return sorted([(p.name, p.attr.get('analyzer', '')) for p in place.searchable_names])
 
     def test_mono_monoling(self):
         assert self.run_sanitizer_on('mono', 'de', name='Foo') == [('Foo', 'de')]
@@ -242,12 +242,12 @@ class TestWhiteList:
                          'whitelist': whitelist}],
                        self.config).process_names(place)
 
-        assert all(isinstance(p.attr, dict) for p in place.sanitized_names)
-        assert all(len(p.attr) <= 1 for p in place.sanitized_names)
+        assert all(isinstance(p.attr, dict) for p in place.searchable_names)
+        assert all(len(p.attr) <= 1 for p in place.searchable_names)
         assert all(not p.attr or ('analyzer' in p.attr and p.attr['analyzer'])
-                   for p in place.sanitized_names)
+                   for p in place.searchable_names)
 
-        return sorted([(p.name, p.attr.get('analyzer', '')) for p in place.sanitized_names])
+        return sorted([(p.name, p.attr.get('analyzer', '')) for p in place.searchable_names])
 
     def test_in_whitelist(self):
         assert self.run_sanitizer_on(['de', 'xx'], ref_xx='123') == [('123', 'xx')]
@@ -276,12 +276,12 @@ class TestSuffixIgnore:
                          'suffix-ignore': suffix_ignore}],
                        self.config).process_names(place)
 
-        assert all(isinstance(p.attr, dict) for p in place.sanitized_names)
-        assert all(len(p.attr) <= 1 for p in place.sanitized_names)
+        assert all(isinstance(p.attr, dict) for p in place.searchable_names)
+        assert all(len(p.attr) <= 1 for p in place.searchable_names)
         assert all(not p.attr or ('analyzer' in p.attr and p.attr['analyzer'])
-                   for p in place.sanitized_names)
+                   for p in place.searchable_names)
 
-        return sorted([(p.name, p.attr.get('analyzer', '')) for p in place.sanitized_names])
+        return sorted([(p.name, p.attr.get('analyzer', '')) for p in place.searchable_names])
 
     def test_ignored_suffix(self):
         assert self.run_sanitizer_on(['left'], name_left='foo') == [('foo', 'de')]

@@ -1,5 +1,3 @@
-query-preprocessing:
-    - step: split_japanese_phrases
 normalization:
     - ":: lower ()"
     - ":: Hans-Hant"

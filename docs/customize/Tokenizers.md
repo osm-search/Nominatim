@@ -63,14 +63,6 @@ have no effect.
 Here is an example configuration file:
 
 ``` yaml
-query-preprocessing:
-    - step: split_japanese_phrases
-    - step: regex_replace
-      replacements:
-        - pattern: https?://[^\s]* # Filter URLs starting with http or https
-          replace: ''
-    - step: normalize
-
 normalization:
     - ":: lower ()"
     - "ß > 'ss'" # German szet is unambiguously equal to double ss
@@ -89,37 +81,8 @@ token-analysis:
             replacements: ['ä', 'ae']
 ```
 
-The configuration file contains five sections:
-`query-preprocessing`, `normalization`, `transliteration`, `sanitizers` and `token-analysis`.
-
-#### Query preprocessing
-
-The section for `query-preprocessing` defines an ordered list of functions
-that are applied to the query before the token analysis.
-
-The following is a list of preprocessors that are shipped with Nominatim.
-
-##### normalize
-
-::: nominatim_api.query_preprocessing.normalize
-    options:
-        members: False
-        heading_level: 6
-        docstring_section_style: spacy
-
-##### regex-replace
-
-::: nominatim_api.query_preprocessing.regex_replace
-    options:
-        members: False
-        heading_level: 6
-        docstring_section_style: spacy
-    description: 
-        This option runs any given regex pattern on the input and replaces values accordingly
-    replacements:
-        - pattern: regex pattern
-          replace: string to replace with
-
+The configuration file contains three sections:
+`normalization`, `transliteration` and `token-analysis`.
 
 #### Normalization and Transliteration
 

@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2025 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 '''
 Tests for replacing values in an input using custom regex.
@@ -16,7 +16,6 @@ from nominatim_api.query_preprocessing import regex_replace
 
 def run_preprocessor_on(query):
     config = QueryConfig()
-    config.set_normalizer(None)
 
     config['replacements'] = [
         {'pattern': r'\b(?:\d{1,3}\.){3}\d{1,3}\b', 'replace': ''},  # IPv4

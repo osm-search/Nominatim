@@ -65,15 +65,10 @@ def load_sanitizers(config: Configuration) -> PlaceSanitizer:
         and read sanitizers from there. This is only for backward compatibility
         and will go away in the next major version.
     """
-    try:
-        config.find_config_file('sanitizers.yaml')
-        use_config = 'sanitizers.yaml'
-    except UsageError:
-        use_config = 'icu_tokenizer.yaml'
-
-    rules = config.load_sub_configuration(use_config)
-
-    if use_config == 'icu_tokenizer.yaml':
-        rules = rules.get('sanitizers', [])
+    if config.config_file_exists('sanitizers.yaml'):
+        rules = config.load_sub_configuration('sanitizers.yaml')
+    else:
+        rules = config.load_sub_configuration('icu_tokenizer.yaml')\
+                      .get('sanitizers', [])
 
     return PlaceSanitizer(rules, config)

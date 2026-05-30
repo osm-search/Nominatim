@@ -329,7 +329,7 @@ def test_load_subconf_env_relative_not_found(make_config_path, monkeypatch):
 
     (config.config_dir / 'test.yaml').write_text('cow: muh\ncat: miau\n', encoding='utf-8')
 
-    with pytest.raises(UsageError, match='Config file not found.'):
+    with pytest.raises(UsageError, match="Configuration file 'test.yaml' not found."):
         config.load_sub_configuration('test.yaml', config='MY_CONFIG')
 
 
@@ -346,7 +346,7 @@ def test_load_subconf_json(make_config_path):
 def test_load_subconf_not_found(make_config_path):
     config = make_config_path()
 
-    with pytest.raises(UsageError, match='Config file not found.'):
+    with pytest.raises(UsageError, match="Configuration file 'test.yaml' not found."):
         config.load_sub_configuration('test.yaml')
 
 
@@ -401,7 +401,7 @@ def test_load_subconf_include_not_found(make_config_path):
     testfile = config.config_dir / 'test.yaml'
     testfile.write_text('base: !include inc.txt\n', encoding='utf-8')
 
-    with pytest.raises(UsageError, match='Config file not found.'):
+    with pytest.raises(UsageError, match="Configuration file 'inc.txt' not found."):
         config.load_sub_configuration('test.yaml')
 
 

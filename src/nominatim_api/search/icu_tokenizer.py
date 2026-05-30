@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2025 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Implementation of query analysis for the ICU tokenizer.
@@ -17,14 +17,11 @@ from icu import Transliterator
 
 import sqlalchemy as sa
 
-from ..errors import UsageError
 from ..typing import SaRow
 from ..sql.sqlalchemy_types import Json
 from ..connection import SearchConnection
 from ..logging import log
 from . import query as qmod
-from ..query_preprocessing.config import QueryConfig
-from ..query_preprocessing.base import QueryProcessingFunc
 from .query_analyzer_factory import AbstractQueryAnalyzer
 from .postcode_parser import PostcodeParser
 
@@ -122,7 +119,6 @@ class ICUAnalyzerConfig:
     postcode_parser: PostcodeParser
     normalizer: Transliterator
     transliterator: Transliterator
-    preprocessors: List[QueryProcessingFunc]
 
     @staticmethod
     async def create(conn: SearchConnection) -> 'ICUAnalyzerConfig':
@@ -132,24 +128,7 @@ class ICUAnalyzerConfig:
         rules = await conn.get_property('tokenizer_import_transliteration')
         transliterator = Transliterator.createFromRules("transliteration", rules)
 
-        preprocessing_rules = conn.config.load_sub_configuration('icu_tokenizer.yaml',
-                                                                 config='TOKENIZER_CONFIG')\
-                                         .get('query-preprocessing', [])
-
-        preprocessors: List[QueryProcessingFunc] = []
-        for func in preprocessing_rules:
-            if 'step' not in func:
-                raise UsageError("Preprocessing rule is missing the 'step' attribute.")
-            if not isinstance(func['step'], str):
-                raise UsageError("'step' attribute must be a simple string.")
-
-            module = conn.config.load_plugin_module(
-                        func['step'], 'nominatim_api.query_preprocessing')
-            preprocessors.append(
-                module.create(QueryConfig(func).set_normalizer(normalizer)))
-
-        return ICUAnalyzerConfig(PostcodeParser(conn.config),
-                                 normalizer, transliterator, preprocessors)
+        return ICUAnalyzerConfig(PostcodeParser(conn.config), normalizer, transliterator)
 
 
 class ICUQueryAnalyzer(AbstractQueryAnalyzer):
@@ -161,15 +140,15 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
         self.postcode_parser = config.postcode_parser
         self.normalizer = config.normalizer
         self.transliterator = config.transliterator
-        self.preprocessors = config.preprocessors
 
     async def analyze_query(self, phrases: List[qmod.Phrase]) -> qmod.QueryStruct:
         """ Analyze the given list of phrases and return the
             tokenized query.
         """
         log().section('Analyze query (using ICU tokenizer)')
-        for func in self.preprocessors:
-            phrases = func(phrases)
+        phrases = list(filter(lambda p: p.text,
+                              (qmod.Phrase(p.ptype, self.normalize_text(p.text))
+                               for p in phrases)))
         query = qmod.QueryStruct(phrases)
 
         log().var_dump('Normalized query', query.source)

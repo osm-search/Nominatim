@@ -16,6 +16,8 @@ from nominatim_db.tokenizer import icu_tokenizer
 import nominatim_db.tokenizer.icu_rule_loader
 from nominatim_db.db import properties
 from nominatim_db.data.place_info import PlaceInfo
+from nominatim_db.data.place_name import PlaceName
+from nominatim_db.tokenizer.place_sanitizer import PlaceSanitizer
 
 from mock_icu_word_table import MockIcuWordTable
 
@@ -66,10 +68,9 @@ def analyzer(tokenizer_factory, test_config, monkeypatch,
 
     def _mk_analyser(norm=("[[:Punctuation:][:Space:]]+ > ' '",), trans=(':: upper()',),
                      variants=('~gasse -> gasse', 'street => st', ),
-                     sanitizers=[], with_housenumber=False,
+                     with_housenumber=False,
                      with_postcode=False):
         cfgstr = {'normalization': list(norm),
-                  'sanitizers': sanitizers,
                   'transliteration': list(trans),
                   'token-analysis': [{'analyzer': 'generic',
                                       'variants': [{'words': list(variants)}]}]}
@@ -249,15 +250,17 @@ def test_normalize_postcode(analyzer):
 class TestPostcodes:
 
     @pytest.fixture(autouse=True)
-    def setup(self, analyzer, sql_functions):
-        sanitizers = [{'step': 'clean-postcodes'}]
-        with analyzer(sanitizers=sanitizers, with_postcode=True) as anl:
+    def setup(self, analyzer, sql_functions, def_config):
+        self.sanitizer = PlaceSanitizer([{'step': 'clean-postcodes'}], def_config)
+        with analyzer(with_postcode=True) as anl:
             self.analyzer = anl
             yield anl
 
     def process_postcode(self, cc, postcode):
-        return self.analyzer.process_place(PlaceInfo({'country_code': cc,
-                                                      'address': {'postcode': postcode}}))
+        place = PlaceInfo({'country_code': cc,
+                           'address': {'postcode': postcode}})
+        self.sanitizer.process_names(place)
+        return self.analyzer.process_place(place)
 
     def test_update_postcodes_deleted(self, word_table):
         word_table.add_postcode(' 1234', '1234')
@@ -337,7 +340,8 @@ def test_update_special_phrase_modify(analyzer, word_table):
 
 def test_add_country_names_new(analyzer, word_table):
     with analyzer() as anl:
-        anl.add_country_names('es', {'name': 'Espagña', 'name:en': 'Spain'})
+        anl.add_country_names('es', [PlaceName('Espagña', 'name', None),
+                                     PlaceName('Spain', 'name', 'en')])
 
     assert word_table.get_country() == {('es', 'ESPAGÑA', 'Espagña'),
                                         ('es', 'SPAIN', 'Spain')}
@@ -347,7 +351,8 @@ def test_add_country_names_extend(analyzer, word_table):
     word_table.add_country('ch', 'SCHWEIZ', 'Schweiz')
 
     with analyzer() as anl:
-        anl.add_country_names('ch', {'name': 'Schweiz', 'name:fr': 'Suisse'})
+        anl.add_country_names('ch', [PlaceName('Schweiz', 'name', None),
+                                     PlaceName('Suisse', 'name', 'fr')])
 
     assert word_table.get_country() == {('ch', 'SCHWEIZ', 'Schweiz'),
                                         ('ch', 'SUISSE', 'Suisse')}
@@ -356,10 +361,10 @@ def test_add_country_names_extend(analyzer, word_table):
 class TestPlaceNames:
 
     @pytest.fixture(autouse=True)
-    def setup(self, analyzer, sql_functions):
-        sanitizers = [{'step': 'split-name-list'},
-                      {'step': 'strip-brace-terms'}]
-        with analyzer(sanitizers=sanitizers) as anl:
+    def setup(self, analyzer, sql_functions, def_config):
+        self.sanitizer = PlaceSanitizer([{'step': 'split-name-list'},
+                                         {'step': 'strip-brace-terms'}], def_config)
+        with analyzer() as anl:
             self.analyzer = anl
             yield anl
 
@@ -371,7 +376,9 @@ class TestPlaceNames:
         assert eval(info['names']) == set((t[2] for t in tokens))
 
     def process_named_place(self, names):
-        return self.analyzer.process_place(PlaceInfo({'name': names}))
+        place = PlaceInfo({'name': names})
+        self.sanitizer.process_names(place)
+        return self.analyzer.process_place(place)
 
     def test_simple_names(self):
         info = self.process_named_place({'name': 'Soft bAr', 'ref': '34'})
@@ -397,7 +404,7 @@ class TestPlaceNames:
                            'rank_address': 4,
                            'class': 'boundary',
                            'type': 'administrative'})
-
+        self.sanitizer.process_names(place)
         info = self.analyzer.process_place(place)
 
         self.expect_name_terms(info, '#norge', 'norge')
@@ -407,10 +414,11 @@ class TestPlaceNames:
 class TestPlaceAddress:
 
     @pytest.fixture(autouse=True)
-    def setup(self, analyzer, sql_functions):
+    def setup(self, analyzer, sql_functions, def_config):
         hnr = {'step': 'clean-housenumbers',
                'filter-kind': ['housenumber', 'conscriptionnumber', 'streetnumber']}
-        with analyzer(trans=(":: upper()", "'🜵' > ' '"), sanitizers=[hnr]) as anl:
+        self.sanitizer = PlaceSanitizer([hnr], def_config)
+        with analyzer(trans=(":: upper()", "'🜵' > ' '")) as anl:
             self.analyzer = anl
             yield anl
 
@@ -421,7 +429,9 @@ class TestPlaceAddress:
                                     SELECT -nextval('seq_word')::INTEGER; $$ LANGUAGE SQL""")
 
     def process_address(self, **kwargs):
-        return self.analyzer.process_place(PlaceInfo({'address': kwargs}))
+        place = PlaceInfo({'address': kwargs})
+        self.sanitizer.process_names(place)
+        return self.analyzer.process_place(place)
 
     def name_token_set(self, *expected_terms):
         tokens = self.analyzer.get_word_token_info(expected_terms)
@@ -465,7 +475,9 @@ class TestPlaceAddress:
         assert eval(info['hnr_tokens']) == {-3}
 
     def test_process_place_street(self):
-        self.analyzer.process_place(PlaceInfo({'name': {'name': 'Grand Road'}}))
+        place = PlaceInfo({'name': {'name': 'Grand Road'}})
+        self.sanitizer.process_names(place)
+        self.analyzer.process_place(place)
         info = self.process_address(street='Grand Road')
 
         assert eval(info['street']) == self.name_token_set('#Grand Road')
@@ -476,8 +488,9 @@ class TestPlaceAddress:
         assert info['street'] == '{}'
 
     def test_process_place_multiple_street_tags(self):
-        self.analyzer.process_place(PlaceInfo({'name': {'name': 'Grand Road',
-                                                        'ref': '05989'}}))
+        place = PlaceInfo({'name': {'name': 'Grand Road', 'ref': '05989'}})
+        self.sanitizer.process_names(place)
+        self.analyzer.process_place(place)
         info = self.process_address(**{'street': 'Grand Road',
                                        'street:sym_ul': '05989'})
 
@@ -489,7 +502,9 @@ class TestPlaceAddress:
         assert info['street'] == '{}'
 
     def test_process_place_street_from_cache(self):
-        self.analyzer.process_place(PlaceInfo({'name': {'name': 'Grand Road'}}))
+        place = PlaceInfo({'name': {'name': 'Grand Road'}})
+        self.sanitizer.process_names(place)
+        self.analyzer.process_place(place)
         self.process_address(street='Grand Road')
 
         # request address again
@@ -541,11 +556,11 @@ class TestPlaceAddress:
 class TestPlaceHousenumberWithAnalyser:
 
     @pytest.fixture(autouse=True)
-    def setup(self, analyzer, sql_functions):
+    def setup(self, analyzer, sql_functions, def_config):
         hnr = {'step': 'clean-housenumbers',
                'filter-kind': ['housenumber', 'conscriptionnumber', 'streetnumber']}
-        with analyzer(trans=(":: upper()", "'🜵' > ' '"), sanitizers=[hnr],
-                      with_housenumber=True) as anl:
+        self.sanitizer = PlaceSanitizer([hnr], def_config)
+        with analyzer(trans=(":: upper()", "'🜵' > ' '"), with_housenumber=True) as anl:
             self.analyzer = anl
             yield anl
 
@@ -557,7 +572,9 @@ class TestPlaceHousenumberWithAnalyser:
                 SELECT -nextval('seq_word')::INTEGER; $$ LANGUAGE SQL""")
 
     def process_address(self, **kwargs):
-        return self.analyzer.process_place(PlaceInfo({'address': kwargs}))
+        place = PlaceInfo({'address': kwargs})
+        self.sanitizer.process_names(place)
+        return self.analyzer.process_place(place)
 
     def name_token_set(self, *expected_terms):
         tokens = self.analyzer.get_word_token_info(expected_terms)

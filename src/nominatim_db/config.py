@@ -311,6 +311,19 @@ class Configuration:
             Raises a UsageError when the file cannot be found or is not
             a regular file.
         """
+        file = self._find_config_file(filename, config)
+
+        if file is None:
+            raise UsageError(f"Configuration file '{filename}' not found.")
+
+        return file
+
+    def config_file_exists(self, filename: StrPath,
+                           config: Optional[str] = None) -> bool:
+        return self._find_config_file(filename, config) is not None
+
+    def _find_config_file(self, filename: StrPath,
+                          config: Optional[str] = None) -> Optional[Path]:
         if config is not None:
             cfg_value = getattr(self, config)
             if cfg_value:
@@ -332,9 +345,7 @@ class Configuration:
             if path is not None and (path / filename).is_file():
                 return path / filename
 
-        LOG.fatal("Configuration file '%s' not found.\nDirectories searched: %s",
-                  filename, search_paths)
-        raise UsageError("Config file not found.")
+        return None
 
     def _load_from_yaml(self, cfgfile: Path) -> Any:
         """ Load a YAML configuration file. This installs a special handler that

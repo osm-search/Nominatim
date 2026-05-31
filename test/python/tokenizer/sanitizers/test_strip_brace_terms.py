@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2025 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for the sanitizer that handles braced suffixes.
@@ -21,9 +21,9 @@ class TestStripBrace:
 
     def run_sanitizer_on(self, **kwargs):
         place = PlaceInfo({'name': kwargs})
-        name, _ = PlaceSanitizer([{'step': 'strip-brace-terms'}], self.config).process_names(place)
+        PlaceSanitizer([{'step': 'strip-brace-terms'}], self.config).process_names(place)
 
-        return sorted([(p.name, p.kind, p.suffix) for p in name])
+        return sorted([(p.name, p.kind, p.suffix) for p in place.searchable_names])
 
     def test_no_braces(self):
         assert self.run_sanitizer_on(name='foo', ref='23') == [('23', 'ref', None),
@@ -49,7 +49,7 @@ class TestStripBrace:
 
 def test_no_names(def_config):
     place = PlaceInfo({'address': {'housenumber': '3'}})
-    name, address = PlaceSanitizer([{'step': 'strip-brace-terms'}], def_config).process_names(place)
+    PlaceSanitizer([{'step': 'strip-brace-terms'}], def_config).process_names(place)
 
-    assert not name
-    assert len(address) == 1
+    assert not place.searchable_names
+    assert len(place.searchable_address) == 1

@@ -74,7 +74,7 @@ class TestIndexing:
 
     @pytest.mark.parametrize("threads", [1, 15])
     @pytest.mark.asyncio
-    async def test_index_all_by_rank(self, dsn, threads, placex_row, osmline_row):
+    async def test_index_all_by_rank(self, def_config, threads, placex_row, osmline_row):
         for rank in range(31):
             placex_row(rank_address=rank, rank_search=rank, indexed_status=1)
         osmline_row()
@@ -82,7 +82,7 @@ class TestIndexing:
         assert self.placex_unindexed() == 31
         assert self.osmline_unindexed() == 1
 
-        idx = indexer.Indexer(dsn, self.tokenizer, threads)
+        idx = indexer.Indexer(def_config, self.tokenizer, threads)
         await idx.index_by_rank(0, 30)
 
         assert self.placex_unindexed() == 0
@@ -108,7 +108,7 @@ class TestIndexing:
 
     @pytest.mark.parametrize("threads", [1, 15])
     @pytest.mark.asyncio
-    async def test_index_partial_without_30(self, dsn, threads, placex_row, osmline_row):
+    async def test_index_partial_without_30(self, def_config, threads, placex_row, osmline_row):
         for rank in range(31):
             placex_row(rank_address=rank, rank_search=rank, indexed_status=1)
         osmline_row()
@@ -116,7 +116,7 @@ class TestIndexing:
         assert self.placex_unindexed() == 31
         assert self.osmline_unindexed() == 1
 
-        idx = indexer.Indexer(dsn, self.tokenizer, threads)
+        idx = indexer.Indexer(def_config, self.tokenizer, threads)
         await idx.index_by_rank(4, 15)
 
         assert self.placex_unindexed() == 19
@@ -128,7 +128,7 @@ class TestIndexing:
 
     @pytest.mark.parametrize("threads", [1, 15])
     @pytest.mark.asyncio
-    async def test_index_partial_with_30(self, dsn, threads, placex_row, osmline_row):
+    async def test_index_partial_with_30(self, def_config, threads, placex_row, osmline_row):
         for rank in range(31):
             placex_row(rank_address=rank, rank_search=rank, indexed_status=1)
         osmline_row()
@@ -136,7 +136,7 @@ class TestIndexing:
         assert self.placex_unindexed() == 31
         assert self.osmline_unindexed() == 1
 
-        idx = indexer.Indexer(dsn, self.tokenizer, threads)
+        idx = indexer.Indexer(def_config, self.tokenizer, threads)
         await idx.index_by_rank(28, 30)
 
         assert self.placex_unindexed() == 28
@@ -148,7 +148,7 @@ class TestIndexing:
 
     @pytest.mark.parametrize("threads", [1, 15])
     @pytest.mark.asyncio
-    async def test_index_boundaries(self, dsn, threads, placex_row, osmline_row):
+    async def test_index_boundaries(self, def_config, threads, placex_row, osmline_row):
         for rank in range(4, 10):
             placex_row(cls='boundary', typ='administrative',
                        rank_address=rank, rank_search=rank, indexed_status=1)
@@ -159,7 +159,7 @@ class TestIndexing:
         assert self.placex_unindexed() == 37
         assert self.osmline_unindexed() == 1
 
-        idx = indexer.Indexer(dsn, self.tokenizer, threads)
+        idx = indexer.Indexer(def_config, self.tokenizer, threads)
         await idx.index_boundaries()
 
         assert self.placex_unindexed() == 31
@@ -171,13 +171,13 @@ class TestIndexing:
 
     @pytest.mark.parametrize("threads", [1, 15])
     @pytest.mark.asyncio
-    async def test_index_postcodes(self, dsn, threads, postcode_row):
+    async def test_index_postcodes(self, def_config, threads, postcode_row):
         for postcode in range(1000):
             postcode_row(country='de', postcode=postcode)
         for postcode in range(32000, 33000):
             postcode_row(country='us', postcode=postcode)
 
-        idx = indexer.Indexer(dsn, self.tokenizer, threads)
+        idx = indexer.Indexer(def_config, self.tokenizer, threads)
         await idx.index_postcodes()
 
         assert self.scalar("""SELECT count(*) FROM location_postcodes
@@ -185,7 +185,7 @@ class TestIndexing:
 
     @pytest.mark.parametrize("analyse", [True, False])
     @pytest.mark.asyncio
-    async def test_index_full(self, dsn, analyse, placex_row, osmline_row, postcode_row):
+    async def test_index_full(self, def_config, analyse, placex_row, osmline_row, postcode_row):
         for rank in range(4, 10):
             placex_row(cls='boundary', typ='administrative',
                        rank_address=rank, rank_search=rank, indexed_status=1)
@@ -195,7 +195,7 @@ class TestIndexing:
         for postcode in range(1000):
             postcode_row(country='de', postcode=postcode)
 
-        idx = indexer.Indexer(dsn, self.tokenizer, 4)
+        idx = indexer.Indexer(def_config, self.tokenizer, 4)
         await idx.index_full(analyse=analyse)
 
         assert self.placex_unindexed() == 0

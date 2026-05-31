@@ -19,6 +19,7 @@ from ..db.connection import connect, Cursor, register_hstore
 from ..db.sql_preprocessor import SQLPreprocessor
 from ..errors import UsageError
 from ..tokenizer import factory as tokenizer_factory
+from ..tokenizer.place_sanitizer import load_sanitizers
 from ..data.place_info import PlaceInfo
 
 LOG = logging.getLogger()
@@ -80,12 +81,14 @@ def analyse_indexing(config: Configuration, osm_id: Optional[str] = None,
             conn.add_notice_handler(lambda diag: print(diag.message_primary))
 
             with tokenizer.name_analyzer() as analyzer:
+                info = PlaceInfo(place)
+                load_sanitizers(config).process_names(info)
                 cur.execute("""UPDATE placex
                                SET indexed_status = 0, address = %s, token_info = %s,
                                name = %s, linked_place_id = %s
                                WHERE place_id = %s""",
                             (place['address'],
-                             Json(analyzer.process_place(PlaceInfo(place))),
+                             Json(analyzer.process_place(info)),
                              place['name'], place['linked_place_id'], place['place_id']))
 
         # we do not want to keep the results

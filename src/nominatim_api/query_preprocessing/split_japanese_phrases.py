@@ -2,12 +2,12 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2025 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
-This file divides Japanese addresses into three categories:
-prefecture, municipality, and other.
-The division is not strict but simple using these keywords.
+This preprocessor divides Japanese addresses into three categories:
+prefecture, municipality, and other. It adds potential phrase boundaries
+between the categories.
 """
 from typing import List
 import re

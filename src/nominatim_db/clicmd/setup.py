@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Implementation of the 'import' subcommand.
@@ -120,7 +120,7 @@ class SetupAll:
 
         if args.continue_at in ('import-from-file', 'load-data', 'indexing', None):
             LOG.warning('Indexing places')
-            indexer = Indexer(args.config.get_libpq_dsn(), tokenizer, num_threads)
+            indexer = Indexer(args.config, tokenizer, num_threads)
             await indexer.index_full(analyse=not args.index_noanalyse)
 
         LOG.warning('Post-process tables')
@@ -131,7 +131,7 @@ class SetupAll:
                                                         threads=num_threads)
             LOG.warning('Create search index for default country names.')
             conn.autocommit = False
-            country_info.create_country_names(conn, tokenizer,
+            country_info.create_country_names(conn, tokenizer, args.config,
                                               args.config.get_str_list('LANGUAGES'))
             if args.no_updates:
                 conn.autocommit = True

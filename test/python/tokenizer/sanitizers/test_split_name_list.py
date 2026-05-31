@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2025 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for the sanitizer that splits multivalue lists.
@@ -23,17 +23,16 @@ class TestSplitName:
 
     def run_sanitizer_on(self, **kwargs):
         place = PlaceInfo({'name': kwargs})
-        name, _ = PlaceSanitizer([{'step': 'split-name-list'}], self.config).process_names(place)
+        PlaceSanitizer([{'step': 'split-name-list'}], self.config).process_names(place)
 
-        return sorted([(p.name, p.kind, p.suffix) for p in name])
+        return sorted([(p.name, p.kind, p.suffix) for p in place.searchable_names])
 
     def sanitize_with_delimiter(self, delimiter, name):
         place = PlaceInfo({'name': {'name': name}})
-        san = PlaceSanitizer([{'step': 'split-name-list', 'delimiters': delimiter}],
-                             self.config)
-        name, _ = san.process_names(place)
+        PlaceSanitizer([{'step': 'split-name-list', 'delimiters': delimiter}],
+                       self.config).process_names(place)
 
-        return sorted([p.name for p in name])
+        return sorted([p.name for p in place.searchable_names])
 
     def test_simple(self):
         assert self.run_sanitizer_on(name='ABC') == [('ABC', 'name', None)]
@@ -67,7 +66,7 @@ class TestSplitName:
 
 def test_no_name_list(def_config):
     place = PlaceInfo({'address': {'housenumber': '3'}})
-    name, address = PlaceSanitizer([{'step': 'split-name-list'}], def_config).process_names(place)
+    PlaceSanitizer([{'step': 'split-name-list'}], def_config).process_names(place)
 
-    assert not name
-    assert len(address) == 1
+    assert not place.searchable_names
+    assert len(place.searchable_address) == 1

@@ -21,9 +21,9 @@ def sanitize(request, def_config):
 
     def _run(**kwargs):
         place = PlaceInfo({'address': kwargs})
-        _, address = PlaceSanitizer([sanitizer_args], def_config).process_names(place)
+        PlaceSanitizer([sanitizer_args], def_config).process_names(place)
 
-        return sorted([(p.kind, p.name) for p in address])
+        return sorted([(p.kind, p.name) for p in place.searchable_address])
 
     return _run
 
@@ -51,10 +51,10 @@ def test_convert_to_name_converted(def_config, number):
                       'convert-to-name': (r'\d+', 'n/a')}
 
     place = PlaceInfo({'address': {'housenumber': number}})
-    names, address = PlaceSanitizer([sanitizer_args], def_config).process_names(place)
+    PlaceSanitizer([sanitizer_args], def_config).process_names(place)
 
-    assert ('housenumber', number) in set((p.kind, p.name) for p in names)
-    assert 'housenumber' not in set(p.kind for p in address)
+    assert ('housenumber', number) in set((p.kind, p.name) for p in place.searchable_names)
+    assert 'housenumber' not in set(p.kind for p in place.searchable_address)
 
 
 @pytest.mark.parametrize('number', ('a54', 'n.a', 'bow'))
@@ -63,10 +63,10 @@ def test_convert_to_name_unconverted(def_config, number):
                       'convert-to-name': (r'\d+', 'n/a')}
 
     place = PlaceInfo({'address': {'housenumber': number}})
-    names, address = PlaceSanitizer([sanitizer_args], def_config).process_names(place)
+    PlaceSanitizer([sanitizer_args], def_config).process_names(place)
 
-    assert 'housenumber' not in set(p.kind for p in names)
-    assert ('housenumber', number) in set((p.kind, p.name) for p in address)
+    assert 'housenumber' not in set(p.kind for p in place.searchable_names)
+    assert ('housenumber', number) in set((p.kind, p.name) for p in place.searchable_address)
 
 
 @pytest.mark.parametrize('hnr,itype,out', [

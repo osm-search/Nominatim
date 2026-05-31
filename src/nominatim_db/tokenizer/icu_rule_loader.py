@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Helper class to create ICU rules from a configuration file.
@@ -18,7 +18,6 @@ from ..config import flatten_config_list, Configuration
 from ..db.properties import set_property, get_property
 from ..db.connection import Connection
 from ..errors import UsageError
-from .place_sanitizer import PlaceSanitizer
 from .icu_token_analysis import ICUTokenAnalysis
 from .token_analysis.base import AnalysisModule, Analyzer
 from ..data import country_info
@@ -58,9 +57,6 @@ class ICURuleLoader:
         self.analysis_rules = _get_section(rules, 'token-analysis')
         self._setup_analysis()
 
-        # Load optional sanitizer rule set.
-        self.sanitizer_rules = rules.get('sanitizers', [])
-
     def load_config_from_db(self, conn: Connection) -> None:
         """ Get previously saved parts of the configuration from the
             database.
@@ -87,11 +83,6 @@ class ICURuleLoader:
         set_property(conn, DBCFG_IMPORT_NORM_RULES, self.normalization_rules)
         set_property(conn, DBCFG_IMPORT_TRANS_RULES, self.transliteration_rules)
         set_property(conn, DBCFG_IMPORT_ANALYSIS_RULES, json.dumps(self.analysis_rules))
-
-    def make_sanitizer(self) -> PlaceSanitizer:
-        """ Create a place sanitizer from the configured rules.
-        """
-        return PlaceSanitizer(self.sanitizer_rules, self.config)
 
     def make_token_analysis(self) -> ICUTokenAnalysis:
         """ Create a token analyser from the reviouly loaded rules.

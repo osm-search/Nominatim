@@ -23,6 +23,7 @@ from .token_assignment import yield_token_assignments
 from .db_search_builder import SearchBuilder, build_poi_search, wrap_near_search
 from .db_searches import AbstractSearch
 from .query_analyzer_factory import make_query_analyzer, AbstractQueryAnalyzer
+from .query_preprocessor import QueryPreprocessor
 from .query import Phrase, QueryStruct
 
 
@@ -35,6 +36,7 @@ class ForwardGeocoder:
         self.conn = conn
         self.params = params
         self.timeout = timeout
+        self.query_preprocessor = QueryPreprocessor(self.conn.config)
         self.query_analyzer: Optional[AbstractQueryAnalyzer] = None
 
     @property
@@ -94,7 +96,7 @@ class ForwardGeocoder:
         if self.query_analyzer is None:
             self.query_analyzer = await make_query_analyzer(self.conn)
 
-        query = await self.query_analyzer.analyze_query(phrases)
+        query = await self.query_analyzer.analyze_query(self.query_preprocessor.run(phrases))
         query.compute_direction_penalty()
         log().var_dump('Query direction penalty',
                        lambda: f"[{'LR' if query.dir_penalty < 0 else 'RL'}] {query.dir_penalty}")

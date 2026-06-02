@@ -61,6 +61,10 @@ exclude = [
 [tool.hatch.build.targets.wheel]
 packages = ["src/nominatim_db"]
 
+exclude = [
+  "src/nominatim_db/paths.py"
+]
+
 [tool.hatch.build.targets.wheel.shared-scripts]
 "scripts" = "/"
 

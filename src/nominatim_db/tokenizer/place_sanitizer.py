@@ -63,11 +63,11 @@ class PlaceSanitizer:
                         raise UsageError(
                             "'base' and 'config' cannot be used as name for 'step'.")
 
-                    module: SanitizerHandler = \
+                    country_module: SanitizerHandler = \
                         config.load_plugin_module(func['step'],
                                                   'nominatim_db.tokenizer.sanitizers')
 
-                    handlers.append(module.create(SanitizerConfig(func)))
+                    handlers.append(country_module.create(SanitizerConfig(func)))
                 self._country_handlers[country] = handlers
 
     def process_names(self, place: PlaceInfo) -> None:

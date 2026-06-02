@@ -148,12 +148,14 @@ def test_country_sanitizer_empty_country_rules(def_config):
 
 def test_country_sanitizer_missing_step_definition(def_config):
     with pytest.raises(UsageError):
-        sanitizer.PlaceSanitizer([], def_config,
-                                  country_rules={'de': [{'id': 'split-name-list'}]})
+        sanitizer.PlaceSanitizer(
+            [], def_config, country_rules={'de': [{'id': 'split-name-list'}]}
+        )
 
 
 @pytest.mark.parametrize('stepname', ['_something', '__init__', 'base', 'config'])
 def test_country_sanitizer_illegal_step_names(def_config, stepname):
     with pytest.raises(UsageError):
-        sanitizer.PlaceSanitizer([], def_config,
-                                  country_rules={'de': [{'step': stepname}]})
+        sanitizer.PlaceSanitizer(
+            [], def_config, country_rules={'de': [{'step': stepname}]}
+        )

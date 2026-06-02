@@ -86,3 +86,74 @@ def test_sanitizer_missing_step_definition(def_config):
 def test_sanitizer_illegal_step_names(def_config, stepname):
     with pytest.raises(UsageError):
         sanitizer.PlaceSanitizer([{'step': stepname}], def_config)
+
+
+def test_country_sanitizer_applies_to_matching_country(def_config):
+    san = sanitizer.PlaceSanitizer(
+        [{'step': 'split-name-list'}],
+        def_config,
+        country_rules={'de': [{'step': 'split-name-list', 'delimiters': '-'}]})
+
+    place = PlaceInfo({'name': {'name': 'a;b-c'},
+                       'country_code': 'de'})
+    san.process_names(place)
+    name = place.searchable_names
+
+    assert len(name) == 3
+    assert {n.name for n in name} == {'a', 'b', 'c'}
+
+
+def test_country_sanitizer_skips_other_countries(def_config):
+    san = sanitizer.PlaceSanitizer(
+        [{'step': 'split-name-list'}],
+        def_config,
+        country_rules={'de': [{'step': 'split-name-list', 'delimiters': '-'}]})
+
+    place = PlaceInfo({'name': {'name': 'a;b-c'},
+                       'country_code': 'fr'})
+    san.process_names(place)
+    name = place.searchable_names
+
+    assert len(name) == 2
+    assert {n.name for n in name} == {'a', 'b-c'}
+
+
+def test_country_sanitizer_no_country_skipped(def_config):
+    san = sanitizer.PlaceSanitizer(
+        [{'step': 'split-name-list'}],
+        def_config,
+        country_rules={'de': [{'step': 'split-name-list', 'delimiters': '-'}]})
+
+    place = PlaceInfo({'name': {'name': 'a;b-c'}})
+    san.process_names(place)
+    name = place.searchable_names
+
+    assert len(name) == 2
+    assert {n.name for n in name} == {'a', 'b-c'}
+
+
+def test_country_sanitizer_empty_country_rules(def_config):
+    san = sanitizer.PlaceSanitizer(
+        [{'step': 'split-name-list'}],
+        def_config,
+        country_rules={'de': []})
+
+    place = PlaceInfo({'name': {'name': 'a;b-c'},
+                       'country_code': 'de'})
+    san.process_names(place)
+    name = place.searchable_names
+
+    assert len(name) == 2
+
+
+def test_country_sanitizer_missing_step_definition(def_config):
+    with pytest.raises(UsageError):
+        sanitizer.PlaceSanitizer([], def_config,
+                                  country_rules={'de': [{'id': 'split-name-list'}]})
+
+
+@pytest.mark.parametrize('stepname', ['_something', '__init__', 'base', 'config'])
+def test_country_sanitizer_illegal_step_names(def_config, stepname):
+    with pytest.raises(UsageError):
+        sanitizer.PlaceSanitizer([], def_config,
+                                  country_rules={'de': [{'step': stepname}]})

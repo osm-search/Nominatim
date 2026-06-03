@@ -15,6 +15,7 @@ CREATE TABLE location_postcodes (
   indexed_date TIMESTAMP,
   country_code varchar(2) NOT NULL,
   postcode TEXT NOT NULL,
+  is_area BOOLEAN NOT NULL DEFAULT FALSE,
   centroid GEOMETRY(Geometry, 4326) NOT NULL,
   geometry GEOMETRY(Geometry, 4326) NOT NULL
   );

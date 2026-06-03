@@ -119,6 +119,7 @@ BEGIN
     UPDATE location_postcodes p
       SET osm_id = NEW.osm_id,
           indexed_status = 2,
+          is_area = NEW.is_area,
           centroid = NEW.centroid,
           geometry = NEW.geometry
       WHERE p.country_code = NEW.country_code AND p.postcode = NEW.postcode;

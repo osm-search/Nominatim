@@ -10,13 +10,22 @@ Nominatim. Please refer to the documentation of
 [Nginx](https://nginx.org/en/docs/) for background information on how
 to configure it.
 
-### Installing the required packages
-
 !!! warning
     ASGI support in gunicorn requires at least version 25.0. If you need
     to work with an older version of gunicorn, please refer to
     [older Nominatim deployment documentation](https://nominatim.org/release-docs/5.2/admin/Deployment-Python/)
     to learn how to run gunicorn with uvicorn.
+
+!!! danger
+    UWSGI support in gunicorn 25.2.0+ does not work together
+    with recent versions of nginx.
+    See [this bug report](https://github.com/benoitc/gunicorn/discussions/3605)
+    for more information. If you encounter **Incomplete Header** errors,
+    either downgrade gunicorn to version 25.1.0 or switch to using the http
+    protocol for communication with nginx.
+
+
+### Installing the required packages
 
 The Nominatim frontend is best run from its own virtual environment. If
 you have already created one for the database backend during the

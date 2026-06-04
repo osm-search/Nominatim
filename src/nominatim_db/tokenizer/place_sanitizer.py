@@ -8,7 +8,7 @@
 Handler for cleaning name and address tags in place information before it
 is handed to the token analysis.
 """
-from typing import Optional, Mapping, Sequence, Callable, Any, Dict
+from typing import Optional, Mapping, Sequence, Callable, Any
 
 from ..errors import UsageError
 from ..config import Configuration
@@ -16,32 +16,38 @@ from .sanitizers.config import SanitizerConfig
 from .sanitizers.base import SanitizerHandler, ProcessInfo
 from ..data.place_info import PlaceInfo
 
+SanitizerRules = Sequence[Mapping[str, Any]]
+
+
+def _validate_step(func: Mapping[str, Any]) -> str:
+    step = func.get('step')
+    if step is None:
+        raise UsageError("Sanitizer rule is missing the 'step' attribute.")
+    if not isinstance(step, str):
+        raise UsageError("'step' attribute must be a simple string.")
+    if step.startswith('_'):
+        raise UsageError("Illegal name for 'step', must not start with '_'.")
+    if step in ('base', 'config'):
+        raise UsageError("'base' and 'config' cannot be used as name for 'step'.")
+    return step
+
 
 class PlaceSanitizer:
     """ Controller class which applies sanitizer functions on the place
         names and address before they are used by the token analysers.
     """
 
-    def __init__(self, rules: Optional[Sequence[Mapping[str, Any]]],
+    def __init__(self, rules: Optional[SanitizerRules],
                  config: Configuration,
-                 country_rules: Optional[Mapping[str, Sequence[Mapping[str, Any]]]] = None) -> None:
+                 country_rules: Optional[Mapping[str, SanitizerRules]] = None) -> None:
         self.handlers: list[Callable[[ProcessInfo], None]] = []
-        self._country_handlers: Dict[str, list[Callable[[ProcessInfo], None]]] = {}
+        self._country_handlers: dict[str, list[Callable[[ProcessInfo], None]]] = {}
 
         if rules:
             for func in rules:
-                if 'step' not in func:
-                    raise UsageError("Sanitizer rule is missing the 'step' attribute.")
-                if not isinstance(func['step'], str):
-                    raise UsageError("'step' attribute must be a simple string.")
-                if func['step'].startswith('_'):
-                    raise UsageError("Illegal name for 'step', must not start with '_'.")
-                if func['step'].startswith('_') or func['step'] in ('base', 'config'):
-                    raise UsageError("'base' and 'config' cannot be used as name for 'step'.")
-
+                step = _validate_step(func)
                 module: SanitizerHandler = \
-                    config.load_plugin_module(func['step'], 'nominatim_db.tokenizer.sanitizers')
-
+                    config.load_plugin_module(step, 'nominatim_db.tokenizer.sanitizers')
                 self.handlers.append(module.create(SanitizerConfig(func)))
 
         if country_rules:
@@ -50,23 +56,10 @@ class PlaceSanitizer:
                     continue
                 handlers: list[Callable[[ProcessInfo], None]] = []
                 for func in country_rules_list:
-                    if 'step' not in func:
-                        raise UsageError(
-                            "Sanitizer rule in country configuration is missing "
-                            "the 'step' attribute.")
-                    if not isinstance(func['step'], str):
-                        raise UsageError("'step' attribute must be a simple string.")
-                    if func['step'].startswith('_'):
-                        raise UsageError(
-                            "Illegal name for 'step', must not start with '_'.")
-                    if func['step'] in ('base', 'config'):
-                        raise UsageError(
-                            "'base' and 'config' cannot be used as name for 'step'.")
-
+                    step = _validate_step(func)
                     country_module: SanitizerHandler = \
-                        config.load_plugin_module(func['step'],
+                        config.load_plugin_module(step,
                                                   'nominatim_db.tokenizer.sanitizers')
-
                     handlers.append(country_module.create(SanitizerConfig(func)))
                 self._country_handlers[country] = handlers
 
@@ -106,7 +99,7 @@ def load_sanitizers(config: Configuration) -> PlaceSanitizer:
         rules = config.load_sub_configuration('icu_tokenizer.yaml')\
                       .get('sanitizers', [])
 
-    country_rules: Dict[str, Sequence[Mapping[str, Any]]] = {}
+    country_rules: dict[str, SanitizerRules] = {}
     country_config = config.load_sub_configuration('country_settings.yaml')
     for code, props in country_config.items():
         if 'sanitizers' in props:

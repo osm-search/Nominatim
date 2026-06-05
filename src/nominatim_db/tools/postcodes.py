@@ -159,7 +159,7 @@ class _PostcodeCollector:
                                 " Ignored.", self.country)
                     return
                 postcode = analyzer.normalize_postcode(row['postcode'])
-                if postcode not in self.collected:
+                if postcode not in self.collected and postcode not in self.exclude:
                     try:
                         # Do float conversation separately, it might throw
                         centroid = (_to_float(row['lon'], 180),

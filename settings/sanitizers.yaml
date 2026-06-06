@@ -7,6 +7,12 @@
   filter-name:
     - '.*=.*'
     - '.*https?:.*'
+- step: delete-names
+  type: address
+  filter-kind:
+    - unit
+    - floor
+    - flats
 - step: clean-housenumbers
   filter-kind:
     - housenumber

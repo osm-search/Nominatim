@@ -193,7 +193,8 @@ CREATE OR REPLACE FUNCTION find_parent_for_poi(poi_osm_type CHAR(1),
                                                poi_partition SMALLINT,
                                                bbox GEOMETRY,
                                                token_info JSONB,
-                                               is_place_addr BOOLEAN)
+                                               is_place_addr BOOLEAN,
+                                               has_place_addr BOOLEAN DEFAULT false)
   RETURNS BIGINT
   AS $$
 DECLARE
@@ -221,7 +222,7 @@ BEGIN
       {% if debug %}RAISE WARNING 'Node is part of way % ', location.osm_id;{% endif %}
 
       -- Way IS a road then we are on it - that must be our road
-      IF location.rank_search < 28 THEN
+      IF location.rank_search BETWEEN 26 AND 27 THEN
         {% if debug %}RAISE WARNING 'node in way that is a street %',location;{% endif %}
         RETURN location.place_id;
       END IF;
@@ -231,22 +232,25 @@ BEGIN
   END IF;
 
   IF parent_place_id is NULL THEN
-    IF is_place_addr THEN
-      -- The address is attached to a place we don't know.
-      -- Instead simply use the containing area with the largest rank.
-      FOR location IN
-        SELECT place_id FROM placex
-         WHERE bbox && geometry AND _ST_Covers(geometry, ST_Centroid(bbox))
-               AND rank_address between 5 and 25
-               AND ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon')
-         ORDER BY rank_address desc
-      LOOP
-        RETURN location.place_id;
-      END LOOP;
-    ELSEIF ST_Area(bbox) < 0.005 THEN
+    IF ST_Area(bbox) < 0.005 THEN
       -- for smaller features get the nearest road
-      SELECT getNearestRoadPlaceId(poi_partition, bbox) INTO parent_place_id;
-      {% if debug %}RAISE WARNING 'Checked for nearest way (%)', parent_place_id;{% endif %}
+      IF NOT has_place_addr THEN
+        SELECT getNearestRoadPlaceId(poi_partition, bbox) INTO parent_place_id;
+        {% if debug %}RAISE WARNING 'Checked for nearest way (%)', parent_place_id;{% endif %}
+      END IF;
+
+      IF parent_place_id is NULL THEN
+        FOR location IN
+          SELECT place_id FROM placex
+           WHERE bbox && geometry AND _ST_Covers(geometry, ST_Centroid(bbox))
+                 AND rank_address between 5 and 25
+                 AND name is not null
+                 AND ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon')
+           ORDER BY rank_address desc
+        LOOP
+          RETURN location.place_id;
+        END LOOP;
+      END IF;
     ELSE
       -- for larger features simply find the area with the largest rank that
       -- contains the bbox, only use addressable features
@@ -255,7 +259,7 @@ BEGIN
          WHERE bbox && geometry AND _ST_Covers(geometry, ST_Centroid(bbox))
                AND rank_address between 5 and 25
                AND ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon')
-        ORDER BY rank_address desc
+         ORDER BY rank_address desc
       LOOP
         RETURN location.place_id;
       END LOOP;
@@ -1026,7 +1030,9 @@ BEGIN
                                                NEW.partition,
                                                ST_Envelope(NEW.geometry),
                                                NEW.token_info,
-                                               is_place_address);
+                                               is_place_address,
+                                               COALESCE(NEW.address ? 'place', false)
+                                                       AND NOT COALESCE(NEW.address ? 'street', false));
 
     -- If we found the road take a shortcut here.
     -- Otherwise fall back to the full address getting method below.

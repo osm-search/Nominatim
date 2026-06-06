@@ -1,10 +1,20 @@
+- step: delete-names
+  type: name
+  filter-name:
+    - '.*https?:.*'
+- step: delete-names
+  type: address
+  filter-name:
+    - '.*=.*'
+    - '.*https?:.*'
 - step: clean-housenumbers
   filter-kind:
     - housenumber
     - conscriptionnumber
     - streetnumber
   convert-to-name:
-    - (\A|.*,)[^\d,]{3,}(,.*|\Z)
+    - '.*[^;,]{15,}.*'
+    - '(\A|.*,)[^\d,]{3,}(,.*|\Z)'
 - step: clean-postcodes
   convert-to-address: yes
   default-pattern: "[A-Z0-9- ]{3,12}"

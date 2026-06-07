@@ -57,6 +57,10 @@ description or in documentation need to
    sufficient. You need to show that the code actually solves the problem
    the PR claims to solve.
 
+We do not accept **under any circumstances** bulk-generated, agent-driven contributions.
+These PRs create a huge burden on the maintainers while not bringing a net-positive
+in increased engagement for the project.
+
 ## Getting Started with Development
 
 Please see the development section of the Nominatim documentation for

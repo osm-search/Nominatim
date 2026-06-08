@@ -4,14 +4,15 @@
 #
 # Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
-'''
+"""
 Tests for replacing values in an input using custom regex.
-'''
+"""
 import pytest
 
 import nominatim_api.search.query as qmod
 from nominatim_api.query_preprocessing.config import QueryConfig
 from nominatim_api.query_preprocessing import regex_replace
+from nominatim_api.errors import UsageError
 
 
 def run_preprocessor_on(query):
@@ -46,3 +47,13 @@ def test_split_phrases(inp, outp):
 
     out = run_preprocessor_on(query)
     assert out == [qmod.Phrase(qmod.PHRASE_ANY, text) for text in outp]
+
+
+def test_missing_replacement_section():
+    with pytest.raises(UsageError, match="'replacements' missing"):
+        regex_replace.create(QueryConfig())
+
+
+def test_bad_type_for_replacement():
+    with pytest.raises(UsageError, match="'replacements' must be of type list"):
+        regex_replace.create(QueryConfig({'replacements': 'something'}))

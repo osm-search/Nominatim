@@ -29,7 +29,7 @@ class _GenericPreprocessing:
         """Initialise the _GenericPreprocessing class with patterns from the ICU config file."""
         self.config = config
 
-        match_patterns = self.config.get('replacements', 'Key not found')
+        match_patterns = self.config.require_typed('replacements', list)
         self.compiled_patterns = [
             (re.compile(item['pattern']), item['replace']) for item in match_patterns
             ]

@@ -119,13 +119,15 @@ the placex table. Only the following columns are special:
 Address interpolations are always ways in OSM, which is why there is no column
 `osm_type`.
 
-The **location_postcodes** table holds computed postcode assembled from the
-postcode information available in OSM. When a postcode has a postcode area
-relation, then the table stores its full geometry. For all other postcode
-the centroid is computed using the position of all OSM object that reference
-the same postoce. The `osm_id` field can be used to distinguish the two.
-When set, it refers to the OSM relation with the postcode area.
-The meaning of the columns in the table is again the same as that of the
+The **location_postcodes** table holds computed postcode assembled from the postcode information
+available in OSM. When a postcode has a postcode area relation, or when the postcode geometry is
+[imported via JSONL files](../customize/Postcodes.md#jsonl-format) then the table stores
+its full geometry. For all other postcodes the centroid is computed using the position of all OSM
+objects that reference the same postcode. The `osm_id` and `is_area` fields can be used to
+distinguish the two. When `osm_id` is set, it refers to the OSM relation with the postcode area,
+and `is_area` is `true` for postcodes with a mature geometry (either from a postcode OSM area
+relation or imported via JSONL), `false` for postcodes without a mature geometry (guessed
+postcode geometries). The meaning of other columns in the table is again the same as that of the
 placex table.
 
 Every place needs an address, a set of surrounding places that describe the

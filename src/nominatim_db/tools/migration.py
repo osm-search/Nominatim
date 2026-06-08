@@ -507,3 +507,15 @@ def create_associated_street_triggers(conn: Connection, config: Configuration, *
         cur.execute("""CREATE OR REPLACE TRIGGER place_associated_street_update
                        AFTER INSERT OR DELETE ON place_associated_street
                        FOR EACH ROW EXECUTE FUNCTION invalidate_associated_street_members()""")
+
+
+@_migration(5, 3, 99, 1)
+def alter_location_postcode_add_area_flag(conn: Connection, **_: Any) -> None:
+    """ Add is_area flag to location_postcodes table
+    """
+    with conn.cursor() as cur:
+        if not table_has_column(conn, 'location_postcodes', 'is_area'):
+            cur.execute("""ALTER TABLE location_postcodes
+                        ADD COLUMN is_area BOOLEAN NOT NULL DEFAULT FALSE""")
+            cur.execute("""UPDATE location_postcodes
+                        SET is_area = true WHERE osm_id IS NOT NULL""")

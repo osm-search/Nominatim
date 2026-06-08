@@ -339,13 +339,13 @@ def postcode_table(temp_db_with_extensions, load_sql):
 
 @pytest.fixture
 def postcode_row(postcode_table, temp_db_cursor):
-    def _add(country, postcode, x=34.5, y=-9.33):
+    def _add(country, postcode, x=34.5, y=-9.33, is_area=False):
         geom = _with_srid(f"POINT({x} {y})")
         return temp_db_cursor.insert_row(
             'location_postcodes',
             place_id=pysql.SQL("nextval('seq_place')"),
             indexed_status=pysql.Literal(1),
-            country_code=country, postcode=postcode,
+            country_code=country, postcode=postcode, is_area=is_area,
             centroid=geom,
             rank_search=pysql.Literal(16),
             geometry=('ST_Expand(%s::geometry, 0.005)', geom))

@@ -76,6 +76,7 @@ class SearchTables:
             sa.Column('indexed_date', sa.DateTime),
             sa.Column('country_code', sa.String(2), nullable=False),
             sa.Column('postcode', sa.Text, nullable=False),
+            sa.Column('is_area', sa.Boolean, default=False, nullable=False),
             sa.Column('centroid', Geometry, nullable=False),
             sa.Column('geometry', Geometry, nullable=False))
 

@@ -49,7 +49,7 @@ class PostcodeSearch(base.AbstractSearch):
                 .where(t.c.postcode.in_(pcs))
 
         if details.geometry_output:
-            pcgeom = sa.case((sa.func.ST_NPoints(t.c.geometry) > 5, t.c.geometry),
+            pcgeom = sa.case((t.c.is_area, t.c.geometry),
                              else_=t.c.centroid)
             sql = base.add_geometry_columns(sql, pcgeom, details)
 

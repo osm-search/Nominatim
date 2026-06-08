@@ -36,9 +36,9 @@ def run_preprocessor_on(query):
     (['http://osm.org'], []),
     (['https://www.openstreetmap.org/user/abc'], []),
     (['https://tile.openstreetmap.org/12/2048/2048.png'], []),
-    (['Check the map at https://www.openstreetmap.org'], ['Check the map at ']),
+    (['Check the map at https://www.openstreetmap.org'], ['Check the map at']),
     (['Use 203.0.113.255 for routing'], ['Use  for routing']),
-    (['Find maps at https://osm.org and http://openstreetmap.org'], ['Find maps at  and ']),
+    (['Find maps at https://osm.org and http://openstreetmap.org'], ['Find maps at  and']),
     (['203.0.113.255', 'Some Address'], ['Some Address']),
     (['https://osm.org', 'Another Place'], ['Another Place']),
 ])

@@ -37,7 +37,7 @@ class _GenericPreprocessing:
     def split_phrase(self, phrase: Phrase) -> Phrase:
         """This function performs replacements on the given text using regex patterns."""
         for item in self.compiled_patterns:
-            phrase.text = item[0].sub(item[1], phrase.text)
+            phrase.text = item[0].sub(item[1], phrase.text).strip()
 
         return phrase
 
@@ -46,7 +46,7 @@ class _GenericPreprocessing:
         Return the final Phrase list.
         Returns an empty list if there is nothing left after split_phrase.
         """
-        result = [p for p in map(self.split_phrase, phrases) if p.text.strip()]
+        result = [p for p in map(self.split_phrase, phrases) if p.text]
         return result
 
 

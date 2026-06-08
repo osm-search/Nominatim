@@ -2,10 +2,13 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2025 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 This preprocessor replaces values in a given input based on pre-defined regex rules.
+
+The preprocessor takes a list of replacements in the 'replacement' parameter.
+Each replacement takes the following arguments:
 
 Arguments:
     pattern: Regex pattern to be applied on the input

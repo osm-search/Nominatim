@@ -49,9 +49,9 @@ Arguments:
 
 
 """
-from typing import Callable, Sequence, Optional
+from typing import Callable, Optional
 
-from ...data.place_name import PlaceName
+from ...data.place_name import PlaceName, PlaceNames
 from .base import ProcessInfo
 from .config import SanitizerConfig
 from ._derived_name_sanitizer import DerivedNameSanitizer
@@ -64,7 +64,7 @@ class _DeleteNameSanitizer(DerivedNameSanitizer):
         self.filter_name = config.get_filter('filter-name')
 
     def compute_derived_names(self, name: PlaceName,
-                              obj: ProcessInfo) -> Optional[Sequence[PlaceName]]:
+                              obj: ProcessInfo) -> Optional[PlaceNames]:
         return [] if self.filter_name(name.name) else None
 
 

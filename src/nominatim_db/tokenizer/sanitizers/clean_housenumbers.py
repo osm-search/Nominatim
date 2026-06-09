@@ -31,7 +31,7 @@ Arguments:
 from typing import Callable, Iterator, Iterable, Union
 import re
 
-from ...data.place_name import PlaceName
+from ...data.place_name import PlaceNames
 from .base import ProcessInfo
 from .config import SanitizerConfig
 
@@ -62,7 +62,7 @@ class _HousenumberSanitizer:
                 elif itype not in ('odd', 'even'):
                     itype = None
 
-        new_address: list[PlaceName] = []
+        new_address: PlaceNames = []
         for item in obj.address:
             if self.filter_kind(item.kind):
                 if itype is not None and RANGE_REGEX.fullmatch(item.name):

@@ -81,3 +81,6 @@ class PlaceName:
         """ Check if the given attribute is set.
         """
         return key in self.attr
+
+
+PlaceNames = list[PlaceName]

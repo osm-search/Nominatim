@@ -10,7 +10,7 @@ Base class for sanitizers that derive new place names from existing ones.
 from typing import Sequence, Optional
 from abc import ABC, abstractmethod
 
-from ...data.place_name import PlaceName
+from ...data.place_name import PlaceName, PlaceNames
 from .base import ProcessInfo
 from .config import SanitizerConfig
 from ...errors import UsageError
@@ -84,7 +84,7 @@ class DerivedNameSanitizer(ABC):
            and obj.place.rank_address in self.allowed_ranks\
            and (self.country_codes is None
                 or obj.place.country_code in self.country_codes):
-            filtered_names: list[PlaceName] = []
+            filtered_names: PlaceNames = []
 
             for name in names:
                 keep_name = True
@@ -102,7 +102,7 @@ class DerivedNameSanitizer(ABC):
 
     @abstractmethod
     def compute_derived_names(self, name: PlaceName,
-                              obj: ProcessInfo) -> Optional[Sequence[PlaceName]]:
+                              obj: ProcessInfo) -> Optional[PlaceNames]:
         """ Filter function to be implemented by derived classes.
             Computes one or more derived names from the given name. The
             full object is handed in for references.

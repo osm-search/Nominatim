@@ -15,7 +15,7 @@ from ..typing import Protocol
 from ..config import Configuration
 from ..db.connection import Connection
 from ..data.place_info import PlaceInfo
-from ..data.place_name import PlaceName
+from ..data.place_name import PlaceNames
 
 
 class AbstractAnalyzer(ABC):
@@ -91,7 +91,7 @@ class AbstractAnalyzer(ABC):
         """
 
     @abstractmethod
-    def add_country_names(self, country_code: str, names: list[PlaceName]) -> None:
+    def add_country_names(self, country_code: str, names: PlaceNames) -> None:
         """ Add the given names to the tokenizer's list of country tokens.
 
             Arguments:

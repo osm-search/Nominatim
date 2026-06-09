@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Sanitizer that preprocesses tags from the TIGER import.
@@ -11,10 +11,9 @@ It makes the following changes:
 
 * remove state reference from tiger:county
 """
-from typing import Callable
 import re
 
-from .base import ProcessInfo
+from .base import ProcessInfo, SanitizerFunc
 from .config import SanitizerConfig
 
 COUNTY_MATCH = re.compile('(.*), [A-Z][A-Z]')
@@ -41,7 +40,7 @@ def _clean_tiger_county(obj: ProcessInfo) -> None:
             return
 
 
-def create(_: SanitizerConfig) -> Callable[[ProcessInfo], None]:
+def create(_: SanitizerConfig) -> SanitizerFunc:
     """ Create a function that preprocesses tags from the TIGER import.
     """
     return _clean_tiger_county

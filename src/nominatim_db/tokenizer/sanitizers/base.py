@@ -45,11 +45,14 @@ class ProcessInfo:
         return out
 
 
+SanitizerFunc = Callable[[ProcessInfo], None]
+
+
 class SanitizerHandler(Protocol):
     """ Protocol for sanitizer modules.
     """
 
-    def create(self, config: SanitizerConfig) -> Callable[[ProcessInfo], None]:
+    def create(self, config: SanitizerConfig) -> SanitizerFunc:
         """
         Create a function for sanitizing a place.
 

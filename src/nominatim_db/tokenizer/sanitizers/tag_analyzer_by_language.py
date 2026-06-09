@@ -35,7 +35,7 @@ Arguments:
 from typing import Callable, Dict, Optional, List
 
 from ...data import country_info
-from .base import ProcessInfo
+from .base import ProcessInfo, SanitizerFunc
 from .config import SanitizerConfig
 
 
@@ -91,7 +91,7 @@ class _AnalyzerByLanguage:
         obj.names.extend(more_names)
 
 
-def create(config: SanitizerConfig) -> Callable[[ProcessInfo], None]:
+def create(config: SanitizerConfig) -> SanitizerFunc:
     """ Create a function that sets the analyzer property depending on the
         language of the tag.
     """

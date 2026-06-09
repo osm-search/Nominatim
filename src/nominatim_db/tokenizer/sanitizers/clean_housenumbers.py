@@ -28,11 +28,11 @@ Arguments:
                            when an 'interpolation' is present. (default: true)
 
 """
-from typing import Callable, Iterator, Iterable, Union
+from typing import Iterator, Iterable, Union
 import re
 
 from ...data.place_name import PlaceNames
-from .base import ProcessInfo
+from .base import ProcessInfo, SanitizerFunc
 from .config import SanitizerConfig
 
 RANGE_REGEX = re.compile(r'\d+-\d+')
@@ -113,7 +113,7 @@ class _HousenumberSanitizer:
         return []
 
 
-def create(config: SanitizerConfig) -> Callable[[ProcessInfo], None]:
+def create(config: SanitizerConfig) -> SanitizerFunc:
     """ Create a housenumber processing function.
     """
 

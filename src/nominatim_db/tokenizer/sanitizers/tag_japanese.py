@@ -9,14 +9,14 @@ This sanitizer maps OSM data to Japanese block addresses.
 It replaces blocknumber and housenumber with housenumber,
 and quarter and neighbourhood with place.
 """
-from typing import Callable, Optional
+from typing import Optional
 
-from .base import ProcessInfo
+from .base import ProcessInfo, SanitizerFunc
 from .config import SanitizerConfig
 from ...data.place_name import PlaceName, PlaceNames
 
 
-def create(_: SanitizerConfig) -> Callable[[ProcessInfo], None]:
+def create(_: SanitizerConfig) -> SanitizerFunc:
     """Set up the sanitizer
     """
     return tag_japanese

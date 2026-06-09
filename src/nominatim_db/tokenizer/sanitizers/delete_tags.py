@@ -56,10 +56,10 @@ Arguments:
 
 
 """
-from typing import Callable, Optional
+from typing import Optional
 
 from ...data.place_name import PlaceName, PlaceNames
-from .base import ProcessInfo
+from .base import ProcessInfo, SanitizerFunc
 from .config import SanitizerConfig
 from ._derived_name_sanitizer import DerivedNameSanitizer
 
@@ -78,7 +78,7 @@ class _DeleteNameSanitizer(DerivedNameSanitizer):
         return [] if self.filter_name(name.name) else None
 
 
-def create(config: SanitizerConfig) -> Callable[[ProcessInfo], None]:
+def create(config: SanitizerConfig) -> SanitizerFunc:
     """ Create a function to process removal of certain tags.
     """
 

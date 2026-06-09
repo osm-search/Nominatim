@@ -38,12 +38,12 @@ Arguments:
           version if it doesn't exist yet. Any expanded version of the name
           that already exists will be kept.
 """
-from typing import Optional, Callable, Sequence
+from typing import Optional, Sequence
 from collections import defaultdict
 from dataclasses import dataclass
 
 from ...data.place_name import PlaceName, PlaceNames
-from .base import ProcessInfo
+from .base import ProcessInfo, SanitizerFunc
 from .config import SanitizerConfig
 
 
@@ -158,7 +158,7 @@ class _AffixSanitizer:
                                               {'partial': 'yes'}))
 
 
-def create(config: SanitizerConfig) -> Callable[[ProcessInfo], None]:
+def create(config: SanitizerConfig) -> SanitizerFunc:
     """ Create the affix handler.
     """
     return _AffixSanitizer(config)

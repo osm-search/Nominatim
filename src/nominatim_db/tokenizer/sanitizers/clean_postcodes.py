@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Sanitizer that filters postcodes by their officially allowed pattern.
@@ -20,10 +20,10 @@ Arguments:
                         objects that have no country assigned. These are always
                         assumed to have no postcode.
 """
-from typing import Callable, Optional, Tuple
+from typing import Optional, Tuple
 
 from ...data.postcode_format import PostcodeFormatter
-from .base import ProcessInfo
+from .base import ProcessInfo, SanitizerFunc
 from .config import SanitizerConfig
 
 
@@ -70,7 +70,7 @@ class _PostcodeSanitizer:
             ' '.join(filter(lambda p: p is not None, match.groups()))
 
 
-def create(config: SanitizerConfig) -> Callable[[ProcessInfo], None]:
+def create(config: SanitizerConfig) -> SanitizerFunc:
     """ Create a function that filters postcodes by their officially allowed pattern.
     """
 

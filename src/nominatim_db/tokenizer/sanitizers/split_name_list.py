@@ -11,13 +11,11 @@ Arguments:
     delimiters: Define the set of characters to be used for
                 splitting the list. (default: ',;')
 """
-from typing import Callable
-
-from .base import ProcessInfo
+from .base import ProcessInfo, SanitizerFunc
 from .config import SanitizerConfig
 
 
-def create(config: SanitizerConfig) -> Callable[[ProcessInfo], None]:
+def create(config: SanitizerConfig) -> SanitizerFunc:
     """ Create a name processing function that splits name values with
         multiple values into their components.
     """

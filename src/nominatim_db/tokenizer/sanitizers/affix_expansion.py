@@ -38,12 +38,12 @@ Arguments:
           version if it doesn't exist yet. Any expanded version of the name
           that already exists will be kept.
 """
-from typing import Optional, Callable, Sequence
+from typing import Optional, Sequence
 from collections import defaultdict
 from dataclasses import dataclass
 
-from ...data.place_name import PlaceName
-from .base import ProcessInfo
+from ...data.place_name import PlaceName, PlaceNames
+from .base import ProcessInfo, SanitizerFunc
 from .config import SanitizerConfig
 
 
@@ -85,7 +85,7 @@ class _AffixSanitizer:
         if not obj.names:
             return
 
-        stem_names: list[PlaceName] = []
+        stem_names: PlaceNames = []
         affixes: dict[StemTuple, _AffixCollector] = defaultdict(_AffixCollector)
         for item in obj.names:
             if (stem := self.find_stem_kind(item, self.prefix_tags)) is not None:
@@ -96,7 +96,7 @@ class _AffixSanitizer:
                 stem_names.append(item)
 
         if affixes:
-            outnames: list[PlaceName] = []
+            outnames: PlaceNames = []
             for item in stem_names:
                 for stem, aff in affixes.items():
                     if item.kind == stem[0] and item.suffix == stem[1]:
@@ -124,7 +124,7 @@ class _AffixSanitizer:
 
         return None
 
-    def add_names(self, outnames: list[PlaceName], src: PlaceName,
+    def add_names(self, outnames: PlaceNames, src: PlaceName,
                   affix: _AffixCollector) -> None:
         fn = src.name
         sn = src.name
@@ -158,7 +158,7 @@ class _AffixSanitizer:
                                               {'partial': 'yes'}))
 
 
-def create(config: SanitizerConfig) -> Callable[[ProcessInfo], None]:
+def create(config: SanitizerConfig) -> SanitizerFunc:
     """ Create the affix handler.
     """
     return _AffixSanitizer(config)

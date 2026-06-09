@@ -20,7 +20,7 @@ from ..db.connection import connect, Connection, Cursor, \
 from ..config import Configuration
 from ..db.sql_preprocessor import SQLPreprocessor
 from ..data.place_info import PlaceInfo
-from ..data.place_name import PlaceName
+from ..data.place_name import PlaceName, PlaceNames
 from .icu_rule_loader import ICURuleLoader
 from .icu_token_analysis import ICUTokenAnalysis
 from .base import AbstractAnalyzer, AbstractTokenizer
@@ -444,12 +444,12 @@ class ICUNameAnalyzer(AbstractAnalyzer):
 
         return len(to_delete)
 
-    def add_country_names(self, country_code: str, names: list[PlaceName]) -> None:
+    def add_country_names(self, country_code: str, names: PlaceNames) -> None:
         """ Add default names for the given country to the search index.
         """
         self._add_country_full_names(country_code, names, internal=True)
 
-    def _add_country_full_names(self, country_code: str, names: Sequence[PlaceName],
+    def _add_country_full_names(self, country_code: str, names: PlaceNames,
                                 internal: bool = False) -> None:
         """ Add names for the given country from an already sanitized
             name list.
@@ -525,8 +525,7 @@ class ICUNameAnalyzer(AbstractAnalyzer):
 
         return token_info.to_dict()
 
-    def _process_place_address(self, token_info: '_TokenInfo',
-                               address: Sequence[PlaceName]) -> None:
+    def _process_place_address(self, token_info: '_TokenInfo', address: PlaceNames) -> None:
         for item in address:
             if item.kind == 'postcode':
                 token_info.set_postcode(self._add_postcode(item))
@@ -601,7 +600,7 @@ class ICUNameAnalyzer(AbstractAnalyzer):
 
         return full
 
-    def _compute_name_tokens(self, names: Sequence[PlaceName]) -> set[int]:
+    def _compute_name_tokens(self, names: PlaceNames) -> set[int]:
         """ Computes the full name and partial name tokens for the given
             dictionary of names.
         """

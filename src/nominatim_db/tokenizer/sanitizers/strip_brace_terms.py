@@ -2,20 +2,19 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2025 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 This sanitizer creates additional name variants for names that have
 addendums in brackets (e.g. "Halle (Saale)"). The additional variant contains
 only the main name part with the bracket part removed.
 """
-from typing import Callable
 
-from .base import ProcessInfo
+from .base import ProcessInfo, SanitizerFunc
 from .config import SanitizerConfig
 
 
-def create(_: SanitizerConfig) -> Callable[[ProcessInfo], None]:
+def create(_: SanitizerConfig) -> SanitizerFunc:
     """ Create a name processing function that creates additional name variants
         for bracket addendums.
     """

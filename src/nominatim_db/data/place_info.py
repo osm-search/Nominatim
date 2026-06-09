@@ -10,7 +10,7 @@ the tokenizer.
 """
 from typing import Optional, Mapping, Any, Tuple, cast
 
-from .place_name import PlaceName
+from .place_name import PlaceNames
 
 
 class PlaceInfo:
@@ -20,8 +20,8 @@ class PlaceInfo:
 
     def __init__(self, info: Mapping[str, Any]) -> None:
         self._info = info
-        self._searchable_names: list[PlaceName] = []
-        self._searchable_address: list[PlaceName] = []
+        self._searchable_names: PlaceNames = []
+        self._searchable_address: PlaceNames = []
 
     @property
     def name(self) -> Optional[Mapping[str, str]]:
@@ -47,13 +47,13 @@ class PlaceInfo:
         return self._info.get('address')
 
     @property
-    def searchable_names(self) -> list[PlaceName]:
+    def searchable_names(self) -> PlaceNames:
         """ List of place names that should be indexed for searching.
         """
         return self._searchable_names
 
     @property
-    def searchable_address(self) -> list[PlaceName]:
+    def searchable_address(self) -> PlaceNames:
         """ List of address terms that should be used to build the search
             index.
         """
@@ -101,6 +101,6 @@ class PlaceInfo:
         """
         return 26 <= self.rank_address <= 27
 
-    def set_sanitized(self, names: list[PlaceName], address: list[PlaceName]) -> None:
+    def set_sanitized(self, names: PlaceNames, address: PlaceNames) -> None:
         self._searchable_names = names
         self._searchable_address = address

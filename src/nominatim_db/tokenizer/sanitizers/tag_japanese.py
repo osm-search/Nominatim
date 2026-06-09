@@ -2,34 +2,28 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 This sanitizer maps OSM data to Japanese block addresses.
 It replaces blocknumber and housenumber with housenumber,
 and quarter and neighbourhood with place.
 """
+from typing import Optional
 
-
-from typing import Callable
-from typing import List, Optional
-
-from .base import ProcessInfo
+from .base import ProcessInfo, SanitizerFunc
 from .config import SanitizerConfig
-from ...data.place_name import PlaceName
+from ...data.place_name import PlaceName, PlaceNames
 
 
-def create(_: SanitizerConfig) -> Callable[[ProcessInfo], None]:
+def create(_: SanitizerConfig) -> SanitizerFunc:
     """Set up the sanitizer
     """
     return tag_japanese
 
 
-def reconbine_housenumber(
-    new_address: List[PlaceName],
-    tmp_housenumber: Optional[str],
-    tmp_blocknumber: Optional[str]
-) -> List[PlaceName]:
+def reconbine_housenumber(new_address: PlaceNames, tmp_housenumber: Optional[str],
+                          tmp_blocknumber: Optional[str]) -> PlaceNames:
     """ Recombine the tag of housenumber by using housenumber and blocknumber
     """
     if tmp_blocknumber and tmp_housenumber:
@@ -59,11 +53,8 @@ def reconbine_housenumber(
     return new_address
 
 
-def reconbine_place(
-    new_address: List[PlaceName],
-    tmp_neighbourhood: Optional[str],
-    tmp_quarter: Optional[str]
-) -> List[PlaceName]:
+def reconbine_place(new_address: PlaceNames, tmp_neighbourhood: Optional[str],
+                    tmp_quarter: Optional[str]) -> PlaceNames:
     """ Recombine the tag of place by using neighbourhood and quarter
     """
     if tmp_neighbourhood and tmp_quarter:

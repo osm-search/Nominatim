@@ -2,16 +2,16 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Common data types and protocols for sanitizers.
 """
-from typing import Optional, List, Mapping, Callable
+from typing import Optional, Mapping, Callable
 
 from ...typing import Protocol, Final
 from ...data.place_info import PlaceInfo
-from ...data.place_name import PlaceName
+from ...data.place_name import PlaceName, PlaceNames
 from .config import SanitizerConfig
 
 
@@ -28,7 +28,7 @@ class ProcessInfo:
         self.address = self._convert_name_dict(place.address)
 
     @staticmethod
-    def _convert_name_dict(names: Optional[Mapping[str, str]]) -> List[PlaceName]:
+    def _convert_name_dict(names: Optional[Mapping[str, str]]) -> PlaceNames:
         """ Convert a dictionary of names into a list of PlaceNames.
             The dictionary key is split into the primary part of the key
             and the suffix (the part after an optional colon).
@@ -45,11 +45,14 @@ class ProcessInfo:
         return out
 
 
+SanitizerFunc = Callable[[ProcessInfo], None]
+
+
 class SanitizerHandler(Protocol):
     """ Protocol for sanitizer modules.
     """
 
-    def create(self, config: SanitizerConfig) -> Callable[[ProcessInfo], None]:
+    def create(self, config: SanitizerConfig) -> SanitizerFunc:
         """
         Create a function for sanitizing a place.
 

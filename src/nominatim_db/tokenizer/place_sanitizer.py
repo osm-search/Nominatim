@@ -8,12 +8,12 @@
 Handler for cleaning name and address tags in place information before it
 is handed to the token analysis.
 """
-from typing import Optional, Mapping, Sequence, Callable, Any
+from typing import Optional, Mapping, Sequence, Any
 
 from ..errors import UsageError
 from ..config import Configuration
 from .sanitizers.config import SanitizerConfig
-from .sanitizers.base import SanitizerHandler, ProcessInfo
+from .sanitizers.base import SanitizerHandler, SanitizerFunc, ProcessInfo
 from ..data.place_info import PlaceInfo
 
 SanitizerRules = Sequence[Mapping[str, Any]]
@@ -40,8 +40,8 @@ class PlaceSanitizer:
     def __init__(self, rules: Optional[SanitizerRules],
                  config: Configuration,
                  country_rules: Optional[Mapping[str, SanitizerRules]] = None) -> None:
-        self.handlers: list[Callable[[ProcessInfo], None]] = []
-        self._country_handlers: dict[str, list[Callable[[ProcessInfo], None]]] = {}
+        self.handlers: list[SanitizerFunc] = []
+        self._country_handlers: dict[str, list[SanitizerFunc]] = {}
 
         if rules:
             for func in rules:
@@ -54,7 +54,7 @@ class PlaceSanitizer:
             for country, country_rules_list in country_rules.items():
                 if not country_rules_list:
                     continue
-                handlers: list[Callable[[ProcessInfo], None]] = []
+                handlers: list[SanitizerFunc] = []
                 for func in country_rules_list:
                     step = _validate_step(func)
                     country_module: SanitizerHandler = \

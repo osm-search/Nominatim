@@ -7,21 +7,14 @@
 """
 Configuration for Sanitizers.
 """
-from typing import Sequence, Union, Optional, Pattern, Callable, Any, TYPE_CHECKING
+from typing import Sequence, Union, Optional, Pattern, Callable, Any
 from collections import UserDict
 import re
 
 from ...errors import UsageError
 
-# working around missing generics in Python < 3.8
-# See https://github.com/python/typing/issues/60#issuecomment-869757075
-if TYPE_CHECKING:
-    _BaseUserDict = UserDict[str, Any]
-else:
-    _BaseUserDict = UserDict
 
-
-class SanitizerConfig(_BaseUserDict):
+class SanitizerConfig(UserDict[str, Any]):
     """ The `SanitizerConfig` class is a read-only dictionary
         with configuration options for the sanitizer.
         In addition to the usual dictionary functions, the class provides

@@ -220,6 +220,12 @@ br:
     postcode:
       pattern: "(ddddd)-?(ddd)"
       output: \1-\2
+    sanitizers:
+      - step: derive-names
+        filter-kind: ref
+        filter-rank: "26"
+        name-pattern: ([A-Z]{2,3}-\d+)
+        variants: Rodovia \1
 
 
 # The Bahamas (The Bahamas)

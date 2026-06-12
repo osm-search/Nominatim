@@ -81,11 +81,6 @@ class TestPostcodes:
         load_sql('functions/postcode_triggers.sql')
 
         temp_db_conn.execute("""
-            CREATE OR REPLACE FUNCTION token_normalized_postcode(postcode TEXT)
-            RETURNS TEXT AS $$
-              SELECT postcode
-            $$ LANGUAGE sql;
-
             CREATE OR REPLACE FUNCTION get_country_code(place geometry)
             RETURNS TEXT AS $$
               SELECT NULL

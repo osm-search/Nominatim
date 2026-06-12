@@ -361,9 +361,6 @@ class ICUNameAnalyzer(AbstractAnalyzer):
 
     def normalize_postcode(self, postcode: str) -> str:
         """ Convert the postcode to a standardized form.
-
-            This function must yield exactly the same result as the SQL function
-            'token_normalized_postcode()'.
         """
         return postcode.strip().upper()
 

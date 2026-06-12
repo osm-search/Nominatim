@@ -59,9 +59,6 @@ class AbstractAnalyzer(ABC):
     def normalize_postcode(self, postcode: str) -> str:
         """ Convert the postcode to its standardized form.
 
-            This function must yield exactly the same result as the SQL function
-            `token_normalized_postcode()`.
-
             Arguments:
                 postcode: The postcode to be normalized.
 

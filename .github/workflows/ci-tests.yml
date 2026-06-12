@@ -404,9 +404,12 @@ jobs:
           - name: Import Nominatim database using release
             run: |
               ./release/bin/nominatim import --osm-file Nominatim/test/testdb/apidb-test-data.pbf
-              ./release/bin/nominatim add-data --file Nominatim/test/testdb/additional_api_test.data.osm
 
           - name: Migrate to master version
             run: |
               ./master/bin/nominatim admin --migrate
+
+          - name: Test adding data on migrated database
+            run: |
               ./master/bin/nominatim add-data --file Nominatim/test/testdb/additional_api_test.data.osm
+              ./master/bin/nominatim index

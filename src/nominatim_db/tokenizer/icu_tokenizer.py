@@ -361,9 +361,6 @@ class ICUNameAnalyzer(AbstractAnalyzer):
 
     def normalize_postcode(self, postcode: str) -> str:
         """ Convert the postcode to a standardized form.
-
-            This function must yield exactly the same result as the SQL function
-            'token_normalized_postcode()'.
         """
         return postcode.strip().upper()
 
@@ -528,7 +525,7 @@ class ICUNameAnalyzer(AbstractAnalyzer):
     def _process_place_address(self, token_info: '_TokenInfo', address: PlaceNames) -> None:
         for item in address:
             if item.kind == 'postcode':
-                token_info.set_postcode(self._add_postcode(item))
+                token_info.set_postcode(self.normalize_postcode(item.name))
             elif item.kind == 'housenumber':
                 token_info.add_housenumber(self._compute_housenumber_token(item))
             elif item.kind == 'street':
@@ -645,17 +642,6 @@ class ICUNameAnalyzer(AbstractAnalyzer):
             out.update(tokens)
 
         return out
-
-    def _add_postcode(self, item: PlaceName) -> Optional[str]:
-        """ Make sure the normalized postcode is present in the word table.
-        """
-        assert self.conn is not None
-        analyzer = self.token_analysis.analysis.get('@postcode')
-
-        if analyzer is None:
-            return item.name.strip().upper()
-        else:
-            return analyzer.get_canonical_id(item)
 
 
 def _mk_array(tokens: Iterable[Any]) -> str:

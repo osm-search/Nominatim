@@ -134,8 +134,12 @@ class ICURuleLoader:
                     LOG.fatal("ICU tokenizer configuration has two token "
                               "analyzers with id '%s'.", name)
                 raise UsageError("Syntax error in ICU tokenizer config.")
-            self.analysis[name] = TokenAnalyzerRule(section, norm, trans,
-                                                    self.config)
+            if name == '@postcode':
+                LOG.warn("Skipping analyser '@postcode', no longer in use. "
+                         "You can remove this section from your config.")
+            else:
+                self.analysis[name] = TokenAnalyzerRule(section, norm, trans,
+                                                        self.config)
 
     @staticmethod
     def _cfg_to_icu_rules(rules: Mapping[str, Any], section: str) -> str:

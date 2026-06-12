@@ -30,8 +30,6 @@ token-analysis:
     - analyzer: generic
     - id: "@housenumber"
       analyzer: housenumbers
-    - id: "@postcode"
-      analyzer: postcodes
     - id: bg
       analyzer: generic
       mode: variant-only

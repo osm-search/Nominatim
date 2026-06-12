@@ -68,8 +68,7 @@ def analyzer(tokenizer_factory, test_config, monkeypatch,
 
     def _mk_analyser(norm=("[[:Punctuation:][:Space:]]+ > ' '",), trans=(':: upper()',),
                      variants=('~gasse -> gasse', 'street => st', ),
-                     with_housenumber=False,
-                     with_postcode=False):
+                     with_housenumber=False):
         cfgstr = {'normalization': list(norm),
                   'transliteration': list(trans),
                   'token-analysis': [{'analyzer': 'generic',
@@ -77,9 +76,6 @@ def analyzer(tokenizer_factory, test_config, monkeypatch,
         if with_housenumber:
             cfgstr['token-analysis'].append({'id': '@housenumber',
                                              'analyzer': 'housenumbers'})
-        if with_postcode:
-            cfgstr['token-analysis'].append({'id': '@postcode',
-                                             'analyzer': 'postcodes'})
         (test_config.project_dir / 'icu_tokenizer.yaml').write_text(
             yaml.dump(cfgstr), encoding='utf-8')
         tok.loader = nominatim_db.tokenizer.icu_rule_loader.ICURuleLoader(test_config)
@@ -252,7 +248,7 @@ class TestPostcodes:
     @pytest.fixture(autouse=True)
     def setup(self, analyzer, sql_functions, def_config):
         self.sanitizer = PlaceSanitizer([{'step': 'clean-postcodes'}], def_config)
-        with analyzer(with_postcode=True) as anl:
+        with analyzer() as anl:
             self.analyzer = anl
             yield anl
 

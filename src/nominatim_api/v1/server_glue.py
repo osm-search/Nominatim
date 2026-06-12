@@ -255,7 +255,7 @@ async def lookup_endpoint(api: NominatimAPIAsync, params: ASGIAdaptor) -> Any:
     places = []
     for oid in (params.get('osm_ids') or '').split(','):
         oid = oid.strip()
-        if len(oid) > 1 and oid[0] in 'RNWrnw' and oid[1:].isdigit():
+        if len(oid) > 1 and oid[0] in 'RNWrnw' and oid[1:].isdecimal():
             places.append(OsmID(oid[0].upper(), int(oid[1:])))
 
     if len(places) > params.config().get_int('LOOKUP_MAX_COUNT'):

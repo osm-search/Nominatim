@@ -57,7 +57,7 @@ class _HousenumberSanitizer:
             if itype is not None:
                 if itype == 'all':
                     itype = 1
-                elif len(itype) == 1 and itype.isdigit():
+                elif len(itype) == 1 and itype.isdecimal():
                     itype = int(itype)
                 elif itype not in ('odd', 'even'):
                     itype = None

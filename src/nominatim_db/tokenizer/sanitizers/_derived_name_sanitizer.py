@@ -17,7 +17,7 @@ from ...errors import UsageError
 
 
 def _to_rank(rstr: str) -> int:
-    if not rstr.isdigit():
+    if not rstr.isdecimal():
         raise UsageError(f"Invalid rank parameter '{rstr}', must be a number.")
 
     rint = int(rstr)

@@ -26,7 +26,7 @@ def _parse_osm_object(obj: str) -> Tuple[str, int]:
     """ Parse the given argument into a tuple of OSM type and ID.
         Raises an ArgumentError if the format is not recognized.
     """
-    if len(obj) < 2 or obj[0].lower() not in 'nrw' or not obj[1:].isdigit():
+    if len(obj) < 2 or obj[0].lower() not in 'nrw' or not obj[1:].isdecimal():
         raise argparse.ArgumentTypeError("Cannot parse OSM ID. Expect format: [N|W|R]<id>.")
 
     return (obj[0].upper(), int(obj[1:]))

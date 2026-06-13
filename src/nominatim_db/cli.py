@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2025 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Command-line interface to the Nominatim functions for import, update,
@@ -168,7 +168,7 @@ class AdminServe:
         server_info = args.server.split(':', 1)
         host = server_info[0]
         if len(server_info) > 1:
-            if not server_info[1].isdigit():
+            if not server_info[1].isdecimal():
                 raise UsageError('Invalid format for --server parameter. Use <host>:<port>')
             port = int(server_info[1])
         else:

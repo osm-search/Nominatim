@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2025 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Complex datatypes used by the Nominatim API.
@@ -81,7 +81,7 @@ class OsmID:
             a number pointing to the exact number requested. This function
             returns the housenumber as an int, if class is set and is a number.
         """
-        if self.osm_class and self.osm_class.isdigit():
+        if self.osm_class and self.osm_class.isdecimal():
             return int(self.osm_class)
         return None
 
@@ -495,10 +495,10 @@ def format_excluded(ids: Any) -> List[PlaceRef]:
             if i > 0:
                 result.append(PlaceID(i))
         elif isinstance(i, str):
-            if i.isdigit():
+            if i.isdecimal():
                 if int(i) > 0:
                     result.append(PlaceID(int(i)))
-            elif len(i) > 1 and i[0].upper() in ('N', 'W', 'R') and i[1:].isdigit():
+            elif len(i) > 1 and i[0].upper() in ('N', 'W', 'R') and i[1:].isdecimal():
                 if int(i[1:]) > 0:
                     result.append(OsmID(i[0].upper(), int(i[1:])))
             elif match := POSTCODE_REF_RE.fullmatch(i):

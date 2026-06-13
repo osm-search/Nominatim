@@ -266,7 +266,7 @@ class AddressSearch(base.AbstractSearch):
             place_sql = place_sql.where(self.qualifiers.sql_restrict(thnr))
 
         numerals = [int(n) for n in self.housenumbers.values
-                    if n.isdigit() and len(n) < 8]
+                    if n.isdecimal() and len(n) < 8]
         interpol_sql: SaColumn
         tiger_sql: SaColumn
         if numerals and \

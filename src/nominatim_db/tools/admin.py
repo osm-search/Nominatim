@@ -34,7 +34,7 @@ def _get_place_info(cursor: Cursor, osm_id: Optional[str],
     values: Tuple[Any, ...]
     if osm_id:
         osm_type = osm_id[0].upper()
-        if osm_type not in 'NWR' or not osm_id[1:].isdigit():
+        if osm_type not in 'NWR' or not osm_id[1:].isdecimal():
             LOG.fatal('OSM ID must be of form <N|W|R><id>. Got: %s', osm_id)
             raise UsageError("OSM ID parameter badly formatted")
 

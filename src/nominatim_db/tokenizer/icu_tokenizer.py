@@ -122,7 +122,8 @@ class ICUTokenizer(AbstractTokenizer):
                 cur.execute('ANALYSE word_frequencies')
                 LOG.info('Update word table with recomputed frequencies')
                 drop_tables(conn, 'tmp_word')
-                cur.execute("""CREATE TABLE tmp_word AS
+                cur.execute("CREATE TABLE tmp_word (LIKE word)")
+                cur.execute("""INSERT INTO tmp_word
                                 SELECT word_id, word_token, type, word,
                                        coalesce(word.info, '{}'::jsonb)
                                        - 'count' - 'addr_count' ||

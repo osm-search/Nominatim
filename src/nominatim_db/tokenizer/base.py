@@ -147,7 +147,7 @@ class AbstractTokenizer(ABC):
         """
 
     @abstractmethod
-    def finalize_import(self, config: Configuration) -> None:
+    def finalize_import(self, config: Configuration, threads: int = 1) -> None:
         """ This function is called at the very end of an import when all
             data has been imported and indexed. The tokenizer may create
             at this point any additional indexes and data structures needed
@@ -155,6 +155,7 @@ class AbstractTokenizer(ABC):
 
             Arguments:
               config: Read-only object with configuration options.
+              threads: Number of threads to use
         """
 
     @abstractmethod

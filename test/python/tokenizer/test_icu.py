@@ -191,8 +191,10 @@ def test_update_sql_functions(db_prop, temp_db_cursor,
     assert test_content == set((('1133', ), ))
 
 
-def test_finalize_import(tokenizer_factory, temp_db_cursor,
-                         test_config, sql_preprocessor_cfg):
+@pytest.mark.parametrize('reverse_only', [True, False])
+def test_finalize_import(tokenizer_factory, temp_db_cursor, load_sql,
+                         test_config, sql_preprocessor_cfg, reverse_only):
+    load_sql('tables/search_name.sql', create_reverse_only=reverse_only)
     tok = tokenizer_factory()
     tok.init_new_db(test_config)
 

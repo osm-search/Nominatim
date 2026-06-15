@@ -68,11 +68,17 @@ class ICUTokenizer(AbstractTokenizer):
         with connect(self.dsn) as conn:
             self.loader.load_config_from_db(conn)
 
-    def finalize_import(self, config: Configuration) -> None:
+    def finalize_import(self, config: Configuration, threads: int = 2) -> None:
         """ Do any required postprocessing to make the tokenizer data ready
             for use.
         """
-        self._create_lookup_indices(config, 'word')
+        with connect(self.dsn) as conn:
+            reverse_only = not table_exists(conn, 'search_name')
+
+        if reverse_only:
+            self._create_lookup_indices(config, 'word')
+        else:
+            self.update_statistics(config, threads)
 
     def update_sql_functions(self, config: Configuration) -> None:
         """ Reimport the SQL functions for this tokenizer.

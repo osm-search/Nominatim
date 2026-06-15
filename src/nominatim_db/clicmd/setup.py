@@ -136,10 +136,8 @@ class SetupAll:
             if args.no_updates:
                 conn.autocommit = True
                 freeze.drop_update_tables(conn)
-        tokenizer.finalize_import(args.config)
-
-        LOG.warning('Recompute word counts')
-        tokenizer.update_statistics(args.config, threads=num_threads)
+        LOG.warning('Finalize search index')
+        tokenizer.finalize_import(args.config, threads=num_threads)
 
         end_time = time.time()
         elapsed = end_time - start_time

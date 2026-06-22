@@ -33,7 +33,7 @@ jobs:
                   path: nominatim-src.tar.bz2
                   retention-days: 1
 
-    tests:
+    tests-ubuntu:
         needs: create-archive
         strategy:
             matrix:
@@ -142,6 +142,14 @@ jobs:
 
     tests-windows:
         needs: create-archive
+        strategy:
+            matrix:
+                python: ['3.10', '3.14']
+                include:
+                    - python: '3.10'
+                      pyicu: 'v2.15/pyicu-2.15-cp310-cp310-win_amd64.whl'
+                    - python: '3.14'
+                      pyicu: 'v2.16.2/pyicu-2.16.2-cp314-cp314-win_amd64.whl'
         runs-on: windows-latest
 
         steps:
@@ -159,7 +167,13 @@ jobs:
             - name: Set up Python
               uses: actions/setup-python@v6
               with:
-                  python-version: '3.14'
+                  python-version: ${{ matrix.python }}
+
+            - uses: actions/cache@v5
+              with:
+                  path: |
+                     C:\osm2pgsql
+                  key: osm2pgsql-windows-1
 
             - name: Install Spatialite
               run: |
@@ -169,8 +183,10 @@ jobs:
 
             - name: Install osm2pgsql
               run: |
-                  Invoke-WebRequest -Uri "https://osm2pgsql.org/download/windows/osm2pgsql-latest-x64.zip" -OutFile "osm2pgsql.zip"
-                  Expand-Archive -Path "osm2pgsql.zip" -DestinationPath "C:\osm2pgsql"
+                  if (-not (Test-Path "C:\osm2pgsql")) {
+                    Invoke-WebRequest -Uri "https://osm2pgsql.org/download/windows/osm2pgsql-latest-x64.zip" -OutFile "osm2pgsql.zip"
+                    Expand-Archive -Path "osm2pgsql.zip" -DestinationPath "C:\osm2pgsql"
+                  }
                   $BinDir = Get-ChildItem -Path "C:\osm2pgsql" -Recurse -Filter "osm2pgsql.exe" | Select-Object -ExpandProperty DirectoryName | Select-Object -First 1
                   if (-not $BinDir) {
                       Write-Error "Could not find osm2pgsql.exe"
@@ -186,19 +202,19 @@ jobs:
 
             - name: Install PyICU from wheel
               run: |
-                  python -m pip install https://github.com/cgohlke/pyicu-build/releases/download/v2.16.0/pyicu-2.16-cp314-cp314-win_amd64.whl
-                  
+                  python -m pip install https://github.com/cgohlke/pyicu-build/releases/download/${{ matrix.pyicu }}
+
             - name: Install test prerequisites
               run: |
                   python -m pip install -U pip
-                  python -m pip install pytest pytest-asyncio "psycopg[binary]!=3.3.0" python-dotenv pyyaml jinja2 psutil sqlalchemy pytest-bdd falcon starlette uvicorn asgi_lifespan aiosqlite osmium mwparserfromhell
+                  python -m pip install pytest pytest-asyncio async-timeout "psycopg[binary]!=3.3.0" python-dotenv pyyaml jinja2 psutil sqlalchemy pytest-bdd falcon starlette uvicorn asgi_lifespan aiosqlite osmium mwparserfromhell
 
             - name: Python unit tests
               run: |
                   python -m pytest test/python -k "not (import_osm or run_osm2pgsql)"
               working-directory: Nominatim
 
-    install:
+    install-ubuntu:
         runs-on: ubuntu-latest
         needs: create-archive
 
@@ -329,6 +345,123 @@ jobs:
             - name: Clean up database (reverse-only import)
               run: nominatim refresh --postcodes --word-tokens
               working-directory: /home/nominatim/nominatim-project
+
+    install-windows:
+        strategy:
+            matrix:
+                python: ['3.10', '3.14']
+                include:
+                    - python: '3.10'
+                      pyicu: 'v2.15/pyicu-2.15-cp310-cp310-win_amd64.whl'
+                    - python: '3.14'
+                      pyicu: 'v2.16.2/pyicu-2.16.2-cp314-cp314-win_amd64.whl'
+        runs-on: windows-latest
+        needs: create-archive
+        steps:
+            - uses: actions/download-artifact@v8
+              with:
+                  name: full-source
+
+            - name: Unpack Nominatim
+              run: tar xf nominatim-src.tar.bz2
+
+            - uses: ./Nominatim/.github/actions/setup-postgresql-windows
+              with:
+                  postgresql-version: 17
+
+            - name: Set up Python
+              uses: actions/setup-python@v6
+              with:
+                  python-version: ${{ matrix.python }}
+
+            - uses: actions/cache@v5
+              with:
+                  path: |
+                     C:\osm2pgsql
+                  key: osm2pgsql-windows-1
+
+            - name: Install osm2pgsql
+              run: |
+                  if (-not (Test-Path "C:\osm2pgsql")) {
+                    Invoke-WebRequest -Uri "https://osm2pgsql.org/download/windows/osm2pgsql-latest-x64.zip" -OutFile "osm2pgsql.zip"
+                    Expand-Archive -Path "osm2pgsql.zip" -DestinationPath "C:\osm2pgsql"
+                  }
+                  $BinDir = Get-ChildItem -Path "C:\osm2pgsql" -Recurse -Filter "osm2pgsql.exe" | Select-Object -ExpandProperty DirectoryName | Select-Object -First 1
+                  if (-not $BinDir) {
+                      Write-Error "Could not find osm2pgsql.exe"
+                      exit 1
+                  }
+                  echo "$BinDir" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+                  $FullExePath = Join-Path $BinDir "osm2pgsql.exe"
+                  echo "NOMINATIM_OSM2PGSQL_BINARY=$FullExePath" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+            - name: Setup virtual environment
+              run: |
+                  python -m venv venv
+                  .\venv\Scripts\python.exe -m pip install -U pip
+                  .\venv\Scripts\Activate.ps1
+              working-directory: Nominatim
+
+            - name: Install dependencies (pip)
+              run: |
+                  pip install "psycopg[binary]!=3.3.0" async-timeout python-dotenv pyyaml jinja2 psutil sqlalchemy falcon starlette uvicorn osmium mwparserfromhell
+                  pip install https://github.com/cgohlke/pyicu-build/releases/download/${{ matrix.pyicu }}
+              working-directory: Nominatim
+
+            - name: Prepare import environment
+              run: |
+                  Move-Item -Path "test\testdb\apidb-test-data.pbf" -Destination "test.pbf"
+                  mkdir data-env-reverse
+              working-directory: Nominatim
+
+            - name: Print version
+              run: |
+                  python nominatim-cli.py --version
+              working-directory: Nominatim
+
+            - name: Collect host OS information
+              run: python .\nominatim-cli.py admin --collect-os-info
+              working-directory: Nominatim
+
+            - name: Import
+              run: python .\nominatim-cli.py import --osm-file .\test.pbf
+              working-directory: Nominatim
+
+            - name: Import special phrases
+              run: python .\nominatim-cli.py special-phrases --import-from-wiki
+              working-directory: Nominatim
+
+            - name: Check full import
+              run: python .\nominatim-cli.py admin --check-database
+              working-directory: Nominatim
+
+            - name: Warm up database
+              run: python .\nominatim-cli.py admin --warm
+              working-directory: Nominatim
+
+            - name: Run update
+              run: |
+                  python .\nominatim-cli.py replication --init
+                  python .\nominatim-cli.py replication --once
+              working-directory: Nominatim
+
+            - name: Clean up database
+              run: python .\nominatim-cli.py refresh --postcodes --word-tokens
+              working-directory: Nominatim
+
+            - name: Run reverse-only import
+              run : |
+                  echo 'NOMINATIM_DATABASE_DSN="pgsql:dbname=reverse"' >> .env
+                  python ..\nominatim-cli.py import --osm-file ..\test.pbf --reverse-only --no-updates
+              working-directory: Nominatim/data-env-reverse
+
+            - name: Check reverse-only import
+              run: python ..\nominatim-cli.py admin --check-database
+              working-directory: Nominatim/data-env-reverse
+
+            - name: Clean up database (reverse-only import)
+              run: python ..\nominatim-cli.py refresh --postcodes --word-tokens
+              working-directory: Nominatim/data-env-reverse
 
     install-no-superuser:
       runs-on: ubuntu-24.04

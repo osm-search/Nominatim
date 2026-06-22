@@ -11,12 +11,12 @@ from typing import Tuple, Optional
 import argparse
 import logging
 from pathlib import Path
-import asyncio
 
 from ..config import Configuration
 from ..db.connection import connect, table_exists
 from ..tokenizer.base import AbstractTokenizer
 from .args import NominatimArgs
+from ..utils.asyncio_utils import asyncio_run
 
 
 LOG = logging.getLogger()
@@ -103,7 +103,8 @@ class UpdateRefresh:
                                            args.project_dir, tokenizer,
                                            force_reimport=args.postcode_force_reimport)
                 indexer = Indexer(args.config, tokenizer, args.threads or 1)
-                asyncio.run(indexer.index_postcodes())
+
+                asyncio_run(indexer.index_postcodes())
             else:
                 LOG.error("The place table doesn't exist. "
                           "Postcode updates on a frozen database is not possible.")

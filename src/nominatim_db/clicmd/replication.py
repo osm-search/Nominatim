@@ -13,12 +13,12 @@ import datetime as dt
 import logging
 import socket
 import time
-import asyncio
 
 from ..db import status
 from ..db.connection import connect
 from ..errors import UsageError
 from .args import NominatimArgs
+from ..utils.asyncio_utils import asyncio_run
 
 LOG = logging.getLogger()
 
@@ -185,5 +185,5 @@ class UpdateReplication:
         if args.check_for_updates:
             return self._check_for_updates(args)
 
-        asyncio.run(self._update(args))
+        asyncio_run(self._update(args))
         return 0

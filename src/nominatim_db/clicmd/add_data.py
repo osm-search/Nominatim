@@ -10,13 +10,13 @@ Implementation of the 'add-data' subcommand.
 from typing import cast
 import argparse
 import logging
-import asyncio
 
 import psutil
 
 from .args import NominatimArgs
 from ..db.connection import connect
 from ..tools.freeze import is_frozen
+from ..utils.asyncio_utils import asyncio_run
 
 
 LOG = logging.getLogger()
@@ -66,7 +66,7 @@ class UpdateAddData:
         from ..tools import add_osm_data
 
         if args.tiger_data:
-            return asyncio.run(self._add_tiger_data(args))
+            return asyncio_run(self._add_tiger_data(args))
 
         with connect(args.config.get_libpq_dsn()) as conn:
             if is_frozen(conn):

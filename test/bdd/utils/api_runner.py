@@ -7,8 +7,8 @@
 """
 Various helper classes for running Nominatim commands.
 """
-import asyncio
 from collections import namedtuple
+from nominatim_db.utils.asyncio_utils import asyncio_run
 
 APIResponse = namedtuple('APIResponse', ['endpoint', 'status', 'body', 'headers'])
 
@@ -21,7 +21,7 @@ class APIRunner:
         self.exec_engine = create_func(environ)
 
     def run(self, endpoint, params, http_headers):
-        return asyncio.run(self.exec_engine(endpoint, params, http_headers))
+        return asyncio_run(self.exec_engine(endpoint, params, http_headers))
 
     def run_step(self, endpoint, base_params, datatable, fmt, http_headers):
         if fmt:

@@ -8,9 +8,16 @@ import itertools
 import sys
 import asyncio
 from pathlib import Path
+from packaging.version import Version
+import pytest_asyncio
 
 if sys.platform == 'win32':
-    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+    if Version(pytest_asyncio.__version__) >= Version("1.4.0"):
+        # pytest-asyncio hook for event loop factory.
+        def pytest_asyncio_loop_factories(config, item):
+            return {"selector": asyncio.SelectorEventLoop}
+    else:
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 import psycopg
 from psycopg import sql as pysql

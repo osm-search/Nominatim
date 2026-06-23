@@ -13,7 +13,6 @@ import importlib
 import logging
 import sys
 import argparse
-import asyncio
 from pathlib import Path
 
 from .config import Configuration
@@ -21,6 +20,7 @@ from .errors import UsageError
 from . import clicmd
 from . import version
 from .clicmd.args import NominatimArgs, Subcommand
+from .utils.asyncio_utils import asyncio_run
 
 LOG = logging.getLogger()
 
@@ -158,7 +158,7 @@ class AdminServe:
                            help='Webserver framework to run. (default: falcon)')
 
     def run(self, args: NominatimArgs) -> int:
-        asyncio.run(self.run_uvicorn(args))
+        asyncio_run(self.run_uvicorn(args))
 
         return 0
 

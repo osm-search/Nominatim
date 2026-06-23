@@ -9,7 +9,6 @@ Collector for BDD import acceptance tests.
 
 These tests check the Nominatim import chain after the osm2pgsql import.
 """
-import asyncio
 import re
 from collections import defaultdict
 
@@ -29,6 +28,7 @@ from nominatim_db import cli
 from nominatim_db.tools.database_import import load_data, create_table_triggers
 from nominatim_db.tools.postcodes import update_postcodes
 from nominatim_db.tokenizer import factory as tokenizer_factory
+from nominatim_db.utils.asyncio_utils import asyncio_run
 
 
 def _rewrite_placeid_field(field, new_field, datatable, place_ids):
@@ -233,7 +233,9 @@ def do_import(db_conn, def_config):
     """ Run a reduced version of the Nominatim import.
     """
     create_table_triggers(db_conn, def_config)
-    asyncio.run(load_data(def_config.get_libpq_dsn(), 1))
+
+    asyncio_run(load_data(def_config.get_libpq_dsn(), 1))
+
     tokenizer = tokenizer_factory.get_tokenizer_for_db(def_config)
     update_postcodes(def_config.get_libpq_dsn(), None, tokenizer)
     cli.nominatim(['index', '-q'], def_config.environ)

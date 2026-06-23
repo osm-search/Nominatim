@@ -11,7 +11,6 @@ from typing import Optional
 import argparse
 import logging
 from pathlib import Path
-import asyncio
 
 import psutil
 
@@ -22,6 +21,7 @@ from ..db import status, properties
 from ..tokenizer.base import AbstractTokenizer
 from ..version import NOMINATIM_VERSION
 from .args import NominatimArgs
+from ..utils.asyncio_utils import asyncio_run
 
 import time
 
@@ -80,7 +80,7 @@ class SetupAll:
                 "Cannot use --continue and --prepare-database together."
             )
 
-        return asyncio.run(self.async_run(args))
+        return asyncio_run(self.async_run(args))
 
     async def async_run(self, args: NominatimArgs) -> int:
         from ..data import country_info

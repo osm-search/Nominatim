@@ -385,7 +385,10 @@ class NominatimAPI:
                   Settings in this mapping also have precedence over any
                   parameters found in the `.env` file of the project directory.
         """
-        self._loop = asyncio.new_event_loop()
+        if sys.platform == 'win32':
+            self._loop = asyncio.SelectorEventLoop()
+        else:
+            self._loop = asyncio.new_event_loop()
         self._async_api = NominatimAPIAsync(project_dir, environ, loop=self._loop)
 
     def close(self) -> None:

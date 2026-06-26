@@ -9,7 +9,7 @@
 #         1) pyosmium-get-changes (with -f sequence.state for getting sequenceNumber)
 
 #     *) Import diff
-#         1) nominatim add-data --diff
+#         1) utils/update.php --import-diff
 
 #     *) Index for all the countries at the end
 
@@ -40,7 +40,8 @@ FOLLOWUP="nominatim index"
 # ******************************************************************************
 UPDATEDIR="update"
 
-for COUNTRY in $COUNTRIES; do
+for COUNTRY in $COUNTRIES;
+do
     echo "===================================================================="
     echo "$COUNTRY"
     echo "===================================================================="
@@ -58,6 +59,6 @@ for COUNTRY in $COUNTRIES; do
 done
 
 echo "===================================================================="
-echo "Reindexing"
+echo "Reindexing" 
 ${FOLLOWUP}
 echo "===================================================================="

@@ -8,7 +8,7 @@
 
 #     *) Set up sequence.state for updates
 
-#     *) Setup nominatim db using 'nominatim import'
+#     *) Setup nominatim db using 'setup.php --osm-file'
 
 # Hint:
 #
@@ -17,7 +17,7 @@
 
 # ******************************************************************************
 
-touch2() { mkdir -p "$(dirname "$1")" && touch "$1"; }
+touch2() { mkdir -p "$(dirname "$1")" && touch "$1" ; }
 
 # ******************************************************************************
 # Configuration section: Variables in this section should be set according to your requirements
@@ -43,7 +43,8 @@ rm -rf tmp
 mkdir -p tmp
 popd
 
-for COUNTRY in $COUNTRIES; do
+for COUNTRY in $COUNTRIES;
+do
     echo "===================================================================="
     echo "$COUNTRY"
     echo "===================================================================="

@@ -92,8 +92,11 @@ class UpdateRefresh:
     def run(self, args: NominatimArgs) -> int:
         from ..tools import refresh, postcodes
         from ..indexer.indexer import Indexer
+        from ..data import country_info
 
         need_function_refresh = args.functions
+
+        country_info.setup_country_config(args.config)
 
         if args.postcodes:
             if postcodes.can_compute(args.config.get_libpq_dsn()):

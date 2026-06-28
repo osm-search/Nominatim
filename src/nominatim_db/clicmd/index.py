@@ -50,9 +50,12 @@ class UpdateIndex:
 
     async def _do_index(self, args: NominatimArgs) -> None:
         from ..tokenizer import factory as tokenizer_factory
+        from ..indexer.indexer import Indexer
+        from ..data import country_info
+
+        country_info.setup_country_config(args.config)
 
         tokenizer = tokenizer_factory.get_tokenizer_for_db(args.config)
-        from ..indexer.indexer import Indexer
 
         indexer = Indexer(args.config, tokenizer, args.threads or psutil.cpu_count() or 1)
 

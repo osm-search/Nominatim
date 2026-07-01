@@ -128,10 +128,25 @@ Feature: Tag evaluation
             n7002 Thighway=primary,bridge=yes,bridge:name=1
             """
         Then place contains exactly
-            | object | class   | type    | name!dict   | extratags!dict |
-            | N7001  | highway | primary | 'name': '1' | 'bridge': 'yes' |
-            | N7002  | highway | primary | -           | 'bridge': 'yes', 'bridge:name': '1' |
-            | N7002  | bridge  | yes     | 'name': '1' | 'highway': 'primary', 'bridge:name': '1' |
+            | object | class   | type    | name!dict   | extratags!dict          | categories!set                               |
+            | N7001  | highway | primary | 'name': '1' | -                       | 'osm.highway.primary'                        |
+            | N7002  | bridge  | yes     | 'name': '1' | 'bridge:name': '1'      | 'osm.bridge.yes', 'osm.highway.primary'      |
+
+
+    Scenario: Categories are populated and merged for main tags
+        When loading osm data
+            """
+            n7101 Ttourism=hotel,amenity=restaurant,name=foo
+            n7102 Tamenity=vending-machine
+            n7103 Tamenity=foo/bar
+            n7104 Tboundary=administrative,place=city,name=A
+            """
+        Then place contains exactly
+            | object | categories!set                                   |
+            | N7101  | 'osm.tourism.hotel', 'osm.amenity.restaurant'    |
+            | N7102  | 'osm.amenity.vending_machine'                    |
+            | N7103  | 'osm.amenity.yes'                                |
+            | N7104  | 'osm.boundary.administrative', 'osm.place.city'  |
 
 
     Scenario: Global fallback and skipping
@@ -176,14 +191,12 @@ Feature: Tag evaluation
             n10003 Tboundary=administrative,place=island,name=C
             """
         Then place contains
-            | object | class    | type           | extratags!dict  |
-            | N10001 | boundary | administrative | 'place': 'city' |
+            | object | class    | type           | categories!set                                    |
+            | N10001 | boundary | administrative | 'osm.boundary.administrative', 'osm.place.city'   |
         And place contains
-            | object | class    | type           |
-            | N10002 | boundary | natural        |
-            | N10002 | place    | city           |
-            | N10003 | boundary | administrative |
-            | N10003 | place    | island         |
+            | object | class    | type           | categories!set                                    |
+            | N10002 | boundary | natural        | 'osm.boundary.natural', 'osm.place.city'          |
+            | N10003 | boundary | administrative | 'osm.boundary.administrative', 'osm.place.island' |
 
 
     Scenario: Building fallbacks
@@ -285,3 +298,42 @@ Feature: Tag evaluation
             | N2     | lock     | yes     | 'name': 'LeLock' |
             | N3     | waterway | river   | 'name': 'LeWater' |
             | N4     | amenity  | parking | - |
+
+
+    Scenario: Categories populate on place table for single and multi-tag
+        When loading osm data
+            """
+            n1 Tamenity=restaurant,name=Foo
+            n2 Ttourism=hotel,amenity=cafe,name=Bar
+            """
+        Then place contains exactly
+          | object | categories!set                          |
+          | N1     | 'osm.amenity.restaurant'                |
+          | N2     | 'osm.tourism.hotel', 'osm.amenity.cafe' |
+
+
+    Scenario: Categories sanitize non-alphanumeric class/type values
+        When loading osm data
+            """
+            n1 Tamenity=3stars
+            n2 Tshop=3for2
+            n3 Tamenity=fast-food
+            n4 Tshop=do-it-yourself
+            """
+        Then place contains exactly
+          | object | categories!set            |
+          | N1     | 'osm.amenity.3stars'      |
+          | N2     | 'osm.shop.3for2'          |
+          | N3     | 'osm.amenity.fast_food'   |
+          | N4     | 'osm.shop.do_it_yourself' |
+
+    Scenario: Category fallback for unrecognized values uses 'yes'
+        When loading osm data
+            """
+            n8101 Tamenity=???
+            n8102 Tshop=????
+            """
+        Then place contains exactly
+          |object|categories!set|
+          |N8101|'osm.amenity.yes'|
+          |N8102|'osm.shop.yes'|

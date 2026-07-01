@@ -175,8 +175,8 @@ Feature: Linking of places
          |   | 9 |   |
          | 4 |   | 3 |
         Given the places
-         | osm  | class    | type           | admin | name   | extra+place | geometry    |
-         | R13  | boundary | administrative | 4     | Berlin | city        | (1,2,3,4,1) |
+         | osm  | class    | type           | admin | name   | categories                                  | geometry    |
+         | R13  | boundary | administrative | 4     | Berlin | osm.boundary.administrative, osm.place.city | (1,2,3,4,1) |
         And the places
          | osm  | class    | type           | name   | geometry |
          | N2   | place    | city           | Berlin | 9 |
@@ -354,4 +354,3 @@ Feature: Linking of places
         Then placex contains
             | object | name+_place_name | name+_place_name:es |
             | R1     | Popayán          | Popayán             |
-

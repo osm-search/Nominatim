@@ -28,9 +28,8 @@ Feature: Import of simple objects by osm2pgsql
           n1 Ttourism=hotel,amenity=restaurant,name=foo
           """
         Then place contains exactly
-          | object | class   | type       | name!dict      |
-          | N1     | tourism | hotel      | 'name' : 'foo' |
-          | N1     | amenity | restaurant | 'name' : 'foo' |
+          | object | class   | type       | name!dict      | categories!set                                |
+          | N1     | amenity | restaurant | 'name' : 'foo' | 'osm.tourism.hotel', 'osm.amenity.restaurant' |
 
     Scenario: Import stand-alone house number with postcode
         When loading osm data
@@ -52,9 +51,9 @@ Feature: Import of simple objects by osm2pgsql
             n2 Tplace=hamlet,wikidata=Q1234321,name=Bar
             """
         Then place contains exactly
-           | object | class    | extratags!dict         |
-           | N1     | boundary | 'place': 'city', 'wikipedia:de': 'Foo' |
-           | N2     | place    | 'wikidata': 'Q1234321' |
+           | object | class    | extratags!dict         | categories!set                                  |
+           | N1     | boundary | 'wikipedia:de': 'Foo'  | 'osm.boundary.administrative', 'osm.place.city' |
+           | N2     | place    | 'wikidata': 'Q1234321' | 'osm.place.hamlet'                              |
 
         Examples:
            | style   |

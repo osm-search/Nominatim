@@ -9,6 +9,7 @@ Tests for running the indexing.
 
 import pytest
 import pytest_asyncio  # noqa
+from psycopg import sql as pysql
 
 from nominatim_db.indexer import indexer
 from nominatim_db.tokenizer import factory
@@ -149,8 +150,10 @@ class TestIndexing:
     @pytest.mark.parametrize("threads", [1, 15])
     @pytest.mark.asyncio
     async def test_index_boundaries(self, def_config, threads, placex_row, osmline_row):
+        bnd_cat = pysql.SQL("ARRAY['osm.boundary.administrative']::ltree[]")
         for rank in range(4, 10):
             placex_row(cls='boundary', typ='administrative',
+                       categories=bnd_cat,
                        rank_address=rank, rank_search=rank, indexed_status=1)
         for rank in range(31):
             placex_row(rank_address=rank, rank_search=rank, indexed_status=1)
@@ -186,8 +189,10 @@ class TestIndexing:
     @pytest.mark.parametrize("analyse", [True, False])
     @pytest.mark.asyncio
     async def test_index_full(self, def_config, analyse, placex_row, osmline_row, postcode_row):
+        bnd_cat = pysql.SQL("ARRAY['osm.boundary.administrative']::ltree[]")
         for rank in range(4, 10):
             placex_row(cls='boundary', typ='administrative',
+                       categories=bnd_cat,
                        rank_address=rank, rank_search=rank, indexed_status=1)
         for rank in range(31):
             placex_row(rank_address=rank, rank_search=rank, indexed_status=1)

@@ -17,21 +17,6 @@ Feature: Object details
      | W    | 43327921 |
      | R    | 123924 |
 
-    Scenario Outline: Details request with different class types for the same OSM id
-        When sending v1/details
-          | osmtype | osmid     | class   |
-          | N       | 300209696 | <class> |
-        Then a HTTP 200 is returned
-        And the result is valid json
-        And the result contains
-          | osm_type | osm_id    | category |
-          | N        | 300209696 | <class>  |
-
-    Examples:
-     | class |
-     | tourism |
-     | mountain_pass |
-
     Scenario: Details request without osmtype
         When sending v1/details
           | osmid |
@@ -96,4 +81,3 @@ Feature: Object details
      | N    | 5484325405 |
      | W    | 43327921 |
      | R    | 123924 |
-

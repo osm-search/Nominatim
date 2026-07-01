@@ -53,6 +53,8 @@ class PlaceColumn:
             self._add_hstore('address', key[5:], value)
         elif key in ('name', 'address', 'extratags'):
             self.columns[key] = ast.literal_eval('{' + value + '}')
+        elif key == 'categories':
+            self.columns[key] = list(map(str.strip, value.split(','))) if value else []
         else:
             self.columns[key] = None if value == '' else value
 
@@ -123,6 +125,12 @@ class PlaceColumn:
     def db_insert(self, cursor):
         """ Insert the collected data into the database.
         """
+        if 'categories' not in self.columns:
+            cls = self.columns.get('class')
+            typ = self.columns.get('type')
+            if cls and typ:
+                self.columns['categories'] = [f'osm.{cls}.{typ}']
+
         query = 'INSERT INTO place ({}, geometry) values({}, {})'.format(
             ','.join(self.columns.keys()),
             ','.join(['%s' for x in range(len(self.columns))]),

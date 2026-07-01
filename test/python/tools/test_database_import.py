@@ -49,7 +49,7 @@ class TestDatabaseSetup:
         # Check that all extensions are set up.
         with self.conn() as conn:
             with conn.cursor() as cur:
-                cur.execute('CREATE TABLE t (h HSTORE, geom GEOMETRY(Geometry, 4326))')
+                cur.execute('CREATE TABLE t (h HSTORE, geom GEOMETRY(Geometry, 4326), path LTREE)')
 
     def test_unsupported_pg_version(self, monkeypatch):
         monkeypatch.setattr(database_import, 'POSTGRESQL_REQUIRED_VERSION', (100, 4))
@@ -165,10 +165,10 @@ def test_truncate_database_tables(temp_db_conn, temp_db_cursor, table_factory, w
 
 @pytest.mark.parametrize("threads", (1, 5))
 @pytest.mark.asyncio
-async def test_load_data(dsn, place_row, place_interpolation_row, placex_table, osmline_table,
-                         temp_db_cursor, threads):
+async def test_load_data(dsn, place_row, place_interpolation_row, placex_table,
+                         osmline_table, temp_db_cursor, threads):
     for oid in range(100, 130):
-        place_row(osm_id=oid)
+        place_row(osm_id=oid, categories=['osm.amenity.cafe'])
     place_interpolation_row(osm_id=342, typ='odd', geom='LINESTRING(0 0, 10 10)')
 
     temp_db_cursor.execute("""
@@ -207,6 +207,11 @@ async def test_load_data(dsn, place_row, place_interpolation_row, placex_table, 
 
     assert temp_db_cursor.table_rows('placex') == 30
     assert temp_db_cursor.table_rows('location_property_osmline') == 1
+    temp_db_cursor.execute(
+        "SELECT count(*) FROM placex "
+        "WHERE categories = ARRAY['osm.amenity.cafe'::ltree]"
+    )
+    assert temp_db_cursor.fetchone()[0] == 30
 
 
 class TestSetupSQL:

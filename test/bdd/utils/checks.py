@@ -63,8 +63,22 @@ COMPARISON_FUNCS = {
                               else (val == ast.literal_eval('{' + exp + '}'))),
     'ints': lambda val, exp: (val is None if exp == '-'
                               else (val == [int(i) for i in exp.split(',')])),
+    'set': lambda val, exp: (val is None if exp == '-'
+                             else _compare_set(val, exp)),
     'in_box': within_box
 }
+
+
+def _compare_set(val, exp):
+    if val is None:
+        return False
+
+    if isinstance(val, str) and val.startswith('{'):
+        val = [v.strip() for v in val[1:-1].split(',')]
+
+    expected = set(s.strip().strip("'\"") for s in exp.split(','))
+    return set(val) == expected
+
 
 OSM_TYPE = {'node': 'n', 'way': 'w', 'relation': 'r',
             'N': 'n', 'W': 'w', 'R': 'r'}
@@ -124,10 +138,14 @@ class ResultAttr:
             return self.subobj == other
 
         other = other.replace(r'\\', '\\')
+        if self.key == 'categories' and self.fmt is None \
+           and isinstance(self.subobj, str) and self.subobj.startswith('{'):
+            val = {v.strip() for v in self.subobj[1:-1].split(',')}
+            exp = {s.strip().strip("'\"") for s in other.split(',')}
+            return val == exp
 
         if self.fmt in COMPARISON_FUNCS:
             return COMPARISON_FUNCS[self.fmt](self.subobj, other)
-
         if self.fmt.startswith(':'):
             return other == f"{{{self.fmt}}}".format(self.subobj)
 

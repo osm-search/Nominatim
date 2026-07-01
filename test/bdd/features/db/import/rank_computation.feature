@@ -51,11 +51,11 @@ Feature: Rank assignment
 
     Scenario: Ranks for addressable boundaries with place assignment go with place address ranks if available
         Given the named places
-          | osm | class    | type           | admin | extra+place | geometry |
-          | R20 | boundary | administrative | 3     | state       | (1 1, 2 2, 1 2, 1 1) |
-          | R21 | boundary | administrative | 32    | suburb      | (3 3, 4 4, 3 4, 3 3) |
-          | R22 | boundary | administrative | 6     | town        | (0 0, 1 0, 0 1, 0 0) |
-          | R23 | boundary | administrative | 10    | village     | (0 0, 1 1, 1 0, 0 0) |
+          | osm | class    | type           | admin | categories                                     | geometry             |
+          | R20 | boundary | administrative | 3     | osm.boundary.administrative, osm.place.state   | (1 1, 2 2, 1 2, 1 1) |
+          | R21 | boundary | administrative | 32    | osm.boundary.administrative, osm.place.suburb  | (3 3, 4 4, 3 4, 3 3) |
+          | R22 | boundary | administrative | 6     | osm.boundary.administrative, osm.place.town    | (0 0, 1 0, 0 1, 0 0) |
+          | R23 | boundary | administrative | 10    | osm.boundary.administrative, osm.place.village | (0 0, 1 1, 1 0, 0 0) |
         When importing
         Then placex contains
           | object | rank_search | rank_address |
@@ -66,10 +66,10 @@ Feature: Rank assignment
 
     Scenario: Place address ranks cannot overtake a parent address rank
         Given the named places
-          | osm | class    | type           | admin | extra+place  | geometry |
-          | R20 | boundary | administrative | 8     | town         | (0 0, 0 2, 2 2, 2 0, 0 0) |
-          | R21 | boundary | administrative | 9     | municipality | (0 0, 0 1, 1 1, 1 0, 0 0) |
-          | R22 | boundary | administrative | 9     | suburb       | (0 0, 0 1, 1 1, 1 0, 0 0) |
+          | osm | class    | type           | admin | categories                                          | geometry                  |
+          | R20 | boundary | administrative | 8     | osm.boundary.administrative, osm.place.town         | (0 0, 0 2, 2 2, 2 0, 0 0) |
+          | R21 | boundary | administrative | 9     | osm.boundary.administrative, osm.place.municipality | (0 0, 0 1, 1 1, 1 0, 0 0) |
+          | R22 | boundary | administrative | 9     | osm.boundary.administrative, osm.place.suburb       | (0 0, 0 1, 1 1, 1 0, 0 0) |
         When importing
         Then placex contains
           | object | rank_search | rank_address |
@@ -83,10 +83,10 @@ Feature: Rank assignment
 
     Scenario: Admin levels cannot overtake each other due to place address ranks
         Given the named places
-          | osm | class    | type           | admin | extra+place  | geometry |
-          | R20 | boundary | administrative | 6     | town         | (0 0, 0 2, 2 2, 2 0, 0 0) |
-          | R21 | boundary | administrative | 8     |              | (0 0, 0 1, 1 1, 1 0, 0 0) |
-          | R22 | boundary | administrative | 8     | suburb       | (0 0, 0 1, 1 1, 1 0, 0 0) |
+          | osm | class    | type           | admin | categories                                    | geometry                  |
+          | R20 | boundary | administrative | 6     | osm.boundary.administrative, osm.place.town   | (0 0, 0 2, 2 2, 2 0, 0 0) |
+          | R21 | boundary | administrative | 8     | osm.boundary.administrative                   | (0 0, 0 1, 1 1, 1 0, 0 0) |
+          | R22 | boundary | administrative | 8     | osm.boundary.administrative, osm.place.suburb | (0 0, 0 1, 1 1, 1 0, 0 0) |
         When importing
         Then placex contains
           | object | rank_search | rank_address |
@@ -100,9 +100,9 @@ Feature: Rank assignment
 
     Scenario: Admin levels cannot overtake each other due to place address ranks even when slightly misaligned
         Given the named places
-          | osm | class    | type           | admin | extra+place  | geometry |
-          | R20 | boundary | administrative | 6     | town         | (0 0, 0 2, 2 2, 2 0, 0 0) |
-          | R21 | boundary | administrative | 8     |              | (0 0, -0.0001 1, 1 1, 1 0, 0 0) |
+          | osm | class    | type           | admin | categories                                  | geometry                        |
+          | R20 | boundary | administrative | 6     | osm.boundary.administrative, osm.place.town | (0 0, 0 2, 2 2, 2 0, 0 0)       |
+          | R21 | boundary | administrative | 8     | osm.boundary.administrative                 | (0 0, -0.0001 1, 1 1, 1 0, 0 0) |
         When importing
         Then placex contains
           | object | rank_search | rank_address |
@@ -114,10 +114,10 @@ Feature: Rank assignment
 
     Scenario: Admin levels must not be larger than 25
         Given the named places
-          | osm | class    | type           | admin | extra+place | geometry |
-          | R20 | boundary | administrative | 6     | quarter     | (0 0, 0 2, 2 2, 2 0, 0 0) |
-          | R21 | boundary | administrative | 7     |             | (0 0, 0 1, 1 1, 1 0, 0 0) |
-          | R22 | boundary | administrative | 8     |             | (0 0, 0 0.5, 0.5 0.5, 0.5 0, 0 0) |
+          | osm | class    | type           | admin | categories                                     | geometry                          |
+          | R20 | boundary | administrative | 6     | osm.boundary.administrative, osm.place.quarter | (0 0, 0 2, 2 2, 2 0, 0 0)         |
+          | R21 | boundary | administrative | 7     | osm.boundary.administrative                    | (0 0, 0 1, 1 1, 1 0, 0 0)         |
+          | R22 | boundary | administrative | 8     | osm.boundary.administrative                    | (0 0, 0 0.5, 0.5 0.5, 0.5 0, 0 0) |
         When importing
         Then placex contains
           | object | rank_search | rank_address |
@@ -254,14 +254,27 @@ Feature: Rank assignment
 
     Scenario: POI nodes with place tags
         Given the places
-          | osm | class   | type       | name | extratags       |
-          | N23 | amenity | playground | AB   | "place": "city" |
-          | N23 | place   | city       | AB   | "amenity": "playground" |
+          | osm | class   | type       | name | categories             |
+          | N23 | amenity | playground | AB   | osm.amenity.playground |
+          | N23 | place   | city       | AB   | osm.place.city         |
         When importing
         Then placex contains exactly
           | object      | rank_search | rank_address |
           | N23:amenity | 30          | 30           |
           | N23:place   | 16          | 16           |
+
+    Scenario: Higher address rank wins with multiple categories
+        Given the named places
+          | osm  | class    | type  | name  | categories                       | geometry |
+          | W100 | lock     | yes   | Gate  | osm.lock.yes                     |    5 5   |
+          | W101 | waterway | river | Rhine | osm.waterway.river               |    5 5   |
+          | W102 | lock     | yes   | Gate2 | osm.lock.yes, osm.waterway.river |    5 5   |
+        When importing
+        Then placex contains
+          | object | rank_search | rank_address |
+          | W100   |      30     |     30       |
+          | W101   |      19     |     0        |
+          | W102   |      30     |     30       |
 
     Scenario: Address rank 25 is only used for addr:place
         Given the grid

@@ -519,3 +519,92 @@ def alter_location_postcode_add_area_flag(conn: Connection, **_: Any) -> None:
                         ADD COLUMN is_area BOOLEAN NOT NULL DEFAULT FALSE""")
             cur.execute("""UPDATE location_postcodes
                         SET is_area = true WHERE osm_id IS NOT NULL""")
+
+
+@_migration(5, 3, 99, 2)
+def add_categories_schema(conn: Connection, **_: Any) -> None:
+    """ Add categories column to place and placex tables.
+    """
+    conn.execute("CREATE EXTENSION IF NOT EXISTS ltree")
+
+    if table_exists(conn, 'place') and not table_has_column(conn, 'place', 'categories'):
+        conn.execute("ALTER TABLE place ADD COLUMN categories ltree[]")
+
+    if table_exists(conn, 'placex') and not table_has_column(conn, 'placex', 'categories'):
+        conn.execute("ALTER TABLE placex ADD COLUMN categories ltree[]")
+
+
+@_migration(5, 3, 99, 2)
+def backfill_categories(conn: Connection, **_: Any) -> None:
+    """ Backfill categories column and create indexes for place categories.
+
+    Backfills rank_address < 26 rows needed for waterway/place linking.
+    Indexes are created after the backfill to avoid maintaining them during
+    the bulk UPDATE. The placex_update trigger is disabled during backfill
+    to prevent per-row reindexing.
+    """
+    if not table_exists(conn, 'placex') or not table_has_column(conn, 'placex', 'categories'):
+        return
+
+    conn.execute("ALTER TABLE placex DISABLE TRIGGER ALL")
+    conn.execute("""
+        UPDATE placex
+        SET categories = (
+          SELECT array_agg(DISTINCT cat)
+          FROM (
+            SELECT (
+                     'osm.'
+                     || CASE
+                          WHEN placex.class !~ '^[A-Za-z0-9_-]+$'
+                            THEN 'place'
+                          ELSE replace(placex.class, '-', '_')
+                        END
+                     || '.'
+                     || CASE
+                          WHEN placex.type IS NULL OR placex.type = ''
+                               OR placex.type !~ '^[A-Za-z0-9_-]+$'
+                            THEN 'yes'
+                          ELSE replace(placex.type, '-', '_')
+                        END
+                   )::ltree AS cat
+            WHERE placex.class != ''
+            UNION
+            SELECT (
+                     'osm.place.'
+                     || CASE
+                          WHEN placex.extratags->'place' IS NULL OR placex.extratags->'place' = ''
+                               OR placex.extratags->'place' !~ '^[A-Za-z0-9_-]+$'
+                            THEN 'yes'
+                          ELSE replace(placex.extratags->'place', '-', '_')
+                        END
+                   )::ltree AS cat
+            WHERE placex.extratags ? 'place'
+          ) sub
+        )
+        WHERE categories IS NULL
+          AND rank_address < 26
+    """)
+    conn.execute("ALTER TABLE placex ENABLE TRIGGER ALL")
+
+    if table_exists(conn, 'search_name'):
+        conn.execute("""CREATE INDEX IF NOT EXISTS idx_placex_categories
+                        ON placex USING GIST (categories gist__ltree_ops)
+                        WHERE categories IS NOT NULL""")
+
+    with conn.cursor() as cur:
+        cur.execute("""CREATE INDEX IF NOT EXISTS idx_placex_geometry_placenode_categories
+                       ON placex USING SPGIST (geometry)
+                       WHERE osm_type = 'N' AND rank_search < 26
+                             AND categories <@ 'osm.place'""")
+        cur.execute("""CREATE INDEX IF NOT EXISTS idx_placex_wikidata_categories ON placex
+                       USING BTREE ((extratags -> 'wikidata'))
+                       WHERE extratags ? 'wikidata'
+                             AND categories <@ 'osm.place'
+                             AND osm_type = 'N' AND rank_search < 26""")
+        cur.execute("""CREATE INDEX IF NOT EXISTS
+                       idx_placex_rank_boundaries_sector_categories ON placex
+                       USING BTREE (rank_search, geometry_sector)
+                       WHERE categories <@ 'osm.boundary.administrative'
+                             AND indexed_status > 0""")
+
+    conn.execute("ANALYZE placex")

@@ -90,9 +90,9 @@ BEGIN
     -- Inserting a new placex.
     FOR newplacex IN
       INSERT INTO placex (osm_type, osm_id, class, type, name,
-                        admin_level, address, extratags, geometry)
+                        admin_level, address, extratags, geometry, categories)
       VALUES (NEW.osm_type, NEW.osm_id, NEW.class, NEW.type, NEW.name,
-              NEW.admin_level, NEW.address, NEW.extratags, NEW.geometry)
+              NEW.admin_level, NEW.address, NEW.extratags, NEW.geometry, NEW.categories)
       RETURNING rank_address
     LOOP
       PERFORM update_invalidate_for_new_place(newplacex.rank_address,
@@ -101,7 +101,7 @@ BEGIN
     END LOOP;
   ELSE
     -- Modify an existing placex.
-    IF is_rankable_place(NEW.osm_type, NEW.class, NEW.admin_level,
+    IF is_rankable_place(NEW.osm_type, NEW.categories, NEW.admin_level,
                          NEW.name, NEW.extratags, is_area)
     THEN
       -- Recompute the ranks to look out for changes.
@@ -110,7 +110,7 @@ BEGIN
       SELECT * INTO search_rank, address_rank
         FROM compute_place_rank(existingplacex.country_code,
                                 CASE WHEN is_area THEN 'A' ELSE NEW.osm_type END,
-                                NEW.class, NEW.type, NEW.admin_level,
+                                NEW.categories, NEW.admin_level,
                                 (NEW.extratags->'capital') = 'yes',
                                 NEW.address->'postcode');
 
@@ -183,7 +183,8 @@ BEGIN
             indexed_status = 2,
             geometry = CASE WHEN address_rank = 0
                             THEN simplify_large_polygons(NEW.geometry)
-                            ELSE NEW.geometry END
+                            ELSE NEW.geometry END,
+            categories = NEW.categories
         WHERE place_id = existingplacex.place_id;
     ELSE
       -- New place is not really valid, remove the placex entry
@@ -191,7 +192,7 @@ BEGIN
     END IF;
 
     -- When an existing way is updated, recalculate entrances
-    IF existingplacex.osm_type = 'W' and (existingplacex.rank_search > 27 or existingplacex.class IN ('landuse', 'leisure')) THEN
+    IF existingplacex.osm_type = 'W' and (existingplacex.rank_search > 27 or existingplacex.categories <@ 'osm.landuse' or existingplacex.categories <@ 'osm.leisure') THEN
       PERFORM place_update_entrances(existingplacex.place_id, existingplacex.osm_id);
     END IF;
   END IF;
@@ -202,6 +203,7 @@ BEGIN
     IF coalesce(existing.name, ''::hstore) != coalesce(NEW.name, ''::hstore)
        or coalesce(existing.address, ''::hstore) != coalesce(NEW.address, ''::hstore)
        or coalesce(existing.extratags, ''::hstore) != coalesce(NEW.extratags, ''::hstore)
+       or coalesce(existing.categories, ARRAY[]::ltree[]) != coalesce(NEW.categories, ARRAY[]::ltree[])
        or coalesce(existing.admin_level, 15) != coalesce(NEW.admin_level, 15)
        or existing.geometry::text != NEW.geometry::text
     THEN
@@ -209,6 +211,7 @@ BEGIN
         SET name = NEW.name,
             address = NEW.address,
             extratags = NEW.extratags,
+            categories = NEW.categories,
             admin_level = NEW.admin_level,
             geometry = NEW.geometry
         WHERE osm_type = NEW.osm_type and osm_id = NEW.osm_id

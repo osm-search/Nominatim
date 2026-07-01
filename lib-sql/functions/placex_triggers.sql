@@ -280,6 +280,7 @@ DECLARE
   rel_member RECORD;
   linked_placex placex%ROWTYPE;
   bnd_name TEXT;
+  bnd_place_type ltree;
 BEGIN
   IF bnd.rank_search >= 26 or bnd.rank_address = 0
      or ST_GeometryType(bnd.geometry) NOT IN ('ST_Polygon','ST_MultiPolygon')
@@ -302,7 +303,7 @@ BEGIN
         FOR linked_placex IN
           SELECT * from placex
           WHERE osm_type = 'N' and osm_id = rel_member.member
-            and class = 'place'
+            and categories <@ 'osm.place'
         LOOP
           {% if debug %}RAISE WARNING 'Linked label member';{% endif %}
           RETURN linked_placex;
@@ -322,7 +323,7 @@ BEGIN
   IF bnd.extratags ? 'wikidata' THEN
     FOR linked_placex IN
       SELECT * FROM placex
-      WHERE placex.class = 'place' AND placex.osm_type = 'N'
+      WHERE placex.categories <@ 'osm.place' AND placex.osm_type = 'N'
         AND placex.extratags ? 'wikidata' -- needed to select right index
         AND placex.extratags->'wikidata' = bnd.extratags->'wikidata'
         AND (placex.linked_place_id is null or placex.linked_place_id = bnd.place_id)
@@ -335,25 +336,28 @@ BEGIN
     END LOOP;
   END IF;
 
-  -- If extratags has a place tag, look for linked nodes by their place type.
+  -- If categories contain a place tag, look for linked nodes by their place type.
   -- Area and node still have to have the same name.
-  IF bnd.extratags ? 'place' and bnd_name is not null
-  THEN
-    FOR linked_placex IN
-      SELECT * FROM placex
-      WHERE (position(lower(name->'name') in bnd_name) > 0
-             OR position(bnd_name in lower(name->'name')) > 0)
-        AND placex.class = 'place' AND placex.type = bnd.extratags->'place'
-        AND placex.osm_type = 'N'
-        AND (placex.linked_place_id is null or placex.linked_place_id = bnd.place_id)
-        AND placex.rank_search < 26 -- needed to select the right index
-        AND (NOT placex.extratags ? 'wikidata' OR NOT bnd.extratags ? 'wikidata'
-             OR placex.extratags->'wikidata' = bnd.extratags->'wikidata')
-        AND ST_Covers(bnd.geometry, placex.geometry)
-    LOOP
-      {% if debug %}RAISE WARNING 'Found type-matching place node %', linked_placex.osm_id;{% endif %}
-      RETURN linked_placex;
-    END LOOP;
+  IF bnd_name is not null THEN
+    bnd_place_type := bnd.categories ?<@ 'osm.place';
+    IF bnd_place_type is not null THEN
+      FOR linked_placex IN
+        SELECT * FROM placex
+        WHERE (position(lower(name->'name') in bnd_name) > 0
+               OR position(bnd_name in lower(name->'name')) > 0)
+          AND placex.categories <@ 'osm.place' -- needed to select the right index
+          AND placex.categories <@ bnd_place_type
+          AND placex.osm_type = 'N'
+          AND (placex.linked_place_id is null or placex.linked_place_id = bnd.place_id)
+          AND placex.rank_search < 26
+          AND (placex.extratags->'wikidata' is null OR bnd.extratags->'wikidata' is null
+               OR placex.extratags->'wikidata' = bnd.extratags->'wikidata')
+          AND ST_Covers(bnd.geometry, placex.geometry)
+      LOOP
+        {% if debug %}RAISE WARNING 'Found type-matching place node %', linked_placex.osm_id;{% endif %}
+        RETURN linked_placex;
+      END LOOP;
+    END IF;
   END IF;
 
   -- Name searches can be done for ways as well as relations
@@ -364,12 +368,12 @@ BEGIN
       WHERE lower(name->'name') = bnd_name
         AND ((bnd.rank_address > 0
               and bnd.rank_address = (compute_place_rank(placex.country_code,
-                                                         'N', placex.class,
-                                                         placex.type, 15::SMALLINT,
+                                                         'N', placex.categories,
+                                                         15::SMALLINT,
                                                          false, placex.postcode)).address_rank)
              OR (bnd.rank_address = 0 and placex.rank_search = bnd.rank_search))
         AND placex.osm_type = 'N'
-        AND placex.class = 'place'
+        AND placex.categories <@ 'osm.place'
         AND (placex.linked_place_id is null or placex.linked_place_id = bnd.place_id)
         AND placex.rank_search < 26 -- needed to select the right index
         AND (placex.extratags->'wikidata' is null OR bnd.extratags->'wikidata' is null
@@ -667,6 +671,7 @@ BEGIN
   NEW.indexed_status := 1; --STATUS_NEW
 
   NEW.centroid := get_center_point(NEW.geometry);
+
   NEW.country_code := lower(get_country_code(NEW.centroid));
 
   NEW.partition := get_partition(NEW.country_code);
@@ -677,7 +682,7 @@ BEGIN
   ELSE
     is_area := ST_GeometryType(NEW.geometry) IN ('ST_Polygon','ST_MultiPolygon');
 
-    IF NOT is_rankable_place(NEW.osm_type, NEW.class, NEW.admin_level,
+    IF NOT is_rankable_place(NEW.osm_type, NEW.categories, NEW.admin_level,
                              NEW.name, NEW.extratags, is_area)
     THEN
         RETURN NULL;
@@ -686,10 +691,9 @@ BEGIN
     SELECT * INTO NEW.rank_search, NEW.rank_address
       FROM compute_place_rank(NEW.country_code,
                               CASE WHEN is_area THEN 'A' ELSE NEW.osm_type END,
-                              NEW.class, NEW.type, NEW.admin_level,
+                              NEW.categories, NEW.admin_level,
                               (NEW.extratags->'capital') = 'yes',
                               NEW.address->'postcode');
-
     -- a country code make no sense below rank 4 (country)
     IF NEW.rank_search < 4 THEN
       NEW.country_code := NULL;
@@ -761,6 +765,7 @@ DECLARE
 
   is_place_address BOOLEAN;
   result BOOLEAN;
+  bnd_place_type ltree;
 BEGIN
   -- deferred delete
   IF OLD.indexed_status = 100 THEN
@@ -776,6 +781,24 @@ BEGIN
   {% if debug %}RAISE WARNING 'placex_update % % (%)',NEW.osm_type,NEW.osm_id,NEW.place_id;{% endif %}
 
   NEW.indexed_date = now();
+
+  -- Lazy backfill: derive categories from class/type when empty.
+  -- Matches Lua sanitize_label(): hyphens -> underscores, invalid chars -> 'yes'.
+  -- Invalid class falls back to 'place' (gives osm.place.yes) per PG < 16 compat.
+  IF array_length(NEW.categories, 1) IS NULL THEN
+    NEW.categories := ARRAY[(
+      'osm.'
+      || CASE WHEN NEW.class !~ '^[A-Za-z0-9_-]+$'
+              THEN 'place'
+              ELSE replace(NEW.class, '-', '_')
+         END
+      || '.'
+      || CASE WHEN NEW.type = '' OR NEW.type !~ '^[A-Za-z0-9_-]+$'
+              THEN 'yes'
+              ELSE replace(NEW.type, '-', '_')
+         END
+    )::ltree];
+  END IF;
 
   IF OLD.indexed_status > 1 THEN
     {% if 'search_name' in db.tables %}
@@ -796,7 +819,6 @@ BEGIN
   -- the previous link status.
   linked_place := NEW.linked_place_id;
   NEW.linked_place_id := OLD.linked_place_id;
-
   -- Remove linkage, if we have computed a different new linkee.
   IF OLD.indexed_status > 1 THEN
     UPDATE placex
@@ -809,8 +831,9 @@ BEGIN
   -- Compute a preliminary centroid.
   NEW.centroid := get_center_point(NEW.geometry);
 
+
   -- Record the entrance node locations
-  IF NEW.osm_type = 'W' and (NEW.rank_search > 27 or NEW.class IN ('landuse', 'leisure')) THEN
+  IF NEW.osm_type = 'W' and (NEW.rank_search > 27 or NEW.categories <@ 'osm.landuse' or NEW.categories <@ 'osm.leisure') THEN
     PERFORM place_update_entrances(NEW.place_id, NEW.osm_id);
   END IF;
 
@@ -842,10 +865,9 @@ BEGIN
                             CASE WHEN ST_GeometryType(NEW.geometry)
                                         IN ('ST_Polygon','ST_MultiPolygon')
                             THEN 'A' ELSE NEW.osm_type END,
-                            NEW.class, NEW.type, NEW.admin_level,
+                            NEW.categories, NEW.admin_level,
                             (NEW.extratags->'capital') = 'yes',
                             NEW.address->'postcode');
-
   -- Short-cut out for linked places. Note that this must happen after the
   -- address rank has been recomputed. The linking might nullify a shift in
   -- address rank.
@@ -856,7 +878,7 @@ BEGIN
   END IF;
 
   -- We must always increase the address level relative to the admin boundary.
-  IF NEW.class = 'boundary' and NEW.type = 'administrative'
+  IF NEW.categories <@ 'osm.boundary.administrative'
      and NEW.osm_type = 'R' and NEW.rank_address > 0
   THEN
     -- First, check that admin boundaries do not overtake each other rank-wise.
@@ -868,7 +890,7 @@ BEGIN
                    THEN ST_Equals(geometry, NEW.geometry)
                    ELSE false END) as is_same
       FROM placex
-      WHERE osm_type = 'R' and class = 'boundary' and type = 'administrative'
+      WHERE osm_type = 'R' and categories <@ 'osm.boundary.administrative'
             and admin_level < NEW.admin_level and admin_level > 3
             and rank_address between 1 and 25 -- for index selection
             and ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon') -- for index selection
@@ -897,9 +919,9 @@ BEGIN
         FOR location IN
           SELECT rank_address
           FROM placex,
-               LATERAL compute_place_rank(country_code, 'A', class, type,
+               LATERAL compute_place_rank(country_code, 'A', categories,
                                           admin_level, False, null) prank
-          WHERE class = 'place' and rank_address between 1 and 23
+          WHERE categories <@ 'osm.place' and rank_address between 1 and 23
                 and prank.address_rank >= NEW.rank_address
                 and ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon') -- select right index
                 and ST_Contains(geometry, NEW.geometry)
@@ -909,7 +931,7 @@ BEGIN
           NEW.rank_address := location.rank_address + 2;
         END LOOP;
     END IF;
-  ELSEIF NEW.class = 'place'
+  ELSEIF NEW.categories <@ 'osm.place'
          and ST_GeometryType(NEW.geometry) in ('ST_Polygon', 'ST_MultiPolygon')
          and NEW.rank_address between 16 and 23
   THEN
@@ -918,7 +940,7 @@ BEGIN
     FOR location IN
           SELECT rank_address
           FROM placex,
-               LATERAL compute_place_rank(country_code, 'A', class, type,
+               LATERAL compute_place_rank(country_code, 'A', categories,
                                           admin_level, False, null) prank
           WHERE prank.address_rank < 24
                 and rank_address between 1 and 25 -- select right index
@@ -930,7 +952,7 @@ BEGIN
         LOOP
           NEW.rank_address := location.rank_address + 2;
         END LOOP;
-  ELSEIF NEW.class = 'place' and NEW.osm_type = 'N'
+  ELSEIF NEW.categories <@ 'osm.place' and NEW.osm_type = 'N'
          and NEW.rank_address between 16 and 23
   THEN
     -- If a place node is contained in an admin or place boundary with the same
@@ -939,13 +961,13 @@ BEGIN
     FOR location IN
         SELECT rank_address
         FROM placex,
-             LATERAL compute_place_rank(country_code, 'A', class, type,
+             LATERAL compute_place_rank(country_code, 'A', categories,
                                         admin_level, False, null) prank
         WHERE osm_type = 'R'
               and rank_address between 1 and 25 -- select right index
               and ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon') -- select right index
-              and ((class = 'place' and prank.address_rank = NEW.rank_address)
-                   or (class = 'boundary' and rank_address = NEW.rank_address))
+              and ((categories <@ 'osm.place' and prank.address_rank = NEW.rank_address)
+                   or (categories <@ 'osm.boundary' and rank_address = NEW.rank_address))
               and geometry && NEW.centroid and _ST_Covers(geometry, NEW.centroid)
         LIMIT 1
     LOOP
@@ -956,11 +978,12 @@ BEGIN
   END IF;
 
   NEW.housenumber := token_normalized_housenumber(NEW.token_info);
-
   NEW.postcode := null;
 
-  -- waterway ways are linked when they are part of a relation and have the same class/type
-  IF NEW.osm_type = 'R' and NEW.class = 'waterway' THEN
+  -- Waterway ways are linked when they are part of a relation and have the same category.
+  IF NEW.osm_type = 'R' and NEW.categories <@ 'osm.waterway'
+     and NEW.rank_search < 26
+     and ST_GeometryType(NEW.geometry) in ('ST_LineString', 'ST_MultiLineString') THEN
 {% if db.middle_db_format == '1' %}
       FOR relation_members IN select members from planet_osm_rels r where r.id = NEW.osm_id and r.parts != array[]::bigint[]
       LOOP
@@ -969,7 +992,7 @@ BEGIN
                 {% if debug %}RAISE WARNING 'waterway parent %, child %/%', NEW.osm_id, i, relation_members[i];{% endif %}
                 FOR linked_node_id IN SELECT place_id FROM placex
                   WHERE osm_type = 'W' and osm_id = substring(relation_members[i],2,200)::bigint
-                  and class = NEW.class and type in ('river', 'stream', 'canal', 'drain', 'ditch')
+                  and categories ~ 'osm.waterway.river|stream|canal|drain|ditch'::lquery
                   and ( relation_members[i+1] != 'side_stream' or NEW.name->'name' = name->'name')
                 LOOP
                   UPDATE placex SET linked_place_id = NEW.place_id WHERE place_id = linked_node_id;
@@ -994,7 +1017,7 @@ BEGIN
         FOR linked_node_id IN
           SELECT place_id FROM placex
           WHERE osm_type = 'W' and osm_id = (relation_member->>'ref')::bigint
-                and class = NEW.class and type in ('river', 'stream', 'canal', 'drain', 'ditch')
+                and categories ~ 'osm.waterway.river|stream|canal|drain|ditch'::lquery
                 and (relation_member->>'role' != 'side_stream' or NEW.name->'name' = name->'name')
         LOOP
           UPDATE placex SET linked_place_id = NEW.place_id WHERE place_id = linked_node_id;
@@ -1091,8 +1114,8 @@ BEGIN
     -- Recompute the ranks here as the ones from the linked place might
     -- have been shifted to accommodate surrounding boundaries.
     SELECT place_id, osm_id, class, type, extratags, rank_search,
-           centroid, geometry,
-           (compute_place_rank(country_code, osm_type, class, type, admin_level,
+           centroid, geometry, categories,
+           (compute_place_rank(country_code, osm_type, categories, admin_level,
                               (extratags->'capital') = 'yes', null)).*
       INTO location
       FROM placex WHERE place_id = linked_place;
@@ -1138,13 +1161,17 @@ BEGIN
   ELSE
     -- No linked place? As a last resort check if the boundary is tagged with
     -- a place type and adapt the rank address.
-    IF NEW.rank_address between 4 and 25 and NEW.extratags ? 'place' THEN
-      SELECT address_rank INTO place_address_level
-        FROM compute_place_rank(NEW.country_code, 'A', 'place',
-                                NEW.extratags->'place', 0::SMALLINT, False, null);
-      IF place_address_level > parent_address_level and
-         place_address_level < 26 THEN
-        NEW.rank_address := place_address_level;
+    IF NEW.rank_address between 4 and 25 THEN
+      bnd_place_type := NEW.categories ?<@ 'osm.place';
+      IF bnd_place_type is not null THEN
+        SELECT address_rank INTO place_address_level
+          FROM compute_place_rank(NEW.country_code, 'A',
+                                  ARRAY[bnd_place_type],
+                                  0::SMALLINT, False, null);
+        IF place_address_level > parent_address_level and
+           place_address_level < 26 THEN
+          NEW.rank_address := place_address_level;
+        END IF;
       END IF;
     END IF;
   END IF;
@@ -1157,9 +1184,8 @@ BEGIN
             and p.indexed_status = 0 and p.rank_address between 4 and 25;
   END IF;
   {% endif %}
-
   IF NEW.admin_level = 2
-     AND NEW.class = 'boundary' AND NEW.type = 'administrative'
+     AND NEW.categories <@ 'osm.boundary.administrative'
      AND NEW.country_code IS NOT NULL AND NEW.osm_type = 'R'
   THEN
     -- Update the list of country names.
@@ -1195,7 +1221,7 @@ BEGIN
     -- Rank 0 features may also span multiple administrative areas (e.g. lakes)
     -- so use the geometry here too. Just make sure the areas don't become too
     -- large.
-    IF NEW.class = 'natural' or max_rank > 10 THEN
+    IF NEW.categories <@ 'osm.natural' or max_rank > 10 THEN
       geom := NEW.geometry;
     END IF;
   ELSEIF NEW.rank_address > 25 THEN
@@ -1226,7 +1252,7 @@ BEGIN
       {% if debug %}RAISE WARNING 'added to location (full)';{% endif %}
     END IF;
 
-    IF NEW.rank_search between 26 and 27 and NEW.class = 'highway' THEN
+    IF NEW.rank_search between 26 and 27 and NEW.categories <@ 'osm.highway' THEN
       result := insertLocationRoad(NEW.partition, NEW.place_id, NEW.country_code, NEW.geometry);
       {% if debug %}RAISE WARNING 'insert into road location table (full)';{% endif %}
     END IF;

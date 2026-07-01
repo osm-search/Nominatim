@@ -103,4 +103,8 @@ CREATE INDEX IF NOT EXISTS idx_osmline_parent_osm_id
     ON location_property_osmline USING btree(parent_place_id)
     INCLUDE (startnumber, endnumber) {{db.tablespace.search_index}}
     WHERE startnumber is not null;
+---
+  CREATE INDEX IF NOT EXISTS idx_placex_categories ON placex
+    USING GIST(categories gist__ltree_ops) {{db.tablespace.search_index}}
+    WHERE categories IS NOT NULL;
 {% endif %}

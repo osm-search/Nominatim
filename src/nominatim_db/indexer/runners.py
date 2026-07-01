@@ -80,13 +80,13 @@ class BoundaryRunner(AbstractPlacexRunner):
         return pysql.SQL("""SELECT count(*) FROM placex
                             WHERE indexed_status > 0
                               AND rank_search = {}
-                              AND class = 'boundary' and type = 'administrative'
-                         """).format(pysql.Literal(self.rank))
+                              AND categories <@ 'osm.boundary.administrative'
+                        """).format(pysql.Literal(self.rank))
 
     def sql_get_objects(self) -> QueryNoTemplate:
         return SELECT_SQL.format(pysql.SQL(
                 """WHERE placex.indexed_status > 0 and placex.rank_search = {}
-                         and placex.class = 'boundary' and placex.type = 'administrative'
+                         and placex.categories <@ 'osm.boundary.administrative'
                    ORDER BY placex.partition, placex.admin_level
                 """).format(pysql.Literal(self.rank)))
 

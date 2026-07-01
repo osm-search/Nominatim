@@ -108,7 +108,7 @@ class Indexer:
                 cur = conn.execute(""" SELECT rank_search, count(*)
                                        FROM placex
                                        WHERE rank_search between %s and %s
-                                             AND class = 'boundary' and type = 'administrative'
+                                             AND categories <@ 'osm.boundary.administrative'
                                              AND indexed_status > 0
                                        GROUP BY rank_search""",
                                    (minrank, maxrank))

@@ -99,6 +99,7 @@ def setup_database_skeleton(dsn: str, rouser: Optional[str] = None) -> None:
             cur.execute('CREATE EXTENSION IF NOT EXISTS hstore')
             cur.execute('CREATE EXTENSION IF NOT EXISTS postgis')
             cur.execute('CREATE EXTENSION IF NOT EXISTS postgis_raster')
+            cur.execute('CREATE EXTENSION IF NOT EXISTS ltree')
 
         conn.commit()
 
@@ -202,7 +203,7 @@ def truncate_data_tables(conn: Connection) -> None:
 _COPY_COLUMNS = pysql.SQL(',').join(map(pysql.Identifier,
                                         ('osm_type', 'osm_id', 'class', 'type',
                                          'name', 'admin_level', 'address',
-                                         'extratags', 'geometry')))
+                                         'extratags', 'geometry', 'categories')))
 
 
 async def load_data(dsn: str, threads: int) -> None:

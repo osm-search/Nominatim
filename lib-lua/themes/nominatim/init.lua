@@ -54,6 +54,7 @@ local table_definitions = {
             { column = 'address', type = 'hstore' },
             { column = 'extratags', type = 'hstore' },
             { column = 'geometry', type = 'geometry', projection = 'WGS84', not_null = true },
+            { column = 'categories', sql_type = 'ltree[]' }
         },
         indexes = {}
     },
@@ -171,36 +172,22 @@ end
 
 -- named_with_key: use place if there is a name with the main key prefix
 function PlaceTransform.named_with_key(place, k)
-    local names = {}
     local prefix = k .. ':name'
+    local found = false
     for namek, namev in pairs(place.intags) do
         if namek:sub(1, #prefix) == prefix
            and (#namek == #prefix
                 or namek:sub(#prefix + 1, #prefix + 1) == ':') then
-            names[namek:sub(#k + 2)] = namev
+            place.names[namek:sub(#k + 2)] = namev
+            found = true
         end
     end
 
-    if next(names) ~= nil then
-        return place:clone{names=names}
-    end
-end
-
--- Special transform used with address fallbacks: ignore all names
--- except for those marked as being part of the address.
-local function address_fallback(place)
-    if next(place.names) == nil or NAMES.house == nil then
+    if found then
         return place
     end
-
-    local names = {}
-    for k, v in pairs(place.names) do
-        if NAME_FILTER(k, v) == 'house' then
-            names[k] = v
-        end
-    end
-    return place:clone{names=names}
 end
+
 
 ----------------- other helper functions -----------------------------
 
@@ -298,6 +285,28 @@ end
 local Place = {}
 Place.__index = Place
 
+-- ltree labels: validate-or-fallback matching Photon's CATEGORY_PATTERN.
+-- Hyphens replaced with underscore for PG < 16 ltree compat.
+-- Any other invalid char -> fall back to 'yes'.
+-- https://www.postgresql.org/message-id/E1pDtub-002Nio-Tv%40gemulon.postgresql.org
+local function sanitize_label(s)
+    if s == nil or s == '' then return 'yes' end
+    if s:match('[^A-Za-z0-9_-]') then
+        return 'yes'
+    end
+    return s:gsub('-', '_')
+end
+
+-- Build an ltree-compatible category string: osm.<key>.<value>.
+-- Returns nil if the key cannot be sanitized to a valid ltree label.
+local function get_category(k, v)
+    if k == nil or k == '' or k:match('[^A-Za-z0-9_-]') then
+        return nil
+    end
+    return 'osm.' .. sanitize_label(k) .. '.' .. sanitize_label(v)
+end
+
+
 function Place.new(object, geom_func)
     local self = setmetatable({}, Place)
     self.object = object
@@ -310,7 +319,6 @@ function Place.new(object, geom_func)
         self.admin_level = 15
     end
 
-    self.num_entries = 0
     self.has_name = false
     self.names = {}
     self.address = {}
@@ -416,7 +424,7 @@ end
 
 
 function Place:grab_name_parts(data)
-    local fallback = nil
+    local fallback = false
 
     if data.groups ~= nil then
         for k, v in pairs(self.intags) do
@@ -429,7 +437,7 @@ function Place:grab_name_parts(data)
                     self.has_name = true
                 elseif atype == 'house' then
                     self.has_name = true
-                    fallback = {'place', 'house', address_fallback}
+                    fallback = true
                 end
             end
         end
@@ -439,21 +447,6 @@ function Place:grab_name_parts(data)
 end
 
 
-function Place:write_place(k, v, mfunc)
-    v = v or self.intags[k]
-    if v == nil then
-        return 0
-    end
-
-    local place = mfunc(self, k, v)
-    if place then
-        local res = place:write_row(k, v)
-        self.num_entries = self.num_entries + res
-        return res
-    end
-
-    return 0
-end
 
 
 function Place:geometry_is_valid()
@@ -471,36 +464,6 @@ function Place:geometry_is_valid()
     return self.geometry ~= false
 end
 
-
-function Place:write_row(k, v)
-    if not self:geometry_is_valid() then
-        return 0
-    end
-
-     local extra = EXTRATAGS_FILTER(self, k, v) or {}
-
-     for tk, tv in pairs(self.object.tags) do
-         if REQUIRED_EXTRATAGS_FILTER(tk, tv) and extra[tk] == nil then
-             extra[tk] = tv
-         end
-     end
-
-     if extra and next(extra) == nil then
-         extra = nil
-     end
-
-    insert_row.place{
-        class = k,
-        type = v,
-        admin_level = self.admin_level,
-        name = next(self.names) and self.names,
-        address = next(self.address) and self.address,
-        extratags = extra,
-        geometry = self.geometry
-    }
-
-    return 1
-end
 
 
 function Place:clone(data)
@@ -732,24 +695,40 @@ else
     osm2pgsql.process_relation = module.process_relation
 end
 
+-- Build extratags for a merged row: filter via EXTRATAGS_FILTER,
+-- remove sibling main tags (they belong in categories, not extratags),
+-- then add any required extratags (wikipedia, wikidata, etc.).
+local function build_extratags(place, k, v)
+    local extra = EXTRATAGS_FILTER(place, k, v) or {}
+    for ek, ev in pairs(extra) do
+        local ktable = MAIN_KEYS[ek]
+        if ktable ~= nil then
+            local transform = ktable[ev] or ktable[1]
+            if type(transform) == 'function' then
+                extra[ek] = nil
+            end
+        end
+    end
+    for tk, tv in pairs(place.object.tags) do
+        if REQUIRED_EXTRATAGS_FILTER(tk, tv) and extra[tk] == nil then
+            extra[tk] = tv
+        end
+    end
+    if next(extra) == nil then return nil end
+    return extra
+end
+
 function module.process_tags(o)
     if next(o.intags) == nil then
         return  -- shortcut when pre-filtering has removed all tags
     end
 
-    -- Exception for boundary/place double tagging
-    if o.intags.boundary == 'administrative' then
-        o:grab_extratags{match = function (k, v)
-            return k == 'place' and v:sub(1,3) ~= 'isl'
-        end}
-    end
-
     -- name keys
-    local fallback = o:grab_name_parts{groups=NAME_FILTER}
+    local needs_address_fallback = o:grab_name_parts{groups=NAME_FILTER}
 
     -- address keys
-    if o:grab_address_parts{groups=ADDRESS_FILTER} > 0 and fallback == nil then
-        fallback = {'place', 'house', address_fallback}
+    if o:grab_address_parts{groups=ADDRESS_FILTER} > 0 and not needs_address_fallback then
+        needs_address_fallback = true
     end
     if o.address.country ~= nil and #o.address.country ~= 2 then
         o.address['country'] = nil
@@ -775,14 +754,42 @@ function module.process_tags(o)
         }
     end
 
-    -- collect main keys
+    -- Collect categories from main keys into a single row.
+    local categories = {}
+    local main_class, main_type = nil, nil
+    local merged_extratags = nil
     local postcode_collect = false
+    local tag_fallback = nil
+
     for k, v in pairs(o.intags) do
         local ktable = MAIN_KEYS[k]
         if ktable then
             local ktype = ktable[v] or ktable[1]
             if type(ktype) == 'function' then
-                o:write_place(k, v, ktype)
+                local result = ktype(o, k, v)
+                if result then
+                    -- If transform returned a clone (lock_transform, etc.),
+                    -- use its names for the final row
+                    if result ~= o then
+                        o.names = result.names
+                    end
+
+                    -- Collect category
+                    local cat = get_category(k, v)
+                    if cat ~= nil then
+                        table.insert(categories, cat)
+
+                        -- TODO: alphabetical winner selection is a temporary heuristic.
+                        -- Later we will choose by rankability (e.g. avoid boundary on non-area ways)
+                        -- or by explicit user/config priority or idk.
+                        if main_class == nil
+                           or k < main_class
+                           or (k == main_class and v < main_type) then
+                            main_class = k
+                            main_type = v
+                        end
+                    end
+                end
             elseif ktype == 'postcode_area' then
                 postcode_collect = true
                 if o.object.type == 'relation'
@@ -795,14 +802,44 @@ function module.process_tags(o)
                     }
                 end
             elseif ktype == 'fallback' and o.has_name then
-                fallback = {k, v, PlaceTransform.always}
+                tag_fallback = {k, v}
             end
         end
     end
 
-    if o.num_entries == 0 then
-        if fallback ~= nil then
-            o:write_place(fallback[1], fallback[2], fallback[3])
+    -- Build extratags once after the loop (filters out main keys automatically)
+    merged_extratags = build_extratags(o, nil, nil)
+
+    -- Handle tag-based fallback: always add category, set class/type only if sole producer
+    if tag_fallback ~= nil then
+        local fk, fv = tag_fallback[1], tag_fallback[2]
+        local was_empty = (#categories == 0)
+        local cat = get_category(fk, fv)
+        if cat ~= nil then
+            table.insert(categories, cat)
+            if was_empty then
+                main_class = fk
+                main_type = fv
+            end
+        end
+    end
+
+    -- Handle address/house fallback if no main tags produced categories
+    if #categories == 0 then
+        if needs_address_fallback then
+            if next(o.names) ~= nil and NAMES.house ~= nil then
+                local names = {}
+                for k, v in pairs(o.names) do
+                    if NAME_FILTER(k, v) == 'house' then
+                        names[k] = v
+                    end
+                end
+                o.names = names
+            end
+
+            table.insert(categories, 'osm.place.house')
+            main_class = 'place'
+            main_type = 'house'
         elseif POSTCODE_FALLBACK and not postcode_collect
                 and o.address.postcode ~= nil
                 and o:geometry_is_valid() then
@@ -811,6 +848,20 @@ function module.process_tags(o)
                 centroid = o.geometry:centroid()
             }
         end
+    end
+
+    -- Build and insert single row with all collected categories
+    if #categories > 0 and o:geometry_is_valid() then
+        insert_row.place{
+            class = main_class,
+            type = main_type,
+            admin_level = o.admin_level,
+            name = next(o.names) and o.names,
+            address = next(o.address) and o.address,
+            extratags = merged_extratags and next(merged_extratags) and merged_extratags,
+            geometry = o.geometry,
+            categories = '{' .. table.concat(categories, ',') .. '}'
+        }
     end
 end
 

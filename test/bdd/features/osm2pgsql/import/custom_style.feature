@@ -78,11 +78,10 @@ Feature: Import with custom styles by osm2pgsql
             n4 Ttourism=hotel,amenity=telephone x0 y0
             """
         Then place contains exactly
-            | object | class   | extratags!dict   |
-            | N2     | amenity | -                |
-            | N3     | tourism | 'amenity': 'yes' |
-            | N4     | tourism | -                |
-            | N4     | amenity | -                |
+            | object | class   | extratags!dict   | categories                               |
+            | N2     | amenity | -                | osm.amenity.hospital                     |
+            | N3     | tourism | 'amenity': 'yes' | osm.tourism.hotel                        |
+            | N4     | amenity | -                | osm.tourism.hotel, osm.amenity.telephone |
 
     Scenario: Ignore some tags
         Given the lua style file

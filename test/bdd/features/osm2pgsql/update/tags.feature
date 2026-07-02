@@ -15,11 +15,10 @@ Feature: Tag evaluation
             n3 Tamenity=prison
             """
         Then place contains exactly
-            | object | class   | type       |
-            | N1     | amenity | restaurant |
-            | N2     | highway | bus_stop   |
-            | N2     | railway | stop       |
-            | N3     | amenity | prison     |
+            | object | class   | type       | categories                               |
+            | N1     | amenity | restaurant | osm.amenity.restaurant                   |
+            | N2     | highway | bus_stop   | osm.highway.bus_stop, osm.railway.stop   |
+            | N3     | amenity | prison     | osm.amenity.prison                       |
 
         When updating osm data
             """
@@ -27,17 +26,17 @@ Feature: Tag evaluation
             n2 Thighway=bus_stop,name=X
             """
         Then place contains exactly
-            | object | class   | type       |
-            | N2     | highway | bus_stop   |
-            | N3     | amenity | prison     |
+            | object | class   | type       | categories            |
+            | N2     | highway | bus_stop   | osm.highway.bus_stop  |
+            | N3     | amenity | prison     | osm.amenity.prison    |
         And placex contains
-            | object | class   | indexed_status |
-            | N3     | amenity | 0              |
+            | object | class   | indexed_status | categories           |
+            | N3     | amenity | 0              | osm.amenity.prison   |
         When indexing
         Then placex contains exactly
-            | object | class   | type     | name!dict   |
-            | N2     | highway | bus_stop | 'name': 'X' |
-            | N3     | amenity | prison   | -           |
+            | object | class   | type     | name!dict   | categories            |
+            | N2     | highway | bus_stop | 'name': 'X' | osm.highway.bus_stop  |
+            | N3     | amenity | prison   | -           | osm.amenity.prison    |
 
 
     Scenario: Main tag added
@@ -47,8 +46,8 @@ Feature: Tag evaluation
             n2 Thighway=bus_stop,name=X
             """
         Then place contains exactly
-            | object | class   | type       |
-            | N2     | highway | bus_stop   |
+            | object | class   | type       | categories            |
+            | N2     | highway | bus_stop   | osm.highway.bus_stop  |
 
         When updating osm data
             """
@@ -56,16 +55,14 @@ Feature: Tag evaluation
             n2 Thighway=bus_stop,railway=stop,name=X
             """
         Then place contains exactly
-            | object | class   | type       |
-            | N1     | amenity | restaurant |
-            | N2     | highway | bus_stop   |
-            | N2     | railway | stop       |
+            | object | class   | type       | categories                                |
+            | N1     | amenity | restaurant | osm.amenity.restaurant                    |
+            | N2     | highway | bus_stop   | osm.highway.bus_stop, osm.railway.stop    |
         When indexing
         Then placex contains exactly
-            | object | class   | type       | name!dict   |
-            | N1     | amenity | restaurant | -           |
-            | N2     | highway | bus_stop   | 'name': 'X' |
-            | N2     | railway | stop       | 'name': 'X' |
+            | object | class   | type       | name!dict   | categories                                |
+            | N1     | amenity | restaurant | -           | osm.amenity.restaurant                    |
+            | N2     | highway | bus_stop   | 'name': 'X' | osm.highway.bus_stop, osm.railway.stop    |
 
 
     Scenario: Main tag modified
@@ -75,9 +72,9 @@ Feature: Tag evaluation
             n11 Tamenity=atm
             """
         Then place contains exactly
-            | object | class   | type    |
-            | N10    | highway | footway |
-            | N11    | amenity | atm     |
+            | object | class   | type    | categories           |
+            | N10    | highway | footway | osm.highway.footway  |
+            | N11    | amenity | atm     | osm.amenity.atm      |
 
         When updating osm data
             """
@@ -85,14 +82,14 @@ Feature: Tag evaluation
             n11 Thighway=primary
             """
         Then place contains exactly
-            | object | class   | type    |
-            | N10    | highway | path    |
-            | N11    | highway | primary |
+            | object | class   | type    | categories            |
+            | N10    | highway | path    | osm.highway.path      |
+            | N11    | highway | primary | osm.highway.primary   |
         When indexing
         Then placex contains exactly
-            | object | class   | type       | name!dict   |
-            | N10    | highway | path       | 'name': 'X' |
-            | N11    | highway | primary    | -           |
+            | object | class   | type       | name!dict   | categories           |
+            | N10    | highway | path       | 'name': 'X' | osm.highway.path     |
+            | N11    | highway | primary    | -           | osm.highway.primary  |
 
 
     Scenario: Main tags with name, name added
@@ -110,14 +107,14 @@ Feature: Tag evaluation
             n46 Tbuilding=yes,addr:housenumber=1
             """
         Then place contains exactly
-            | object | class   | type    |
-            | N45    | landuse | cemetry |
-            | N46    | building| yes     |
+            | object | class   | type    | categories           |
+            | N45    | landuse | cemetry | osm.landuse.cemetry  |
+            | N46    | building| yes     | osm.building.yes     |
         When indexing
         Then placex contains exactly
-            | object | class   | type       | name!dict      | address!dict       |
-            | N45    | landuse | cemetry    | 'name': 'TODO' | -                  |
-            | N46    | building| yes        | -              | 'housenumber': '1' |
+            | object | class   | type       | name!dict      | address!dict       | categories           |
+            | N45    | landuse | cemetry    | 'name': 'TODO' | -                  | osm.landuse.cemetry  |
+            | N46    | building| yes        | -              | 'housenumber': '1' | osm.building.yes     |
 
 
     Scenario: Main tags with name, name removed
@@ -127,9 +124,9 @@ Feature: Tag evaluation
             n46 Tbuilding=yes,addr:housenumber=1
             """
         Then place contains exactly
-            | object | class   | type    |
-            | N45    | landuse | cemetry |
-            | N46    | building| yes     |
+            | object | class   | type    | categories            |
+            | N45    | landuse | cemetry | osm.landuse.cemetry   |
+            | N46    | building| yes     | osm.building.yes      |
 
         When updating osm data
             """
@@ -149,9 +146,9 @@ Feature: Tag evaluation
             n46 Tbuilding=yes,addr:housenumber=1
             """
         Then place contains exactly
-            | object | class   | type    | name!dict       | address!dict      |
-            | N45    | landuse | cemetry | 'name' : 'TODO' | -                 |
-            | N46    | building| yes     | -               | 'housenumber': '1'|
+            | object | class   | type    | name!dict       | address!dict      | categories           |
+            | N45    | landuse | cemetry | 'name' : 'TODO' | -                 | osm.landuse.cemetry  |
+            | N46    | building| yes     | -               | 'housenumber': '1'| osm.building.yes     |
 
         When updating osm data
             """
@@ -159,14 +156,14 @@ Feature: Tag evaluation
             n46 Tbuilding=yes,addr:housenumber=10
             """
         Then place contains exactly
-            | object | class   | type    | name!dict       | address!dict       |
-            | N45    | landuse | cemetry | 'name' : 'DONE' | -                  |
-            | N46    | building| yes     | -               | 'housenumber': '10'|
+            | object | class   | type    | name!dict       | address!dict       | categories           |
+            | N45    | landuse | cemetry | 'name' : 'DONE' | -                  | osm.landuse.cemetry  |
+            | N46    | building| yes     | -               | 'housenumber': '10'| osm.building.yes     |
         When indexing
         Then placex contains exactly
-            | object | class   | type    | name!dict       | address!dict       |
-            | N45    | landuse | cemetry | 'name' : 'DONE' | -                  |
-            | N46    | building| yes     | -               | 'housenumber': '10'|
+            | object | class   | type    | name!dict       | address!dict       | categories           |
+            | N45    | landuse | cemetry | 'name' : 'DONE' | -                  | osm.landuse.cemetry  |
+            | N46    | building| yes     | -               | 'housenumber': '10'| osm.building.yes     |
 
 
     Scenario: Main tag added to address only node
@@ -175,20 +172,20 @@ Feature: Tag evaluation
             n1 Taddr:housenumber=345
             """
         Then place contains exactly
-            | object | class | type  | address!dict |
-            | N1     | place | house | 'housenumber': '345'|
+            | object | class | type  | address!dict        | categories         |
+            | N1     | place | house | 'housenumber': '345'| osm.place.house    |
 
         When updating osm data
             """
             n1 Taddr:housenumber=345,building=yes
             """
         Then place contains exactly
-            | object | class    | type  | address!dict |
-            | N1     | building | yes   | 'housenumber': '345'|
+            | object | class    | type  | address!dict        | categories         |
+            | N1     | building | yes   | 'housenumber': '345'| osm.building.yes   |
         When indexing
         Then placex contains exactly
-            | object | class    | type  | address!dict |
-            | N1     | building | yes   | 'housenumber': '345'|
+            | object | class    | type  | address!dict        | categories         |
+            | N1     | building | yes   | 'housenumber': '345'| osm.building.yes   |
 
 
     Scenario: Main tag removed from address only node
@@ -197,20 +194,20 @@ Feature: Tag evaluation
             n1 Taddr:housenumber=345,building=yes
             """
         Then place contains exactly
-            | object | class    | type  | address!dict |
-            | N1     | building | yes   | 'housenumber': '345'|
+            | object | class    | type  | address!dict        | categories         |
+            | N1     | building | yes   | 'housenumber': '345'| osm.building.yes   |
 
         When updating osm data
             """
             n1 Taddr:housenumber=345
             """
         Then place contains exactly
-            | object | class | type  | address!dict |
-            | N1     | place | house | 'housenumber': '345'|
+            | object | class | type  | address!dict        | categories           |
+            | N1     | place | house | 'housenumber': '345'| osm.place.house      |
         When indexing
         Then placex contains exactly
-            | object | class | type  | address!dict |
-            | N1     | place | house | 'housenumber': '345'|
+            | object | class | type  | address!dict        | categories           |
+            | N1     | place | house | 'housenumber': '345'| osm.place.house      |
 
 
     Scenario: Main tags with name key, adding key name
@@ -226,12 +223,12 @@ Feature: Tag evaluation
             n2 Tbridge=yes,bridge:name=high
             """
         Then place contains exactly
-            | object | class    | type  | name!dict      |
-            | N2     | bridge   | yes   | 'name': 'high' |
+            | object | class    | type  | name!dict      | categories       |
+            | N2     | bridge   | yes   | 'name': 'high' | osm.bridge.yes   |
         When indexing
         Then placex contains exactly
-            | object | class    | type  | name!dict      |
-            | N2     | bridge   | yes   | 'name': 'high' |
+            | object | class    | type  | name!dict      | categories       |
+            | N2     | bridge   | yes   | 'name': 'high' | osm.bridge.yes   |
 
 
     Scenario: Main tags with name key, deleting key name
@@ -240,8 +237,8 @@ Feature: Tag evaluation
             n2 Tbridge=yes,bridge:name=high
             """
         Then place contains exactly
-            | object | class    | type  | name!dict      |
-            | N2     | bridge   | yes   | 'name': 'high' |
+            | object | class    | type  | name!dict      | categories       |
+            | N2     | bridge   | yes   | 'name': 'high' | osm.bridge.yes   |
 
         When updating osm data
             """
@@ -268,12 +265,12 @@ Feature: Tag evaluation
             n2 Tbridge=yes,bridge:name:en=high
             """
         Then place contains exactly
-            | object | class  | type | name!dict         |
-            | N2     | bridge | yes  | 'name:en': 'high' |
+            | object | class  | type | name!dict         | categories       |
+            | N2     | bridge | yes  | 'name:en': 'high' | osm.bridge.yes   |
         When indexing
         Then placex contains exactly
-            | object | class  | type | name!dict         |
-            | N2     | bridge | yes  | 'name:en': 'high' |
+            | object | class  | type | name!dict         | categories       |
+            | N2     | bridge | yes  | 'name:en': 'high' | osm.bridge.yes   |
 
 
     Scenario: Downgrading a highway to one that is dropped without name
@@ -284,8 +281,8 @@ Feature: Tag evaluation
           w1 Thighway=residential Nn100,n101
           """
         Then place contains exactly
-          | object | class |
-          | W1     | highway |
+          | object | class   | categories                |
+          | W1     | highway | osm.highway.residential   |
 
         When updating osm data
           """
@@ -313,12 +310,12 @@ Feature: Tag evaluation
           w1 Thighway=unclassified Nn100,n101
           """
         Then place contains exactly
-          | object | class   |
-          | W1     | highway |
+          | object | class   | categories                |
+          | W1     | highway | osm.highway.unclassified  |
         When indexing
         Then placex contains exactly
-          | object | class   |
-          | W1     | highway |
+          | object | class   | categories                |
+          | W1     | highway | osm.highway.unclassified  |
 
 
     Scenario: Downgrading a highway when a second tag is present
@@ -329,21 +326,20 @@ Feature: Tag evaluation
           w1 Thighway=residential,tourism=hotel Nn100,n101
           """
         Then place contains exactly
-          | object | class   | type        |
-          | W1     | highway | residential |
-          | W1     | tourism | hotel       |
+          | object | class   | type        | categories                                    |
+          | W1     | highway | residential | osm.highway.residential, osm.tourism.hotel    |
 
         When updating osm data
           """
           w1 Thighway=service,tourism=hotel Nn100,n101
           """
         Then place contains exactly
-          | object | class   | type  |
-          | W1     | tourism | hotel |
+          | object | class   | type  | categories           |
+          | W1     | tourism | hotel | osm.tourism.hotel    |
         When indexing
         Then placex contains exactly
-          | object | class   | type  |
-          | W1     | tourism | hotel |
+          | object | class   | type  | categories          |
+          | W1     | tourism | hotel | osm.tourism.hotel   |
 
 
     Scenario: Upgrading a highway when a second tag is present
@@ -354,50 +350,45 @@ Feature: Tag evaluation
           w1 Thighway=service,tourism=hotel Nn100,n101
           """
         Then place contains exactly
-          | object | class   | type  |
-          | W1     | tourism | hotel |
+          | object | class   | type  | categories          |
+          | W1     | tourism | hotel | osm.tourism.hotel   |
 
         When updating osm data
           """
           w1 Thighway=residential,tourism=hotel Nn100,n101
           """
         Then place contains exactly
-          | object | class   | type        |
-          | W1     | highway | residential |
-          | W1     | tourism | hotel       |
+          | object | class   | type        | categories                                     |
+          | W1     | highway | residential | osm.highway.residential, osm.tourism.hotel     |
         When indexing
         Then placex contains exactly
-          | object | class   | type        |
-          | W1     | highway | residential |
-          | W1     | tourism | hotel       |
+          | object | class   | type        | categories                                     |
+          | W1     | highway | residential | osm.highway.residential, osm.tourism.hotel     |
 
 
     Scenario: Replay on administrative boundary
         When loading osm data
-          """
-          n10 x34.0 y-4.23
-          n11 x34.1 y-4.23
-          n12 x34.2 y-4.13
-          w10 Tboundary=administrative,waterway=river,name=Border,admin_level=2 Nn12,n11,n10
-          """
+            """
+            n10 x34.0 y-4.23
+            n11 x34.1 y-4.23
+            n12 x34.2 y-4.13
+            w10 Tboundary=administrative,waterway=river,name=Border,admin_level=2 Nn12,n11,n10
+            """
         Then place contains exactly
-          | object | class    | type           | admin_level | name!dict        |
-          | W10    | waterway | river          | 2           | 'name': 'Border' |
-          | W10    | boundary | administrative | 2           | 'name': 'Border' |
+            | object | class    | type           | admin_level | name!dict        | categories!set                                          |
+            | W10    | boundary | administrative | 2           | 'name': 'Border' | 'osm.boundary.administrative', 'osm.waterway.river'     |
 
         When updating osm data
-          """
-          w10 Tboundary=administrative,waterway=river,name=Border,admin_level=2 Nn12,n11,n10
-          """
+            """
+            w10 Tboundary=administrative,waterway=river,name=Border,admin_level=2 Nn12,n11,n10
+            """
         Then place contains exactly
-          | object | class    | type           | admin_level | name!dict        |
-          | W10    | waterway | river          | 2           | 'name': 'Border' |
-          | W10    | boundary | administrative | 2           | 'name': 'Border' |
+            | object | class    | type           | admin_level | name!dict        | categories!set                                          |
+            | W10    | boundary | administrative | 2           | 'name': 'Border' | 'osm.boundary.administrative', 'osm.waterway.river'     |
         When indexing
         Then placex contains exactly
-          | object | class    | type           | admin_level | name!dict        |
-          | W10    | waterway | river          | 2           | 'name': 'Border' |
-
+            | object | class    | type           | admin_level | name!dict        | categories!set                                          |
+            | W10    | boundary | administrative | 2           | 'name': 'Border' | 'osm.boundary.administrative', 'osm.waterway.river'     |
 
     Scenario: Change admin_level on administrative boundary
         Given the grid
@@ -413,20 +404,20 @@ Feature: Tag evaluation
           r10 Ttype=multipolygon,boundary=administrative,name=Border,admin_level=2 Mw10@
           """
         Then place contains exactly
-          | object | class    | admin_level |
-          | R10    | boundary | 2           |
+          | object | class    | admin_level | categories                      |
+          | R10    | boundary | 2           | osm.boundary.administrative     |
 
         When updating osm data
           """
           r10 Ttype=multipolygon,boundary=administrative,name=Border,admin_level=4 Mw10@
           """
         Then place contains exactly
-          | object | class    | type           | admin_level |
-          | R10    | boundary | administrative | 4           |
+          | object | class    | type           | admin_level | categories                    |
+          | R10    | boundary | administrative | 4           | osm.boundary.administrative   |
         When indexing
         Then placex contains exactly
-          | object | class    | type           | admin_level |
-          | R10    | boundary | administrative | 4           |
+          | object | class    | type           | admin_level | categories                    |
+          | R10    | boundary | administrative | 4           | osm.boundary.administrative   |
 
 
     Scenario: Change boundary to administrative
@@ -443,20 +434,20 @@ Feature: Tag evaluation
           r10 Ttype=multipolygon,boundary=informal,name=Border,admin_level=4 Mw10@
           """
         Then place contains exactly
-          | object | class    | type     | admin_level |
-          | R10    | boundary | informal | 4           |
+          | object | class    | type     | admin_level | categories              |
+          | R10    | boundary | informal | 4           | osm.boundary.informal   |
 
         When updating osm data
           """
           r10 Ttype=multipolygon,boundary=administrative,name=Border,admin_level=4 Mw10@
           """
         Then place contains exactly
-          | object | class    | type           | admin_level |
-          | R10    | boundary | administrative | 4           |
+          | object | class    | type           | admin_level | categories                    |
+          | R10    | boundary | administrative | 4           | osm.boundary.administrative   |
         When indexing
         Then placex contains exactly
-          | object | class    | type           | admin_level |
-          | R10    | boundary | administrative | 4           |
+          | object | class    | type           | admin_level | categories                    |
+          | R10    | boundary | administrative | 4           | osm.boundary.administrative   |
 
 
     Scenario: Change boundary away from administrative
@@ -473,20 +464,20 @@ Feature: Tag evaluation
           r10 Ttype=multipolygon,boundary=administrative,name=Border,admin_level=4 Mw10@
           """
         Then place contains exactly
-          | object | class    | type           | admin_level |
-          | R10    | boundary | administrative | 4           |
+          | object | class    | type           | admin_level | categories                    |
+          | R10    | boundary | administrative | 4           | osm.boundary.administrative   |
 
         When updating osm data
           """
           r10 Ttype=multipolygon,boundary=informal,name=Border,admin_level=4 Mw10@
           """
         Then place contains exactly
-          | object | class    | type     | admin_level |
-          | R10    | boundary | informal | 4           |
+          | object | class    | type     | admin_level | categories              |
+          | R10    | boundary | informal | 4           | osm.boundary.informal   |
         When indexing
         Then placex contains exactly
-          | object | class    | type     | admin_level |
-          | R10    | boundary | informal | 4           |
+          | object | class    | type     | admin_level | categories              |
+          | R10    | boundary | informal | 4           | osm.boundary.informal   |
 
 
     Scenario: Main tag and geometry is changed
@@ -499,8 +490,8 @@ Feature: Tag evaluation
           w5 Tbuilding=house,name=Foo Nn1,n2,n3,n4,n1
           """
         Then place contains exactly
-          | object | class    | type  |
-          | W5     | building | house |
+          | object | class    | type  | categories           |
+          | W5     | building | house | osm.building.house   |
 
         When updating osm data
           """
@@ -508,5 +499,5 @@ Feature: Tag evaluation
           w5 Tbuilding=terrace,name=Bar Nn1,n2,n3,n4,n1
           """
         Then place contains exactly
-          | object | class    | type    |
-          | W5     | building | terrace |
+          | object | class    | type    | categories             |
+          | W5     | building | terrace | osm.building.terrace   |

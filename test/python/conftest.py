@@ -83,6 +83,7 @@ def temp_db_with_extensions(temp_db):
     with psycopg.connect(dbname=temp_db) as conn:
         with conn.cursor() as cur:
             cur.execute('CREATE EXTENSION postgis')
+            cur.execute('CREATE EXTENSION ltree')
 
     return temp_db
 
@@ -201,6 +202,7 @@ def place_table(temp_db_with_extensions, table_factory):
                      admin_level smallint,
                      address HSTORE,
                      extratags HSTORE,
+                     categories ltree[],
                      geometry GEOMETRY(Geometry,4326) NOT NULL""")
 
 
@@ -212,10 +214,12 @@ def place_row(place_table, temp_db_cursor):
     idseq = itertools.count(1001)
 
     def _insert(osm_type='N', osm_id=None, cls='amenity', typ='cafe', names=None,
-                admin_level=None, address=None, extratags=None, geom='POINT(0 0)'):
+                admin_level=None, address=None, extratags=None, categories=None,
+                geom='POINT(0 0)'):
         args = {'osm_type': osm_type, 'osm_id': osm_id or next(idseq),
-                'class': cls, 'type': typ, 'name': names, 'admin_level': admin_level,
-                'address': address, 'extratags': extratags,
+                'class': cls, 'type': typ, 'name': names,
+                'admin_level': admin_level, 'address': address,
+                'extratags': extratags, 'categories': categories,
                 'geometry': _with_srid(geom)}
         temp_db_cursor.insert_row('place', **args)
 
@@ -298,16 +302,16 @@ def placex_row(placex_table, temp_db_cursor):
     idseq = itertools.count(1001)
 
     def _add(osm_type='N', osm_id=None, cls='amenity', typ='cafe', names=None,
-             admin_level=None, address=None, extratags=None, geom='POINT(10 4)',
-             country=None, housenumber=None, rank_search=30, rank_address=30,
-             centroid='POINT(10 4)', indexed_status=0, indexed_date=None,
-             importance=0.00001):
+             admin_level=None, address=None, extratags=None, categories=None,
+             geom='POINT(10 4)', country=None, housenumber=None, rank_search=30,
+             rank_address=30, centroid='POINT(10 4)', indexed_status=0,
+             indexed_date=None, importance=0.00001):
         args = {'place_id': pysql.SQL("nextval('seq_place')"),
                 'osm_type': osm_type, 'osm_id': osm_id or next(idseq),
                 'class': cls, 'type': typ, 'name': names, 'admin_level': admin_level,
                 'address': address, 'housenumber': housenumber,
                 'rank_search': rank_search, 'rank_address': rank_address,
-                'extratags': extratags, 'importance': importance,
+                'extratags': extratags, 'categories': categories, 'importance': importance,
                 'centroid': _with_srid(centroid), 'geometry': _with_srid(geom),
                 'country_code': country,
                 'indexed_status': indexed_status, 'indexed_date': indexed_date,

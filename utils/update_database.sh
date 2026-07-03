@@ -58,7 +58,7 @@ echo "Reindexing"
 nominatim index
 echo "===================================================================="
 
-if [ -n "$var" ]; then
+if [ -n "$PHOTON_UPDATE" ]; then
   echo "===================================================================="
   echo "Triggering asynchronous Photon update"
   ${PHOTON_UPDATE}

@@ -32,6 +32,7 @@ UPDATECOUNTRYPOSTFIX="-updates"
 # parameters):
 #
 #PHOTON_UPDATE="curl http://localhost:2322/nominatim-update"
+PHOTON_UPDATE="" # Just set to an empty string, if not wanted.
 
 # ******************************************************************************
 UPDATEDIR="update"

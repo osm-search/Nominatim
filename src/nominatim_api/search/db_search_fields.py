@@ -126,7 +126,7 @@ class WeightedCategories:
         return default
 
     def sql_restrict(self, table: SaFromClause) -> SaExpression:
-        """ Return an SQLAlcheny expression that restricts the
+        """ Return an SQLAlchemy expression that restricts the
             class and type columns of the given table to the values
             in the list.
             Must not be used with an empty list.
@@ -260,7 +260,7 @@ class SearchData:
             self.countries = WeightedStrings(list(countries.keys()), list(countries.values()))
 
     def set_qualifiers(self, tokens: List[Token]) -> None:
-        """ Set the qulaifier field from the given tokens.
+        """ Set the qualifier field from the given tokens.
         """
         if tokens:
             categories: Dict[Tuple[str, str], float] = {}

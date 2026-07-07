@@ -63,7 +63,7 @@ def _sqlite_is_line_like(element: Geometry_IsLineLike,
 class Geometry_IsAreaLike(sa.sql.expression.FunctionElement[Any]):
     """ Check if the geometry is a polygon or multipolygon.
     """
-    name = 'Geometry_IsLineLike'
+    name = 'Geometry_IsAreaLike'
     inherit_cache = True
 
 

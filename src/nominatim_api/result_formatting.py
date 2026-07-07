@@ -104,7 +104,7 @@ def load_format_dispatcher(api_name: str, project_dir: Optional[Path]) -> Format
     if project_dir is not None:
         priv_module = project_dir / 'api' / api_name / 'format.py'
         if priv_module.is_file():
-            spec = importlib.util.spec_from_file_location(f'api.{api_name},format',
+            spec = importlib.util.spec_from_file_location(f'api.{api_name}.format',
                                                           str(priv_module))
             if spec:
                 module = importlib.util.module_from_spec(spec)

@@ -221,6 +221,35 @@ def test_build_response_jsonp_bad_format(param):
         glue.build_response(a, '{}')
 
 
+# get_layers()
+
+def test_get_layers_no_param():
+    assert glue.get_layers(FakeAdaptor()) is None
+
+
+@pytest.mark.parametrize('param,expected', [
+    ('address', napi.DataLayer.ADDRESS),
+    ('POI', napi.DataLayer.POI),
+    ('address,poi', napi.DataLayer.ADDRESS | napi.DataLayer.POI),
+    ('  address , poi ', napi.DataLayer.ADDRESS | napi.DataLayer.POI),
+    ('address,address', napi.DataLayer.ADDRESS),
+    ('address,', napi.DataLayer.ADDRESS)])
+def test_get_layers_success(param, expected):
+    assert glue.get_layers(FakeAdaptor(params={'layer': param})) == expected
+
+
+@pytest.mark.parametrize('param', ['', ' ', ',', ' , '])
+def test_get_layers_empty_disables_filter(param):
+    assert glue.get_layers(FakeAdaptor(params={'layer': param})) is None
+
+
+@pytest.mark.parametrize('param', ['bogus', 'address,bogus', 'name', '_name_',
+                                   'address poi', '<script>'])
+def test_get_layers_invalid_value(param):
+    with pytest.raises(FakeError, match='^400 -- .*must be a comma-separated list'):
+        glue.get_layers(FakeAdaptor(params={'layer': param}))
+
+
 # status_endpoint()
 
 class TestStatusEndpoint:

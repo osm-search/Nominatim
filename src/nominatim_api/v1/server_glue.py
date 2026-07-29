@@ -8,7 +8,7 @@
 Generic part of the server implementation of the v1 API.
 Combine with the scaffolding provided for the various Python ASGI frameworks.
 """
-from typing import Optional, Any, Type, Dict, cast, Sequence, Tuple
+from typing import Optional, Any, Type, Dict, Sequence, Tuple
 from functools import reduce
 import dataclasses
 from urllib.parse import urlencode
@@ -69,14 +69,30 @@ def setup_debugging(adaptor: ASGIAdaptor) -> bool:
 
 def get_layers(adaptor: ASGIAdaptor) -> Optional[DataLayer]:
     """ Return a parsed version of the layer parameter.
+
+        Returns None when the parameter is not given or contains no layer
+        names at all. Layer filtering is disabled in that case. Surrounding
+        whitespace is ignored. An unknown layer name results in a user error.
     """
     param = adaptor.get('layer', None)
     if param is None:
         return None
 
-    return cast(DataLayer,
-                reduce(DataLayer.__or__,
-                       (getattr(DataLayer, s.upper()) for s in param.split(','))))
+    layers = []
+    for name in param.split(','):
+        name = name.strip()
+        if not name:
+            continue
+        try:
+            layers.append(DataLayer[name.upper()])
+        except KeyError:
+            adaptor.raise_error("Parameter 'layer' must be a comma-separated list of: "
+                                + ', '.join(n.lower() for n in DataLayer.__members__))
+
+    if not layers:
+        return None
+
+    return reduce(DataLayer.__or__, layers)
 
 
 def parse_format(adaptor: ASGIAdaptor, result_type: Type[Any], default: str) -> str:

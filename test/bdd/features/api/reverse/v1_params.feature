@@ -182,3 +182,25 @@ Feature: v1/reverse Parameter Tests
           | format | outformat |
           | json   | json |
           | jsonv2 | json |
+
+    Scenario Outline: Unknown layers are rejected
+        When sending v1/reverse
+          | lat         | lon           | layer   |
+          | 47.14122383 | 9.52169581334 | <layer> |
+        Then a HTTP 400 is returned
+
+        Examples:
+          | layer |
+          | bogus |
+          | address,bogus |
+
+    Scenario Outline: An empty layer parameter disables layer filtering
+        When sending v1/reverse
+          | lat         | lon           | layer   |
+          | 47.14122383 | 9.52169581334 | <layer> |
+        Then a HTTP 200 is returned
+
+        Examples:
+          | layer |
+          |       |
+          | ,     |

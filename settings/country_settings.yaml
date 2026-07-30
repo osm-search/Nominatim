@@ -1118,7 +1118,7 @@ md:
 # Montenegro (Crna Gora / Црна Гора)
 me:
     partition: 180
-    languages: srp, sr, hr, bs, sq
+    languages: sr, hr, bs, sq
     names: !include country-names/me.yaml
     postcode:
       pattern: "ddddd"

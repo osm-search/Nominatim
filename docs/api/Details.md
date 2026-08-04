@@ -123,6 +123,16 @@ a simple comma-separated list of language codes or have the same format
 as the ["Accept-Language" HTTP header](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Accept-Language).
 
 
+### Other
+
+| Parameter | Value  | Default |
+|-----------| -----  | ------- |
+| debug     | 0 or 1 | 0       |
+
+Output special developer debug information instead of the normal result.
+See [Debug output](Output.md#debug-output) for details.
+
+
 ## Examples
 
 ##### JSON

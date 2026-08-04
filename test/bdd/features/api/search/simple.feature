@@ -169,6 +169,7 @@ Feature: Simple Tests
           | .*&countrycodes=pl%2Cbo&.* |
 
     Scenario Outline: Search debug output does not return errors
+        Given debug output is enabled
         When sending v1/search
           | q       | debug |
           | <query> | 1     |
@@ -183,3 +184,9 @@ Feature: Simple Tests
           | Landstr 27 Steinort, Triesenberg, 9495 |
           | 9497 |
           | restaurant in triesen |
+
+    Scenario: Search debug output is rejected when not enabled
+        When sending v1/search with format json
+          | q             | debug |
+          | Liechtenstein | 1     |
+        Then a HTTP 400 is returned

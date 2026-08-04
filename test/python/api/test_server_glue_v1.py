@@ -17,6 +17,16 @@ from fake_adaptor import FakeAdaptor, FakeError, FakeResponse
 import nominatim_api.v1.server_glue as glue
 import nominatim_api as napi
 import nominatim_api.logging as loglib
+from nominatim_api.config import Configuration
+
+
+def debug_config(enabled):
+    """ Return a configuration where the HTML debug output is explicitly
+        enabled or disabled.
+    """
+    return Configuration(None,
+                         environ={'NOMINATIM_SERVE_DEBUG_OUTPUT':
+                                  'yes' if enabled else 'no'})
 
 
 # ASGIAdaptor.get_int/bool()
@@ -106,6 +116,42 @@ def test_accepted_languages_header_over_default(monkeypatch):
     assert glue.get_accepted_languages(a) == 'de'
 
 
+# NOMINATIM_SERVE_DEBUG_OUTPUT enables debug=1
+
+@pytest.mark.parametrize('environ', [{}, {'NOMINATIM_SERVE_DEBUG_OUTPUT': 'no'}])
+def test_setup_debugging_rejected_when_disabled(environ):
+    a = FakeAdaptor(params={'debug': '1'},
+                    config=Configuration(None, environ=environ))
+
+    with pytest.raises(FakeError, match='^400 -- .*not enabled'):
+        glue.setup_debugging(a)
+
+
+def test_setup_debugging_enabled():
+    a = FakeAdaptor(params={'debug': '1'}, config=debug_config(True))
+
+    assert glue.setup_debugging(a)
+    assert a.content_type == 'text/html; charset=utf-8'
+
+
+@pytest.mark.parametrize('params', [{}, {'debug': '0'}])
+def test_setup_debugging_not_requested(params):
+    a = FakeAdaptor(params=params, config=debug_config(True))
+
+    assert not glue.setup_debugging(a)
+    assert a.content_type == 'text/plain; charset=utf-8'
+
+
+@pytest.mark.parametrize('content_type', ['application/json; charset=utf-8',
+                                          'text/xml; charset=utf-8'])
+def test_setup_debugging_rejection_keeps_output_format(content_type):
+    a = FakeAdaptor(params={'debug': '1'}, config=debug_config(False))
+    a.content_type = content_type
+
+    with pytest.raises(FakeError, match='(?s)^400 -- .*not enabled'):
+        glue.setup_debugging(a)
+
+
 # ASGIAdaptor.raise_error()
 
 class TestAdaptorRaiseError:
@@ -150,7 +196,7 @@ class TestAdaptorRaiseError:
 
 
 def test_raise_error_during_debug():
-    a = FakeAdaptor(params={'debug': '1'})
+    a = FakeAdaptor(params={'debug': '1'}, config=debug_config(True))
     glue.setup_debugging(a)
     loglib.log().section('Ongoing')
 
@@ -347,7 +393,8 @@ class TestDetailsEndpoint:
 
     @pytest.mark.asyncio
     async def test_details_with_debugging(self):
-        a = FakeAdaptor(params={'osmtype': 'N', 'osmid': '45', 'debug': '1'})
+        a = FakeAdaptor(params={'osmtype': 'N', 'osmid': '45', 'debug': '1'},
+                        config=debug_config(True))
 
         resp = await glue.details_endpoint(napi.NominatimAPIAsync(), a)
         content = ET.fromstring(resp.output)

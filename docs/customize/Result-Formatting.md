@@ -120,6 +120,10 @@ special format that enables debug output via the command line (the same
 as the `debug=1` parameter enables for the server API). To not clash
 with this built-in function, you shouldn't name your own format 'debug'.
 
+Note that the `debug` format of the CLI is always available, while the
+`debug=1` parameter of the server API needs to be enabled explicitly with
+[NOMINATIM_SERVE_DEBUG_OUTPUT](Settings.md#nominatim_serve_debug_output).
+
 ### Content type of new formats
 
 All responses will be returned with the content type application/json by

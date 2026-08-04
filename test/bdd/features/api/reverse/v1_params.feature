@@ -100,6 +100,7 @@ Feature: v1/reverse Parameter Tests
           | foo; evil |
 
     Scenario Outline: Reverse debug mode produces valid HTML
+        Given debug output is enabled
         When sending v1/reverse
           | lat   | lon   | debug |
           | <lat> | <lon> | 1 |

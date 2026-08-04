@@ -85,6 +85,7 @@ Feature: Object details
 
 
     Scenario Outline: Details debug output returns no errors
+        Given debug output is enabled
         When sending v1/details
           | osmtype | osmid | debug |
           | <type>  | <id>  | 1     |

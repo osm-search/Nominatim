@@ -103,6 +103,12 @@ def setup_connection_unknown_database(test_config_env):
     return test_config_env
 
 
+@given('debug output is enabled', target_fixture='test_config_env')
+def setup_debug_output_enabled(test_config_env):
+    test_config_env['NOMINATIM_SERVE_DEBUG_OUTPUT'] = 'yes'
+    return test_config_env
+
+
 @when(step_parse(r'sending v1/(?P<endpoint>\S+)(?: with format (?P<fmt>\S+))?'),
       target_fixture='api_response')
 def send_api_status(test_config_env, api_http_request_headers, pytestconfig,

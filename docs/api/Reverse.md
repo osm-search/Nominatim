@@ -211,9 +211,8 @@ address to identify your requests. See Nominatim's
 |-----------| -----  | ------- |
 | debug     | 0 or 1 | 0       |
 
-Output assorted developer debug information. Data on internals of Nominatim's
-"search loop" logic, and SQL queries. The output is HTML format.
-This overrides the specified machine readable format.
+Output special developer debug information instead of the normal result.
+See [Debug output](Output.md#debug-output) for details.
 
 
 ## Examples

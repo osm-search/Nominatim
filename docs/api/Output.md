@@ -235,6 +235,22 @@ Additional information requested with `extratags=1`, `namedetails=1`, and
 `namedetails`, and `entrances` respectively.
 
 
+## Debug output
+
+| Parameter | Value  | Default |
+|-----------| -----  | ------- |
+| debug     | 0 or 1 | 0       |
+
+Adding `debug=1` to a query to the [/search](Search.md), [/reverse](Reverse.md),
+[/lookup](Lookup.md) or [/details](Details.md) endpoint switches the output to
+an HTML page with assorted developer debug information: how Nominatim parsed,
+understood and executed its database searches.
+
+Debug output is disabled by default. It is only available when the server
+administrator has enabled
+[`NOMINATIM_SERVE_DEBUG_OUTPUT`](../customize/Settings.md#nominatim_serve_debug_output).
+
+
 ## Notes on field values
 
 ### place_id is not a persistent id

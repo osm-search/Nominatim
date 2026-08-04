@@ -60,6 +60,9 @@ def setup_debugging(adaptor: ASGIAdaptor) -> bool:
         Return True when debugging was requested.
     """
     if adaptor.get_bool('debug', False):
+        if not adaptor.config().get_bool('SERVE_DEBUG_OUTPUT'):
+            adaptor.raise_error('Debug output is not enabled on this server.')
+
         loglib.set_log_output('html')
         adaptor.content_type = ct.CONTENT_HTML
         return True

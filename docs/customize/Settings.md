@@ -466,11 +466,26 @@ Return "Unable to geocode" instead.
 | **Description:**   | Enable serving via URLs with a .php suffix |
 | **Format:**        | boolean |
 | **Default:**       | yes |
-| **Comment:**       | Python frontend only |
 
 When enabled, then endpoints are reachable as `/<name>` as well as `/<name>.php`.
 This can be useful when you want to be backwards-compatible with previous
 versions of Nominatim.
+
+
+#### NOMINATIM_SERVE_DEBUG_OUTPUT
+
+| Summary            |                                                     |
+| --------------     | --------------------------------------------------- |
+| **Description:**   | Enable the HTML debug output |
+| **Format:**        | boolean |
+| **Default:**       | no |
+
+When enabled, requests to `/search`, `/reverse`, `/lookup` and `/details` with
+the parameter `debug=1` return an HTML page detailing how the query was
+parsed, understood and executed.
+
+The `debug` format of the command-line tool (`nominatim search --format debug`),
+which has a similar output (text instead of HTML), is always available.
 
 
 #### NOMINATIM_API_POOL_SIZE
@@ -480,7 +495,6 @@ versions of Nominatim.
 | **Description:**   | Number of parallel database connections per worker |
 | **Format:**        | number |
 | **Default:**       | 10 |
-| **Comment:**       | Python frontend only |
 
 Sets the maximum number of database connections available for a single instance
 of Nominatim. When configuring the maximum number of connections that your
@@ -496,7 +510,6 @@ For configuring the number of workers, refer to the section about
 | **Description:**   | Timeout for SQL queries to the database |
 | **Format:**        | number (seconds) |
 | **Default:**       | 10 |
-| **Comment:**       | Python frontend only |
 
 When this timeout is set, then all SQL queries that run longer than the
 specified numbers of seconds will be cancelled and the user receives a
@@ -514,7 +527,6 @@ of the library. A timeout can be manually set, if required.
 | **Description:**   | Timeout for search queries |
 | **Format:**        | number (seconds) |
 | **Default:**       | 60 |
-| **Comment:**       | Python frontend only |
 
 When this timeout is set, a search query will finish sending queries
 to the database after the timeout has passed and immediately return the

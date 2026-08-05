@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2025 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Functions for specialised logging with HTML output.
@@ -32,6 +32,13 @@ def _debug_name(res: Any) -> str:
         return cast(str, res.names.get('name', next(iter(res.names.values()))))
 
     return f"Hnr {res.housenumber}" if res.housenumber is not None else '[NONE]'
+
+
+def _esc(value: Any) -> str:
+    """ Convert a value to a string and escape it so that it is safe to
+        interpolate into HTML text or attribute content.
+    """
+    return html.escape(str(value))
 
 
 class BaseLogger:
@@ -141,32 +148,32 @@ class HTMLLogger(BaseLogger):
 
     def section(self, heading: str) -> None:
         self._timestamp()
-        self._write(f"<h2>{heading}</h2>")
+        self._write(f"<h2>{_esc(heading)}</h2>")
 
     def comment(self, text: str) -> None:
         self._timestamp()
-        self._write(f"<p>{text}</p>")
+        self._write(f"<p>{_esc(text)}</p>")
 
     def var_dump(self, heading: str, var: Any) -> None:
         self._timestamp()
         if callable(var):
             var = var()
 
-        self._write(f'<h5>{heading}</h5>{self._python_var(var)}')
+        self._write(f'<h5>{_esc(heading)}</h5>{self._python_var(var)}')
 
     def table_dump(self, heading: str, rows: Iterator[Optional[List[Any]]]) -> None:
         self._timestamp()
         head = next(rows)
         assert head
-        self._write(f'<table><thead><tr><th colspan="{len(head)}">{heading}</th></tr><tr>')
+        self._write(f'<table><thead><tr><th colspan="{len(head)}">{_esc(heading)}</th></tr><tr>')
         for cell in head:
-            self._write(f'<th>{cell}</th>')
+            self._write(f'<th>{_esc(cell)}</th>')
         self._write('</tr></thead><tbody>')
         for row in rows:
             if row is not None:
                 self._write('<tr>')
                 for cell in row:
-                    self._write(f'<td>{cell}</td>')
+                    self._write(f'<td>{_esc(cell)}</td>')
                 self._write('</tr>')
         self._write('</tbody></table>')
 
@@ -191,14 +198,14 @@ class HTMLLogger(BaseLogger):
 
             return f'<a href="https://www.openstreetmap.org/{fullt}/{i}">{t}{i}</a>'
 
-        self._write(f'<h5>{heading}</h5><p><dl>')
+        self._write(f'<h5>{_esc(heading)}</h5><p><dl>')
         total = 0
         for rank, res in results:
             self._write(f'<dt>[{rank:.3f}]</dt>  <dd>{res.source_table.name}(')
-            self._write(f"{_debug_name(res)}, type=({','.join(res.category)}), ")
+            self._write(f"{_esc(_debug_name(res))}, type=({_esc(','.join(res.category))}), ")
             self._write(f"rank={res.rank_address}, ")
             self._write(f"osm={format_osm(res.osm_object)}, ")
-            self._write(f'cc={res.country_code}, ')
+            self._write(f'cc={_esc(res.country_code)}, ')
             self._write(f'importance={res.importance or float("nan"):.5f})</dd>')
             total += 1
         self._write(f'</dl><b>TOTAL:</b> {total}</p>')

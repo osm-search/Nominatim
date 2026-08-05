@@ -417,6 +417,8 @@ class QueryStruct:
                 max_last = min(first + 20, endpos)
                 for last, last_node in enumerate(self.nodes[first + 2:max_last], first + 2):
                     word = ' '.join((word, last_node.term_lookup))
+                    if len(word) > 255:
+                        break
                     words[word].append(TokenRange(first, last))
                     if last_node.btype == BREAK_PHRASE:
                         break

@@ -266,7 +266,7 @@ class ICUQueryAnalyzer(AbstractQueryAnalyzer):
                     continue
                 if trans := self.transliterator.transliterate(word):
                     for term, term_word in self.split_transliteration(trans, word):
-                        if term:
+                        if term and len(term) < 256:
                             query.add_node(qmod.BREAK_TOKEN, phrase.ptype, term, term_word)
                     query.nodes[-1].btype = breakchar
 

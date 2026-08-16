@@ -315,6 +315,32 @@ Feature: Creation of search terms
          | object |
          | N1     |
 
+    Scenario: Named POIs on unnamed streets can be found by address
+        Given the grid
+         | 100 |    |   |   |    | 101 |
+         |     |    | 1 |   |    |     |
+         | 103 | 10 |   |   | 11 | 102 |
+        And the places
+         | osm | class | type  | name       | housenr |
+         | N1  | place | house | Blue house | 23      |
+        And the places
+         | osm | class   | type        | name+name    | geometry |
+         | R1  | place   | city        | Strange Town | (100,101,102,103,100) |
+        And the places
+         | osm | class   | type        | geometry |
+         | W1  | highway | residential | 10,1,11  |
+        And the ways
+         | id | nodes   |
+         | 1  | 10,1,11 |
+        When importing
+        Then placex contains
+         | object | parent_place_id |
+         | N1     | W1              |
+        When geocoding "Blue house, Strange Town"
+        Then the result set contains
+         | object |
+         | N1     |
+
     Scenario: Some addr: tags are added to address
         Given the grid
          |    | 2 | 3 |    |

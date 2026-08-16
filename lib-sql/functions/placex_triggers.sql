@@ -405,6 +405,7 @@ DECLARE
 
   addr_item RECORD;
   addr_place RECORD;
+  parent_place RECORD;
   parent_address_place_ids BIGINT[];
 BEGIN
   nameaddress_vector := '{}'::INTEGER[];
@@ -413,6 +414,24 @@ BEGIN
     INTO parent_name_vector, parent_address_vector
     FROM search_name s
     WHERE s.place_id = parent_place_id;
+
+  IF parent_address_vector is null
+     AND (token_get_name_search_tokens(token_info) is not null
+          OR token_get_housenumber_search_tokens(token_info) is not null)
+  THEN
+    parent_name_vector := '{}'::INTEGER[];
+    parent_address_vector := '{}'::INTEGER[];
+
+    FOR parent_place IN
+      SELECT s.name_vector
+        FROM place_addressline pa
+        JOIN search_name s ON s.place_id = pa.address_place_id
+       WHERE pa.place_id = parent_place_id
+    LOOP
+      parent_address_vector := array_merge(parent_address_vector,
+                                           parent_place.name_vector);
+    END LOOP;
+  END IF;
 
   FOR addr_item IN
     SELECT ranks.*, key,

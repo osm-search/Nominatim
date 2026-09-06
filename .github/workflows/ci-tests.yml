@@ -7,11 +7,11 @@ jobs:
         runs-on: ubuntu-latest
 
         steps:
-            - uses: actions/checkout@v6
+            - uses: actions/checkout@v7
               with:
                 submodules: true
 
-            - uses: actions/cache@v5
+            - uses: actions/cache@v6
               with:
                   path: |
                      data/country_osm_grid.sql.gz
@@ -37,16 +37,16 @@ jobs:
         needs: create-archive
         strategy:
             matrix:
-                flavour: ["ubuntu-22", "ubuntu-24"]
+                flavour: ["ubuntu-24", "ubuntu-26"]
                 include:
-                    - flavour: ubuntu-22
-                      ubuntu: 22
+                    - flavour: ubuntu-24
+                      ubuntu: 24
                       postgresql: 13
                       lua: '5.1'
                       dependencies: pip
                       python: '3.9'
-                    - flavour: ubuntu-24
-                      ubuntu: 24
+                    - flavour: ubuntu-26
+                      ubuntu: 26
                       postgresql: 18
                       lua: '5.3'
                       dependencies: apt
@@ -70,39 +70,11 @@ jobs:
               with:
                   dependencies: ${{ matrix.dependencies }}
 
-            - uses: actions/cache@v5
-              with:
-                  path: |
-                     /usr/local/bin/osm2pgsql
-                  key: osm2pgsql-bin-22-1
-              if: matrix.ubuntu == '22'
-
             - name: Set up Python
-              uses: actions/setup-python@v6
+              uses: actions/setup-python@v7
               with:
                   python-version: ${{ matrix.python }}
               if: matrix.python != 'builtin'
-
-            - name: Compile osm2pgsql
-              run: |
-                  if [ ! -f /usr/local/bin/osm2pgsql ]; then
-                      sudo apt-get install -y -qq libboost-system-dev libboost-filesystem-dev libexpat1-dev zlib1g-dev libbz2-dev libpq-dev libproj-dev libicu-dev liblua${LUA_VERSION}-dev lua-dkjson nlohmann-json3-dev 
-                      mkdir osm2pgsql-build
-                      cd osm2pgsql-build
-                      git clone https://github.com/osm2pgsql-dev/osm2pgsql
-                      mkdir build
-                      cd build
-                      cmake ../osm2pgsql
-                      make
-                      sudo make install
-                      cd ../..
-                      rm -rf osm2pgsql-build
-                  else
-                      sudo apt-get install -y -qq libexpat1 liblua${LUA_VERSION}
-                  fi
-              if: matrix.ubuntu == '22'
-              env:
-                  LUA_VERSION: ${{ matrix.lua }}
 
             - name: Install test prerequisites (apt)
               run: sudo apt-get install -y -qq python3-pytest python3-pytest-asyncio uvicorn python3-falcon python3-aiosqlite python3-pyosmium
@@ -165,11 +137,11 @@ jobs:
                   postgresql-version: 17
 
             - name: Set up Python
-              uses: actions/setup-python@v6
+              uses: actions/setup-python@v7
               with:
                   python-version: ${{ matrix.python }}
 
-            - uses: actions/cache@v5
+            - uses: actions/cache@v6
               with:
                   path: |
                      C:\osm2pgsql
@@ -370,11 +342,11 @@ jobs:
                   postgresql-version: 17
 
             - name: Set up Python
-              uses: actions/setup-python@v6
+              uses: actions/setup-python@v7
               with:
                   python-version: ${{ matrix.python }}
 
-            - uses: actions/cache@v5
+            - uses: actions/cache@v6
               with:
                   path: |
                      C:\osm2pgsql
@@ -464,7 +436,7 @@ jobs:
               working-directory: Nominatim/data-env-reverse
 
     install-no-superuser:
-      runs-on: ubuntu-24.04
+      runs-on: ubuntu-26.04
       needs: create-archive
 
       steps:
@@ -504,7 +476,7 @@ jobs:
             run: ./venv/bin/nominatim admin --check-database
 
     migrate:
-      runs-on: ubuntu-24.04
+      runs-on: ubuntu-26.04
       needs: create-archive
 
       steps:

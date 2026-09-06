@@ -7,11 +7,11 @@ jobs:
         runs-on: ubuntu-latest
 
         steps:
-            - uses: actions/checkout@v6
+            - uses: actions/checkout@v7
               with:
                 submodules: true
 
-            - uses: actions/cache@v5
+            - uses: actions/cache@v6
               with:
                   path: |
                      data/country_osm_grid.sql.gz
@@ -70,7 +70,7 @@ jobs:
               with:
                   dependencies: ${{ matrix.dependencies }}
 
-            - uses: actions/cache@v5
+            - uses: actions/cache@v6
               with:
                   path: |
                      /usr/local/bin/osm2pgsql
@@ -78,7 +78,7 @@ jobs:
               if: matrix.ubuntu == '22'
 
             - name: Set up Python
-              uses: actions/setup-python@v6
+              uses: actions/setup-python@v7
               with:
                   python-version: ${{ matrix.python }}
               if: matrix.python != 'builtin'
@@ -165,11 +165,11 @@ jobs:
                   postgresql-version: 17
 
             - name: Set up Python
-              uses: actions/setup-python@v6
+              uses: actions/setup-python@v7
               with:
                   python-version: ${{ matrix.python }}
 
-            - uses: actions/cache@v5
+            - uses: actions/cache@v6
               with:
                   path: |
                      C:\osm2pgsql
@@ -370,11 +370,11 @@ jobs:
                   postgresql-version: 17
 
             - name: Set up Python
-              uses: actions/setup-python@v6
+              uses: actions/setup-python@v7
               with:
                   python-version: ${{ matrix.python }}
 
-            - uses: actions/cache@v5
+            - uses: actions/cache@v6
               with:
                   path: |
                      C:\osm2pgsql

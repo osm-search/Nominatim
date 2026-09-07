@@ -216,7 +216,7 @@ class HTMLLogger(BaseLogger):
         sqlstr = self.format_sql(conn, statement, params)
         if CODE_HIGHLIGHT:
             sqlstr = highlight(sqlstr, PostgresLexer(),
-                               HtmlFormatter(nowrap=True, lineseparator='<br />'))
+                               HtmlFormatter(nowrap=True)).replace('\n', '<br />')
             self._write(f'<div class="highlight"><code class="lang-sql">{sqlstr}</code></div>')
         else:
             self._write(f'<code class="lang-sql">{html.escape(sqlstr)}</code>')

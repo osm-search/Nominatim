@@ -129,8 +129,8 @@ Feature: Tag evaluation
             """
         Then place contains exactly
             | object | class   | type    | name!dict   | extratags!dict          | categories!set                               |
-            | N7001  | highway | primary | 'name': '1' | -                       | 'osm.highway.primary'                        |
-            | N7002  | bridge  | yes     | 'name': '1' | 'bridge:name': '1'      | 'osm.bridge.yes', 'osm.highway.primary'      |
+            | N7001  | highway | primary | 'name': '1' | 'bridge': 'yes'                | 'osm.highway.primary'                        |
+            | N7002  | bridge  | yes     | 'name': '1' | 'highway': 'primary', 'bridge:name': '1' | 'osm.bridge.yes', 'osm.highway.primary'      |
 
 
     Scenario: Categories are populated and merged for main tags

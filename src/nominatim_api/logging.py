@@ -213,10 +213,10 @@ class HTMLLogger(BaseLogger):
     def sql(self, conn: AsyncConnection, statement: 'sa.Executable',
             params: Union[Mapping[str, Any], Sequence[Mapping[str, Any]], None]) -> None:
         self._timestamp()
-        sqlstr = self.format_sql(conn, statement, params)
+        sqlstr = self.format_sql(conn, statement, params) + ';'
         if CODE_HIGHLIGHT:
             sqlstr = highlight(sqlstr, PostgresLexer(),
-                               HtmlFormatter(nowrap=True, lineseparator='<br />'))
+                               HtmlFormatter(nowrap=True)).replace('\n', '<br />')
             self._write(f'<div class="highlight"><code class="lang-sql">{sqlstr}</code></div>')
         else:
             self._write(f'<code class="lang-sql">{html.escape(sqlstr)}</code>')
@@ -303,7 +303,7 @@ class TextLogger(BaseLogger):
             params: Union[Mapping[str, Any], Sequence[Mapping[str, Any]], None]) -> None:
         self._timestamp()
         sqlstr = '\n| '.join(textwrap.wrap(self.format_sql(conn, statement, params), width=78))
-        self._write(f"| {sqlstr}\n\n")
+        self._write(f"| {sqlstr};\n\n")
 
     def _python_var(self, var: Any) -> str:
         return str(var)

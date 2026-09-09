@@ -83,6 +83,26 @@ Feature: Import with custom styles by osm2pgsql
             | N3     | tourism | 'amenity': 'yes' | osm.tourism.hotel                        |
             | N4     | amenity | -                | osm.tourism.hotel, osm.amenity.telephone |
 
+    Scenario: Secondary main tags are kept in extratags
+        Given the lua style file
+            """
+            local flex = require('import-extratags')
+
+            flex.set_main_tags{
+                amenity = 'always',
+                tourism = 'always'
+            }
+            """
+        When loading osm data
+            """
+            n1 Ttourism=hotel,amenity=telephone x0 y0
+            n2 Tamenity=telephone,tourism=museum x0 y0
+            """
+        Then place contains exactly
+            | object | class   | type       | extratags!dict      | categories                               |
+            | N1     | amenity | telephone  | 'tourism': 'hotel'  | osm.tourism.hotel, osm.amenity.telephone |
+            | N2     | amenity | telephone  | 'tourism': 'museum' | osm.amenity.telephone, osm.tourism.museum |
+
     Scenario: Ignore some tags
         Given the lua style file
             """

@@ -32,6 +32,7 @@ local EXTRATAGS_FILTER
 local REQUIRED_EXTRATAGS_FILTER
 local POSTCODE_FALLBACK = true
 local ENTRANCE_FUNCTION = nil
+local CUSTOM_CATEGORY_FUNCS = {}
 
 -- This file can also be directly require'd instead of running it under
 -- the themepark framework. In that case the first parameter is usually
@@ -304,6 +305,18 @@ local function get_category(k, v)
         return nil
     end
     return 'osm.' .. sanitize_label(k) .. '.' .. sanitize_label(v)
+end
+
+local function sanitize_category_path(path)
+    if path == nil or path == '' then return nil end
+    local result = {}
+    for label in path:gmatch('[^%.]+') do
+        local s = sanitize_label(label)
+        if s == nil or s == '' then return nil end
+        table.insert(result, s)
+    end
+    if #result == 0 then return nil end
+    return table.concat(result, '.')
 end
 
 
@@ -768,25 +781,44 @@ function module.process_tags(o)
             if type(ktype) == 'function' then
                 local result = ktype(o, k, v)
                 if result then
-                    -- If transform returned a clone (lock_transform, etc.),
-                    -- use its names for the final row
-                    if result ~= o then
-                        o.names = result.names
-                    end
+                    if type(result) == 'table' and result.categories ~= nil then
+                        local cat = get_category(k, v)
+                        if cat ~= nil then
+                            table.insert(categories, cat)
+                            if main_class == nil
+                               or k < main_class
+                               or (k == main_class and v < main_type) then
+                                main_class = k
+                                main_type = v
+                            end
+                        end
+                        for _, extra_cat in ipairs(result.categories) do
+                            local sanitized = sanitize_category_path(extra_cat)
+                            if sanitized ~= nil then
+                                table.insert(categories, sanitized)
+                            end
+                        end
+                    else
+                        -- If transform returned a clone (lock_transform, etc.),
+                        -- use its names for the final row
+                        if result ~= o then
+                            o.names = result.names
+                        end
 
-                    -- Collect category
-                    local cat = get_category(k, v)
-                    if cat ~= nil then
-                        table.insert(categories, cat)
+                        -- Collect category
+                        local cat = get_category(k, v)
+                        if cat ~= nil then
+                            table.insert(categories, cat)
 
-                        -- TODO: alphabetical winner selection is a temporary heuristic.
-                        -- Later we will choose by rankability (e.g. avoid boundary on non-area ways)
-                        -- or by explicit user/config priority or idk.
-                        if main_class == nil
-                           or k < main_class
-                           or (k == main_class and v < main_type) then
-                            main_class = k
-                            main_type = v
+                            -- TODO: alphabetical winner selection is a temporary heuristic.
+                            -- Later we will choose by rankability (e.g. avoid boundary on non-area ways)
+                            -- or by explicit user/config priority or idk.
+                            if main_class == nil
+                               or k < main_class
+                               or (k == main_class and v < main_type) then
+                                main_class = k
+                                main_type = v
+                            end
                         end
                     end
                 end
@@ -847,6 +879,18 @@ function module.process_tags(o)
                 postcode = o.address.postcode,
                 centroid = o.geometry:centroid()
             }
+        end
+    end
+
+for _, cat_func in ipairs(CUSTOM_CATEGORY_FUNCS) do
+        local extra_cats = cat_func(o)
+        if extra_cats ~= nil then
+            for _, cat in ipairs(extra_cats) do
+                local sanitized = sanitize_category_path(cat)
+                if sanitized ~= nil then
+                    table.insert(categories, sanitized)
+                end
+            end
         end
     end
 
@@ -1102,6 +1146,23 @@ function module.set_relation_types(data)
             module.RELATION_TYPES[k] = module.relation_as_multiline
         end
     end
+end
+
+function module.add_custom_categories(funcs)
+    if type(funcs) == 'function' then
+        table.insert(CUSTOM_CATEGORY_FUNCS, funcs)
+    elseif type(funcs) == 'table' then
+        for _, f in ipairs(funcs) do
+            if type(f) == 'function' then
+                table.insert(CUSTOM_CATEGORY_FUNCS, f)
+            end
+        end
+    end
+end
+
+function module.set_custom_categories(funcs)
+    CUSTOM_CATEGORY_FUNCS = {}
+    module.add_custom_categories(funcs)
 end
 
 function module.set_entrance_filter(data)

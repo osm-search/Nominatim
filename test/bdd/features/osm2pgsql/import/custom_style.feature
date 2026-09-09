@@ -315,3 +315,107 @@ Feature: Import with custom styles by osm2pgsql
         Then place contains exactly
             | object | class   | type        |
             | N1     | highway | residential |
+
+    Scenario: Custom categories via add_custom_categories function
+        Given the lua style file
+            """
+            local flex = require('import-full')
+
+            flex.add_custom_categories(function(place)
+                if place.object.tags.boundary == 'administrative'
+                   and place.object.tags.admin_level ~= nil then
+                    return {'osm.boundary.administrative.' .. place.object.tags.admin_level}
+                end
+            end)
+            """
+        When loading osm data
+            """
+            n1 Tboundary=administrative,admin_level=4,name=Foo x0 y0
+            n2 Thighway=residential x0 y0
+            """
+        Then place contains exactly
+            | object | class    | type           | categories!set                                           |
+            | N1     | boundary | administrative | 'osm.boundary.administrative', 'osm.boundary.administrative.4' |
+            | N2     | highway  | residential    | 'osm.highway.residential'                                |
+
+    Scenario: Multiple custom category functions via add_custom_categories
+        Given the lua style file
+            """
+            local flex = require('import-full')
+
+            flex.add_custom_categories{
+                function(place)
+                    if place.object.tags.boundary == 'administrative' then
+                        return {'my.admin.boundary'}
+                    end
+                end,
+                function(place)
+                    if place.object.tags.tourism ~= nil then
+                        return {'my.tourism.' .. place.object.tags.tourism}
+                    end
+                end
+            }
+            """
+        When loading osm data
+            """
+            n1 Tboundary=administrative,name=Foo x0 y0
+            n2 Ttourism=museum,name=Bar x0 y0
+            n3 Thighway=residential x0 y0
+            """
+        Then place contains exactly
+            | object | class    | type           | categories!set                                                          |
+            | N1     | boundary | administrative | 'osm.boundary.administrative', 'my.admin.boundary'                     |
+            | N2     | tourism  | museum         | 'osm.tourism.museum', 'my.tourism.museum'                               |
+            | N3     | highway  | residential    | 'osm.highway.residential'                                               |
+
+    Scenario: set_custom_categories replaces previous functions
+        Given the lua style file
+            """
+            local flex = require('import-full')
+
+            flex.add_custom_categories(function(place)
+                if place.object.tags.tourism ~= nil then
+                    return {'should.not.appear'}
+                end
+            end)
+
+            flex.set_custom_categories(function(place)
+                if place.object.tags.tourism ~= nil then
+                    return {'my.tourism.only'}
+                end
+            end)
+            """
+        When loading osm data
+            """
+            n1 Ttourism=museum,name=Bar x0 y0
+            """
+        Then place contains exactly
+            | object | class   | type   | categories!set                           |
+            | N1     | tourism | museum | 'osm.tourism.museum', 'my.tourism.only' |
+
+    Scenario: Transform function returning custom categories table
+        Given the lua style file
+            """
+            local flex = require('import-full')
+
+            flex.modify_main_tags{
+                boundary = {administrative = function(place, k, v)
+                    local al = place.object.tags.admin_level
+                    if al ~= nil then
+                        return {categories = {'osm.boundary.administrative.' .. al}}
+                    end
+                    return place
+                end}
+            }
+            """
+        When loading osm data
+            """
+            n1 Tboundary=administrative,admin_level=2,name=Country x0 y0
+            n2 Tboundary=administrative,admin_level=4,name=Region x0 y0
+            n3 Tboundary=administrative,name=Unknown x0 y0
+            """
+        Then place contains exactly
+            | object | class    | type           | categories!set                                                          |
+            | N1     | boundary | administrative | 'osm.boundary.administrative', 'osm.boundary.administrative.2'          |
+            | N2     | boundary | administrative | 'osm.boundary.administrative', 'osm.boundary.administrative.4'          |
+            | N3     | boundary | administrative | 'osm.boundary.administrative'                                           |

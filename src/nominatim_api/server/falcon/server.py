@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2025 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Server implementation using the falcon webserver framework.
@@ -13,6 +13,8 @@ from typing import Optional, Mapping, Any, List, cast
 from pathlib import Path
 import asyncio
 import datetime as dt
+import traceback
+import logging
 
 from falcon.asgi import App, Request, Response
 
@@ -23,6 +25,9 @@ from ... import v1 as api_impl
 from ...result_formatting import FormatDispatcher, load_format_dispatcher
 from ... import logging as loglib
 from ..asgi_adaptor import ASGIAdaptor, EndpointFunc
+
+
+LOG = logging.getLogger()
 
 
 class HTTPNominatimError(Exception):
@@ -60,6 +65,29 @@ async def timeout_error_handler(req: Request, resp: Response,
         resp.content_type = 'text/html; charset=utf-8'
     else:
         resp.text = "Query took too long to process."
+        resp.content_type = 'text/plain; charset=utf-8'
+
+
+async def generic_error_handler(req: Request, resp: Response,
+                                exception: Exception,
+                                _: Any) -> None:
+    """ Special error handler that passes message and content type as
+        per exception info.
+    """
+    resp.status = 500
+
+    details = ''.join(traceback.format_exception(exception))
+
+    LOG.error(details)
+
+    loglib.log().section('ERROR: Internal server error')
+    loglib.log().var_dump('Traceback', details)
+    logdata = loglib.get_and_disable()
+    if logdata:
+        resp.text = logdata
+        resp.content_type = 'text/html; charset=utf-8'
+    else:
+        resp.text = "Internal server error."
         resp.content_type = 'text/plain; charset=utf-8'
 
 
@@ -220,6 +248,7 @@ def get_application(project_dir: Path,
     app.add_error_handler(TimeoutError, timeout_error_handler)
     # different from TimeoutError in Python <= 3.10
     app.add_error_handler(asyncio.TimeoutError, timeout_error_handler)  # type: ignore[arg-type]
+    app.add_error_handler(Exception, generic_error_handler)
 
     return app
 

@@ -39,8 +39,38 @@ class TestWithDefaults:
 
     @pytest.mark.parametrize('suffix', ['DE', 'asbc'])
     def test_illegal_suffix(self, suffix):
-        assert self.run_sanitizer_on('fr', **{'name_' + suffix: 'Foo'}) \
+        assert self.run_sanitizer_on('fr', **{f"name_{suffix}": 'Foo'}) \
                  == [('Foo', 'name', suffix, {})]
+
+
+class TestWithAddress:
+
+    @pytest.fixture(autouse=True)
+    def setup_country(self, def_config):
+        self.config = def_config
+
+    def run_sanitizer_on(self, country, **kwargs):
+        place = PlaceInfo({'address': {k.replace('_', ':'): v for k, v in kwargs.items()},
+                           'country_code': country})
+        PlaceSanitizer([{'step': 'tag-analyzer-by-language',
+                         'type': 'address'}], self.config).process_names(place)
+
+        return sorted([(p.name, p.kind, p.suffix, p.attr) for p in place.searchable_address])
+
+    def test_no_names(self):
+        assert self.run_sanitizer_on('de') == []
+
+    def test_simple(self):
+        res = self.run_sanitizer_on('fr', street='Foo', street_de='Zoo', city_abc='M')
+
+        assert res == [('Foo', 'street', None, {}),
+                       ('M', 'city', 'abc', {'analyzer': 'abc'}),
+                       ('Zoo', 'street', 'de', {'analyzer': 'de'})]
+
+    @pytest.mark.parametrize('suffix', ['DE', 'asbc'])
+    def test_illegal_suffix(self, suffix):
+        assert self.run_sanitizer_on('fr', **{f"suburb_{suffix}": 'Foo'}) \
+                 == [('Foo', 'suburb', suffix, {})]
 
 
 class TestFilterKind:
@@ -292,3 +322,13 @@ class TestSuffixIgnore:
 
     def test_ignored_suffix_and_whitelisted(self):
         assert self.run_sanitizer_on(['de'], name_de='foo') == [('foo', 'de')]
+
+
+def test_custom_attribute(def_config):
+    place = PlaceInfo({'name': {'name:fr': 'Cité'}, 'country_code': 'de'})
+    PlaceSanitizer([{'step': 'tag-analyzer-by-language', 'attribute': 'lang'}],
+                   def_config).process_names(place)
+
+    assert len(place.searchable_names) == 1
+
+    assert place.searchable_names[0].attr == {'lang': 'fr'}

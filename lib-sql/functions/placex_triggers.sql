@@ -878,7 +878,7 @@ BEGIN
   -- address rank has been recomputed. The linking might nullify a shift in
   -- address rank.
   IF NEW.linked_place_id is not null THEN
-    NEW.token_info := null;
+    NEW.token_info := token_strip_info(NEW.token_info);
     {% if debug %}RAISE WARNING 'place already linked to %', OLD.linked_place_id;{% endif %}
     RETURN NEW;
   END IF;

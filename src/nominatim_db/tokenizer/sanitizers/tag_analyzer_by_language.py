@@ -10,6 +10,9 @@ language of the tag. The language is taken from the suffix of the name.
 If a name already has an analyzer tagged, then this is kept.
 
 Arguments:
+    type: Define which type of names should be considered for language tagging:
+          proper names of the object ('name') or names defining the address
+          ('address'). (default: 'name')
     filter-kind: Restrict the names the sanitizer should be applied to
                  the given tags. The parameter expects a list of
                  regular expressions which are matched against 'kind'.
@@ -30,6 +33,7 @@ Arguments:
     mode: Define how the variants are created and may be 'replace' or
           'append'. When set to 'append' the original name (without
           any analyzer tagged) is retained. (default: replace)
+    attribute: Attribute which will be set. (default: analyzer)
 
 """
 from typing import Callable, Dict, Optional, List
@@ -44,9 +48,11 @@ class _AnalyzerByLanguage:
     """
 
     def __init__(self, config: SanitizerConfig) -> None:
+        self.name_type = config.get('type', 'name')
         self.filter_kind = config.get_filter('filter-kind')
         self.replace = config.get('mode', 'replace') != 'append'
         self.suffix_ignore = set(config.get_string_list('suffix-ignore'))
+        self.out_attribute = str(config.get('attribute', 'analyzer'))
         whitelist = config.get('whitelist')
         self.suffix_matcher: Callable[[str], bool]
         if whitelist is None:
@@ -68,13 +74,14 @@ class _AnalyzerByLanguage:
                         self.deflangs[ccode] = clangs
 
     def __call__(self, obj: ProcessInfo) -> None:
-        if not obj.names:
+        to_process = obj.names if self.name_type == 'name' else obj.address
+        if not to_process:
             return
 
         more_names = []
 
-        for name in (n for n in obj.names
-                     if not n.has_attr('analyzer') and self.filter_kind(n.kind)):
+        for name in (n for n in to_process
+                     if not n.has_attr(self.out_attribute) and self.filter_kind(n.kind)):
             if name.suffix and name.suffix not in self.suffix_ignore:
                 langs = [name.suffix] if self.suffix_matcher(name.suffix) else None
             else:
@@ -82,13 +89,13 @@ class _AnalyzerByLanguage:
 
             if langs:
                 if self.replace:
-                    name.set_attr('analyzer', langs[0])
+                    name.set_attr(self.out_attribute, langs[0])
                 else:
-                    more_names.append(name.clone(attr={'analyzer': langs[0]}))
+                    more_names.append(name.clone(attr={self.out_attribute: langs[0]}))
 
-                more_names.extend(name.clone(attr={'analyzer': lg}) for lg in langs[1:])
+                more_names.extend(name.clone(attr={self.out_attribute: lg}) for lg in langs[1:])
 
-        obj.names.extend(more_names)
+        to_process.extend(more_names)
 
 
 def create(config: SanitizerConfig) -> SanitizerFunc:

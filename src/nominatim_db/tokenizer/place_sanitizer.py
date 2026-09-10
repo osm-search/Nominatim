@@ -95,9 +95,11 @@ def load_sanitizers(config: Configuration) -> PlaceSanitizer:
     """
     if config.config_file_exists('sanitizers.yaml'):
         rules = config.load_sub_configuration('sanitizers.yaml')
-    else:
+    elif config.TOKENIZER == 'icu':
         rules = config.load_sub_configuration('icu_tokenizer.yaml')\
                       .get('sanitizers', [])
+    else:
+        rules = []
 
     country_rules: dict[str, SanitizerRules] = {}
     country_config = config.load_sub_configuration('country_settings.yaml')

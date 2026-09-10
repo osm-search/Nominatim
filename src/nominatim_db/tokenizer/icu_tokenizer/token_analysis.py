@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Container class collecting all components required to transform an OSM name
@@ -11,11 +11,11 @@ into a Nominatim token.
 from typing import Mapping, Optional, TYPE_CHECKING
 from icu import Transliterator
 
-from .token_analysis.base import Analyzer
+from ..token_analysis.base import Analyzer
 
 if TYPE_CHECKING:
     from typing import Any  # noqa
-    from .icu_rule_loader import TokenAnalyzerRule
+    from .rule_loader import TokenAnalyzerRule
 
 
 class ICUTokenAnalysis:

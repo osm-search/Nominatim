@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2025 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Functions for creating a tokenizer or initialising the right one for an
@@ -33,13 +33,15 @@ LOG = logging.getLogger()
 def _import_tokenizer(name: str) -> TokenizerModule:
     """ Load the tokenizer.py module from project directory.
     """
-    src_file = Path(__file__).parent / (name + '_tokenizer.py')
+    src_file = Path(__file__).parent / f"{name}_tokenizer.py"
     if not src_file.is_file():
-        LOG.fatal("No tokenizer named '%s' available. "
-                  "Check the setting of NOMINATIM_TOKENIZER.", name)
-        raise UsageError('Tokenizer not found')
+        src_file = Path(__file__).parent / f"{name}_tokenizer" / '__init__.py'
+        if not src_file.is_file():
+            LOG.fatal("No tokenizer named '%s' available. "
+                      'Check the setting of NOMINATIM_TOKENIZER.', name)
+            raise UsageError('Tokenizer not found')
 
-    return importlib.import_module('nominatim_db.tokenizer.' + name + '_tokenizer')
+    return importlib.import_module(f"nominatim_db.tokenizer.{name}_tokenizer")
 
 
 def create_tokenizer(config: Configuration, init_db: bool = True,

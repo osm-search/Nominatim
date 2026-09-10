@@ -14,13 +14,13 @@ import logging
 
 from icu import Transliterator
 
-from ..config import flatten_config_list, Configuration
-from ..db.properties import set_property, get_property
-from ..db.connection import Connection
-from ..errors import UsageError
-from .icu_token_analysis import ICUTokenAnalysis
-from .token_analysis.base import AnalysisModule, Analyzer
-from ..data import country_info
+from ...config import flatten_config_list, Configuration
+from ...db.properties import set_property, get_property
+from ...db.connection import Connection
+from ...errors import UsageError
+from .token_analysis import ICUTokenAnalysis
+from ..token_analysis.base import AnalysisModule, Analyzer
+from ...data import country_info
 
 LOG = logging.getLogger()
 

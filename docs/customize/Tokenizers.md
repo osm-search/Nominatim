@@ -69,6 +69,8 @@ normalization:
 transliteration:
     - !include /etc/nominatim/icu-rules/extended-unicode-to-asccii.yaml
     - ":: Ascii ()"
+tokenizer-sanitizers:
+    - step: tag-analyzer-by-language
 token-analysis:
     - analyzer: generic
       variants:
@@ -81,8 +83,8 @@ token-analysis:
             replacements: ['ä', 'ae']
 ```
 
-The configuration file contains three sections:
-`normalization`, `transliteration` and `token-analysis`.
+The configuration file contains four sections:
+`normalization`, `transliteration`, `tokenizer-sanitizers` and `token-analysis`.
 
 #### Normalization and Transliteration
 
@@ -110,6 +112,12 @@ and may again include other files.
     The ICU rule syntax contains special characters that conflict with the
     YAML syntax. You should therefore always enclose the ICU rules in
     double-quotes.
+
+#### Tokenizer-specific Sanitizers
+
+The **tokenizer-sanitizers** rules define [Sanitizers](Sanitizers.md) which
+specificly configure the subsequent token analysis. They are executed
+after the global sanitizers and before any country-specific sanitizers.
 
 #### Token Analysis
 

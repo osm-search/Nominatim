@@ -139,6 +139,12 @@ between letters and digits.
     you must explicitly state the canonical output or Nominatim will not
     handle the variations correctly.
 
+#### `sanitizers`
+
+Defines [Sanitizers](Sanitizers.md) which should only applied to places
+within the given country. Country-specific sanitizers are executed after
+the general sanitizers have run.
+
 ### Other country-specific configuration
 
 There are some other configuration files where you can set localized settings

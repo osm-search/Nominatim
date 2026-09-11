@@ -368,7 +368,7 @@ Feature: Import with custom styles by osm2pgsql
             | N2     | tourism  | museum         | 'osm.tourism.museum', 'my.tourism.museum'                               |
             | N3     | highway  | residential    | 'osm.highway.residential'                                               |
 
-    Scenario: set_custom_categories replaces previous functions
+    Scenario: set_custom_categories replaces all category functions including the default
         Given the lua style file
             """
             local flex = require('import-full')
@@ -390,8 +390,8 @@ Feature: Import with custom styles by osm2pgsql
             n1 Ttourism=museum,name=Bar x0 y0
             """
         Then place contains exactly
-            | object | class   | type   | categories!set                           |
-            | N1     | tourism | museum | 'osm.tourism.museum', 'my.tourism.only' |
+            | object | class   | type   | categories!set     |
+            | N1     | tourism | museum | 'my.tourism.only'  |
 
     Scenario: Transform function returning custom categories table
         Given the lua style file

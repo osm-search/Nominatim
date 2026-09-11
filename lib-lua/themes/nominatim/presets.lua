@@ -388,4 +388,29 @@ module.ENTRANCE_TABLE = {}
 module.ENTRANCE_TABLE.default = {main_tags = {'entrance', 'routing:entrance'},
                                  extra_exclude = module.IGNORE_KEYS.metatags}
 
+module.CATEGORY = {}
+
+module.CATEGORY.main_tags = function(place)
+    if place.main_categories == nil then return nil end
+    local cats = {}
+    for _, mc in ipairs(place.main_categories) do
+        table.insert(cats, mc.cat)
+    end
+    return cats
+end
+
+local ADDRESS_KEYS = {boundary = 1, place = 1, waterway = 1,
+                      landuse = 1, leisure = 1, natural = 1, highway = 1}
+
+module.CATEGORY.minimal = function(place)
+    if place.main_categories == nil then return nil end
+    local cats = {}
+    for _, mc in ipairs(place.main_categories) do
+        if mc.key == place.main_key or ADDRESS_KEYS[mc.key] ~= nil then
+            table.insert(cats, mc.cat)
+        end
+    end
+    return cats
+end
+
 return module

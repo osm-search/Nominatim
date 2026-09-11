@@ -26,6 +26,13 @@ transliteration:
     - "[^a-z0-9[:Space:]] >"
     - ":: NFC ()"
     - "[:Space:]+ > ' '"
+tokenizer-sanitizers:
+    - step: tag-analyzer-by-language
+      filter-kind: [".*name.*"]
+      suffix-ignore: [left,right]
+      whitelist: [bg,ca,cs,da,de,el,en,es,et,eu,fi,fr,gl,hu,it,ja,mg,ms,nl,"no",pl,pt,ro,ru,sk,sl,sv,tr,uk,vi]
+      use-defaults: all
+      mode: append
 token-analysis:
     - analyzer: generic
     - id: "@housenumber"

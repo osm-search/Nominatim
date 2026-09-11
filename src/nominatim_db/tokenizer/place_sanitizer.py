@@ -86,7 +86,12 @@ def load_sanitizers(config: Configuration) -> PlaceSanitizer:
         This looks for a configuration file 'sanitizers.yaml' and creates
         a sanitizer based on that.
 
-        Failing to find the file it will further look for the 'icu_tokenizer.yaml'
+        After the general rules, tokenizer-specific rules are loaded from
+        the tokenizer configuration. It looks for a section
+        'tokenizer-sanitizers'.
+
+        If a 'sanitizers.yaml' is not found and the tokenizer is ICU, then
+        it will further look for the 'icu_tokenizer.yaml'
         and read sanitizers from there. This is only for backward compatibility
         and will go away in the next major version.
 
@@ -95,9 +100,14 @@ def load_sanitizers(config: Configuration) -> PlaceSanitizer:
     """
     if config.config_file_exists('sanitizers.yaml'):
         rules = config.load_sub_configuration('sanitizers.yaml')
-    else:
+        if config.config_file_exists(f"{config.TOKENIZER}_tokenizer.yaml"):
+            rules.extend(config.load_sub_configuration(f"{config.TOKENIZER}_tokenizer.yaml")
+                               .get('tokenizer-sanitizers', []))
+    elif config.TOKENIZER == 'icu':
         rules = config.load_sub_configuration('icu_tokenizer.yaml')\
                       .get('sanitizers', [])
+    else:
+        rules = []
 
     country_rules: dict[str, SanitizerRules] = {}
     country_config = config.load_sub_configuration('country_settings.yaml')

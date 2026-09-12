@@ -144,8 +144,6 @@ Feature: Tag evaluation
         Then place contains exactly
             | object | categories!set                                   |
             | N7101  | 'osm.tourism.hotel', 'osm.amenity.restaurant'    |
-            | N7102  | 'osm.amenity.vending_machine'                    |
-            | N7103  | 'osm.amenity.yes'                                |
             | N7104  | 'osm.boundary.administrative', 'osm.place.city'  |
 
 
@@ -312,7 +310,7 @@ Feature: Tag evaluation
           | N2     | 'osm.tourism.hotel', 'osm.amenity.cafe' |
 
 
-    Scenario: Categories sanitize non-alphanumeric class/type values
+    Scenario: Categories reject non-alphanumeric class/type values
         When loading osm data
             """
             n1 Tamenity=3stars
@@ -324,16 +322,12 @@ Feature: Tag evaluation
           | object | categories!set            |
           | N1     | 'osm.amenity.3stars'      |
           | N2     | 'osm.shop.3for2'          |
-          | N3     | 'osm.amenity.fast_food'   |
-          | N4     | 'osm.shop.do_it_yourself' |
 
-    Scenario: Category fallback for unrecognized values uses 'yes'
+    Scenario: Category fallback for unrecognized values drops the category
         When loading osm data
             """
             n8101 Tamenity=???
             n8102 Tshop=????
             """
         Then place contains exactly
-          |object|categories!set|
-          |N8101|'osm.amenity.yes'|
-          |N8102|'osm.shop.yes'|
+            | object |

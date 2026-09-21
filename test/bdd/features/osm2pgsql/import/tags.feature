@@ -205,12 +205,10 @@ Feature: Tag evaluation
             w10003 Tboundary=administrative,place=island,name=C Nn10,n11,n12,n13,n10
             """
         Then place contains
-            | object | class    | type           | categories!set                                            |
-            | W10001 | boundary | administrative | 'osm.boundary.administrative', 'osm.place.city'           |
-        And place contains
-            | object | class    | type    | categories!set                                            |
-            | W10002 | boundary | natural | 'osm.boundary.natural', 'osm.place.city'                 |
-            | W10003 | boundary | administrative | 'osm.boundary.administrative', 'osm.place.island'   |
+            | object | class    | type           | categories!set                                        |
+            | W10001 | boundary | administrative | 'osm.boundary.administrative', 'osm.place.city'       |
+            | W10002 | boundary | natural        | 'osm.boundary.natural', 'osm.place.city'              |
+            | W10003 | boundary | administrative | 'osm.boundary.administrative', 'osm.place.island'     |
 
 
     Scenario: Boundary ways for countries and states are imported with their admin level

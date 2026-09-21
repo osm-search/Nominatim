@@ -88,12 +88,21 @@ local function filter_highway(place)
     return place
 end
 
-local function filter_boundary(place, k, v)
-    if not place.has_name or not place:geometry_is_valid() or not place.is_area then
+-- Same as the 'named' transform but also rejects unnamed area polygons.
+local function filter_highway_named(place)
+    if not place.has_name then
         return nil
     end
-    if v == 'administrative' and place.object.type == 'way'
-       and place.admin_level <= 4 then
+
+    return filter_highway(place)
+end
+
+local function filter_boundary(place, k, v)
+    if not place.has_name
+       or not place:geometry_is_valid()
+       or not place.is_area
+       or (v == 'administrative' and place.object.type == 'way'
+           and place.admin_level <= 4) then
         return nil
     end
     return place
@@ -274,18 +283,18 @@ module.MAIN_TAGS_STREETS.default = {
                road = filter_highway,
                living_street = filter_highway,
                pedestrian = filter_highway,
-               service = 'named',
-               cycleway = 'named',
-               path = 'named',
+               service = filter_highway_named,
+               cycleway = filter_highway_named,
+               path = filter_highway_named,
                footway = filter_footways,
-               steps = 'named',
-               bridleway = 'named',
-               track = 'named',
-               motorway_link = 'named',
-               trunk_link = 'named',
-               primary_link = 'named',
-               secondary_link = 'named',
-               tertiary_link = 'named'}
+               steps = filter_highway_named,
+               bridleway = filter_highway_named,
+               track = filter_highway_named,
+               motorway_link = filter_highway_named,
+               trunk_link = filter_highway_named,
+               primary_link = filter_highway_named,
+               secondary_link = filter_highway_named,
+               tertiary_link = filter_highway_named}
 }
 
 module.MAIN_TAGS_STREETS.car = {

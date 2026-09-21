@@ -88,7 +88,6 @@ local function filter_highway(place)
     return place
 end
 
--- Same as the 'named' transform but also rejects unnamed area polygons.
 local function filter_highway_named(place)
     if not place.has_name then
         return nil

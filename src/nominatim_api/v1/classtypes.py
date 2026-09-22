@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2025 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Hard-coded information about tag categories.
@@ -30,10 +30,10 @@ def get_label_tag(category: Tuple[str, str], extratags: Optional[Mapping[str, st
         label = ADMIN_LABELS.get((country or '', rank // 2))\
                 or ADMIN_LABELS.get(('', rank // 2))\
                 or 'Administrative'
-    elif rank < 26:
-        label = category[1] if category[1] != 'yes' else category[0]
-    elif rank < 28:
+    elif rank == 27 and category[0] == 'highway':
         label = 'road'
+    elif rank <= 28:
+        label = category[1] if category[1] != 'yes' else category[0]
     elif (category[0] == 'place'
           and category[1] in ('house_number', 'house_name', 'country_code')):
         label = category[1]

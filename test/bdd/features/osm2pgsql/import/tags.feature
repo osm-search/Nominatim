@@ -70,7 +70,17 @@ Feature: Tag evaluation
             | N4002  | place | 'streetnumber': '10', 'city': 'Rootoo' |
 
 
-    Scenario: Country codes
+    Scenario: addr:substreet is an alias for addr:place
+        When loading osm data
+            """
+            n41 Taddr:housenumber=34,addr:substreet=Bow%20%Terrace,addr:parentstreet=Main%20%Road
+            """
+        Then place contains exactly
+            | object | class | address!dict |
+            | N41    | place | 'housenumber': '34', 'place': 'Bow Terrace', 'parentstreet': 'Main Road' |
+
+
+     Scenario: Country codes
         When loading osm data
             """
             n5001 Tshop=yes,country_code=DE

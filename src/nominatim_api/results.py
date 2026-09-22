@@ -546,7 +546,8 @@ def _setup_address_details(result: BaseResultT) -> None:
             extratags=result.extratags or {},
             admin_level=result.admin_level,
             fromarea=True, isaddress=True,
-            rank_address=result.rank_address, distance=0.0))
+            rank_address=27 if result.rank_address == 26 else result.rank_address,
+            distance=0.0))
     if result.source_table == SourceTable.PLACEX and result.address:
         housenumber = result.address.get('housenumber')\
                       or result.address.get('streetnumber')\
@@ -559,12 +560,18 @@ def _setup_address_details(result: BaseResultT) -> None:
         result.address_rows.append(AddressLine(
             category=('place', 'house_number'),
             names={'ref': housenumber},
-            fromarea=True, isaddress=True, rank_address=28, distance=0))
-    if result.address and '_unlisted_place' in result.address:
-        result.address_rows.append(AddressLine(
-            category=('place', 'locality'),
-            names={'name': result.address['_unlisted_place']},
-            fromarea=False, isaddress=True, rank_address=25, distance=0))
+            fromarea=True, isaddress=True, rank_address=29, distance=0))
+    if result.address and result.rank_address > 27:
+        if 'parentstreet' in result.address:
+            result.address_rows.append(AddressLine(
+                category=('highway', 'road'),
+                names={'name': result.address['parentstreet']},
+                fromarea=False, isaddress=True, rank_address=26, distance=0))
+        if '_unlisted_place' in result.address:
+            result.address_rows.append(AddressLine(
+                category=('place', 'locality'),
+                names={'name': result.address['_unlisted_place']},
+                fromarea=False, isaddress=True, rank_address=28, distance=0))
 
 
 async def complete_address_details(conn: SearchConnection, results: List[BaseResultT]) -> None:
@@ -652,14 +659,23 @@ async def complete_address_details(conn: SearchConnection, results: List[BaseRes
             assert current_result is not None
             assert current_result.address_rows is not None
 
+            if current_result.rank_address <= 27:
+                rank_address = row.rank_address
+            elif row.rank_address >= 26:
+                rank_address = 27
+            elif current_result.address and '_unlisted_place' in current_result.address:
+                rank_address = row.rank_address
+            else:
+                rank_address = 28
+
             current_result.address_rows.append(AddressLine(
                     place_id=row.place_id,
                     osm_object=(row.osm_type, row.osm_id),
                     category=(row.class_, row.type),
                     names=row.name, extratags=row.extratags or {},
                     admin_level=row.admin_level,
-                    fromarea=True, isaddress=True,
-                    rank_address=row.rank_address, distance=0.0))
+                    fromarea=True, isaddress=True, rank_address=rank_address,
+                    distance=0.0))
 
     # Now sort everything
     def mk_sort_key(place_id: Optional[int]) -> Callable[[AddressLine], Tuple[bool, int, bool]]:

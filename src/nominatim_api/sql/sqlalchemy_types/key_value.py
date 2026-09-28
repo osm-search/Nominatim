@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 A custom type that implements a simple key-value store of strings.
@@ -25,7 +25,7 @@ class KeyValueStore(sa.types.TypeDecorator[Any]):
 
     def load_dialect_impl(self, dialect: SaDialect) -> sa.types.TypeEngine[Any]:
         if dialect.name == 'postgresql':
-            return HSTORE()  # type: ignore[no-untyped-call]
+            return HSTORE()  # type: ignore[no-untyped-call, unused-ignore]
 
         return sqlite_json(none_as_null=True)
 

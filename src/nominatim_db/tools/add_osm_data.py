@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Function to add additional OSM data from a file or the API into the database.
@@ -10,7 +10,7 @@ Function to add additional OSM data from a file or the API into the database.
 from typing import Any, MutableMapping
 from pathlib import Path
 import logging
-import urllib
+import urllib.parse
 
 from ..db.connection import connect
 from ..utils.url_utils import get_url

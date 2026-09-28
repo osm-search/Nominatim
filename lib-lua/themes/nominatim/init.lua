@@ -753,7 +753,7 @@ function module.process_tags(o)
     local main_class, main_type = nil, nil
     local merged_extratags = nil
     local postcode_collect = false
-    local tag_fallback = nil
+    local fallback_tags = {}
 
     for k, v in pairs(o.intags) do
         local ktable = MAIN_KEYS[k]
@@ -795,30 +795,31 @@ function module.process_tags(o)
                         geometry = o.geometry
                     }
                 end
-            elseif ktype == 'fallback' and o.has_name then
-                tag_fallback = {k, v}
+            elseif ktype == 'fallback' then
+                table.insert(fallback_tags, {k, v})
             end
         end
     end
 
     merged_extratags = build_extratags(o, nil, nil, main_class)
 
-    -- Handle tag-based fallback: always add category, set class/type only if sole producer
-    if tag_fallback ~= nil then
-        local fk, fv = tag_fallback[1], tag_fallback[2]
-        local was_empty = (#categories == 0)
-        local cat = get_category(fk, fv)
+    -- Fallback tags always add their categories, 
+    -- they are only used for class or type when the object is named and nothing better was found
+    table.sort(fallback_tags, function(a, b)
+        return a[1] < b[1] or (a[1] == b[1] and a[2] < b[2])
+    end)
+    for _, kv in ipairs(fallback_tags) do
+        local cat = get_category(kv[1], kv[2])
         if cat ~= nil then
-            table.insert(categories, cat)
-            if was_empty then
-                main_class = fk
-                main_type = fv
+            table.insert(categories, cat) 
+            if main_class == nil and o.has_name then
+                main_class, main_type = kv[1], kv[2]
             end
         end
     end
 
-    -- Handle address/house fallback if no main tags produced categories
-    if #categories == 0 then
+    -- For address fallback we keep an artificial class that gets no category
+    if main_class == nil then
         if needs_address_fallback then
             if next(o.names) ~= nil and NAMES.house ~= nil then
                 local names = {}
@@ -830,7 +831,6 @@ function module.process_tags(o)
                 o.names = names
             end
 
-            table.insert(categories, 'osm.place.house')
             main_class = 'place'
             main_type = 'house'
         elseif POSTCODE_FALLBACK and not postcode_collect
@@ -844,7 +844,7 @@ function module.process_tags(o)
     end
 
     -- Build and insert single row with all collected categories
-    if #categories > 0 and o:geometry_is_valid() then
+    if main_class ~= nil and o:geometry_is_valid() then
         insert_row.place{
             class = main_class,
             type = main_type,
@@ -853,7 +853,7 @@ function module.process_tags(o)
             address = next(o.address) and o.address,
             extratags = merged_extratags and next(merged_extratags) and merged_extratags,
             geometry = o.geometry,
-            categories = '{' .. table.concat(categories, ',') .. '}'
+            categories = #categories > 0 and ('{'..table.concat(categories, ',') .. '}') or nil
         }
     end
 end

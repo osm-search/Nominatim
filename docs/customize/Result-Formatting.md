@@ -154,16 +154,19 @@ You can overwrite the default formatting function with the decorator
 `error_format_func`:
 
 ``` python
+import json
+from xml.sax.saxutils import escape
+
 import nominatim_api.server.content_types as ct
 
 @dispatch.error_format_func
 def _format_error(content_type: str, msg: str, status: int) -> str:
     if content_type == ct.CONTENT_XML:
         return f"""<?xml version="1.0" encoding="UTF-8" ?>
-                     <message>{msg}</message>
+                     <message>{escape(msg)}</message>
                 """
     if content_type == ct.CONTENT_JSON:
-        return f'"{msg}"'
+        return json.dumps(msg)
 
     return f"ERROR: {msg}"
 ```

@@ -75,7 +75,7 @@ To install dependencies individually:
 
 ```sh
 pip install \
-    psutil 'psycopg[binary]' PyICU 'SQLAlchemy[asyncio]' \
+    psutil 'psycopg[binary]' PyICU 'SQLAlchemy[asyncio]<2.1' \
     python-dotenv jinja2 pyYAML \
     mkdocs 'mkdocstrings[python]' mkdocs-gen-files mkdocs-material \
     pytest pytest-asyncio pytest-bdd flake8 \

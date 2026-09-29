@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2025 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for formatting results for the V1 API.
@@ -17,6 +17,7 @@ import xml.etree.ElementTree as ET
 import pytest
 
 from nominatim_api.v1.format import dispatch as v1_format
+from nominatim_api.server import content_types as ct
 import nominatim_api as napi
 
 STATUS_FORMATS = {'text', 'json'}
@@ -69,6 +70,40 @@ def test_status_format_json_full():
                                   'data_updated': '2010-02-07T20:20:03+00:00',
                                   'software_version': napi.__version__,
                                   'database_version': '5.6'}
+
+
+# Error messages
+
+# Messages may repeat values from the request, so they contain arbitrary text.
+ERROR_MESSAGES = ['Too many object IDs.',
+                  'Invalid postcode ID: Z","amenity":"cafe","x":"',
+                  "Invalid category 'x\\y'.",
+                  'Invalid exclude ID: </message><amenity>cafe</amenity><message>',
+                  'a & b <c>',
+                  'line\nbreak\tand tab']
+
+
+@pytest.mark.parametrize('msg', ERROR_MESSAGES + ['a\x00b\x1fc'])
+def test_error_format_json(msg):
+    result = v1_format.format_error(ct.CONTENT_JSON, msg, 400)
+
+    assert json.loads(result) == {'error': {'code': 400, 'message': msg}}
+
+
+@pytest.mark.parametrize('msg', ERROR_MESSAGES)
+def test_error_format_xml(msg):
+    result = v1_format.format_error(ct.CONTENT_XML, msg, 400)
+
+    root = ET.fromstring(result)
+    assert root.tag == 'error'
+    assert [child.tag for child in root] == ['code', 'message']
+    assert root.find('code').text == '400'
+    assert root.find('message').text == msg
+
+
+def test_error_format_text():
+    assert v1_format.format_error(ct.CONTENT_TEXT, 'a "message"', 404) \
+        == 'ERROR 404: a "message"'
 
 
 # DetailedResult

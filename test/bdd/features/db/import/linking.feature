@@ -169,6 +169,27 @@ Feature: Linking of places
          | object | centroid!wkt | name+name | extratags+linked_place |
          | R13    | 9            | Garbo     | hamlet |
 
+    # github #4183
+    Scenario: Boundaries take over the place category of the linked place
+        Given the 0.05 grid
+         | 1 |   | 2 |
+         |   | 9 |   |
+         | 4 |   | 3 |
+        Given the places
+         | osm  | class    | type           | admin | name  | geometry    |
+         | R13  | boundary | administrative | 6     | Garbo | (1,2,3,4,1) |
+         | N2   | place    | hamlet         | 15    | Vario | 9           |
+        And the relations
+         | id | members  | tags+type |
+         | 13 | N2:label | boundary  |
+        When importing
+        Then placex contains
+         | object | linked_place_id |
+         | N2     | R13             |
+        And placex contains
+         | object | categories |
+         | R13    | osm.boundary.administrative, osm.place.hamlet |
+
     Scenario: Boundaries with place tags are linked against places with same type
         Given the 0.01 grid
          | 1 |   | 2 |

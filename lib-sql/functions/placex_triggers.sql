@@ -972,7 +972,11 @@ BEGIN
         WHERE osm_type = 'R'
               and rank_address between 1 and 25 -- select right index
               and ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon') -- select right index
-              and ((categories <@ 'osm.place' and prank.address_rank = NEW.rank_address)
+              -- A boundary that carries a place category because it is linked to
+              -- a place acts on the address rank of that linkee, not on the rank
+              -- of the place category. Compare those by their address rank.
+              and ((not categories <@ 'osm.boundary'
+                    and categories <@ 'osm.place' and prank.address_rank = NEW.rank_address)
                    or (categories <@ 'osm.boundary' and rank_address = NEW.rank_address))
               and geometry && NEW.centroid and _ST_Covers(geometry, NEW.centroid)
         LIMIT 1
@@ -1116,6 +1120,19 @@ BEGIN
   -- ---------------------------------------------------------------------------
   -- Full indexing
   {% if debug %}RAISE WARNING 'Using full index mode for % %', NEW.osm_type, NEW.osm_id;{% endif %}
+
+  -- Linked objects take over the place categories of the place they link to.
+  -- Recompute them from scratch so that a link which has disappeared or whose
+  -- linkee has changed its place type does not leave a stale category behind.
+  -- Categories which do not come from place tags are left untouched.
+  IF linked_place is not null
+     OR (OLD.extratags ? 'linked_place'
+         AND NEW.categories ?<@ 'osm.place' IS NOT NULL)
+  THEN
+    NEW.categories := ARRAY(
+        SELECT c FROM unnest(NEW.categories) c WHERE NOT (c <@ 'osm.place'));
+  END IF;
+
   IF linked_place is not null THEN
     -- Recompute the ranks here as the ones from the linked place might
     -- have been shifted to accommodate surrounding boundaries.
@@ -1146,6 +1163,11 @@ BEGIN
     NEW.extratags := hstore('linked_' || location.class, location.type)
                      || coalesce(location.extratags, ''::hstore)
                      || coalesce(NEW.extratags, ''::hstore);
+
+    -- inherit the place categories of the linked place
+    NEW.categories := NEW.categories
+                      || ARRAY(SELECT c FROM unnest(location.categories) c
+                               WHERE c <@ 'osm.place');
 
     -- mark the linked place (excludes from search results)
     -- Force reindexing to remove any traces from the search indexes and
@@ -1313,7 +1335,12 @@ BEGIN
           indexed_status = CASE WHEN indexed_status = 0 THEN 2 ELSE indexed_status END
       WHERE linked_place_id = OLD.place_id;
   ELSE
-    update placex set indexed_status = 2 where place_id = OLD.linked_place_id and indexed_status = 0;
+    -- OLD was linked to this place: remove the place categories it inherited.
+    UPDATE placex
+      SET categories = ARRAY(
+            SELECT c FROM unnest(categories) c WHERE NOT (c <@ 'osm.place')),
+          indexed_status = CASE WHEN indexed_status = 0 THEN 2 ELSE indexed_status END
+      WHERE place_id = OLD.linked_place_id;
   END IF;
 
   IF OLD.rank_address < 30 THEN

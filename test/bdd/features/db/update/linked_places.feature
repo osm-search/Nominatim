@@ -259,6 +259,33 @@ Feature: Updates of linked places
             | object | extratags |
             | R1     | - |
 
+    # github #4183
+    Scenario: Remove inherited place category when linked place is deleted
+        Given the 0.05 grid
+         | 1 |   | 2 |
+         |   | 9 |   |
+         | 4 |   | 3 |
+        Given the places
+            | osm | class | type   | name  | geometry |
+            | N2  | place | hamlet | Vario | 9        |
+        And the places
+            | osm | class    | type           | name  | admin | categories                                    | geometry    |
+            | R13 | boundary | administrative | Garbo | 6     | osm.boundary.administrative, osm.place.hamlet | (1,2,3,4,1) |
+        And the relations
+            | id | members  | tags+type |
+            | 13 | N2:label | boundary  |
+        When importing
+        Then placex contains
+            | object | linked_place_id |
+            | N2     | R13             |
+        And placex contains
+            | object | categories |
+            | R13    | osm.boundary.administrative, osm.place.hamlet |
+        When marking for delete N2
+        Then placex contains
+            | object | categories |
+            | R13    | osm.boundary.administrative |
+
     Scenario: Update linked_place info when linkee type changes
         Given the 0.1 grid
          | 10 |   | 11 |

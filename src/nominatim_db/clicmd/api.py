@@ -290,6 +290,7 @@ class APIReverse:
                                      max_rank=zoom_to_rank(args.zoom or 18),
                                      layers=layers,
                                      address_details=True,  # needed for display name
+                                     entrances=args.entrances,
                                      geometry_output=_get_geometry_output(args),
                                      geometry_simplification=args.polygon_threshold)
         except napi.UsageError as ex:
@@ -356,6 +357,7 @@ class APILookup:
             with napi.NominatimAPI(args.project_dir) as api:
                 results = api.lookup(places,
                                      address_details=True,  # needed for display name
+                                     entrances=args.entrances,
                                      geometry_output=_get_geometry_output(args),
                                      geometry_simplification=args.polygon_threshold or 0.0)
         except napi.UsageError as ex:
@@ -470,7 +472,8 @@ class APIDetails:
 
         if result:
             _print_output(formatter, result, args.format or 'json',
-                          {'group_hierarchy': args.group_hierarchy})
+                          {'group_hierarchy': args.group_hierarchy,
+                           'entrances': args.entrances})
             return 0
 
         LOG.error("Object not found in database.")

@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Output formatters for API version v1.
@@ -10,6 +10,7 @@ Output formatters for API version v1.
 from typing import List, Dict, Mapping, Any
 import collections
 import datetime as dt
+from xml.sax.saxutils import escape as xml_escape
 
 from ..utils.json_writer import JsonWriter
 from ..status import StatusResult
@@ -40,12 +41,20 @@ def _format_error(content_type: str, msg: str, status: int) -> str:
         return f"""<?xml version="1.0" encoding="UTF-8" ?>
                    <error>
                      <code>{status}</code>
-                     <message>{msg}</message>
+                     <message>{xml_escape(msg)}</message>
                    </error>
                 """
 
     if content_type == ct.CONTENT_JSON:
-        return f"""{{"error":{{"code":{status},"message":"{msg}"}}}}"""
+        # {"error": {"code": 400, "message": "Too many object IDs."}}
+        out = JsonWriter()
+        out.start_object()\
+           .key('error').start_object()\
+           .keyval('code', status)\
+           .keyval('message', msg)\
+           .end_object().next()\
+           .end_object()
+        return out()
 
     if content_type == ct.CONTENT_HTML:
         loglib.log().section('Execution error')

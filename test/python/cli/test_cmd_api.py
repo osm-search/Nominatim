@@ -11,6 +11,7 @@ import json
 import pytest
 
 import nominatim_api as napi
+from nominatim_api.types import EntranceDetails
 
 
 @pytest.mark.parametrize('call', ['search', 'reverse', 'lookup', 'details', 'status'])
@@ -163,3 +164,23 @@ def test_search(cli_call, tmp_path, capsys, monkeypatch, endpoint, params):
     assert 'address' not in out[0]
     assert 'extratags' not in out[0]
     assert 'namedetails' not in out[0]
+
+
+@pytest.mark.parametrize('call, params, rtype',
+                         [('search', ('--query', 'Berlin'), napi.SearchResult),
+                          ('reverse', ('--lat', '34', '--lon', '34'), napi.ReverseResult),
+                          ('lookup', ('--id', 'N34'), napi.SearchResult),
+                          ('details', ('--node', '34'), napi.DetailedResult)])
+def test_entrances_parameter(cli_call, tmp_path, capsys, monkeypatch, call, params, rtype):
+    result = rtype(napi.SourceTable.PLACEX, ('place', 'thing'), napi.Point(1.0, -3.0))
+
+    def _api_call(*args, entrances=False, **kwargs):
+        # Like the real API, only add entrances when they were requested.
+        if entrances:
+            result.entrances = [EntranceDetails(45, 'main', napi.Point(1.0, -3.0), {})]
+        return napi.SearchResults([result]) if rtype is napi.SearchResult else result
+
+    monkeypatch.setattr(napi.NominatimAPI, call, _api_call)
+
+    assert cli_call(call, '--project-dir', str(tmp_path), *params, '--entrances') == 0
+    assert '"osm_id": 45' in capsys.readouterr().out

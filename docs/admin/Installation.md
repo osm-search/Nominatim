@@ -47,7 +47,7 @@ For running continuous updates:
 
 For running the Python frontend:
 
-  * [SQLAlchemy](https://www.sqlalchemy.org/) (1.4.31+ with greenlet support)
+  * [SQLAlchemy](https://www.sqlalchemy.org/) (1.4.31+, below 2.1, with greenlet support)
   * [asyncpg](https://magicstack.github.io/asyncpg) (0.8+, only when using SQLAlchemy < 2.0)
   * one of the following web frameworks:
     * [falcon](https://falconframework.org/) (3.0+)

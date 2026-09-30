@@ -58,5 +58,5 @@ runtime = [
     "psutil",
     "PyICU",
     "mwparserfromhell",
-    "SQLAlchemy[asyncio]>=1.4.31",
+    "SQLAlchemy[asyncio]>=1.4.31,<2.1",
 ]

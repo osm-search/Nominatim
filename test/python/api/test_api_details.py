@@ -641,6 +641,16 @@ def test_lookup_class_mismatch_falls_back_to_osm_id(apiobj, frontend):
     assert result.category == ('place', 'suburb')
 
 
+def test_lookup_numeric_class_does_not_fall_back_to_placex(apiobj, frontend):
+    apiobj.add_placex(place_id=332, osm_type='W', osm_id=9,
+                      class_='highway', type='residential')
+
+    api = frontend(apiobj, options={'details'})
+    result = api.details(napi.OsmID('W', 9, '50'))
+
+    assert result is None
+
+
 @pytest.mark.parametrize('gtype', (napi.GeometryFormat.KML,
                                    napi.GeometryFormat.SVG,
                                    napi.GeometryFormat.TEXT))

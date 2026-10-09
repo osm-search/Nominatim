@@ -329,6 +329,7 @@ class ReverseGeocoder:
         result = None
         hnr_distance = None
         parent_street = None
+        parent_row = None
         for row in await self._find_closest_street_or_pois(distance, 0.001):
             if result is None:
                 log().var_dump('Closest result', row)
@@ -337,6 +338,7 @@ class ReverseGeocoder:
                         and self.layer_enabled(DataLayer.ADDRESS) \
                         and result.rank_address <= 27:
                     parent_street = result.place_id
+                    parent_row = result
                     distance = 0.001
                 else:
                     distance = row.distance
@@ -369,10 +371,11 @@ class ReverseGeocoder:
             log().var_dump('Result (street Tiger housenumber)', addr_row)
 
             if addr_row is not None:
+                assert parent_row is not None
                 row_func = cast(RowFunc,
                                 functools.partial(nres.create_from_tiger_row,
-                                                  osm_type=row.osm_type,
-                                                  osm_id=row.osm_id))
+                                                  osm_type=parent_row.osm_type,
+                                                  osm_id=parent_row.osm_id))
                 result = addr_row
 
         # Check for an interpolation that is either closer than our result

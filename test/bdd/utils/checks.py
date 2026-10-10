@@ -9,6 +9,7 @@ Helper functions to compare expected values.
 """
 import ast
 import collections.abc
+import importlib.metadata
 import json
 import re
 import math
@@ -16,6 +17,12 @@ import math
 from psycopg import sql as pysql
 from psycopg.rows import dict_row
 from .geometry_alias import ALIASES
+
+# pytest-bdd before 9.0 doubles backslashes in table cells, see
+# https://github.com/pytest-dev/pytest-bdd/blob/master/CHANGES.rst
+# https://github.com/pytest-dev/pytest-bdd/issues/769
+PYTEST_BDD_DOUBLES_BACKSLASHES = \
+    int(importlib.metadata.version('pytest-bdd').split('.')[0]) < 9
 
 
 COMPARATOR_TERMS = {
@@ -133,11 +140,11 @@ class ResultAttr:
                 self.subobj = self.subobj[sub]
 
     def __eq__(self, other):
-        # work around bad quoting by pytest-bdd
         if not isinstance(other, str):
             return self.subobj == other
 
-        other = other.replace(r'\\', '\\')
+        if PYTEST_BDD_DOUBLES_BACKSLASHES:
+            other = other.replace(r'\\', '\\')
         if self.key == 'categories' and self.fmt is None \
            and isinstance(self.subobj, str) and self.subobj.startswith('{'):
             val = {v.strip() for v in self.subobj[1:-1].split(',')}

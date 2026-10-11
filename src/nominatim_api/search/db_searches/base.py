@@ -2,12 +2,12 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2025 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Interface for classes implementing a database search.
 """
-from typing import Callable, List
+from typing import Callable, List, TypeVar
 import abc
 
 import sqlalchemy as sa
@@ -17,6 +17,9 @@ from ...sql.sqlalchemy_types import Geometry
 from ...connection import SearchConnection
 from ...types import SearchDetails, DataLayer, GeometryFormat
 from ...results import SearchResults
+
+
+S = TypeVar('S', bound=SaSelect)
 
 
 class AbstractSearch(abc.ABC):
@@ -102,8 +105,8 @@ def no_index(expr: SaColumn) -> SaColumn:
     return sa.func.coalesce(sa.null(), expr)
 
 
-def filter_by_area(sql: SaSelect, t: SaFromClause,
-                   details: SearchDetails, avoid_index: bool = False) -> SaSelect:
+def filter_by_area(sql: S, t: SaFromClause,
+                   details: SearchDetails, avoid_index: bool = False) -> S:
     """ Apply SQL statements for filtering by viewbox and near point,
         if applicable.
     """

@@ -74,7 +74,7 @@ through configuration variables in your `pytest.ini`:
     (default: `test_template_nominatim`)
 
 To change other connection parameters for the PostgreSQL database, use
-the [libpq enivronment variables](https://www.postgresql.org/docs/current/libpq-envars.html).
+the [libpq environment variables](https://www.postgresql.org/docs/current/libpq-envars.html).
 Never set a password through these variables. Use a
 [password file](https://www.postgresql.org/docs/current/libpq-pgpass.html) instead.
 

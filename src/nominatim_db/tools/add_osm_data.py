@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Function to add additional OSM data from a file or the API into the database.
@@ -10,7 +10,7 @@ Function to add additional OSM data from a file or the API into the database.
 from typing import Any, MutableMapping
 from pathlib import Path
 import logging
-import urllib
+from urllib.parse import urlencode
 
 from ..db.connection import connect
 from ..utils.url_utils import get_url
@@ -58,8 +58,7 @@ def add_osm_object(dsn: str, osm_type: str, osm_id: int, use_main_api: bool,
             data = f'(way({osm_id});>;);out meta;'
         else:
             data = f'(rel(id:{osm_id});>;);out meta;'
-        base_url = 'https://overpass-api.de/api/interpreter?' \
-                   + urllib.parse.urlencode({'data': data})
+        base_url = 'https://overpass-api.de/api/interpreter?' + urlencode({'data': data})
 
     options['append'] = True
     options['import_data'] = get_url(base_url).encode('utf-8')

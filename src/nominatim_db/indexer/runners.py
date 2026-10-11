@@ -8,9 +8,10 @@
 Mix-ins that provide the actual commands for the indexer for various indexing
 tasks.
 """
+from typing import Protocol
 from psycopg import sql as pysql
 
-from ..typing import Protocol, QueryNoTemplate
+from ..typing import QueryNoTemplate
 
 
 def _mk_valuelist(template: str, num: int) -> pysql.Composed:

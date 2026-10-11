@@ -30,17 +30,7 @@ class DictCursorResult(Mapping[str, Any]):
 
 DictCursorResults = Sequence[DictCursorResult]
 
-# The following typing features require typing_extensions to work
-# on all supported Python versions.
-# Only require this for type checking but not for normal operations.
-
 if TYPE_CHECKING:
-    from typing_extensions import (Protocol as Protocol,
-                                   Final as Final,
-                                   TypedDict as TypedDict)
     from psycopg.abc import (QueryNoTemplate as QueryNoTemplate)
 else:
-    Protocol = object
-    Final = 'Final'
-    TypedDict = dict
     QueryNoTemplate = 'QueryNoTemplate'

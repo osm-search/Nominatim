@@ -7,9 +7,7 @@
 """
 Common data types and protocols for preprocessing.
 """
-from typing import Callable
-
-from ..typing import Protocol
+from typing import Callable, Protocol
 from ..search.query import Phrase
 from .config import QueryConfig
 

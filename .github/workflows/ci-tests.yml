@@ -110,7 +110,9 @@ jobs:
               if: matrix.python != 'builtin'
 
             - name: Install test prerequisites (apt)
-              run: sudo apt-get install -y -qq python3-pytest python3-pytest-bdd python3-pytest-asyncio uvicorn python3-falcon python3-aiosqlite python3-pyosmium
+              run: |
+                  sudo apt-get install -y -qq python3-pytest python3-pytest-asyncio uvicorn python3-falcon python3-aiosqlite python3-pyosmium
+                  ./venv/bin/pip install -U pytest-bdd
               if: matrix.dependencies == 'apt'
 
             - name: Install test prerequisites (pip)

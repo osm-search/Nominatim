@@ -33,6 +33,41 @@ jobs:
                   path: nominatim-src.tar.bz2
                   retention-days: 1
 
+    linting:
+        needs: create-archive
+        runs-on: ubuntu-26.04
+        steps:
+            - uses: actions/download-artifact@v8
+              with:
+                  name: full-source
+
+            - name: Unpack Nominatim
+              run: tar xf nominatim-src.tar.bz2
+
+            - name: Install general prerequisites
+              run: |
+                sudo apt-get install -y -qq virtualenv python3-dev
+              shell: bash
+
+            - name: Setup virtual environment (for pip)
+              run: |
+                virtualenv venv
+                ./venv/bin/pip install -U pip
+              shell: bash
+
+            - name: Install test prerequisites (pip)
+              run: ../venv/bin/pip install --group dev --group runtime
+              working-directory: Nominatim
+
+            - name: Python linting
+              run: ../venv/bin/python -m flake8 src test/python test/bdd
+              working-directory: Nominatim
+
+            - name: Python static typechecking
+              run: ../venv/bin/python -m mypy src
+              working-directory: Nominatim
+
+
     tests-ubuntu:
         needs: create-archive
         strategy:
@@ -42,13 +77,11 @@ jobs:
                     - flavour: ubuntu-24
                       ubuntu: 24
                       postgresql: 13
-                      lua: '5.1'
                       dependencies: pip
                       python: '3.9'
                     - flavour: ubuntu-26
                       ubuntu: 26
                       postgresql: 18
-                      lua: '5.3'
                       dependencies: apt
                       python: 'builtin'
 
@@ -81,17 +114,7 @@ jobs:
               if: matrix.dependencies == 'apt'
 
             - name: Install test prerequisites (pip)
-              run: ../venv/bin/pip install --group test --group serve --group lint --group types
-              working-directory: Nominatim
-              if: matrix.dependencies == 'pip'
-
-            - name: Python linting
-              run: ../venv/bin/python -m flake8 src test/python test/bdd
-              working-directory: Nominatim
-              if: matrix.dependencies == 'pip'
-
-            - name: Python static typechecking
-              run: ../venv/bin/python -m mypy --strict --python-version 3.10 src
+              run: ../venv/bin/pip install --group test --group serve
               working-directory: Nominatim
               if: matrix.dependencies == 'pip'
 

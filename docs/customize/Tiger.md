@@ -23,6 +23,26 @@ entire US adds about 10GB to your database.
         nominatim refresh --functions --website
 
 
+## Importing only part of the US
+
+If your database covers only part of the US, you can speed up the import by
+cutting the TIGER data down to that area first. Use the script
+`tiger_create_extract.py` from the
+[TIGER-data project](https://github.com/osm-search/TIGER-data). It needs
+nothing but Python 3. Select states by abbreviation or FIPS code (`--states`),
+a bounding box (`--bbox`), or both:
+
+    python3 tiger_create_extract.py --states NY,NJ \
+        tiger-nominatim-preprocessed-latest.csv.tar.gz tiger-ny-nj/
+
+The result is a directory of CSV files. Use it in step 2 in place of the
+archive:
+
+    nominatim add-data --tiger-data tiger-ny-nj/
+
+Run `python3 tiger_create_extract.py --help` for more examples.
+
+
 See the [TIGER-data project](https://github.com/osm-search/TIGER-data) for more
 information on how the data got preprocessed.
 

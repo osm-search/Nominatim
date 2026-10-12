@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Extended SQLAlchemy connection class that also includes access to the schema.
@@ -14,6 +14,7 @@ import asyncio
 import sqlalchemy as sa
 from sqlalchemy.ext.asyncio import AsyncConnection
 
+from .typing import SaResult
 from .sql.sqlalchemy_schema import SearchTables
 from .logging import log
 from .config import Configuration
@@ -53,7 +54,7 @@ class SearchConnection:
 
     async def execute(self, sql: 'sa.Executable',
                       params: Union[Mapping[str, Any], Sequence[Mapping[str, Any]], None] = None
-                      ) -> 'sa.Result[Any]':
+                      ) -> SaResult:
         """ Execute a 'execute()' query on the connection.
         """
         log().sql(self.connection, sql, params)

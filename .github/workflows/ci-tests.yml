@@ -33,6 +33,41 @@ jobs:
                   path: nominatim-src.tar.bz2
                   retention-days: 1
 
+    linting:
+        needs: create-archive
+        runs-on: ubuntu-26.04
+        steps:
+            - uses: actions/download-artifact@v8
+              with:
+                  name: full-source
+
+            - name: Unpack Nominatim
+              run: tar xf nominatim-src.tar.bz2
+
+            - name: Install general prerequisites
+              run: |
+                sudo apt-get install -y -qq virtualenv python3-dev
+              shell: bash
+
+            - name: Setup virtual environment (for pip)
+              run: |
+                virtualenv venv
+                ./venv/bin/pip install -U pip
+              shell: bash
+
+            - name: Install test prerequisites (pip)
+              run: ../venv/bin/pip install --group dev --group runtime
+              working-directory: Nominatim
+
+            - name: Python linting
+              run: ../venv/bin/python -m flake8 src test/python test/bdd
+              working-directory: Nominatim
+
+            - name: Python static typechecking
+              run: ../venv/bin/python -m mypy src
+              working-directory: Nominatim
+
+
     tests-ubuntu:
         needs: create-archive
         strategy:
@@ -42,13 +77,11 @@ jobs:
                     - flavour: ubuntu-24
                       ubuntu: 24
                       postgresql: 13
-                      lua: '5.1'
                       dependencies: pip
                       python: '3.9'
                     - flavour: ubuntu-26
                       ubuntu: 26
                       postgresql: 18
-                      lua: '5.3'
                       dependencies: apt
                       python: 'builtin'
 
@@ -77,29 +110,13 @@ jobs:
               if: matrix.python != 'builtin'
 
             - name: Install test prerequisites (apt)
-              run: sudo apt-get install -y -qq python3-pytest python3-pytest-asyncio uvicorn python3-falcon python3-aiosqlite python3-pyosmium
+              run: |
+                  sudo apt-get install -y -qq python3-pytest python3-pytest-asyncio uvicorn python3-falcon python3-aiosqlite python3-pyosmium
+                  ./venv/bin/pip install -U pytest-bdd
               if: matrix.dependencies == 'apt'
 
             - name: Install test prerequisites (pip)
-              run: ./venv/bin/pip install pytest-asyncio falcon starlette asgi_lifespan aiosqlite osmium uvicorn
-              if: matrix.dependencies == 'pip'
-
-            - name: Install test prerequisites
-              run: ./venv/bin/pip install pytest-bdd
-
-            - name: Install latest flake8
-              run: ./venv/bin/pip install -U flake8
-
-            - name: Python linting
-              run: ../venv/bin/python -m flake8 src test/python test/bdd
-              working-directory: Nominatim
-
-            - name: Install mypy and typechecking info
-              run: ./venv/bin/pip install -U mypy types-PyYAML types-jinja2 types-psutil types-requests types-ujson types-Pygments typing-extensions
-              if: matrix.dependencies == 'pip'
-
-            - name: Python static typechecking
-              run: ../venv/bin/python -m mypy --strict --python-version 3.10 src
+              run: ../venv/bin/pip install --group test --group serve
               working-directory: Nominatim
               if: matrix.dependencies == 'pip'
 
@@ -108,8 +125,7 @@ jobs:
               working-directory: Nominatim
 
             - name: BDD tests
-              run: |
-                  ../venv/bin/python -m pytest test/bdd --nominatim-purge
+              run: ../venv/bin/python -m pytest test/bdd --nominatim-purge
               working-directory: Nominatim
 
     tests-windows:
@@ -179,7 +195,8 @@ jobs:
             - name: Install test prerequisites
               run: |
                   python -m pip install -U pip
-                  python -m pip install pytest pytest-asyncio async-timeout "psycopg[binary]!=3.3.0" python-dotenv pyyaml jinja2 psutil "sqlalchemy[asyncio]<2.1" pytest-bdd falcon starlette uvicorn asgi_lifespan aiosqlite osmium mwparserfromhell
+                  python -m pip install --group runtime --group serve --group test
+              working-directory: Nominatim
 
             - name: Python unit tests
               run: |

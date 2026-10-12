@@ -2,19 +2,18 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2025 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Provides custom functions over command-line arguments.
 """
-from typing import Optional, List, Dict, Any, Sequence, Tuple
+from typing import Optional, List, Dict, Any, Sequence, Tuple, Protocol
 import argparse
 import logging
 from pathlib import Path
 
 from ..errors import UsageError
 from ..config import Configuration
-from ..typing import Protocol
 
 
 LOG = logging.getLogger()

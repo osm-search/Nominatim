@@ -13,11 +13,10 @@
     The phrases already present in the database which are not
     valids anymore are removed.
 """
-from typing import Iterable, Tuple, Mapping, Sequence, Set
+from typing import Iterable, Tuple, Mapping, Sequence, Set, Protocol
 import logging
 import re
 
-from ...typing import Protocol
 from ...config import Configuration
 from ...db.connection import Connection
 from .importer_statistics import SpecialPhrasesImporterStatistics

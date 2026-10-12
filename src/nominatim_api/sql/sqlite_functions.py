@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Custom functions for SQLite.
@@ -116,6 +116,6 @@ async def _make_aggregate(aioconn: Any, *args: Any) -> None:
 
 def _create_aggregate(conn: Any, name: str, nargs: int, aggregate: Any) -> None:
     try:
-        conn.await_(_make_aggregate(conn._connection, name, nargs, aggregate))
+        conn.run_async(lambda aioconn: _make_aggregate(aioconn, name, nargs, aggregate))
     except Exception as error:
         conn._handle_exception(error)

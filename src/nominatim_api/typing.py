@@ -2,14 +2,14 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Type definitions for typing annotations.
 
 Complex type definitions are moved here, to keep the source files readable.
 """
-from typing import Union, TYPE_CHECKING
+from typing import Union, Any, TYPE_CHECKING
 
 # flake8: noqa
 
@@ -22,10 +22,9 @@ if TYPE_CHECKING:
     import sqlalchemy as sa
     import os
     from typing_extensions import (TypeAlias as TypeAlias,
-                                   Protocol as Protocol)
+                                   Unpack as Unpack)
 else:
     TypeAlias = str
-    Protocol = object
 
 StrPath = Union[str, 'os.PathLike[str]']
 
@@ -40,3 +39,4 @@ SaFromClause: TypeAlias = 'sa.FromClause'
 SaSelectable: TypeAlias = 'sa.Selectable'
 SaBind: TypeAlias = 'sa.BindParameter[Any]'
 SaDialect: TypeAlias = 'sa.Dialect'
+SaResult: TypeAlias = 'sa.Result[Unpack[tuple[Any, ...]]]'

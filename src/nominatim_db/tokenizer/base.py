@@ -9,9 +9,8 @@ Abstract class definitions for tokenizers. These base classes are here
 mainly for documentation purposes.
 """
 from abc import ABC, abstractmethod
-from typing import List, Tuple, Any, Optional, Iterable
+from typing import List, Tuple, Any, Optional, Iterable, Protocol
 
-from ..typing import Protocol
 from ..config import Configuration
 from ..db.connection import Connection
 from ..data.place_info import PlaceInfo

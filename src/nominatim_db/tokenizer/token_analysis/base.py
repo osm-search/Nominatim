@@ -2,14 +2,13 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Common data types and protocols for analysers.
 """
-from typing import Mapping, List, Any, Union, Tuple
+from typing import Mapping, List, Any, Union, Tuple, Protocol
 
-from ...typing import Protocol
 from ...data.place_name import PlaceName
 
 

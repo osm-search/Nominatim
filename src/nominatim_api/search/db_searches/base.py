@@ -2,12 +2,12 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2025 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Interface for classes implementing a database search.
 """
-from typing import Callable, List, Optional
+from typing import Callable, List, Optional, TypeVar
 import abc
 import re
 
@@ -22,6 +22,8 @@ from ...results import SearchResults
 
 
 _LTREE_INVALID = re.compile(r'[^A-Za-z0-9_-]')
+
+S = TypeVar('S', bound=SaSelect)
 
 
 def _sanitize_label(part: str) -> str:
@@ -80,8 +82,7 @@ def category_restriction(table: SaFromClause,
     return sa.and_(*terms)
 
 
-def filter_by_category(sql: SaSelect, t: SaFromClause,
-                       details: SearchDetails) -> SaSelect:
+def filter_by_category(sql: S, t: SaFromClause, details: SearchDetails) -> S:
     """ Apply the include/exclude category filters, if applicable.
     """
     restriction = category_restriction(t, details)
@@ -172,8 +173,8 @@ def no_index(expr: SaColumn) -> SaColumn:
     return sa.func.coalesce(sa.null(), expr)
 
 
-def filter_by_area(sql: SaSelect, t: SaFromClause,
-                   details: SearchDetails, avoid_index: bool = False) -> SaSelect:
+def filter_by_area(sql: S, t: SaFromClause,
+                   details: SearchDetails, avoid_index: bool = False) -> S:
     """ Apply SQL statements for filtering by viewbox and near point,
         if applicable.
     """

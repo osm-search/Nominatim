@@ -7,9 +7,8 @@
 """
 Common data types and protocols for sanitizers.
 """
-from typing import Optional, Mapping, Callable
+from typing import Optional, Mapping, Callable, Protocol, Final
 
-from ...typing import Protocol, Final
 from ...data.place_info import PlaceInfo
 from ...data.place_name import PlaceName, PlaceNames
 from .config import SanitizerConfig

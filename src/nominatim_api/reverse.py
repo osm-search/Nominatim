@@ -362,8 +362,8 @@ class ReverseGeocoder:
                 break  # it can't get better than that, everything else is farther away
 
         # For the US also check the TIGER data, when no housenumber/POI was found.
-        if result is not None and parent_street is not None and hnr_distance is None \
-                and result.country_code == 'us':
+        if result is not None and parent_street is not None \
+                and result.country_code == 'us' and result.place_id == parent_street:
             log().comment('Find TIGER housenumber for street')
             addr_row = await self._find_tiger_number_for_street(parent_street)
             log().var_dump('Result (street Tiger housenumber)', addr_row)
@@ -371,8 +371,8 @@ class ReverseGeocoder:
             if addr_row is not None:
                 row_func = cast(RowFunc,
                                 functools.partial(nres.create_from_tiger_row,
-                                                  osm_type=row.osm_type,
-                                                  osm_id=row.osm_id))
+                                                  osm_type=result.osm_type,
+                                                  osm_id=result.osm_id))
                 result = addr_row
 
         # Check for an interpolation that is either closer than our result

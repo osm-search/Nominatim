@@ -85,13 +85,13 @@ Feature: Json output for Reverse API
 
     Scenario: Reverse json - Tiger address
         When sending v1/reverse with format jsonv2
-          | lat           | lon            |
-          | 32.4752389363 | -86.4810198619 |
+          | lat       | lon        |
+          | 32.460754 | -86.449175 |
         Then a HTTP 200 is returned
         And the result is valid json
         And the result contains
-          | osm_type | osm_id    | category | type  | addresstype  |
-          | way      | 396009653 | place    | house | place        |
+          | osm_type | osm_id  | category | type  | addresstype  |
+          | way      | 6201946 | place    | house | place        |
 
     Scenario Outline: Reverse json - Interpolation address
         When sending v1/reverse with format <format>

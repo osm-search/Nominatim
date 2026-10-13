@@ -795,7 +795,7 @@ function module.process_tags(o)
                         geometry = o.geometry
                     }
                 end
-            elseif ktype == 'fallback' then
+            elseif ktype == 'fallback' and o.has_name then
                 table.insert(fallback_tags, {k, v})
             end
         end
@@ -803,8 +803,8 @@ function module.process_tags(o)
 
     merged_extratags = build_extratags(o, nil, nil, main_class)
 
-    -- Fallback tags always add their categories, 
-    -- they are only used for class or type when the object is named and nothing better was found
+    -- Fallback tags are only used for named objects. All of them get a category,
+    -- the first one also provides class/type when no other main tag did.
     table.sort(fallback_tags, function(a, b)
         return a[1] < b[1] or (a[1] == b[1] and a[2] < b[2])
     end)
@@ -812,7 +812,7 @@ function module.process_tags(o)
         local cat = get_category(kv[1], kv[2])
         if cat ~= nil then
             table.insert(categories, cat) 
-            if main_class == nil and o.has_name then
+            if main_class == nil then
                 main_class, main_type = kv[1], kv[2]
             end
         end

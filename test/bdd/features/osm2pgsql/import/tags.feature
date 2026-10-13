@@ -14,11 +14,11 @@ Feature: Tag evaluation
             """
         Then place contains exactly
             | object | class    | type     | categories!set                             |
-            | N100   | highway  | bus_stop | 'osm.highway.bus_stop', 'osm.junction.yes' |
+            | N100   | highway  | bus_stop | 'osm.highway.bus_stop'                     |
             | N101   | junction | yes      | 'osm.junction.yes'                         |
-            | N200   | amenity  | cafe     | 'osm.amenity.cafe', 'osm.building.yes'     |
+            | N200   | amenity  | cafe     | 'osm.amenity.cafe'                         |
             | N201   | building | yes      | 'osm.building.yes'                         |
-            | N203   | place    | house    | 'osm.building.yes'                         |
+            | N203   | building | yes      | 'osm.building.yes'                         |
             | N204   | building | yes      | 'osm.building.yes', 'osm.landuse.retail'   |
 
 

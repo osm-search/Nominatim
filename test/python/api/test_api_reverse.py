@@ -206,12 +206,20 @@ def test_reverse_housenumber_point_interpolation(apiobj, frontend):
 
 
 def test_reverse_tiger_number(apiobj, frontend):
-    apiobj.add_placex(place_id=990, class_='highway', type='service',
+    apiobj.add_placex(place_id=990, osm_type='W', osm_id=100,
+                      class_='highway', type='service',
                       rank_search=27, rank_address=27,
                       name={'name': 'My Street'},
                       centroid=(10.0, 10.0),
                       country_code='us',
                       geometry='LINESTRING(9.995 10, 10.005 10)')
+    apiobj.add_placex(place_id=991, osm_type='N', osm_id=5,
+                      class_='place', type='house',
+                      rank_search=30, rank_address=30,
+                      housenumber='28',
+                      parent_place_id=993,
+                      centroid=(10.0, 10.0007),
+                      country_code='us')
     apiobj.add_tiger(place_id=992,
                      parent_place_id=990,
                      startnumber=1, endnumber=3, step=1,
@@ -219,7 +227,11 @@ def test_reverse_tiger_number(apiobj, frontend):
                      geometry='LINESTRING(9.995 10.00001, 10.005 10.00001)')
 
     api = frontend(apiobj, options=API_OPTIONS)
-    assert api.reverse((10.0, 10.0)).place_id == 992
+
+    result = api.reverse((10.0, 10.0))
+    assert result.place_id == 992
+    assert result.osm_object == ('W', 100)
+
     assert api.reverse((10.0, 10.00001)).place_id == 992
 
 

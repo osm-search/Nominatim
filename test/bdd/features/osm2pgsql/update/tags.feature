@@ -173,7 +173,7 @@ Feature: Tag evaluation
             """
         Then place contains exactly
             | object | class | type  | address!dict        | categories         |
-            | N1     | place | house | 'housenumber': '345'| osm.place.house    |
+            | N1     | place | house | 'housenumber': '345'| -                  |
 
         When updating osm data
             """
@@ -203,11 +203,11 @@ Feature: Tag evaluation
             """
         Then place contains exactly
             | object | class | type  | address!dict        | categories           |
-            | N1     | place | house | 'housenumber': '345'| osm.place.house      |
+            | N1     | place | house | 'housenumber': '345'| -                    |
         When indexing
         Then placex contains exactly
             | object | class | type  | address!dict        | categories           |
-            | N1     | place | house | 'housenumber': '345'| osm.place.house      |
+            | N1     | place | house | 'housenumber': '345'| -                    |
 
 
     Scenario: Main tags with name key, adding key name

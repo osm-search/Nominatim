@@ -481,3 +481,19 @@ Feature: Search queries
           | include | osm |
           | include | |
           | exclude | osm.amenity;cafe |
+
+    Scenario Outline: Invalid values are properly encoded in error messages
+        When sending v1/search with format <format>
+          | q           | include |
+          | Boccia Club | <value> |
+        Then a HTTP 400 is returned
+        And the result is valid <format>
+        And the result contains
+          | error+code | error+message |
+          | 400        | Invalid category '<value>'. A category must consist of at least two labels separated by dots. |
+
+        Examples:
+          | format | value |
+          | json   | x"y |
+          | xml    | </message><amenity>cafe</amenity><message> |
+          | xml    | a&b<c |

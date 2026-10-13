@@ -47,15 +47,21 @@ Please make sure to follow these guidelines:
 
 ### Using AI-assisted code generators
 
-PRs that include AI-generated content, may that be in code, in the PR
-description or in documentation need to
+Using AI to explore the code, improve understanding and review human-written
+code is perfectly fine. In fact, we strongly encourage new contributors to
+do so as Nominatim has a complex code base with many moving parts. No need
+to mention if you use AI in this way.
 
-1. clearly mark the AI-generated sections as such, for example, by
-   mentioning all use of AI in the PR description, and
-2. include proof that you have run the generated code on an actual
-   installation of Nominatim. Adding and executing tests will not be
-   sufficient. You need to show that the code actually solves the problem
-   the PR claims to solve.
+PRs that include AI-generated content, may that be in code, in the PR
+description or in documentation need to clearly mark the AI-generated
+sections as such by mentioning all use of AI in the PR description. Any
+AI-generated content must have been throughly reviewed and tested by
+the submitter. You will be held responsible for all AI output and for
+correctly declaring the AI content.
+
+The maintainers reserve the right to refuse review of any PR that looks to be
+predominantly AI-generated. (This does, of course, not apply to PRs from our
+sponsors/contractors for the project.)
 
 We do not accept **under any circumstances** bulk-generated, agent-driven contributions.
 These PRs create a huge burden on the maintainers while not bringing a net-positive

@@ -410,13 +410,13 @@ Feature: Search queries
 
     Scenario Outline: Invalid values are properly encoded in error messages
         When sending v1/search with format <format>
-          | q           | include |
+          | q           | exclude_place_ids |
           | Boccia Club | <value> |
         Then a HTTP 400 is returned
         And the result is valid <format>
         And the result contains
           | error+code | error+message |
-          | 400        | Invalid category '<value>'. A category must consist of at least two labels separated by dots. |
+          | 400        | Invalid exclude ID: <value> |
 
         Examples:
           | format | value |

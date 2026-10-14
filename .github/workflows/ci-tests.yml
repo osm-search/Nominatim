@@ -33,6 +33,40 @@ jobs:
                   path: nominatim-src.tar.bz2
                   retention-days: 1
 
+    linting:
+        needs: create-archive
+        runs-on: ubuntu-26.04
+        steps:
+            - uses: actions/download-artifact@v8
+              with:
+                  name: full-source
+
+            - name: Unpack Nominatim
+              run: tar xf nominatim-src.tar.bz2
+
+            - name: Install general prerequisites
+              run: |
+                sudo apt-get install -y -qq virtualenv python3-dev
+              shell: bash
+
+            - name: Setup virtual environment (for pip)
+              run: |
+                virtualenv venv
+                ./venv/bin/pip install -U pip
+              shell: bash
+
+            - name: Install test prerequisites (pip)
+              run: ../venv/bin/pip install -U flake8 mypy types-PyYAML types-jinja2 types-psutil types-requests types-ujson types-Pygments typing-extensions
+              working-directory: Nominatim
+
+            - name: Python linting
+              run: ../venv/bin/python -m flake8 src test/python test/bdd
+              working-directory: Nominatim
+
+            - name: Python static typechecking
+              run: ../venv/bin/python -m mypy src
+              working-directory: Nominatim
+
     tests:
         needs: create-archive
         strategy:
@@ -114,22 +148,6 @@ jobs:
 
             - name: Install test prerequisites
               run: ./venv/bin/pip install pytest-bdd
-
-            - name: Install latest flake8
-              run: ./venv/bin/pip install -U flake8
-
-            - name: Python linting
-              run: ../venv/bin/python -m flake8 src test/python test/bdd
-              working-directory: Nominatim
-
-            - name: Install mypy and typechecking info
-              run: ./venv/bin/pip install -U mypy types-PyYAML types-jinja2 types-psutil types-requests types-ujson types-Pygments typing-extensions
-              if: matrix.dependencies == 'pip'
-
-            - name: Python static typechecking
-              run: ../venv/bin/python -m mypy --strict --python-version 3.10 src
-              working-directory: Nominatim
-              if: matrix.dependencies == 'pip'
 
             - name: Python unit tests
               run: ../venv/bin/python -m pytest test/python

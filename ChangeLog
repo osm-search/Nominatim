@@ -1,3 +1,14 @@
+5.3.3
+ * fix display of rank 11 boundaries
+ * remove address level exceptions for Slovakia
+ * do not search for countries when country retriction is in place
+ * improve reverse geocoding near overlapping POIs
+ * fix file inclusion in wheel builds
+ * improve API parameter validation
+ * disable debug paramter by default
+ * add variants for Hungarian (thanks @Janjko)
+ * documentation improvements (thanks @jeremy-code, @RhinoDevel)
+
 5.3.2
  * fix constraint error from SQL when deleting places
 

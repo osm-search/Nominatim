@@ -1,6 +1,11 @@
 query-preprocessing:
     - step: split_japanese_phrases
     - step: normalize
+    - step: regex-replace
+      replacements:
+          - pattern: '^.{500,}$'
+            replace: ''
+
 normalization:
     - ":: lower ()"
     - ":: Hans-Hant"

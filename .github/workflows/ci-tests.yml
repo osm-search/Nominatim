@@ -56,8 +56,9 @@ jobs:
               shell: bash
 
             - name: Install test prerequisites (pip)
-              run: ../venv/bin/pip install -U Nominatim/packaging/nominatim-{api,db} flake8 mypy types-PyYAML types-jinja2 types-psutil types-requests types-ujson types-Pygments typing-extensions
-              working-directory: Nominatim
+              run: |
+                  ./venv/bin/pip install Nominatim/packaging/nominatim-{api,db}
+                  ./venv/bin/pip install -U flake8 mypy types-PyYAML types-jinja2 types-psutil types-requests types-ujson types-Pygments typing-extensions
 
             - name: Python linting
               run: ../venv/bin/python -m flake8 src test/python test/bdd

@@ -5,7 +5,15 @@
  * improve reverse geocoding near overlapping POIs
  * fix file inclusion in wheel builds
  * improve API parameter validation
+ * restrict overlong query terms
+ * improve escaping of API output
+ * fix searching for POIs parented to unnamed streets (thanks @pawank925)
+ * fix code-formatting for newer pygments version
  * disable debug paramter by default
+ * improve postcode pattern for Falklands
+ * adapt code for latest versions of pytest-bdd and SQLAlchemy
+ * CLI: make entrances work for reverse and lookup calls
+ * fix reported parent street for TIGER results in reverse search
  * add variants for Hungarian (thanks @Janjko)
  * documentation improvements (thanks @jeremy-code, @RhinoDevel)
 

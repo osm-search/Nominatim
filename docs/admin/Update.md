@@ -120,7 +120,7 @@ Description=Single updates of Nominatim
 [Service]
 WorkingDirectory=/srv/nominatim-project
 ExecStart=/srv/nominatim-venv/bin/nominatim replication --once
-StandardOutput=journald
+StandardOutput=journal
 StandardError=inherit
 User=nominatim
 Group=nominatim

@@ -100,6 +100,15 @@ def test_simple_postcode(pc_config, query, pos):
     assert result == {(pos, pos + 1, '45325'), (pos, pos + 1, '453 25')}
 
 
+def test_postcode_phrase_with_space(pc_config):
+    query = qmod.QueryStruct([])
+    add_node(query, '<', qmod.PHRASE_POSTCODE, 'EC1R')
+    add_node(query, ' ', qmod.PHRASE_POSTCODE, '3HF')
+    query.add_final_node()
+
+    assert PostcodeParser(pc_config).parse(query) == {(0, 2, 'EC1R 3HF')}
+
+
 @pytest.mark.parametrize('query', ['EC1R 3HF', 'ec1r 3hf'])
 def test_postcode_matching_case_insensitive(pc_config, query):
     parser = PostcodeParser(pc_config)

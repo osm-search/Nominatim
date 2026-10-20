@@ -353,7 +353,8 @@ module.ADDRESS_TAGS.core = { extra = {'addr:*', 'is_in:*', 'tiger:county'},
 module.ADDRESS_TAGS.houses = { main = {'addr:housenumber',
                                        'addr:conscriptionnumber',
                                        'addr:streetnumber'},
-                               interpolation = {'addr:interpolation'}
+                               interpolation = {'addr:interpolation'},
+                               place = {'addr:place', 'addr:substreet'}
                              }
 
 -- Ignored tags (prefiltered away)

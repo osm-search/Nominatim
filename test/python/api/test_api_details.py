@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2025 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for details API call.
@@ -159,7 +159,7 @@ def test_lookup_placex_with_address_details(apiobj, frontend):
                                 category=('highway', 'residential'),
                                 names={'name': 'Street'}, extratags={},
                                 admin_level=15, fromarea=True, isaddress=True,
-                                rank_address=26, distance=0.0,
+                                rank_address=27, distance=0.0,
                                 local_name='Street'),
                napi.AddressLine(place_id=1000, osm_object=('N', 3333),
                                 category=('place', 'suburb'),
@@ -361,7 +361,7 @@ def test_lookup_osmline_with_address_details(apiobj, frontend):
                                 category=('highway', 'residential'),
                                 names={'name': 'Street'}, extratags={},
                                 admin_level=15, fromarea=True, isaddress=True,
-                                rank_address=26, distance=0.0,
+                                rank_address=27, distance=0.0,
                                 local_name='Street'),
                napi.AddressLine(place_id=1000, osm_object=('N', 3333),
                                 category=('place', 'suburb'),
@@ -462,7 +462,7 @@ def test_lookup_tiger_with_address_details(apiobj, frontend):
                                 category=('highway', 'residential'),
                                 names={'name': 'Street'}, extratags={},
                                 admin_level=15, fromarea=True, isaddress=True,
-                                rank_address=26, distance=0.0,
+                                rank_address=27, distance=0.0,
                                 local_name='Street'),
                napi.AddressLine(place_id=1000, osm_object=('N', 3333),
                                 category=('place', 'suburb'),

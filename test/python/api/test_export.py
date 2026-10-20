@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2025 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for export CLI function.
@@ -27,7 +27,7 @@ def setup_database_with_context(apiobj):
     apiobj.add_placex(place_id=332, osm_type='W', osm_id=4,
                       class_='highway', type='residential',  name='Street',
                       country_code='pl', postcode='55674',
-                      rank_search=27, rank_address=26)
+                      rank_search=26, rank_address=26)
     apiobj.add_address_placex(332, fromarea=False, isaddress=False,
                               distance=0.0034,
                               place_id=1000, osm_type='N', osm_id=3333,

@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Implementation of the 'export' subcommand.
@@ -33,8 +33,7 @@ RANK_RANGE_MAP = {
   'county': (10, 12),
   'city': (13, 16),
   'suburb': (17, 21),
-  'street': (26, 26),
-  'path': (27, 27)
+  'street': (26, 27)
 }
 
 
@@ -44,7 +43,7 @@ RANK_TO_OUTPUT_MAP = {
     10: 'county', 11: 'county', 12: 'county',
     13: 'city', 14: 'city', 15: 'city', 16: 'city',
     17: 'suburb', 18: 'suburb', 19: 'suburb', 20: 'suburb', 21: 'suburb',
-    26: 'street', 27: 'path'}
+    26: 'street', 27: 'street'}
 
 
 class QueryExport:
@@ -92,7 +91,8 @@ async def export(args: NominatimArgs) -> int:
     api = napi.NominatimAPIAsync(args.project_dir)
 
     try:
-        output_range = RANK_RANGE_MAP[args.output_type]
+        output_range = RANK_RANGE_MAP['street' if args.output_type == 'path'
+                                      else args.output_type]
 
         writer = init_csv_writer(args.output_format)
 

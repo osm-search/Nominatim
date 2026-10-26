@@ -41,9 +41,10 @@ class _PostcodeSanitizer:
         if not obj.address:
             return
 
-        postcodes = ((i, o) for i, o in enumerate(obj.address) if o.kind == 'postcode')
+        for pos, postcode in list(enumerate(obj.address)):
+            if postcode.kind != 'postcode':
+                continue
 
-        for pos, postcode in postcodes:
             formatted = self.scan(postcode.name, obj.place.country_code)
 
             if formatted is None:

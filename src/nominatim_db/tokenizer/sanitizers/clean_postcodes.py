@@ -42,6 +42,7 @@ class _PostcodeSanitizer:
             return
 
         postcodes = ((i, o) for i, o in enumerate(obj.address) if o.kind == 'postcode')
+        to_delete = []
 
         for pos, postcode in postcodes:
             formatted = self.scan(postcode.name, obj.place.country_code)
@@ -50,10 +51,13 @@ class _PostcodeSanitizer:
                 if self.convert_to_address:
                     postcode.kind = 'unofficial_postcode'
                 else:
-                    obj.address.pop(pos)
+                    to_delete.append(pos)
             else:
                 postcode.name = formatted[0]
                 postcode.set_attr('variant', formatted[1])
+
+        if to_delete:
+            obj.address = [o for i, o in enumerate(obj.address) if i not in to_delete]
 
     def scan(self, postcode: str, country: Optional[str]) -> Optional[Tuple[str, str]]:
         """ Check the postcode for correct formatting and return the

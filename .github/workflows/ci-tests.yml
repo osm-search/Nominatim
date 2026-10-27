@@ -4,7 +4,7 @@ on: [ push, pull_request ]
 
 jobs:
     create-archive:
-        runs-on: ubuntu-latest
+        runs-on: blacksmith-2vcpu-ubuntu-2404
 
         steps:
             - uses: actions/checkout@v7
@@ -35,7 +35,7 @@ jobs:
 
     linting:
         needs: create-archive
-        runs-on: ubuntu-26.04
+        runs-on: blacksmith-2vcpu-ubuntu-2604
         steps:
             - uses: actions/download-artifact@v8
               with:
@@ -85,7 +85,7 @@ jobs:
                       dependencies: apt
                       python: 'builtin'
 
-        runs-on: ubuntu-${{ matrix.ubuntu }}.04
+        runs-on: blacksmith-2vcpu-ubuntu-${{ matrix.ubuntu }}04
 
         steps:
             - uses: actions/download-artifact@v8
@@ -138,7 +138,7 @@ jobs:
                       pyicu: 'v2.15/pyicu-2.15-cp310-cp310-win_amd64.whl'
                     - python: '3.14'
                       pyicu: 'v2.16.2/pyicu-2.16.2-cp314-cp314-win_amd64.whl'
-        runs-on: windows-latest
+        runs-on: blacksmith-2vcpu-windows-2025
 
         steps:
             - uses: actions/download-artifact@v8
@@ -204,7 +204,7 @@ jobs:
               working-directory: Nominatim
 
     install-ubuntu:
-        runs-on: ubuntu-latest
+        runs-on: blacksmith-2vcpu-ubuntu-2404
         needs: create-archive
 
         strategy:
@@ -344,7 +344,7 @@ jobs:
                       pyicu: 'v2.15/pyicu-2.15-cp310-cp310-win_amd64.whl'
                     - python: '3.14'
                       pyicu: 'v2.16.2/pyicu-2.16.2-cp314-cp314-win_amd64.whl'
-        runs-on: windows-latest
+        runs-on: blacksmith-2vcpu-windows-2025
         needs: create-archive
         steps:
             - uses: actions/download-artifact@v8
@@ -453,7 +453,7 @@ jobs:
               working-directory: Nominatim/data-env-reverse
 
     install-no-superuser:
-      runs-on: ubuntu-26.04
+      runs-on: blacksmith-2vcpu-ubuntu-2604
       needs: create-archive
 
       steps:
@@ -493,7 +493,7 @@ jobs:
             run: ./venv/bin/nominatim admin --check-database
 
     migrate:
-      runs-on: ubuntu-26.04
+      runs-on: blacksmith-2vcpu-ubuntu-2604
       needs: create-archive
 
       steps:

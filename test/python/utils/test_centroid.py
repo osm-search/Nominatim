@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2025 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Tests for centroid computation.
@@ -13,7 +13,7 @@ from nominatim_db.utils.centroid import PointsCentroid
 
 
 def test_empty_set():
-    c = PointsCentroid()
+    c = PointsCentroid(10)
 
     with pytest.raises(ValueError, match='No points'):
         c.centroid()
@@ -21,7 +21,7 @@ def test_empty_set():
 
 @pytest.mark.parametrize("centroid", [(0, 0), (-1, 3), [0.0000032, 88.4938]])
 def test_one_point_centroid(centroid):
-    c = PointsCentroid()
+    c = PointsCentroid(10)
 
     c += centroid
 
@@ -30,7 +30,7 @@ def test_one_point_centroid(centroid):
 
 
 def test_multipoint_centroid():
-    c = PointsCentroid()
+    c = PointsCentroid(10)
 
     c += (20.0, -10.0)
     assert c.centroid() == (pytest.approx(20.0), pytest.approx(-10.0))
@@ -41,7 +41,7 @@ def test_multipoint_centroid():
 
 
 def test_manypoint_centroid():
-    c = PointsCentroid()
+    c = PointsCentroid(10)
 
     for _ in range(10000):
         c += (4.564732, -0.000034)
@@ -51,7 +51,7 @@ def test_manypoint_centroid():
 
 @pytest.mark.parametrize("param", ["aa", None, 5, [1, 2, 3], (3, None), ("a", 3.9)])
 def test_add_non_tuple(param):
-    c = PointsCentroid()
+    c = PointsCentroid(10)
 
     with pytest.raises(ValueError, match='2-element tuples'):
         c += param

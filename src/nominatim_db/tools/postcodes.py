@@ -8,7 +8,7 @@
 Functions for importing, updating and otherwise maintaining the table
 of artificial postcode centroids.
 """
-from typing import Optional, Tuple, TextIO
+from typing import Optional, TextIO
 from collections import defaultdict
 from pathlib import Path
 import csv
@@ -22,7 +22,7 @@ from psycopg import sql as pysql
 from ..db.connection import connect, Connection, table_exists
 from ..utils.centroid import PointsCentroid
 from ..data.postcode_format import PostcodeFormatter, CountryPostcodeMatcher, PostcodeMatch
-from ..tokenizer.base import AbstractAnalyzer, AbstractTokenizer
+from ..tokenizer.base import AbstractTokenizer
 
 LOG = logging.getLogger()
 
@@ -68,7 +68,7 @@ class _PostcodeCollector:
         self.matcher = matcher
         self.exclude = exclude
         self.collected: dict[str, PointsCentroid] = {}
-        self.normalization_cache: Tuple[str, Optional[PostcodeMatch]] = ('', None)
+        self.normalization_cache: tuple[str, Optional[PostcodeMatch]] = ('', None)
 
     def add(self, postcode: str, x: float, y: float) -> None:
         """ Add the given postcode to the collection cache. If the postcode
@@ -90,15 +90,14 @@ class _PostcodeCollector:
                     pt += (x, y)
                     self.collected[normalized.norm] = pt
 
-    def commit(self, conn: Connection, analyzer: AbstractAnalyzer,
-               project_dir: Optional[Path], is_initial: bool) -> None:
+    def commit(self, conn: Connection, project_dir: Optional[Path], is_initial: bool) -> None:
         """ Update postcodes for the country from the postcodes selected so far.
 
             When 'project_dir' is set, then any postcode files found in this
             directory are taken into account as well.
         """
         if project_dir is not None:
-            self._update_from_external(analyzer, project_dir)
+            self._update_from_external(project_dir)
 
         if is_initial:
             to_delete = []
@@ -147,12 +146,12 @@ class _PostcodeCollector:
                                      AND osm_id is null and not is_area
                             """, (self.country, to_delete))
 
-    def _update_from_external(self, analyzer: AbstractAnalyzer, project_dir: Path) -> None:
+    def _update_from_external(self, project_dir: Path) -> None:
         """ Look for an external postcode file for the active country in
             the project directory and add missing postcodes when found.
         """
         fname = self._find_external_centroid_file(project_dir)
-        if fname is None:
+        if fname is None or self.matcher is None:
             return
 
         with _open_external_file(fname) as csvfile:
@@ -162,21 +161,21 @@ class _PostcodeCollector:
                     LOG.warning("Bad format for external postcode file for country '%s'."
                                 " Ignored.", self.country)
                     return
-                postcode = analyzer.normalize_postcode(row['postcode'])
-                if postcode not in self.collected and postcode not in self.exclude:
-                    try:
-                        # Do float conversation separately, it might throw
-                        centroid = (_to_float(row['lon'], 180),
-                                    _to_float(row['lat'], 90))
-                        if (coll := self.collected.get(postcode)):
+                if (m := self.matcher.match(row['postcode'])):
+                    if m.norm not in self.collected and m.norm not in self.exclude:
+                        try:
+                            # Do float conversation separately, it might throw
+                            centroid = (_to_float(row['lon'], 180),
+                                        _to_float(row['lat'], 90))
+                            coll = PointsCentroid(m.extent)
                             coll += centroid
-                        else:
-                            coll = PointsCentroid(5000)
-                            coll += centroid
-                            self.collected[postcode] = coll
-                    except ValueError:
-                        LOG.warning("Bad coordinates %s, %s in '%s' country postcode file.",
-                                    row['lat'], row['lon'], self.country)
+                            self.collected[m.norm] = coll
+                        except ValueError:
+                            LOG.warning("Bad coordinates %s, %s in '%s' country postcode file.",
+                                        row['lat'], row['lon'], self.country)
+                else:
+                    LOG.warning("Badly formatted postcode '%s' in file for country '%s'. Ignored.",
+                                row['postcode'], self.country)
 
     def _find_external_centroid_file(self, project_dir: Path) -> Optional[Path]:
         for ext in ('csv', 'csv.gz'):
@@ -193,32 +192,32 @@ def update_postcodes(dsn: str, project_dir: Optional[Path],
         placex and place_postcode.
     """
     matcher = PostcodeFormatter()
-    with tokenizer.name_analyzer() as analyzer:
-        with connect(dsn) as conn:
-            # Backfill country_code column where required
-            conn.execute("""UPDATE place_postcode
-                              SET country_code = get_country_code(centroid)
-                              WHERE country_code is null
-                         """)
-            if force_reimport:
-                conn.execute("TRUNCATE location_postcodes")
-                is_initial = True
-            else:
-                is_initial = _is_postcode_table_empty(conn)
-            if is_initial:
-                conn.execute("""ALTER TABLE location_postcodes
-                                DISABLE TRIGGER location_postcodes_before_insert""")
-            # Now update first postcode areas
-            _update_postcode_areas(conn, analyzer, matcher, is_initial)
-            # Update postcode areas from external geometry files
-            _update_external_postcode_areas(conn, analyzer, matcher, project_dir, is_initial)
-            # Then fill with estimated postcode centroids from other info
-            _update_guessed_postcode(conn, analyzer, matcher, project_dir, is_initial)
-            if is_initial:
-                conn.execute("""ALTER TABLE location_postcodes
-                                ENABLE TRIGGER location_postcodes_before_insert""")
-            conn.commit()
+    with connect(dsn) as conn:
+        # Backfill country_code column where required
+        conn.execute("""UPDATE place_postcode
+                          SET country_code = get_country_code(centroid)
+                          WHERE country_code is null
+                     """)
+        if force_reimport:
+            conn.execute("TRUNCATE location_postcodes")
+            is_initial = True
+        else:
+            is_initial = _is_postcode_table_empty(conn)
+        if is_initial:
+            conn.execute("""ALTER TABLE location_postcodes
+                            DISABLE TRIGGER location_postcodes_before_insert""")
+        # Now update first postcode areas
+        _update_postcode_areas(conn, matcher, is_initial)
+        # Update postcode areas from external geometry files
+        _update_external_postcode_areas(conn, matcher, project_dir, is_initial)
+        # Then fill with estimated postcode centroids from other info
+        _update_guessed_postcode(conn, matcher, project_dir, is_initial)
+        if is_initial:
+            conn.execute("""ALTER TABLE location_postcodes
+                            ENABLE TRIGGER location_postcodes_before_insert""")
+        conn.commit()
 
+    with tokenizer.name_analyzer() as analyzer:
         analyzer.update_postcodes_from_db()
 
 
@@ -259,8 +258,8 @@ def _insert_postcode_areas(conn: Connection, country_code: str,
                 pcs)
 
 
-def _update_postcode_areas(conn: Connection, analyzer: AbstractAnalyzer,
-                           matcher: PostcodeFormatter, is_initial: bool) -> None:
+def _update_postcode_areas(conn: Connection, matcher: PostcodeFormatter,
+                           is_initial: bool) -> None:
     """ Update the postcode areas made from postcode boundaries.
     """
     # first delete all areas that have gone
@@ -361,8 +360,7 @@ def _insert_external_postcode_areas(conn: Connection, country_code: str,
         )
 
 
-def _update_external_postcode_areas(conn: Connection, analyzer: AbstractAnalyzer,
-                                    matcher: PostcodeFormatter,
+def _update_external_postcode_areas(conn: Connection, matcher: PostcodeFormatter,
                                     project_dir: Optional[Path], is_initial: bool) -> None:
     if project_dir is None:
         return
@@ -445,9 +443,8 @@ def _update_external_postcode_areas(conn: Connection, analyzer: AbstractAnalyzer
         _insert_external_postcode_areas(conn, country, pcs, is_initial)
 
 
-def _update_guessed_postcode(conn: Connection, analyzer: AbstractAnalyzer,
-                             matcher: PostcodeFormatter, project_dir: Optional[Path],
-                             is_initial: bool) -> None:
+def _update_guessed_postcode(conn: Connection, matcher: PostcodeFormatter,
+                             project_dir: Optional[Path], is_initial: bool) -> None:
     """ Computes artificial postcode centroids from the placex table,
         potentially enhances it with external postcode centroid data and then updates
         the postcodes in the table 'location_postcodes'.
@@ -503,20 +500,20 @@ def _update_guessed_postcode(conn: Connection, analyzer: AbstractAnalyzer,
         for country, postcode, x, y in cur:
             if collector is None or country != collector.country:
                 if collector is not None:
-                    collector.commit(conn, analyzer, project_dir, is_initial)
+                    collector.commit(conn, project_dir, is_initial)
                 collector = _PostcodeCollector(country, matcher.get_matcher(country),
                                                exclude=area_pcs[country])
                 todo_countries.discard(country)
             collector.add(postcode, x, y)
 
         if collector is not None:
-            collector.commit(conn, analyzer, project_dir, is_initial)
+            collector.commit(conn, project_dir, is_initial)
 
     # Now handle any countries that are only in the postcode table.
     for country in todo_countries:
         fmt = matcher.get_matcher(country)
         _PostcodeCollector(country, fmt,
-                           exclude=area_pcs[country]).commit(conn, analyzer, project_dir, False)
+                           exclude=area_pcs[country]).commit(conn, project_dir, False)
 
     conn.execute("DROP TABLE IF EXISTS _global_postcode_area")
 

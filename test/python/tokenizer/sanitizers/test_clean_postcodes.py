@@ -253,6 +253,22 @@ def test_postcode_virgin_islands_fail(sanitize, postcode):
     assert sanitize(country='vg', postcode=postcode) == []
 
 
+@pytest.mark.parametrize("postcode,output", [('123456', '123456'),
+                                             ('ng-094432', '094432'),
+                                             ('EK-01-A03-FK-01', 'EK-01-A03-FK-01'),
+                                             ('NG 01 A03 FK 01', 'NG-01-A03-FK-01'),
+                                             ('bg34g56SD54', 'BG-34-G56-SD-54')])
+@pytest.mark.sanitizer_params(convert_to_address=False)
+def test_postcode_nigeria_pass(sanitize, postcode, output):
+    assert sanitize(country='ng', postcode=postcode) == [('postcode', output)]
+
+
+@pytest.mark.parametrize("postcode", ('11111', 'ng-34-a004501'))
+@pytest.mark.sanitizer_params(convert_to_address=False)
+def test_postcode_nigeria_fail(sanitize, postcode):
+    assert sanitize(country='ng', postcode=postcode) == []
+
+
 @pytest.mark.parametrize("postcode", ('AB1', '123-456-7890', '1 as 44'))
 @pytest.mark.sanitizer_params(default_pattern='[A-Z0-9- ]{3,12}')
 def test_postcode_default_pattern_pass(sanitize, postcode):

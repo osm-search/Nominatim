@@ -8,7 +8,7 @@
 Functions for formatting postcodes according to their country-specific
 format.
 """
-from typing import Any, Mapping, Optional
+from typing import Any, Mapping, Optional, Protocol
 import dataclasses
 import re
 
@@ -22,8 +22,20 @@ class PostcodeMatch:
     extent: int
 
 
-class CountryPostcodeMatcher:
+class CountryPostcodeMatcher(Protocol):
     """ Matches and formats a postcode according to a format definition
+        of the given country.
+    """
+
+    def match(self, postcode: str) -> Optional[PostcodeMatch]:
+        """ Match the given postcode against the postcode pattern for this
+            matcher. Returns a `re.Match` object if the match was successful
+            and None otherwise.
+        """
+
+
+class SimplePostcodeMatcher:
+    """ Matches and formats a postcode according to a single format definition
         of the given country.
     """
     def __init__(self, country_code: str, config: Mapping[str, Any]) -> None:
@@ -44,10 +56,6 @@ class CountryPostcodeMatcher:
         self.extent = int(config.get('extent', 5000))
 
     def match(self, postcode: str) -> Optional[PostcodeMatch]:
-        """ Match the given postcode against the postcode pattern for this
-            matcher. Returns a `re.Match` object if the match was successful
-            and None otherwise.
-        """
         # Upper-case, strip spaces and leading country code.
         normalized = self.norm_pattern.fullmatch(postcode.upper())
 
@@ -60,6 +68,20 @@ class CountryPostcodeMatcher:
         return None
 
 
+class ListPostcodeMatcher:
+    """ Matcher which allows to have multiple postcode patterns in a country.
+    """
+    def __init__(self, country_code: str, config: list[Any]) -> None:
+        self.matchers = [SimplePostcodeMatcher(country_code, p) for p in config]
+
+    def match(self, postcode: str) -> Optional[PostcodeMatch]:
+        for m in self.matchers:
+            if (pm := m.match(postcode)) is not None:
+                return pm
+
+        return None
+
+
 class PostcodeFormatter:
     """ Container for different postcode formats of the world and
         access functions.
@@ -67,15 +89,17 @@ class PostcodeFormatter:
     def __init__(self) -> None:
         # Objects without a country code can't have a postcode per definition.
         self.country_without_postcode: set[Optional[str]] = {None}
-        self.country_matcher = {}
-        self.default_matcher = CountryPostcodeMatcher('', {'pattern': '.*'})
+        self.country_matcher: dict[str, CountryPostcodeMatcher] = {}
+        self.default_matcher = SimplePostcodeMatcher('', {'pattern': '.*'})
         self.postcode_extent: dict[Optional[str], int] = {}
 
         for ccode, prop in country_info.iterate('postcode'):
             if prop is False:
                 self.country_without_postcode.add(ccode)
             elif isinstance(prop, dict):
-                self.country_matcher[ccode] = CountryPostcodeMatcher(ccode, prop)
+                self.country_matcher[ccode] = SimplePostcodeMatcher(ccode, prop)
+            elif isinstance(prop, list):
+                self.country_matcher[ccode] = ListPostcodeMatcher(ccode, prop)
             else:
                 raise UsageError(f"Invalid entry 'postcode' for country '{ccode}'")
 
@@ -83,7 +107,7 @@ class PostcodeFormatter:
         """ Set the postcode match pattern to use, when a country does not
             have a specific pattern.
         """
-        self.default_matcher = CountryPostcodeMatcher('', {'pattern': pattern})
+        self.default_matcher = SimplePostcodeMatcher('', {'pattern': pattern})
 
     def get_matcher(self, country_code: Optional[str]) -> Optional[CountryPostcodeMatcher]:
         """ Return the CountryPostcodeMatcher for the given country.

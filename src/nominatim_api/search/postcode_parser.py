@@ -7,7 +7,7 @@
 """
 Handling of arbitrary postcode tokens in tokenized query string.
 """
-from typing import Tuple, Set, Dict, List
+from typing import Tuple, Set, Any, Optional
 import re
 from collections import defaultdict
 
@@ -15,6 +15,28 @@ import yaml
 
 from ..config import Configuration
 from . import query as qmod
+
+
+class _UniquePattern:
+    """ Helper class for creating the postcode search pattern.
+    """
+    def __init__(self) -> None:
+        self.patterns: dict[str, dict[Optional[str], list[str]]] = {}
+
+    def add(self, cc: str, pcdata: dict[str, Any]) -> None:
+        pat = pcdata['pattern'].replace('d', '[0-9]').replace('l', '[A-Z]')
+        out = pcdata.get('output')
+        if pat not in self.patterns:
+            self.patterns[pat] = defaultdict(list)
+        self.patterns[pat][out].append(cc.upper())
+
+    def global_pattern(self) -> re.Pattern[str]:
+        return re.compile('(?:(?P<cc>[A-Z][A-Z])(?P<space>[ -]?))?(?P<pc>(?:(?:'
+                          f"{')|(?:'.join(self.patterns)}))[:, >].*)")
+
+    def local_patterns(self) -> list[tuple[re.Pattern[str], list[tuple[Optional[str], list[str]]]]]:
+        return [(re.compile(f"{pat}[:, >]"), list(info.items()))
+                for pat, info in self.patterns.items()]
 
 
 class PostcodeParser:
@@ -31,21 +53,17 @@ class PostcodeParser:
         cdata = yaml.safe_load(config.find_config_file('country_settings.yaml')
                                      .read_text(encoding='utf-8'))
 
-        unique_patterns: Dict[str, Dict[str, List[str]]] = {}
+        unique_patterns = _UniquePattern()
         for cc, data in cdata.items():
-            if data.get('postcode'):
-                pat = data['postcode']['pattern'].replace('d', '[0-9]').replace('l', '[A-Z]')
-                out = data['postcode'].get('output')
-                if pat not in unique_patterns:
-                    unique_patterns[pat] = defaultdict(list)
-                unique_patterns[pat][out].append(cc.upper())
+            if (pcdata := data.get('postcode')):
+                if isinstance(pcdata, dict):
+                    unique_patterns.add(cc, pcdata)
+                elif isinstance(pcdata, list):
+                    for pcitem in pcdata:
+                        unique_patterns.add(cc, pcitem)
 
-        self.global_pattern = re.compile(
-                '(?:(?P<cc>[A-Z][A-Z])(?P<space>[ -]?))?(?P<pc>(?:(?:'
-                + ')|(?:'.join(unique_patterns) + '))[:, >].*)')
-
-        self.local_patterns = [(re.compile(f"{pat}[:, >]"), list(info.items()))
-                               for pat, info in unique_patterns.items()]
+        self.global_pattern = unique_patterns.global_pattern()
+        self.local_patterns = unique_patterns.local_patterns()
 
     def parse(self, query: qmod.QueryStruct) -> Set[Tuple[int, int, str]]:
         """ Parse postcodes in the given list of query tokens taking into

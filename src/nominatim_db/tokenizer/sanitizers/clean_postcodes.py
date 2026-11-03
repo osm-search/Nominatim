@@ -20,7 +20,7 @@ Arguments:
                         objects that have no country assigned. These are always
                         assumed to have no postcode.
 """
-from typing import Optional, Tuple
+from typing import Optional
 
 from ...data.postcode_format import PostcodeFormatter
 from .base import ProcessInfo, SanitizerFunc
@@ -45,33 +45,27 @@ class _PostcodeSanitizer:
         to_delete = []
 
         for pos, postcode in postcodes:
-            formatted = self.scan(postcode.name, obj.place.country_code)
-
-            if formatted is None:
+            if (norm := self.scan(postcode.name, obj.place.country_code)) is not None:
+                postcode.name = norm
+            else:
                 if self.convert_to_address:
                     postcode.kind = 'unofficial_postcode'
                 else:
                     to_delete.append(pos)
-            else:
-                postcode.name = formatted[0]
-                postcode.set_attr('variant', formatted[1])
 
         if to_delete:
             obj.address = [o for i, o in enumerate(obj.address) if i not in to_delete]
 
-    def scan(self, postcode: str, country: Optional[str]) -> Optional[Tuple[str, str]]:
+    def scan(self, postcode: str, country: Optional[str]) -> Optional[str]:
         """ Check the postcode for correct formatting and return the
             normalized version. Returns None if the postcode does not
             correspond to the official format of the given country.
         """
-        match = self.matcher.match(country, postcode)
-        if match is None:
-            return None
+        if (fmt := self.matcher.get_matcher(country)) is not None:
+            if (m := fmt.match(postcode)) is not None:
+                return m.norm
 
-        assert country is not None
-
-        return self.matcher.normalize(country, match), \
-            ' '.join(filter(lambda p: p is not None, match.groups()))
+        return None
 
 
 def create(config: SanitizerConfig) -> SanitizerFunc:

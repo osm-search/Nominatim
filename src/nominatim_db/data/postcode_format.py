@@ -2,21 +2,40 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2025 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Functions for formatting postcodes according to their country-specific
 format.
 """
-from typing import Any, Mapping, Optional, Set, Match
+from typing import Any, Mapping, Optional, Protocol
+import dataclasses
 import re
 
 from ..errors import UsageError
 from . import country_info
 
 
-class CountryPostcodeMatcher:
+@dataclasses.dataclass
+class PostcodeMatch:
+    norm: str
+    extent: int
+
+
+class CountryPostcodeMatcher(Protocol):
     """ Matches and formats a postcode according to a format definition
+        of the given country.
+    """
+
+    def match(self, postcode: str) -> Optional[PostcodeMatch]:
+        """ Match the given postcode against the postcode pattern for this
+            matcher. Returns a `re.Match` object if the match was successful
+            and None otherwise.
+        """
+
+
+class SimplePostcodeMatcher:
+    """ Matches and formats a postcode according to a single format definition
         of the given country.
     """
     def __init__(self, country_code: str, config: Mapping[str, Any]) -> None:
@@ -34,28 +53,33 @@ class CountryPostcodeMatcher:
 
         self.output = config.get('output', r'\g<0>')
 
-    def match(self, postcode: str) -> Optional[Match[str]]:
-        """ Match the given postcode against the postcode pattern for this
-            matcher. Returns a `re.Match` object if the match was successful
-            and None otherwise.
-        """
+        self.extent = int(config.get('extent', 5000))
+
+    def match(self, postcode: str) -> Optional[PostcodeMatch]:
         # Upper-case, strip spaces and leading country code.
         normalized = self.norm_pattern.fullmatch(postcode.upper())
 
         if normalized:
             match = self.pattern.fullmatch(normalized.group(1))
-            if match and self.zero_pattern.match(match.string):
+            if match is None or self.zero_pattern.match(match.string):
                 return None
-            return match
+            return PostcodeMatch(norm=match.expand(self.output), extent=self.extent)
 
         return None
 
-    def normalize(self, match: Match[str]) -> str:
-        """ Return the default format of the postcode for the given match.
-            `match` must be a `re.Match` object previously returned by
-            `match()`
-        """
-        return match.expand(self.output)
+
+class ListPostcodeMatcher:
+    """ Matcher which allows to have multiple postcode patterns in a country.
+    """
+    def __init__(self, country_code: str, config: list[Any]) -> None:
+        self.matchers = [SimplePostcodeMatcher(country_code, p) for p in config]
+
+    def match(self, postcode: str) -> Optional[PostcodeMatch]:
+        for m in self.matchers:
+            if (pm := m.match(postcode)) is not None:
+                return pm
+
+        return None
 
 
 class PostcodeFormatter:
@@ -64,18 +88,18 @@ class PostcodeFormatter:
     """
     def __init__(self) -> None:
         # Objects without a country code can't have a postcode per definition.
-        self.country_without_postcode: Set[Optional[str]] = {None}
-        self.country_matcher = {}
-        self.default_matcher = CountryPostcodeMatcher('', {'pattern': '.*'})
+        self.country_without_postcode: set[Optional[str]] = {None}
+        self.country_matcher: dict[str, CountryPostcodeMatcher] = {}
+        self.default_matcher = SimplePostcodeMatcher('', {'pattern': '.*'})
         self.postcode_extent: dict[Optional[str], int] = {}
 
         for ccode, prop in country_info.iterate('postcode'):
             if prop is False:
                 self.country_without_postcode.add(ccode)
             elif isinstance(prop, dict):
-                self.country_matcher[ccode] = CountryPostcodeMatcher(ccode, prop)
-                if 'extent' in prop:
-                    self.postcode_extent[ccode] = int(prop['extent'])
+                self.country_matcher[ccode] = SimplePostcodeMatcher(ccode, prop)
+            elif isinstance(prop, list):
+                self.country_matcher[ccode] = ListPostcodeMatcher(ccode, prop)
             else:
                 raise UsageError(f"Invalid entry 'postcode' for country '{ccode}'")
 
@@ -83,7 +107,7 @@ class PostcodeFormatter:
         """ Set the postcode match pattern to use, when a country does not
             have a specific pattern.
         """
-        self.default_matcher = CountryPostcodeMatcher('', {'pattern': pattern})
+        self.default_matcher = SimplePostcodeMatcher('', {'pattern': pattern})
 
     def get_matcher(self, country_code: Optional[str]) -> Optional[CountryPostcodeMatcher]:
         """ Return the CountryPostcodeMatcher for the given country.
@@ -98,27 +122,12 @@ class PostcodeFormatter:
 
         return self.country_matcher.get(country_code, self.default_matcher)
 
-    def match(self, country_code: Optional[str], postcode: str) -> Optional[Match[str]]:
+    def match(self, country_code: Optional[str], postcode: str) -> Optional[PostcodeMatch]:
         """ Match the given postcode against the postcode pattern for this
             matcher. Returns a `re.Match` object if the country has a pattern
             and the match was successful or None if the match failed.
         """
-        if country_code in self.country_without_postcode:
-            return None
+        if (matcher := self.get_matcher(country_code)):
+            return matcher.match(postcode)
 
-        assert country_code is not None
-
-        return self.country_matcher.get(country_code, self.default_matcher).match(postcode)
-
-    def normalize(self, country_code: str, match: Match[str]) -> str:
-        """ Return the default format of the postcode for the given match.
-            `match` must be a `re.Match` object previously returned by
-            `match()`
-        """
-        return self.country_matcher.get(country_code, self.default_matcher).normalize(match)
-
-    def get_postcode_extent(self, country_code: Optional[str]) -> int:
-        """ Return the extent (in m) to use for the given country. If no
-            specific extent is set, then the default of 5km will be returned.
-        """
-        return self.postcode_extent.get(country_code, 5000)
+        return None

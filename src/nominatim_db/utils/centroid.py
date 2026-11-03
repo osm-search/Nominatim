@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2024 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Functions for computation of centroids.
@@ -19,10 +19,11 @@ class PointsCentroid:
         (i.e. in OSM style).
     """
 
-    def __init__(self) -> None:
+    def __init__(self, extent: int) -> None:
         self.sum_x = 0
         self.sum_y = 0
         self.count = 0
+        self.extent = extent
 
     def centroid(self) -> Tuple[float, float]:
         """ Return the centroid of all points collected so far.

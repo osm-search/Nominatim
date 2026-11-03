@@ -1286,7 +1286,10 @@ ng:
     languages: en
     names: !include country-names/ng.yaml
     postcode:
-      pattern: "dddddd"
+      - pattern: "dddddd"
+      - pattern: "(ll)[ -]?(dd)[ -]?([A-Z0-9]{3})[ -]?(ll)[ -]?(dd)"
+        output: \1-\2-\3-\4-\5
+        extent: 1
 
 
 # Nicaragua (Nicaragua)

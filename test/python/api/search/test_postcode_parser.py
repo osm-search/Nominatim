@@ -39,7 +39,8 @@ in:
     output: \1\2
 mc:
   postcode:
-    pattern: "980dd"
+    - pattern: "980dd"
+    - pattern: "ll-dd-ll"
 mz:
   postcode:
     pattern: "(dddd)(?:-dd)?"
@@ -189,3 +190,10 @@ def test_partial_postcode_in_postcode_phrase(pc_config):
     add_node(query, '>', qmod.PHRASE_ANY, qmod.PARTIAL_END_TOKEN)
 
     assert not parser.parse(query)
+
+
+def test_country_with_multiple_postcode_patterns(pc_config):
+    parser = PostcodeParser(pc_config)
+
+    assert parser.parse(mk_query('MC-98033')) == {(0, 2, '98033')}
+    assert parser.parse(mk_query('cc-44-xx')) == {(0, 3, 'CC-44-XX')}

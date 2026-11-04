@@ -83,6 +83,26 @@ def test_check_tokenizer(temp_db_conn, def_config, monkeypatch,
     assert chkdb.check_tokenizer(temp_db_conn, def_config) == state
 
 
+def test_check_duplicate_partial_terms_no_word_table(temp_db_conn, def_config):
+    assert chkdb.check_duplicate_partial_terms(temp_db_conn, def_config) \
+        == chkdb.CheckState.NOT_APPLICABLE
+
+
+@pytest.mark.parametrize("words,state", [
+    ([], chkdb.CheckState.OK),
+    ([(1, 'foo', 'w'), (2, 'bar', 'w'), (3, 'foo', 'W')], chkdb.CheckState.OK),
+    ([(1, 'foo', 'w'), (2, 'bar', 'w'), (3, 'foo', 'w')], chkdb.CheckState.FAIL)])
+def test_check_duplicate_partial_terms(temp_db_cursor, temp_db_conn, def_config,
+                                       words, state):
+    temp_db_cursor.execute("""CREATE TABLE word (word_id INTEGER, word_token text NOT NULL,
+                                                 type text NOT NULL, word text, info jsonb)""")
+    for word in words:
+        temp_db_cursor.execute('INSERT INTO word (word_id, word_token, type) VALUES (%s, %s, %s)',
+                               word)
+
+    assert chkdb.check_duplicate_partial_terms(temp_db_conn, def_config) == state
+
+
 def test_check_indexing_good(placex_row, temp_db_conn, def_config):
     for _ in range(2):
         placex_row(indexed_status=0)

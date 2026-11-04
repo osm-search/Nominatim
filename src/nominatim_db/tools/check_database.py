@@ -264,6 +264,34 @@ def check_existance_wikipedia(conn: Connection, _: Configuration) -> CheckResult
 
 
 @_check(hint="""\
+             The word table contains {count} duplicated partial terms, for example:
+               {examples}
+
+             Any search containing one of these terms fails with an internal error.
+             This usually happens when two processes import or index the same
+             database at the same time. Reimport the database to fix it.
+             """)
+def check_duplicate_partial_terms(conn: Connection, _: Configuration) -> CheckResult:
+    """ Checking for duplicate partial terms in word table
+    """
+    if not table_exists(conn, 'word'):
+        return CheckState.NOT_APPLICABLE
+
+    with conn.cursor() as cur:
+        cur.execute("""SELECT count(*), (array_agg(word_token ORDER BY word_token))[1:5]
+                         FROM (SELECT word_token FROM word WHERE type = 'w'
+                               GROUP BY word_token HAVING count(*) > 1) d""")
+        row = cur.fetchone()
+        assert row is not None
+        cnt, examples = row
+
+    if cnt == 0:
+        return CheckState.OK
+
+    return CheckState.FAIL, dict(count=cnt, examples=', '.join(examples))
+
+
+@_check(hint="""\
              The indexing didn't finish. {count} entries are not yet indexed.
 
              To index the remaining entries, run:   {index_cmd}

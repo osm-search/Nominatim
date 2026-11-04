@@ -168,10 +168,18 @@ async def get_detailed_place(conn: SearchConnection, place: ntyp.PlaceRef,
         if await func(conn, collector):
             break
 
-    if collector.result is not None:
-        await nres.add_result_details(conn, [collector.result], details)
+    result = collector.result
+    if result is None and isinstance(place, ntyp.OsmID) and place.osm_class \
+            and place.class_as_housenumber() is None:
+        fallback = DetailedCollector(ntyp.OsmID(place.osm_type, place.osm_id),
+                                     collector.with_geometry)
+        if await find_in_placex(conn, fallback):
+            result = fallback.result
 
-    return collector.result
+    if result is not None:
+        await nres.add_result_details(conn, [result], details)
+
+    return result
 
 
 async def get_places(conn: SearchConnection, places: Iterable[ntyp.PlaceRef],

@@ -31,12 +31,15 @@ Feature: Object details
         Then a HTTP 404 is returned
         And the result is valid json
 
-    Scenario: Details request with unknown class
+    Scenario: Details request with unknown class falls back to the object
         When sending v1/details
           | osmtype | osmid     | class   |
           | N       | 300209696 | highway |
-        Then a HTTP 404 is returned
+        Then a HTTP 200 is returned
         And the result is valid json
+        And the result contains
+            | osm_type | osm_id    |
+            | N        | 300209696 |
 
     Scenario: Details for interpolation way return the interpolation
         When sending v1/details

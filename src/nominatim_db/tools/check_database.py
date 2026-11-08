@@ -45,7 +45,7 @@ def _check(hint: Optional[str] = None) -> Callable[[CheckFunc], CheckFunc]:
         title = (func.__doc__ or '').split('\n', 1)[0].strip()
 
         def run_check(conn: Connection, config: Configuration) -> CheckState:
-            print(title, end=' ... ')
+            print(title, end=' ... ', flush=True)
             ret = func(conn, config)
             if isinstance(ret, tuple):
                 ret, params = ret
@@ -272,7 +272,7 @@ def check_existance_wikipedia(conn: Connection, _: Configuration) -> CheckResult
              database at the same time. Reimport the database to fix it.
              """)
 def check_duplicate_partial_terms(conn: Connection, _: Configuration) -> CheckResult:
-    """ Checking for duplicate partial terms in word table
+    """ Checking for duplicate partial terms in word table (slow)
     """
     if not table_exists(conn, 'word'):
         return CheckState.NOT_APPLICABLE

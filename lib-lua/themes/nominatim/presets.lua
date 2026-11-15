@@ -20,7 +20,7 @@ end
 
 -- Customized main tag filter functions
 
-local EXCLUDED_FOOTWAYS = { sidewalk = 1, crossing = 1, link = 1, traffic_aisle }
+local EXCLUDED_FOOTWAYS = { sidewalk = 1, crossing = 1, link = 1, traffic_aisle = 1}
 
 local function filter_footways(place)
     if place.has_name then

@@ -100,99 +100,89 @@ BEGIN
                                               NEW.osm_Type, NEW.geometry);
     END LOOP;
   ELSE
-    -- Modify an existing placex.
-    IF is_rankable_place(NEW.osm_type, NEW.categories, NEW.admin_level,
-                         NEW.name, NEW.extratags, is_area)
+    -- Recompute the ranks to look out for changes.
+    -- We use the old country assignment here which is good enough for the
+    -- purpose.
+    SELECT * INTO search_rank, address_rank
+      FROM compute_place_rank(existingplacex.country_code,
+                              CASE WHEN is_area THEN 'A' ELSE NEW.osm_type END,
+                              NEW.categories,
+                              NEW.admin_level,
+                              (NEW.extratags->'capital') = 'yes',
+                              NEW.address->'postcode');
+
+    existing_is_area := ST_GeometryType(existingplacex.geometry) in ('ST_Polygon', 'ST_MultiPolygon');
+
+    IF (address_rank BETWEEN 4 and 27
+        AND (existingplacex.rank_address <= 0 OR existingplacex.rank_address > 27))
+       OR (not existing_is_area and is_area)
     THEN
-      -- Recompute the ranks to look out for changes.
-      -- We use the old country assignment here which is good enough for the
-      -- purpose.
-      SELECT * INTO search_rank, address_rank
-        FROM compute_place_rank(existingplacex.country_code,
-                                CASE WHEN is_area THEN 'A' ELSE NEW.osm_type END,
-                                drop_unwanted_categories(NEW.categories, NEW.osm_type,
-                                                         NEW.admin_level, NEW.name,
-                                                         NEW.extratags, is_area),
-                                NEW.admin_level,
-                                (NEW.extratags->'capital') = 'yes',
-                                NEW.address->'postcode');
-
-      existing_is_area := ST_GeometryType(existingplacex.geometry) in ('ST_Polygon', 'ST_MultiPolygon');
-
-      IF (address_rank BETWEEN 4 and 27
-          AND (existingplacex.rank_address <= 0 OR existingplacex.rank_address > 27))
-         OR (not existing_is_area and is_area)
+      -- object newly relevant for addressing, invalidate new version
+      PERFORM update_invalidate_for_new_place(address_rank,
+                                              is_area, area_size,
+                                              NEW.osm_type, NEW.geometry);
+    ELSEIF (existingplacex.rank_address BETWEEN 4 and 27
+            AND (address_rank <= 0 OR address_rank > 27))
+           OR (existing_is_area and not is_area)
+    THEN
+      -- object no longer relevant for addressing, invalidate old version
+      PERFORM update_invalidate_for_new_place(existingplacex.rank_address,
+                                              existing_is_area, null,
+                                              existingplacex.osm_type,
+                                              existingplacex.geometry);
+    ELSEIF address_rank BETWEEN 4 and 27 THEN
+      IF coalesce(existing.name, ''::hstore) != coalesce(NEW.name, ''::hstore)
+         OR existing.admin_level != NEW.admin_level
       THEN
-        -- object newly relevant for addressing, invalidate new version
-        PERFORM update_invalidate_for_new_place(address_rank,
-                                                is_area, area_size,
-                                                NEW.osm_type, NEW.geometry);
-      ELSEIF (existingplacex.rank_address BETWEEN 4 and 27
-              AND (address_rank <= 0 OR address_rank > 27))
-             OR (existing_is_area and not is_area)
-      THEN
-        -- object no longer relevant for addressing, invalidate old version
-        PERFORM update_invalidate_for_new_place(existingplacex.rank_address,
-                                                existing_is_area, null,
-                                                existingplacex.osm_type,
-                                                existingplacex.geometry);
-      ELSEIF address_rank BETWEEN 4 and 27 THEN
-        IF coalesce(existing.name, ''::hstore) != coalesce(NEW.name, ''::hstore)
-           OR existing.admin_level != NEW.admin_level
-        THEN
-          -- Name changes may have an effect on searchable objects and parenting
-          -- for new and old areas.
-          PERFORM update_invalidate_for_new_place(address_rank, is_area, null,
+        -- Name changes may have an effect on searchable objects and parenting
+        -- for new and old areas.
+        PERFORM update_invalidate_for_new_place(address_rank, is_area, null,
+                                                NEW.osm_type,
+                                                CASE WHEN is_area and existing_is_area
+                                                  THEN ST_Union(NEW.geometry, existingplacex.geometry)
+                                                  ELSE ST_Collect(NEW.geometry, existingplacex.geometry)
+                                                END);
+      ELSEIF existingplacex.geometry::text != NEW.geometry::text THEN
+          -- Geometry change, just invalidate the changed areas.
+          -- Changes of other geometry types are currently ignored.
+        IF is_area and existing_is_area THEN
+          PERFORM update_invalidate_for_new_place(address_rank, true, null,
                                                   NEW.osm_type,
-                                                  CASE WHEN is_area and existing_is_area
-                                                    THEN ST_Union(NEW.geometry, existingplacex.geometry)
-                                                    ELSE ST_Collect(NEW.geometry, existingplacex.geometry)
-                                                  END);
-        ELSEIF existingplacex.geometry::text != NEW.geometry::text THEN
-            -- Geometry change, just invalidate the changed areas.
-            -- Changes of other geometry types are currently ignored.
-          IF is_area and existing_is_area THEN
-            PERFORM update_invalidate_for_new_place(address_rank, true, null,
-                                                    NEW.osm_type,
-                                                    ST_SymDifference(existingplacex.geometry,
-                                                                     NEW.geometry));
-          END IF;
+                                                  ST_SymDifference(existingplacex.geometry,
+                                                                   NEW.geometry));
         END IF;
       END IF;
-
-      -- Invalidate linked places: they potentially get a new name and addresses.
-      IF existingplacex.linked_place_id is not NULL THEN
-        UPDATE placex x
-          SET name = p.name,
-              extratags = p.extratags,
-              indexed_status = 2
-          FROM place p
-          WHERE x.place_id = existingplacex.linked_place_id
-                and x.indexed_status = 0
-                and x.osm_type = p.osm_type
-                and x.osm_id = p.osm_id
-                and x.class = p.class;
-      END IF;
-
-      -- update placex in place
-      UPDATE placex
-        SET name = NEW.name,
-            address = NEW.address,
-            parent_place_id = null,
-            extratags = NEW.extratags,
-            admin_level = NEW.admin_level,
-            rank_address = address_rank,
-            rank_search = search_rank,
-            indexed_status = 2,
-            geometry = CASE WHEN address_rank = 0
-                            THEN simplify_large_polygons(NEW.geometry)
-                            ELSE NEW.geometry END,
-            categories = NEW.categories
-        WHERE place_id = existingplacex.place_id;
-    ELSE
-      -- New place is not really valid, remove the placex entry
-      UPDATE placex SET indexed_status = 100 WHERE place_id = existingplacex.place_id;
     END IF;
+
+    -- Invalidate linked places: they potentially get a new name and addresses.
+    IF existingplacex.linked_place_id is not NULL THEN
+      UPDATE placex x
+        SET name = p.name,
+            extratags = p.extratags,
+            indexed_status = 2
+        FROM place p
+        WHERE x.place_id = existingplacex.linked_place_id
+              and x.indexed_status = 0
+              and x.osm_type = p.osm_type
+              and x.osm_id = p.osm_id
+              and x.class = p.class;
+    END IF;
+
+    -- update placex in place
+    UPDATE placex
+      SET name = NEW.name,
+          address = NEW.address,
+          parent_place_id = null,
+          extratags = NEW.extratags,
+          admin_level = NEW.admin_level,
+          rank_address = address_rank,
+          rank_search = search_rank,
+          indexed_status = 2,
+          geometry = CASE WHEN address_rank = 0
+                          THEN simplify_large_polygons(NEW.geometry)
+                          ELSE NEW.geometry END,
+          categories = NEW.categories
+      WHERE place_id = existingplacex.place_id;
 
     -- When an existing way is updated, recalculate entrances
     IF existingplacex.osm_type = 'W' and (existingplacex.rank_search > 27 or existingplacex.categories <@ 'osm.landuse' or existingplacex.categories <@ 'osm.leisure') THEN

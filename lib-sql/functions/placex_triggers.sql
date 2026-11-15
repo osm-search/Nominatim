@@ -699,18 +699,10 @@ BEGIN
   ELSE
     is_area := ST_GeometryType(NEW.geometry) IN ('ST_Polygon','ST_MultiPolygon');
 
-    IF NOT is_rankable_place(NEW.osm_type, NEW.categories, NEW.admin_level,
-                             NEW.name, NEW.extratags, is_area)
-    THEN
-        RETURN NULL;
-    END IF;
-
     SELECT * INTO NEW.rank_search, NEW.rank_address
       FROM compute_place_rank(NEW.country_code,
                               CASE WHEN is_area THEN 'A' ELSE NEW.osm_type END,
-                              drop_unwanted_categories(NEW.categories, NEW.osm_type,
-                                                       NEW.admin_level, NEW.name,
-                                                       NEW.extratags, is_area),
+                              NEW.categories,
                               NEW.admin_level,
                               (NEW.extratags->'capital') = 'yes',
                               NEW.address->'postcode');
@@ -868,9 +860,7 @@ BEGIN
   SELECT * INTO NEW.rank_search, NEW.rank_address
     FROM compute_place_rank(NEW.country_code,
                             CASE WHEN is_area THEN 'A' ELSE NEW.osm_type END,
-                            drop_unwanted_categories(NEW.categories, NEW.osm_type,
-                                                     NEW.admin_level, NEW.name,
-                                                     NEW.extratags, is_area),
+                            NEW.categories,
                             NEW.admin_level,
                             (NEW.extratags->'capital') = 'yes',
                             NEW.address->'postcode');

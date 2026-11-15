@@ -215,6 +215,14 @@ the handling:
 * **address** is a table with the collected list of address tags
 * **extratags** is a table with the collected list of additional tags to save
 
+Furthermore it offers two convenience functions:
+
+* **is_geometry_valid()** returns true if the OSM object can be built into
+  a valid geometry. After the function has returned true, the geometry
+  is available in the read-only field **geometry**.
+* **is_area()** determines if the geometry of the OSM object represents an
+  area.
+
 !!! example
     ``` lua
     local flex = require('flex-base')

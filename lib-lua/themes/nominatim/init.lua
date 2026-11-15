@@ -632,9 +632,14 @@ end
 function module.process_way(object)
 
     local function geom_func(o)
-        local geom = o:as_polygon()
+        local geom
 
-        if geom:is_null() then
+        if o.tags.area == 'yes' or o.tags.highway == nil
+           or o.tags.highway == 'services' or o.tags.highway == 'rest_area' then
+            geom = o:as_polygon()
+        end
+
+        if geom == nil or geom:is_null() then
             geom = o:as_linestring()
             if geom:is_null() or geom:length() > 30 then
                 return nil

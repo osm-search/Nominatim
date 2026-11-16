@@ -45,7 +45,7 @@ def _check(hint: Optional[str] = None) -> Callable[[CheckFunc], CheckFunc]:
         title = (func.__doc__ or '').split('\n', 1)[0].strip()
 
         def run_check(conn: Connection, config: Configuration) -> CheckState:
-            print(title, end=' ... ')
+            print(title, end=' ... ', flush=True)
             ret = func(conn, config)
             if isinstance(ret, tuple):
                 ret, params = ret
@@ -261,6 +261,34 @@ def check_existance_wikipedia(conn: Connection, _: Configuration) -> CheckResult
         cnt = execute_scalar(conn, 'SELECT count(*) FROM wikipedia_article')
 
     return CheckState.WARN if cnt == 0 else CheckState.OK
+
+
+@_check(hint="""\
+             The word table contains {count} duplicated partial terms, for example:
+               {examples}
+
+             Any search containing one of these terms fails with an internal error.
+             This usually happens when two processes import or index the same
+             database at the same time. Reimport the database to fix it.
+             """)
+def check_duplicate_partial_terms(conn: Connection, _: Configuration) -> CheckResult:
+    """ Checking for duplicate partial terms in word table (slow)
+    """
+    if not table_exists(conn, 'word'):
+        return CheckState.NOT_APPLICABLE
+
+    with conn.cursor() as cur:
+        cur.execute("""SELECT count(*), (array_agg(word_token ORDER BY word_token))[1:5]
+                         FROM (SELECT word_token FROM word WHERE type = 'w'
+                               GROUP BY word_token HAVING count(*) > 1) d""")
+        row = cur.fetchone()
+        assert row is not None
+        cnt, examples = row
+
+    if cnt == 0:
+        return CheckState.OK
+
+    return CheckState.FAIL, dict(count=cnt, examples=', '.join(examples))
 
 
 @_check(hint="""\

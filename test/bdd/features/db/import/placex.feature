@@ -48,12 +48,6 @@ Feature: Import into placex
 
     Scenario: search and address ranks for boundaries are correctly assigned
         Given the named places
-          | osm | class    | type |
-          | N1  | boundary | administrative |
-        And the named places
-          | osm | class    | type           | geometry |
-          | W10 | boundary | administrative | 10 10, 11 11 |
-        And the named places
           | osm | class    | type           | admin | geometry |
           | R20 | boundary | administrative | 2     | (1 1, 2 2, 1 2, 1 1) |
           | R21 | boundary | administrative | 32    | (3 3, 4 4, 3 4, 3 3) |
@@ -64,9 +58,7 @@ Feature: Import into placex
           | R40 | place | country | (1 1, 2 2, 1 2, 1 1) |
           | R41 | place | state   | (3 3, 4 4, 3 4, 3 3) |
         When importing
-        Then placex has no entry for N1
-        And placex has no entry for W10
-        And placex contains
+        Then placex contains
           | object | rank_search | rank_address |
           | R20    | 4           | 4 |
           | R21    | 25          | 0 |
@@ -151,26 +143,3 @@ Feature: Import into placex
           | R5     | 4           | 0 |
           | R6     | 4           | 0 |
           | W3     | 22          | 0 |
-
-    Scenario: boundary ways for countries and states are ignored
-        Given the 0.3 grid
-          | 1 | 2 |
-          | 4 | 3 |
-        Given the named places
-          | osm | class    | type           | admin | geometry |
-          | W4  | boundary | administrative | 2     | (1,2,3,4,1) |
-          | R4  | boundary | administrative | 2     | (1,2,3,4,1) |
-          | W5  | boundary | administrative | 3     | (1,2,3,4,1) |
-          | R5  | boundary | administrative | 3     | (1,2,3,4,1) |
-          | W6  | boundary | administrative | 4     | (1,2,3,4,1) |
-          | R6  | boundary | administrative | 4     | (1,2,3,4,1) |
-          | W7  | boundary | administrative | 5     | (1,2,3,4,1) |
-          | R7  | boundary | administrative | 5     | (1,2,3,4,1) |
-       When importing
-       Then placex contains exactly
-           | object |
-           | R4     |
-           | R5     |
-           | R6     |
-           | W7     |
-           | R7     |

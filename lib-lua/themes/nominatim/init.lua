@@ -447,8 +447,6 @@ function Place:grab_name_parts(data)
 end
 
 
-
-
 function Place:geometry_is_valid()
     if self.geometry == nil then
         self.geometry = self.geom_func(self.object)
@@ -465,6 +463,21 @@ function Place:geometry_is_valid()
 end
 
 
+function Place:is_area()
+    if self.is_area == nil then
+        if self.object.type == 'point' then
+            self.is_area = false
+        elseif self:geometry_is_valid() then
+            local gtype = self.geomtry:geometry_type()
+            self.is_area = (gtype == 'POLYGON') or (gtype == 'MULTIPOLYGON')
+        else
+            self.is_area = false
+        end
+    end
+
+    return self.is_area
+end
+
 
 function Place:clone(data)
     local cp = setmetatable({}, Place)
@@ -476,6 +489,7 @@ function Place:clone(data)
     cp.names = data.names or self.names
     cp.address = data.address or self.address
     cp.extratags = data.extratags or self.extratags
+    cp.is_area = data.is_area
 
     return cp
 end
@@ -632,9 +646,14 @@ end
 function module.process_way(object)
 
     local function geom_func(o)
-        local geom = o:as_polygon()
+        local geom
 
-        if geom:is_null() then
+        if o.tags.area == 'yes' or o.tags.highway == nil
+           or o.tags.highway == 'services' or o.tags.highway == 'rest_area' then
+            geom = o:as_polygon()
+        end
+
+        if geom == nil or geom:is_null() then
             geom = o:as_linestring()
             if geom:is_null() or geom:length() > 30 then
                 return nil

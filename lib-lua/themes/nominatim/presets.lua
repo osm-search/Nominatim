@@ -20,7 +20,7 @@ end
 
 -- Customized main tag filter functions
 
-local EXCLUDED_FOOTWAYS = { sidewalk = 1, crossing = 1, link = 1, traffic_aisle }
+local EXCLUDED_FOOTWAYS = { sidewalk = 1, crossing = 1, link = 1, traffic_aisle = 1}
 
 local function filter_footways(place)
     if place.has_name then
@@ -80,12 +80,31 @@ local function lock_transform(place)
     return false
 end
 
+local function admin_boundary(place)
+    if place:is_area() then
+        local alvl = place.object.tags.admin_level
+        if place.object.type == 'relation'
+               or alvl == '8' or alvl == '9' or alvl == '10' or alvl == '11' or alvl == '12' then
+           return place
+        end
+    end
+
+    return false
+end
+
+local function named_area(place)
+    if place.has_name and place:is_area() then
+        return place
+    end
+    return false
+end
+
 -- Main tag definition
 
 module.MAIN_TAGS = {}
 
 module.MAIN_TAGS.admin = {
-    boundary = {administrative = 'named'},
+    boundary = {administrative = admin_boundary},
     landuse = {residential = 'fallback',
                farm = 'fallback',
                farmyard = 'fallback',
@@ -114,7 +133,8 @@ module.MAIN_TAGS.admin = {
 }
 
 module.MAIN_TAGS.all_boundaries = {
-    boundary = {'named',
+    boundary = {named_area,
+                administrative = admin_boundary,
                 place = 'delete',
                 land_area = 'delete',
                 protected_area = 'fallback',
@@ -254,7 +274,7 @@ module.MAIN_TAGS_STREETS.default = {
                residential = 'always',
                road = 'always',
                living_street = 'always',
-               pedestrian = 'always',
+               pedestrian = 'named',
                service = 'named',
                cycleway = 'named',
                path = 'named',

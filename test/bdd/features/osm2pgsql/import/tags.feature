@@ -148,19 +148,25 @@ Feature: Tag evaluation
 
 
     Scenario: Categories are populated and merged for main tags
+        Given the grid
+            | 1 | 2 |
+            | 3 |   |
         When loading osm data
             """
+            n1
+            n2
+            n3
             n7101 Ttourism=hotel,amenity=restaurant,name=foo
             n7102 Tamenity=vending-machine
             n7103 Tamenity=foo/bar
-            n7104 Tboundary=administrative,place=city,name=A
+            w7104 Tboundary=administrative,place=city,name=A,admin_level=10 Nn1,n2,n3,n1
             """
         Then place contains exactly
             | object | categories!set                                   |
             | N7101  | 'osm.tourism.hotel', 'osm.amenity.restaurant'    |
             | N7102  | 'osm.amenity.vending_machine'                    |
             | N7103  | 'osm.amenity.yes'                                |
-            | N7104  | 'osm.boundary.administrative', 'osm.place.city'  |
+            | W7104  | 'osm.boundary.administrative', 'osm.place.city'  |
 
 
     Scenario: Global fallback and skipping
@@ -198,19 +204,23 @@ Feature: Tag evaluation
 
 
     Scenario: Administrative boundaries with place tags
+        Given the grid
+            | 1 | 2 |
+            | 3 |   |
         When loading osm data
             """
-            n10001 Tboundary=administrative,place=city,name=A
-            n10002 Tboundary=natural,place=city,name=B
-            n10003 Tboundary=administrative,place=island,name=C
+            n1
+            n2
+            n3
+            w10001 Tboundary=administrative,place=city,name=A,admin_level=10 Nn1,n2,n3,n1
+            w10002 Tboundary=natural,place=city,name=B Nn1,n2,n3,n1
+            w10003 Tboundary=administrative,place=island,name=C,admin_level=10 Nn1,n2,n3,n1
             """
         Then place contains
             | object | class    | type           | categories!set                                    |
-            | N10001 | boundary | administrative | 'osm.boundary.administrative', 'osm.place.city'   |
-        And place contains
-            | object | class    | type           | categories!set                                    |
-            | N10002 | boundary | natural        | 'osm.boundary.natural', 'osm.place.city'          |
-            | N10003 | boundary | administrative | 'osm.boundary.administrative', 'osm.place.island' |
+            | W10001 | boundary | administrative | 'osm.boundary.administrative', 'osm.place.city'   |
+            | W10002 | boundary | natural        | 'osm.boundary.natural', 'osm.place.city'          |
+            | W10003 | boundary | administrative | 'osm.boundary.administrative', 'osm.place.island' |
 
 
     Scenario: Building fallbacks

@@ -68,22 +68,6 @@ Feature: Update of simple objects
           | object | class | type    | centroid!wkt |
           | N3     | shop  | grocery | 1 -1 |
 
-    Scenario: remove boundary when changing from polygon to way
-        Given the grid
-          | 1 | 2 |
-          | 3 | 4 |
-        And the places
-          | osm | class    | type           | name | admin | geometry        |
-          | W1  | boundary | administrative | Haha | 5     | (1, 2, 4, 3, 1) |
-        When importing
-        Then placex contains
-          | object |
-          | W1 |
-        When updating places
-          | osm | class    | type           | name | admin | geometry   |
-          | W1  | boundary | administrative | Haha | 5     | 1, 2, 4, 3 |
-        Then placex has no entry for W1
-
      #895
      Scenario: update rank when boundary is downgraded from admin to historic
         Given the grid

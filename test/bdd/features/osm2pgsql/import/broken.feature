@@ -27,9 +27,11 @@ Feature: Import of objects with broken geometries by osm2pgsql
           w1 Thighway=unclassified Nn1,n2,n3,n4,n1,n5
           w2 Thighway=unclassified Nn1,n2,n3,n4,n1
           w3 Thighway=unclassified Nn1,n2,n3,n4,n3
+          w4 Thighway=unclassified,area=yes Nn1,n2,n3,n4,n1
           """
         Then place contains
           | object | geometry!wkt |
           | W1     | 1,2,3,4,1,5  |
-          | W2     | (1,2,3,4,1)  |
+          | W2     | 1,2,3,4,1    |
           | W3     | 1,2,3,4      |
+          | W4     | (1,2,3,4,1)  |

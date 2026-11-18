@@ -779,24 +779,6 @@ BEGIN
 
   NEW.indexed_date = now();
 
-  -- Lazy backfill: derive categories from class/type when empty.
-  -- Matches Lua sanitize_label(): hyphens -> underscores, invalid chars -> 'yes'.
-  -- Invalid class falls back to 'place' (gives osm.place.yes) per PG < 16 compat.
-  IF array_length(NEW.categories, 1) IS NULL AND NOT (NEW.class = 'place' AND NEW.type = 'house') THEN
-    NEW.categories := ARRAY[(
-      'osm.'
-      || CASE WHEN NEW.class !~ '^[A-Za-z0-9_-]+$'
-              THEN 'place'
-              ELSE replace(NEW.class, '-', '_')
-         END
-      || '.'
-      || CASE WHEN NEW.type = '' OR NEW.type !~ '^[A-Za-z0-9_-]+$'
-              THEN 'yes'
-              ELSE replace(NEW.type, '-', '_')
-         END
-    )::ltree];
-  END IF;
-
   IF OLD.indexed_status > 1 THEN
     {% if 'search_name' in db.tables %}
       DELETE from search_name WHERE place_id = NEW.place_id;

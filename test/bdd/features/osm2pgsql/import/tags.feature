@@ -13,13 +13,13 @@ Feature: Tag evaluation
             n204 Tbuilding=yes,landuse=retail,name=Two
             """
         Then place contains exactly
-            | object | class    | type     | categories!set                             |
-            | N100   | highway  | bus_stop | 'osm.highway.bus_stop'                     |
-            | N101   | junction | yes      | 'osm.junction.yes'                         |
-            | N200   | amenity  | cafe     | 'osm.amenity.cafe'                         |
-            | N201   | building | yes      | 'osm.building.yes'                         |
-            | N203   | building | yes      | 'osm.building.yes'                         |
-            | N204   | building | yes      | 'osm.building.yes', 'osm.landuse.retail'   |
+            | object | class    | type     | categories!set          |
+            | N100   | highway  | bus_stop | 'osm.highway.bus_stop'  |
+            | N101   | junction | yes      | 'osm.junction.yes'      |
+            | N200   | amenity  | cafe     | 'osm.amenity.cafe'      |
+            | N201   | building | yes      | -                       |
+            | N203   | building | yes      | -                       |
+            | N204   | landuse  | retail   | 'osm.landuse.retail'    |
 
 
     Scenario: Name and reg tags
@@ -50,12 +50,12 @@ Feature: Tag evaluation
         When loading osm data
             """
             n3001 Tbridge=yes,bridge:name=GoldenGate
-            n3002 Tbridge=yes,bridge:name:en=Rainbow
+            n3002 Ttunnel=yes,tunnel:name:en=Rainbow
             """
         Then place contains exactly
-            | object | class   | type | name!dict            |
-            | N3001  | bridge  | yes  | 'name': 'GoldenGate' |
-            | N3002  | bridge  | yes  | 'name:en': 'Rainbow' |
+            | object | class   | type | name!dict            | categories!set   |
+            | N3001  | bridge  | yes  | 'name': 'GoldenGate' | 'osm.bridge.yes' |
+            | N3002  | tunnel  | yes  | 'name:en': 'Rainbow' | 'osm.tunnel.yes' |
 
 
     Scenario: Address tags
@@ -142,9 +142,10 @@ Feature: Tag evaluation
             n7002 Thighway=primary,bridge=yes,bridge:name=1
             """
         Then place contains exactly
-            | object | class   | type    | name!dict   | extratags!dict          | categories!set                               |
-            | N7001  | highway | primary | 'name': '1' | 'bridge': 'yes'                | 'osm.highway.primary'                        |
-            | N7002  | bridge  | yes     | 'name': '1' | 'highway': 'primary', 'bridge:name': '1' | 'osm.bridge.yes', 'osm.highway.primary'      |
+            | object | class   | type    | name!dict   | extratags!dict                      | categories!set        |
+            | N7001  | highway | primary | 'name': '1' | 'bridge': 'yes'                     | 'osm.highway.primary' |
+            | N7002  | highway | primary | -           | 'bridge': 'yes', 'bridge:name': '1' | 'osm.highway.primary' |
+            | N7002  | bridge  | yes     | 'name': '1' | 'highway': 'primary'                | 'osm.bridge.yes'      |
 
 
     Scenario: Categories are populated and merged for main tags
@@ -219,7 +220,7 @@ Feature: Tag evaluation
         Then place contains
             | object | class    | type           | categories!set                                    |
             | W10001 | boundary | administrative | 'osm.boundary.administrative', 'osm.place.city'   |
-            | W10002 | boundary | natural        | 'osm.boundary.natural', 'osm.place.city'          |
+            | W10002 | place    | city           | 'osm.boundary.natural', 'osm.place.city'          |
             | W10003 | boundary | administrative | 'osm.boundary.administrative', 'osm.place.island' |
 
 
@@ -233,10 +234,10 @@ Feature: Tag evaluation
             n12005 Tbuilding=yes,addr:postcode=12345
             """
         Then place contains exactly
-            | object | class    | type     |
-            | N12001 | tourism  | hotel    |
-            | N12003 | building | shed     |
-            | N12004 | building | yes      |
+            | object | class    | type     | categories          |
+            | N12001 | tourism  | hotel    | 'osm.tourism.hotel' |
+            | N12003 | building | shed     | 'osm.building.shed' |
+            | N12004 | building | yes      | -                   |
         And place_postcode contains exactly
             | object | postcode | geometry |
             | N12005 | 12345    | -        |

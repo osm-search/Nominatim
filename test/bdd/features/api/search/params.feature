@@ -409,62 +409,62 @@ Feature: Search queries
           | polygon_kml  | geokml             |
 
     Scenario: Restrict results to a category
-        When geocoding "Boccia Club"
-          | include |
-          | osm.leisure.sports_centre |
-        Then more than 0 results are returned
-        When geocoding "Boccia Club"
+        When geocoding "Affenhangel"
+          | include           |
+          | osm.leisure.pitch |
+        Then exactly 1 result is returned
+        When geocoding "Affenhangel"
           | include |
           | osm.amenity.cafe |
         Then exactly 0 results are returned
 
     Scenario: A category matches all its descendants
-        When geocoding "Boccia Club"
+        When geocoding "Affenhangel"
           | include |
           | osm.leisure |
-        Then more than 0 results are returned
-        When geocoding "Boccia Club"
+        Then exactly 1 result is returned
+        When geocoding "Affenhangel"
           | include |
           | osm.tourism |
         Then exactly 0 results are returned
 
     Scenario: A place matches any of its categories
-        When geocoding "Boccia Club"
+        When geocoding "Affenhangel"
           | include |
-          | osm.building.yes |
-        Then more than 0 results are returned
+          | osm.natural.cliff |
+        Then exactly 1 result is returned
 
     Scenario: Comma-separated categories match any of them
-        When geocoding "Boccia Club"
+        When geocoding "Affenhangel"
           | include |
-          | osm.amenity.cafe,osm.leisure.sports_centre |
+          | osm.amenity.cafe,osm.leisure.pitch |
         Then more than 0 results are returned
 
     Scenario: Exclude drops results of the given category
-        When geocoding "Boccia Club"
+        When geocoding "Affenhangel"
           | exclude |
-          | osm.building.yes |
+          | osm.natural.cliff |
         Then exactly 0 results are returned
 
     Scenario: Repeated include parameters must all match
-        When geocoding "Boccia Club"
-          | param   | value                     |
-          | include | osm.leisure.sports_centre |
-          | include | osm.building.yes          |
+        When geocoding "Affenhangel"
+          | param   | value             |
+          | include | osm.leisure.pitch |
+          | include | osm.natural.cliff |
         Then more than 0 results are returned
-        When geocoding "Boccia Club"
-          | param   | value                     |
-          | include | osm.leisure.sports_centre |
-          | include | osm.amenity.cafe          |
+        When geocoding "Affenhangel"
+          | param   | value             |
+          | include | osm.leisure.pitch |
+          | include | osm.amenity.cafe  |
         Then exactly 0 results are returned
 
     Scenario: Repeated exclude parameters drop results matching any of them
-        When geocoding "Boccia Club"
-          | param   | value            |
-          | exclude | osm.amenity.cafe |
-          | exclude | osm.building.yes |
+        When geocoding "Affenhangel"
+          | param   | value             |
+          | exclude | osm.amenity.cafe  |
+          | exclude | osm.natural.cliff |
         Then exactly 0 results are returned
-        When geocoding "Boccia Club"
+        When geocoding "Affenhangel"
           | param   | value             |
           | exclude | osm.amenity.cafe  |
           | exclude | osm.tourism.hotel |

@@ -109,12 +109,12 @@ Feature: Tag evaluation
         Then place contains exactly
             | object | class   | type    | categories           |
             | N45    | landuse | cemetry | osm.landuse.cemetry  |
-            | N46    | building| yes     | osm.building.yes     |
+            | N46    | building| yes     | -                    |
         When indexing
         Then placex contains exactly
             | object | class   | type       | name!dict      | address!dict       | categories           |
             | N45    | landuse | cemetry    | 'name': 'TODO' | -                  | osm.landuse.cemetry  |
-            | N46    | building| yes        | -              | 'housenumber': '1' | osm.building.yes     |
+            | N46    | building| yes        | -              | 'housenumber': '1' | -                    |
 
 
     Scenario: Main tags with name, name removed
@@ -126,7 +126,7 @@ Feature: Tag evaluation
         Then place contains exactly
             | object | class   | type    | categories            |
             | N45    | landuse | cemetry | osm.landuse.cemetry   |
-            | N46    | building| yes     | osm.building.yes      |
+            | N46    | building| yes     | -                     |
 
         When updating osm data
             """
@@ -148,7 +148,7 @@ Feature: Tag evaluation
         Then place contains exactly
             | object | class   | type    | name!dict       | address!dict      | categories           |
             | N45    | landuse | cemetry | 'name' : 'TODO' | -                 | osm.landuse.cemetry  |
-            | N46    | building| yes     | -               | 'housenumber': '1'| osm.building.yes     |
+            | N46    | building| yes     | -               | 'housenumber': '1'| -                    |
 
         When updating osm data
             """
@@ -158,12 +158,12 @@ Feature: Tag evaluation
         Then place contains exactly
             | object | class   | type    | name!dict       | address!dict       | categories           |
             | N45    | landuse | cemetry | 'name' : 'DONE' | -                  | osm.landuse.cemetry  |
-            | N46    | building| yes     | -               | 'housenumber': '10'| osm.building.yes     |
+            | N46    | building| yes     | -               | 'housenumber': '10'| -                    |
         When indexing
         Then placex contains exactly
             | object | class   | type    | name!dict       | address!dict       | categories           |
             | N45    | landuse | cemetry | 'name' : 'DONE' | -                  | osm.landuse.cemetry  |
-            | N46    | building| yes     | -               | 'housenumber': '10'| osm.building.yes     |
+            | N46    | building| yes     | -               | 'housenumber': '10'| -                    |
 
 
     Scenario: Main tag added to address only node
@@ -180,12 +180,12 @@ Feature: Tag evaluation
             n1 Taddr:housenumber=345,building=yes
             """
         Then place contains exactly
-            | object | class    | type  | address!dict        | categories         |
-            | N1     | building | yes   | 'housenumber': '345'| osm.building.yes   |
+            | object | class    | type  | address!dict        | categories |
+            | N1     | building | yes   | 'housenumber': '345'| -          |
         When indexing
         Then placex contains exactly
-            | object | class    | type  | address!dict        | categories         |
-            | N1     | building | yes   | 'housenumber': '345'| osm.building.yes   |
+            | object | class    | type  | address!dict        | categories |
+            | N1     | building | yes   | 'housenumber': '345'| -          |
 
 
     Scenario: Main tag removed from address only node
@@ -194,8 +194,8 @@ Feature: Tag evaluation
             n1 Taddr:housenumber=345,building=yes
             """
         Then place contains exactly
-            | object | class    | type  | address!dict        | categories         |
-            | N1     | building | yes   | 'housenumber': '345'| osm.building.yes   |
+            | object | class    | type  | address!dict        | categories |
+            | N1     | building | yes   | 'housenumber': '345'| -          |
 
         When updating osm data
             """
@@ -466,14 +466,14 @@ Feature: Tag evaluation
           w5 Tbuilding=house,name=Foo Nn1,n2,n3,n4,n1
           """
         Then place contains exactly
-          | object | class    | type  | categories           |
-          | W5     | building | house | osm.building.house   |
+          | object | class    | type  | categories |
+          | W5     | building | house | -          |
 
         When updating osm data
           """
           n1 x39.999 y40
-          w5 Tbuilding=terrace,name=Bar Nn1,n2,n3,n4,n1
+          w5 Tbuilding=shed,name=Bar Nn1,n2,n3,n4,n1
           """
         Then place contains exactly
-          | object | class    | type    | categories             |
-          | W5     | building | terrace | osm.building.terrace   |
+          | object | class    | type | categories        |
+          | W5     | building | shed | osm.building.shed |

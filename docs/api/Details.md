@@ -22,15 +22,14 @@ https://nominatim.openstreetmap.org/details?osmtype=[N|W|R]&osmid=<value>&class=
 
 `osmtype` and `osmid` are required parameters. The type is one of node (N), way (W)
 or relation (R). The id must be a number. The `class` parameter is optional and
-only kept for backwards compatibility. An OSM object has a single entry in
-Nominatim, even when it is tagged with more than one main tag. A place tagged
-with `tourism=hotel` and `amenity=restaurant` is therefore returned as one
-result, classified as a restaurant. When `class` is given, then it must be
-equal to the class of that entry or the lookup returns no result.
+mostly kept for backwards compatibility. In same rare cases, an OSM object
+may appear with more than one entry in the database. For example, a
+highway on a bridge might have distinct entries for the highway and the
+bridge because they have different names. The `class` parameter may be used
+to select a specific entry for the OSM object. It must then correspond to the
+'class' of that entry. If no matching entry can be found, Nominatim will
+fall back to returning any entry that matches the OSM object.
 
-Databases that were migrated from a version before 5.4 may still hold one entry
-per main tag. There the `class` parameter selects between them and, when it is
-left out, one of the entries is chosen at random and displayed.
 
 ``` xml
 https://nominatim.openstreetmap.org/details?place_id=<value>

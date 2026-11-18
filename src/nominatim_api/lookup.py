@@ -2,7 +2,7 @@
 #
 # This file is part of Nominatim. (https://nominatim.org)
 #
-# Copyright (C) 2025 by the Nominatim developer community.
+# Copyright (C) 2026 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
 Implementation of place lookup by ID (doing many places at once).
@@ -90,6 +90,11 @@ class LookupCollector:
         return ((i, p.pid) for i, p in enumerate(self.lookups)
                 if p.result is None and isinstance(p.pid, ntyp.OsmID))
 
+    def enumerate_free_osmline_ids(self) -> Iterable[Tuple[int, int, Optional[int]]]:
+        return ((i, p.pid.osm_id, p.pid.class_as_housenumber())
+                for i, p in enumerate(self.lookups)
+                if p.result is None and isinstance(p.pid, ntyp.OsmID) and p.pid.osm_type == 'W')
+
     def enumerate_free_postcode_refs(self) -> Iterable[Tuple[int, ntyp.PostcodeRef]]:
         return ((i, p.pid) for i, p in enumerate(self.lookups)
                 if p.result is None and isinstance(p.pid, ntyp.PostcodeRef))
@@ -98,6 +103,10 @@ class LookupCollector:
 class DetailedCollector:
     """ Result collector for detailed lookup.
 
+        Supports falling back to non-matching class when an OSM ID is
+        requested. This ensures backward-compatibility where an OSM object
+        was formerly split into two entries.
+
         Only one place at the time may be looked up.
     """
 
@@ -105,6 +114,9 @@ class DetailedCollector:
         self.with_geometry = with_geometry
         self.place = place
         self.result: Optional[nres.DetailedResult] = None
+        self.osm_class: Optional[str] = None
+        if isinstance(self.place, ntyp.OsmID):
+            self.osm_class = self.place.osm_class
 
     async def add_rows_from_sql(self, conn: SearchConnection, sql: SaSelect,
                                 col: SaColumn, row_func: RowFunc[nres.DetailedResult]) -> bool:
@@ -118,33 +130,43 @@ class DetailedCollector:
             sql = sql.add_columns(sa.func.ST_GeometryType(col).label('geometry_type'))
 
         for row in await conn.execute(sql):
-            self.result = row_func(row, nres.DetailedResult)
-            # add missing details
-            if 'type' in self.result.geometry:
-                self.result.geometry['type'] = \
-                    GEOMETRY_TYPE_MAP.get(self.result.geometry['type'],
-                                          self.result.geometry['type'])
-            indexed_date = getattr(row, 'indexed_date', None)
-            if indexed_date is not None:
-                self.result.indexed_date = indexed_date.replace(tzinfo=dt.timezone.utc)
+            is_final = self.osm_class is None or not hasattr(row, 'class_')\
+                        or self.osm_class == row.class_
+            if self.result is None or is_final:
+                self.result = row_func(row, nres.DetailedResult)
+                # add missing details
+                if 'type' in self.result.geometry:
+                    self.result.geometry['type'] = \
+                        GEOMETRY_TYPE_MAP.get(self.result.geometry['type'],
+                                              self.result.geometry['type'])
+                indexed_date = getattr(row, 'indexed_date', None)
+                if indexed_date is not None:
+                    self.result.indexed_date = indexed_date.replace(tzinfo=dt.timezone.utc)
 
-            return True
+                if is_final:
+                    return True
 
-        # Nothing found.
         return False
 
     def enumerate_free_place_ids(self) -> Iterable[Tuple[int, ntyp.PlaceID]]:
-        if self.result is None and isinstance(self.place, ntyp.PlaceID):
+        if isinstance(self.place, ntyp.PlaceID):
             return [(0, self.place)]
         return []
 
     def enumerate_free_osm_ids(self) -> Iterable[Tuple[int, ntyp.OsmID]]:
-        if self.result is None and isinstance(self.place, ntyp.OsmID):
-            return [(0, self.place)]
+        if isinstance(self.place, ntyp.OsmID):
+            # Also search for IDs with a class mismatch.
+            # Multiple results will be handled in add_rows_from_sql above.
+            return [(0, ntyp.OsmID(self.place.osm_type, self.place.osm_id))]
+        return []
+
+    def enumerate_free_osmline_ids(self) -> Iterable[Tuple[int, int, Optional[int]]]:
+        if isinstance(self.place, ntyp.OsmID) and self.place.osm_type == 'W':
+            return [(0, self.place.osm_id, self.place.class_as_housenumber())]
         return []
 
     def enumerate_free_postcode_refs(self) -> Iterable[Tuple[int, ntyp.PostcodeRef]]:
-        if self.result is None and isinstance(self.place, ntyp.PostcodeRef):
+        if isinstance(self.place, ntyp.PostcodeRef):
             return [(0, self.place)]
         return []
 
@@ -159,7 +181,7 @@ async def get_detailed_place(conn: SearchConnection, place: ntyp.PlaceRef,
     log().function('get_detailed_place', place=place, details=details)
 
     if details.geometry_output and details.geometry_output != ntyp.GeometryFormat.GEOJSON:
-        raise ValueError("lookup only supports geojosn polygon output.")
+        raise ValueError("lookup only supports geojson polygon output.")
 
     collector = DetailedCollector(place,
                                   bool(details.geometry_output & ntyp.GeometryFormat.GEOJSON))
@@ -254,8 +276,8 @@ async def find_in_osmline(conn: SearchConnection, collector: Collector) -> bool:
                     t.c.step, t.c.address, t.c.postcode, t.c.country_code,
                     t.c.linegeo.ST_Centroid().label('centroid'))
 
-    osm_ids = [{'i': i, 'oi': p.osm_id, 'oc': p.class_as_housenumber()}
-               for i, p in collector.enumerate_free_osm_ids() if p.osm_type == 'W']
+    osm_ids = [{'i': i, 'oi': osm_id, 'oc': hnr}
+               for i, osm_id, hnr in collector.enumerate_free_osmline_ids()]
 
     if osm_ids:
         oid_tab = sa.func.JsonArrayEach(sa.type_coerce(osm_ids, sa.JSON))\

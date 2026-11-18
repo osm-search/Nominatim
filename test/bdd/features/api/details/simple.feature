@@ -35,8 +35,12 @@ Feature: Object details
         When sending v1/details
           | osmtype | osmid     | class   |
           | N       | 300209696 | highway |
-        Then a HTTP 404 is returned
+        Then a HTTP 200 is returned
         And the result is valid json
+        And the result contains
+            | osm_type | osm_id |
+            | N        | 300209696 |
+
 
     Scenario: Details for interpolation way return the interpolation
         When sending v1/details
@@ -49,24 +53,16 @@ Feature: Object details
           | place    | houses | W        | 1      | 15          |
 
 
-    @skip
-    Scenario: Details for interpolation way return the interpolation
-        When sending details query for 112871
-        Then the result is valid json
-        And the result contains
-            | category | type   | admin_level |
-            | place    | houses | 15          |
-        And result has not attributes osm_type,osm_id
-
-
-    @skip
     Scenario: Details for postcode
-        When sending details query for 112820
-        Then the result is valid json
+        When sending v1/details
+            | postcode |
+            | li:9490  |
+        Then a HTTP 200 is returned
+        And the result is valid json
         And the result contains
             | category | type     | admin_level |
             | place    | postcode | 15          |
-        And result has not attributes osm_type,osm_id
+        And the result has no attributes osm_type,osm_id
 
 
     Scenario Outline: Details debug output returns no errors

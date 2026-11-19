@@ -106,10 +106,9 @@ BEGIN
     SELECT * INTO search_rank, address_rank
       FROM compute_place_rank(existingplacex.country_code,
                               CASE WHEN is_area THEN 'A' ELSE NEW.osm_type END,
-                              NEW.categories,
+                              NEW.class, NEW.type,
                               NEW.admin_level,
-                              (NEW.extratags->'capital') = 'yes',
-                              NEW.address->'postcode');
+                              (NEW.extratags->'capital') = 'yes');
 
     existing_is_area := ST_GeometryType(existingplacex.geometry) in ('ST_Polygon', 'ST_MultiPolygon');
 

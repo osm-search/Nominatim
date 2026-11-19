@@ -367,10 +367,9 @@ BEGIN
       SELECT placex.* from placex
       WHERE lower(name->'name') = bnd_name
         AND ((bnd.rank_address > 0
-              and bnd.rank_address = (compute_place_rank(placex.country_code,
-                                                         'N', placex.categories,
-                                                         15::SMALLINT,
-                                                         false, placex.postcode)).address_rank)
+              and bnd.rank_address = (compute_place_rank(placex.country_code, 'N',
+                                                         placex.class, placex.type,
+                                                         15::SMALLINT, false)).address_rank)
              OR (bnd.rank_address = 0 and placex.rank_search = bnd.rank_search))
         AND placex.osm_type = 'N'
         AND placex.categories <@ 'osm.place'
@@ -702,10 +701,9 @@ BEGIN
     SELECT * INTO NEW.rank_search, NEW.rank_address
       FROM compute_place_rank(NEW.country_code,
                               CASE WHEN is_area THEN 'A' ELSE NEW.osm_type END,
-                              NEW.categories,
+                              NEW.class, NEW.type,
                               NEW.admin_level,
-                              (NEW.extratags->'capital') = 'yes',
-                              NEW.address->'postcode');
+                              (NEW.extratags->'capital') = 'yes');
     -- a country code make no sense below rank 4 (country)
     IF NEW.rank_search < 4 THEN
       NEW.country_code := NULL;
@@ -842,10 +840,9 @@ BEGIN
   SELECT * INTO NEW.rank_search, NEW.rank_address
     FROM compute_place_rank(NEW.country_code,
                             CASE WHEN is_area THEN 'A' ELSE NEW.osm_type END,
-                            NEW.categories,
+                            NEW.class, NEW.type,
                             NEW.admin_level,
-                            (NEW.extratags->'capital') = 'yes',
-                            NEW.address->'postcode');
+                            (NEW.extratags->'capital') = 'yes');
   -- Short-cut out for linked places. Note that this must happen after the
   -- address rank has been recomputed. The linking might nullify a shift in
   -- address rank.
@@ -897,8 +894,8 @@ BEGIN
         FOR location IN
           SELECT rank_address
           FROM placex,
-               LATERAL compute_place_rank(country_code, 'A', categories,
-                                          admin_level, False, null) prank
+               LATERAL compute_place_rank(country_code, 'A', class, type,
+                                          admin_level, False) prank
           WHERE categories <@ 'osm.place' and rank_address between 1 and 23
                 and prank.address_rank >= NEW.rank_address
                 and ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon') -- select right index
@@ -918,8 +915,8 @@ BEGIN
     FOR location IN
           SELECT rank_address
           FROM placex,
-               LATERAL compute_place_rank(country_code, 'A', categories,
-                                          admin_level, False, null) prank
+               LATERAL compute_place_rank(country_code, 'A', class, type,
+                                          admin_level, False) prank
           WHERE prank.address_rank < 24
                 and rank_address between 1 and 25 -- select right index
                 and ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon') -- select right index
@@ -939,8 +936,8 @@ BEGIN
     FOR location IN
         SELECT rank_address
         FROM placex,
-             LATERAL compute_place_rank(country_code, 'A', categories,
-                                        admin_level, False, null) prank
+             LATERAL compute_place_rank(country_code, 'A', class, type,
+                                        admin_level, False) prank
         WHERE osm_type = 'R'
               and rank_address between 1 and 25 -- select right index
               and ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon') -- select right index
@@ -1093,8 +1090,8 @@ BEGIN
     -- have been shifted to accommodate surrounding boundaries.
     SELECT place_id, osm_id, class, type, extratags, rank_search,
            centroid, geometry, categories,
-           (compute_place_rank(country_code, osm_type, categories, admin_level,
-                              (extratags->'capital') = 'yes', null)).*
+           (compute_place_rank(country_code, osm_type, class, type, admin_level,
+                              (extratags->'capital') = 'yes')).*
       INTO location
       FROM placex WHERE place_id = linked_place;
 
@@ -1140,12 +1137,11 @@ BEGIN
     -- No linked place? As a last resort check if the boundary is tagged with
     -- a place type and adapt the rank address.
     IF NEW.rank_address between 4 and 25 THEN
-      bnd_place_type := NEW.categories ?<@ 'osm.place';
-      IF bnd_place_type is not null THEN
+      IF NEW.extratags ? 'place' THEN
         SELECT address_rank INTO place_address_level
-          FROM compute_place_rank(NEW.country_code, 'A',
-                                  ARRAY[bnd_place_type],
-                                  0::SMALLINT, False, null);
+          FROM compute_place_rank(NEW.country_code, 'N',
+                                  'place', NEW.extratags->'place',
+                                  0::SMALLINT, False);
         IF place_address_level > parent_address_level and
            place_address_level < 26 THEN
           NEW.rank_address := place_address_level;

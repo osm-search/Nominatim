@@ -60,8 +60,7 @@ CREATE INDEX idx_placex_geometry_buildings ON placex
 --        - linking of place nodes with same type to boundaries
 CREATE INDEX idx_placex_geometry_placenode ON placex
   USING SPGIST (geometry) {{db.tablespace.address_index}}
-  WHERE osm_type = 'N' and rank_search < 26
-        and categories <@ 'osm.place';
+  WHERE osm_type = 'N' and rank_search < 26 and class = 'place';
 
 -- Usage: - is node part of a way?
 --        - find parent of interpolation spatially
@@ -72,8 +71,7 @@ CREATE INDEX idx_placex_geometry_lower_rank_ways ON placex
 -- Usage: - linking place nodes by wikidata tag to boundaries
 CREATE INDEX idx_placex_wikidata on placex
   USING BTREE ((extratags -> 'wikidata')) {{db.tablespace.address_index}}
-  WHERE extratags ? 'wikidata'
-        and categories <@ 'osm.place'
+  WHERE extratags ? 'wikidata' and class = 'place'
         and osm_type = 'N' and rank_search < 26;
 
 -- The following two indexes function as a todo list for indexing.
@@ -84,6 +82,6 @@ CREATE INDEX idx_placex_rank_address_sector ON placex
 
 CREATE INDEX idx_placex_rank_boundaries_sector ON placex
   USING BTREE (rank_search, geometry_sector) {{db.tablespace.address_index}}
-  WHERE categories <@ 'osm.boundary.administrative'
+  WHERE class = 'boundary' and type = 'administrative'
         and indexed_status > 0;
 

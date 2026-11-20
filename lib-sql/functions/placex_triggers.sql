@@ -302,8 +302,7 @@ BEGIN
 
         FOR linked_placex IN
           SELECT * from placex
-          WHERE osm_type = 'N' and osm_id = rel_member.member
-            and categories <@ 'osm.place'
+          WHERE osm_type = 'N' and osm_id = rel_member.member and class = 'place'
         LOOP
           {% if debug %}RAISE WARNING 'Linked label member';{% endif %}
           RETURN linked_placex;
@@ -323,7 +322,7 @@ BEGIN
   IF bnd.extratags ? 'wikidata' THEN
     FOR linked_placex IN
       SELECT * FROM placex
-      WHERE placex.categories <@ 'osm.place' AND placex.osm_type = 'N'
+      WHERE placex.class = 'place' AND placex.osm_type = 'N'
         AND placex.extratags ? 'wikidata' -- needed to select right index
         AND placex.extratags->'wikidata' = bnd.extratags->'wikidata'
         AND (placex.linked_place_id is null or placex.linked_place_id = bnd.place_id)
@@ -339,14 +338,12 @@ BEGIN
   -- If categories contain a place tag, look for linked nodes by their place type.
   -- Area and node still have to have the same name.
   IF bnd_name is not null THEN
-    bnd_place_type := bnd.categories ?<@ 'osm.place';
-    IF bnd_place_type is not null THEN
+    IF bnd.extratags ? 'place' THEN
       FOR linked_placex IN
         SELECT * FROM placex
         WHERE (position(lower(name->'name') in bnd_name) > 0
                OR position(bnd_name in lower(name->'name')) > 0)
-          AND placex.categories <@ 'osm.place' -- needed to select the right index
-          AND placex.categories <@ bnd_place_type
+          AND placex.class = 'place' AND placex.type = bnd.extratags->'place'
           AND placex.osm_type = 'N'
           AND (placex.linked_place_id is null or placex.linked_place_id = bnd.place_id)
           AND placex.rank_search < 26
@@ -372,7 +369,7 @@ BEGIN
                                                          15::SMALLINT, false)).address_rank)
              OR (bnd.rank_address = 0 and placex.rank_search = bnd.rank_search))
         AND placex.osm_type = 'N'
-        AND placex.categories <@ 'osm.place'
+        AND placex.class = 'place'
         AND (placex.linked_place_id is null or placex.linked_place_id = bnd.place_id)
         AND placex.rank_search < 26 -- needed to select the right index
         AND (placex.extratags->'wikidata' is null OR bnd.extratags->'wikidata' is null

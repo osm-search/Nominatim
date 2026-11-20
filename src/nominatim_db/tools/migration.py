@@ -586,22 +586,6 @@ def backfill_categories(conn: Connection, **_: Any) -> None:
     """)
     conn.execute("ALTER TABLE placex ENABLE TRIGGER ALL")
 
-    with conn.cursor() as cur:
-        cur.execute("""CREATE INDEX IF NOT EXISTS idx_placex_geometry_placenode_categories
-                       ON placex USING SPGIST (geometry)
-                       WHERE osm_type = 'N' AND rank_search < 26
-                             AND categories <@ 'osm.place'""")
-        cur.execute("""CREATE INDEX IF NOT EXISTS idx_placex_wikidata_categories ON placex
-                       USING BTREE ((extratags -> 'wikidata'))
-                       WHERE extratags ? 'wikidata'
-                             AND categories <@ 'osm.place'
-                             AND osm_type = 'N' AND rank_search < 26""")
-        cur.execute("""CREATE INDEX IF NOT EXISTS
-                       idx_placex_rank_boundaries_sector_categories ON placex
-                       USING BTREE (rank_search, geometry_sector)
-                       WHERE categories <@ 'osm.boundary.administrative'
-                             AND indexed_status > 0""")
-
     conn.execute("ANALYZE placex")
 
 
@@ -684,3 +668,27 @@ def add_centroid_categories_index(conn: Connection, **_: Any) -> None:
     conn.execute("""CREATE INDEX IF NOT EXISTS idx_placex_centroid_categories
                     ON placex USING GIST (centroid,
                                           categories gist__ltree_ops(siglen=8))""")
+
+
+@_migration(5, 3, 99, 4)
+def recreate_classtype_dependend_index(conn: Connection, **_: Any) -> None:
+    """ Recreate indexes for place and admin.
+
+        These indexes had been moved to using categories in patch version 2
+        and should now be reinstated to use class/type. For most installations
+        the indexes should still be there unless deleted by hand, so this
+        will be a no-op.
+    """
+    with conn.cursor() as cur:
+        cur.execute("""CREATE INDEX IF NOT EXISTS idx_placex_geometry_placenode
+                       ON placex USING SPGIST (geometry)
+                       WHERE osm_type = 'N' AND rank_search < 26 AND class = 'place'""")
+        cur.execute("""CREATE INDEX IF NOT EXISTS idx_placex_wikidata ON placex
+                       USING BTREE ((extratags -> 'wikidata'))
+                       WHERE extratags ? 'wikidata' and class = 'place'
+                             AND osm_type = 'N' AND rank_search < 26""")
+        cur.execute("""CREATE INDEX IF NOT EXISTS
+                       idx_placex_rank_boundaries_sector ON placex
+                       USING BTREE (rank_search, geometry_sector)
+                       WHERE class = 'boundary' and type = 'administrative'
+                             AND indexed_status > 0""")

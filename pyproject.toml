@@ -11,7 +11,7 @@ dev = [
 ]
 
 test = [
-    "pytest<9.2",
+    "pytest",
     "pytest-asyncio",
     "pytest-bdd",
     "aiosqlite",

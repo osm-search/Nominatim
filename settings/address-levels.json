@@ -90,6 +90,9 @@
           "stream" : [22, 0],
           "ditch" : [22, 0],
           "drain" : [22, 0],
+          "boatyard" : 30,
+          "lock_gate": 30,
+          "access_point": 30,
           "" : [20, 0]
       },
       "highway" : {

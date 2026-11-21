@@ -129,6 +129,7 @@ module.MAIN_TAGS.admin = {
              isolated_dwelling = 'always',
              farm = 'always',
              city_block = 'always',
+             plot = 'named',
              locality = 'always'}
 }
 
@@ -140,7 +141,9 @@ module.MAIN_TAGS.all_boundaries = {
                 protected_area = 'fallback',
                 postal_code = 'postcode_area'},
     landuse = 'fallback',
-    place = 'always'
+    place = {'always',
+             plot = 'named',
+             cadastral_community = 'extra'}
 }
 
 module.MAIN_TAGS.natural = {

@@ -630,7 +630,7 @@ Feature: Parenting of objects
           | object | parent_place_id |
           | N10    | W1 |
 
-     Scenario: place=square may be parented via addr:place
+     Scenario: place=square is parented via addr:street
         Given the grid
             |   |   | 9 |   |   |
             |   | 5 |   | 6 |   |
@@ -639,12 +639,12 @@ Feature: Parenting of objects
             | osm | class    | type    | name+name | geometry        |
             | W2  | place    | square  | Foo pl    | (5, 6, 7, 8, 5) |
         And the places
-            | osm | class    | type    | name+name | housenr | addr_place | geometry |
-            | N10 | shop     | grocery | le shop   | 5       | Foo pl     | 9        |
+            | osm | class    | type    | name+name | housenr | addr+street | geometry |
+            | N10 | shop     | grocery | le shop   | 5       | Foo pl      | 9        |
         When importing
         Then placex contains
             | object | rank_address |
-            | W2     | 25           |
+            | W2     | 26           |
         Then placex contains
             | object | parent_place_id |
             | N10    | W2              |

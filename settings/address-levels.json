@@ -2,6 +2,7 @@
 { "tags" : {
       "place" : {
           "sea" : [2, 0],
+          "archipelago" : [16, 0],
           "island" : [17, 0],
           "islet" : [20, 0],
           "continent" : [2, 0],
@@ -20,6 +21,7 @@
           "hamlet" : 20,
           "croft" : 20,
           "subdivision" : 22,
+          "subdistrict": 14,
           "allotments" : 22,
           "neighbourhood" : 24,
           "quarter" : [20, 22],
@@ -27,10 +29,11 @@
           "farm" : [22, 25],
           "city_block" : 25,
           "mountain_pass" : 25,
-          "square" : 25,
           "locality" : 25,
+          "plot" : 25,
           "houses" : [28, 0],
           "house" : 30,
+          "square" : 26,
           "" : [22, 0]
       },
       "boundary" : {

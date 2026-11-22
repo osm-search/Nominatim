@@ -272,11 +272,6 @@ CREATE OR REPLACE FUNCTION find_linked_place(bnd placex)
   RETURNS placex
   AS $$
 DECLARE
-{% if db.middle_db_format == '1' %}
-  relation_members TEXT[];
-{% else %}
-  relation_members JSONB;
-{% endif %}
   rel_member RECORD;
   linked_placex placex%ROWTYPE;
   bnd_name TEXT;
@@ -289,27 +284,20 @@ BEGIN
   END IF;
 
   IF bnd.osm_type = 'R' THEN
-    -- see if we have any special relation members
-    SELECT members FROM planet_osm_rels WHERE id = bnd.osm_id INTO relation_members;
-    {% if debug %}RAISE WARNING 'Got relation members';{% endif %}
-
-    -- Search for relation members with role 'lable'.
-    IF relation_members IS NOT NULL THEN
-      FOR rel_member IN
-        SELECT get_rel_node_members(relation_members, ARRAY['label']) as member
+    FOR rel_member IN
+      SELECT i.node_id
+      FROM (SELECT node_id FROM place_label_members WHERE relation_id = bnd.osm_id) i
+      WHERE NOT EXISTS (SELECT * FROM place_label_members p
+                        WHERE p.relation_id != bnd.osm_id AND p.node_id = i.node_id)
+    LOOP
+      FOR linked_placex IN
+        SELECT * from placex
+        WHERE osm_type = 'N' and osm_id = rel_member.node_id and class = 'place'
       LOOP
-        {% if debug %}RAISE WARNING 'Found label member %', rel_member.member;{% endif %}
-
-        FOR linked_placex IN
-          SELECT * from placex
-          WHERE osm_type = 'N' and osm_id = rel_member.member and class = 'place'
-        LOOP
-          {% if debug %}RAISE WARNING 'Linked label member';{% endif %}
-          RETURN linked_placex;
-        END LOOP;
-
+        {% if debug %}RAISE WARNING 'Linked label member';{% endif %}
+        RETURN linked_placex;
       END LOOP;
-    END IF;
+    END LOOP;
   END IF;
 
   IF bnd.name ? 'name' THEN

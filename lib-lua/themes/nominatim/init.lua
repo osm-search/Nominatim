@@ -469,18 +469,18 @@ end
 
 
 function Place:is_area()
-    if self.is_area == nil then
+    if self._is_area == nil then
         if self.object.type == 'point' then
-            self.is_area = false
+            self._is_area = false
         elseif self:geometry_is_valid() then
-            local gtype = self.geomtry:geometry_type()
-            self.is_area = (gtype == 'POLYGON') or (gtype == 'MULTIPOLYGON')
+            local gtype = self.geometry:geometry_type()
+            self._is_area = (gtype == 'POLYGON') or (gtype == 'MULTIPOLYGON')
         else
-            self.is_area = false
+            self._is_area = false
         end
     end
 
-    return self.is_area
+    return self._is_area
 end
 
 

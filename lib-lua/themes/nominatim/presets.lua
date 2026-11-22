@@ -81,12 +81,11 @@ local function lock_transform(place)
 end
 
 local function admin_boundary(place)
-    if place:is_area() then
-        local alvl = place.object.tags.admin_level
-        if place.object.type == 'relation'
-               or alvl == '8' or alvl == '9' or alvl == '10' or alvl == '11' or alvl == '12' then
-           return place
-        end
+    if place.has_name
+        and (place.object.type == 'relation'
+             or (place.admin_level >= 8 and place.admin_level < 15))
+        and place:is_area() then
+       return place
     end
 
     return false

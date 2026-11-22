@@ -204,6 +204,29 @@ Feature: Tag evaluation
             | N9006  | place | 15          |
 
 
+    Scenario: Administrative boundaries only as areas
+        Given the grid
+            | 1 | 2 |
+            | 4 | 3 |
+        When loading osm data
+            """
+            n1
+            n2
+            n3
+            n4
+            w100 Tboundary=administrative,name=A,admin_level=8 Nn1,n2,n3
+            w101 Tboundary=administrative,name=A,admin_level=8 Nn1,n4,n3
+            w200 Tboundary=administrative,name=B,admin_level=5 Nn1,n2,n3,n4,n1
+            w201 Tboundary=administrative,name=C,admin_level=10 Nn1,n2,n3,n4,n1
+            r100 Ttype=boundary,boundary=administrative,name=A,admin_level=8 Mw100@,w101@
+            r101 Ttype=boundary,boundary=administrative,admin_level=4 Mw100@,w101@
+            """
+        Then place contains exactly
+            | object |
+            | W201   |
+            | R100   |
+
+
     Scenario: Administrative boundaries with place tags
         Given the grid
             | 1 | 2 |

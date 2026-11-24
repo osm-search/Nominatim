@@ -869,10 +869,10 @@ local CLASSIFICATION_TAG_PRIO = {
     landuse = {-1},
     natural = {0, saddle = -1},
     building = {-8},
-    historic = {-7},
+    historic = {-6},
     healthcare = {-1},
     junction = {1},
-    tourism = {0, attraction = -2}
+    tourism = {0, attraction = -7}
 }
 
 local function default_classification_tag_filter(place, candidates)

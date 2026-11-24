@@ -85,6 +85,9 @@ local function admin_boundary(place)
         and (place.object.type == 'relation'
              or (place.admin_level >= 8 and place.admin_level < 15))
         and place:is_area() then
+        if place.object.tags.place ~= nil then
+            place.extratags.place = place.object.tags.place
+        end
        return place
     end
 

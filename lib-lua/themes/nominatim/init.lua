@@ -976,9 +976,9 @@ end
 
 function module.set_main_tags(data)
     for key, values in pairs(MAIN_KEYS) do
-        for _, ttype in pairs(values) do
-            if type(ttype) == 'function' then
-                values[ttype] = nil
+        for tk, ttype in pairs(values) do
+            if type == 'fallback' or type(ttype) == 'function' then
+                values[tk] = nil
             end
         end
         if next(values) == nil then

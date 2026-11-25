@@ -1,6 +1,31 @@
 Feature: Tag evaluation
     Tests if tags are correctly imported into the place table
 
+    Scenario: Main tag is priorised
+        Given the grid
+            | 1 |   | 2 |
+            |   | 3 |   |
+        When loading osm data
+            """
+            n1
+            n2
+            n3
+            n71 Ttourism=hotel,amenity=restaurant,name=foo
+            n72 Tamenity=vending-machine
+            n73 Tamenity=foo/bar
+            n100 Thistoric=castle,tourism=attraction,building=castle,name=S
+            w101 Tman_made=works,landuse=industrial,name=This Nn1,n2,n3,n1
+            w102 Tplace=square,highway=pedestrian,area=yes,name=This Nn1,n2,n3,n1
+            """
+        Then place contains exactly
+            | object | class    | type            | categories!set |
+            | N71    | amenity  | restaurant      | 'osm.tourism.hotel', 'osm.amenity.restaurant' |
+            | N72    | amenity  | vending-machine | 'osm.amenity.vending_machine' |
+            | N73    | amenity  | foo/bar         | 'osm.amenity.yes |
+            | N100   | historic | castle          | 'osm.historic.castle','osm.tourism.attraction','osm.building.castle' |
+            | W101   | man_made | works           | 'osm.man_made.works','osm.landuse.industrial' |
+            | W102   | place    | square          | 'osm.place.square','osm.highway.pedestrian' |
+
     Scenario: Main tags as fallback
         When loading osm data
             """
@@ -13,13 +38,13 @@ Feature: Tag evaluation
             n204 Tbuilding=yes,landuse=retail,name=Two
             """
         Then place contains exactly
-            | object | class    | type     | categories!set                             |
-            | N100   | highway  | bus_stop | 'osm.highway.bus_stop'                     |
-            | N101   | junction | yes      | 'osm.junction.yes'                         |
-            | N200   | amenity  | cafe     | 'osm.amenity.cafe'                         |
-            | N201   | building | yes      | 'osm.building.yes'                         |
-            | N203   | building | yes      | 'osm.building.yes'                         |
-            | N204   | building | yes      | 'osm.building.yes', 'osm.landuse.retail'   |
+            | object | class    | type     | categories!set          |
+            | N100   | highway  | bus_stop | 'osm.highway.bus_stop'  |
+            | N101   | junction | yes      | 'osm.junction.yes'      |
+            | N200   | amenity  | cafe     | 'osm.amenity.cafe'      |
+            | N201   | building | yes      | -                       |
+            | N203   | building | yes      | -                       |
+            | N204   | landuse  | retail   | 'osm.landuse.retail'    |
 
 
     Scenario: Name and reg tags
@@ -50,12 +75,12 @@ Feature: Tag evaluation
         When loading osm data
             """
             n3001 Tbridge=yes,bridge:name=GoldenGate
-            n3002 Tbridge=yes,bridge:name:en=Rainbow
+            n3002 Ttunnel=yes,tunnel:name:en=Rainbow
             """
         Then place contains exactly
-            | object | class   | type | name!dict            |
-            | N3001  | bridge  | yes  | 'name': 'GoldenGate' |
-            | N3002  | bridge  | yes  | 'name:en': 'Rainbow' |
+            | object | class   | type | name!dict            | categories!set   |
+            | N3001  | bridge  | yes  | 'name': 'GoldenGate' | 'osm.bridge.yes' |
+            | N3002  | tunnel  | yes  | 'name:en': 'Rainbow' | 'osm.tunnel.yes' |
 
 
     Scenario: Address tags
@@ -142,31 +167,10 @@ Feature: Tag evaluation
             n7002 Thighway=primary,bridge=yes,bridge:name=1
             """
         Then place contains exactly
-            | object | class   | type    | name!dict   | extratags!dict          | categories!set                               |
-            | N7001  | highway | primary | 'name': '1' | 'bridge': 'yes'                | 'osm.highway.primary'                        |
-            | N7002  | bridge  | yes     | 'name': '1' | 'highway': 'primary', 'bridge:name': '1' | 'osm.bridge.yes', 'osm.highway.primary'      |
-
-
-    Scenario: Categories are populated and merged for main tags
-        Given the grid
-            | 1 | 2 |
-            | 3 |   |
-        When loading osm data
-            """
-            n1
-            n2
-            n3
-            n7101 Ttourism=hotel,amenity=restaurant,name=foo
-            n7102 Tamenity=vending-machine
-            n7103 Tamenity=foo/bar
-            w7104 Tboundary=administrative,place=city,name=A,admin_level=10 Nn1,n2,n3,n1
-            """
-        Then place contains exactly
-            | object | categories!set                                   |
-            | N7101  | 'osm.tourism.hotel', 'osm.amenity.restaurant'    |
-            | N7102  | 'osm.amenity.vending_machine'                    |
-            | N7103  | 'osm.amenity.yes'                                |
-            | W7104  | 'osm.boundary.administrative', 'osm.place.city'  |
+            | object | class   | type    | name!dict   | extratags!dict                      | categories!set        |
+            | N7001  | highway | primary | 'name': '1' | 'bridge': 'yes'                     | 'osm.highway.primary' |
+            | N7002  | highway | primary | -           | 'bridge': 'yes', 'bridge:name': '1' | 'osm.highway.primary' |
+            | N7002  | bridge  | yes     | 'name': '1' | 'highway': 'primary'                | 'osm.bridge.yes'      |
 
 
     Scenario: Global fallback and skipping
@@ -183,46 +187,6 @@ Feature: Tag evaluation
             | N8003  | shop  |  -        | -            |
 
 
-    Scenario: Admin levels
-        When loading osm data
-            """
-            n9001 Tplace=city
-            n9002 Tplace=city,admin_level=16
-            n9003 Tplace=city,admin_level=x
-            n9004 Tplace=city,admin_level=1
-            n9005 Tplace=city,admin_level=0
-            n9006 Tplace=city,admin_level=2.5
-            """
-        Then place contains exactly
-            | object | class | admin_level |
-            | N9001  | place | 15          |
-            | N9002  | place | 15          |
-            | N9003  | place | 15          |
-            | N9004  | place | 1           |
-            | N9005  | place | 15          |
-            | N9006  | place | 15          |
-
-
-    Scenario: Administrative boundaries with place tags
-        Given the grid
-            | 1 | 2 |
-            | 3 |   |
-        When loading osm data
-            """
-            n1
-            n2
-            n3
-            w10001 Tboundary=administrative,place=city,name=A,admin_level=10 Nn1,n2,n3,n1
-            w10002 Tboundary=natural,place=city,name=B Nn1,n2,n3,n1
-            w10003 Tboundary=administrative,place=island,name=C,admin_level=10 Nn1,n2,n3,n1
-            """
-        Then place contains
-            | object | class    | type           | categories!set                                    |
-            | W10001 | boundary | administrative | 'osm.boundary.administrative', 'osm.place.city'   |
-            | W10002 | boundary | natural        | 'osm.boundary.natural', 'osm.place.city'          |
-            | W10003 | boundary | administrative | 'osm.boundary.administrative', 'osm.place.island' |
-
-
     Scenario: Building fallbacks
         When loading osm data
             """
@@ -233,10 +197,10 @@ Feature: Tag evaluation
             n12005 Tbuilding=yes,addr:postcode=12345
             """
         Then place contains exactly
-            | object | class    | type     |
-            | N12001 | tourism  | hotel    |
-            | N12003 | building | shed     |
-            | N12004 | building | yes      |
+            | object | class    | type     | categories          |
+            | N12001 | tourism  | hotel    | 'osm.tourism.hotel' |
+            | N12003 | building | shed     | 'osm.building.shed' |
+            | N12004 | building | yes      | -                   |
         And place_postcode contains exactly
             | object | postcode | geometry |
             | N12005 | 12345    | -        |
@@ -324,18 +288,6 @@ Feature: Tag evaluation
             | N4     | amenity  | parking | - |
 
 
-    Scenario: Categories populate on place table for single and multi-tag
-        When loading osm data
-            """
-            n1 Tamenity=restaurant,name=Foo
-            n2 Ttourism=hotel,amenity=cafe,name=Bar
-            """
-        Then place contains exactly
-          | object | categories!set                          |
-          | N1     | 'osm.amenity.restaurant'                |
-          | N2     | 'osm.tourism.hotel', 'osm.amenity.cafe' |
-
-
     Scenario: Categories sanitize non-alphanumeric class/type values
         When loading osm data
             """
@@ -358,6 +310,6 @@ Feature: Tag evaluation
             n8102 Tshop=????
             """
         Then place contains exactly
-          |object|categories!set|
-          |N8101|'osm.amenity.yes'|
-          |N8102|'osm.shop.yes'|
+          |object | categories!set    |
+          |N8101  | 'osm.amenity.yes' |
+          |N8102  | 'osm.shop.yes'    |

@@ -302,8 +302,7 @@ BEGIN
 
         FOR linked_placex IN
           SELECT * from placex
-          WHERE osm_type = 'N' and osm_id = rel_member.member
-            and categories <@ 'osm.place'
+          WHERE osm_type = 'N' and osm_id = rel_member.member and class = 'place'
         LOOP
           {% if debug %}RAISE WARNING 'Linked label member';{% endif %}
           RETURN linked_placex;
@@ -323,7 +322,7 @@ BEGIN
   IF bnd.extratags ? 'wikidata' THEN
     FOR linked_placex IN
       SELECT * FROM placex
-      WHERE placex.categories <@ 'osm.place' AND placex.osm_type = 'N'
+      WHERE placex.class = 'place' AND placex.osm_type = 'N'
         AND placex.extratags ? 'wikidata' -- needed to select right index
         AND placex.extratags->'wikidata' = bnd.extratags->'wikidata'
         AND (placex.linked_place_id is null or placex.linked_place_id = bnd.place_id)
@@ -339,14 +338,12 @@ BEGIN
   -- If categories contain a place tag, look for linked nodes by their place type.
   -- Area and node still have to have the same name.
   IF bnd_name is not null THEN
-    bnd_place_type := bnd.categories ?<@ 'osm.place';
-    IF bnd_place_type is not null THEN
+    IF bnd.extratags ? 'place' THEN
       FOR linked_placex IN
         SELECT * FROM placex
         WHERE (position(lower(name->'name') in bnd_name) > 0
                OR position(bnd_name in lower(name->'name')) > 0)
-          AND placex.categories <@ 'osm.place' -- needed to select the right index
-          AND placex.categories <@ bnd_place_type
+          AND placex.class = 'place' AND placex.type = bnd.extratags->'place'
           AND placex.osm_type = 'N'
           AND (placex.linked_place_id is null or placex.linked_place_id = bnd.place_id)
           AND placex.rank_search < 26
@@ -367,13 +364,12 @@ BEGIN
       SELECT placex.* from placex
       WHERE lower(name->'name') = bnd_name
         AND ((bnd.rank_address > 0
-              and bnd.rank_address = (compute_place_rank(placex.country_code,
-                                                         'N', placex.categories,
-                                                         15::SMALLINT,
-                                                         false, placex.postcode)).address_rank)
+              and bnd.rank_address = (compute_place_rank(placex.country_code, 'N',
+                                                         placex.class, placex.type,
+                                                         15::SMALLINT, false)).address_rank)
              OR (bnd.rank_address = 0 and placex.rank_search = bnd.rank_search))
         AND placex.osm_type = 'N'
-        AND placex.categories <@ 'osm.place'
+        AND placex.class = 'place'
         AND (placex.linked_place_id is null or placex.linked_place_id = bnd.place_id)
         AND placex.rank_search < 26 -- needed to select the right index
         AND (placex.extratags->'wikidata' is null OR bnd.extratags->'wikidata' is null
@@ -702,10 +698,9 @@ BEGIN
     SELECT * INTO NEW.rank_search, NEW.rank_address
       FROM compute_place_rank(NEW.country_code,
                               CASE WHEN is_area THEN 'A' ELSE NEW.osm_type END,
-                              NEW.categories,
+                              NEW.class, NEW.type,
                               NEW.admin_level,
-                              (NEW.extratags->'capital') = 'yes',
-                              NEW.address->'postcode');
+                              (NEW.extratags->'capital') = 'yes');
     -- a country code make no sense below rank 4 (country)
     IF NEW.rank_search < 4 THEN
       NEW.country_code := NULL;
@@ -779,24 +774,6 @@ BEGIN
 
   NEW.indexed_date = now();
 
-  -- Lazy backfill: derive categories from class/type when empty.
-  -- Matches Lua sanitize_label(): hyphens -> underscores, invalid chars -> 'yes'.
-  -- Invalid class falls back to 'place' (gives osm.place.yes) per PG < 16 compat.
-  IF array_length(NEW.categories, 1) IS NULL AND NOT (NEW.class = 'place' AND NEW.type = 'house') THEN
-    NEW.categories := ARRAY[(
-      'osm.'
-      || CASE WHEN NEW.class !~ '^[A-Za-z0-9_-]+$'
-              THEN 'place'
-              ELSE replace(NEW.class, '-', '_')
-         END
-      || '.'
-      || CASE WHEN NEW.type = '' OR NEW.type !~ '^[A-Za-z0-9_-]+$'
-              THEN 'yes'
-              ELSE replace(NEW.type, '-', '_')
-         END
-    )::ltree];
-  END IF;
-
   IF OLD.indexed_status > 1 THEN
     {% if 'search_name' in db.tables %}
       DELETE from search_name WHERE place_id = NEW.place_id;
@@ -860,10 +837,9 @@ BEGIN
   SELECT * INTO NEW.rank_search, NEW.rank_address
     FROM compute_place_rank(NEW.country_code,
                             CASE WHEN is_area THEN 'A' ELSE NEW.osm_type END,
-                            NEW.categories,
+                            NEW.class, NEW.type,
                             NEW.admin_level,
-                            (NEW.extratags->'capital') = 'yes',
-                            NEW.address->'postcode');
+                            (NEW.extratags->'capital') = 'yes');
   -- Short-cut out for linked places. Note that this must happen after the
   -- address rank has been recomputed. The linking might nullify a shift in
   -- address rank.
@@ -915,8 +891,8 @@ BEGIN
         FOR location IN
           SELECT rank_address
           FROM placex,
-               LATERAL compute_place_rank(country_code, 'A', categories,
-                                          admin_level, False, null) prank
+               LATERAL compute_place_rank(country_code, 'A', class, type,
+                                          admin_level, False) prank
           WHERE categories <@ 'osm.place' and rank_address between 1 and 23
                 and prank.address_rank >= NEW.rank_address
                 and ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon') -- select right index
@@ -936,8 +912,8 @@ BEGIN
     FOR location IN
           SELECT rank_address
           FROM placex,
-               LATERAL compute_place_rank(country_code, 'A', categories,
-                                          admin_level, False, null) prank
+               LATERAL compute_place_rank(country_code, 'A', class, type,
+                                          admin_level, False) prank
           WHERE prank.address_rank < 24
                 and rank_address between 1 and 25 -- select right index
                 and ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon') -- select right index
@@ -957,8 +933,8 @@ BEGIN
     FOR location IN
         SELECT rank_address
         FROM placex,
-             LATERAL compute_place_rank(country_code, 'A', categories,
-                                        admin_level, False, null) prank
+             LATERAL compute_place_rank(country_code, 'A', class, type,
+                                        admin_level, False) prank
         WHERE osm_type = 'R'
               and rank_address between 1 and 25 -- select right index
               and ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon') -- select right index
@@ -1111,8 +1087,8 @@ BEGIN
     -- have been shifted to accommodate surrounding boundaries.
     SELECT place_id, osm_id, class, type, extratags, rank_search,
            centroid, geometry, categories,
-           (compute_place_rank(country_code, osm_type, categories, admin_level,
-                              (extratags->'capital') = 'yes', null)).*
+           (compute_place_rank(country_code, osm_type, class, type, admin_level,
+                              (extratags->'capital') = 'yes')).*
       INTO location
       FROM placex WHERE place_id = linked_place;
 
@@ -1158,12 +1134,11 @@ BEGIN
     -- No linked place? As a last resort check if the boundary is tagged with
     -- a place type and adapt the rank address.
     IF NEW.rank_address between 4 and 25 THEN
-      bnd_place_type := NEW.categories ?<@ 'osm.place';
-      IF bnd_place_type is not null THEN
+      IF NEW.extratags ? 'place' THEN
         SELECT address_rank INTO place_address_level
-          FROM compute_place_rank(NEW.country_code, 'A',
-                                  ARRAY[bnd_place_type],
-                                  0::SMALLINT, False, null);
+          FROM compute_place_rank(NEW.country_code, 'N',
+                                  'place', NEW.extratags->'place',
+                                  0::SMALLINT, False);
         IF place_address_level > parent_address_level and
            place_address_level < 26 THEN
           NEW.rank_address := place_address_level;

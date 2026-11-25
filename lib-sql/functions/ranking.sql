@@ -116,121 +116,66 @@ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
 
 
 -- Get standard search and address rank for an object.
--- Iterates all osm.* categories and finds the one with the lowest positive
--- address rank. Address rank of 0 has the lowest priority. Ties broken by
--- lower search rank.
 --
 -- \param country        Two-letter country code where the object is in.
 -- \param extended_type  OSM type (N, W, R) or area type (A).
--- \param categories     ltree[] of osm.<class>.<type> categories.
+-- \param place_class    Class (or tag key) of object.
+-- \param place_type     Type (or tag value) of object.
 -- \param admin_level    Value of admin_level tag.
 -- \param is_major       If true, boost search rank by one.
--- \param postcode       Value of addr:postcode tag.
 -- \param[out] search_rank   Computed search rank.
 -- \param[out] address_rank  Computed address rank.
 --
 CREATE OR REPLACE FUNCTION compute_place_rank(country VARCHAR(2),
                                               extended_type VARCHAR(1),
-                                              categories ltree[],
+                                              place_class TEXT, place_type TEXT,
                                               admin_level SMALLINT,
                                               is_major BOOLEAN,
-                                              postcode TEXT,
                                               OUT search_rank SMALLINT,
                                               OUT address_rank SMALLINT)
 AS $$
 DECLARE
-  cat ltree;
-  cat_class TEXT;
-  cat_type TEXT;
   classtype TEXT;
-  best_search SMALLINT := 99;
-  best_address SMALLINT := 99;
-  cand_search SMALLINT;
-  cand_address SMALLINT;
-  has_boundary_admin BOOLEAN;
 BEGIN
-  IF categories IS NULL THEN
-    search_rank := 30;
-    address_rank := 30;
-    RETURN;
-  END IF;
-
-  -- Hoist: skip place categories when boundary/administrative is also present.
-  has_boundary_admin := categories <@ 'osm.boundary.administrative';
-
-  FOREACH cat IN ARRAY categories LOOP
-    -- Only consider osm.* categories
-    IF NOT (cat ~ 'osm.*'::lquery) THEN
-      CONTINUE;
-    END IF;
-
-    -- Place ranks are handled by the post-hoc adjustment in placex_update.
-    IF has_boundary_admin AND cat ~ 'osm.place.*'::lquery THEN
-      CONTINUE;
-    END IF;
-
-    cat_class := split_part(cat::text, '.', 2);
-    cat_type := split_part(cat::text, '.', 3);
-    -- Short-circuits for special cases
-    IF extended_type = 'N' AND cat_class = 'highway' THEN
-      cand_search := 30;
-      cand_address := 30;
-    ELSIF cat_class = 'landuse' AND extended_type != 'A' THEN
-      cand_search := 30;
-      cand_address := 30;
+  IF extended_type = 'N' AND place_class = 'highway' THEN
+    search_rank = 30;
+    address_rank = 30;
+  ELSEIF place_class = 'landuse' AND extended_type != 'A' THEN
+    search_rank = 30;
+    address_rank = 30;
+  ELSE
+    IF place_class = 'boundary' and place_type = 'administrative' THEN
+      classtype = place_type || admin_level::TEXT;
     ELSE
-      -- Build classtype for boundary/administrative
-      IF cat_class = 'boundary' AND cat_type = 'administrative' THEN
-        classtype := cat_type || admin_level::TEXT;
-      ELSE
-        classtype := cat_type;
-      END IF;
-
-      SELECT l.rank_search, l.rank_address INTO cand_search, cand_address
-        FROM address_levels l
-       WHERE (l.country_code = country OR l.country_code IS NULL)
-             AND l.class = cat_class AND (l.type = classtype OR l.type IS NULL)
-       ORDER BY l.country_code, l.class, l.type LIMIT 1;
-
-      IF cand_search IS NULL OR cand_address IS NULL THEN
-        cand_search := 30;
-        cand_address := 30;
-      END IF;
-
-      -- Waterway relation boost
-      IF cat_class = 'waterway' AND extended_type = 'R' THEN
-        cand_search := cand_search - 1;
-      END IF;
+      classtype = place_type;
     END IF;
 
-    -- Selection: pick the candidate with lowest positive address rank.
-    -- Address rank of 0 has lowest priority (fallback only). Tiebreak: lower search rank.
-    -- A positive address rank always overrides a zero-address fallback (best_address = 0).
-    IF cand_address > 0 AND (best_address = 0 OR cand_address < best_address) THEN
-      best_search := cand_search;
-      best_address := cand_address;
-    ELSIF cand_address > 0 AND cand_address = best_address
-          AND cand_search < best_search THEN
-      best_search := cand_search;
-      best_address := cand_address;
-    ELSIF cand_address = 0 AND (best_address = 99 OR best_address = 0)
-          AND cand_search < best_search THEN
-      -- Fallback: when no addressable category found, pick best search rank
-      best_search := cand_search;
-      best_address := cand_address;
-    END IF;
-  END LOOP;
+    SELECT l.rank_search, l.rank_address INTO search_rank, address_rank
+      FROM address_levels l
+     WHERE (l.country_code = country or l.country_code is NULL)
+           AND l.class = place_class AND (l.type = classtype or l.type is NULL)
+     ORDER BY l.country_code, l.class, l.type LIMIT 1;
 
-  -- Apply is_major boost to the winner
-  IF is_major THEN
-    best_search := best_search - 1;
+    IF search_rank is NULL OR address_rank is NULL THEN
+      search_rank := 30;
+      address_rank := 30;
+    END IF;
+
+    -- some postcorrections
+    IF place_class = 'waterway' AND extended_type = 'R' THEN
+        -- Slightly promote waterway relations so that they are processed
+        -- before their members.
+        search_rank := search_rank - 1;
+    END IF;
+
+    IF is_major THEN
+      search_rank := search_rank - 1;
+    END IF;
   END IF;
-
-  search_rank := best_search;
-  address_rank := best_address;
 END;
 $$
 LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
 
 CREATE OR REPLACE FUNCTION get_addr_tag_rank(key TEXT, country TEXT,
                                              OUT from_rank SMALLINT,

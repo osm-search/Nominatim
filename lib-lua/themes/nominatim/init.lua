@@ -28,6 +28,8 @@ local NAMES = {}
 local NAME_FILTER = nil
 local ADDRESS_TAGS = {}
 local ADDRESS_FILTER = nil
+local CLASSIFICATION_TAG_FILTER
+local CATEGORY_FACTORY
 local EXTRATAGS_FILTER
 local REQUIRED_EXTRATAGS_FILTER
 local POSTCODE_FALLBACK = true
@@ -148,7 +150,6 @@ module.RELATION_TYPES = {
 local PlaceTransform = {}
 
 -- Special transform meanings which are interpreted elsewhere
-PlaceTransform.fallback = 'fallback'
 PlaceTransform.postcode_area = 'postcode_area'
 PlaceTransform.delete = 'delete'
 PlaceTransform.extra = 'extra'
@@ -170,21 +171,25 @@ function PlaceTransform.named(place)
     end
 end
 
+PlaceTransform.fallback = PlaceTransform.named
+
 -- named_with_key: use place if there is a name with the main key prefix
 function PlaceTransform.named_with_key(place, k)
     local prefix = k .. ':name'
-    local found = false
+    local names = {}
+    local intags = {}
     for namek, namev in pairs(place.intags) do
         if namek:sub(1, #prefix) == prefix
            and (#namek == #prefix
                 or namek:sub(#prefix + 1, #prefix + 1) == ':') then
-            place.names[namek:sub(#k + 2)] = namev
-            found = true
+            names[namek:sub(#k + 2)] = namev
+        else
+          intags[namek] = namev
         end
     end
 
-    if found then
-        return place
+    if next(names) ~= nil then
+        return place:clone{names=names, intags=intags}
     end
 end
 
@@ -464,18 +469,18 @@ end
 
 
 function Place:is_area()
-    if self.is_area == nil then
+    if self._is_area == nil then
         if self.object.type == 'point' then
-            self.is_area = false
+            self._is_area = false
         elseif self:geometry_is_valid() then
-            local gtype = self.geomtry:geometry_type()
-            self.is_area = (gtype == 'POLYGON') or (gtype == 'MULTIPOLYGON')
+            local gtype = self.geometry:geometry_type()
+            self._is_area = (gtype == 'POLYGON') or (gtype == 'MULTIPOLYGON')
         else
-            self.is_area = false
+            self._is_area = false
         end
     end
 
-    return self.is_area
+    return self._is_area
 end
 
 
@@ -623,6 +628,39 @@ local function process_key(key)
     return key
 end
 
+
+local function insert_place(o, main_tags)
+    local k, v = CLASSIFICATION_TAG_FILTER(o, main_tags)
+    local categories = CATEGORY_FACTORY(o, main_tags)
+
+    local extra = EXTRATAGS_FILTER(o, k, v) or {}
+    for tk, tv in pairs(o.object.tags) do
+        if REQUIRED_EXTRATAGS_FILTER(tk, tv) and extra[tk] == nil then
+            extra[tk] = tv
+        end
+    end
+    if next(extra) == nil then
+        extra = nil
+    end
+
+    local category_str = nil
+    if categories ~= nil and next(categories) ~= nil then
+        category_str = '{'..table.concat(categories, ',') .. '}'
+    end
+
+    insert_row.place{
+        class = k,
+        type = v,
+        admin_level = o.admin_level,
+        name = next(o.names) and o.names,
+        address = next(o.address) and o.address,
+        extratags = extra,
+        geometry = o.geometry,
+        categories = category_str
+    }
+end
+
+
 -- Process functions for all data types
 function module.process_node(object)
     if ENTRANCE_FUNCTION ~= nil then
@@ -714,22 +752,6 @@ else
     osm2pgsql.process_relation = module.process_relation
 end
 
--- Build extratags for a merged row: filter via EXTRATAGS_FILTER,
--- remove the winning main tag (it belongs in class/type, not extratags),
--- keeping any secondary main tags, then add any required extratags.
-local function build_extratags(place, k, v, main_class)
-    local extra = EXTRATAGS_FILTER(place, k, v) or {}
-    if main_class ~= nil then
-        extra[main_class] = nil
-    end
-    for tk, tv in pairs(place.object.tags) do
-        if REQUIRED_EXTRATAGS_FILTER(tk, tv) and extra[tk] == nil then
-            extra[tk] = tv
-        end
-    end
-    if next(extra) == nil then return nil end
-    return extra
-end
 
 function module.process_tags(o)
     if next(o.intags) == nil then
@@ -740,7 +762,7 @@ function module.process_tags(o)
     local needs_address_fallback = o:grab_name_parts{groups=NAME_FILTER}
 
     -- address keys
-    if o:grab_address_parts{groups=ADDRESS_FILTER} > 0 and not needs_address_fallback then
+    if o:grab_address_parts{groups=ADDRESS_FILTER} > 0 then
         needs_address_fallback = true
     end
     if o.address.country ~= nil and #o.address.country ~= 2 then
@@ -767,12 +789,10 @@ function module.process_tags(o)
         }
     end
 
-    -- Collect categories from main keys into a single row.
-    local categories = {}
-    local main_class, main_type = nil, nil
-    local merged_extratags = nil
+    -- Process remaining tags.
+    local main_tags = {}
+    local separate_place_objects = {}
     local postcode_collect = false
-    local fallback_tags = {}
 
     for k, v in pairs(o.intags) do
         local ktable = MAIN_KEYS[k]
@@ -781,26 +801,10 @@ function module.process_tags(o)
             if type(ktype) == 'function' then
                 local result = ktype(o, k, v)
                 if result then
-                    -- If transform returned a clone (lock_transform, etc.),
-                    -- use its names for the final row
-                    if result ~= o then
-                        o.names = result.names
-                    end
-
-                    -- Collect category
-                    local cat = get_category(k, v)
-                    if cat ~= nil then
-                        table.insert(categories, cat)
-
-                        -- TODO: alphabetical winner selection is a temporary heuristic.
-                        -- Later we will choose by rankability (e.g. avoid boundary on non-area ways)
-                        -- or by explicit user/config priority or idk.
-                        if main_class == nil
-                           or k < main_class
-                           or (k == main_class and v < main_type) then
-                            main_class = k
-                            main_type = v
-                        end
+                    if result == o then
+                        main_tags[k] = v
+                    else
+                        separate_place_objects[k] = result
                     end
                 end
             elseif ktype == 'postcode_area' then
@@ -814,31 +818,12 @@ function module.process_tags(o)
                         geometry = o.geometry
                     }
                 end
-            elseif ktype == 'fallback' and o.has_name then
-                table.insert(fallback_tags, {k, v})
-            end
-        end
-    end
-
-    merged_extratags = build_extratags(o, nil, nil, main_class)
-
-    -- Fallback tags are only used for named objects. All of them get a category,
-    -- the first one also provides class/type when no other main tag did.
-    table.sort(fallback_tags, function(a, b)
-        return a[1] < b[1] or (a[1] == b[1] and a[2] < b[2])
-    end)
-    for _, kv in ipairs(fallback_tags) do
-        local cat = get_category(kv[1], kv[2])
-        if cat ~= nil then
-            table.insert(categories, cat) 
-            if main_class == nil then
-                main_class, main_type = kv[1], kv[2]
             end
         end
     end
 
     -- For address fallback we keep an artificial class that gets no category
-    if main_class == nil then
+    if next(main_tags) == nil then
         if needs_address_fallback then
             if next(o.names) ~= nil and NAMES.house ~= nil then
                 local names = {}
@@ -850,8 +835,7 @@ function module.process_tags(o)
                 o.names = names
             end
 
-            main_class = 'place'
-            main_type = 'house'
+            main_tags['place'] = 'house'
         elseif POSTCODE_FALLBACK and not postcode_collect
                 and o.address.postcode ~= nil
                 and o:geometry_is_valid() then
@@ -862,20 +846,84 @@ function module.process_tags(o)
         end
     end
 
-    -- Build and insert single row with all collected categories
-    if main_class ~= nil and o:geometry_is_valid() then
-        insert_row.place{
-            class = main_class,
-            type = main_type,
-            admin_level = o.admin_level,
-            name = next(o.names) and o.names,
-            address = next(o.address) and o.address,
-            extratags = merged_extratags and next(merged_extratags) and merged_extratags,
-            geometry = o.geometry,
-            categories = #categories > 0 and ('{'..table.concat(categories, ',') .. '}') or nil
-        }
+    if (next(main_tags) == nil and next(separate_place_objects) == nil)
+       or not o:geometry_is_valid() then
+        return
     end
+
+    for k, place in pairs(separate_place_objects) do
+        local tag = {}
+        tag[k] = o.intags[k]
+        place.geometry = o.geometry
+        insert_place(place, tag)
+    end
+
+    insert_place(o, main_tags)
 end
+
+--------- Classification tag computation ------------------------------
+
+local CLASSIFICATION_TAG_PRIO = {
+    boundary = {0, administrative = 9, protected_area = -1},
+    place = {8, house = -9},
+    landuse = {-1},
+    natural = {0, saddle = -1},
+    building = {-8},
+    historic = {-6},
+    healthcare = {-1},
+    junction = {1},
+    tourism = {0, attraction = -7}
+}
+
+local function default_classification_tag_filter(place, candidates)
+    if #candidates == 1 then
+        return next(candidates)
+    end
+
+    local max_prio = -10
+    local best_k
+    local best_v
+    for k, v in pairs(candidates) do
+        local ptab = CLASSIFICATION_TAG_PRIO[k]
+        local prio = (ptab and (ptab[v] or ptab[1])) or 0
+        if prio > max_prio then
+            max_prio = prio
+            best_k, best_v = k, v
+        elseif prio == max_prio and
+               (k < best_k or (k == best_k and v < best_v)) then
+            best_k, best_v = k, v
+        end
+    end
+
+    return best_k, best_v
+end
+
+CLASSIFICATION_TAG_FILTER = default_classification_tag_filter
+
+--------- Category computation ------------------------------
+
+local CATEGORY_BLACKLIST = {
+    place = {house = true},
+    building = {yes = true, house = true, residential = true, detached = true,
+                apartment = true, semi_detached_house = true, terrace = true}
+}
+
+local function default_category_factory(place, main_tags)
+    local categories = {}
+    for k, v in pairs(main_tags) do
+        local bltab = CATEGORY_BLACKLIST[k]
+        if bltab == nil or bltab[v] == nil then
+            local cat = get_category(k, v)
+            if cat ~= nil then
+                table.insert(categories, cat)
+            end
+        end
+    end
+
+    return next(categories) and categories
+end
+
+CATEGORY_FACTORY = default_category_factory
 
 --------- Extratags post-processing functions ---------------
 
@@ -929,7 +977,7 @@ end
 function module.set_main_tags(data)
     for key, values in pairs(MAIN_KEYS) do
         for _, ttype in pairs(values) do
-            if ttype == 'fallback' or type(ttype) == 'function' then
+            if type(ttype) == 'function' then
                 values[ttype] = nil
             end
         end

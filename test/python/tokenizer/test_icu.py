@@ -150,7 +150,7 @@ def test_init_new(tokenizer_factory, test_config, db_prop):
 
     prop = db_prop(icu_rule_loader.DBCFG_IMPORT_NORM_RULES)
 
-    assert prop.startswith(':: lower ();')
+    assert prop.startswith(':: NFKC ();')
 
 
 def test_init_word_table(tokenizer_factory, test_config, place_row, temp_db_cursor):

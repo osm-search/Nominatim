@@ -18,6 +18,7 @@ normalization:
     - "[-:]?[:Space:]+[-:]? > ' '"
 transliteration:
     - "[-:]  > ' '"
+    - "'ة' > 'ه'"
     - ":: Latin ()"
     - !include icu-rules/extended-unicode-to-asccii.yaml
     - ":: Ascii ()"

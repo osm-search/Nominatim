@@ -201,9 +201,11 @@ The function may return one of three values:
 
 * `nil` or `false` causes the entry to be ignored
 * the Place object causes the place to be added as is
-* `Place.copy(names=..., address=..., extratags=...) causes the
+* `Place.copy(names=..., address=..., extratags=..., main_tags=...) causes the
   place to be enter into the database but with name/address/extratags
-  set to the given different values.
+  set to the given different values. You can also set a custom list of
+  main tags for the place. If none is set then the main tag currently
+  processed will be the only entry in the main tags list used for this place.
 
 The Place object has some read-only values that can be used to determine
 the handling:
@@ -214,6 +216,8 @@ the handling:
 * **names** is a table with the collected list of name tags
 * **address** is a table with the collected list of address tags
 * **extratags** is a table with the collected list of additional tags to save
+* **main_tags** the key/value pairs collected during processing as candidates
+  for the main tag
 
 Furthermore it offers two convenience functions:
 

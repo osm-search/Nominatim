@@ -1,12 +1,9 @@
 normalization:
+    - ":: NFKC ()"
     - ":: lower ()"
     - ":: Hans-Hant"
     - !include icu-rules/unicode-digits-to-decimal.yaml
-    - "'№' > 'no'"
     - "'n°' > 'no'"
-    - "'nº' > 'no'"
-    - "ª > a"
-    - "º > o"
     - "[[:Punctuation:][:Symbol:][\u02bc] - [-:]]+  > '-'"
     - "ß > 'ss'" # German szet is unambiguously equal to double ss
     - "[^[:alnum:] [:Canonical_Combining_Class=Virama:] [:Space:] [-:]] >"
@@ -18,6 +15,7 @@ normalization:
     - "[-:]?[:Space:]+[-:]? > ' '"
 transliteration:
     - "[-:]  > ' '"
+    - "'ة' > 'ه'"
     - ":: Latin ()"
     - !include icu-rules/extended-unicode-to-asccii.yaml
     - ":: Ascii ()"

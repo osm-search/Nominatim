@@ -692,3 +692,26 @@ def recreate_classtype_dependend_index(conn: Connection, **_: Any) -> None:
                        USING BTREE (rank_search, geometry_sector)
                        WHERE class = 'boundary' and type = 'administrative'
                              AND indexed_status > 0""")
+
+
+@_migration(5, 3, 99, 5)
+def add_place_label_member_table(conn: Connection, **_: Any) -> None:
+    """ Create place_label_members table.
+    """
+    if table_exists(conn, 'place_label_members'):
+        return
+
+    with conn.cursor() as cur:
+        cur.execute("""CREATE TABLE place_label_members AS (
+                       SELECT id::BIGINT as relation_id,
+                              (m->>'ref')::BIGINT as node_id
+                       FROM (SELECT id, jsonb_array_elements(members) as m FROM planet_osm_rels
+                             WHERE (SELECT count(*) FROM jsonb_array_elements(members) im
+                             WHERE im->>'role' = 'label' and im->>'type' = 'N') = 1) rels
+                        WHERE m->>'role' = 'label' and m->>'type' = 'N')
+                    """)
+        for column in ('relation_id', 'node_id'):
+            cur.execute(f"ALTER TABLE place_label_members ALTER COLUMN {column} SET NOT NULL")
+            cur.execute(f"""CREATE INDEX place_label_members_{column}_idx
+                            ON place_label_members USING btree({column})
+                        """)

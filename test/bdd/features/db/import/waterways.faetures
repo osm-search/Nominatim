@@ -1,0 +1,113 @@
+Feature: Import of waterway features
+    Tests that waterway features are correctly linked
+
+     Scenario: Waterways are linked when in waterway relations
+        Given the grid
+         | 1 |  |   |  | 3 | 4  |  |   |  | 6 |
+         |   |  | 2 |  |   | 10 |  | 5 |  |   |
+         |   |  |   |  |   | 11 |  |   |  |   |
+        And the places
+         | osm | class    | type  | name  | geometry |
+         | W1  | waterway | river | Rhein | 1,2,3    |
+         | W2  | waterway | river | Rhein | 3,4,5    |
+         | R13 | waterway | river | Rhein | 1,2,3,4,5,6 |
+         | R23 | waterway | river | Limmat| 4,10,11  |
+        And the relations
+         | id | members                          | tags+type |
+         | 13 | R23:tributary,W1,W2:main_stream  | waterway |
+        When importing
+        Then placex contains
+         | object | linked_place_id |
+         | W1     | R13 |
+         | W2     | R13 |
+         | R13    | -   |
+         | R23    | -   |
+        When geocoding "rhein"
+        Then the result set contains
+         | object |
+         | R13    |
+
+    Scenario: Relations are not linked when in waterway relations
+        Given the grid
+         | 1 |  |   |  | 3 | 4  |  |   |  | 6 |
+         |   |  | 2 |  |   | 10 |  | 5 |  |   |
+         |   |  |   |  |   | 11 |  |   |  |   |
+        And the places
+         | osm | class    | type   | name  | geometry |
+         | W1  | waterway | stream | Rhein | 1,2,3,4 |
+         | W2  | waterway | river  | Rhein | 4,5,6 |
+         | R1  | waterway | river  | Rhein | 1,2,3,4 |
+         | R2  | waterway | river  | Limmat| 4,10,11 |
+        And the relations
+         | id | members                          | tags+type |
+         | 1  | R2                               | waterway  |
+        When importing
+        Then placex contains
+         | object | linked_place_id |
+         | W1     | - |
+         | W2     | - |
+         | R1     | - |
+         | R2     | - |
+        When geocoding "rhein"
+        Then result 0 contains
+          | object |
+          | R1  |
+        And result 1 contains
+          | object |
+          | W2  |
+
+
+    Scenario: Empty waterway relations are handled correctly
+        Given the grid
+         | 1 |  |   |  | 3 |
+        And the places
+         | osm | class    | type  | name  | geometry |
+         | R1  | waterway | river | Rhein | 1,3 |
+        And the relations
+         | id | members  | tags+type |
+         | 1  |          | waterway |
+        When importing
+        Then placex contains
+         | object | linked_place_id |
+         | R1     | - |
+
+    Scenario: Waterways are not linked when the way type is not a river feature
+        Given the grid
+         | 1 |   | 2 |
+         |   |   |   |
+         | 3 |   | 4 |
+        And the places
+         | osm | class    | type     | name  | geometry |
+         | W1  | waterway | lock     | Rhein | 3,4 |
+         | R1  | landuse  | meadow   | Rhein | (3,1,2,4,3) |
+        And the relations
+         | id | members      | tags+type |
+         | 1  | W1,W2        | multipolygon |
+        When importing
+        Then placex contains
+         | object | linked_place_id |
+         | W1     | - |
+         | R1     | - |
+
+    Scenario: Side streams are linked only when they have the same name
+        Given the grid
+         |   |  |   |   | 8 |   |   |  |
+         | 1 |  | 2 | 3 |   | 4 | 5 | 6|
+         |   |  |   |   |   | 9 |   |  |
+        And the places
+         | osm | class    | type  | name   | geometry |
+         | W1  | waterway | river | Rhein2 | 2,8,4 |
+         | W2  | waterway | river | Rhein  | 3,9,5 |
+         | R1  | waterway | river | Rhein  | 1,2,3,4,5,6 |
+        And the relations
+         | id | members                           | tags+type |
+         | 1  | W1:side_stream,W2:side_stream,W3  | waterway |
+        When importing
+        Then placex contains
+         | object | linked_place_id |
+         | W1     | -  |
+         | W2     | R1 |
+        When geocoding "rhein2"
+        Then the result set contains
+         | object |
+         | W1  |

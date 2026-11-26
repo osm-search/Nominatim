@@ -310,6 +310,26 @@ Feature: Tag evaluation
             n8102 Tshop=????
             """
         Then place contains exactly
-          |object | categories!set    |
-          |N8101  | 'osm.amenity.yes' |
-          |N8102  | 'osm.shop.yes'    |
+          | object | categories!set    |
+          | N8101  | 'osm.amenity.yes' |
+          | N8102  | 'osm.shop.yes'    |
+
+    Scenario: Rapids are added when they are named
+        When loading osm data
+            """
+            n30 Twaterway=river,rapids=yes,name=Elbe,rapids:name=Schnell
+            n31 Twaterway=river,rapids=no,name=Elbe,rapids:name=Schnell
+            n32 Twaterway=river,rapids=yes
+            n33 Twaterway=river,rapids=2;3,rapids:name=Schnell
+            n34 Twaterway=rapids,name=Elbe
+            n35 Twaterway=rapids,rapids=1,name=Elbe,rapids:name:en=Fast
+            n36 Twater=rapids,rapids=1,name=Elbe,rapids:name:en=Fast
+            """
+        Then place contains exactly
+          | object | class    | type   | categories!set        | name!dict         | extratags!dict  |
+          | N30    | waterway | river  | 'osm.waterway.river'  | 'name': 'Elbe'    | 'rapids': 'yes', 'rapids:name': 'Schnell' |
+          | N30    | rapids   | yes    | 'osm.rapids.yes'      | 'name': 'Schnell' | 'waterway': 'river', 'rapids': 'yes' |
+          | N31    | waterway | river  | 'osm.waterway.river'  | 'name': 'Elbe'    | 'rapids': 'no', 'rapids:name': 'Schnell' |
+          | N33    | rapids   | yes    | 'osm.rapids.yes'      | 'name': 'Schnell' | 'waterway': 'river', 'rapids': '2;3' |
+          | N35    | rapids   | yes    | 'osm.rapids.yes'      | 'name:en': 'Fast' | 'rapids': '1' |
+          | N36    | rapids   | yes    | 'osm.rapids.yes'      | 'name:en': 'Fast' | 'rapids': '1' |

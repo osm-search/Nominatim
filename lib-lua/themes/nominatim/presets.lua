@@ -101,6 +101,26 @@ local function named_area(place)
     return false
 end
 
+local function named_rapids(place)
+    local prefix = 'rapids:name'
+    local names = {}
+    local intags = {}
+    for namek, namev in pairs(place.intags) do
+        if namek:sub(1, 11) == prefix
+           and (#namek == 11 or namek:sub(12, 12) == ':') then
+            names[namek:sub(8)] = namev
+        else
+          intags[namek] = namev
+        end
+    end
+
+    if next(names) ~= nil then
+        local extra = {}
+        extra.rapids = place.object.tags.rapids
+        return place:clone{main_tags={rapids = 'yes'}, names=names, intags=intags, extratags=extra}
+    end
+end
+
 -- Main tag definition
 
 module.MAIN_TAGS = {}
@@ -150,7 +170,8 @@ module.MAIN_TAGS.all_boundaries = {
 
 module.MAIN_TAGS.natural = {
     waterway = {'named',
-                riverbank = 'delete'},
+                riverbank = 'delete',
+                rapids = 'delete'},
     natural = {'named',
                yes = 'delete',
                no = 'delete',
@@ -168,7 +189,8 @@ module.MAIN_TAGS.natural = {
              fish_pass = 'never',
              yes = 'delete',
              intermittent = 'delete',
-             tidal = 'delete'
+             tidal = 'delete',
+             rapids = 'delete'
              }
 }
 
@@ -255,6 +277,8 @@ module.MAIN_TAGS_POIS = function (group)
                switch = group,
                signal = group,
                buffer_stop = group},
+    rapids = {named_rapids,
+              no = group},
     shop = {'always',
             no = group},
     tourism = {'always',

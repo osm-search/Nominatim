@@ -328,6 +328,7 @@ function Place.new(object, geom_func)
     self.names = {}
     self.address = {}
     self.extratags = {}
+    self.main_tags = {}
 
     self.intags = {}
 
@@ -494,7 +495,8 @@ function Place:clone(data)
     cp.names = data.names or self.names
     cp.address = data.address or self.address
     cp.extratags = data.extratags or self.extratags
-    cp.is_area = data.is_area
+    cp.is_area = self.is_area
+    cp.main_tags = data.main_tags or {}
 
     return cp
 end
@@ -629,9 +631,9 @@ local function process_key(key)
 end
 
 
-local function insert_place(o, main_tags)
-    local k, v = CLASSIFICATION_TAG_FILTER(o, main_tags)
-    local categories = CATEGORY_FACTORY(o, main_tags)
+local function insert_place(o)
+    local k, v = CLASSIFICATION_TAG_FILTER(o)
+    local categories = CATEGORY_FACTORY(o)
 
     local extra = EXTRATAGS_FILTER(o, k, v) or {}
     for tk, tv in pairs(o.object.tags) do
@@ -790,7 +792,6 @@ function module.process_tags(o)
     end
 
     -- Process remaining tags.
-    local main_tags = {}
     local separate_place_objects = {}
     local postcode_collect = false
 
@@ -802,9 +803,12 @@ function module.process_tags(o)
                 local result = ktype(o, k, v)
                 if result then
                     if result == o then
-                        main_tags[k] = v
+                        o.main_tags[k] = v
                     else
                         separate_place_objects[k] = result
+                        if next(result.main_tags) == nil then
+                            result.main_tags[k] = v
+                        end
                     end
                 end
             elseif ktype == 'postcode_area' then
@@ -823,7 +827,7 @@ function module.process_tags(o)
     end
 
     -- For address fallback we keep an artificial class that gets no category
-    if next(main_tags) == nil then
+    if next(o.main_tags) == nil then
         if needs_address_fallback then
             if next(o.names) ~= nil and NAMES.house ~= nil then
                 local names = {}
@@ -835,7 +839,7 @@ function module.process_tags(o)
                 o.names = names
             end
 
-            main_tags['place'] = 'house'
+            o.main_tags['place'] = 'house'
         elseif POSTCODE_FALLBACK and not postcode_collect
                 and o.address.postcode ~= nil
                 and o:geometry_is_valid() then
@@ -846,19 +850,17 @@ function module.process_tags(o)
         end
     end
 
-    if (next(main_tags) == nil and next(separate_place_objects) == nil)
+    if (next(o.main_tags) == nil and next(separate_place_objects) == nil)
        or not o:geometry_is_valid() then
         return
     end
 
-    for k, place in pairs(separate_place_objects) do
-        local tag = {}
-        tag[k] = o.intags[k]
+    for _, place in pairs(separate_place_objects) do
         place.geometry = o.geometry
-        insert_place(place, tag)
+        insert_place(place)
     end
 
-    insert_place(o, main_tags)
+    insert_place(o)
 end
 
 --------- Classification tag computation ------------------------------
@@ -875,15 +877,15 @@ local CLASSIFICATION_TAG_PRIO = {
     tourism = {0, attraction = -7}
 }
 
-local function default_classification_tag_filter(place, candidates)
-    if #candidates == 1 then
-        return next(candidates)
+local function default_classification_tag_filter(place)
+    if #place.main_tags == 1 then
+        return next(place.main_tags)
     end
 
     local max_prio = -10
     local best_k
     local best_v
-    for k, v in pairs(candidates) do
+    for k, v in pairs(place.main_tags) do
         local ptab = CLASSIFICATION_TAG_PRIO[k]
         local prio = (ptab and (ptab[v] or ptab[1])) or 0
         if prio > max_prio then
@@ -908,9 +910,9 @@ local CATEGORY_BLACKLIST = {
                 apartment = true, semi_detached_house = true, terrace = true}
 }
 
-local function default_category_factory(place, main_tags)
+local function default_category_factory(place)
     local categories = {}
-    for k, v in pairs(main_tags) do
+    for k, v in pairs(place.main_tags) do
         local bltab = CATEGORY_BLACKLIST[k]
         if bltab == nil or bltab[v] == nil then
             local cat = get_category(k, v)

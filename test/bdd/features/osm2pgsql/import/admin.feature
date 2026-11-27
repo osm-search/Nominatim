@@ -118,3 +118,23 @@ Feature: Import of place and admin objects
             | W10002 | place    | city           | 'osm.boundary.natural', 'osm.place.city'          |
             | W10003 | boundary | administrative | 'osm.boundary.administrative', 'osm.place.island' |
 
+
+    Scenario: Label relations are saved when they are unique
+        Given the grid
+            | 1 | 2 |
+            | 4 | 3 |
+        When loading osm data
+            """
+            n1
+            n2
+            n3
+            n4
+            w1 Nn1,n2,n3,n4,n1
+            r100 Ttype=boundary Mw1@,n2@label
+            r101 Ttype=boundary Mw1@,n2@label,w1@label
+            r102 Ttype=boundary Mw1@,n2@label,n3@label
+            """
+        Then place_label_members contains exactly
+            | relation_id | node_id |
+            | 100         | 2       |
+            | 101         | 2       |

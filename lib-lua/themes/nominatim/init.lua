@@ -103,6 +103,15 @@ local table_definitions = {
         indexes = {
             { column = { 'member_type', 'member_id' }, method = 'btree' }
         }
+    },
+    place_label_members = {
+        ids = { type = 'relation', id_column = 'relation_id' },
+        columns = {
+            { column = 'node_id', type = 'int8', not_null = true }
+        },
+        indexes = {
+            { column = 'node_id', method = 'btree' }
+        }
     }
 }
 
@@ -733,6 +742,23 @@ function module.process_relation(object)
                     }
                 end
             end
+        end
+    elseif object.tags.type == 'multipolygon' or object.tags.type == 'boundary' then
+        local label_node = -1
+        for _, member in ipairs(object.members) do
+            if member.role == 'label' and member.type == 'n' then
+                if label_node == -1 then
+                    label_node = member.ref
+                else
+                    -- boundary has two label members, ignore both
+                    label_node = -1
+                    break
+                end
+            end
+        end
+
+        if label_node >= 0 then
+            insert_row.place_label_members{node_id = label_node}
         end
     end
 

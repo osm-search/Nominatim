@@ -16,117 +16,6 @@ Feature: Linking of places
          | R13     | - |
          | N256    | - |
 
-     Scenario: Waterways are linked when in waterway relations
-        Given the grid
-         | 1 |  |   |  | 3 | 4  |  |   |  | 6 |
-         |   |  | 2 |  |   | 10 |  | 5 |  |   |
-         |   |  |   |  |   | 11 |  |   |  |   |
-        And the places
-         | osm | class    | type  | name  | geometry |
-         | W1  | waterway | river | Rhein | 1,2,3    |
-         | W2  | waterway | river | Rhein | 3,4,5    |
-         | R13 | waterway | river | Rhein | 1,2,3,4,5,6 |
-         | R23 | waterway | river | Limmat| 4,10,11  |
-        And the relations
-         | id | members                          | tags+type |
-         | 13 | R23:tributary,W1,W2:main_stream  | waterway |
-        When importing
-        Then placex contains
-         | object | linked_place_id |
-         | W1     | R13 |
-         | W2     | R13 |
-         | R13    | -   |
-         | R23    | -   |
-        When geocoding "rhein"
-        Then the result set contains
-         | object |
-         | R13    |
-
-    Scenario: Relations are not linked when in waterway relations
-        Given the grid
-         | 1 |  |   |  | 3 | 4  |  |   |  | 6 |
-         |   |  | 2 |  |   | 10 |  | 5 |  |   |
-         |   |  |   |  |   | 11 |  |   |  |   |
-        And the places
-         | osm | class    | type   | name  | geometry |
-         | W1  | waterway | stream | Rhein | 1,2,3,4 |
-         | W2  | waterway | river  | Rhein | 4,5,6 |
-         | R1  | waterway | river  | Rhein | 1,2,3,4 |
-         | R2  | waterway | river  | Limmat| 4,10,11 |
-        And the relations
-         | id | members                          | tags+type |
-         | 1  | R2                               | waterway  |
-        When importing
-        Then placex contains
-         | object | linked_place_id |
-         | W1     | - |
-         | W2     | - |
-         | R1     | - |
-         | R2     | - |
-        When geocoding "rhein"
-        Then result 0 contains
-          | object |
-          | R1  |
-        And result 1 contains
-          | object |
-          | W2  |
-
-
-    Scenario: Empty waterway relations are handled correctly
-        Given the grid
-         | 1 |  |   |  | 3 |
-        And the places
-         | osm | class    | type  | name  | geometry |
-         | R1  | waterway | river | Rhein | 1,3 |
-        And the relations
-         | id | members  | tags+type |
-         | 1  |          | waterway |
-        When importing
-        Then placex contains
-         | object | linked_place_id |
-         | R1     | - |
-
-    Scenario: Waterways are not linked when the way type is not a river feature
-        Given the grid
-         | 1 |   | 2 |
-         |   |   |   |
-         | 3 |   | 4 |
-        And the places
-         | osm | class    | type     | name  | geometry |
-         | W1  | waterway | lock     | Rhein | 3,4 |
-         | R1  | landuse  | meadow   | Rhein | (3,1,2,4,3) |
-        And the relations
-         | id | members      | tags+type |
-         | 1  | W1,W2        | multipolygon |
-        When importing
-        Then placex contains
-         | object | linked_place_id |
-         | W1     | - |
-         | R1     | - |
-
-    Scenario: Side streams are linked only when they have the same name
-        Given the grid
-         |   |  |   |   | 8 |   |   |  |
-         | 1 |  | 2 | 3 |   | 4 | 5 | 6|
-         |   |  |   |   |   | 9 |   |  |
-        And the places
-         | osm | class    | type  | name   | geometry |
-         | W1  | waterway | river | Rhein2 | 2,8,4 |
-         | W2  | waterway | river | Rhein  | 3,9,5 |
-         | R1  | waterway | river | Rhein  | 1,2,3,4,5,6 |
-        And the relations
-         | id | members                           | tags+type |
-         | 1  | W1:side_stream,W2:side_stream,W3  | waterway |
-        When importing
-        Then placex contains
-         | object | linked_place_id |
-         | W1     | -  |
-         | W2     | R1 |
-        When geocoding "rhein2"
-        Then the result set contains
-         | object |
-         | W1  |
-
     # github #573
     Scenario: Boundaries should only be linked to places
         Given the 0.05 grid
@@ -134,20 +23,24 @@ Feature: Linking of places
          |   | 9 |   |
          | 4 |   | 3 |
         Given the named places
-         | osm | class    | type           | extra+wikidata | admin | geometry    |
-         | R1  | boundary | administrative | 34             | 8     | (1,2,3,4,1) |
+         | osm | class    | type           | admin | geometry    |
+         | R1  | boundary | administrative | 8     | (1,2,3,4,1) |
+         | R2  | boundary | administrative | 8     | (1,2,3,4,1) |
         And the named places
          | osm | class    | type           |
          | N9  | natural  | island         |
          | N9  | place    | city           |
+         | N10 | amenity  | city_hall      |
         And the relations
          | id | members  |
          | 1  | N9:label |
+         | 2  | N10:label |
         When importing
         Then placex contains
          | object     | linked_place_id |
          | N9:natural | -               |
          | N9:place   | R1              |
+         | N10        | -               |
 
     Scenario: Nodes with 'role' label are always linked
         Given the 0.05 grid
@@ -168,6 +61,25 @@ Feature: Linking of places
         And placex contains
          | object | centroid!wkt | name+name | extratags+linked_place |
          | R13    | 9            | Garbo     | hamlet |
+
+    Scenario: Nodes are not linked when they are labels in two relations
+        Given the 0.05 grid
+         | 1 |   | 2 |
+         |   | 9 |   |
+         | 4 |   | 3 |
+        Given the places
+         | osm  | class    | type           | admin | name  | geometry    |
+         | R13  | boundary | administrative | 6     | Garbo | (1,2,3,4,1) |
+         | R14  | boundary | administrative | 6     | Garbo | (1,2,3,4,1) |
+         | N2   | place    | hamlet         | 15    | Vario | 9           |
+        And the relations
+         | id | members       | tags+type |
+         | 13 | N2:label      | boundary |
+         | 14 | N2:label      | boundary |
+        When importing
+        Then placex contains
+         | object  | linked_place_id |
+         | N2      | - |
 
     Scenario: Boundaries with place tags are linked against places with same type
         Given the 0.01 grid

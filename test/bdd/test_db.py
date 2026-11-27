@@ -131,7 +131,7 @@ def import_place_entrances(row_factory, datatable, node_grid):
 
 @given(step_parse('the interpolations'), target_fixture=None)
 def import_place_interpolations(row_factory, datatable, node_grid):
-    """ Insert todo rows into the place_entrance table.
+    """ Insert todo rows into the place_interpolation table.
     """
     for row in datatable[1:]:
         data = PlaceColumn(node_grid).add_row(datatable[0], row, False)
@@ -207,16 +207,23 @@ def import_rels(row_factory, datatable):
         raw_tags = {k[5:]: v for k, v in zip(datatable[0], line)
                     if k.startswith("tags+")}
         members = []
+        label_member = None
         if line[memb_idx]:
             for member in line[memb_idx].split(','):
                 m = re.fullmatch(r'\s*([RWN])(\d+)(?::(\S+))?\s*', member)
                 if not m:
                     raise ValueError(f'Illegal member {member}.')
                 members.append({'ref': int(m[2]), 'role': m[3] or '', 'type': m[1]})
+                if m[1] == 'N' and m[3] == 'label':
+                    label_member = int(m[2])
 
         row_factory('planet_osm_rels',
                     id=int(line[id_idx]), tags=psycopg.types.json.Json(raw_tags),
                     members=psycopg.types.json.Json(members))
+
+        if label_member is not None:
+            row_factory('place_label_members',
+                        relation_id=int(line[id_idx]), node_id=label_member)
 
         # Mirror associatedStreet data into the dedicated table.
         if raw_tags.get('type') == 'associatedStreet':

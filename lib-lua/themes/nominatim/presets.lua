@@ -121,6 +121,14 @@ local function named_rapids(place)
     end
 end
 
+local function public_only(place)
+    local access = place.object.tags.access
+    if access == nil or (access ~= 'no' and access ~= 'private') then
+        return place
+    end
+    return false
+end
+
 -- Main tag definition
 
 module.MAIN_TAGS = {}
@@ -204,6 +212,7 @@ module.MAIN_TAGS_POIS = function (group)
                no = group},
     amenity = {'always',
                no = group,
+               parking = public_only,
                parking_space = group,
                parking_entrance = group,
                waste_disposal = group,

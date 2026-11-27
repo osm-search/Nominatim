@@ -199,7 +199,7 @@ Feature: Search queries
         When geocoding "restaurant"
           | limit |
           | 1000 |
-        Then exactly 35 results are returned
+        Then exactly 34 results are returned
 
     Scenario: Limit number of non-duplicated search results
         When geocoding "landstr"

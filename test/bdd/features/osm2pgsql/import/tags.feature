@@ -333,3 +333,19 @@ Feature: Tag evaluation
           | N33    | rapids   | yes    | 'osm.rapids.yes'      | 'name': 'Schnell' | 'waterway': 'river', 'rapids': '2;3' |
           | N35    | rapids   | yes    | 'osm.rapids.yes'      | 'name:en': 'Fast' | 'rapids': '1' |
           | N36    | rapids   | yes    | 'osm.rapids.yes'      | 'name:en': 'Fast' | 'rapids': '1' |
+
+
+    Scenario: Omit private parking
+        When loading osm data
+            """
+            n20 Tamenity=parking
+            n21 Tamenity=parking,access=yes
+            n22 Tamenity=parking,access=no
+            n23 Tamenity=parking,access=customers
+            n24 Tamenity=parking,access=private,name=Foo
+            """
+        Then place contains exactly
+            | object | class   |
+            | N20    | amenity |
+            | N21    | amenity |
+            | N23    | amenity |
